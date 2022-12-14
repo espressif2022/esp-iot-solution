@@ -84,6 +84,7 @@ static void button_handler(button_dev_t *btn)
     if (read_gpio_level != btn->button_level) {
         if (++(btn->debounce_cnt) >= DEBOUNCE_TICKS) {
             btn->button_level = read_gpio_level;
+            CALL_EVENT_CB(BUTTON_EVENT_ANYEDGE);
             btn->debounce_cnt = 0;
         }
     } else {
