@@ -7,6 +7,12 @@
 #include "esp_cache.h"
 #include "esp_memory_utils.h"
 #include <limits.h>
+#ifdef PV2_HOST
+#define PV2_SPI_EXTERNAL_DMA 1
+#else
+#include "soc/soc_caps.h"
+#define PV2_SPI_EXTERNAL_DMA SOC_PSRAM_DMA_CAPABLE
+#endif
 
 struct pv2_lcd_spi {
     pv2_lock_t lock;
@@ -100,8 +106,14 @@ static esp_err_t validate_tx(pv2_lcd_spi_t *a, const pv2_surface_t *s,
     }
     /* Check both ends: a valid base alone does not establish the entire range. */
     const uint8_t *last = (const uint8_t *)s->pixels + *bytes - 1;
-    if (!esp_ptr_internal(s->pixels) || !esp_ptr_internal(last) ||
-            !esp_ptr_dma_capable(s->pixels) || !esp_ptr_dma_capable(last)) {
+    bool valid = esp_ptr_internal(s->pixels) && esp_ptr_internal(last) &&
+                 esp_ptr_dma_capable(s->pixels) && esp_ptr_dma_capable(last);
+#if PV2_SPI_EXTERNAL_DMA
+    if (!valid && a->config.psram_dma_direct && *bytes % 64 == 0) {
+        valid = esp_ptr_dma_ext_capable(s->pixels) && esp_ptr_dma_ext_capable(last);
+    }
+#endif
+    if (!valid) {
         return ESP_ERR_NOT_SUPPORTED;
     }
     return ESP_OK;
@@ -218,6 +230,11 @@ esp_err_t pv2_lcd_spi_create(const pv2_lcd_spi_config_t *config, pv2_lcd_spi_t *
             (config->format == PV2_FORMAT_RGB888 && config->byte_order != PV2_ORDER_NATIVE)) {
         return ESP_ERR_INVALID_ARG;
     }
+#if !PV2_SPI_EXTERNAL_DMA
+    if (config->psram_dma_direct) {
+        return ESP_ERR_NOT_SUPPORTED;
+    }
+#endif
     pv2_lcd_spi_t *a = pv2_alloc(sizeof(*a));
     if (!a) {
         return ESP_ERR_NO_MEM;
@@ -252,5 +269,19 @@ esp_err_t pv2_lcd_spi_destroy(pv2_lcd_spi_t *a)
     }
     pv2_lock_destroy(&a->lock);
     pv2_free(a);
+    return ESP_OK;
+}
+
+esp_err_t pv2_lcd_spi_get_output_caps(pv2_lcd_spi_t *a, pv2_output_caps_t *out)
+{
+    if (!a || !out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    *out = (pv2_output_caps_t) {
+        .x_alignment = 1, .y_alignment = 1, .width_alignment = 1, .height_alignment = 1,
+        .base_alignment = 64, .stride_alignment = 1, .tight_stride = true,
+        .full_frame_only = false, .internal_dma = true, .external_memory = a->config.psram_dma_direct,
+        .max_inflight = a->config.max_inflight, .external_length_alignment = a->config.psram_dma_direct ? 64 : 1
+    };
     return ESP_OK;
 }

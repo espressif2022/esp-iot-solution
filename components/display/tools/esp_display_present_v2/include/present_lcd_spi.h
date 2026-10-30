@@ -5,6 +5,7 @@
 #pragma once
 
 #include "present_backend.h"
+#include "present_output_caps.h"
 #include "esp_lcd_panel_io.h"
 #include "esp_lcd_panel_ops.h"
 
@@ -20,6 +21,7 @@ typedef struct {
     pv2_pixel_format_t format; /* Must match the panel driver's input format. */
     pv2_byte_order_t byte_order; /* Wire byte order; adapter does not convert. */
     size_t max_inflight; /* 1..16; independent of the SPI driver's queue size. */
+    bool psram_dma_direct; /* Opt-in: underlying LCD SPI IO must enable the same flag on a capable SPI host. */
 } pv2_lcd_spi_config_t;
 
 /**
@@ -30,8 +32,10 @@ typedef struct {
  * - no other tx_color/draw_bitmap or callback registration on the same IO;
  * - format, byte order and area bounds match the panel configuration.
  *
- * Source must be 64-byte aligned, internal DMA-capable memory. Cache writeback
- * occurs before draw_bitmap. PSRAM and arbitrary RGB/DSI/I80 are not supported.
+ * Source must be 64-byte aligned and DMA-capable. Internal RAM is the default.
+ * PSRAM direct DMA is opt-in and requires a capable SoC/SPI host, the underlying
+ * esp_lcd IO psram_dma_direct flag, and a transfer length divisible by 64.
+ * Cache writeback occurs before draw_bitmap. No hidden staging fallback.
  * API task calls are serialized by caller; IO callbacks run in ISR context.
  *
  * draw_bitmap errors are UNCERTAIN, not a rollback promise. New submits then
@@ -65,6 +69,9 @@ esp_err_t pv2_lcd_spi_get_interface(pv2_lcd_spi_t *adapter, pv2_panel_adapter_t 
  * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
  */
 esp_err_t pv2_lcd_spi_destroy(pv2_lcd_spi_t *adapter);
+
+/* Transport constraints only; panel command alignment may be stricter. */
+esp_err_t pv2_lcd_spi_get_output_caps(pv2_lcd_spi_t *adapter, pv2_output_caps_t *caps);
 
 #ifdef __cplusplus
 }

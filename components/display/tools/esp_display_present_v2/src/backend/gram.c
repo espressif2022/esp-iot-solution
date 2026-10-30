@@ -2,27 +2,25 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
+#include "present_memory.h"
 #include "present_backend.h"
 #include "present_os.h"
 #include "present_limits.h"
-#include "present_records.h"
+#include "present_frame_core.h"
+#include "present_transaction.h"
+#include "present_allocation.h"
 
 typedef enum { SLOT_FREE, SLOT_LEASED, SLOT_COPYING, SLOT_READY, SLOT_SUBMITTING, SLOT_INFLIGHT } slot_state_t;
-typedef enum { BACKEND_RUNNING, BACKEND_CLOSING, BACKEND_QUIESCENT } lifecycle_t;
-
-typedef struct {
-    pv2_record_t common;
-    size_t pending, leased;
-    bool sealed, canceled;
-} frame_record_t;
+typedef pv2_core_frame_t frame_record_t;
 
 typedef struct {
     void *pixels, *converted;
+    pv2_allocation_t storage; /* Source/conversion pair is one reusable tile slot. */
     pv2_lease_t lease;
     uint64_t cookie;
     size_t frame;
     slot_state_t state;
-    bool early_done;
+    pv2_transaction_t transaction;
     pv2_copy_ticket_t copy;
     pv2_surface_t tx;
     pv2_rect_t area;
@@ -33,12 +31,8 @@ struct pv2_backend {
     pv2_backend_config_t config;
     pv2_pixel_engine_t *pixel;
     gram_slot_t *slots;
-    frame_record_t *frames;
-    size_t active; /* SIZE_MAX when no frame is being built/canceled. */
-    pv2_cancel_history_t canceled;
-    pv2_backend_fault_t fault;
+    pv2_frame_core_t core;
     size_t tile_bytes;
-    lifecycle_t life;
 };
 
 static bool valid_area(const pv2_backend_t *g, const pv2_rect_t *a)
@@ -48,7 +42,7 @@ static bool valid_area(const pv2_backend_t *g, const pv2_rect_t *a)
 
 static frame_record_t *find_frame(pv2_backend_t *g, uint64_t token)
 {
-    return pv2_record_find(g->frames, g->config.max_frames, sizeof(*g->frames), token, false);
+    return pv2_frame_core_find(&g->core, token);
 }
 
 static gram_slot_t *find_lease(pv2_backend_t *g, uint64_t token, size_t frame)
@@ -69,29 +63,19 @@ static gram_slot_t *find_lease(pv2_backend_t *g, uint64_t token, size_t frame)
 static void PV2_ISR_ATTR record_fault(pv2_backend_t *g, frame_record_t *f,
                                       uint64_t cookie, esp_err_t error)
 {
-    if (error == ESP_OK) {
-        return;
-    }
-    pv2_record_fail(&f->common, error);
-    pv2_fault_first(&g->fault, f->common.token, cookie, error);
+    pv2_frame_core_fail(&g->core, f, cookie, error);
 }
 
 static void PV2_ISR_ATTR complete_slot(pv2_backend_t *g, gram_slot_t *s)
 {
-    frame_record_t *f = &g->frames[s->frame];
-    --f->pending;
+    frame_record_t *f = &g->core.frames[s->frame];
+    if (s->storage.readers[PV2_REF_COPY]) {
+        pv2_allocation_drop(&s->storage, PV2_REF_COPY);
+    }
+    pv2_allocation_drop(&s->storage, PV2_REF_TRANSFER);
     s->state = SLOT_FREE;
     s->cookie = 0;
-    if (f->sealed && f->pending == 0 && !f->common.external) {
-        size_t idx = (size_t)(f - g->frames);
-        if (g->active == idx) {
-            g->active = SIZE_MAX;
-        }
-        if (f->canceled) {
-            pv2_cancel_publish(&g->canceled, f->common.token);
-        }
-        f->common.token = 0;
-    }
+    pv2_frame_core_complete(&g->core, f);
 }
 
 static bool copy_done(void *context, pv2_copy_ticket_t ticket, const pv2_copy_status_t *status, bool isr)
@@ -100,6 +84,16 @@ static bool copy_done(void *context, pv2_copy_ticket_t ticket, const pv2_copy_st
     (void)status;
     pv2_backend_t *g = context;
     return g->config.on_progress ? g->config.on_progress(g->config.progress_user, isr) : false;
+}
+
+/* Lock held; ready copies are not hardware transfers. */
+static bool channel_full(const pv2_backend_t *g)
+{
+    size_t used = 0, limit = g->config.transfer_capacity ? g->config.transfer_capacity : g->config.buffer_count;
+    for (size_t i = 0; i < g->config.buffer_count; i++) {
+        used += g->slots[i].state == SLOT_SUBMITTING || g->slots[i].state == SLOT_INFLIGHT;
+    }
+    return used >= limit;
 }
 
 esp_err_t pv2_gram_service(pv2_backend_t *g)
@@ -138,31 +132,37 @@ esp_err_t pv2_gram_service(pv2_backend_t *g)
             s->copy.value = 0;
         }
         pv2_lock_enter(&g->lock, false);
-        frame_record_t *f = &g->frames[s->frame];
+        frame_record_t *f = &g->core.frames[s->frame];
+        if (copying) {
+            pv2_allocation_drop(&s->storage, PV2_REF_COPY);
+        }
         record_fault(g, f, s->cookie, copy_result);
-        if (f->canceled || g->life != BACKEND_RUNNING || g->fault.result != ESP_OK) {
+        if (f->canceled || g->core.life != PV2_CORE_RUNNING || g->core.fault.result != ESP_OK) {
             if (!f->canceled && f->common.result == ESP_OK) {
-                record_fault(g, f, s->cookie, g->fault.result != ESP_OK ? g->fault.result : ESP_ERR_INVALID_STATE);
+                record_fault(g, f, s->cookie, g->core.fault.result != ESP_OK ? g->core.fault.result : ESP_ERR_INVALID_STATE);
             }
             complete_slot(g, s);
             pv2_lock_exit(&g->lock, false);
             continue;
         }
+        if (channel_full(g)) {
+            s->state = SLOT_READY;
+            pv2_lock_exit(&g->lock, false);
+            return ESP_ERR_NO_MEM;
+        }
         s->state = SLOT_SUBMITTING;
-        s->early_done = false;
+        pv2_transaction_prepare(&s->transaction);
         pv2_lock_exit(&g->lock, false);
         pv2_tx_result_t result = g->config.panel.submit(g->config.panel.context, &s->tx, &s->area, s->cookie);
         pv2_lock_enter(&g->lock, false);
-        if (result.acceptance == PV2_TX_REJECTED && !s->early_done) {
+        pv2_transaction_resolution_t resolved = pv2_transaction_resolve(&s->transaction, result);
+        if (resolved.rejected) {
             s->state = SLOT_READY; /* Accepted copy stays owned; retry by service. */
             pv2_lock_exit(&g->lock, false);
             return result.result == ESP_OK ? ESP_FAIL : result.result;
         }
-        record_fault(g, f, s->cookie, result.result);
-        if (result.acceptance != PV2_TX_ACCEPTED) {
-            record_fault(g, f, s->cookie, ESP_FAIL);
-        }
-        if (s->early_done) {
+        record_fault(g, f, s->cookie, resolved.result);
+        if (resolved.complete) {
             complete_slot(g, s);
         } else {
             s->state = SLOT_INFLIGHT;
@@ -178,14 +178,14 @@ static bool PV2_ISR_ATTR event_dispatch(void *user, const pv2_backend_event_t *e
         return false;
     }
     pv2_lock_enter(&g->lock, isr);
-    if (g->life != BACKEND_QUIESCENT) {
+    if (g->core.life != PV2_CORE_QUIESCENT) {
         for (size_t i = 0; i < g->config.buffer_count; ++i) {
             gram_slot_t *s = &g->slots[i];
             if (!s->cookie || s->cookie != event->transaction_cookie ||
                     (s->state != SLOT_SUBMITTING && s->state != SLOT_INFLIGHT)) {
                 continue;
             }
-            frame_record_t *f = &g->frames[s->frame];
+            frame_record_t *f = &g->core.frames[s->frame];
             if (event->kind == PV2_EVENT_FAULT) {
                 record_fault(g, f, s->cookie, event->result != ESP_OK ? event->result : ESP_FAIL);
                 break; /* Fault does NOT establish that hardware stopped. */
@@ -193,10 +193,12 @@ static bool PV2_ISR_ATTR event_dispatch(void *user, const pv2_backend_event_t *e
             if (event->kind != PV2_EVENT_TRANSFER_DONE) {
                 break;
             }
+            if (!pv2_transaction_done(&s->transaction, event->result)) {
+                record_fault(g, f, s->cookie, ESP_ERR_INVALID_STATE);
+                break;
+            }
             record_fault(g, f, s->cookie, event->result);
-            if (s->state == SLOT_SUBMITTING) {
-                s->early_done = true;
-            } else {
+            if (s->state == SLOT_INFLIGHT) {
                 complete_slot(g, s);
             }
             break;
@@ -228,7 +230,7 @@ static void free_backend(pv2_backend_t *g)
         (void)pv2_pixel_stop(g->pixel, UINT32_MAX);
         (void)pv2_pixel_destroy(g->pixel);
     }
-    pv2_free(g->frames);
+    pv2_frame_core_deinit(&g->core);
     pv2_free(g->slots);
     pv2_lock_destroy(&g->lock);
     pv2_free(g);
@@ -275,19 +277,19 @@ static esp_err_t gram_create(const pv2_backend_config_t *c, pv2_backend_t **out)
         return ESP_ERR_NO_MEM;
     }
     g->config = *c;
-    g->active = SIZE_MAX;
+    g->core.active = SIZE_MAX;
     g->tile_bytes = c->width * bytes * c->tile_rows;
     g->slots = pv2_alloc(c->buffer_count * sizeof(*g->slots));
-    g->frames = pv2_alloc(c->max_frames * sizeof(*g->frames));
-    if (!g->slots || !g->frames) {
+    esp_err_t core_error = pv2_frame_core_init(&g->core, c->max_frames);
+    if (!g->slots || core_error != ESP_OK) {
         free_backend(g);
         return ESP_ERR_NO_MEM;
     }
     bool convert = c->rotation != PV2_ROTATE_0 || c->async_copy || (c->draw_order != c->panel_order && !c->in_place_convert);
     for (size_t i = 0; i < c->buffer_count; ++i) {
-        g->slots[i].pixels = pv2_alloc_pixels(g->tile_bytes);
+        g->slots[i].pixels = pv2_alloc_pixels_in(g->tile_bytes, g->config.tile_in_psram);
         if (convert) {
-            g->slots[i].converted = pv2_alloc_pixels(g->tile_bytes);
+            g->slots[i].converted = pv2_alloc_pixels_in(g->tile_bytes, g->config.tile_in_psram);
         }
         if (!g->slots[i].pixels || (convert && !g->slots[i].converted)) {
             free_backend(g);
@@ -341,28 +343,9 @@ static esp_err_t gram_begin(pv2_backend_t *g, const pv2_frame_request_t *request
         return ESP_ERR_INVALID_ARG;
     }
     pv2_lock_enter(&g->lock, false);
-    if (g->life != BACKEND_RUNNING || g->fault.result != ESP_OK || g->active != SIZE_MAX) {
-        pv2_lock_exit(&g->lock, false);
-        return ESP_ERR_INVALID_STATE;
-    }
-    for (size_t i = 0; i < g->config.max_frames; ++i) {
-        if (g->frames[i].common.token) {
-            continue;
-        }
-        uint64_t token = pv2_new_token();
-        if (!token) {
-            break;
-        }
-        g->frames[i] = (frame_record_t) {
-            .common = {.token = token}
-        };
-        g->active = i;
-        out->value = token;
-        pv2_lock_exit(&g->lock, false);
-        return ESP_OK;
-    }
+    esp_err_t ret = pv2_frame_core_begin(&g->core, out);
     pv2_lock_exit(&g->lock, false);
-    return ESP_ERR_NO_MEM;
+    return ret;
 }
 
 static esp_err_t gram_acquire(pv2_backend_t *g, pv2_frame_t frame, const pv2_rect_t *area,
@@ -387,7 +370,7 @@ static esp_err_t gram_acquire(pv2_backend_t *g, pv2_frame_t frame, const pv2_rec
         (void)pv2_gram_service(g);
         pv2_lock_enter(&g->lock, false);
         frame_record_t *f = find_frame(g, frame.value);
-        if (g->life != BACKEND_RUNNING || !f || f->sealed || f->common.result != ESP_OK) {
+        if (g->core.life != PV2_CORE_RUNNING || !f || f->sealed || f->common.result != ESP_OK) {
             pv2_lock_exit(&g->lock, false);
             return ESP_ERR_INVALID_STATE;
         }
@@ -412,7 +395,8 @@ static esp_err_t gram_acquire(pv2_backend_t *g, pv2_frame_t frame, const pv2_rec
                     { actual.width, actual.height, actual.width * bytes, g->config.format, g->config.draw_order }
                 }
             };
-            s->frame = (size_t)(f - g->frames);
+            s->frame = (size_t)(f - g->core.frames);
+            pv2_allocation_claim(&s->storage);
             s->state = SLOT_LEASED;
             ++f->leased;
             *out = s->lease;
@@ -460,7 +444,7 @@ static esp_err_t prepare_pixels(pv2_backend_t *g, gram_slot_t *s,
     }
     if (need_pack || !g->config.in_place_convert || g->config.rotation != PV2_ROTATE_0) {
         if (!s->converted) {
-            s->converted = pv2_alloc_pixels(g->tile_bytes);
+            s->converted = pv2_alloc_pixels_in(g->tile_bytes, g->config.tile_in_psram);
             if (!s->converted) {
                 return ESP_ERR_NO_MEM;
             }
@@ -508,8 +492,8 @@ static esp_err_t gram_submit_region_ex(pv2_backend_t *g, pv2_frame_t frame,
     }
     pv2_lock_enter(&g->lock, false);
     frame_record_t *f = find_frame(g, frame.value);
-    gram_slot_t *s = f ? find_lease(g, lease.value, (size_t)(f - g->frames)) : NULL;
-    if (g->life != BACKEND_RUNNING || !f || f->sealed || f->common.result != ESP_OK || !s) {
+    gram_slot_t *s = f ? find_lease(g, lease.value, (size_t)(f - g->core.frames)) : NULL;
+    if (g->core.life != PV2_CORE_RUNNING || !f || f->sealed || f->common.result != ESP_OK || !s) {
         pv2_lock_exit(&g->lock, false);
         return ESP_ERR_INVALID_STATE;
     }
@@ -567,6 +551,9 @@ static esp_err_t gram_submit_region_ex(pv2_backend_t *g, pv2_frame_t frame,
         s->cookie = cookie;
         s->tx = target;
         s->area = physical_area;
+        pv2_allocation_written(&s->storage);
+        pv2_allocation_hold(&s->storage, PV2_REF_COPY);
+        pv2_allocation_hold(&s->storage, PV2_REF_TRANSFER);
         s->state = SLOT_COPYING;
         --f->leased;
         ++f->pending;
@@ -596,17 +583,29 @@ static esp_err_t gram_submit_region_ex(pv2_backend_t *g, pv2_frame_t frame,
         }
         return ESP_ERR_INVALID_STATE;
     }
+    if (channel_full(g)) {
+        pv2_lock_exit(&g->lock, false);
+        if (swapped_in_place) {
+            revert_in_place_swap(s->pixels, submit_area.height * row_bytes);
+        }
+        return ESP_ERR_NO_MEM;
+    }
+    pv2_allocation_written(&s->storage);
+    pv2_allocation_hold(&s->storage, PV2_REF_TRANSFER);
     s->state = SLOT_SUBMITTING;
     s->cookie = cookie;
-    s->early_done = false;
+    pv2_transaction_prepare(&s->transaction);
     ++f->pending;
     pv2_lock_exit(&g->lock, false);
 
     pv2_tx_result_t result = g->config.panel.submit(g->config.panel.context, &tx, &physical_area, cookie);
 
     pv2_lock_enter(&g->lock, false);
-    if (result.acceptance == PV2_TX_REJECTED && !s->early_done) {
+    pv2_transaction_resolution_t resolved = pv2_transaction_resolve(&s->transaction, result);
+    if (resolved.rejected) {
         --f->pending;
+        pv2_allocation_drop(&s->storage, PV2_REF_TRANSFER);
+        pv2_allocation_claim(&s->storage);
         s->state = SLOT_LEASED;
         s->cookie = 0;
         ret = result.result != ESP_OK ? result.result : ESP_FAIL;
@@ -619,11 +618,8 @@ static esp_err_t gram_submit_region_ex(pv2_backend_t *g, pv2_frame_t frame,
     /* Early completion proves acceptance even if the adapter returned an
      * inconsistent rejection. Uncertain acceptance never returns a lease. */
     --f->leased;
-    record_fault(g, f, cookie, result.result);
-    if (result.acceptance != PV2_TX_ACCEPTED) {
-        record_fault(g, f, cookie, ESP_FAIL);
-    }
-    if (s->early_done) {
+    record_fault(g, f, cookie, resolved.result);
+    if (resolved.complete) {
         complete_slot(g, s);
     } else {
         s->state = SLOT_INFLIGHT;
@@ -645,12 +641,13 @@ static esp_err_t gram_cancel_region(pv2_backend_t *g, pv2_frame_t frame, pv2_lea
     }
     pv2_lock_enter(&g->lock, false);
     frame_record_t *f = find_frame(g, frame.value);
-    gram_slot_t *s = f ? find_lease(g, lease.value, (size_t)(f - g->frames)) : NULL;
+    gram_slot_t *s = f ? find_lease(g, lease.value, (size_t)(f - g->core.frames)) : NULL;
     if (!f || f->sealed || !s) {
         pv2_lock_exit(&g->lock, false);
         return ESP_ERR_INVALID_STATE;
     }
     --f->leased;
+    pv2_allocation_written(&s->storage);
     s->state = SLOT_FREE;
     pv2_lock_exit(&g->lock, false);
     return ESP_OK;
@@ -692,20 +689,9 @@ static esp_err_t gram_end_ex(pv2_backend_t *g, pv2_frame_t frame,
     }
     pv2_lock_enter(&g->lock, false);
     frame_record_t *f = find_frame(g, frame.value);
-    if (g->life != BACKEND_RUNNING || !f || f->sealed || f->leased) {
-        pv2_lock_exit(&g->lock, false);
-        return ESP_ERR_INVALID_STATE;
-    }
-    f->sealed = true;
-    g->active = SIZE_MAX;
-    if (out) {
-        f->common.external = true;
-        out->value = f->common.token;
-    } else if (f->pending == 0) {
-        f->common.token = 0;
-    }
+    esp_err_t ret = pv2_frame_core_seal(&g->core, f, out);
     pv2_lock_exit(&g->lock, false);
-    return ESP_OK;
+    return ret;
 }
 
 static esp_err_t gram_end(pv2_backend_t *g, pv2_frame_t frame, pv2_receipt_t *out)
@@ -715,12 +701,13 @@ static esp_err_t gram_end(pv2_backend_t *g, pv2_frame_t frame, pv2_receipt_t *ou
 
 static void cancel_build(pv2_backend_t *g, size_t index)
 {
-    frame_record_t *f = &g->frames[index];
+    frame_record_t *f = &g->core.frames[index];
     f->sealed = true;
     f->canceled = true;
     for (size_t i = 0; i < g->config.buffer_count; ++i) {
         gram_slot_t *s = &g->slots[i];
         if (s->state == SLOT_LEASED && s->frame == index) {
+            pv2_allocation_written(&s->storage);
             s->state = SLOT_FREE;
             --f->leased;
         }
@@ -737,7 +724,7 @@ static esp_err_t gram_cancel_frame(pv2_backend_t *g, pv2_frame_t frame, uint32_t
         pv2_lock_enter(&g->lock, false);
         frame_record_t *f = find_frame(g, frame.value);
         if (!f) {
-            if (pv2_cancel_matches(&g->canceled, frame.value)) {
+            if (pv2_cancel_matches(&g->core.canceled, frame.value)) {
                 pv2_lock_exit(&g->lock, false);
                 return ESP_OK;
             }
@@ -748,17 +735,18 @@ static esp_err_t gram_cancel_frame(pv2_backend_t *g, pv2_frame_t frame, uint32_t
             pv2_lock_exit(&g->lock, false);
             return ESP_ERR_INVALID_STATE;
         }
-        cancel_build(g, (size_t)(f - g->frames));
+        cancel_build(g, (size_t)(f - g->core.frames));
         if (!f->pending) {
-            pv2_cancel_publish(&g->canceled, f->common.token);
-            f->common.token = 0;
-            g->active = SIZE_MAX;
+            pv2_frame_core_reap(&g->core, f);
             pv2_lock_exit(&g->lock, false);
             return ESP_OK;
         }
         pv2_lock_exit(&g->lock, false);
         (void)pv2_gram_service(g);
-        if (pv2_cancel_matches(&g->canceled, frame.value)) {
+        pv2_lock_enter(&g->lock, false);
+        bool canceled = pv2_cancel_matches(&g->core.canceled, frame.value);
+        pv2_lock_exit(&g->lock, false);
+        if (canceled) {
             return ESP_OK;
         }
         if (pv2_expired(start, timeout)) {
@@ -791,7 +779,7 @@ static esp_err_t gram_get_fault(pv2_backend_t *g, pv2_backend_fault_t *out)
         return ESP_ERR_INVALID_ARG;
     }
     pv2_lock_enter(&g->lock, false);
-    *out = g->fault;
+    *out = g->core.fault;
     pv2_lock_exit(&g->lock, false);
     return ESP_OK;
 }
@@ -828,13 +816,9 @@ static esp_err_t gram_release_receipt(pv2_backend_t *g, pv2_receipt_t receipt)
     }
     pv2_lock_enter(&g->lock, false);
     frame_record_t *f = find_frame(g, receipt.value);
-    if (!f || !f->common.external || !f->sealed || f->pending) {
-        pv2_lock_exit(&g->lock, false);
-        return ESP_ERR_INVALID_STATE;
-    }
-    f->common.token = 0;
+    esp_err_t ret = pv2_frame_core_release(f);
     pv2_lock_exit(&g->lock, false);
-    return ESP_OK;
+    return ret;
 }
 
 static esp_err_t gram_stop(pv2_backend_t *g, uint32_t timeout)
@@ -843,13 +827,13 @@ static esp_err_t gram_stop(pv2_backend_t *g, uint32_t timeout)
         return ESP_ERR_INVALID_ARG;
     }
     pv2_lock_enter(&g->lock, false);
-    if (g->life == BACKEND_QUIESCENT) {
+    if (g->core.life == PV2_CORE_QUIESCENT) {
         pv2_lock_exit(&g->lock, false);
         return ESP_OK;
     }
-    g->life = BACKEND_CLOSING;
-    if (g->active != SIZE_MAX) {
-        cancel_build(g, g->active);
+    g->core.life = PV2_CORE_CLOSING;
+    if (g->core.active != SIZE_MAX) {
+        cancel_build(g, g->core.active);
     }
     pv2_lock_exit(&g->lock, false);
     uint64_t start = pv2_now_ms();
@@ -869,20 +853,14 @@ static esp_err_t gram_stop(pv2_backend_t *g, uint32_t timeout)
     for (size_t i = 0; i < g->config.buffer_count; ++i) {
         gram_slot_t *s = &g->slots[i];
         if (s->state == SLOT_INFLIGHT) {
-            frame_record_t *f = &g->frames[s->frame];
+            frame_record_t *f = &g->core.frames[s->frame];
             record_fault(g, f, s->cookie, ESP_ERR_INVALID_STATE);
             complete_slot(g, s);
         }
     }
-    for (size_t i = 0; i < g->config.max_frames; ++i) {
-        if (!g->frames[i].common.external) {
-            g->frames[i].common.token = 0;
-        }
-    }
-    g->active = SIZE_MAX;
-    g->life = BACKEND_QUIESCENT;
+    ret = pv2_frame_core_quiescent(&g->core);
     pv2_lock_exit(&g->lock, false);
-    return ESP_OK;
+    return ret;
 }
 
 static esp_err_t gram_destroy(pv2_backend_t *g)
@@ -890,11 +868,11 @@ static esp_err_t gram_destroy(pv2_backend_t *g)
     if (!g) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (g->life != BACKEND_QUIESCENT) {
+    if (g->core.life != PV2_CORE_QUIESCENT) {
         return ESP_ERR_INVALID_STATE;
     }
     for (size_t i = 0; i < g->config.max_frames; ++i) {
-        if (g->frames[i].common.token) {
+        if (g->core.frames[i].common.token) {
             return ESP_ERR_INVALID_STATE;
         }
     }
@@ -907,11 +885,11 @@ static esp_err_t gram_set_rotation(pv2_backend_t *g, pv2_rotation_t rotation)
     if (!g || rotation < PV2_ROTATE_0 || rotation > PV2_ROTATE_270) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (g->life != BACKEND_RUNNING || g->active != SIZE_MAX) {
+    if (g->core.life != PV2_CORE_RUNNING || g->core.active != SIZE_MAX) {
         return ESP_ERR_INVALID_STATE;
     }
     for (size_t i = 0; i < g->config.max_frames; ++i)
-        if (g->frames[i].common.token) {
+        if (g->core.frames[i].common.token) {
             return ESP_ERR_INVALID_STATE;
         }
     if (g->config.in_place_convert && rotation != PV2_ROTATE_0) {
@@ -955,3 +933,9 @@ const pv2_backend_ops_t pv2_gram_backend = {
     .destroy = gram_destroy,
     .set_rotation = gram_set_rotation,
 };
+
+size_t pv2_gram_memory(const pv2_backend_config_t *c)
+{
+    return sizeof(pv2_backend_t) + c->buffer_count * sizeof(gram_slot_t) + c->max_frames * sizeof(pv2_core_frame_t) +
+           pv2_pixel_memory(c->buffer_count, c->async_copy);
+}

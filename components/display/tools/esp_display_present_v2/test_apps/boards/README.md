@@ -105,3 +105,76 @@ Run a separate capture for P4. The analyzer rejects failure/pixel-corruption
 logs, repeated startup, incomplete mode sets, duplicate completed cases and
 varying per-mode post-destroy heap across completed cycles. A trailing partial
 cycle is excluded from totals. It does not replace visual confirmation.
+
+## S31 Mosaico QSPI / TE acceptance
+
+Reference: [Mosaico BSP](https://github.com/esp-mosaico/esp-mosaico-bsp/tree/master/components/esp-mosaico-bsp).
+Local reference revision: `c973747027a14e14c795136fc7ed2ed33599d3b1`; initialization is
+adapted from local BSP sources, not a full BSP dependency. CO5300 driver is pinned
+at 2.2.0 in `prepare_deps.py`. eFuse USER_DATA selects board v1.0/v1.1/v1.2 pins;
+unknown revisions fail instead of probing arbitrary pins. Identified board:
+ESP32-S31 rev0.0, MAC `30:ed:a0:f4:0b:34`, Flash16MB, `/dev/ttyACM1`.
+
+From the V2 component root:
+
+```sh
+python3 test_apps/boards/prepare_deps.py
+idf.py -C test_apps/boards -B build-s31 -DIDF_TARGET=esp32s31 -DSDKCONFIG=sdkconfig.s31 build
+```
+
+The S31 target selects `qspi_main.c`/`board_qspi.c`. CPU/native RGB565 is converted
+to swapped wire order by V2; SPI adapter sources remain internal DMA memory.
+QSPI=40MHz, TE GPIO43 (rising edges forwarded, both edges measured), panel 480×480.
+The test uses source-release completion, not unsupported optical/present confirmation.
+
+1. Measure TE period and minimum high-pulse duration for 1 s.
+2. Render 8 full-screen GRAM frames in 16-row bands, checking receipt results and
+   exact transmission/callback counts.
+3. Calibrate a centered 64×16 GRAM ROI over 32 frames. Set transfer budget to the
+   measured maximum plus 100us, require it to fit the measured TE high pulse.
+4. Repeatedly create/stop/destroy a TE Presenter for 120 ROI frames. ISR publishes
+   only edges; the owner task sends. Count edge-to-completion overruns against the
+   pulse-derived window and retain resources on failure. Clear the ISR's Presenter
+   pointer under the same critical section before stop/destroy. The panel/IO and
+   GPIO ISR service intentionally live until reset; this is Presenter lifecycle
+   testing, not panel power-cycle testing.
+
+At 40MHz quad SPI, 480×480×16 bits requires at least 23.04ms of payload time;
+full-screen transfer cannot be assumed to fit a measured ~16.75ms refresh cycle.
+A measured high pulse is only a diagnostic timing bound, **not a verified optical
+blanking interval**. Passing ROI scheduling does not prove full-screen tear-free
+TE support. This runner deliberately refuses an oversized transfer instead of
+inflating the configured window. Initial 128×64 ROI was rejected for that reason.
+
+The vendor IO logs callback replacement when the adapter unregisters/re-registers
+between runs; each run first drains transfers. SPI max_inflight is 1. A later
+stress test is needed for queue saturation and concurrent business traffic.
+Original full Flash backup and its SHA256 are under ignored `artifacts/`.
+
+## P4 executor plugin acceptance
+
+P4 builds additionally run `main/executor_check.c` before the existing display
+suite. The check executes 32 CPU-reference memory comparisons through the queued
+Pixel Engine: PPA/DMA2D × internal/PSRAM × RGB565/RGB888 × four rotations. It
+requires hardware selection for supported internal-memory cases, reports every
+actual executor and reason, compares the entire 3072-byte destination allocation
+(including untouched pixels), and checks heap integrity after teardown. No
+accelerator is silently replaced after execution starts. The subsequent display
+suite remains CPU-driven; this check does not claim accelerated LCD presentation.
+
+Build from the component root after activating the local IDF:
+
+```sh
+idf.py -C test_apps/boards -B build-p4-executors -DIDF_TARGET=esp32p4 -DSDKCONFIG=sdkconfig.p4 build
+```
+
+Expect `EXECUTOR_SUITE_PASS cases=32 hardware=20 cpu_fallback=12` on the tested
+P4 revision and layouts. Counts are evidence for this firmware/platform, not a
+required capability assumption for other targets or stricter external memory.
+
+
+## 当前整体迁移测试
+
+S3/P4 测试通过 `pv2_presenter_create_planned()` 使用 PARTIAL 两 tile 与独立图像池；P4 先运行执行器 32 例。S31 在全屏 GRAM 后运行 12 帧显式双 compose 全屏 TE，然后进入 ROI 循环。S31 图像池在 PSRAM，SPI2/LCD IO/adapter 均显式开启外部 DMA；区域和长度限制必须由能力协商满足。
+
+全屏 TE 测试名含 `UNVERIFIED`，其较宽门控用于验证完整图像发送和池复用，不代表面板扫描安全窗口已经实测。最新证据与硬件身份见 RESULTS.md。固件依旧是专用测试工程，不修改产品构建依赖。

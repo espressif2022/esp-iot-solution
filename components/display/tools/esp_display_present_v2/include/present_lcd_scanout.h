@@ -4,6 +4,7 @@
  */
 #pragma once
 #include "present_backend.h"
+#include "present_output_caps.h"
 #include "esp_lcd_panel_ops.h"
 #ifdef __cplusplus
 extern "C" {
@@ -76,6 +77,9 @@ esp_err_t pv2_lcd_scanout_get_interface(pv2_lcd_scanout_t *adapter, pv2_panel_ad
  * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
  */
 esp_err_t pv2_lcd_scanout_destroy(pv2_lcd_scanout_t *adapter);
+/* Transport constraints only; panel command alignment may be stricter. */
+esp_err_t pv2_lcd_scanout_get_output_caps(pv2_lcd_scanout_t *adapter, pv2_output_caps_t *caps);
+
 #ifdef __cplusplus
 }
 #endif

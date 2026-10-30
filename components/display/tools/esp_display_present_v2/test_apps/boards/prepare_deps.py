@@ -8,6 +8,7 @@ from pathlib import Path
 import shutil
 
 PACKAGES = {
+    'esp_lcd_co5300': ('2.2.0_1a5cbaa0', 'esp_lcd_co5300.c', 'esp_lcd esp_driver_gpio', (2, 2, 0)),
     'esp_lcd_gc9503': ('3.0.1_6940bf99', 'esp_lcd_gc9503.c', 'esp_lcd esp_driver_gpio esp_lcd_panel_io_additions', (3, 0, 1)),
     'esp_lcd_panel_io_additions': ('1.0.1~1_1856c8b2', 'esp_lcd_panel_io_3wire_spi.c', 'esp_lcd esp_driver_gpio esp_io_expander', (1, 0, 1)),
     'esp_io_expander': ('1.2.1_7b7f9127', 'esp_io_expander.c', 'esp_driver_gpio', None),
@@ -27,6 +28,8 @@ for name, (version, source, requires, ver) in PACKAGES.items():
     shutil.copytree(origin, dest, dirs_exist_ok=True)
     (dest/'idf_component.yml').unlink(missing_ok=True)
     cmake = f'idf_component_register(SRCS "{source}" INCLUDE_DIRS "include" REQUIRES {requires})\n'
+    if name == 'esp_lcd_co5300':
+        cmake = 'idf_component_register(SRCS esp_lcd_co5300.c esp_lcd_co5300_spi.c esp_lcd_co5300_mipi.c INCLUDE_DIRS include PRIV_INCLUDE_DIRS priv_include REQUIRES esp_lcd esp_driver_gpio)\n'
     if ver:
         cmake += 'target_compile_definitions(${COMPONENT_LIB} PRIVATE ' + ' '.join(f'{name.upper()}_VER_{k}={v}' for k,v in zip(('MAJOR','MINOR','PATCH'),ver)) + ')\n'
     (dest/'CMakeLists.txt').write_text(cmake)

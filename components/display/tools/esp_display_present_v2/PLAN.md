@@ -1,88 +1,66 @@
-# V2 八项代码收敛与验收计划
+# V2 实施与验收状态
 
-本轮按用户要求完成前八项代码工作，再统一 review。代码阶段完成本地 Host 与离线编译；随后已启动 S3/P4 独立测试工程上板验收，首轮 DOUBLE_FULL 通过，详见下文。V1 与现有产品工程不变。本文为当前状态，早期分阶段记录不代表现状。
+更新：2026-10-30。本轮从执行器前置继续推进公共核心、图像构建、TE/FB、Presenter/LVGL 和三板验证。以下是当前代码状态；早期计划及阶段性测试数保存在 [历史计划](PLAN_HISTORY_2026-10-30.md)。
 
-| 项 | 交付 | 当前结果与限制 |
+## 实施结果
+
+| 切片 | 已落实到生产代码 | 验收与边界 |
 | --- | --- | --- |
-| 1 | TE／FB 非阻塞 repair、prefill | 异步 ticket 驱动，service 每次只推进已完成阶段；取消／stop 超时保留源和目标；同步默认路径保留 |
-| 2 | 运行时旋转与触摸逆变换 | GRAM／TE／FB 四方向、非方形画面；Presenter drain 后切换，超时不改配置；FB 保留物理扫描池，另建逻辑绘制池 |
-| 3 | Presenter 显式 receipt／tracking | commit/query/wait/release/cancel_tracking；32 个观察记录；取消观察不取消传输；不冒充 V1 generation／VSYNC 协议 |
-| 4 | P4 DSI scanout 与 PSRAM/cache 边界 | 真实 IDF adapter、驱动 FB 池、FB0 初始扫描保留、两次提交后帧边界确认、C2M 与安全停止；真实 PSRAM 一致性待上板 |
-| 5 | RGB scanout | 复用同一 adapter 的 RGB bounce 连续刷新路径；明确拒绝非 bounce 模式，后者缺少当前平台统一可验证的退役语义 |
-| 6 | DMA2D／PPA executor | 独立执行器、串行共享、完成后归还借用、cache line／MSPI 约束、提交前 CPU 回退；DMA2D 用本地 IDF 6.2 私有 API，升级需复核 |
-| 7 | LVGL 零拷贝 | 可选 FULL／RGB565/native／兼容 stride／多 FB；RENDER_START 先 acquire，flush_ready 前解绑；保留失败准入的私有安全缓冲。PARTIAL、DIRECT、RGB888 保持复制路径 |
-| 8 | 统一 review、回归与文档 | 普通 Host、ASan/UBSan、P4 编译；说明 API、资源代价、支持边界与后续硬件验收，不将模拟结果当成无撕裂证明 |
+| Executor | CPU/PPA/DMA2D 显式注入、纯 probe、能力查询、统一选择层、旧 API 薄包装 | 四种独立插件链接；P4 32 例像素对照 |
+| S0 配置规划 | 模式归一化，tile/image/logical/transfer 独立数量，内存类型，旋转拓扑，输出/执行器约束，渲染区域协商，总请求预算 | 不支持的配置在分配/attach 前拒绝；硬件地址仍须执行前 probe |
+| S1 生命周期 | 三后端共用 frame/receipt/fault/cancel 核心、接受性/完成归并；allocation 的 B/C/T/S 引用与写权限 | receipt 终态不释放扫描引用；lease 与 copy/输出槽仍由各后端推进 |
+| S2 图像构建 | TE/FB 共用精确 coverage、内容版本、8 代/每代 32 矩形 history 和增量 repair | history 溢出退化全图 repair；coverage 不放大；DIRECT 保留防御性修补 |
+| S3 TE | 显式单/双 compose，前帧发送与后帧构建重叠，FIFO 输出，边沿重试；线性扫描模型的动态相位准入 | Host 覆盖延迟 DMA、拒收及故障；模型不能自动推断真实面板扫描规律 |
+| S4 FB | 接公共核心/构建器，多 tile 独立于 image 数；PARTIAL 边拷边转；FULL/DIRECT 共享一张逻辑画布 | PARTIAL 无额外逻辑全屏池；已扫描图像一直持有 S 引用 |
+| S5 Presenter/LVGL | 规划入口、失效区域协商、拆 band、三绘制契约、运行时旋转保留对象树 | `pv2_lvgl_set_rotation()` 排空后重绑；原 tracking 与事件/后台 service 契约保留 |
+| S6 验收 | Host/LVGL 29/29、ASan/UBSan 29/29；S3/P4/S31 构建与对应硬件路径运行，用户确认三板画面正常 | 本轮板测详见 RESULTS；真实光学无撕裂、长期压力和性能边界仍需独立验收 |
 
-上述第 4～7 项提供了明确限定的实现，不表示支持所有 IDF 版本、RGB 扫描模式或所有 LVGL 零拷贝组合。未承诺旧 API 二进制兼容。
+## 当前流水线与职责
 
-## 本地验收
-
-- 17 组核心：records、coverage、repair、accel、scanout、rotation、pixel、gram、lcd_spi、presenter、te_composer、te、presenter_te、fb、event、scheduler、headers_cpp。
-- 4 组真实 LVGL 9.5：lvgl_zero、lvgl、lvgl_te、lvgl_fb；合计 21 组。
-- repair 用条件变量阻塞执行器，检查 service 不阻塞、候选帧不提前发送、prefill 未完成不借出、取消／stop 保留和重试。
-- rotation 覆盖初始与运行时四方向、三个后端、RGB565／RGB888、同步／异步、外部扫描缓冲与逆坐标；独立像素期望值对照。
-- accel 编译生产适配器，驱动 stub 独立解释描述符；验证像素、旋转方向、字节序、cache 对齐、MSPI 限制、早到完成、错误后不重复 CPU 拷贝及销毁失败重试。
-- scanout 验证初始扫描 FB 不可写、提交期间边沿不冒充确认、两边界确认、不确定接受隔离和 stop 重试。
-- LVGL 零拷贝验证实际 lease 地址、完整像素、pending／scanning 源不被重写、无脏区不申请 lease、超时暂停、销毁 binding 后传输仍可完成。
-- repair／rotation／scanout／accel／lvgl_zero／presenter 六组各重复 100 次通过。P4 + LVGL 与 ESP32-S3 核心 smoke 均完成离线编译链接。
-- ASan/UBSan 使用 `detect_leaks=0`；当前环境未验收泄漏检测、TSAN、竞态穷举或真机时序。
-
-```sh
-python3 tools/dev.py test --with-lvgl
-ASAN_OPTIONS=detect_leaks=0 python3 tools/dev.py test --with-lvgl --sanitize
-# 激活本地 ESP-IDF 后，只编译，不烧录
-python3 tools/dev.py idf-build --target esp32p4 --with-lvgl
+```mermaid
+flowchart TD
+    A[Adapter / Executor capabilities] --> P[Resolved plan: constraints and pools]
+    P --> L[Presenter / LVGL render negotiation]
+    L --> C[Frame core: token / receipt / fault / cancel]
+    C --> G[GRAM region stream]
+    C --> I[Shared image builder: coverage / versions / repair]
+    I --> T[TE admission and transfer]
+    I --> F[FB switch and retirement]
+    G --> E[Pixel executor and output adapters]
+    T --> E
+    F --> E
+    O[Allocation references B / C / T / S] --- G
+    O --- I
+    O --- F
 ```
 
-## Review 顺序
+共同核心拥有共同语义；后端保留 copy ticket、发送队列和硬件阶段推进。共享 image builder 负责内容/修补规划，执行与等待仍由 TE composer 或 FB 驱动，不是万能 stage 表，也不能将三个后端已变成无状态薄包装作为交付结论。
 
-1. `include/present_backend.h`、`present_presenter.h`：lease、receipt、旋转和 stop 契约。
-2. `src/backend/te_composer.c`、`fb.c`：repair/prefill 与长期扫描借用。
-3. `src/platform/lcd_scanout.c`：事件到退役证据的映射，驱动版本假设。
-4. `src/platform/pixel_accel.c`：硬件准入、cache、失败和完成屏障。
-5. `bindings/esp_lv_present_v2/present_lvgl.c`：绘制前取得写权限，错误路径解绑。
-6. `review.md` 的已处理建议与保留项，结合上述生产源码测试阅读。
+## 明确拒绝的配置
 
-## 统一上板阶段（已启动）
+- 同时使用多张逻辑构建画布（当前单 producer 只需一张）。
+- FULL/DIRECT 的 draw_order 与 panel_order 不同；PARTIAL/GRAM 仍支持对应像素转换。
+- 规划器要求非当前紧凑 stride 或非 64B 基址约束的池布局。像素引擎自身的 padding 支持不等于所有后端池支持。
+- TE 没有可用固定发送预算、也没有合法显式动态时序模型；不允许超时后自由发送。
 
-已核对并完整备份原 Flash：S3 `/dev/ttyUSB0`，MAC `90:e5:b1:d0:a9:d8`，R16、480×480 GC9503 RGB565；P4 `/dev/ttyACM0`，MAC `e8:f6:0a:e7:a7:8d`，芯片 v3.2、1024×600 EK79007 MIPI RGB565。PSRAM 分别 16/32 MB。
+这些组合仍以 `pending_runtime` 明确报告并拒绝创建，不标记为已迁移。旧 pending 枚举值保留兼容，已实现的池/内存/流水路径不再产生对应位。
 
-2026-10-30：独立工程 [test_apps/boards](test_apps/boards/README.md) 完成两板编译、烧录和 CPU DOUBLE_FULL 首轮验收。两板日志均覆盖 frame 0..240，PRESENT_CONFIRMED 成功、pending=0、sticky=ESP_OK，采样内部 heap 保持不变；用户确认画面正常。保留两次边界确认，没有降低阈值。详见 [RESULTS.md](test_apps/boards/RESULTS.md)。
+## 内存与硬件约束
 
-第二轮五种模式首轮硬件验收已通过：S3 3 轮、P4 2 轮，整帧像素一致，stop/recreate 与 heap 检查通过，用户确认画面正常。三缓冲目前仅验证配置和生命周期。后续：三缓冲实际第三缓冲使用/排队背压 → LVGL → 旋转/触摸 → DMA2D/PPA 对照 → 长时间压力。尚未验收的模式不因 FULL 通过而判定通过；两板结果不能替代 SPI/TE 实屏时序验收。
+`required_bytes = pixel + coverage + metadata + requested stacks + additional_budget_bytes`。这是框架分配请求及调用方预留，不是测得的整机峰值 heap。驱动、LVGL、分配器和 Host pthread 栈开销需单独预留/测量。
 
-## 独立后续项
+S31 双全屏 TE 不能放入本次剩余约 444 KB 内部 RAM（一张 RGB565 为 460800 B）。测试已使用显式 PSRAM 图像池与 SPI2 PSRAM 直接 DMA；底层 LCD IO 和 adapter 必须同时开启 `psram_dma_direct`。适配器要求 64B 地址/长度及外部 DMA 能力，不隐式分配全屏内部暂存。
 
-非 bounce RGB 的平台专属退役协议；更多 LVGL 零拷贝组合；V1 generation/VSYNC 兼容层；裸后端及 SPI 等待的全面事件化；减少 DIRECT 防御性 prefill+repair 写放大；硬件性能调优。它们不混入本轮已通过的能力声明。
+动态 TE 模型仅适用于扫描与写入同向、全帧线性时间界限已证明的面板。S31 本轮全屏测试采用标明 UNVERIFIED 的边沿门控，验证传输/生命周期，未验证光学扫描相位。539 µs 高脉冲不能当作完整合法窗口。
 
+## 验收命令
 
-## Review 修改验收（2026-10-30）
+```sh
+python3 tools/dev.py test --with-lvgl --build-dir build/host-relocated
+ASAN_OPTIONS=detect_leaks=0 python3 tools/dev.py test --with-lvgl --sanitize --build-dir build/sanitize-relocated
+# 激活本地 ESP-IDF 后
+python3 tools/dev.py idf-build --target esp32s3 --with-lvgl --build-dir build/esp32s3-converged
+python3 tools/dev.py idf-build --target esp32p4 --with-lvgl --build-dir build/esp32p4-converged
+```
 
-已落实：目标行带 cache 同步、coverage 字节批处理、旋转回零释放逻辑池；同步修改资源契约与命名风格。新增 coverage 组，普通 Host 与 ASan/UBSan 均为 20/20（detect_leaks=0）；P4 + LVGL、S3 核心离线编译通过。Doxygen XML 生成零警告；coverage、rotation、accel、repair 四组各重复 100 次通过。旋转测试覆盖像素池内存水位恢复；cache 测试核对准确的同步区间和边界。
-
-DSI 两次边界规则保持不变。本地驱动源码显示 DMA 完成后重启持续扫描；正式上板先做单次提交后持续边界计数，不通过降低阈值绕过异常。用户确认：P4 ACM0 为 1024×600 EK79007 配置，S3 USB0 为 480×480 GC9503CV 配置；该代码 review 阶段未上板；后续首轮上板结果见上文。
-
-## 公共记录规则收敛（2026-10-30）
-
-新增私有 `src/present_records.h`，三个后端共享以下规则：
-
-- `pv2_record_t`：token、external、terminal、首次错误；TE/FB 直接使用，GRAM 以首成员组合并保留 pending/leased/sealed/canceled。
-- 按实际记录 stride 查找 token；是否要求 external 由调用点指定，不跨实例共享池。
-- 统一公共状态输出、首次 record error 与 sticky fault 保留、最近一次完成取消的幂等记录。
-- 统一防溢出的矩形/脏区校验及 stop 剩余超时预算。
-
-模块不持有锁，不调用驱动，不释放像素，不选择完成时机，不统一后端状态机。
-调用者继续持有所属后端锁；ISR 会调用的错误/取消发布函数保留 ISR 属性。
-GRAM 的 terminal 仍由 sealed/pending 推导；TE 的传输终态不冒充显示确认；FB
-只在成功确认时声明 present_confirmed。池大小、空槽分配、回收与缓冲所有权仍
-由后端管理，避免引入第二个资源状态机。当前没有新增时间戳字段；未来新增时
-需先定义事件语义，再扩展公共记录/输出入口以及各后端真实完成点。
-
-新增 `records` 测试包含组合记录 stride、零/旧 token、external 限制、首次错误、
-失败终态与显示确认区别、矩形溢出、超时边界，以及同一套 GRAM/TE/FB 契约检查：
-非法 begin 不产生 token、重复取消成功、旧取消 token 失效、超过池容量次数的
-begin/cancel 循环正常复用、取消后 receipt 不可查询且不污染 fault。
-
-验收：普通 Host + LVGL 21/21；ASan/UBSan 21/21（detect_leaks=0，未做泄漏检测）；
-S3 核心与 P4 + LVGL smoke 离线编译通过。本轮未连接或烧录设备，之前板测结果
-对应重构前固件，不能当成本次修改的板上回归结果。
+sanitize 关闭泄漏检测；未声称泄漏检测、竞态穷举或真机所有时序通过。测试工程、身份与原始记录见 [板测结果](test_apps/boards/RESULTS.md)。当前重构代码尚未自动提交 Git。

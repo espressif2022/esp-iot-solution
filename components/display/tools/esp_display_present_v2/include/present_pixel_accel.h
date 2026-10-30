@@ -7,6 +7,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+/* Compatibility facade. New code may inject present_executor.h instances to
+ * query capabilities/probe before choosing a path. CPU fallback is selected by
+ * the common dispatcher, never inside a hardware plugin. */
 typedef struct pv2_pixel_accel pv2_pixel_accel_t;
 typedef enum { PV2_ACCEL_DMA2D, PV2_ACCEL_PPA } pv2_accel_kind_t;
 typedef struct {

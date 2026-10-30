@@ -7,3 +7,5 @@
 /sdkconfig.p4*
 
 __pycache__/
+
+/sdkconfig.s31*

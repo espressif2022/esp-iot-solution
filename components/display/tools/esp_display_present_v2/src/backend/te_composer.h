@@ -14,6 +14,8 @@ typedef struct {
 } pv2_te_frame_t;
 typedef struct {
     uint32_t width, height;
+    bool image_in_psram;
+    size_t image_count; /* 0 -> 2; explicit 1 or 2. */
     pv2_pixel_format_t format;
     pv2_byte_order_t panel_order;
     pv2_rotation_t rotation; /* Applied to producer writes only, not repair. */
@@ -21,8 +23,9 @@ typedef struct {
 } pv2_te_composer_config_t;
 
 esp_err_t pv2_te_composer_create(const pv2_te_composer_config_t *, pv2_te_composer_t **);
-/* One active frame. Two full buffers: immutable successful baseline + candidate.
- * A generation token prevents stale completions/cancellations affecting reuse. */
+/* One construction writer, with up to two READY/INFLIGHT image slots. Explicit
+ * image_count publishes the content baseline at READY; legacy zero serializes
+ * frames and publishes only on successful transfer. Tokens reject stale reuse. */
 esp_err_t pv2_te_composer_begin(pv2_te_composer_t *, pv2_te_frame_t *);
 esp_err_t pv2_te_composer_write(pv2_te_composer_t *, pv2_te_frame_t,
                                 const pv2_source_t *, const pv2_rect_t *source_area,
@@ -42,10 +45,10 @@ esp_err_t pv2_te_composer_offer(pv2_te_composer_t *, pv2_te_frame_t,
 /* Only a DEFINITELY unaccepted transmission can return to READY. Retry waits
  * for a newer edge. ACCEPTED/UNCERTAIN must stay pinned until access ends. */
 esp_err_t pv2_te_composer_reject(pv2_te_composer_t *, pv2_te_frame_t);
-/* Call only after all peripheral reads end, including safe abort. Success
- * promotes the candidate to baseline; failure preserves the previous baseline.
- * Every subsequent send is a full frame, so a partial failed panel write is
- * repaired by the next successful full transfer. No display confirmation claim. */
+/* Call only after all peripheral reads end, including safe abort. Legacy zero
+ * image_count publishes on success; explicit pools already published at READY.
+ * On failure the backend must fault queued successors; content version does not
+ * imply successful presentation. No display confirmation claim. */
 esp_err_t pv2_te_composer_complete(pv2_te_composer_t *, pv2_te_frame_t, esp_err_t result);
 /* BUILDING/REPAIR/READY only; pending repair can return TIMEOUT; INFLIGHT cannot be canceled or destroyed. */
 esp_err_t pv2_te_composer_cancel(pv2_te_composer_t *, pv2_te_frame_t);
@@ -60,3 +63,6 @@ esp_err_t pv2_te_composer_finish_write(pv2_te_composer_t *, pv2_copy_ticket_t, e
 esp_err_t pv2_te_composer_stop(pv2_te_composer_t *, uint32_t);
 
 esp_err_t pv2_te_composer_set_rotation(pv2_te_composer_t *, pv2_rotation_t);
+
+/* Output policy has already established admission; no timing model here. */
+esp_err_t pv2_te_composer_pin(pv2_te_composer_t *, pv2_te_frame_t, pv2_source_t *);

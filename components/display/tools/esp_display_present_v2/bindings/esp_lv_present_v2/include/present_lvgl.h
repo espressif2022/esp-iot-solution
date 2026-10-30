@@ -61,6 +61,12 @@ esp_err_t pv2_lvgl_get_error(pv2_lvgl_t *binding);
  */
 esp_err_t pv2_lvgl_destroy(pv2_lvgl_t *binding);
 
+/* Owner task, outside LVGL callbacks. Allocates replacement draw storage before
+ * draining/changing the presenter. Timeout leaves old binding usable. Keeps the
+ * LVGL display and object tree, changes logical resolution, invalidates all.
+ * No panel MADCTL change and no recovery from an existing sticky fault. */
+esp_err_t pv2_lvgl_set_rotation(pv2_lvgl_t *, pv2_rotation_t, uint32_t timeout_ms);
+
 #ifdef __cplusplus
 }
 #endif

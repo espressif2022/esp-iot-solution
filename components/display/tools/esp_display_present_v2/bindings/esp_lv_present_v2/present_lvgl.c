@@ -139,6 +139,25 @@ static void fail_refresh(pv2_lvgl_t *b, esp_err_t error)
     }
 }
 
+static void round_area(lv_event_t *event)
+{
+    pv2_lvgl_t *b = lv_event_get_user_data(event);
+    lv_area_t *a = lv_event_get_param(event);
+    if (!a || a->x1 < 0 || a->y1 < 0 || a->x2 < a->x1 || a->y2 < a->y1) {
+        return;
+    }
+    pv2_rect_t dirty = {a->x1, a->y1, a->x2 - a->x1 + 1, a->y2 - a->y1 + 1}, render;
+    esp_err_t error = pv2_presenter_resolve_render_area(b->presenter, &dirty, &render);
+    if (error != ESP_OK) {
+        fail_refresh(b, error);
+        return;
+    }
+    a->x1 = render.x;
+    a->y1 = render.y;
+    a->x2 = render.x + render.width - 1;
+    a->y2 = render.y + render.height - 1;
+}
+
 static void refresh_event(lv_event_t *event)
 {
     pv2_lvgl_t *b = lv_event_get_user_data(event);
@@ -298,6 +317,7 @@ static esp_err_t create_binding(pv2_presenter_t *presenter, uint32_t rows, bool 
     }
     lv_display_set_render_mode(b->display, mode);
     lv_display_set_flush_cb(b->display, flush);
+    lv_display_add_event_cb(b->display, round_area, LV_EVENT_INVALIDATE_AREA, b);
     if (zero_copy) {
         lv_display_add_event_cb(b->display, refresh_event, LV_EVENT_RENDER_START, b);
         lv_display_add_event_cb(b->display, refresh_event, LV_EVENT_REFR_READY, b);
@@ -358,5 +378,57 @@ esp_err_t pv2_lvgl_destroy(pv2_lvgl_t *b)
     lv_display_delete(b->display);
     lv_draw_buf_destroy(b->draw);
     lv_free(b);
+    return ESP_OK;
+}
+
+esp_err_t pv2_lvgl_set_rotation(pv2_lvgl_t *b, pv2_rotation_t rotation, uint32_t timeout)
+{
+    if (!b || rotation < PV2_ROTATE_0 || rotation > PV2_ROTATE_270) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (b->refreshing || b->error != ESP_OK) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    pv2_rotation_t old_rotation;
+    esp_err_t error = pv2_presenter_get_rotation(b->presenter, &old_rotation);
+    if (error != ESP_OK) {
+        return error;
+    }
+    if (old_rotation == rotation) {
+        return ESP_OK;
+    }
+    bool axes = ((unsigned)old_rotation ^ (unsigned)rotation) & 1;
+    uint32_t width = axes ? b->caps.draw_layout.height : b->caps.draw_layout.width;
+    uint32_t height = axes ? b->caps.draw_layout.width : b->caps.draw_layout.height;
+    uint32_t rows = b->caps.contract == PV2_CONTRACT_PARTITION ? b->draw->header.h : height;
+    if (rows > height) {
+        rows = height;
+    }
+    lv_color_format_t format = b->bpp == 2 ? LV_COLOR_FORMAT_RGB565 : LV_COLOR_FORMAT_RGB888;
+    uint32_t stride = lv_draw_buf_width_to_stride(width, format);
+    if (b->zero_copy && stride != (size_t)width * b->bpp) {
+        return ESP_ERR_NOT_SUPPORTED;
+    }
+    lv_draw_buf_t *draw = lv_draw_buf_create(width, rows, format, stride);
+    if (!draw) {
+        return ESP_ERR_NO_MEM;
+    }
+    error = pv2_presenter_set_rotation(b->presenter, rotation, timeout);
+    if (error != ESP_OK) {
+        lv_draw_buf_destroy(draw);
+        return error;
+    }
+    error = pv2_presenter_get_caps(b->presenter, &b->caps);
+    if (error != ESP_OK) {
+        lv_draw_buf_destroy(draw);
+        fail_refresh(b, error);
+        return error;
+    }
+    lv_draw_buf_t *old = b->draw;
+    b->draw = draw;
+    lv_display_set_draw_buffers(b->display, draw, NULL);
+    lv_display_set_resolution(b->display, width, height);
+    lv_draw_buf_destroy(old);
+    lv_obj_invalidate(lv_display_get_screen_active(b->display));
     return ESP_OK;
 }

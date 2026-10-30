@@ -5,6 +5,7 @@
 #include <inttypes.h>
 #include "board.h"
 #include "present_presenter.h"
+#include "present_plan.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "esp_heap_caps.h"
@@ -156,7 +157,18 @@ static void run_case(unsigned cycle, unsigned test)
                                                                  }
                                  };
     pv2_presenter_t *presenter;
-    check(pv2_presenter_create(&cfg, &presenter), "presenter create");
+    pv2_plan_config_t planned = {.presenter = cfg,
+                                 .resources = {.tile_count = cases[test].contract == PV2_CONTRACT_PARTITION ? 2 : 0,
+                                               .image_memory = PV2_MEMORY_EXTERNAL
+                                              }
+                                };
+    check(pv2_lcd_scanout_get_output_caps(adapter, &planned.output), "output caps");
+    pv2_resolved_plan_t resolved;
+    check(pv2_plan_resolve(&planned, &resolved), "resolve plan");
+    ESP_LOGI(TAG, "PLAN images=%u tiles=%u logical=%u pixel_bytes=%u coverage=%u pending=%u",
+             (unsigned)resolved.images.count, (unsigned)resolved.tiles.count, (unsigned)resolved.logical.count,
+             (unsigned)resolved.pixel_bytes, (unsigned)resolved.coverage_bytes, (unsigned)resolved.pending_runtime);
+    check(pv2_presenter_create_planned(&planned, &presenter), "planned presenter create");
     uint64_t max_wait = 0;
     for (unsigned frame = 0; frame < FRAME_COUNT; ++frame) {
         bool full = frame == 0 || cases[test].contract == PV2_CONTRACT_FULL;
@@ -202,8 +214,14 @@ static void run_case(unsigned cycle, unsigned test)
     ESP_LOGI(TAG, "CLEAN cycle=%u mode=%s internal=%u psram=%u", cycle, cases[test].name,
              (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL), (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
 }
+#ifdef PV2_BOARD_EXECUTOR_CHECK
+void pv2_board_test_executors(void);
+#endif
 void app_main(void)
 {
+#ifdef PV2_BOARD_EXECUTOR_CHECK
+    pv2_board_test_executors();
+#endif
     ESP_LOGI(TAG, "V2 SUITE2 %s %dx%d RGB565 CPU", BOARD_NAME, WIDTH, HEIGHT);
     for (unsigned cycle = 0; ; ++cycle) {
         for (unsigned test = 0; test < CASE_COUNT; ++test) {

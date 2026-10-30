@@ -7,6 +7,7 @@
 #include "esp_lcd_panel_rgb.h"
 #include "esp_cache.h"
 #include <assert.h>
+#include <pthread.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -97,6 +98,7 @@ esp_err_t esp_lcd_panel_del(esp_lcd_panel_handle_t p)
     if (p->stop_timeout) {
         return ESP_ERR_TIMEOUT;
     }
+    assert(!p->deleted); /* Must never double-delete panel on stop retry. */
     p->dsi = NULL;
     p->rgb = NULL;
     p->deleted = true;
@@ -115,6 +117,9 @@ static void exercise(pv2_lcd_scanout_kind_t kind, bool fail)
                                    };
     pv2_lcd_scanout_t *a;
     OK(pv2_lcd_scanout_create(&cfg, &a));
+    pv2_output_caps_t output_caps;
+    OK(pv2_lcd_scanout_get_output_caps(a, &output_caps));
+    assert(output_caps.full_frame_only && output_caps.external_buffers_required && output_caps.max_inflight == 1);
     void *buffers[3];
     size_t count;
     OK(pv2_lcd_scanout_get_buffers(a, buffers, 3, &count));
@@ -169,11 +174,89 @@ static void exercise(pv2_lcd_scanout_kind_t kind, bool fail)
         free(panel.buffers[i]);
     }
 }
+typedef struct {
+    pthread_mutex_t lock;
+    pthread_cond_t changed;
+    bool block, entered;
+    pv2_panel_event_fn real_cb;
+    void *real_user;
+} cb_gate_t;
+
+static bool blocking_panel_cb(void *user, const pv2_backend_event_t *event, bool isr)
+{
+    cb_gate_t *g = user;
+    pthread_mutex_lock(&g->lock);
+    g->entered = true;
+    pthread_cond_broadcast(&g->changed);
+    while (g->block) {
+        pthread_cond_wait(&g->changed, &g->lock);
+    }
+    pthread_mutex_unlock(&g->lock);
+    return g->real_cb ? g->real_cb(g->real_user, event, isr) : false;
+}
+
+static void *boundary_thread(void *arg)
+{
+    struct fake_lcd *p = arg;
+    boundary(p);
+    return NULL;
+}
+
+static void test_callback_drain_retry(void)
+{
+    struct fake_lcd panel = {0};
+    for (size_t i = 0; i < 2; ++i) {
+        panel.buffers[i] = aligned_alloc(64, 64);
+        assert(panel.buffers[i]);
+    }
+    cb_gate_t gate = {.lock = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER, .block = true};
+    pv2_lcd_scanout_config_t cfg = {.panel = &panel, .kind = PV2_LCD_DSI, .width = 3, .height = 2,
+                                    .format = PV2_FORMAT_RGB565, .buffer_count = 2, .delete_panel_on_stop = true
+                                   };
+    pv2_lcd_scanout_t *a;
+    OK(pv2_lcd_scanout_create(&cfg, &a));
+    void *buffers[2];
+    size_t count;
+    OK(pv2_lcd_scanout_get_buffers(a, buffers, 2, &count));
+    pv2_panel_adapter_t interface;
+    OK(pv2_lcd_scanout_get_interface(a, &interface));
+    OK(interface.attach(interface.context, blocking_panel_cb, &gate));
+    pv2_surface_t surface = {buffers[1], 64, {3, 2, 6, PV2_FORMAT_RGB565, PV2_ORDER_NATIVE}};
+    pv2_rect_t area = {0, 0, 3, 2};
+    pv2_tx_result_t tx = interface.submit(interface.context, &surface, &area, 42);
+    assert(tx.acceptance == PV2_TX_ACCEPTED && tx.result == ESP_OK);
+    boundary(&panel);
+    pthread_t th;
+    assert(pthread_create(&th, NULL, boundary_thread, &panel) == 0);
+    pthread_mutex_lock(&gate.lock);
+    while (!gate.entered) {
+        pthread_cond_wait(&gate.changed, &gate.lock);
+    }
+    pthread_mutex_unlock(&gate.lock);
+    /* Panel deletes once, then callback drain times out; retry must not call esp_lcd_panel_del again. */
+    assert(interface.quiesce(interface.context, 0) == ESP_ERR_TIMEOUT);
+    assert(panel.deleted);
+    assert(interface.quiesce(interface.context, 0) == ESP_ERR_TIMEOUT);
+    pthread_mutex_lock(&gate.lock);
+    gate.block = false;
+    pthread_cond_broadcast(&gate.changed);
+    pthread_mutex_unlock(&gate.lock);
+    assert(pthread_join(th, NULL) == 0);
+    OK(interface.quiesce(interface.context, UINT32_MAX));
+    OK(pv2_lcd_scanout_destroy(a));
+    pthread_cond_destroy(&gate.changed);
+    pthread_mutex_destroy(&gate.lock);
+    for (size_t i = 0; i < 2; ++i) {
+        free(panel.buffers[i]);
+    }
+}
+
 int main(void)
 {
     exercise(PV2_LCD_DSI, false);
     exercise(PV2_LCD_DSI, true);
     exercise(PV2_LCD_RGB_BOUNCE, false);
     exercise(PV2_LCD_RGB_BOUNCE, true);
+    test_callback_drain_retry();
     puts("scanout: real adapter against driver stubs, boundary fence, initial scanout and stop retry passed");
 }

@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
 # SPDX-License-Identifier: Apache-2.0
-set(PRESENT_SOURCES src/present_os.c src/present_event.c src/presenter.c src/pixel/pixel_engine.c src/backend/gram.c
+set(PRESENT_SOURCES src/present_os.c src/present_event.c src/present_te_timing.c src/present_image.c src/present_frame_core.c src/present_config.c src/present_plan.c src/presenter.c src/pixel/pixel_engine.c src/backend/gram.c
+    src/pixel/executor.c src/pixel/executor_cpu.c src/platform/executor_ppa.c src/platform/executor_dma2d.c
     src/platform/pixel_accel.c src/platform/lcd_spi.c src/platform/lcd_scanout.c src/backend/te_composer.c src/backend/te.c src/backend/fb.c)
 
 if(COMMAND idf_component_register)
@@ -29,7 +30,7 @@ if(PRESENT_SANITIZE)
     target_link_options(present_v2 PUBLIC -fsanitize=address,undefined -no-pie)
 endif()
 enable_testing()
-foreach(name records coverage repair accel scanout rotation pixel gram lcd_spi presenter te_composer te presenter_te fb event scheduler)
+foreach(name te_timing image frame_core plan records coverage repair accel scanout rotation pixel gram lcd_spi presenter te_composer te presenter_te fb event scheduler)
     add_executable(test_${name} tests/test_${name}.c)
     target_link_libraries(test_${name} PRIVATE present_v2)
     target_compile_definitions(test_${name} PRIVATE PV2_HOST=1)
@@ -37,7 +38,7 @@ foreach(name records coverage repair accel scanout rotation pixel gram lcd_spi p
     add_test(NAME ${name} COMMAND test_${name})
     set_tests_properties(${name} PROPERTIES TIMEOUT 15)
 endforeach()
-target_link_options(test_rotation PRIVATE -Wl,--wrap=pv2_alloc_pixels -Wl,--wrap=pv2_free)
+target_link_options(test_rotation PRIVATE -Wl,--wrap=pv2_alloc_pixels -Wl,--wrap=pv2_alloc_pixels_in -Wl,--wrap=pv2_free)
 add_executable(header_smoke tests/header_smoke.cpp)
 target_link_libraries(header_smoke PRIVATE present_v2)
 target_compile_options(header_smoke PRIVATE -Wall -Wextra -Werror)
@@ -75,3 +76,31 @@ if(PRESENT_LVGL_DIR)
     add_test(NAME lvgl_fb COMMAND test_lvgl_fb)
     set_tests_properties(lvgl_fb PROPERTIES TIMEOUT 20)
 endif()
+
+# Compile and link four independent plugin sets. Disabled plugins have no mock
+# driver symbols, so accidental dependencies fail the link (including CPU-only).
+foreach(variant cpu ppa dma2d both)
+    set(has_ppa 0)
+    set(has_dma2d 0)
+    if(variant STREQUAL "ppa" OR variant STREQUAL "both")
+        set(has_ppa 1)
+    endif()
+    if(variant STREQUAL "dma2d" OR variant STREQUAL "both")
+        set(has_dma2d 1)
+    endif()
+    add_executable(test_executor_${variant} tests/test_executor.c
+        src/present_os.c src/present_event.c src/pixel/pixel_engine.c
+        src/pixel/executor.c src/pixel/executor_cpu.c src/platform/executor_ppa.c
+        src/platform/executor_dma2d.c src/platform/pixel_accel.c)
+    target_include_directories(test_executor_${variant} PRIVATE include src tests/support)
+    target_compile_definitions(test_executor_${variant} PRIVATE PV2_HOST=1
+        PV2_HOST_PPA=${has_ppa} PV2_HOST_DMA2D=${has_dma2d})
+    target_compile_options(test_executor_${variant} PRIVATE -Wall -Wextra -Werror -UNDEBUG)
+    target_link_libraries(test_executor_${variant} PRIVATE Threads::Threads)
+    if(PRESENT_SANITIZE)
+        target_compile_options(test_executor_${variant} PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer -fno-pie)
+        target_link_options(test_executor_${variant} PRIVATE -fsanitize=address,undefined -no-pie)
+    endif()
+    add_test(NAME executor_${variant} COMMAND test_executor_${variant})
+    set_tests_properties(executor_${variant} PROPERTIES TIMEOUT 15)
+endforeach()

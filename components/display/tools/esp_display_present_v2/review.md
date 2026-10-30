@@ -1,5 +1,22 @@
 # `esp_display_present_v2` 设计与代码风格 Review 报告
 
+> 2026-10-30：已继续执行整体迁移。下面“历史 review”保留当时的判断；当前状态以本节和 PLAN.md 为准。
+
+## 当前整体修改的 Review 入口
+
+- 公共状态：`present_frame_core` 是三后端帧/receipt/fault/cancel 的共同核心；`present_transaction` 归并提交返回与早到完成。
+- 内存所有权：`present_allocation` 区分 B/C/T/S 和独占 writer，FB receipt 完成仍保留扫描引用；GRAM 源/转换缓冲作为一个复用单元保守管理。
+- 数据面：`present_image` 统一 coverage、版本、history/repair。TE composer 与 FB 仍承担不同的 copy/输出阶段，未新增通用 stage 分发表。
+- 拓扑：FB PARTIAL 旋转零逻辑全屏，FULL/DIRECT 一张共享逻辑画布；FB 多 tile 与图像数解耦；TE 显式单/双 compose 可重叠构建和发送。
+- 准入：规划器纯查询能力；运行时必须地址 probe。动态 TE 需要明确线性模型；不把实际传输通过等同光学无撕裂。
+- 集成：LVGL 渲染前区域协商、运行时旋转更新绑定；copy 完成才能复用源，stop 超时保留资源。
+- 回归：29/29 Host/LVGL 与 29/29 ASan/UBSan，泄漏检测关闭。P4/S3 五模式和 S31 全屏输出证据见 RESULTS。
+
+剩余明确限制：多逻辑并发画布、特殊池 stride/base alignment、FULL/DIRECT 字节序变化仍拒绝；扫描模型光学验证、长期压力、完整峰值内存测量仍不能标完成。具体见 [PLAN.md](PLAN.md)。
+
+## 历史 review（下文按实施时间保留）
+
+
 ## 当前统一复核（2026-10-30，八项代码收敛）
 
 本轮实现、限制及验收清单以 PLAN.md 为准。本轮普通 Host 20/20、ASan/UBSan 20/20（detect_leaks=0）与 P4 + LVGL、ESP32-S3 核心 smoke 离线构建通过；六组新增／相关测试各重复 100 次通过。上述代码 review 阶段没有执行硬件测试。后续已完成 S3 RGB／P4 MIPI CPU DOUBLE_FULL 首轮上板，两板用户确认画面正常，见 [板测记录](test_apps/boards/RESULTS.md)。其他模式及长期时序尚待验收；不能外推为全模式无撕裂、硬件吞吐或竞态穷举。
@@ -224,3 +241,21 @@ begin/cancel 循环正常复用、取消后 receipt 不可查询且不污染 fau
 验收：普通 Host + LVGL 21/21；ASan/UBSan 21/21（detect_leaks=0，未做泄漏检测）；
 S3 核心与 P4 + LVGL smoke 离线编译通过。本轮未连接或烧录设备，之前板测结果
 对应重构前固件，不能当成本次修改的板上回归结果。
+
+## QSPI TE 与流程收敛（2026-10-30）
+
+FB 推进结果已明确分离 IDLE/PENDING/COMPLETE/FAILED 与 esp_err_t，封帧尝试/已接受操作采用命名上下文；文档同步。普通及 sanitizer Host 21/21，scanout/repair/fb各100次通过，S3/P4/S31离线构建通过。S31新板全屏GRAM 8帧与TE 64×16 ROI 1200帧通过、零窗口超出；不能外推全屏TE或光学无撕裂。详情见 [板测记录](test_apps/boards/RESULTS.md)。本轮未重刷S3/P4。
+
+## Executor插件代码切片验收（2026-10-30）
+
+独立CPU/PPA/DMA2D执行器已落地，能力与probe可被上层查询；硬件插件不内调CPU，公共dispatcher仅在probe明确不支持时选择fallback。旧accel API薄包装保持兼容，类型分支仅在创建处，SoC宏限插件编译边界。各插件保留独立实例串行化和驱动资源仲裁；销毁失败保留对象。
+
+普通Host+LVGL及ASan/UBSan 25/25（泄漏检测关闭）；四种插件集合分别链接，未启用硬件不提供mock符号。S3/P4离线构建通过。P4实测32例全内存对照通过：PPA16、DMA2D4、显式CPU回退12。原CPU显示五模式也完成一轮240帧。详见板测RESULTS与executor-summary.json。未修改GRAM/TE/FB生命周期或缓冲拓扑，不算S0/整体架构迁移完成。
+
+
+## S0/S1 初始切片记录（已由本轮整体推进更新）
+
+- `present_plan.c`：纯规划不调用 probe/硬件；格式、旋转、池计数、overflow、外部 FB 范围、对齐与像素预算检查。未实现运行拓扑在 create 前拒绝。
+- `present_frame_core.c` / `present_transaction.h`：GRAM 共用帧核心和接受性归并。封帧前完成不回收记录；外部 receipt 终态仍需释放；取消/closing 必须等待 pending 排空。GRAM cancel 的任务侧完成历史检查也已加锁。
+- `test_plan.c` / `test_frame_core.c` 加上既有 GRAM/Presenter/LVGL 回归：27/27 普通和 sanitizer 通过；泄漏检测关闭。S3/P4 编译通过。
+- **仍需继续**：公共 allocation 引用和 lease 操作、S2 history/repair 构建器、TE/FB 接入、LVGL 对齐协商、完整总内存预算。不因接口/测试存在就将这些功能标记完成。

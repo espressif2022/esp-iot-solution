@@ -101,12 +101,29 @@ void *pv2_alloc_pixels(size_t size)
 #endif
 }
 
+void *pv2_alloc_pixels_in(size_t size, bool external)
+{
+#ifdef PV2_HOST
+    (void)external;
+    return pv2_alloc_pixels(size);
+#else
+    if (!external) {
+        return pv2_alloc_pixels(size);
+    }
+    if (size > SIZE_MAX - (PV2_BUFFER_ALIGNMENT - 1)) {
+        return NULL;
+    }
+    return heap_caps_aligned_alloc(PV2_BUFFER_ALIGNMENT,
+                                   (size + PV2_BUFFER_ALIGNMENT - 1) & ~(size_t)(PV2_BUFFER_ALIGNMENT - 1), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+#endif
+}
+
 void pv2_free(void *memory)
 {
     free(memory);
 }
 
-uint64_t pv2_now_us(void)
+uint64_t PV2_ISR_ATTR pv2_now_us(void)
 {
 #ifdef PV2_HOST
     struct timespec now;

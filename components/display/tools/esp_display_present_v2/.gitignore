@@ -1,2 +1,8 @@
 /build/
 __pycache__/
+
+/build-s31/
+
+/build-p4-executors/
+
+/build-s3-all/

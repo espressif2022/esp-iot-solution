@@ -28,7 +28,8 @@ struct pv2_lcd_scanout {
     void *callback_user;
     uint64_t cookie;
     unsigned boundaries;
-    bool attached, armed, closing, stopped;
+    size_t active_callbacks;
+    bool attached, armed, closing, source_stopped, stopped;
 };
 static bool PV2_ISR_ATTR frame_boundary(pv2_lcd_scanout_t *a)
 {
@@ -42,13 +43,18 @@ static bool PV2_ISR_ATTR frame_boundary(pv2_lcd_scanout_t *a)
         a->armed = false;
         callback = a->callback;
         user = a->callback_user;
+        ++a->active_callbacks;
     }
     pv2_lock_exit(&a->lock, true);
     if (!callback) {
         return false;
     }
     pv2_backend_event_t event = {.kind = PV2_EVENT_SCANOUT_CONFIRMED, .transaction_cookie = cookie};
-    return callback(user, &event, true);
+    bool need_yield = callback(user, &event, true);
+    pv2_lock_enter(&a->lock, true);
+    --a->active_callbacks;
+    pv2_lock_exit(&a->lock, true);
+    return need_yield;
 }
 #if PV2_DSI_SUPPORTED
 static bool PV2_ISR_ATTR dsi_done(esp_lcd_panel_handle_t panel, esp_lcd_dpi_panel_event_data_t *data, void *user)
@@ -160,19 +166,35 @@ static esp_err_t quiesce(void *context, uint32_t timeout)
     if (a->stopped) {
         return ESP_OK;
     }
+    uint64_t start = pv2_now_ms();
     pv2_lock_enter(&a->lock, false);
     a->closing = true;
     pv2_lock_exit(&a->lock, false);
-    esp_err_t error = a->config.delete_panel_on_stop ? esp_lcd_panel_del(a->config.panel)
-                      : a->config.stop_scanout(a->config.user, timeout);
-    if (error != ESP_OK) {
-        return error;
+    if (!a->source_stopped) {
+        esp_err_t error = a->config.delete_panel_on_stop ? esp_lcd_panel_del(a->config.panel)
+                          : a->config.stop_scanout(a->config.user, timeout);
+        if (error != ESP_OK) {
+            return error;
+        }
+        a->source_stopped = true;
     }
-    /* The board hook joins all ISR callbacks; no further access is possible. */
-    a->attached = false;
-    a->stopped = true;
-    a->cookie = 0;
-    return ESP_OK;
+    for (;;) {
+        pv2_lock_enter(&a->lock, false);
+        bool busy = a->active_callbacks != 0;
+        if (!busy) {
+            a->attached = false;
+            a->stopped = true;
+            a->cookie = 0;
+        }
+        pv2_lock_exit(&a->lock, false);
+        if (!busy) {
+            return ESP_OK;
+        }
+        if (pv2_expired(start, timeout)) {
+            return ESP_ERR_TIMEOUT;
+        }
+        pv2_pause();
+    }
 }
 
 esp_err_t pv2_lcd_scanout_create(const pv2_lcd_scanout_config_t *config, pv2_lcd_scanout_t **out)
@@ -271,5 +293,19 @@ esp_err_t pv2_lcd_scanout_destroy(pv2_lcd_scanout_t *a)
     }
     pv2_lock_destroy(&a->lock);
     pv2_free(a);
+    return ESP_OK;
+}
+
+esp_err_t pv2_lcd_scanout_get_output_caps(pv2_lcd_scanout_t *a, pv2_output_caps_t *out)
+{
+    if (!a || !out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    *out = (pv2_output_caps_t) {
+        .x_alignment = 1, .y_alignment = 1, .width_alignment = 1, .height_alignment = 1,
+        .base_alignment = 64, .stride_alignment = 1, .tight_stride = true,
+        .full_frame_only = true, .external_buffers_required = true, .internal_dma = true, .external_memory = true,
+        .max_inflight = 1
+    };
     return ESP_OK;
 }

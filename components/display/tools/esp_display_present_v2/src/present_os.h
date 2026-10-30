@@ -31,6 +31,7 @@ void pv2_lock_enter(pv2_lock_t *lock, bool isr);
 void pv2_lock_exit(pv2_lock_t *lock, bool isr);
 void *pv2_alloc(size_t size);
 void *pv2_alloc_pixels(size_t size);
+void *pv2_alloc_pixels_in(size_t size, bool external);
 void pv2_free(void *memory);
 uint64_t pv2_now_us(void);
 uint64_t pv2_now_ms(void);

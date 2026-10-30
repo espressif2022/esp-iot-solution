@@ -4,6 +4,7 @@
  */
 #pragma once
 #include "present_backend.h"
+#include "present_output_caps.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,6 +42,7 @@ typedef struct {
      * AUTO uses explicit backend kind (no hardware detection): FB 2/3 buffers
      * -> PARTITION, FB 1 -> NONE; IO with both TE budgets -> TE, otherwise GRAM.
      * Named FB modes set buffer_count; external array must have that many entries. */
+    pv2_output_caps_t output_caps; /* Zero region alignments mean 1. */
 } pv2_presenter_config_t;
 
 typedef enum { PV2_PRESENTER_RUNNING, PV2_PRESENTER_CLOSING, PV2_PRESENTER_STOPPED } pv2_presenter_state_t;
@@ -320,6 +322,10 @@ esp_err_t pv2_presenter_stop(pv2_presenter_t *presenter, uint32_t timeout_ms);
  * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
  */
 esp_err_t pv2_presenter_destroy(pv2_presenter_t *presenter);
+
+esp_err_t pv2_presenter_get_rotation(pv2_presenter_t *, pv2_rotation_t *);
+/* Before rendering; expands logical damage to satisfy physical panel regions. */
+esp_err_t pv2_presenter_resolve_render_area(pv2_presenter_t *, const pv2_rect_t *, pv2_rect_t *);
 
 #ifdef __cplusplus
 }

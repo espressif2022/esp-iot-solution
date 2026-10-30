@@ -135,22 +135,58 @@ static void pipeline(void)
     pv2_backend_config_t cfg = config(&p, 3, PV2_CONTRACT_DIRECT);
     pv2_backend_t *b;
     OK(ops->create(&cfg, &b));
+    /* Frame 1: becomes active SCANNING buffer (Slot 0). */
     pv2_receipt_t first = full(b, 0x1111);
     finish(b, &p, first);
-    void *old = p.current.pixels;
+    void *scanning_fb = p.current.pixels;
+
+    /* Frame 2: sealed and submitted to panel -> PENDING switch (Slot 1).
+     * While Slot 0 is SCANNING and Slot 1 is PENDING switch confirmation,
+     * begin Frame 3 on Slot 2 and verify all 3 buffers are simultaneously
+     * in distinct pipeline stages (SCANNING + PENDING + DRAWING). */
     pv2_receipt_t second = full(b, 0x2222);
+    void *pending_fb = p.pending.pixels;
+    assert(pending_fb && pending_fb != scanning_fb);
+
     pv2_frame_t third = begin(b);
+    pv2_lease_t third_lease;
+    OK(ops->acquire(b, third, NULL, 0, &third_lease));
+    void *drawing_fb = third_lease.surface.pixels;
+    assert(drawing_fb && drawing_fb != scanning_fb && drawing_fb != pending_fb);
+    OK(ops->cancel_region(b, third, third_lease.id));
+
     write_rect(b, third, (pv2_rect_t) {
         0, 0, 1, 1
     }, 0x3333);
+    /* Active scanout (0x1111) and pending switch (0x2222) are untouched while drawing Frame 3. */
+    uint16_t check_scan = 0, check_pend = 0;
+    memcpy(&check_scan, scanning_fb, 2);
+    memcpy(&check_pend, pending_fb, 2);
+    assert(check_scan == 0x1111 && check_pend == 0x2222);
+
     pv2_receipt_t receipt;
     OK(ops->end(b, third, &receipt));
+
+    /* All 3 buffers are now occupied (SCANNING + PENDING + READY): 4th frame hits backpressure. */
     pv2_frame_request_t request = {0};
     pv2_frame_t blocked;
     assert(ops->begin(b, &request, &blocked) == ESP_ERR_NO_MEM);
-    assert(p.submissions == 2 && p.current.pixels == old);
-    finish(b, &p, second); /* Pump can now submit queued third. */
-    assert(p.submissions == 3);
+    assert(p.submissions == 2 && p.current.pixels == scanning_fb);
+
+    /* Confirming Frame 2 retires Slot 0 (SCANNING -> FREE) and promotes Slot 1 to SCANNING;
+     * service() then submits queued Frame 3 (Slot 2: READY -> PENDING). */
+    finish(b, &p, second);
+    assert(p.submissions == 3 && p.current.pixels == pending_fb);
+
+    /* Because Slot 0 is now FREE, a 4th frame can immediately begin & draw while
+     * Slot 1 is SCANNING and Slot 2 is PENDING! */
+    pv2_frame_t fourth = begin(b);
+    pv2_lease_t fourth_lease;
+    OK(ops->acquire(b, fourth, NULL, 0, &fourth_lease));
+    assert(fourth_lease.surface.pixels == scanning_fb); /* Reuses retired Slot 0! */
+    OK(ops->cancel_region(b, fourth, fourth_lease.id));
+    OK(ops->cancel_frame(b, fourth, 0));
+
     finish(b, &p, receipt);
     uint16_t value;
     memcpy(&value, p.current.pixels, 2);
@@ -449,8 +485,40 @@ static void asynchronous_partition(unsigned mode)
     pthread_mutex_destroy(&g.mutex);
 }
 
+static void independent_tiles(void)
+{
+    scan_panel_t panel = {0};
+    pv2_backend_config_t cfg = config(&panel, 2, PV2_CONTRACT_PARTITION);
+    cfg.tile_rows = 2; cfg.tile_buffer_count = 2;
+    pv2_backend_t *b;
+    OK(ops->create(&cfg, &b));
+    pv2_frame_t f = begin(b);
+    pv2_lease_t first, second, blocked;
+    OK(ops->acquire(b, f, NULL, 0, &first));
+    OK(ops->acquire(b, f, NULL, 0, &second));
+    assert(first.surface.pixels != second.surface.pixels);
+    assert(ops->acquire(b, f, NULL, 0, &blocked) == ESP_ERR_TIMEOUT);
+    assert(ops->end(b, f, NULL) == ESP_ERR_INVALID_STATE);
+    memset(first.surface.pixels, 0x11, 16);
+    memset(second.surface.pixels, 0x22, 16);
+    pv2_region_submit_t a = {.logical_area = {0, 0, 4, 2}}, z = {.logical_area = {0, 2, 4, 2}};
+    OK(ops->submit_region_ex(b, f, first.id, &a));
+    OK(ops->submit_region_ex(b, f, second.id, &z));
+    pv2_receipt_t receipt;
+    OK(ops->end(b, f, &receipt));
+    OK(pv2_fb_service(b));
+    scan_confirm(&panel);
+    OK(pv2_fb_service(b));
+    for (unsigned i = 0; i < 16; i++) {
+        assert(((uint16_t*)panel.current.pixels)[i] == (i < 8 ? 0x1111 : 0x2222));
+    }
+    OK(ops->release_receipt(b, receipt));
+    OK(ops->stop(b, 0)); OK(ops->destroy(b));
+}
+
 int main(void)
 {
+    independent_tiles();
     for (unsigned mode = 0; mode < 6; ++mode) {
         asynchronous_partition(mode);
     }

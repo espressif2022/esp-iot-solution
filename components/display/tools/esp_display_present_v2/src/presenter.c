@@ -2,7 +2,10 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
+#include "present_memory.h"
 #include "present_presenter.h"
+#include "present_config.h"
+#include "present_plan.h"
 #include "present_os.h"
 #include "present_limits.h"
 #include <limits.h>
@@ -32,6 +35,7 @@ struct pv2_presenter {
     pv2_rotation_t rotation;
     bool (*event_isr)(pv2_backend_t *, const pv2_backend_event_t *);
     pv2_backend_caps_t caps;
+    pv2_output_caps_t output;
     pv2_task_t owner;
     pv2_frame_t frame;
     pv2_lease_t held;
@@ -82,6 +86,11 @@ static pv2_tx_result_t panel_submit(void *context, const pv2_surface_t *surface,
                                     const pv2_rect_t *area, uint64_t cookie)
 {
     pv2_presenter_t *p = context;
+    if (area->x % p->output.x_alignment || area->y % p->output.y_alignment ||
+            area->width % p->output.width_alignment || area->height % p->output.height_alignment)
+        return (pv2_tx_result_t) {
+        PV2_TX_REJECTED, ESP_ERR_INVALID_ARG
+    };
     return p->panel.submit(p->panel.context, surface, area, cookie);
 }
 
@@ -247,74 +256,6 @@ static bool valid_lease(pv2_presenter_t *p, const pv2_lease_t *lease)
            lease->surface.capacity_bytes == p->held.surface.capacity_bytes;
 }
 
-static esp_err_t resolve_config(const pv2_presenter_config_t *input, pv2_presenter_config_t *out)
-{
-    if (!input || input->backend_kind < PV2_PRESENTER_GRAM || input->backend_kind > PV2_PRESENTER_FB ||
-            input->mode < PV2_MODE_DEFAULT || input->mode > PV2_MODE_AUTO) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    *out = *input;
-    pv2_present_mode_t mode = input->mode;
-    if (mode == PV2_MODE_AUTO) {
-        if (input->backend_kind == PV2_PRESENTER_FB) {
-            if (input->backend.buffer_count == 1) {
-                mode = PV2_MODE_NONE;
-            } else if (input->backend.buffer_count == 2) {
-                mode = PV2_MODE_DOUBLE_PARTIAL;
-            } else if (input->backend.buffer_count == 3) {
-                mode = PV2_MODE_TRIPLE_PARTIAL;
-            } else {
-                return ESP_ERR_INVALID_ARG;
-            }
-        } else {
-            mode = input->backend.te_window_us && input->backend.te_transfer_budget_us ? PV2_MODE_TE_SYNC : PV2_MODE_NONE;
-        }
-    }
-    if (mode == PV2_MODE_DEFAULT) {
-        return ESP_OK;
-    }
-    if (mode == PV2_MODE_NONE) {
-        out->backend.render_contract = PV2_CONTRACT_PARTITION;
-        if (input->backend_kind == PV2_PRESENTER_FB) {
-            if (input->backend.external_buffers && input->backend.buffer_count != 1) {
-                return ESP_ERR_INVALID_ARG;
-            }
-            out->backend.buffer_count = 1;
-        } else {
-            out->backend_kind = PV2_PRESENTER_GRAM;
-        }
-        return ESP_OK;
-    }
-    if (mode == PV2_MODE_TE_SYNC) {
-        if (input->backend_kind == PV2_PRESENTER_FB) {
-            return ESP_ERR_NOT_SUPPORTED;
-        }
-        out->backend_kind = PV2_PRESENTER_TE;
-        out->backend.render_contract = PV2_CONTRACT_PARTITION;
-        return ESP_OK;
-    }
-    if (input->backend_kind != PV2_PRESENTER_FB) {
-        return ESP_ERR_NOT_SUPPORTED;
-    }
-    out->backend.buffer_count = mode == PV2_MODE_TRIPLE_FULL || mode == PV2_MODE_TRIPLE_PARTIAL ? 3 : 2;
-    if (input->backend.external_buffers && input->backend.buffer_count != out->backend.buffer_count) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    switch (mode) {
-    case PV2_MODE_DOUBLE_DIRECT:
-        out->backend.render_contract = PV2_CONTRACT_DIRECT;
-        break;
-    case PV2_MODE_DOUBLE_FULL:
-    case PV2_MODE_TRIPLE_FULL:
-        out->backend.render_contract = PV2_CONTRACT_FULL;
-        break;
-    default:
-        out->backend.render_contract = PV2_CONTRACT_PARTITION;
-        break;
-    }
-    return ESP_OK;
-}
-
 esp_err_t pv2_presenter_get_required_frame_buffer_count(const pv2_presenter_config_t *config, size_t *count)
 {
     if (!count) {
@@ -326,7 +267,7 @@ esp_err_t pv2_presenter_get_required_frame_buffer_count(const pv2_presenter_conf
     }
     pv2_presenter_config_t input = *config, resolved;
     input.backend.external_buffers = NULL;
-    esp_err_t error = resolve_config(&input, &resolved);
+    esp_err_t error = pv2_config_resolve_legacy(&input, &resolved);
     if (error != ESP_OK) {
         return error;
     }
@@ -379,7 +320,7 @@ esp_err_t pv2_presenter_create(const pv2_presenter_config_t *config, pv2_present
     }
     *out = NULL;
     pv2_presenter_config_t resolved;
-    esp_err_t resolution = resolve_config(config, &resolved);
+    esp_err_t resolution = pv2_config_resolve_legacy(config, &resolved);
     if (resolution != ESP_OK) {
         return resolution;
     }
@@ -409,6 +350,19 @@ esp_err_t pv2_presenter_create(const pv2_presenter_config_t *config, pv2_present
         return ESP_ERR_NO_MEM;
     }
     p->kind = config->backend_kind;
+    p->output = config->output_caps;
+    if (!p->output.x_alignment) {
+        p->output.x_alignment = 1;
+    }
+    if (!p->output.y_alignment) {
+        p->output.y_alignment = 1;
+    }
+    if (!p->output.width_alignment) {
+        p->output.width_alignment = 1;
+    }
+    if (!p->output.height_alignment) {
+        p->output.height_alignment = 1;
+    }
     p->rotation = config->backend.rotation;
     p->ops = p->kind == PV2_PRESENTER_TE ? &pv2_te_backend :
              p->kind == PV2_PRESENTER_FB ? &pv2_fb_backend : &pv2_gram_backend;
@@ -600,6 +554,22 @@ static esp_err_t resolve_rows_impl(pv2_presenter_t *p, const pv2_lease_t *lease,
     }
     size_t rows = p->held.surface.capacity_bytes / stride;
     *out = rows < requested ? (uint32_t)rows : requested;
+    if (p->kind == PV2_PRESENTER_GRAM && *out < requested) {
+        bool quarter = p->rotation == PV2_ROTATE_90 || p->rotation == PV2_ROTATE_270;
+        uint32_t a = quarter ? p->output.x_alignment : p->output.y_alignment;
+        uint32_t extent = quarter ? p->output.width_alignment : p->output.height_alignment;
+        uint32_t u = a, v = extent;
+        while (v) {
+            uint32_t t = u % v;
+            u = v;
+            v = t;
+        }
+        uint64_t step = (uint64_t)a / u * extent;
+        if (step > *out) {
+            return ESP_ERR_INVALID_SIZE;
+        }
+        *out -= *out % (uint32_t)step;
+    }
     return ESP_OK;
 }
 
@@ -1133,4 +1103,47 @@ esp_err_t pv2_presenter_map_point(pv2_presenter_t *p, uint32_t x, uint32_t y, ui
     error = pv2_unrotate_point(p->caps.draw_layout.width, p->caps.draw_layout.height, p->rotation, x, y, lx, ly);
     pv2_mutex_give(p->gate);
     return error;
+}
+
+esp_err_t pv2_presenter_resolve_render_area(pv2_presenter_t *p, const pv2_rect_t *dirty, pv2_rect_t *render)
+{
+    esp_err_t error = check_owner(p);
+    if (error != ESP_OK) {
+        return error;
+    }
+    (void)pv2_mutex_take(p->gate, UINT32_MAX);
+    pv2_resolved_plan_t plan = {.logical_layout = p->caps.draw_layout, .output = p->output};
+    plan.normalized.backend.rotation = p->rotation;
+    plan.normalized.backend.render_contract = p->caps.contract;
+    plan.images.count = p->kind == PV2_PRESENTER_GRAM ? 0 : 1;
+    plan.physical_layout = plan.logical_layout;
+    if (p->rotation == PV2_ROTATE_90 || p->rotation == PV2_ROTATE_270) {
+        plan.physical_layout.width = plan.logical_layout.height;
+        plan.physical_layout.height = plan.logical_layout.width;
+    }
+    pv2_rect_t physical;
+    error = pv2_plan_render_area(&plan, dirty, render, &physical);
+    pv2_mutex_give(p->gate);
+    return error;
+}
+
+size_t pv2_presenter_memory(const pv2_presenter_config_t *c)
+{
+    return sizeof(pv2_presenter_t) + pv2_mutex_memory() + 2 * pv2_event_memory() +
+           (c->background_service ? pv2_worker_memory() : 0);
+}
+
+esp_err_t pv2_presenter_get_rotation(pv2_presenter_t *p, pv2_rotation_t *out)
+{
+    esp_err_t error = check_owner(p);
+    if (error != ESP_OK) {
+        return error;
+    }
+    if (!out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    (void)pv2_mutex_take(p->gate, UINT32_MAX);
+    *out = p->rotation;
+    pv2_mutex_give(p->gate);
+    return ESP_OK;
 }

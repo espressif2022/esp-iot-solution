@@ -6,6 +6,7 @@
 
 /** Experimental backend API; existing presenter API is not replaced. */
 #include "present_pixel_engine.h"
+#include "present_te_timing.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -207,6 +208,11 @@ struct pv2_backend_config {
      * Caller context remains valid through successful stop. */
     pv2_progress_fn on_progress;
     void *progress_user;
+    bool tile_in_psram, image_in_psram, logical_in_psram;
+    size_t transfer_capacity; /* GRAM: 0 uses tile count. */
+    pv2_te_timing_t te_timing; /* period_us=0 retains the explicit fixed edge window. */
+    size_t tile_buffer_count; /* FB PARTIAL: independent draw pool; 0 legacy one. */
+    size_t compose_count; /* TE: 0 legacy serialized dual-image, explicit 1/2 enables pool scheduling. */
 };
 
 /** All task-side operations are serialized by a single caller, except pixel

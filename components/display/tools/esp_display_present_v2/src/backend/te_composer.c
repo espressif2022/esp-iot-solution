@@ -2,22 +2,30 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
+#include "present_memory.h"
 #include "te_composer.h"
 #include "present_os.h"
 #include "present_limits.h"
-#include "present_coverage.h"
+#include "present_image.h"
 #include <string.h>
+
+typedef enum { IDLE, BUILDING, REPAIR, READY, INFLIGHT } compose_state_t;
+typedef struct {
+    compose_state_t state;
+    pv2_te_frame_t frame;
+    uint64_t ready_us, last_edge_us;
+    bool edge_seen;
+    size_t candidate;
+} compose_job_t;
 
 struct pv2_te_composer {
     pv2_pixel_engine_t *pixel;
     pv2_surface_t buffers[2];
-    uint8_t *coverage;
-    size_t coverage_bytes;
-    int baseline, candidate;
-    enum { IDLE, BUILDING, REPAIR, READY, INFLIGHT } state;
-    pv2_te_frame_t frame;
-    uint64_t ready_us, last_edge_us;
-    bool edge_seen;
+    pv2_image_builder_t image;
+    int baseline;
+    size_t image_count;
+    bool pipelined;
+    compose_job_t jobs[2];
     struct {
         pv2_copy_ticket_t ticket;
         pv2_rect_t area;
@@ -29,21 +37,23 @@ struct pv2_te_composer {
     pv2_copy_ticket_t repair;
 };
 
-static bool matches(const pv2_te_composer_t *c, pv2_te_frame_t f)
+static compose_job_t *find_job(pv2_te_composer_t *c, pv2_te_frame_t f)
 {
-    return c && f.value && c->frame.value == f.value && c->state != IDLE;
+    if (!c || !f.value) {
+        return NULL;
+    }
+    for (size_t i = 0; i < c->image_count; i++)
+        if (c->jobs[i].state != IDLE && c->jobs[i].frame.value == f.value) {
+            return &c->jobs[i];
+        }
+    return NULL;
 }
 
-static bool covered(const pv2_te_composer_t *c, size_t index)
-{
-    return (c->coverage[index / 8] & (1u << (index % 8))) != 0;
-}
-
-static esp_err_t copy(pv2_te_composer_t *c, const pv2_source_t *source,
+static esp_err_t copy(pv2_te_composer_t *c, compose_job_t *j, const pv2_source_t *source,
                       const pv2_rect_t *area, uint32_t x, uint32_t y)
 {
     pv2_copy_request_t request = {
-        .source = *source, .destination = c->buffers[c->candidate],
+        .source = *source, .destination = c->buffers[j->candidate],
         .source_area = *area, .destination_x = x, .destination_y = y,
         .rotation = PV2_ROTATE_0,
     };
@@ -69,7 +79,7 @@ esp_err_t pv2_te_composer_create(const pv2_te_composer_config_t *cfg, pv2_te_com
         return ESP_ERR_INVALID_ARG;
     }
     *out = NULL;
-    if (!cfg || !cfg->width || !cfg->height || cfg->rotation < PV2_ROTATE_0 || cfg->rotation > PV2_ROTATE_270 ||
+    if (!cfg || cfg->image_count > 2 || !cfg->width || !cfg->height || cfg->rotation < PV2_ROTATE_0 || cfg->rotation > PV2_ROTATE_270 ||
             (cfg->format != PV2_FORMAT_RGB565 && cfg->format != PV2_FORMAT_RGB888) ||
             (cfg->panel_order != PV2_ORDER_NATIVE && cfg->panel_order != PV2_ORDER_SWAPPED) ||
             (cfg->format == PV2_FORMAT_RGB888 && cfg->panel_order != PV2_ORDER_NATIVE)) {
@@ -88,18 +98,19 @@ esp_err_t pv2_te_composer_create(const pv2_te_composer_config_t *cfg, pv2_te_com
         return ESP_ERR_NO_MEM;
     }
     c->baseline = -1;
+    c->image_count = cfg->image_count ? cfg->image_count : 2;
+    c->pipelined = cfg->image_count != 0;
     c->rotation = cfg->rotation;
     c->asynchronous = cfg->pixel.asynchronous;
-    c->coverage_bytes = pixels / 8 + (pixels % 8 != 0);
-    c->coverage = pv2_alloc(c->coverage_bytes);
-    for (size_t i = 0; i < 2; i++) {
+    esp_err_t image_error = pv2_image_init(&c->image, cfg->width, cfg->height);
+    for (size_t i = 0; i < c->image_count; i++) {
         c->buffers[i] = (pv2_surface_t) {
-            .pixels = pv2_alloc_pixels(pixels * bpp), .capacity_bytes = pixels * bpp,
+            .pixels = pv2_alloc_pixels_in(pixels * bpp, cfg->image_in_psram), .capacity_bytes = pixels * bpp,
             .layout = {cfg->width, cfg->height, cfg->width * bpp, cfg->format, cfg->panel_order},
         };
     }
     esp_err_t err = ESP_ERR_NO_MEM;
-    if (!c->coverage || !c->buffers[0].pixels || !c->buffers[1].pixels) {
+    if (image_error != ESP_OK || !c->buffers[0].pixels || (c->image_count == 2 && !c->buffers[1].pixels)) {
         goto fail;
     }
     pv2_pixel_config_t pc = cfg->pixel;
@@ -113,7 +124,7 @@ esp_err_t pv2_te_composer_create(const pv2_te_composer_config_t *cfg, pv2_te_com
     *out = c;
     return ESP_OK;
 fail:
-    pv2_free(c->coverage);
+    pv2_image_deinit(&c->image);
     pv2_free(c->buffers[0].pixels);
     pv2_free(c->buffers[1].pixels);
     pv2_free(c);
@@ -128,19 +139,36 @@ esp_err_t pv2_te_composer_begin(pv2_te_composer_t *c, pv2_te_frame_t *out)
     *out = (pv2_te_frame_t) {
         0
     };
-    if (c->state != IDLE) {
-        return ESP_ERR_INVALID_STATE;
+    compose_job_t *j = NULL;
+    for (size_t i = 0; i < c->image_count; i++) {
+        if (!c->pipelined && c->jobs[i].state != IDLE) {
+            return ESP_ERR_INVALID_STATE;
+        }
+        if (c->jobs[i].state == BUILDING || c->jobs[i].state == REPAIR) {
+            return ESP_ERR_INVALID_STATE;
+        }
+        if (c->jobs[i].state == IDLE && (c->image_count == 1 || i != (size_t)c->baseline)) {
+            j = &c->jobs[i];
+        }
+    }
+    if (!j) {
+        return ESP_ERR_NO_MEM;
     }
     uint64_t token = pv2_new_token();
     if (!token) {
         return ESP_ERR_NO_MEM;
     }
-    c->candidate = c->baseline == 0 ? 1 : 0;
-    memset(c->coverage, 0, c->coverage_bytes);
-    c->frame.value = token;
-    c->state = BUILDING;
+    size_t candidate = (size_t)(j - c->jobs);
+    *j = (compose_job_t) {
+        .state = BUILDING, .frame = {token}, .candidate = candidate
+    };
+    esp_err_t error = pv2_image_begin(&c->image, candidate, c->baseline < 0 ? SIZE_MAX : (size_t)c->baseline);
+    if (error != ESP_OK) {
+        j->state = IDLE;
+        return error;
+    }
     c->repair_pos = 0;
-    *out = c->frame;
+    *out = j->frame;
     return ESP_OK;
 }
 
@@ -148,11 +176,12 @@ esp_err_t pv2_te_composer_queue_write(pv2_te_composer_t *c, pv2_te_frame_t f,
                                       const pv2_source_t *source, const pv2_rect_t *area, uint32_t x, uint32_t y,
                                       pv2_copy_ticket_t *ticket)
 {
+    compose_job_t *j = find_job(c, f);
     if (!ticket) {
         return ESP_ERR_INVALID_ARG;
     }
     ticket->value = 0;
-    if (!matches(c, f) || c->state != BUILDING) {
+    if (!j || j->state != BUILDING) {
         return ESP_ERR_INVALID_STATE;
     }
     if (!source || !area) {
@@ -165,7 +194,7 @@ esp_err_t pv2_te_composer_queue_write(pv2_te_composer_t *c, pv2_te_frame_t f,
     if (slot == PV2_MAX_COPY_JOBS) {
         return ESP_ERR_NO_MEM;
     }
-    pv2_copy_request_t r = {.source = *source, .destination = c->buffers[c->candidate],
+    pv2_copy_request_t r = {.source = *source, .destination = c->buffers[j->candidate],
                             .source_area = *area, .destination_x = x, .destination_y = y, .rotation = c->rotation
                            };
     esp_err_t error = pv2_pixel_submit(c->pixel, &r, ticket);
@@ -202,10 +231,7 @@ esp_err_t pv2_te_composer_finish_write(pv2_te_composer_t *c, pv2_copy_ticket_t t
     *result = status.result;
     if (status.result == ESP_OK) {
         pv2_rect_t a = c->writes[slot].area;
-        size_t width = c->buffers[c->candidate].layout.width;
-        for (uint32_t row = 0; row < a.height; row++) {
-            pv2_coverage_set(c->coverage, ((size_t)a.y + row) * width + a.x, a.width);
-        }
+        pv2_image_cover(&c->image, a);
     }
     error = pv2_pixel_release(c->pixel, ticket);
     if (error != ESP_OK) {
@@ -251,7 +277,8 @@ esp_err_t pv2_te_composer_stop(pv2_te_composer_t *c, uint32_t timeout)
 
 esp_err_t pv2_te_composer_seal(pv2_te_composer_t *c, pv2_te_frame_t f, uint64_t ready_us)
 {
-    if (!matches(c, f) || (c->state != BUILDING && c->state != REPAIR)) {
+    compose_job_t *j = find_job(c, f);
+    if (!j || (j->state != BUILDING && j->state != REPAIR)) {
         return ESP_ERR_INVALID_STATE;
     }
     if (c->pending) {
@@ -269,39 +296,40 @@ esp_err_t pv2_te_composer_seal(pv2_te_composer_t *c, pv2_te_frame_t f, uint64_t 
             return status.result;
         }
     }
-    pv2_surface_t *surface = &c->buffers[c->candidate];
-    size_t width = surface->layout.width, count = width * surface->layout.height;
+    pv2_surface_t *surface = &c->buffers[j->candidate];
+    (void)surface;
     if (c->baseline < 0) {
-        if (!pv2_coverage_full(c->coverage, count)) {
+        if (!pv2_image_full(&c->image)) {
             return ESP_ERR_INVALID_STATE;
         }
     } else {
-        c->state = REPAIR;
+        j->state = REPAIR;
         pv2_surface_t *base = &c->buffers[c->baseline];
         pv2_source_t source = {base->pixels, base->capacity_bytes, base->layout};
-        while (c->repair_pos < count) {
-            size_t i = c->repair_pos;
-            if (covered(c, i)) {
-                c->repair_pos++;
-                continue;
-            }
-            uint32_t x = i % width, y = i / width;
-            uint32_t end = x + 1;
-            while (end < width && !covered(c, (size_t)y * width + end)) {
-                end++;
-            }
-            pv2_rect_t area = {x, y, end - x, 1};
-            esp_err_t error = copy(c, &source, &area, x, y);
+        pv2_image_prepare_repair(&c->image, false);
+        pv2_rect_t area;
+        while (pv2_image_next_repair(&c->image, &area)) {
+            esp_err_t error = copy(c, j, &source, &area, area.x, area.y);
             if (error == ESP_OK || error == ESP_ERR_TIMEOUT) {
-                c->repair_pos += area.width;
+                pv2_image_repaired(&c->image, &area);
             }
             if (error != ESP_OK) {
                 return error;
             }
         }
     }
-    c->ready_us = ready_us;
-    c->state = READY;
+    if (c->pipelined) {
+        esp_err_t commit = pv2_image_commit(&c->image);
+        if (commit != ESP_OK) {
+            return commit;
+        }
+        c->baseline = j->candidate;
+    }
+    if (!c->pipelined) {
+        pv2_allocation_written(&c->image.allocations[j->candidate]);
+    }
+    j->ready_us = ready_us;
+    j->state = READY;
     return ESP_OK;
 }
 
@@ -309,57 +337,84 @@ esp_err_t pv2_te_composer_offer(pv2_te_composer_t *c, pv2_te_frame_t f,
                                 uint64_t edge_us, uint64_t now_us, uint64_t window_us,
                                 pv2_source_t *out)
 {
+    compose_job_t *j = find_job(c, f);
     if (!out) {
         return ESP_ERR_INVALID_ARG;
     }
     *out = (pv2_source_t) {
         0
     };
-    if (!matches(c, f) || c->state != READY) {
+    if (!j || j->state != READY) {
         return ESP_ERR_INVALID_STATE;
     }
     if (!window_us || now_us < edge_us) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (edge_us < c->ready_us || now_us - edge_us >= window_us ||
-            (c->edge_seen && edge_us <= c->last_edge_us)) {
+    if (edge_us < j->ready_us || now_us - edge_us >= window_us ||
+            (j->edge_seen && edge_us <= j->last_edge_us)) {
         return ESP_ERR_TIMEOUT;
     }
-    c->edge_seen = true;
-    c->last_edge_us = edge_us;
-    pv2_surface_t *s = &c->buffers[c->candidate];
+    j->edge_seen = true;
+    j->last_edge_us = edge_us;
+    return pv2_te_composer_pin(c, f, out);
+}
+esp_err_t pv2_te_composer_pin(pv2_te_composer_t *c, pv2_te_frame_t f, pv2_source_t *out)
+{
+    compose_job_t *j = find_job(c, f);
+    if (!out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (!j || j->state != READY) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    pv2_surface_t *s = &c->buffers[j->candidate];
     *out = (pv2_source_t) {
         s->pixels, s->capacity_bytes, s->layout
     };
-    c->state = INFLIGHT;
+    pv2_allocation_hold(&c->image.allocations[j->candidate], PV2_REF_TRANSFER);
+    j->state = INFLIGHT;
     return ESP_OK;
 }
 
 esp_err_t pv2_te_composer_reject(pv2_te_composer_t *c, pv2_te_frame_t f)
 {
-    if (!matches(c, f) || c->state != INFLIGHT) {
+    compose_job_t *j = find_job(c, f);
+    if (!j || j->state != INFLIGHT) {
         return ESP_ERR_INVALID_STATE;
     }
-    c->state = READY;
+    pv2_allocation_drop(&c->image.allocations[j->candidate], PV2_REF_TRANSFER);
+    j->state = READY;
     return ESP_OK;
 }
 
 esp_err_t pv2_te_composer_complete(pv2_te_composer_t *c, pv2_te_frame_t f, esp_err_t result)
 {
-    if (!matches(c, f) || c->state != INFLIGHT) {
+    compose_job_t *j = find_job(c, f);
+    if (!j || j->state != INFLIGHT) {
         return ESP_ERR_INVALID_STATE;
     }
-    if (result == ESP_OK) {
-        c->baseline = c->candidate;
+    pv2_allocation_drop(&c->image.allocations[j->candidate], PV2_REF_TRANSFER);
+    if (!c->pipelined) {
+        if (result == ESP_OK) {
+            c->image.allocations[j->candidate].writer = true; /* metadata publication after a drained legacy transfer */
+            esp_err_t error = pv2_image_commit(&c->image);
+            if (error != ESP_OK) {
+                return error;
+            }
+            c->baseline = j->candidate;
+        } else {
+            pv2_image_cancel(&c->image);
+        }
     }
-    c->state = IDLE;
-    c->frame.value = 0;
+    j->state = IDLE;
+    j->frame.value = 0;
     return ESP_OK;
 }
 
 esp_err_t pv2_te_composer_cancel(pv2_te_composer_t *c, pv2_te_frame_t f)
 {
-    if (!matches(c, f) || c->state == INFLIGHT) {
+    compose_job_t *j = find_job(c, f);
+    if (!j || j->state == INFLIGHT) {
         return ESP_ERR_INVALID_STATE;
     }
     if (c->pending) {
@@ -374,8 +429,15 @@ esp_err_t pv2_te_composer_cancel(pv2_te_composer_t *c, pv2_te_frame_t f)
         (void)pv2_pixel_release(c->pixel, c->repair);
         c->repair.value = 0;
     }
-    c->state = IDLE;
-    c->frame.value = 0;
+    if (j->state == BUILDING || j->state == REPAIR || !c->pipelined) {
+        pv2_image_cancel(&c->image);
+    }
+    c->image.versions[j->candidate] = 0;
+    if (c->baseline == (int)j->candidate) {
+        c->baseline = -1;
+    }
+    j->state = IDLE;
+    j->frame.value = 0;
     return ESP_OK;
 }
 
@@ -384,7 +446,7 @@ esp_err_t pv2_te_composer_destroy(pv2_te_composer_t *c)
     if (!c) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (c->state != IDLE || c->pending) {
+    if (c->jobs[0].state != IDLE || c->jobs[1].state != IDLE || c->pending) {
         return ESP_ERR_INVALID_STATE;
     }
     esp_err_t err = pv2_pixel_stop(c->pixel, 0);
@@ -395,7 +457,7 @@ esp_err_t pv2_te_composer_destroy(pv2_te_composer_t *c)
     if (err != ESP_OK) {
         return err;
     }
-    pv2_free(c->coverage);
+    pv2_image_deinit(&c->image);
     pv2_free(c->buffers[0].pixels);
     pv2_free(c->buffers[1].pixels);
     pv2_free(c);
@@ -407,9 +469,16 @@ esp_err_t pv2_te_composer_set_rotation(pv2_te_composer_t *c, pv2_rotation_t rota
     if (!c || rotation < PV2_ROTATE_0 || rotation > PV2_ROTATE_270) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (c->state != IDLE) {
+    if (c->jobs[0].state != IDLE || c->jobs[1].state != IDLE) {
         return ESP_ERR_INVALID_STATE;
     }
     c->rotation = rotation;
+    pv2_image_reset(&c->image, c->image.width, c->image.height);
+    c->baseline = -1;
     return ESP_OK;
+}
+
+size_t pv2_composer_memory(void)
+{
+    return sizeof(pv2_te_composer_t);
 }

@@ -1,8 +1,11 @@
 # 显示提交与资源生命周期
 
+> 2026-10-30：整体迁移已接入，当前支持范围见 [PLAN.md](PLAN.md)。公共帧生命周期、allocation 引用与内容版本相互独立。
+
+
 本设计将“函数返回”“硬件完成”“buffer 可复用”分别定义。等待超时只结束本次等待，不自动取消硬件访问，也不归还 buffer。
 
-当前 GRAM／TE／FB、异步 pixel FIFO、非阻塞 repair、Presenter、LVGL 复制与受限 FULL 零拷贝均已实现。DSI／RGB bounce 与 DMA2D／PPA 桥接已通过 Host 驱动 stub 和 P4 离线编译；真实硬件时序与 cache 行为未验收。支持矩阵以 README 与 PLAN 为准。
+当前 GRAM／TE／FB、异步 pixel FIFO、非阻塞 repair、Presenter、LVGL 复制与受限 FULL 零拷贝均已实现。DSI／RGB bounce 与 DMA2D／PPA 桥接已通过 Host 驱动 stub 和 P4 离线编译；已完成三板对应路径验证，仍不代表所有硬件时序/cache 组合通过。支持矩阵以 README 与 PLAN 为准。
 
 ## 完成与释放
 
@@ -200,7 +203,7 @@ owner 等待 receipt/lease/cancel 条件时先检查，未满足则释放 gate�
 
 ### FB 异步 PARTITION 的追加状态
 
-`DRAWING → COPY_DRAIN → READY`：最后一笔 copy 未完成时 end 仅封闭构建并登记 receipt；scratch 和 candidate 继续借用，service 观察 ticket 终态后标记成功覆盖并完成封帧。新 begin 在 COPY_DRAIN 返回 NO_MEM，不能读取未完成 candidate 作基线。失败或实际覆盖不足终结 receipt 并保存 sticky fault，不提交 panel。
+`PREFILL → DRAWING → DRAIN_TILE → REPAIR → CONVERT → READY`：异步 prefill 完成前不能获取绘制 lease；end 封闭 producer 写入，排空最后一笔 tile copy，再验证实际覆盖、执行 DIRECT 修补及可选旋转。候选帧只在 CONVERT 完成后发布为基线。DRAIN_TILE/REPAIR/CONVERT 期间新 begin 返回 NO_MEM；异步失败终结 receipt 并保存 sticky fault，不提交 panel。
 
 `DRAWING → CANCELING → FREE/SCANNING`：未封闭帧可取消，超时保留源与目标；service 在 copy 排空后回收，重复 cancel 幂等。单缓冲仍须显式允许扫描写入，取消无法撤销已可见的像素。stop join pixel callback 后才 quiesce panel。
 
@@ -223,3 +226,31 @@ panel 提交前预登记 SUBMITTING；早到回调仍只置 early_done，panel �
 ## Review 后的资源与范围约束
 
 旋转回零可释放逻辑绘制池，但 drain 只证明在途操作结束，不证明持续扫描停止；physical scan pool 与 SCANNING 状态保持，调用方重建 renderer 后必须全覆盖。硬件 cache 同步覆盖实际目标行带并首尾对齐，范围必须包含底层 PPA 会 invalidate 的行带且始终位于独占 allocation。coverage 优化只改变位图操作粒度，不改变实际覆盖判据。
+
+### FB 内部推进结果与封帧边界
+
+`advance_build_pipeline` 的结果是私有 `IDLE / PENDING / COMPLETE / FAILED`，
+操作错误单独携带 `esp_err_t`，不能把硬件 TIMEOUT 当作异步接受。`FB_SEAL_ATTEMPT`
+允许 end 拒绝并保留开放构建；`FB_SEAL_ACCEPTED` 的失败通过 receipt 与 sticky
+fault 收尾。公共 API、后端锁及缓冲所有权不变，不引入跨后端 stage 表。
+
+CANCELING 的排空优先于 closing 检查；cancel 成功必须匹配已发布的取消记录。
+scanout 分别记录 source_stopped 与 stopped：底层成功停止/删除只执行一次，
+回调排空超时后的重试只等待剩余回调。内部计数不能替代停止事件源/禁止新回调
+进入的底层契约。
+
+
+## 当前统一数据流
+
+```text
+Producer → resolve render area → lease → actual successful writes
+  GRAM: tile → copy/convert → READY → transfer → source released
+  TE:   tile → physical image → history repair → READY → TE admission → transfer
+  FB:   tile/logical canvas → physical image → history repair → READY → switch
+```
+
+TE/FB 的 coverage 是实际成功写入的精确位图；history 是有界保守脏矩形。修补范围为候选版本到基线版本的历史变化，减去本帧实际写入。历史不足退化全图补齐；DIRECT 仍需修复未声明写入。repair 完成后才发布内容版本，显示失败不伪装成内容构建失败回滚。
+
+显式 TE 图像池允许 A 为 INFLIGHT 时 B 构建，图像到 READY 即发布内容基线；若 A 输出失败，后端故障阻断后继发送。旧 compose_count=0 保持串行、发送成功后发布的兼容语义。
+
+分配引用：B 保留最新内容基线，C 保留 copy 源，T 保留 DMA 发送源，S 保留当前扫描源。没有 writer 与 C/T 重叠；只有显式允许单缓冲撕裂时才能写仍被扫描的缓冲。停止须先排空 copy/输出并静默事件源，不能靠 receipt 已完成推断 S 已退出。

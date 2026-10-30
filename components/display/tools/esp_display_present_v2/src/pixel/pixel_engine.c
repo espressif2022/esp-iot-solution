@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
+#include "present_memory.h"
 #include "present_pixel_engine.h"
 #include "present_os.h"
 #include "present_limits.h"
@@ -543,4 +544,10 @@ esp_err_t pv2_pixel_execute_cpu(const pv2_copy_request_t *request)
         copy_cpu(request);
     }
     return error;
+}
+
+size_t pv2_pixel_memory(size_t jobs, bool async)
+{
+    return sizeof(pv2_pixel_engine_t) + jobs * sizeof(copy_record_t) + (jobs + 2) * pv2_event_memory() +
+           (async ? pv2_worker_memory() : 0);
 }

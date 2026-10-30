@@ -206,6 +206,21 @@ int main(void)
                 OK(pv2_pixel_accel_destroy(a));
             }
     pv2_pixel_accel_t *a;
+    /* Source without tail cache-line padding (32B capacity on 64B line) must still be admitted by hardware. */
+    {
+        alignment = 64;
+        strict_alignment = 1;
+        pv2_layout_t l4 = {.width = 4, .height = 4, .stride_bytes = 8, .format = PV2_FORMAT_RGB565};
+        pv2_copy_request_t r32 = {.source = {src, 32, l4}, .destination = {dst, 64, l4}, .source_area = {0, 0, 4, 4}};
+        for (unsigned kind = 0; kind < 2; kind++) {
+            pv2_pixel_accel_config_t cfg32 = {kind, false};
+            OK(pv2_pixel_accel_create(&cfg32, &a));
+            unsigned before_sub = submissions;
+            OK(pv2_pixel_accel_execute(a, &r32));
+            assert(submissions == before_sub + 1);
+            OK(pv2_pixel_accel_destroy(a));
+        }
+    }
     pv2_pixel_accel_config_t c = {PV2_ACCEL_DMA2D, false};
     OK(pv2_pixel_accel_create(&c, &a));
     pv2_layout_t l = {.width = 2, .height = 2, .stride_bytes = 4, .format = PV2_FORMAT_RGB565};

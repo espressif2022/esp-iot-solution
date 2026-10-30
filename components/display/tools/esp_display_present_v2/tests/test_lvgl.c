@@ -14,6 +14,10 @@ static pv2_presenter_t *make(test_panel_t *panel)
                                                  .panel = test_panel_interface(panel)
                                                 }
                                     };
+    if (!(panel->width % 2) && !(panel->height % 2))
+        config.output_caps = (pv2_output_caps_t) {
+        .x_alignment = 2, .y_alignment = 2, .width_alignment = 2, .height_alignment = 2
+    };
     pv2_presenter_t *p;
     assert(pv2_presenter_create(&config, &p) == ESP_OK);
     return p;
@@ -113,6 +117,20 @@ int main(void)
     assert(pv2_lvgl_destroy(other_binding) == ESP_OK);
     assert(pv2_presenter_stop(other, 0) == ESP_OK);
     assert(pv2_presenter_destroy(other) == ESP_OK);
+
+    /* Reconfigure the live binding while preserving its object tree. */
+    assert(pv2_lvgl_set_rotation(binding, PV2_ROTATE_90, 0) == ESP_OK);
+    assert(lv_display_get_screen_active(display) == screen);
+    lv_refr_now(display);
+    assert(pv2_lvgl_get_error(binding) == ESP_OK);
+    complete_all(&panel);
+    assert(pv2_presenter_drain(p, 0) == ESP_OK);
+    for (unsigned y = 0; y < 12; y++)
+        for (unsigned x = 0; x < 16; x++) {
+            uint32_t lx, ly;
+            assert(pv2_unrotate_point(12, 16, PV2_ROTATE_90, x, y, &lx, &ly) == ESP_OK);
+            assert(pixel(&panel, x, y) == (lx >= 3 && lx < 7 && ly >= 2 && ly < 5 ? 0xF800 : 0xFFFF));
+        }
 
     panel.reject = true;
     lv_obj_set_style_bg_color(box, lv_color_hex(0x0000FF), 0);

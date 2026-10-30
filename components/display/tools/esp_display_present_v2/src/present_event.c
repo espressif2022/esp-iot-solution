@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
+#include "present_memory.h"
 #include "present_os.h"
 #ifdef PV2_HOST
 #include <errno.h>
@@ -284,4 +285,25 @@ void pv2_worker_destroy(pv2_worker_t *worker)
     }
     pv2_event_destroy(worker->exited);
     pv2_free(worker);
+}
+
+size_t pv2_event_memory(void)
+{
+    return sizeof(pv2_event_t);
+}
+size_t pv2_mutex_memory(void)
+{
+    size_t bytes = sizeof(pv2_mutex_t);
+#ifdef PV2_HOST
+    bytes += sizeof(pv2_event_t);
+#endif
+    return bytes;
+}
+size_t pv2_worker_memory(void)
+{
+    size_t bytes = sizeof(pv2_worker_t) + sizeof(pv2_event_t);
+#ifndef PV2_HOST
+    bytes += sizeof(StaticTask_t);
+#endif
+    return bytes;
 }

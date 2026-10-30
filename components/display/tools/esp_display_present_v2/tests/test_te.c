@@ -63,13 +63,13 @@ static void edge(pv2_backend_t *backend)
     (void)ops->on_event_isr(backend, &event);
 }
 
-static pv2_backend_t *create(fixture_t *fixture)
+static pv2_backend_t *create_pool(fixture_t *fixture, size_t count)
 {
     fixture->panel.width = 4;
     fixture->panel.height = 4;
     fixture->panel.bpp = 2;
     pv2_backend_config_t config = {
-        .width = 4, .height = 4, .tile_rows = 2, .buffer_count = 2, .max_frames = 2,
+        .compose_count = count, .width = 4, .height = 4, .tile_rows = 2, .buffer_count = 2, .max_frames = 2,
         .format = PV2_FORMAT_RGB565, .draw_order = PV2_ORDER_NATIVE, .panel_order = PV2_ORDER_NATIVE,
         .panel = {fixture, test_panel_attach, submit, stop},
         .te_window_us = 1000000, .te_transfer_budget_us = 1000,
@@ -77,6 +77,11 @@ static pv2_backend_t *create(fixture_t *fixture)
     pv2_backend_t *backend;
     OK(ops->create(&config, &backend));
     return backend;
+}
+
+static pv2_backend_t *create(fixture_t *fixture)
+{
+    return create_pool(fixture, 0);
 }
 
 static pv2_frame_t begin(pv2_backend_t *backend)
@@ -425,8 +430,59 @@ static void asynchronous_copy(unsigned mode)
     pthread_cond_destroy(&g.changed);
     pthread_mutex_destroy(&g.mutex);
 }
+static void compose_pool(size_t count)
+{
+    fixture_t fixture = {0};
+    pv2_backend_t *b = create_pool(&fixture, count);
+    pv2_receipt_t first = full(b, true);
+    edge(b);
+    OK(pv2_te_service(b));
+    assert(fixture.panel.count == 1);
+    pv2_frame_t f;
+    pv2_frame_request_t req = {0};
+    if (count == 1) {
+        assert(ops->begin(b, &req, &f) == ESP_ERR_NO_MEM);
+        test_panel_complete(&fixture.panel);
+        OK(pv2_te_service(b));
+    }
+    OK(ops->begin(b, &req, &f));
+    write_area(b, f, (pv2_rect_t) {
+        1, 1, 1, 1
+    }, 0x5678);
+    pv2_receipt_t second;
+    OK(ops->end(b, f, &second));
+    if (count == 2) {
+        assert(ops->begin(b, &req, &f) == ESP_ERR_NO_MEM);
+        OK(pv2_te_service(b));
+        assert(fixture.panel.submitted == 1);
+        test_panel_complete(&fixture.panel); /* reads the original source NOW */
+    }
+    for (unsigned i = 0; i < 16; i++) {
+        assert(((uint16_t*)fixture.panel.pixels)[i] == 0x1234);
+    }
+    edge(b);
+    OK(pv2_te_service(b));
+    assert(fixture.panel.count == 1 && fixture.panel.submitted == 2);
+    assert(ops->stop(b, 0) == ESP_ERR_TIMEOUT);
+    test_panel_complete(&fixture.panel);
+    OK(pv2_te_service(b));
+    for (unsigned i = 0; i < 16; i++) {
+        assert(((uint16_t*)fixture.panel.pixels)[i] == (i == 5 ? 0x5678 : 0x1234));
+    }
+    pv2_frame_status_t status;
+    OK(ops->query(b, first, &status));
+    assert(status.terminal && status.result == ESP_OK);
+    OK(ops->release_receipt(b, first));
+    OK(ops->query(b, second, &status));
+    assert(status.terminal && status.result == ESP_OK);
+    OK(ops->release_receipt(b, second));
+    destroy(b);
+}
+
 int main(void)
 {
+    compose_pool(1);
+    compose_pool(2);
     for (unsigned mode = 0; mode < 4; ++mode) {
         asynchronous_copy(mode);
     }

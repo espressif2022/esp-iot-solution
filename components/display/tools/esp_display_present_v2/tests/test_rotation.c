@@ -38,6 +38,11 @@ void *__wrap_pv2_alloc_pixels(size_t size)
     pthread_mutex_unlock(&allocation_lock);
     return pointer;
 }
+void *__wrap_pv2_alloc_pixels_in(size_t size, bool external)
+{
+    (void)external; /* Host has one address space; account both allocation paths. */
+    return __wrap_pv2_alloc_pixels(size);
+}
 void __wrap_pv2_free(void *memory)
 {
     pthread_mutex_lock(&allocation_lock);
@@ -116,12 +121,12 @@ static void exercise(unsigned kind, pv2_render_contract_t contract, bool async, 
     pv2_backend_t *b;
     size_t before_create = pixel_bytes;
     OK(ops->create(&cfg, &b));
-    size_t zero_rotation_bytes = pixel_bytes - (kind == 2 && initial ? 2 * 6 * bpp : 0);
+    size_t zero_rotation_bytes = pixel_bytes - (kind == 2 && initial && contract != PV2_CONTRACT_PARTITION ? 6 * bpp : 0);
     for (unsigned iteration = 0; iteration < 8; ++iteration) {
         unsigned rotation = (initial + iteration) % 4;
         OK(ops->set_rotation(b, rotation));
         if (kind == 2) {
-            assert(pixel_bytes == zero_rotation_bytes + (rotation ? 2 * 6 * bpp : 0));
+            assert(pixel_bytes == zero_rotation_bytes + (rotation && contract != PV2_CONTRACT_PARTITION ? 6 * bpp : 0));
         }
         pv2_backend_caps_t caps;
         OK(ops->get_caps(b, &caps));

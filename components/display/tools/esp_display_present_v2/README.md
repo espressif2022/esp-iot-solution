@@ -1,6 +1,9 @@
 # Display Present 第二版
 
-本目录独立实现显示框架的新设计，让一次提交、一次完成和一次失败都能在所属后端内追踪清楚。第一阶段提供 CPU 像素引擎与 GRAM 后端，现有 `../esp_display_present` 继续作为行为对照。
+> 2026-10-30：公共核心、共享图像构建、TE/FB 新拓扑和 LVGL 协商已接入。当前状态、拒绝组合和验收边界以 [PLAN.md](PLAN.md) 为准；文中阶段性验收数字属于相应历史切片。
+
+
+本目录独立实现显示框架的新设计，让一次提交、一次完成和一次失败都能在所属后端内追踪清楚。现提供 GRAM、TE、FB 及可注入像素执行器，现有 `../esp_display_present` 继续作为行为对照。
 
 接口目前是实验性接口。已有 Host 构建与 ESP-IDF 组件注册；已新增 ESP LCD SPI/QSPI adapter；已新增 GRAM／TE／FB Presenter 语义迁移入口及可选 LVGL 9.5 PARTIAL／FULL／DIRECT 绑定；已增加显式泵送的 CPU TE 后端，并已补齐 DSI／RGB bounce adapter、DMA2D／PPA executor、运行时旋转、显式 tracking 与可选 FULL 零拷贝；尚未提供旧 API 的二进制兼容。S3 RGB／P4 MIPI 已完成 CPU FULL／DIRECT／PARTIAL、双／三缓冲配置及停止重建的基线验收；三缓冲排队背压、LVGL 和其他能力仍待逐项验证。不能作为原组件的直接替换，也没有修改现有产品固件的构建依赖。
 
@@ -13,11 +16,11 @@
 | CPU 像素引擎 | RGB565/RGB888、四方向旋转、RGB565 字节序转换（含安全原地转换）、源只读/重叠校验、带 padding 的 stride、容量及溢出校验 |
 | 像素任务记录 | 可选 FIFO worker、事件等待、排队取消/运行中排空、有限记录、跨实例和过期 token 拒绝、查询/等待/释放、`on_event` 完成回调通知；区分关闭态 (`INVALID_STATE`) 与忙/满背压 (`NO_MEM`) |
 | GRAM 后端 | tile lease（支持预设区域或 `NULL` 区域 + `submit_region_ex` 子区域/自定义 stride 紧凑化）、可选原地字节序翻转及拒绝时自动回滚、多块帧、可选/强制多帧 receipt、早到/迟到回调、不确定接受隔离、取消超时后台自愈与停止 |
-| SPI/QSPI adapter | `draw_bitmap` 与 IO 回调接入、FIFO cookie、DMA 前 cache 同步、部分接受报错隔离、排空与回调退出屏障；目前仅离线验证 |
+| SPI/QSPI adapter | `draw_bitmap` 与 IO 回调接入、FIFO cookie、DMA 前 cache 同步、部分接受报错隔离、排空与回调退出屏障；已完成 S31 QSPI 全屏 GRAM/TE 传输验证 |
 | Presenter | GRAM/TE/FB 选择与模式预设（默认 GRAM）、单 producer、有界准入等待、调用序列/lease 校验、有限 receipt 自动回收、非破坏性 drain、取消/停止与错误状态 |
 | 可选 LVGL 绑定 | 真实 LVGL 9.5 PARTIAL/FULL/DIRECT、独立绘制缓冲、按后端容量拆 band、RGB565/RGB888、错误暂停、多显示实例 |
 | TE 后端 | 同步 CPU / 异步 FIFO copy、COPY_DRAIN、分块合成、首帧覆盖、基线补齐、窗口准入、panel 回调、receipt、fault/stop；显式 service 或可选 Presenter 后台任务，已接真实 LVGL |
-| FB CPU 后端 | 单/双/三 FB、PARTITION/FULL/DIRECT、外部 FB、最新封帧基线、顺序切换与旧帧退役；仅模拟 scanout 验证 |
+| FB CPU 后端 | 单/双/三 FB、PARTITION/FULL/DIRECT、外部 FB、最新封帧基线、顺序切换与旧帧退役；S3 RGB/P4 MIPI 五种模式通过板测 |
 | 平台基础 | Host pthread 与 ESP-IDF 临界区、内部 64B 对齐 DMA-capable buffer 分配、单调时间 |
 | 验证入口 | CMake/CTest、整份生产源文件链接、C++ 头文件与链接、ESP-IDF loopback smoke 应用 |
 
@@ -59,7 +62,7 @@ Presenter 的准入、acquire、cancel、drain 已使用保留通知的事件等
 
 `offer` 只在任务上下文检查新边沿与窗口并借出只读帧，不操作硬件。返回后即固定缓冲，明确未接受时才可 reject，安全完成/中止后才可 complete。重试必须等更新的边沿。窗口检查仅代表可开始发送，真实无撕裂还需板级扫描相位、传输时间预算及调度延迟验证。`te.c` 现已接入 panel 回调、receipt 与停止生命周期。backend 创建时需要设置 `te_window_us` 和 `te_transfer_budget_us`（均非零且预算小于窗口），实际准入预留后者；未自动推导硬件时序。GRAM 忽略这两个字段。
 
-TE 使用 `pv2_te_backend`，调用顺序与 GRAM 一致。end 后调用方须持续执行 `pv2_te_service`；query/wait/begin 也会泵送。ISR 通过 on_event_isr 提交同一单调时钟域的 TE_EDGE，仅记录最新事件，不发送。首版只允许一个活动合成/发送帧，未完成时 begin 返回 NO_MEM；完成 receipt 可继续保留到显式释放。明确拒收由 service 返回错误并保留 READY，等待新边沿重试；query/wait 观察 receipt，拒收期间仍为 pending。end 成功消费 frame，不以之后的驱动拒收伪装成 end 回滚。
+TE 使用 `pv2_te_backend`，调用顺序与 GRAM 一致。end 后调用方须持续执行 `pv2_te_service`；query/wait/begin 也会泵送。ISR 通过 on_event_isr 提交同一单调时钟域的 TE_EDGE，仅记录最新事件，不发送。旧 compose_count=0 保留串行兼容；显式 compose_count=1/2 使用对应图像池，双池允许前帧发送时构建后帧。池满时 begin 返回 NO_MEM；完成 receipt 可继续保留到显式释放。明确拒收由 service 返回错误并保留 READY，等待新边沿重试；query/wait 观察 receipt，拒收期间仍为 pending。end 成功消费 frame，不以之后的驱动拒收伪装成 end 回滚。
 
 TE 已接入 Presenter／LVGL，可选 background_service 后台调度。销毁前，应用还必须注销外部 TE GPIO/Timer 事件源并等待回调退出；panel.quiesce 只覆盖它自己的回调。三个后端的 sticky fault 都会阻止新帧准入，恢复须安全停止并重建。
 
@@ -330,7 +333,7 @@ Host 新增队列满、描述符快照、重叠 FIFO、排队取消、延迟读�
 
 ### FB PARTITION 异步路径
 
-设置 `backend.async_copy=true` 可将 scratch → candidate 的拷贝交给 pixel worker。scratch 当前仍为一个：完成前 acquire 返回 TIMEOUT，由 Presenter 按总预算等待通知并重试。end 遇到未完成 copy 时进入 COPY_DRAIN，后续 service 验证实际覆盖再将 candidate 置 READY；期间新帧准入返回可重试的 NO_MEM。尚未完成的 candidate 不成为基线，也不会被扫描。
+设置 `backend.async_copy=true` 可将 scratch → candidate 的拷贝交给 pixel worker。scratch 当前仍为一个：完成前 acquire 返回 TIMEOUT，由 Presenter 按总预算等待通知并重试。end 遇到未完成 copy 时进入 DRAIN_TILE，后续 service 依次完成覆盖检查、REPAIR 和 CONVERT 后才将 candidate 置 READY；期间新帧准入返回可重试的 NO_MEM。尚未完成的 candidate 不成为基线，也不会被扫描。
 
 取消构建进入 CANCELING，待 copy 排空后自动回收。stop 先 join pixel，再用剩余预算 quiesce 扫描面板；超时保留 scratch/candidate/receipt。async_copy 配置下，基线预填和 DIRECT 恢复也走 ticket；prefill 完成前不借出 lease。
 
@@ -418,3 +421,92 @@ DMA2D 仅同格式 0°／不交换字节，PPA 支持四方向和 RGB565 byte sw
 记录；TE/FB 复用同一记录类型。锁、缓冲所有权、完成时机和回收仍由各后端控制。
 公共模块不持有后端指针、不推进状态机。新增跨后端 records 契约测试后，当前
 Host/ASan+UBSan（泄漏检测关闭）均为 21 组通过；本次重构仅完成本地验证。
+
+本轮 FB 推进结果已明确区分 idle/pending/complete/failed；QSPI/TE 板测配置与边界见 [boards/README.md](test_apps/boards/README.md)。
+
+## Executor plugin slice (2026-10-30)
+
+Implemented [present_executor.h](include/present_executor.h): explicitly injected
+CPU, PPA and DMA2D instances with `get_caps`, side-effect-free `probe`, blocking
+`execute`, and retryable `destroy`. Hardware implementation and SoC build guards
+live in the individual plugins; the common dispatcher has no hardware-kind or
+SoC branches. `pixel_accel.c` is now a compatibility facade: existing create /
+execute / destroy callers retain their configuration and behavior.
+
+Capabilities describe minimum alignment, transform/format support and layout
+limits. `probe` additionally checks actual addresses, cache lines, capacity and
+platform memory restrictions; it does not submit, synchronize cache or modify
+pixels. These queries are the capability input for the future S0 resolved plan;
+S0 and the full architecture migration are **not** implemented by this slice.
+
+```c
+pv2_executor_t *hardware, *cpu;
+ESP_ERROR_CHECK(pv2_executor_ppa_create(&hardware));
+ESP_ERROR_CHECK(pv2_executor_cpu_create(&cpu));
+pv2_executor_dispatch_t dispatch = { .primary = hardware, .fallback = cpu };
+pv2_executor_selection_t selected;
+ESP_ERROR_CHECK(pv2_executor_select(&dispatch, &request, &selected));
+// selected.executor and primary_reason describe the chosen path.
+// Unchanged request and borrowed executor must remain valid through execution.
+ESP_ERROR_CHECK(pv2_executor_execute(selected.executor, &request));
+// Or use .execute=pv2_executor_dispatch_execute, .execute_user=&dispatch
+// in a pixel engine. Dispatch and executors must outlive that engine.
+// After all borrowing engines successfully stop/join and are destroyed:
+ESP_ERROR_CHECK(pv2_executor_destroy(hardware));
+ESP_ERROR_CHECK(pv2_executor_destroy(cpu));
+```
+
+For a per-call selection report with execution, use `pv2_executor_run`.
+`selection.executor` is the attempted executor, not evidence of successful
+execution; inspect the return value. No shared last-result slot is used. A NULL
+fallback enforces primary-only operation. Only a valid request rejected by probe
+with `ESP_ERR_NOT_SUPPORTED` permits fallback; driver/cache/execute errors never
+trigger a second CPU write. Probe errors caused by invalid requests propagate.
+Creation of an unavailable plugin still fails even if a legacy caller requests
+CPU fallback, preserving the old create contract.
+
+Plugin ops and instance contexts are immutable while borrowed. Built-ins serialize
+execution per instance; callers still own the source/destination exclusivity
+contract. Destroy never races users and requires all engines to be stopped/joined.
+Hardware unregister failure leaves the instance intact for retry. Driver resource
+arbitration is preserved; separate plugins do not imply independent silicon.
+
+Validation: 25/25 Host + LVGL and 25/25 ASan/UBSan (leak detection disabled).
+Four separately linked plugin combinations (CPU-only, PPA-only, DMA2D-only, both)
+provide driver stubs only for enabled hardware, so hidden hardware dependencies
+fail linking. Existing accelerator pixel/cache, delayed DMA, stop and unregister
+retry tests remain. S3 and P4+LVGL offline builds passed.
+
+P4 MAC `e8:f6:0a:e7:a7:8d` was reidentified and flashed: 32 memory cases passed,
+20 actual hardware executions and 12 explicit CPU fallbacks. See
+[board results](test_apps/boards/RESULTS.md). This is executor correctness at the
+tested layouts, not a general PSRAM/cache proof, performance benchmark, full-frame
+TE result or acceptance of the future lifecycle architecture.
+
+
+## 规划入口与当前拓扑（2026-10-30）
+
+`present_plan.h` 在分配前协商模式、独立池、输出对齐与执行器能力。`required_bytes` 包括像素、coverage、框架元数据、请求栈和调用方额外预留；不是实测整机 heap 峰值。
+
+```c
+pv2_plan_config_t cfg = {
+    .presenter = existing_config,
+    .resources = { .tile_count = 2, .image_memory = PV2_MEMORY_EXTERNAL },
+    .additional_budget_bytes = driver_and_renderer_reserve,
+};
+ESP_ERROR_CHECK(pv2_lcd_scanout_get_output_caps(scanout, &cfg.output));
+pv2_resolved_plan_t plan;
+ESP_ERROR_CHECK(pv2_plan_resolve(&cfg, &plan));
+/* Review pool counts, required_bytes and pending_runtime. */
+ESP_ERROR_CHECK(pv2_presenter_create_planned(&cfg, &presenter));
+```
+
+示例需提供真实面板回调及已有配置；外部 FB 还需有效 buffers。SPI 通过 `pv2_lcd_spi_get_output_caps()` 查询；仅在底层与 adapter 都显式支持 PSRAM 直接 DMA 时选择外部发送池。
+
+LVGL INVALIDATE_AREA 在绘制前通过 `pv2_presenter_resolve_render_area()` 执行 L→P 对齐→L 协商。绑定存活期间使用 `pv2_lvgl_set_rotation()` 排空并更新绘制缓冲/分辨率，保留对象树并使全屏失效。
+
+PARTIAL 直接拷转到物理图像，额外逻辑全屏池为零；旋转 FULL/DIRECT 共享一张逻辑画布。TE/FB 共用精确 coverage、版本 history 与 repair 规划；各自推进 copy 和输出。三后端共用 frame core/transaction，allocation 独立记录基线 B、copy C、传输 T、扫描 S。完成 receipt 不意味着所有引用清零。
+
+显式双 compose 支持构建/发送重叠；未配置后台 service 时仍须由创建任务持续调用 `pv2_presenter_service()`。ISR 只交付事件，不执行发送。未知安全窗口不能超时降级为自由发送。
+
+Host/LVGL 29/29、ASan/UBSan 29/29（detect_leaks=0）。支持与明确拒绝组合、实际板测边界见 [PLAN.md](PLAN.md)。

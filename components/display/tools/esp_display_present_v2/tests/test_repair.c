@@ -171,6 +171,20 @@ static void fb(bool cancel)
     OK(o->begin(b, &q, &f));
     wait_enter(&g);
     assert(o->acquire(b, f, NULL, 0, &l) == ESP_ERR_TIMEOUT);
+    if (cancel) {
+        assert(o->cancel_frame(b, f, 0) == ESP_ERR_TIMEOUT);
+        assert(o->stop(b, 0) == ESP_ERR_TIMEOUT);
+        /* Copy is still blocked; cancel_frame must not falsely succeed after stop(0) sets closing. */
+        assert(o->cancel_frame(b, f, 0) == ESP_ERR_TIMEOUT);
+        unblock(&g);
+        wait_done(&g, n);
+        OK(o->cancel_frame(b, f, 0));
+        OK(o->stop(b, UINT32_MAX));
+        OK(o->destroy(b));
+        pthread_cond_destroy(&g.changed);
+        pthread_mutex_destroy(&g.lock);
+        return;
+    }
     unblock(&g);
     wait_done(&g, n);
     OK(o->acquire(b, f, NULL, 0, &l));
@@ -220,5 +234,51 @@ int main(void)
     te(true);
     fb(false);
     fb(true);
+    /* Also cover stop(0) during post-seal async repair. */
+    {
+        gate_t g = {.lock = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER};
+        scan_panel_t panel = {0};
+        const pv2_backend_ops_t *o = &pv2_fb_backend;
+        pv2_backend_config_t c = {.width = 4, .height = 4, .buffer_count = 2, .max_frames = 3, .format = PV2_FORMAT_RGB565, .render_contract = PV2_CONTRACT_DIRECT, .panel = scan_interface(&panel), .async_copy = true, .copy_execute = execute, .copy_user = &g, .on_progress = progress, .progress_user = &g};
+        pv2_backend_t *b;
+        OK(o->create(&c, &b));
+        pv2_frame_t f;
+        pv2_frame_request_t q = {0};
+        pv2_lease_t l;
+        pv2_receipt_t r;
+        pv2_frame_status_t status;
+        OK(o->begin(b, &q, &f));
+        OK(o->acquire(b, f, NULL, 0, &l));
+        memset(l.surface.pixels, 0x11, 32);
+        OK(o->submit_region(b, f, l.id));
+        OK(o->end(b, f, &r));
+        OK(pv2_fb_service(b));
+        scan_confirm(&panel);
+        OK(o->wait(b, r, PV2_COMPLETION_PRESENT_CONFIRMED, 0, &status));
+        OK(o->release_receipt(b, r));
+        arm(&g);
+        unsigned n = count(&g);
+        OK(o->begin(b, &q, &f));
+        wait_enter(&g);
+        unblock(&g);
+        wait_done(&g, n);
+        OK(o->acquire(b, f, NULL, 0, &l));
+        pv2_region_submit_t sub = {.logical_area = {0, 0, 1, 1}, .stride_bytes = 8};
+        OK(o->submit_region_ex(b, f, l.id, &sub));
+        arm(&g);
+        n = count(&g);
+        OK(o->end(b, f, &r));
+        wait_enter(&g);
+        assert(o->stop(b, 0) == ESP_ERR_TIMEOUT);
+        unblock(&g);
+        wait_done(&g, n);
+        OK(o->stop(b, UINT32_MAX));
+        OK(o->query(b, r, &status));
+        assert(status.terminal);
+        OK(o->release_receipt(b, r));
+        OK(o->destroy(b));
+        pthread_cond_destroy(&g.changed);
+        pthread_mutex_destroy(&g.lock);
+    }
     puts("repair: gated TE spans, FB prefill/DIRECT, cancel and stop retention passed");
 }

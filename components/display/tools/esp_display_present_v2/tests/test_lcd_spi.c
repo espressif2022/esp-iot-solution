@@ -17,7 +17,7 @@ struct fake_lcd {
     esp_err_t draw_result;
     size_t draws, pending;
     int x0, y0, x1, y1;
-    uint8_t bytes[32];
+    uint8_t bytes[64];
 };
 
 static esp_err_t cache_result;
@@ -34,6 +34,12 @@ bool esp_ptr_dma_capable(const void *p)
 {
     (void)p;
     return dma_capable;
+}
+
+bool esp_ptr_dma_ext_capable(const void *p)
+{
+    (void)p;
+    return !internal && dma_capable;
 }
 
 esp_err_t esp_cache_msync(void *p, size_t bytes, int flags)
@@ -278,8 +284,32 @@ static void gram_integration(void)
     assert(pv2_lcd_spi_destroy(adapter) == ESP_OK);
 }
 
+static void external_dma(void)
+{
+    struct fake_lcd lcd = {0};
+    pv2_lcd_spi_config_t cfg = {.panel = &lcd, .io = &lcd, .format = PV2_FORMAT_RGB565, .max_inflight = 1, .psram_dma_direct = true};
+    pv2_lcd_spi_t *adapter;
+    assert(pv2_lcd_spi_create(&cfg, &adapter) == ESP_OK);
+    pv2_panel_adapter_t api;
+    assert(pv2_lcd_spi_get_interface(adapter, &api) == ESP_OK);
+    sink_t sink = {0};
+    assert(api.attach(api.context, sink_event, &sink) == ESP_OK);
+    _Alignas(64) uint8_t pixels[64] = {0};
+    pv2_surface_t surface = {pixels, 64, {8, 4, 16, PV2_FORMAT_RGB565, PV2_ORDER_NATIVE}};
+    pv2_rect_t area = {0, 0, 8, 4};
+    internal = false;
+    assert(api.submit(api.context, &surface, &area, 123).acceptance == PV2_TX_ACCEPTED);
+    complete(&lcd);
+    dma_capable = false;
+    assert(api.submit(api.context, &surface, &area, 124).acceptance == PV2_TX_REJECTED);
+    internal = dma_capable = true;
+    assert(api.quiesce(api.context, 0) == ESP_OK);
+    assert(pv2_lcd_spi_destroy(adapter) == ESP_OK);
+}
+
 int main(void)
 {
+    external_dma();
     fifo_and_validation();
     early_and_uncertain();
     callback_exit_barrier();

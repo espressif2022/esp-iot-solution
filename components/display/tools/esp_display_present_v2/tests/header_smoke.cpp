@@ -7,6 +7,8 @@
 #include "present_lcd_spi.h"
 #include "present_presenter.h"
 #include "present_pixel_accel.h"
+#include "present_executor.h"
+#include "present_plan.h"
 #include "present_lcd_scanout.h"
 int main()
 {
