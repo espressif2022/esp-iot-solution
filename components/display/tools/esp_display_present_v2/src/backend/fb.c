@@ -652,8 +652,7 @@ static esp_err_t fb_create(const pv2_backend_config_t *c, pv2_backend_t **out)
     }
     if ((c->rotation < PV2_ROTATE_0 || c->rotation > PV2_ROTATE_270) || c->in_place_convert ||
             c->render_contract > PV2_CONTRACT_DIRECT || c->render_contract < PV2_CONTRACT_PARTITION ||
-            (c->buffer_count == 1 && !c->allow_active_scanout_writes) ||
-            (c->render_contract != PV2_CONTRACT_PARTITION && c->draw_order != c->panel_order)) {
+            (c->buffer_count == 1 && !c->allow_active_scanout_writes)) {
         return ESP_ERR_INVALID_ARG;
     }
     if (c->render_contract == PV2_CONTRACT_PARTITION && (!c->tile_rows || c->tile_rows > c->height)) {
@@ -737,13 +736,14 @@ static esp_err_t fb_create(const pv2_backend_config_t *c, pv2_backend_t **out)
             b->slots[i].surface.layout.width = quarter ? c->height : c->width;
             b->slots[i].surface.layout.height = quarter ? c->width : c->height;
             b->slots[i].surface.layout.stride_bytes = b->slots[i].surface.layout.width * bpp;
-        } else if (c->rotation != PV2_ROTATE_0) {
+        } else if (c->rotation != PV2_ROTATE_0 || c->draw_order != c->panel_order) {
             bool quarter = c->rotation == PV2_ROTATE_90 || c->rotation == PV2_ROTATE_270;
             b->slots[i].scan = b->slots[i].surface;
             b->slots[i].scan_owned = b->slots[i].draw_owned;
             b->slots[i].scan.layout.width = quarter ? c->height : c->width;
             b->slots[i].scan.layout.height = quarter ? c->width : c->height;
             b->slots[i].scan.layout.stride_bytes = b->slots[i].scan.layout.width * bpp;
+            b->slots[i].surface.layout.byte_order = c->draw_order;
             b->slots[i].surface.pixels = i ? b->slots[0].surface.pixels : pv2_alloc_pixels_in(bytes, c->logical_in_psram);
             b->slots[i].draw_owned = i == 0;
             if (!b->slots[i].surface.pixels) {
@@ -833,11 +833,9 @@ static esp_err_t fb_begin(pv2_backend_t *b, const pv2_frame_request_t *request, 
     if (b->active != SIZE_MAX) {
         return post_seal_stage(b->slots[b->active].state) ? ESP_ERR_NO_MEM : ESP_ERR_INVALID_STATE;
     }
-    pv2_lock_enter(&b->lock, false);
-    bool unavailable = (b->core.life != PV2_CORE_RUNNING) || b->core.fault.result != ESP_OK;
-    pv2_lock_exit(&b->lock, false);
-    if (unavailable) {
-        return ESP_ERR_INVALID_STATE;
+    error = pv2_frame_core_admit(&b->core, &b->lock, b->config.width, b->config.height, request, out);
+    if (error != ESP_OK) {
+        return error;
     }
     size_t slot = SIZE_MAX, record = SIZE_MAX;
     for (size_t i = 0; i < b->config.buffer_count; i++) {
@@ -1106,6 +1104,8 @@ static esp_err_t fb_end_ex(pv2_backend_t *b, pv2_frame_t frame,
     fb_record_t *record = &b->core.frames[slot->record];
     slot->state = FB_SLOT_DRAIN_TILE;
     record->common.external = out != NULL;
+    record->sealed = true;
+    record->pending = 1;
     fb_advance_result_t progress = advance_build_pipeline(b, FB_SEAL_ATTEMPT);
     if (progress.state == FB_ADVANCE_PENDING) {
         if (out) {
@@ -1116,6 +1116,8 @@ static esp_err_t fb_end_ex(pv2_backend_t *b, pv2_frame_t frame,
     if (progress.state != FB_ADVANCE_COMPLETE) {
         slot->state = FB_SLOT_DRAWING;
         record->common.external = false;
+        record->sealed = false;
+        record->pending = 0;
         return progress.state == FB_ADVANCE_FAILED ? progress.error : ESP_ERR_INVALID_STATE;
     }
     if (out) {
@@ -1161,56 +1163,24 @@ static esp_err_t fb_cancel_frame(pv2_backend_t *b, pv2_frame_t frame, uint32_t t
     }
 }
 
-static fb_record_t *find_record(pv2_backend_t *b, pv2_receipt_t receipt)
-{
-    return pv2_record_find(b->core.frames, b->config.max_frames, sizeof(*b->core.frames), receipt.value, true);
-}
-
 static esp_err_t fb_query(pv2_backend_t *b, pv2_receipt_t receipt, pv2_frame_status_t *out)
 {
     if (!b || !out) {
         return ESP_ERR_INVALID_ARG;
     }
     (void)pv2_fb_service(b);
-    pv2_lock_enter(&b->lock, false);
-    fb_record_t *record = find_record(b, receipt);
-    if (!record) {
-        pv2_lock_exit(&b->lock, false);
-        return ESP_ERR_INVALID_STATE;
-    }
-    *out = pv2_record_status(&record->common, true, record->common.terminal, record->common.terminal, record->common.terminal && record->common.result == ESP_OK);
-    pv2_lock_exit(&b->lock, false);
-    return ESP_OK;
+    return pv2_frame_core_query(&b->core, &b->lock, receipt, true, out);
 }
 
 static esp_err_t fb_get_fault(pv2_backend_t *b, pv2_backend_fault_t *out)
 {
-    if (!b || !out) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    pv2_lock_enter(&b->lock, false);
-    *out = b->core.fault;
-    pv2_lock_exit(&b->lock, false);
-    return ESP_OK;
+    return b ? pv2_frame_core_get_fault(&b->core, &b->lock, out) : ESP_ERR_INVALID_ARG;
 }
 
 static esp_err_t fb_wait(pv2_backend_t *b, pv2_receipt_t receipt, pv2_completion_point_t point,
                          uint32_t timeout, pv2_frame_status_t *out)
 {
-    if (point != PV2_COMPLETION_SOURCE_RELEASED && point != PV2_COMPLETION_PRESENT_CONFIRMED) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    uint64_t start = pv2_now_ms();
-    for (;;) {
-        esp_err_t error = fb_query(b, receipt, out);
-        if (error != ESP_OK || out->terminal) {
-            return error;
-        }
-        if (pv2_expired(start, timeout)) {
-            return ESP_ERR_TIMEOUT;
-        }
-        pv2_pause();
-    }
+    return pv2_frame_core_wait(b, fb_query, receipt, point, true, timeout, out);
 }
 
 static esp_err_t fb_release_receipt(pv2_backend_t *b, pv2_receipt_t receipt)
@@ -1219,15 +1189,7 @@ static esp_err_t fb_release_receipt(pv2_backend_t *b, pv2_receipt_t receipt)
         return ESP_ERR_INVALID_ARG;
     }
     (void)pv2_fb_service(b);
-    pv2_lock_enter(&b->lock, false);
-    fb_record_t *record = find_record(b, receipt);
-    esp_err_t error = ESP_ERR_INVALID_STATE;
-    if (record && record->common.terminal) {
-        record->common.token = 0;
-        error = ESP_OK;
-    }
-    pv2_lock_exit(&b->lock, false);
-    return error;
+    return pv2_frame_core_release_receipt(&b->core, &b->lock, receipt);
 }
 
 static esp_err_t fb_stop(pv2_backend_t *b, uint32_t timeout)
@@ -1279,13 +1241,9 @@ static esp_err_t fb_destroy(pv2_backend_t *b)
     if (!b) {
         return ESP_ERR_INVALID_ARG;
     }
-    if ((b->core.life != PV2_CORE_QUIESCENT)) {
-        return ESP_ERR_INVALID_STATE;
-    }
-    for (size_t i = 0; i < b->config.max_frames; i++) {
-        if (b->core.frames[i].common.token) {
-            return ESP_ERR_INVALID_STATE;
-        }
+    esp_err_t err = pv2_frame_core_can_destroy(&b->core);
+    if (err != ESP_OK) {
+        return err;
     }
     free_backend(b);
     return ESP_OK;
@@ -1324,7 +1282,8 @@ static esp_err_t fb_set_rotation(pv2_backend_t *b, pv2_rotation_t rotation)
         pv2_image_reset(&b->image, b->image.width, b->image.height);
         return ESP_OK;
     }
-    if (rotation == PV2_ROTATE_0 && b->scan_storage) {
+    bool need_scan_storage = rotation != PV2_ROTATE_0 || b->config.draw_order != b->config.panel_order;
+    if (!need_scan_storage && b->scan_storage) {
         /* Drained receipts do not retire current scanout. Preserve the physical
          * pool and each slot's FB_SLOT_SCANNING/FB_SLOT_FREE state; free only logical storage. */
         for (size_t i = 0; i < b->config.buffer_count; i++) {
@@ -1339,7 +1298,7 @@ static esp_err_t fb_set_rotation(pv2_backend_t *b, pv2_rotation_t rotation)
             b->slots[i].scan_owned = false;
         }
         b->scan_storage = false;
-    } else if (!b->scan_storage) {
+    } else if (need_scan_storage && !b->scan_storage) {
         void *draw = pv2_alloc_pixels_in(b->bytes, b->config.logical_in_psram);
         if (!draw) {
             return ESP_ERR_NO_MEM;
@@ -1349,6 +1308,7 @@ static esp_err_t fb_set_rotation(pv2_backend_t *b, pv2_rotation_t rotation)
             b->slots[i].scan = b->slots[i].surface;
             b->slots[i].scan_owned = b->slots[i].draw_owned;
             b->slots[i].surface.pixels = draw;
+            b->slots[i].surface.layout.byte_order = b->config.draw_order;
             b->slots[i].draw_owned = i == 0;
         }
         b->scan_storage = true;
@@ -1357,6 +1317,7 @@ static esp_err_t fb_set_rotation(pv2_backend_t *b, pv2_rotation_t rotation)
         b->slots[i].surface.layout.width = width;
         b->slots[i].surface.layout.height = height;
         b->slots[i].surface.layout.stride_bytes = width * bpp;
+        b->slots[i].surface.layout.byte_order = b->config.draw_order;
     }
     b->config.width = width;
     b->config.height = height;

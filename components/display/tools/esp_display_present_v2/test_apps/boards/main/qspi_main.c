@@ -89,15 +89,22 @@ static pv2_tx_result_t metered_submit(void *ctx, const pv2_surface_t *s, const p
 {
     meter_t *m = ctx;
     portENTER_CRITICAL(&mux);
-    m->started = esp_timer_get_time();
-    m->edge_at_submit = last_rise;
-    uint64_t age = last_rise ? m->started - last_rise : 0;
-    if (age > m->max_edge_age) {
-        m->max_edge_age = age;
-    }
-    m->offered++;
+    uint64_t now = esp_timer_get_time();
+    uint64_t rise = last_rise;
+    m->started = now;
+    m->edge_at_submit = rise;
     portEXIT_CRITICAL(&mux);
-    return m->real.submit(m->real.context, s, area, cookie);
+    pv2_tx_result_t res = m->real.submit(m->real.context, s, area, cookie);
+    if (res.acceptance != PV2_TX_REJECTED) {
+        portENTER_CRITICAL(&mux);
+        uint64_t age = rise ? now - rise : 0;
+        if (age > m->max_edge_age) {
+            m->max_edge_age = age;
+        }
+        m->offered++;
+        portEXIT_CRITICAL(&mux);
+    }
+    return res;
 }
 static esp_err_t metered_stop(void *ctx, uint32_t timeout)
 {
@@ -183,10 +190,84 @@ static uint64_t run(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_handle_t io,
     check(meter.done == meter.offered ? ESP_OK : ESP_FAIL, "callbacks balanced");
     ESP_LOGI(TAG, "window_overruns=%u", meter.overruns);
     check(meter.overruns == 0 ? ESP_OK : ESP_FAIL, "TE pulse overrun");
-    ESP_LOGI(TAG, "PASS %s frames=%u tx=%u callbacks=%u max_tx_us=%"PRIu64" max_edge_age_us=%"PRIu64" internal=%u",
+    ESP_LOGI(TAG, "PASS %s frames=%u tx=%u callbacks=%u max_tx_us=%"PRIu64" max_edge_age_us=%"PRIu64" internal=%u psram=%u",
              te ? (roi ? "TE_ROI" : "TE_FULL_EDGE_SYNC_UNVERIFIED") : roi ? "GRAM_ROI" : "GRAM_FULL", frames, meter.offered, meter.done, meter.max_tx, meter.max_edge_age,
-             (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
     return meter.max_tx;
+}
+
+static void run_rotation_async(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_handle_t io,
+                               bool te, size_t compose_count, uint32_t window, uint32_t budget)
+{
+    unsigned w = 480, h = 480, tile = 16;
+    check(esp_lcd_panel_set_gap(panel, 0, 0), "gap");
+    pv2_lcd_spi_t *adapter;
+    pv2_lcd_spi_config_t spi = {.panel = panel, .io = io, .format = PV2_FORMAT_RGB565, .byte_order = PV2_ORDER_SWAPPED, .max_inflight = 1, .psram_dma_direct = true};
+    check(pv2_lcd_spi_create(&spi, &adapter), "adapter create");
+    meter_t meter = {.window = te ? window : 0};
+    check(pv2_lcd_spi_get_interface(adapter, &meter.real), "adapter interface");
+    pv2_presenter_config_t cfg = {.backend_kind = te ? PV2_PRESENTER_TE : PV2_PRESENTER_GRAM,
+                                  .timeout_ms = 2000, .background_service = true,
+                                  .backend = {.image_in_psram = te, .compose_count = te ? compose_count : 0,
+                                              .width = w, .height = h, .tile_rows = tile, .buffer_count = 2, .max_frames = 3,
+                                              .format = PV2_FORMAT_RGB565, .panel_order = PV2_ORDER_SWAPPED, .async_copy = true,
+                                              .panel = {&meter, metered_attach, metered_submit, metered_stop},
+                                              .te_window_us = window, .te_transfer_budget_us = budget
+                                             }
+                                 };
+    pv2_presenter_t *p;
+    check(pv2_presenter_create(&cfg, &p), "presenter create");
+    if (te) {
+        portENTER_CRITICAL(&mux);
+        te_presenter = p;
+        portEXIT_CRITICAL(&mux);
+    }
+    const pv2_rotation_t rots[] = {PV2_ROTATE_0, PV2_ROTATE_90, PV2_ROTATE_180, PV2_ROTATE_270, PV2_ROTATE_0};
+    for (size_t r = 0; r < sizeof(rots) / sizeof(rots[0]); ++r) {
+        check(pv2_presenter_set_rotation(p, rots[r], 2000), "set_rotation");
+        for (unsigned f = 0; f < 2; ++f) {
+            pv2_frame_request_t req = {.full_redraw = true};
+            check(pv2_presenter_begin_next_frame(p, &req), "begin");
+            for (unsigned y = 0; y < h; y += tile) {
+                pv2_lease_t l;
+                check(pv2_presenter_acquire_buffer(p, &l), "acquire");
+                uint16_t *pixels = l.surface.pixels;
+                unsigned rows = h - y < tile ? h - y : tile;
+                for (unsigned j = 0; j < rows; j++) {
+                    for (unsigned x = 0; x < w; x++) {
+                        uint16_t c = colors[x * 8 / w];
+                        if (x < 2 || x >= w - 2 || y + j < 2 || y + j >= h - 2) {
+                            c = te ? 0x07e0 : 0xffff;
+                        }
+                        pixels[j * w + x] = c;
+                    }
+                }
+                pv2_area_t area = {0, y, w - 1, y + rows - 1};
+                check(pv2_presenter_submit_buffer(p, &l, &area, w * 2), "submit");
+            }
+            pv2_presenter_receipt_t receipt;
+            check(pv2_presenter_commit_with_receipt(p, NULL, &receipt), "commit");
+            pv2_frame_status_t state;
+            check(pv2_presenter_wait_frame(p, receipt, PV2_COMPLETION_SOURCE_RELEASED, 2000, &state), "wait");
+            check(state.result, "result");
+            check(pv2_presenter_release_receipt(p, receipt), "release");
+        }
+    }
+    portENTER_CRITICAL(&mux);
+    te_presenter = NULL;
+    portEXIT_CRITICAL(&mux);
+    check(pv2_presenter_stop(p, 2000), "stop");
+    check(pv2_presenter_destroy(p), "destroy");
+    check(pv2_lcd_spi_destroy(adapter), "adapter destroy");
+    check(meter.done == meter.offered ? ESP_OK : ESP_FAIL, "callbacks balanced");
+    check(heap_caps_check_integrity_all(true) ? ESP_OK : ESP_FAIL, "heap integrity");
+    ESP_LOGI(TAG, "COMBO_PASS kind=%s compose=%u rots=5 tx=%u max_tx_us=%"PRIu64" min_int=%u min_psram=%u free_int=%u free_psram=%u",
+             te ? "TE_ASYNC_ROT" : "GRAM_ASYNC_ROT", (unsigned)compose_count, meter.offered, meter.max_tx,
+             (unsigned)heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL),
+             (unsigned)heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM),
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
 }
 void app_main(void)
 {
@@ -209,6 +290,9 @@ void app_main(void)
      * only aligns with an edge; it is NOT a certified scan-phase window. */
     ESP_LOGW(TAG, "Full-frame edge synchronization only; optical phase model UNVERIFIED");
     run(panel, io, true, false, 12, (uint32_t)(3 * min), (uint32_t)(2 * min));
+    run_rotation_async(panel, io, false, 0, 0, 0);
+    run_rotation_async(panel, io, true, 1, (uint32_t)(3 * min), (uint32_t)(2 * min));
+    run_rotation_async(panel, io, true, 2, (uint32_t)(3 * min), (uint32_t)(2 * min));
     /* ROI GRAM consists of one band. Budget accounts for its measured
      * maximum plus dispatch margin; must fit measured pulse high duration.
      * Pulse timing is only a diagnostic proxy, not a proven optical safe window. */

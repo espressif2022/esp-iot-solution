@@ -472,23 +472,28 @@ static esp_err_t validate_damage(pv2_backend_t *backend, const pv2_rect_t *areas
 
 static esp_err_t te_begin(pv2_backend_t *backend, const pv2_frame_request_t *request, pv2_frame_t *out)
 {
-    if (!out) {
+    if (!backend) {
+        if (out) {
+            out->value = 0;
+        }
         return ESP_ERR_INVALID_ARG;
     }
-    out->value = 0;
-    if (!backend || !request) {
-        return ESP_ERR_INVALID_ARG;
+    if (request) {
+        esp_err_t error = validate_damage(backend, request->damage, request->damage_count);
+        if (error != ESP_OK) {
+            if (out) {
+                out->value = 0;
+            }
+            return error;
+        }
     }
-    esp_err_t error = validate_damage(backend, request->damage, request->damage_count);
+    (void)pv2_te_service(backend);
+    esp_err_t error = pv2_frame_core_admit(&backend->core, &backend->lock,
+                                           backend->config.width, backend->config.height, request, out);
     if (error != ESP_OK) {
         return error;
     }
-    (void)pv2_te_service(backend);
     pv2_lock_enter(&backend->lock, false);
-    if (backend->core.life != PV2_CORE_RUNNING || backend->core.fault.result != ESP_OK) {
-        pv2_lock_exit(&backend->lock, false);
-        return ESP_ERR_INVALID_STATE;
-    }
     bool busy = backend->core.active != SIZE_MAX;
     if (!backend->config.compose_count)
         for (size_t k = 0; k < backend->config.max_frames; k++) {
@@ -717,6 +722,8 @@ static esp_err_t te_end_ex(pv2_backend_t *backend, pv2_frame_t frame,
         backend->core.frames[backend->core.active].common.external = true;
         out->value = frame.value;
     }
+    backend->core.frames[backend->core.active].sealed = true;
+    backend->core.frames[backend->core.active].pending = 1;
     backend->core.active = SIZE_MAX;
     pv2_lock_exit(&backend->lock, false);
     /* end consumes frame regardless of later panel acceptance; service reports
@@ -764,62 +771,24 @@ static esp_err_t te_cancel_frame(pv2_backend_t *backend, pv2_frame_t frame, uint
     } while (true);
 }
 
-static te_record_t *find_receipt(pv2_backend_t *backend, pv2_receipt_t receipt)
-{
-    return pv2_record_find(backend->core.frames, backend->config.max_frames, sizeof(*backend->core.frames), receipt.value, true);
-}
-
 static esp_err_t te_query(pv2_backend_t *backend, pv2_receipt_t receipt, pv2_frame_status_t *out)
 {
     if (!backend || !out) {
         return ESP_ERR_INVALID_ARG;
     }
     (void)pv2_te_service(backend);
-    pv2_lock_enter(&backend->lock, false);
-    te_record_t *record = find_receipt(backend, receipt);
-    if (!record) {
-        pv2_lock_exit(&backend->lock, false);
-        return ESP_ERR_INVALID_STATE;
-    }
-    *out = pv2_record_status(&record->common, true, record->common.terminal, record->common.terminal, false);
-    pv2_lock_exit(&backend->lock, false);
-    return ESP_OK;
+    return pv2_frame_core_query(&backend->core, &backend->lock, receipt, false, out);
 }
 
 static esp_err_t te_get_fault(pv2_backend_t *backend, pv2_backend_fault_t *out)
 {
-    if (!backend || !out) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    pv2_lock_enter(&backend->lock, false);
-    *out = backend->core.fault;
-    pv2_lock_exit(&backend->lock, false);
-    return ESP_OK;
+    return backend ? pv2_frame_core_get_fault(&backend->core, &backend->lock, out) : ESP_ERR_INVALID_ARG;
 }
 
 static esp_err_t te_wait(pv2_backend_t *backend, pv2_receipt_t receipt, pv2_completion_point_t point,
                          uint32_t timeout, pv2_frame_status_t *out)
 {
-    if (!backend || !out) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    if (point == PV2_COMPLETION_PRESENT_CONFIRMED) {
-        return ESP_ERR_NOT_SUPPORTED;
-    }
-    if (point != PV2_COMPLETION_SOURCE_RELEASED) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    uint64_t start = pv2_now_ms();
-    do {
-        esp_err_t error = te_query(backend, receipt, out);
-        if (error != ESP_OK || out->terminal) {
-            return error;
-        }
-        if (pv2_expired(start, timeout)) {
-            return ESP_ERR_TIMEOUT;
-        }
-        pv2_pause();
-    } while (true);
+    return pv2_frame_core_wait(backend, te_query, receipt, point, false, timeout, out);
 }
 
 static esp_err_t te_release_receipt(pv2_backend_t *backend, pv2_receipt_t receipt)
@@ -828,15 +797,7 @@ static esp_err_t te_release_receipt(pv2_backend_t *backend, pv2_receipt_t receip
         return ESP_ERR_INVALID_ARG;
     }
     (void)pv2_te_service(backend);
-    pv2_lock_enter(&backend->lock, false);
-    te_record_t *record = find_receipt(backend, receipt);
-    esp_err_t error = ESP_ERR_INVALID_STATE;
-    if (record && record->common.terminal) {
-        record->common.token = 0;
-        error = ESP_OK;
-    }
-    pv2_lock_exit(&backend->lock, false);
-    return error;
+    return pv2_frame_core_release_receipt(&backend->core, &backend->lock, receipt);
 }
 
 static esp_err_t te_stop(pv2_backend_t *backend, uint32_t timeout)
@@ -893,13 +854,9 @@ static esp_err_t te_destroy(pv2_backend_t *backend)
     if (!backend) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (backend->core.life != PV2_CORE_QUIESCENT) {
-        return ESP_ERR_INVALID_STATE;
-    }
-    for (size_t i = 0; i < backend->config.max_frames; i++) {
-        if (backend->core.frames[i].common.token) {
-            return ESP_ERR_INVALID_STATE;
-        }
+    esp_err_t err = pv2_frame_core_can_destroy(&backend->core);
+    if (err != ESP_OK) {
+        return err;
     }
     free_backend(backend);
     return ESP_OK;

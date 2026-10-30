@@ -4,18 +4,19 @@
 
 | 板子 / 身份 | 本轮路径 | 结果 |
 | --- | --- | --- |
-| P4 `e8:f6:0a:e7:a7:8d` / 1024×600 MIPI | 规划入口，FULL/DIRECT/PARTIAL，双/三 FB，PARTIAL 两 tile | 五模式两轮，480 帧逐像素对照与确认；stop/recreate 后 heap 回归 |
-| P4 同板 | CPU/PPA/DMA2D，内部/PSRAM，RGB565/RGB888、四方向 | 32 例：PPA 16、DMA2D 4、明确 CPU 回退 12 |
-| S3 `90:e5:b1:d0:a9:d8` / 480×480 RGB bounce | 同样五模式与新池配置 | 完整一轮 240 帧通过；第二轮部分结果不计入总数 |
-| S31 `30:ed:a0:f4:0b:34` / 480×480 QSPI | GRAM 全屏 | 8 帧、240 次传输与完成匹配 |
-| S31 同板 | 显式双 compose，PSRAM→SPI2，TE 全屏 | 12 帧、12 次完成；最长传输 23747 µs；只验证边沿门控/资源，不验证光学相位 |
-| S31 同板 | GRAM 64×16 / TE 64×16 | GRAM 32 帧；TE 31 轮×120=3720 帧，零记录窗口超出 |
+| P4 `e8:f6:0a:e7:a7:8d` / 1024×600 MIPI | 规划入口，FULL/DIRECT/PARTIAL，双/三 FB，PARTIAL 两 tile | 五模式完整轮次，逐像素对照与确认；stop/recreate 后 heap 回归 |
+| P4 同板 | CPU/PPA/DMA2D 独立算子对照（内部/PSRAM，RGB565/RGB888、四方向） | 32 例：PPA 16、DMA2D 4、明确 CPU 回退 12 |
+| P4 同板 | **显示组合**：`DOUBLE_FULL` / `DOUBLE_DIRECT` / `TRIPLE_PARTIAL` × (`async-cpu` / `async-ppa` / `async-dma2d`) × 5 次动态旋转 (`0°→90°→180°→270°→0°`) | 9 组全部 `COMBO_PASS`（每组 10 帧逐像素旋转比对通过）；`DOUBLE_FULL` 下 `async-ppa` 平均等待 **34.2 ms**（对比 `async-cpu` 375.4 ms 提速 11 倍）；`TRIPLE_PARTIAL` 下 `async-dma2d` 平均等待 **70.7 ms**（对比 `async-cpu` 96.7 ms） |
+| S3 `90:e5:b1:d0:a9:d8` / 480×480 RGB bounce | 五模式基线 + **显示组合**：`DOUBLE_FULL` / `DOUBLE_DIRECT` / `TRIPLE_PARTIAL` × `async-cpu` × 5 次动态旋转 (`0°→90°→180°→270°→0°`) | 五模式 240 帧 + 3 组旋转异步组合（30 帧）全部 `PASS` / `COMBO_PASS`；每组销毁后内部空闲稳定回归 **352319 B**、PSRAM **16774784 B**（峰值最低内部剩余 222752 B） |
+| S31 `30:ed:a0:f4:0b:34` / 480×480 QSPI | GRAM 全屏 / TE 全屏双 compose（PSRAM→SPI2） | GRAM 8 帧（240 次传输）；TE 12 帧（最长传输 23778 µs）；边沿门控验证 |
+| S31 同板 | **显示组合**：480×480 全屏 `GRAM_ASYNC_ROT`、`TE_ASYNC_ROT (单 compose=1)`、`TE_ASYNC_ROT (双 compose=2)` × 5 次动态旋转 (`0°→90°→180°→270°→0°`) | 3 组全部 `COMBO_PASS`（GRAM 300 次传输 `max_tx=1086 µs`；单/双 compose TE 各 10 帧 `max_tx=23854/23867 µs`）；销毁后内部空闲稳定回归 **443811 B**、PSRAM **16774284 B** |
+| S31 同板 | GRAM 64×16 / TE 64×16 | GRAM 32 帧；TE 连续多轮 120 帧/轮，零记录窗口超出 |
 
 S31 初次双全屏内部池创建失败（内部剩余 443811 B，一张图 460800 B）。没有缩小全屏测试，而是核查本地 IDF 的 S31 SPI2 外部 DMA 支持后，显式打开 LCD IO 和 adapter 的 `psram_dma_direct`，将 compose 放入 PSRAM。后续各轮内部空闲值回到 443811 B。原失败日志保留，不能把配置不可能创建误报为通过。
 
 全屏 TE 固件明确打印 `TE_FULL_EDGE_SYNC_UNVERIFIED`：其发送预算 33442 µs、边沿门控 50163 µs，不是光学无撕裂证明。539 µs TE 高脉冲仅用于保守 ROI。动态线性模型已通过 Host 数学/边界测试，真实面板扫描规律和最坏写入包络仍需单独测量。
 
-本轮 Host/LVGL 29/29，ASan/UBSan 29/29，`detect_leaks=0`。S3/P4+LVGL 和 S31 最终离线构建通过。旋转拓扑、延迟 copy/发送、明确拒收与不确定接受、cancel/stop 重试、版本 repair 及多实例以 Host 测试验收；本轮五模式板测采用零旋转，不能代替这些组合的真机验收。
+本轮 Host/LVGL 29/29，ASan/UBSan 29/29，`detect_leaks=0`。S3/P4+LVGL 和 S31 最终离线构建通过。延迟 copy/发送、明确拒收与不确定接受、cancel/stop 重试、版本 repair 及多实例以 Host 测试验收；三板补充验收已覆盖 S3/P4/S31 的运行时五次方向切换 (`0°→90°→180°→270°→0°`)、异步 copy、单/双 compose 切换及 P4 PPA/DMA2D 硬件加速与显示的端到端组合（日志见 `artifacts/{s3,p4,s31}-combo.log`）。
 
 证据位于忽略目录 `artifacts/`：`migration-summary.json`、`migration-{p4,s3,s31}.bin` 和 `pv2-all-*.log`。JSON SHA256 对应实际烧入文件。板测之后增加的规划阶段非法时序/长度/反向 band 对齐检查已独立 Host 与离线编译；不把随后重建的 bin 哈希冒充已烧版本。
 

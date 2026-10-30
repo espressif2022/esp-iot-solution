@@ -27,12 +27,25 @@ typedef struct {
 esp_err_t pv2_frame_core_init(pv2_frame_core_t *core, size_t count);
 void pv2_frame_core_deinit(pv2_frame_core_t *core);
 pv2_core_frame_t *pv2_frame_core_find(pv2_frame_core_t *core, uint64_t token);
+pv2_core_frame_t *pv2_frame_core_find_receipt(pv2_frame_core_t *core, pv2_receipt_t receipt);
+esp_err_t pv2_frame_core_admit(pv2_frame_core_t *core, pv2_lock_t *lock,
+                               uint32_t width, uint32_t height,
+                               const pv2_frame_request_t *request, pv2_frame_t *out);
 esp_err_t pv2_frame_core_begin(pv2_frame_core_t *core, pv2_frame_t *out);
 esp_err_t pv2_frame_core_seal(pv2_frame_core_t *core, pv2_core_frame_t *frame, pv2_receipt_t *out);
 void pv2_frame_core_reap(pv2_frame_core_t *core, pv2_core_frame_t *frame);
 void pv2_frame_core_complete(pv2_frame_core_t *core, pv2_core_frame_t *frame);
 void pv2_frame_core_fail(pv2_frame_core_t *core, pv2_core_frame_t *frame, uint64_t cookie, esp_err_t error);
 esp_err_t pv2_frame_core_release(pv2_core_frame_t *frame);
+esp_err_t pv2_frame_core_query(pv2_frame_core_t *core, pv2_lock_t *lock, pv2_receipt_t receipt,
+                               bool supports_present, pv2_frame_status_t *out);
+esp_err_t pv2_frame_core_get_fault(pv2_frame_core_t *core, pv2_lock_t *lock, pv2_backend_fault_t *out);
+esp_err_t pv2_frame_core_wait(pv2_backend_t *backend,
+                              esp_err_t (*query)(pv2_backend_t *, pv2_receipt_t, pv2_frame_status_t *),
+                              pv2_receipt_t receipt, pv2_completion_point_t point,
+                              bool supports_present, uint32_t timeout, pv2_frame_status_t *out);
+esp_err_t pv2_frame_core_release_receipt(pv2_frame_core_t *core, pv2_lock_t *lock, pv2_receipt_t receipt);
+esp_err_t pv2_frame_core_can_destroy(const pv2_frame_core_t *core);
 /* Call only after output/copy quiescence. Rejects outstanding access/leases. */
 esp_err_t pv2_frame_core_quiescent(pv2_frame_core_t *core);
 

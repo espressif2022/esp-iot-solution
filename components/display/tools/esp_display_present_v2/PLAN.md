@@ -13,7 +13,7 @@
 | S3 TE | 显式单/双 compose，前帧发送与后帧构建重叠，FIFO 输出，边沿重试；线性扫描模型的动态相位准入 | Host 覆盖延迟 DMA、拒收及故障；模型不能自动推断真实面板扫描规律 |
 | S4 FB | 接公共核心/构建器，多 tile 独立于 image 数；PARTIAL 边拷边转；FULL/DIRECT 共享一张逻辑画布 | PARTIAL 无额外逻辑全屏池；已扫描图像一直持有 S 引用 |
 | S5 Presenter/LVGL | 规划入口、失效区域协商、拆 band、三绘制契约、运行时旋转保留对象树 | `pv2_lvgl_set_rotation()` 排空后重绑；原 tracking 与事件/后台 service 契约保留 |
-| S6 验收 | Host/LVGL 29/29、ASan/UBSan 29/29；S3/P4/S31 构建与对应硬件路径运行，用户确认三板画面正常 | 本轮板测详见 RESULTS；真实光学无撕裂、长期压力和性能边界仍需独立验收 |
+| S6 验收 | Host/LVGL 29/29、ASan/UBSan 29/29；S3/P4/S31 实板覆盖五模式基线 + 动态四方向旋转、异步 copy、单/双 compose 与 P4 PPA/DMA2D 硬件加速显示组合 | 本轮板测详见 RESULTS；真实光学 TE 扫描相位模型仍需结合面板扫描资料或光学测量独立确认 |
 
 ## 当前流水线与职责
 
@@ -38,12 +38,12 @@ flowchart TD
 
 ## 明确拒绝的配置
 
-- 同时使用多张逻辑构建画布（当前单 producer 只需一张）。
-- FULL/DIRECT 的 draw_order 与 panel_order 不同；PARTIAL/GRAM 仍支持对应像素转换。
-- 规划器要求非当前紧凑 stride 或非 64B 基址约束的池布局。像素引擎自身的 padding 支持不等于所有后端池支持。
-- TE 没有可用固定发送预算、也没有合法显式动态时序模型；不允许超时后自由发送。
+- 同时使用多张逻辑构建画布（`resources.logical_count > 1`；当前单 producer 只需一张，`pv2_plan_resolve` 直接返回 `ESP_ERR_NOT_SUPPORTED`）。
+- 规划器要求非当前紧凑 stride 或非 64B 基址约束的池布局（`pv2_plan_resolve` 直接返回 `ESP_ERR_NOT_SUPPORTED`，不再留 `pending_runtime`）。
+- TE 没有可用固定发送预算、也没有合法显式动态时序模型（`pv2_plan_resolve` 直接返回 `ESP_ERR_NOT_SUPPORTED`；不允许超时后自由发送）。
+- 注：FB `FULL`/`DIRECT` 的 `draw_order != panel_order` 现已通过单张逻辑构建画布 + 转换阶段支持，不再拒绝。
 
-这些组合仍以 `pending_runtime` 明确报告并拒绝创建，不标记为已迁移。旧 pending 枚举值保留兼容，已实现的池/内存/流水路径不再产生对应位。
+所有规划通过的配置均具备完整运行时路径（`pending_runtime == 0`）；不支持的组合在 `pv2_plan_resolve()` 阶段直接返回 `ESP_ERR_NOT_SUPPORTED` 或 `ESP_ERR_INVALID_ARG`。旧 `PV2_PLAN_NEEDS_*` 枚举值仅保留头文件兼容。
 
 ## 内存与硬件约束
 

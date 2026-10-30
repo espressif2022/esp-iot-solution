@@ -26,6 +26,30 @@ pv2_core_frame_t *pv2_frame_core_find(pv2_frame_core_t *c, uint64_t token)
 {
     return pv2_record_find(c->frames, c->count, sizeof(*c->frames), token, false);
 }
+pv2_core_frame_t *pv2_frame_core_find_receipt(pv2_frame_core_t *c, pv2_receipt_t receipt)
+{
+    return pv2_record_find(c->frames, c->count, sizeof(*c->frames), receipt.value, true);
+}
+esp_err_t pv2_frame_core_admit(pv2_frame_core_t *c, pv2_lock_t *lock,
+                               uint32_t width, uint32_t height,
+                               const pv2_frame_request_t *request, pv2_frame_t *out)
+{
+    if (!out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    out->value = 0;
+    if (!c || !lock || !request) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    esp_err_t err = pv2_validate_damage(width, height, request->damage, request->damage_count);
+    if (err != ESP_OK) {
+        return err;
+    }
+    pv2_lock_enter(lock, false);
+    bool ok = c->life == PV2_CORE_RUNNING && c->fault.result == ESP_OK;
+    pv2_lock_exit(lock, false);
+    return ok ? ESP_OK : ESP_ERR_INVALID_STATE;
+}
 esp_err_t pv2_frame_core_begin(pv2_frame_core_t *c, pv2_frame_t *out)
 {
     out->value = 0;
@@ -97,6 +121,87 @@ esp_err_t pv2_frame_core_release(pv2_core_frame_t *f)
         return ESP_ERR_INVALID_STATE;
     }
     f->common.token = 0;
+    return ESP_OK;
+}
+esp_err_t pv2_frame_core_query(pv2_frame_core_t *c, pv2_lock_t *lock, pv2_receipt_t receipt,
+                               bool supports_present, pv2_frame_status_t *out)
+{
+    if (!c || !lock || !out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    pv2_lock_enter(lock, false);
+    pv2_core_frame_t *f = pv2_frame_core_find_receipt(c, receipt);
+    if (!f) {
+        pv2_lock_exit(lock, false);
+        return ESP_ERR_INVALID_STATE;
+    }
+    bool done = f->common.terminal || (f->sealed && f->pending == 0);
+    bool released = supports_present ? true : (f->common.terminal || f->pending == 0);
+    *out = pv2_record_status(&f->common, f->sealed || f->common.terminal, released, done,
+                             supports_present && done && f->common.result == ESP_OK);
+    pv2_lock_exit(lock, false);
+    return ESP_OK;
+}
+esp_err_t pv2_frame_core_get_fault(pv2_frame_core_t *c, pv2_lock_t *lock, pv2_backend_fault_t *out)
+{
+    if (!c || !lock || !out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    pv2_lock_enter(lock, false);
+    *out = c->fault;
+    pv2_lock_exit(lock, false);
+    return ESP_OK;
+}
+esp_err_t pv2_frame_core_wait(pv2_backend_t *backend,
+                              esp_err_t (*query)(pv2_backend_t *, pv2_receipt_t, pv2_frame_status_t *),
+                              pv2_receipt_t receipt, pv2_completion_point_t point,
+                              bool supports_present, uint32_t timeout, pv2_frame_status_t *out)
+{
+    if (!backend || !query || !out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (point == PV2_COMPLETION_PRESENT_CONFIRMED && !supports_present) {
+        return ESP_ERR_NOT_SUPPORTED;
+    }
+    if (point != PV2_COMPLETION_SOURCE_RELEASED && point != PV2_COMPLETION_PRESENT_CONFIRMED) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    uint64_t start = pv2_now_ms();
+    for (;;) {
+        esp_err_t err = query(backend, receipt, out);
+        if (err != ESP_OK || out->terminal) {
+            return err;
+        }
+        if (pv2_expired(start, timeout)) {
+            return ESP_ERR_TIMEOUT;
+        }
+        pv2_pause();
+    }
+}
+esp_err_t pv2_frame_core_release_receipt(pv2_frame_core_t *c, pv2_lock_t *lock, pv2_receipt_t receipt)
+{
+    if (!c || !lock) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    pv2_lock_enter(lock, false);
+    pv2_core_frame_t *f = pv2_frame_core_find_receipt(c, receipt);
+    esp_err_t err = pv2_frame_core_release(f);
+    pv2_lock_exit(lock, false);
+    return err;
+}
+esp_err_t pv2_frame_core_can_destroy(const pv2_frame_core_t *c)
+{
+    if (!c) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (c->life != PV2_CORE_QUIESCENT) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    for (size_t i = 0; i < c->count; ++i) {
+        if (c->frames[i].common.token) {
+            return ESP_ERR_INVALID_STATE;
+        }
+    }
     return ESP_OK;
 }
 esp_err_t pv2_frame_core_quiescent(pv2_frame_core_t *c)

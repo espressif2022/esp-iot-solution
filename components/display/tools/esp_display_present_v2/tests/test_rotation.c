@@ -213,6 +213,78 @@ static void exercise(unsigned kind, pv2_render_contract_t contract, bool async, 
     pthread_cond_destroy(&n.changed);
     pthread_mutex_destroy(&n.lock);
 }
+static void exercise_swapped_fb(pv2_render_contract_t contract, bool async)
+{
+    const uint8_t expected[4][6] = {{1, 2, 3, 4, 5, 6}, {5, 3, 1, 6, 4, 2}, {6, 5, 4, 3, 2, 1}, {2, 4, 6, 1, 3, 5}};
+    const pv2_backend_ops_t *ops = &pv2_fb_backend;
+    scan_panel_t scan = {0};
+    notifications_t n = {.lock = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER};
+    void *buffers[2] = {aligned_alloc(64, 64), aligned_alloc(64, 64)};
+    assert(buffers[0] && buffers[1]);
+    pv2_backend_config_t cfg = {.width = 3, .height = 2, .tile_rows = 2, .buffer_count = 2, .max_frames = 2,
+                                .format = PV2_FORMAT_RGB565, .draw_order = PV2_ORDER_NATIVE, .panel_order = PV2_ORDER_SWAPPED,
+                                .render_contract = contract, .panel = scan_interface(&scan), .async_copy = async,
+                                .on_progress = notify, .progress_user = &n, .external_buffers = buffers, .external_buffer_bytes = 64
+                               };
+    pv2_backend_t *b;
+    size_t before_create = pixel_bytes;
+    OK(ops->create(&cfg, &b));
+    /* Even at 0 deg, draw_order != panel_order allocates one logical canvas. */
+    assert(pixel_bytes == before_create + 12);
+    for (unsigned rotation = 0; rotation < 4; ++rotation) {
+        OK(ops->set_rotation(b, rotation));
+        assert(pixel_bytes == before_create + 12);
+        pv2_frame_request_t req = {.full_redraw = true};
+        pv2_frame_t f;
+        OK(ops->begin(b, &req, &f));
+        pv2_lease_t lease;
+        for (;;) {
+            unsigned seen = count(&n);
+            esp_err_t error = ops->acquire(b, f, NULL, 0, &lease);
+            if (error == ESP_OK) {
+                break;
+            }
+            assert(error == ESP_ERR_TIMEOUT && async);
+            wait_changed(&n, seen);
+        }
+        assert(lease.surface.layout.byte_order == PV2_ORDER_NATIVE);
+        assert(lease.surface.pixels != buffers[0] && lease.surface.pixels != buffers[1]);
+        for (size_t i = 0; i < 6; ++i) {
+            uint8_t *pixel = (uint8_t *)lease.surface.pixels + i * 2;
+            pixel[0] = i + 1;
+            pixel[1] = 0x66;
+        }
+        OK(ops->submit_region(b, f, lease.id));
+        pv2_receipt_t receipt;
+        OK(ops->end(b, f, &receipt));
+        for (;;) {
+            unsigned seen = count(&n);
+            pump(2, b);
+            if (scan.cookie != 0) {
+                break;
+            }
+            assert(async);
+            wait_changed(&n, seen);
+        }
+        scan_confirm(&scan);
+        assert(scan.current.layout.byte_order == PV2_ORDER_SWAPPED);
+        pv2_frame_status_t status;
+        OK(ops->query(b, receipt, &status));
+        assert(status.terminal && status.result == ESP_OK);
+        for (size_t i = 0; i < 6; ++i) {
+            assert(scan.pixels[i * 2] == 0x66);
+            assert(scan.pixels[i * 2 + 1] == expected[rotation][i]);
+        }
+        OK(ops->release_receipt(b, receipt));
+    }
+    OK(ops->stop(b, 1000));
+    OK(ops->destroy(b));
+    assert(pixel_bytes == before_create);
+    free(buffers[0]);
+    free(buffers[1]);
+    pthread_cond_destroy(&n.changed);
+    pthread_mutex_destroy(&n.lock);
+}
 int main(void)
 {
     for (unsigned initial = 0; initial < 4; ++initial)
@@ -225,6 +297,10 @@ int main(void)
                         exercise(kind, PV2_CONTRACT_FULL, async, bpp, true, initial);
                     }
                 }
+    for (unsigned async = 0; async < 2; ++async) {
+        exercise_swapped_fb(PV2_CONTRACT_FULL, async);
+        exercise_swapped_fb(PV2_CONTRACT_DIRECT, async);
+    }
     puts("rotation: all backends, runtime orientation, inverse touch, async and external scanout passed");
     return 0;
 }

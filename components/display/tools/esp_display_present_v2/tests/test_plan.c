@@ -73,7 +73,9 @@ static void modes(void)
     assert(pv2_plan_resolve(&c, &p) == ESP_OK && p.normalized.backend_kind == PV2_PRESENTER_GRAM);
     c.defaults = PV2_PLAN_V1_DEFAULTS;
     c.te_enabled = true;
-    assert(pv2_plan_resolve(&c, &p) == ESP_OK && p.images.count == 1 && (p.pending_runtime & PV2_PLAN_NEEDS_DYNAMIC_TE));
+    assert(pv2_plan_resolve(&c, &p) == ESP_ERR_NOT_SUPPORTED);
+    c.presenter.backend.te_window_us = 1000;
+    assert(pv2_plan_resolve(&c, &p) == ESP_OK && p.images.count == 1 && !p.pending_runtime);
     c = config(PV2_PRESENTER_FB);
     c.presenter.mode = PV2_MODE_AUTO;
     assert(pv2_plan_resolve(&c, &p) == ESP_OK && p.images.count == 2);
@@ -99,10 +101,17 @@ static void topology_and_budget(void)
     c.presenter.mode = PV2_MODE_TRIPLE_FULL;
     assert(pv2_plan_resolve(&c, &p) == ESP_OK && p.logical.count == 1 && !p.tiles.count);
     assert(p.pixel_bytes == 4915200 && p.logical.total_bytes == 1228800);
-    c.resources.logical_count = 2;
-    assert(pv2_plan_resolve(&c, &p) == ESP_OK && p.pixel_bytes == 6144000);
     c.pixel_budget_bytes = p.pixel_bytes - 1;
     assert(pv2_plan_resolve(&c, &p) == ESP_ERR_NO_MEM && p.pixel_bytes == 0);
+    c.pixel_budget_bytes = 0;
+    c.resources.logical_count = 2;
+    assert(pv2_plan_resolve(&c, &p) == ESP_ERR_NOT_SUPPORTED);
+    c.resources.logical_count = 1;
+    /* FULL/DIRECT byte-order conversion uses the single logical canvas topology. */
+    c.presenter.backend.rotation = PV2_ROTATE_0;
+    c.presenter.backend.draw_order = PV2_ORDER_NATIVE;
+    c.presenter.backend.panel_order = PV2_ORDER_SWAPPED;
+    assert(pv2_plan_resolve(&c, &p) == ESP_OK && p.topology == PV2_TOPOLOGY_LOGICAL_TO_PHYSICAL && p.logical.count == 1 && !p.pending_runtime);
     c = config(PV2_PRESENTER_GRAM);
     c.presenter.backend.width = INT_MAX;
     c.presenter.backend.height = INT_MAX;
@@ -170,8 +179,7 @@ static void alignment(void)
     c.output.stride_alignment = 64;
     assert(pv2_plan_resolve(&c, &p) == ESP_ERR_NOT_SUPPORTED); /* tight row cannot be padded */
     c.output.tight_stride = false;
-    assert(pv2_plan_resolve(&c, &p) == ESP_OK && p.physical_layout.stride_bytes == 192);
-    assert(p.pending_runtime & PV2_PLAN_NEEDS_PADDED_LAYOUT);
+    assert(pv2_plan_resolve(&c, &p) == ESP_ERR_NOT_SUPPORTED); /* non-tight padded pool layout rejected */
 }
 static void creation(void)
 {

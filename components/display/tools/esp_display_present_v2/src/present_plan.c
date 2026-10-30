@@ -292,6 +292,9 @@ static esp_err_t resolve(const pv2_plan_config_t *c, pv2_resolved_plan_t *p)
     if ((!logical && c->resources.logical_count) || logical > b->max_frames) {
         return ESP_ERR_INVALID_ARG;
     }
+    if (logical > 1) {
+        return ESP_ERR_NOT_SUPPORTED;
+    }
     if (kind == PV2_PRESENTER_GRAM && b->tile_rows < (quarter ? p->output.width_alignment : p->output.height_alignment)) {
         return ESP_ERR_NOT_SUPPORTED;
     }
@@ -343,9 +346,6 @@ static esp_err_t resolve(const pv2_plan_config_t *c, pv2_resolved_plan_t *p)
     }
     if (kind == PV2_PRESENTER_FB) {
         b->tile_buffer_count = tiles;
-        if (logical > 1 || (!partial && b->draw_order != b->panel_order)) {
-            p->pending_runtime |= PV2_PLAN_NEEDS_ROTATION_TOPOLOGY;
-        }
         if (b->external_buffers && images != b->buffer_count) {
             return ESP_ERR_INVALID_ARG;
         }
@@ -385,10 +385,10 @@ static esp_err_t resolve(const pv2_plan_config_t *c, pv2_resolved_plan_t *p)
         return ESP_ERR_NOT_SUPPORTED;
     }
     if (kind == PV2_PRESENTER_TE && !b->te_timing.period_us && (!b->te_transfer_budget_us || b->te_transfer_budget_us >= b->te_window_us)) {
-        p->pending_runtime |= PV2_PLAN_NEEDS_DYNAMIC_TE;
+        return ESP_ERR_NOT_SUPPORTED;
     }
     if (p->physical_layout.stride_bytes != (size_t)pw * bpp || p->logical_layout.stride_bytes != (size_t)b->width * bpp || alignment != PV2_BUFFER_ALIGNMENT) {
-        p->pending_runtime |= PV2_PLAN_NEEDS_PADDED_LAYOUT;
+        return ESP_ERR_NOT_SUPPORTED;
     }
     b->tile_in_psram = c->resources.tile_memory == PV2_MEMORY_EXTERNAL;
     b->image_in_psram = c->resources.image_memory == PV2_MEMORY_EXTERNAL;

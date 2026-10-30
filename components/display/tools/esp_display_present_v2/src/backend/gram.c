@@ -334,16 +334,18 @@ static esp_err_t gram_get_caps(pv2_backend_t *g, pv2_backend_caps_t *out)
 
 static esp_err_t gram_begin(pv2_backend_t *g, const pv2_frame_request_t *request, pv2_frame_t *out)
 {
-    if (!out) {
+    if (!g) {
+        if (out) {
+            out->value = 0;
+        }
         return ESP_ERR_INVALID_ARG;
     }
-    out->value = 0;
-    if (!g || !request || pv2_validate_damage(g->config.width, g->config.height,
-                                              request->damage, request->damage_count) != ESP_OK) {
-        return ESP_ERR_INVALID_ARG;
+    esp_err_t ret = pv2_frame_core_admit(&g->core, &g->lock, g->config.width, g->config.height, request, out);
+    if (ret != ESP_OK) {
+        return ret;
     }
     pv2_lock_enter(&g->lock, false);
-    esp_err_t ret = pv2_frame_core_begin(&g->core, out);
+    ret = pv2_frame_core_begin(&g->core, out);
     pv2_lock_exit(&g->lock, false);
     return ret;
 }
@@ -762,51 +764,18 @@ static esp_err_t gram_query(pv2_backend_t *g, pv2_receipt_t receipt, pv2_frame_s
         return ESP_ERR_INVALID_ARG;
     }
     (void)pv2_gram_service(g);
-    pv2_lock_enter(&g->lock, false);
-    frame_record_t *f = find_frame(g, receipt.value);
-    if (!f || !f->common.external) {
-        pv2_lock_exit(&g->lock, false);
-        return ESP_ERR_INVALID_STATE;
-    }
-    *out = pv2_record_status(&f->common, f->sealed, f->pending == 0, f->sealed && f->pending == 0, false);
-    pv2_lock_exit(&g->lock, false);
-    return ESP_OK;
+    return pv2_frame_core_query(&g->core, &g->lock, receipt, false, out);
 }
 
 static esp_err_t gram_get_fault(pv2_backend_t *g, pv2_backend_fault_t *out)
 {
-    if (!g || !out) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    pv2_lock_enter(&g->lock, false);
-    *out = g->core.fault;
-    pv2_lock_exit(&g->lock, false);
-    return ESP_OK;
+    return g ? pv2_frame_core_get_fault(&g->core, &g->lock, out) : ESP_ERR_INVALID_ARG;
 }
 
 static esp_err_t gram_wait(pv2_backend_t *g, pv2_receipt_t receipt, pv2_completion_point_t point,
                            uint32_t timeout, pv2_frame_status_t *out)
 {
-    if (!g || !out) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    if (point == PV2_COMPLETION_PRESENT_CONFIRMED) {
-        return ESP_ERR_NOT_SUPPORTED;
-    }
-    if (point != PV2_COMPLETION_SOURCE_RELEASED) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    uint64_t start = pv2_now_ms();
-    for (;;) {
-        esp_err_t ret = gram_query(g, receipt, out);
-        if (ret != ESP_OK || out->terminal) {
-            return ret;
-        }
-        if (pv2_expired(start, timeout)) {
-            return ESP_ERR_TIMEOUT;
-        }
-        pv2_pause();
-    }
+    return pv2_frame_core_wait(g, gram_query, receipt, point, false, timeout, out);
 }
 
 static esp_err_t gram_release_receipt(pv2_backend_t *g, pv2_receipt_t receipt)
@@ -814,11 +783,7 @@ static esp_err_t gram_release_receipt(pv2_backend_t *g, pv2_receipt_t receipt)
     if (!g) {
         return ESP_ERR_INVALID_ARG;
     }
-    pv2_lock_enter(&g->lock, false);
-    frame_record_t *f = find_frame(g, receipt.value);
-    esp_err_t ret = pv2_frame_core_release(f);
-    pv2_lock_exit(&g->lock, false);
-    return ret;
+    return pv2_frame_core_release_receipt(&g->core, &g->lock, receipt);
 }
 
 static esp_err_t gram_stop(pv2_backend_t *g, uint32_t timeout)
@@ -868,13 +833,9 @@ static esp_err_t gram_destroy(pv2_backend_t *g)
     if (!g) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (g->core.life != PV2_CORE_QUIESCENT) {
-        return ESP_ERR_INVALID_STATE;
-    }
-    for (size_t i = 0; i < g->config.max_frames; ++i) {
-        if (g->core.frames[i].common.token) {
-            return ESP_ERR_INVALID_STATE;
-        }
+    esp_err_t err = pv2_frame_core_can_destroy(&g->core);
+    if (err != ESP_OK) {
+        return err;
     }
     free_backend(g);
     return ESP_OK;
