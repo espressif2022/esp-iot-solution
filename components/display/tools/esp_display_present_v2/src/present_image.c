@@ -155,8 +155,24 @@ bool pv2_image_next_repair(pv2_image_builder_t *b, pv2_rect_t *out)
             while (end < a.x + a.width && !covered(b, (size_t)y * b->width + end)) {
                 end++;
             }
+            uint32_t rows = 1;
+            if (x == a.x && end == a.x + a.width) {
+                while (y + rows < a.y + a.height) {
+                    bool row_uncovered = true;
+                    for (uint32_t cx = a.x; cx < end; cx++) {
+                        if (covered(b, (size_t)(y + rows) * b->width + cx)) {
+                            row_uncovered = false;
+                            break;
+                        }
+                    }
+                    if (!row_uncovered) {
+                        break;
+                    }
+                    rows++;
+                }
+            }
             *out = (pv2_rect_t) {
-                x, y, end - x, 1
+                x, y, end - x, rows
             };
             return true;
         }
@@ -198,6 +214,10 @@ void pv2_image_cancel(pv2_image_builder_t *b)
     if (b->candidate < PV2_IMAGE_SLOTS) {
         if (b->allocations[b->candidate].writer) {
             pv2_allocation_written(&b->allocations[b->candidate]);
+        }
+        if (b->published_baseline == b->candidate) {
+            pv2_allocation_drop(&b->allocations[b->candidate], PV2_REF_BASELINE);
+            b->published_baseline = SIZE_MAX;
         }
         b->versions[b->candidate] = 0;
     }

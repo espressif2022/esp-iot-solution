@@ -8,9 +8,10 @@
 | P4 同板 | CPU/PPA/DMA2D 独立算子对照（内部/PSRAM，RGB565/RGB888、四方向） | 32 例：PPA 16、DMA2D 4、明确 CPU 回退 12 |
 | P4 同板 | **显示组合**：`DOUBLE_FULL` / `DOUBLE_DIRECT` / `TRIPLE_PARTIAL` × (`async-cpu` / `async-ppa` / `async-dma2d`) × 5 次动态旋转 (`0°→90°→180°→270°→0°`) | 9 组全部 `COMBO_PASS`（每组 10 帧逐像素旋转比对通过）；`DOUBLE_FULL` 下 `async-ppa` 平均等待 **34.2 ms**（对比 `async-cpu` 375.4 ms 提速 11 倍）；`TRIPLE_PARTIAL` 下 `async-dma2d` 平均等待 **70.7 ms**（对比 `async-cpu` 96.7 ms） |
 | S3 `90:e5:b1:d0:a9:d8` / 480×480 RGB bounce | 五模式基线 + **显示组合**：`DOUBLE_FULL` / `DOUBLE_DIRECT` / `TRIPLE_PARTIAL` × `async-cpu` × 5 次动态旋转 (`0°→90°→180°→270°→0°`) | 五模式 240 帧 + 3 组旋转异步组合（30 帧）全部 `PASS` / `COMBO_PASS`；每组销毁后内部空闲稳定回归 **352319 B**、PSRAM **16774784 B**（峰值最低内部剩余 222752 B） |
-| S31 `30:ed:a0:f4:0b:34` / 480×480 QSPI | **全屏动态相位 TE (`TE_FULL_DYNAMIC_PHASE`)**：`period=16734 µs, scan=16198 µs, edge_to_scan=536 µs, guard=678 µs, budget=24946 µs` | **24 帧全部通过**；理论安全窗口 `[678, 7308) µs`，实测全部 24 帧提交相位落在 **`[814, 3636] µs`** 内，最大传输 `23852 µs <= budget` |
-| S31 同板 | GRAM 全屏 / TE 全屏双 compose（PSRAM→SPI2） | GRAM 8 帧（240 次传输）；TE 12 帧（最长传输 23746 µs）；边沿门控验证 |
-| S31 同板 | **显示组合**：480×480 全屏 `GRAM_ASYNC_ROT`、`TE_ASYNC_ROT (单 compose=1)`、`TE_ASYNC_ROT (双 compose=2)` × 5 次动态旋转 (`0°→90°→180°→270°→0°`) | 3 组全部 `COMBO_PASS`（GRAM 300 次传输 `max_tx=997 µs`；单/双 compose TE 各 10 帧 `max_tx=23852/23863 µs`）；销毁后内部空闲稳定回归 **443811 B**、PSRAM **16774284 B** |
+| S31 `30:ed:a0:f4:0b:34` / 480×480 QSPI | **全屏动态相位 TE (`TE_FULL_DYNAMIC_PHASE`)**：`period=16730 µs, scan=16191 µs, edge_to_scan=539 µs, guard=677 µs, budget=24940 µs` | **24 帧全部通过**；理论安全窗口 `[677, 7304) µs`，实测全部 24 帧提交相位落在 **`[740, 1631] µs`** 内，最大传输 `23855 µs <= budget` |
+| S31 同板 | **TE 2×2 池组合 × `cancel_frame` × 分段时延/空等待剖析**：`(compose=1..2) × (tiles=1..2)` | 4 组全部 `TE_MATRIX_PASS`（含异步 copy 在途 `cancel_frame` 排空、`compose=1` 取消后局部提交拒绝与全绘恢复、`compose=2` 取消后局部修补恢复）；连续未覆盖行合并后 `compose=2` 最大封帧到发送等待从 `98.7 ms` 降至 **`50.8 ms`**（均值 `11.95 ms`），`cancel_drain_us = 84~97 µs` |
+| S31 同板 | GRAM 全屏 / TE 全屏双 compose（PSRAM→SPI2） | GRAM 8 帧（240 次传输）；TE 12 帧（最长传输 23740 µs）；边沿门控验证 |
+| S31 同板 | **显示组合**：480×480 全屏 `GRAM_ASYNC_ROT`、`TE_ASYNC_ROT (单 compose=1)`、`TE_ASYNC_ROT (双 compose=2)` × 5 次动态旋转 (`0°→90°→180°→270°→0°`) | 3 组全部 `COMBO_PASS`（GRAM 300 次传输 `max_tx=1090 µs`；单/双 compose TE 各 10 帧 `max_tx=23862/23861 µs`）；销毁后内部空闲稳定回归 **443811 B**、PSRAM **16774284 B** |
 | S31 同板 | GRAM 64×16 / TE 64×16 | GRAM 32 帧；TE 连续多轮 120 帧/轮，零记录窗口超出 |
 
 S31 初次双全屏内部池创建失败（内部剩余 443811 B，一张图 460800 B）。没有缩小全屏测试，而是核查本地 IDF 的 S31 SPI2 外部 DMA 支持后，显式打开 LCD IO 和 adapter 的 `psram_dma_direct`，将 compose 放入 PSRAM。后续各轮内部空闲值回到 443811 B。原失败日志保留，不能把配置不可能创建误报为通过。

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include "present_backend.h"
+#include "../src/present_os.h"
 #include "test_panel.h"
 #include <pthread.h>
 #include <time.h>
@@ -479,10 +480,153 @@ static void compose_pool(size_t count)
     destroy(b);
 }
 
+static void compose_matrix_and_cancel(size_t compose_count, size_t tile_count)
+{
+    copy_gate_t g = {.mutex = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER, .release = true};
+    test_panel_t panel = {.width = 4, .height = 4, .bpp = 2};
+    pv2_backend_config_t cfg = {.compose_count = compose_count, .width = 4, .height = 4, .tile_rows = 2,
+                                .buffer_count = tile_count, .max_frames = 3, .format = PV2_FORMAT_RGB565,
+                                .panel = test_panel_interface(&panel), .te_window_us = 1000000,
+                                .te_transfer_budget_us = 1, .async_copy = true, .copy_execute = gated_copy,
+                                .copy_user = &g, .on_progress = copied, .progress_user = &g
+                               };
+    pv2_backend_t *b;
+    OK(ops->create(&cfg, &b));
+
+    /* Frame 1: full redraw establishes baseline 0x1111. */
+    pv2_frame_t f = begin(b);
+    for (uint32_t y = 0; y < 4; y += 2) {
+        pv2_lease_t lease;
+        pv2_rect_t band = {0, y, 4, 2};
+        for (;;) {
+            esp_err_t e = ops->acquire(b, f, &band, 0, &lease);
+            if (e == ESP_OK) {
+                break;
+            }
+            assert(e == ESP_ERR_TIMEOUT);
+            OK(pv2_te_service(b));
+            pv2_pause();
+        }
+        for (size_t i = 0; i < 8; ++i) {
+            ((uint16_t *)lease.surface.pixels)[i] = 0x1111;
+        }
+        OK(ops->submit_region(b, f, lease.id));
+    }
+    pv2_receipt_t r1;
+    OK(ops->end(b, f, &r1));
+    pv2_frame_status_t st;
+    for (;;) {
+        edge(b);
+        OK(pv2_te_service(b));
+        if (panel.count == 1) {
+            test_panel_complete(&panel);
+        }
+        OK(ops->query(b, r1, &st));
+        if (st.terminal) {
+            break;
+        }
+        pv2_pause();
+    }
+    OK(ops->release_receipt(b, r1));
+
+    /* Frame 2: block async copy in-flight, exercise tile_count exhaustion + cancel_frame(0) -> stop(0) -> cancel_frame(0). */
+    f = begin(b);
+    pthread_mutex_lock(&g.mutex);
+    g.entered = false;
+    g.release = false;
+    g.completed = 0;
+    pthread_mutex_unlock(&g.mutex);
+
+    pv2_lease_t l0, l1, l2;
+    pv2_rect_t b0 = {0, 0, 4, 2}, b1 = {0, 2, 4, 2};
+    OK(ops->acquire(b, f, &b0, 0, &l0));
+    for (size_t i = 0; i < 8; ++i) {
+        ((uint16_t *)l0.surface.pixels)[i] = 0x9999;
+    }
+    OK(ops->submit_region(b, f, l0.id));
+    pthread_mutex_lock(&g.mutex);
+    while (!g.entered) {
+        pthread_cond_wait(&g.changed, &g.mutex);
+    }
+    pthread_mutex_unlock(&g.mutex);
+
+    if (tile_count == 1) {
+        assert(ops->acquire(b, f, &b1, 0, &l1) == ESP_ERR_TIMEOUT);
+    } else {
+        OK(ops->acquire(b, f, &b1, 0, &l1));
+        assert(l1.surface.pixels != l0.surface.pixels);
+        assert(ops->acquire(b, f, &b1, 0, &l2) == ESP_ERR_TIMEOUT);
+        OK(ops->cancel_region(b, f, l1.id));
+    }
+
+    assert(ops->cancel_frame(b, f, 0) == ESP_ERR_TIMEOUT);
+    pthread_mutex_lock(&g.mutex);
+    g.release = true;
+    pthread_cond_broadcast(&g.changed);
+    while (!g.completed) {
+        pthread_cond_wait(&g.changed, &g.mutex);
+    }
+    pthread_mutex_unlock(&g.mutex);
+    OK(ops->cancel_frame(b, f, 1000));
+    OK(ops->cancel_frame(b, f, 0)); /* Idempotent after cancel published. */
+
+    /* Frame 3: after cancel, compose_count==1 invalidated its only buffer and MUST reject partial end();
+     * compose_count==2 preserved baseline buffer and MUST allow partial end() and repair from 0x1111. */
+    f = begin(b);
+    pv2_rect_t corner = {0, 0, 1, 1};
+    OK(ops->acquire(b, f, &corner, 0, &l0));
+    ((uint16_t *)l0.surface.pixels)[0] = 0x2222;
+    OK(ops->submit_region(b, f, l0.id));
+    for (;;) {
+        OK(pv2_te_service(b));
+        pthread_mutex_lock(&g.mutex);
+        size_t done = g.completed;
+        pthread_mutex_unlock(&g.mutex);
+        if (done >= 2) {
+            break;
+        }
+        pv2_pause();
+    }
+    pv2_receipt_t r3;
+    if (compose_count == 1) {
+        assert(ops->end(b, f, &r3) == ESP_ERR_INVALID_STATE);
+        OK(ops->cancel_frame(b, f, 1000));
+    } else {
+        OK(ops->end(b, f, &r3));
+        for (;;) {
+            edge(b);
+            OK(pv2_te_service(b));
+            if (panel.count == 1) {
+                test_panel_complete(&panel);
+            }
+            OK(ops->query(b, r3, &st));
+            if (st.terminal) {
+                break;
+            }
+            pv2_pause();
+        }
+        assert(((uint16_t *)panel.pixels)[0] == 0x2222);
+        for (size_t i = 1; i < 16; ++i) {
+            assert(((uint16_t *)panel.pixels)[i] == 0x1111);
+        }
+        OK(ops->release_receipt(b, r3));
+    }
+
+    OK(ops->stop(b, 1000));
+    OK(ops->destroy(b));
+    pthread_cond_destroy(&g.changed);
+    pthread_mutex_destroy(&g.mutex);
+}
+
 int main(void)
 {
     compose_pool(1);
     compose_pool(2);
+    for (size_t compose_count = 1; compose_count <= 2; ++compose_count) {
+        for (size_t tile_count = 1; tile_count <= 2; ++tile_count) {
+            compose_matrix_and_cancel(compose_count, tile_count);
+        }
+    }
     for (unsigned mode = 0; mode < 4; ++mode) {
         asynchronous_copy(mode);
     }
