@@ -4,10 +4,12 @@
 
 | 板子 / 身份 | 本轮路径 | 结果 |
 | --- | --- | --- |
-| P4 `e8:f6:0a:e7:a7:8d` / 1024×600 MIPI | 规划入口，FULL/DIRECT/PARTIAL，双/三 FB，PARTIAL 两 tile | 五模式完整轮次，逐像素对照与确认；stop/recreate 后 heap 回归 |
+| P4 `e8:f6:0a:e7:a7:8d` / 1024×600 MIPI | **FB 2/3 缓冲异步拷贝 × 跨帧流水切换衔接剖析 (`FB_HANDOFF_PASS`)**：5 模式连续 in-flight 排队提交 | 5 模式全部通过；2 FB `used_mask=0x3`、3 FB **`used_mask=0x7`**（证三块物理 FB 全部轮转）；`TRIPLE_FULL` 平均 VSYNC 切换等待 **`2070 µs`**（对比 `DOUBLE_FULL` `25047 µs` 降 91.7%），`TRIPLE_PARTIAL` 平均 VSYNC 等待 **`8773 µs`**（对比 `DOUBLE_PARTIAL` `39752 µs`）；`cancel_drain_us = 58~86 µs` |
+| P4 同板 | 规划入口，FULL/DIRECT/PARTIAL，双/三 FB，PARTIAL 两 tile | 五模式完整轮次，逐像素对照与确认；stop/recreate 后 heap 回归 |
 | P4 同板 | CPU/PPA/DMA2D 独立算子对照（内部/PSRAM，RGB565/RGB888、四方向） | 32 例：PPA 16、DMA2D 4、明确 CPU 回退 12 |
 | P4 同板 | **显示组合**：`DOUBLE_FULL` / `DOUBLE_DIRECT` / `TRIPLE_PARTIAL` × (`async-cpu` / `async-ppa` / `async-dma2d`) × 5 次动态旋转 (`0°→90°→180°→270°→0°`) | 9 组全部 `COMBO_PASS`（每组 10 帧逐像素旋转比对通过）；`DOUBLE_FULL` 下 `async-ppa` 平均等待 **34.2 ms**（对比 `async-cpu` 375.4 ms 提速 11 倍）；`TRIPLE_PARTIAL` 下 `async-dma2d` 平均等待 **70.7 ms**（对比 `async-cpu` 96.7 ms） |
-| S3 `90:e5:b1:d0:a9:d8` / 480×480 RGB bounce | 五模式基线 + **显示组合**：`DOUBLE_FULL` / `DOUBLE_DIRECT` / `TRIPLE_PARTIAL` × `async-cpu` × 5 次动态旋转 (`0°→90°→180°→270°→0°`) | 五模式 240 帧 + 3 组旋转异步组合（30 帧）全部 `PASS` / `COMBO_PASS`；每组销毁后内部空闲稳定回归 **352319 B**、PSRAM **16774784 B**（峰值最低内部剩余 222752 B） |
+| S3 `90:e5:b1:d0:a9:d8` / 480×480 RGB bounce | **FB 2/3 缓冲异步拷贝 × 跨帧流水切换衔接剖析 (`FB_HANDOFF_PASS`)**：5 模式连续 in-flight 排队提交 | 5 模式全部通过；2 FB `used_mask=0x3`、3 FB **`used_mask=0x7`**；`TRIPLE_FULL` 平均 VSYNC 切换等待 **`1916 µs`**（对比 `DOUBLE_FULL` `20699 µs` 降 90.7%），`TRIPLE_PARTIAL` 平均 VSYNC 等待 **`19095 µs`**（对比 `DOUBLE_PARTIAL` `34902 µs`）；`cancel_drain_us = 54~77 µs` |
+| S3 同板 | 五模式基线 + **显示组合**：`DOUBLE_FULL` / `DOUBLE_DIRECT` / `TRIPLE_PARTIAL` × `async-cpu` × 5 次动态旋转 (`0°→90°→180°→270°→0°`) | 五模式 240 帧 + 3 组旋转异步组合（30 帧）全部 `PASS` / `COMBO_PASS`；每组销毁后内部空闲稳定回归 **352319 B**、PSRAM **16774784 B**（峰值最低内部剩余 222752 B） |
 | S31 `30:ed:a0:f4:0b:34` / 480×480 QSPI | **全屏动态相位 TE (`TE_FULL_DYNAMIC_PHASE`)**：`period=16730 µs, scan=16191 µs, edge_to_scan=539 µs, guard=677 µs, budget=24940 µs` | **24 帧全部通过**；理论安全窗口 `[677, 7304) µs`，实测全部 24 帧提交相位落在 **`[740, 1631] µs`** 内，最大传输 `23855 µs <= budget` |
 | S31 同板 | **TE 2×2 池组合 × `cancel_frame` × 分段时延/空等待剖析**：`(compose=1..2) × (tiles=1..2)` | 4 组全部 `TE_MATRIX_PASS`（含异步 copy 在途 `cancel_frame` 排空、`compose=1` 取消后局部提交拒绝与全绘恢复、`compose=2` 取消后局部修补恢复）；连续未覆盖行合并后 `compose=2` 最大封帧到发送等待从 `98.7 ms` 降至 **`50.8 ms`**（均值 `11.95 ms`），`cancel_drain_us = 84~97 µs` |
 | S31 同板 | GRAM 全屏 / TE 全屏双 compose（PSRAM→SPI2） | GRAM 8 帧（240 次传输）；TE 12 帧（最长传输 23740 µs）；边沿门控验证 |

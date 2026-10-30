@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include "scan_panel.h"
+#include "../src/present_os.h"
 #include "present_presenter.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -516,9 +517,173 @@ static void independent_tiles(void)
     OK(ops->stop(b, 0)); OK(ops->destroy(b));
 }
 
+static void async_pipeline_handoff(size_t buffers, pv2_render_contract_t contract)
+{
+    copy_gate_t g = {.mutex = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER, .release = true};
+    scan_panel_t p = {0};
+    void *ext[3] = {aligned_alloc(64, 64), aligned_alloc(64, 64), aligned_alloc(64, 64)};
+    assert(ext[0] && ext[1] && ext[2]);
+    pv2_backend_config_t cfg = config(&p, buffers, contract);
+    cfg.tile_rows = 2;
+    cfg.tile_buffer_count = contract == PV2_CONTRACT_PARTITION ? 2 : 0;
+    cfg.rotation = contract == PV2_CONTRACT_FULL ? PV2_ROTATE_90 : PV2_ROTATE_0;
+    cfg.async_copy = true;
+    cfg.on_progress = copied;
+    cfg.progress_user = &g;
+    cfg.external_buffers = ext;
+    cfg.external_buffer_bytes = 64;
+    pv2_backend_t *b;
+    OK(ops->create(&cfg, &b));
+
+    /* Helper to pump async copies to READY/PENDING. */
+    pv2_receipt_t r1, r2, r3;
+    for (unsigned step = 1; step <= buffers; ++step) {
+        pv2_frame_t f = begin(b);
+        uint16_t color = (uint16_t)(0x1111 * step);
+        if (contract == PV2_CONTRACT_PARTITION) {
+            if (step == 1) {
+                for (uint32_t y = 0; y < 4; y += 2) {
+                    pv2_lease_t l;
+                    pv2_rect_t band = {0, y, 4, 2};
+                    while (ops->acquire(b, f, &band, 0, &l) == ESP_ERR_TIMEOUT) {
+                        OK(pv2_fb_service(b));
+                        pv2_pause();
+                    }
+                    for (size_t i = 0; i < 8; ++i) {
+                        ((uint16_t *)l.surface.pixels)[i] = color;
+                    }
+                    OK(ops->submit_region_ex(b, f, l.id, &(pv2_region_submit_t) {
+                        .logical_area = band
+                    }));
+                }
+            } else {
+                pv2_lease_t l;
+                pv2_rect_t spot = {step - 2, 0, 1, 1};
+                while (ops->acquire(b, f, &spot, 0, &l) == ESP_ERR_TIMEOUT) {
+                    OK(pv2_fb_service(b));
+                    pv2_pause();
+                }
+                ((uint16_t *)l.surface.pixels)[0] = color;
+                OK(ops->submit_region_ex(b, f, l.id, &(pv2_region_submit_t) {
+                    .logical_area = spot
+                }));
+            }
+        } else {
+            pv2_lease_t l;
+            while (ops->acquire(b, f, NULL, 0, &l) == ESP_ERR_TIMEOUT) {
+                OK(pv2_fb_service(b));
+                pv2_pause();
+            }
+            if (step == 1 || contract == PV2_CONTRACT_FULL) {
+                for (size_t i = 0; i < 16; ++i) {
+                    ((uint16_t *)l.surface.pixels)[i] = color;
+                }
+                OK(ops->submit_region(b, f, l.id));
+            } else {
+                ((uint16_t *)l.surface.pixels)[step - 2] = color;
+                pv2_region_submit_t sub = {.logical_area = {step - 2, 0, 1, 1}, .stride_bytes = 8};
+                OK(ops->submit_region_ex(b, f, l.id, &sub));
+            }
+        }
+        pv2_receipt_t *target = step == 1 ? &r1 : step == 2 ? &r2 : &r3;
+        OK(ops->end(b, f, target));
+        /* Pump until async tile/repair/convert copies finish and frame reaches PENDING or READY. */
+        for (;;) {
+            OK(pv2_fb_service(b));
+            if (step <= 2 && p.cookie) {
+                break;
+            }
+            if (step == 3) {
+                pv2_frame_request_t probe_req = {0};
+                pv2_frame_t probe;
+                /* Once Frame 3 finishes async repair/convert and reaches READY, begin() remains NO_MEM and copy is idle. */
+                assert(ops->begin(b, &probe_req, &probe) == ESP_ERR_NO_MEM);
+                pthread_mutex_lock(&g.mutex);
+                size_t done = g.completed;
+                pthread_mutex_unlock(&g.mutex);
+                if (done >= 3) {
+                    break;
+                }
+            }
+            pv2_pause();
+        }
+        if (step == 1) {
+            assert(p.cookie);
+            scan_confirm(&p);
+            OK(pv2_fb_service(b));
+            pv2_frame_status_t st;
+            OK(ops->query(b, r1, &st));
+            assert(st.terminal && st.present_confirmed);
+            OK(ops->release_receipt(b, r1));
+        }
+    }
+
+    /* At this point:
+     * - ext[0] is SCANNING (Frame 1)
+     * - ext[1] is PENDING switch (Frame 2)
+     * - If buffers == 3, ext[2] is READY queued behind ext[1] (Frame 3).
+     * Next begin() must hit backpressure (ESP_ERR_NO_MEM). */
+    assert(p.current.pixels == ext[0] && p.pending.pixels == ext[1]);
+    pv2_frame_request_t req = {0};
+    pv2_frame_t blocked;
+    assert(ops->begin(b, &req, &blocked) == ESP_ERR_NO_MEM);
+
+    /* Confirm Frame 2: ext[0] retires, ext[1] becomes SCANNING; if buffers==3, ext[2] submits to PENDING once its async repair/convert finishes! */
+    scan_confirm(&p);
+    if (buffers == 3) {
+        while (!p.cookie) {
+            OK(pv2_fb_service(b));
+            pv2_pause();
+        }
+    } else {
+        OK(pv2_fb_service(b));
+    }
+    assert(p.current.pixels == ext[1]);
+    pv2_frame_status_t st;
+    OK(ops->query(b, r2, &st));
+    assert(st.terminal && st.present_confirmed);
+    OK(ops->release_receipt(b, r2));
+
+    if (buffers == 3) {
+        assert(p.cookie && p.pending.pixels == ext[2]);
+        /* While ext[1] is SCANNING and ext[2] is PENDING, retired ext[0] can begin & cancel mid-copy! */
+        pv2_frame_t f4 = begin(b);
+        pv2_lease_t l4;
+        while (ops->acquire(b, f4, NULL, 0, &l4) == ESP_ERR_TIMEOUT) {
+            OK(pv2_fb_service(b));
+        }
+        OK(ops->cancel_region(b, f4, l4.id));
+        OK(ops->cancel_frame(b, f4, 1000));
+
+        scan_confirm(&p);
+        OK(pv2_fb_service(b));
+        assert(p.current.pixels == ext[2]);
+        OK(ops->query(b, r3, &st));
+        assert(st.terminal && st.present_confirmed);
+        OK(ops->release_receipt(b, r3));
+        if (contract != PV2_CONTRACT_FULL) {
+            const uint16_t *px = (const uint16_t *)p.current.pixels;
+            assert(px[0] == 0x2222 && px[1] == 0x3333 && px[2] == 0x1111);
+        }
+    }
+
+    OK(ops->stop(b, 1000));
+    OK(ops->destroy(b));
+    for (size_t i = 0; i < 3; ++i) {
+        free(ext[i]);
+    }
+    pthread_cond_destroy(&g.changed);
+    pthread_mutex_destroy(&g.mutex);
+}
+
 int main(void)
 {
     independent_tiles();
+    for (size_t buffers = 2; buffers <= 3; ++buffers) {
+        async_pipeline_handoff(buffers, PV2_CONTRACT_PARTITION);
+        async_pipeline_handoff(buffers, PV2_CONTRACT_FULL);
+        async_pipeline_handoff(buffers, PV2_CONTRACT_DIRECT);
+    }
     for (unsigned mode = 0; mode < 6; ++mode) {
         asynchronous_partition(mode);
     }

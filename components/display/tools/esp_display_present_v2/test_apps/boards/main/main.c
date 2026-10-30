@@ -47,6 +47,9 @@ typedef struct {
     pv2_panel_adapter_t real;
     pv2_surface_t submitted;
     unsigned submissions;
+    void *known[3];
+    size_t known_count;
+    unsigned used_mask;
 } tap_t;
 static esp_err_t tap_attach(void *context, pv2_panel_event_fn callback, void *user)
 {
@@ -61,6 +64,11 @@ static pv2_tx_result_t tap_submit(void *context, const pv2_surface_t *surface,
     if (result.acceptance == PV2_TX_ACCEPTED) {
         tap->submitted = *surface;
         tap->submissions++;
+        for (size_t i = 0; i < tap->known_count; ++i) {
+            if (tap->known[i] == surface->pixels) {
+                tap->used_mask |= (1u << i);
+            }
+        }
     }
     return result;
 }
@@ -393,6 +401,195 @@ static void run_combo_case(unsigned cycle, unsigned test, bool async_copy, unsig
              (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
 }
 
+static void run_fb_handoff_profile(unsigned cycle, unsigned test)
+{
+    esp_lcd_panel_handle_t panel;
+    check(board_panel_create(&panel, cases[test].buffers), "handoff panel create");
+    pv2_lcd_scanout_t *adapter;
+    pv2_lcd_scanout_config_t scan = {.panel = panel, .kind = SCANOUT_KIND,
+                                     .width = WIDTH, .height = HEIGHT, .format = PV2_FORMAT_RGB565, .buffer_count = cases[test].buffers,
+                                     .rgb_bounce_buffer_mode = SCANOUT_KIND == PV2_LCD_RGB_BOUNCE, .delete_panel_on_stop = true
+                                    };
+    check(pv2_lcd_scanout_create(&scan, &adapter), "handoff scanout create");
+    void *buffers[3] = {0};
+    size_t count = 0;
+    check(pv2_lcd_scanout_get_buffers(adapter, buffers, 3, &count), "handoff get buffers");
+    tap_t tap = {.known = {buffers[0], buffers[1], buffers[2]}, .known_count = count, .used_mask = 1u /* buffers[0] is initial scanout */};
+    check(pv2_lcd_scanout_get_interface(adapter, &tap.real), "handoff interface");
+
+    /* For FULL modes, set draw_order = SWAPPED and panel_order = NATIVE so FB_SLOT_CONVERT runs through async_copy on every frame! */
+    pv2_presenter_config_t cfg = {.backend_kind = PV2_PRESENTER_FB, .mode = cases[test].mode,
+                                  .timeout_ms = 2000, .background_service = true,
+                                  .backend = {.width = WIDTH, .height = HEIGHT, .tile_rows = 16,
+                                              .format = PV2_FORMAT_RGB565,
+                                              .draw_order = cases[test].contract == PV2_CONTRACT_FULL ? PV2_ORDER_SWAPPED : PV2_ORDER_NATIVE,
+                                              .panel_order = PV2_ORDER_NATIVE,
+                                              .buffer_count = count, .max_frames = 3,
+                                              .async_copy = true,
+                                              .external_buffers = buffers, .external_buffer_bytes = WIDTH * HEIGHT * 2,
+                                              .initial_scanout_buffer = buffers[0], .panel = {&tap, tap_attach, tap_submit, tap_quiesce}
+                                             }
+                                 };
+    pv2_plan_config_t planned = {.presenter = cfg,
+                                 .resources = {.tile_count = cases[test].contract == PV2_CONTRACT_PARTITION ? 2 : 0,
+                                               .image_memory = PV2_MEMORY_EXTERNAL,
+                                               .logical_memory = PV2_MEMORY_EXTERNAL
+                                              }
+                                };
+    check(pv2_lcd_scanout_get_output_caps(adapter, &planned.output), "handoff output caps");
+    pv2_presenter_t *p;
+    check(pv2_presenter_create_planned(&planned, &p), "handoff create planned");
+
+    uint64_t sum_begin_wait = 0, max_begin_wait = 0;
+    uint64_t sum_acq_wait = 0, max_acq_wait = 0;
+    uint64_t sum_draw_sub = 0, max_draw_sub = 0;
+    uint64_t sum_commit = 0, max_commit = 0;
+    uint64_t sum_vsync_wait = 0, max_vsync_wait = 0;
+
+    /* Pipelined frame queue: do NOT wait after every commit; keep up to (count - 1) frames in-flight
+     * while building the next frame so 3-buffer modes simultaneously occupy SCANNING + PENDING + BUILDING! */
+    pv2_presenter_receipt_t inflight[3] = {0};
+    size_t head = 0, tail = 0, queued = 0;
+    const unsigned total_frames = 12;
+
+    for (unsigned f = 0; f < total_frames; ++f) {
+        /* Only retire the oldest in-flight receipt when the pipeline is full. */
+        if (queued >= count - 1) {
+            pv2_frame_status_t st;
+            uint64_t tv0 = esp_timer_get_time();
+            check(pv2_presenter_wait_frame(p, inflight[head], PV2_COMPLETION_PRESENT_CONFIRMED, 2000, &st), "handoff wait oldest");
+            uint64_t tv1 = esp_timer_get_time();
+            check(st.result, "handoff oldest result");
+            check(pv2_presenter_release_receipt(p, inflight[head]), "handoff release oldest");
+            head = (head + 1) % 3;
+            queued--;
+            uint64_t vsync_w = tv1 - tv0;
+            sum_vsync_wait += vsync_w;
+            if (vsync_w > max_vsync_wait) {
+                max_vsync_wait = vsync_w;
+            }
+        }
+
+        bool full = f == 0 || cases[test].contract == PV2_CONTRACT_FULL;
+        pv2_rect_t dirty[2] = {moving(f ? f - 1 : 0), moving(f)};
+        pv2_frame_request_t req = {.full_redraw = full, .damage = full ? NULL : dirty, .damage_count = full ? 0 : 2};
+
+        uint64_t tb0 = esp_timer_get_time();
+        check(pv2_presenter_begin_next_frame(p, &req), "handoff begin");
+        uint64_t tb1 = esp_timer_get_time();
+        uint64_t bw = tb1 - tb0;
+        sum_begin_wait += bw;
+        if (bw > max_begin_wait) {
+            max_begin_wait = bw;
+        }
+
+        uint64_t f_acq = 0, f_draw = 0;
+        unsigned n_rects = full ? 1 : 2;
+        pv2_rect_t full_rect = {0, 0, WIDTH, HEIGHT};
+        const pv2_rect_t *rects = full ? &full_rect : dirty;
+        for (unsigned r_idx = 0; r_idx < n_rects; ++r_idx) {
+            pv2_rect_t area = rects[r_idx];
+            for (unsigned offset = 0; offset < area.height;) {
+                pv2_lease_t lease;
+                uint64_t ta0 = esp_timer_get_time();
+                check(pv2_presenter_acquire_buffer(p, &lease), "handoff acquire");
+                uint64_t ta1 = esp_timer_get_time();
+                f_acq += (ta1 - ta0);
+                unsigned rows = area.height - offset;
+                if (cases[test].contract == PV2_CONTRACT_PARTITION && rows > 16) {
+                    rows = 16;
+                }
+                size_t stride = cases[test].contract == PV2_CONTRACT_PARTITION ? area.width * 2 : lease.surface.layout.stride_bytes;
+                for (unsigned y = 0; y < rows; ++y) {
+                    unsigned dy = area.y + offset + y;
+                    uint16_t *row = (uint16_t *)((uint8_t *)lease.surface.pixels +
+                                                 (cases[test].contract == PV2_CONTRACT_PARTITION ? y : dy) * stride);
+                    for (unsigned x = 0; x < area.width; ++x) {
+                        row[cases[test].contract == PV2_CONTRACT_PARTITION ? x : area.x + x] = reference(area.x + x, dy, f, test);
+                    }
+                }
+                pv2_area_t sub = {area.x, area.y + offset, area.x + area.width - 1, area.y + offset + rows - 1};
+                check(pv2_presenter_submit_buffer(p, &lease, &sub, stride), "handoff submit");
+                uint64_t ta2 = esp_timer_get_time();
+                f_draw += (ta2 - ta1);
+                offset += rows;
+            }
+        }
+        sum_acq_wait += f_acq;
+        if (f_acq > max_acq_wait) {
+            max_acq_wait = f_acq;
+        }
+        sum_draw_sub += f_draw;
+        if (f_draw > max_draw_sub) {
+            max_draw_sub = f_draw;
+        }
+
+        uint64_t tc0 = esp_timer_get_time();
+        check(pv2_presenter_commit_with_receipt(p, NULL, &inflight[tail]), "handoff commit");
+        uint64_t tc1 = esp_timer_get_time();
+        uint64_t cw = tc1 - tc0;
+        sum_commit += cw;
+        if (cw > max_commit) {
+            max_commit = cw;
+        }
+        tail = (tail + 1) % 3;
+        queued++;
+    }
+
+    /* Drain remaining in-flight frames. */
+    while (queued > 0) {
+        pv2_frame_status_t st;
+        uint64_t tv0 = esp_timer_get_time();
+        check(pv2_presenter_wait_frame(p, inflight[head], PV2_COMPLETION_PRESENT_CONFIRMED, 2000, &st), "handoff drain");
+        uint64_t tv1 = esp_timer_get_time();
+        check(st.result, "handoff drain result");
+        check(pv2_presenter_release_receipt(p, inflight[head]), "handoff drain release");
+        head = (head + 1) % 3;
+        queued--;
+        uint64_t vsync_w = tv1 - tv0;
+        sum_vsync_wait += vsync_w;
+        if (vsync_w > max_vsync_wait) {
+            max_vsync_wait = vsync_w;
+        }
+    }
+
+    /* Exercise cancel_frame while async copy is active, then submit one more frame to verify clean handoff. */
+    pv2_rect_t cdirty = moving(total_frames);
+    pv2_frame_request_t creq = {.full_redraw = cases[test].contract == PV2_CONTRACT_FULL,
+                                .damage = cases[test].contract == PV2_CONTRACT_FULL ? NULL :&cdirty,
+                                .damage_count = cases[test].contract == PV2_CONTRACT_FULL ? 0 : 1
+                               };
+    check(pv2_presenter_begin_next_frame(p, &creq), "handoff cancel begin");
+    {
+        pv2_lease_t l;
+        check(pv2_presenter_acquire_buffer(p, &l), "handoff cancel acquire");
+        memset(l.surface.pixels, 0xaa, 16 * WIDTH * 2);
+        pv2_area_t sub = {0, 0, WIDTH - 1, cases[test].contract == PV2_CONTRACT_PARTITION ? 15 : HEIGHT - 1};
+        check(pv2_presenter_submit_buffer(p, &l, &sub, WIDTH * 2), "handoff cancel submit");
+    }
+    uint64_t tcan0 = esp_timer_get_time();
+    check(pv2_presenter_cancel_frame(p), "handoff cancel_frame");
+    uint64_t cancel_drain_us = esp_timer_get_time() - tcan0;
+
+    unsigned expected_mask = (1u << count) - 1u;
+    check(tap.used_mask == expected_mask ? ESP_OK : ESP_FAIL, "all physical FBs rotated through scanout");
+
+    ESP_LOGI(TAG, "FB_HANDOFF_PASS cycle=%u mode=%s buffers=%u used_mask=0x%x begin_wait_us=[avg=%"PRIu64", max=%"PRIu64"] acq_wait_us=[avg=%"PRIu64", max=%"PRIu64"] draw_sub_us=[avg=%"PRIu64", max=%"PRIu64"] commit_us=[avg=%"PRIu64", max=%"PRIu64"] vsync_wait_us=[avg=%"PRIu64", max=%"PRIu64"] cancel_drain_us=%"PRIu64,
+             cycle, cases[test].name, (unsigned)count, tap.used_mask,
+             sum_begin_wait / total_frames, max_begin_wait,
+             sum_acq_wait / total_frames, max_acq_wait,
+             sum_draw_sub / total_frames, max_draw_sub,
+             sum_commit / total_frames, max_commit,
+             sum_vsync_wait / total_frames, max_vsync_wait,
+             cancel_drain_us);
+
+    check(pv2_presenter_stop(p, 2000), "handoff stop");
+    check(pv2_presenter_destroy(p), "handoff destroy");
+    check(pv2_lcd_scanout_destroy(adapter), "handoff adapter destroy");
+    check(board_resources_destroy(), "handoff board destroy");
+    check(heap_caps_check_integrity_all(true) ? ESP_OK : ESP_FAIL, "handoff heap integrity");
+}
+
 #ifdef PV2_BOARD_EXECUTOR_CHECK
 void pv2_board_test_executors(void);
 #endif
@@ -403,6 +600,9 @@ void app_main(void)
 #endif
     ESP_LOGI(TAG, "V2 SUITE2 %s %dx%d RGB565 CPU + ROTATION/ASYNC/ACCEL COMBOS", BOARD_NAME, WIDTH, HEIGHT);
     for (unsigned cycle = 0; ; ++cycle) {
+        for (unsigned test = 0; test < CASE_COUNT; ++test) {
+            run_fb_handoff_profile(cycle, test);
+        }
         for (unsigned test = 0; test < CASE_COUNT; ++test) {
             run_case(cycle, test);
         }
