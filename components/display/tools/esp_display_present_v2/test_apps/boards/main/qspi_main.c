@@ -56,7 +56,7 @@ typedef struct {
     pv2_panel_adapter_t real;
     pv2_panel_event_fn callback;
     void *user;
-    uint64_t started, completed, max_tx, max_edge_age;
+    uint64_t started, completed, max_tx, min_edge_age, max_edge_age;
     unsigned offered, done, overruns;
     uint64_t edge_at_submit;
     uint32_t window;
@@ -98,6 +98,9 @@ static pv2_tx_result_t metered_submit(void *ctx, const pv2_surface_t *s, const p
     if (res.acceptance != PV2_TX_REJECTED) {
         portENTER_CRITICAL(&mux);
         uint64_t age = rise ? now - rise : 0;
+        if (!m->offered || age < m->min_edge_age) {
+            m->min_edge_age = age;
+        }
         if (age > m->max_edge_age) {
             m->max_edge_age = age;
         }
@@ -269,6 +272,98 @@ static void run_rotation_async(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_ha
              (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
              (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
 }
+
+static void run_dynamic_phase_te(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_handle_t io,
+                                 uint64_t period_min_us, uint64_t period_max_us,
+                                 uint64_t high_us, uint64_t measured_full_tx_us)
+{
+    unsigned w = 480, h = 480, tile = 16, frames = 24;
+    check(esp_lcd_panel_set_gap(panel, 0, 0), "gap");
+    uint64_t period_avg = (period_min_us + period_max_us) / 2;
+    uint64_t jitter = (period_max_us - period_min_us) + 250;
+    uint64_t guard = jitter + 400;
+    uint64_t edge_to_scan = high_us < period_avg / 4 ? high_us : 536;
+    uint64_t scan_us = period_avg - edge_to_scan;
+    uint32_t budget_us = (uint32_t)(measured_full_tx_us + 1200);
+    pv2_te_timing_t timing = {
+        .period_us = period_avg,
+        .scan_us = scan_us,
+        .edge_to_scan_us = edge_to_scan,
+        .guard_us = guard,
+        .jitter_us = jitter,
+    };
+    pv2_te_window_t win = pv2_te_window(&timing, budget_us, 100000, 100000 + edge_to_scan + guard, true);
+    ESP_LOGI(TAG, "TE_DYNAMIC_MODEL period=%"PRIu64" scan=%"PRIu64" edge_to_scan=%"PRIu64" guard=%"PRIu64" jitter=%"PRIu64" budget=%"PRIu32" window=[%"PRIu64", %"PRIu64") admission=%d",
+             timing.period_us, timing.scan_us, timing.edge_to_scan_us, timing.guard_us, timing.jitter_us,
+             budget_us, win.earliest_phase_us, win.latest_phase_us, (int)win.admission);
+    check(win.admission == PV2_TE_ALLOW ? ESP_OK : ESP_ERR_NOT_SUPPORTED, "dynamic TE window admission");
+
+    pv2_lcd_spi_t *adapter;
+    pv2_lcd_spi_config_t spi = {.panel = panel, .io = io, .format = PV2_FORMAT_RGB565, .byte_order = PV2_ORDER_SWAPPED, .max_inflight = 1, .psram_dma_direct = true};
+    check(pv2_lcd_spi_create(&spi, &adapter), "adapter create");
+    meter_t meter = {0};
+    check(pv2_lcd_spi_get_interface(adapter, &meter.real), "adapter interface");
+    pv2_presenter_config_t cfg = {.backend_kind = PV2_PRESENTER_TE, .timeout_ms = 2000, .background_service = true,
+                                  .backend = {.image_in_psram = true, .compose_count = 2,
+                                              .width = w, .height = h, .tile_rows = tile, .buffer_count = 2, .max_frames = 3,
+                                              .format = PV2_FORMAT_RGB565, .panel_order = PV2_ORDER_SWAPPED, .async_copy = true,
+                                              .panel = {&meter, metered_attach, metered_submit, metered_stop},
+                                              .te_timing = timing, .te_transfer_budget_us = budget_us
+                                             }
+                                 };
+    pv2_presenter_t *p;
+    check(pv2_presenter_create(&cfg, &p), "dynamic TE presenter create");
+    portENTER_CRITICAL(&mux);
+    te_presenter = p;
+    portEXIT_CRITICAL(&mux);
+    /* Let two TE edges establish measured=true on the backend before frame 0. */
+    vTaskDelay(pdMS_TO_TICKS(50));
+    for (unsigned f = 0; f < frames; f++) {
+        pv2_frame_request_t req = {.full_redraw = true};
+        check(pv2_presenter_begin_next_frame(p, &req), "begin");
+        for (unsigned y = 0; y < h; y += tile) {
+            pv2_lease_t l;
+            check(pv2_presenter_acquire_buffer(p, &l), "acquire");
+            uint16_t *pixels = l.surface.pixels;
+            unsigned rows = h - y < tile ? h - y : tile;
+            for (unsigned j = 0; j < rows; j++) {
+                for (unsigned x = 0; x < w; x++) {
+                    uint16_t c = colors[x * 8 / w];
+                    if (x >= (f * 16) % (w - 48) && x < (f * 16) % (w - 48) + 48) {
+                        c = 0xffff;
+                    }
+                    if (x < 2 || x >= w - 2 || y + j < 2 || y + j >= h - 2) {
+                        c = 0x07e0;
+                    }
+                    pixels[j * w + x] = c;
+                }
+            }
+            pv2_area_t area = {0, y, w - 1, y + rows - 1};
+            check(pv2_presenter_submit_buffer(p, &l, &area, w * 2), "submit");
+        }
+        pv2_presenter_receipt_t receipt;
+        check(pv2_presenter_commit_with_receipt(p, NULL, &receipt), "commit");
+        pv2_frame_status_t state;
+        check(pv2_presenter_wait_frame(p, receipt, PV2_COMPLETION_SOURCE_RELEASED, 2000, &state), "wait");
+        check(state.result, "dynamic TE frame result");
+        check(state.terminal && state.source_released ? ESP_OK : ESP_FAIL, "dynamic TE terminal");
+        check(pv2_presenter_release_receipt(p, receipt), "release");
+    }
+    portENTER_CRITICAL(&mux);
+    te_presenter = NULL;
+    portEXIT_CRITICAL(&mux);
+    check(pv2_presenter_stop(p, 2000), "stop");
+    check(pv2_presenter_destroy(p), "destroy");
+    check(pv2_lcd_spi_destroy(adapter), "adapter destroy");
+    check(meter.done == frames && meter.offered == frames ? ESP_OK : ESP_FAIL, "dynamic TE callbacks");
+    check(meter.max_tx <= budget_us ? ESP_OK : ESP_FAIL, "dynamic TE transfer within budget");
+    uint64_t min_phase = meter.min_edge_age >= timing.edge_to_scan_us ? meter.min_edge_age - timing.edge_to_scan_us : 0;
+    uint64_t max_phase = meter.max_edge_age >= timing.edge_to_scan_us ? meter.max_edge_age - timing.edge_to_scan_us : 0;
+    ESP_LOGI(TAG, "PASS TE_FULL_DYNAMIC_PHASE frames=%u tx=%u callbacks=%u max_tx_us=%"PRIu64" budget_us=%"PRIu32" phase_us=[%"PRIu64", %"PRIu64"] window=[%"PRIu64", %"PRIu64")",
+             frames, meter.offered, meter.done, meter.max_tx, budget_us, min_phase, max_phase,
+             win.earliest_phase_us, win.latest_phase_us);
+    check(min_phase >= win.earliest_phase_us && max_phase < win.latest_phase_us ? ESP_OK : ESP_FAIL, "dynamic TE phase bounds");
+}
 void app_main(void)
 {
     esp_lcd_panel_handle_t panel;
@@ -289,7 +384,8 @@ void app_main(void)
     /* Exercise real full-image ownership and DMA. This broad, explicit gate
      * only aligns with an edge; it is NOT a certified scan-phase window. */
     ESP_LOGW(TAG, "Full-frame edge synchronization only; optical phase model UNVERIFIED");
-    run(panel, io, true, false, 12, (uint32_t)(3 * min), (uint32_t)(2 * min));
+    uint64_t full_tx_max = run(panel, io, true, false, 12, (uint32_t)(3 * min), (uint32_t)(2 * min));
+    run_dynamic_phase_te(panel, io, min, max, high, full_tx_max);
     run_rotation_async(panel, io, false, 0, 0, 0);
     run_rotation_async(panel, io, true, 1, (uint32_t)(3 * min), (uint32_t)(2 * min));
     run_rotation_async(panel, io, true, 2, (uint32_t)(3 * min), (uint32_t)(2 * min));

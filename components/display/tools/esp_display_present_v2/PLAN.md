@@ -13,7 +13,7 @@
 | S3 TE | 显式单/双 compose，前帧发送与后帧构建重叠，FIFO 输出，边沿重试；线性扫描模型的动态相位准入 | Host 覆盖延迟 DMA、拒收及故障；模型不能自动推断真实面板扫描规律 |
 | S4 FB | 接公共核心/构建器，多 tile 独立于 image 数；PARTIAL 边拷边转；FULL/DIRECT 共享一张逻辑画布 | PARTIAL 无额外逻辑全屏池；已扫描图像一直持有 S 引用 |
 | S5 Presenter/LVGL | 规划入口、失效区域协商、拆 band、三绘制契约、运行时旋转保留对象树 | `pv2_lvgl_set_rotation()` 排空后重绑；原 tracking 与事件/后台 service 契约保留 |
-| S6 验收 | Host/LVGL 29/29、ASan/UBSan 29/29；S3/P4/S31 实板覆盖五模式基线 + 动态四方向旋转、异步 copy、单/双 compose 与 P4 PPA/DMA2D 硬件加速显示组合 | 本轮板测详见 RESULTS；真实光学 TE 扫描相位模型仍需结合面板扫描资料或光学测量独立确认 |
+| S6 验收 | Host/LVGL 29/29、ASan/UBSan 29/29；S3/P4/S31 实板覆盖五模式基线 + 动态四方向旋转、异步 copy、单/双 compose、P4 PPA/DMA2D 硬件加速显示组合及 **S31 480×480 全屏动态相位 TE (`pv2_te_window`)** | 本轮板测详见 RESULTS；S31 全屏慢写相位窗口 `[678, 7308) µs` 内实测提交相位 `[814, 3636] µs`、最大传输 `23852 µs` |
 
 ## 当前流水线与职责
 

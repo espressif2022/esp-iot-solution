@@ -224,13 +224,14 @@ static esp_err_t wait_change(pv2_presenter_t *p, uint64_t start, uint32_t timeou
     if (!budget) {
         return ESP_ERR_TIMEOUT;
     }
+    uint32_t slice = (p->kind == PV2_PRESENTER_TE && budget > 1) ? 1 : budget;
     pv2_mutex_give(p->gate);
-    bool signaled = pv2_event_wait(p->changed, budget);
+    bool signaled = pv2_event_wait(p->changed, slice);
     /* Reacquire before returning even on timeout: the caller must not inspect
      * backend state concurrently. Latency of an already running driver call
      * is not a hard real-time bound; adapter submit must return promptly. */
     (void)pv2_mutex_take(p->gate, UINT32_MAX);
-    return signaled ? ESP_OK : ESP_ERR_TIMEOUT;
+    return (signaled || remaining(start, timeout) > 0) ? ESP_OK : ESP_ERR_TIMEOUT;
 }
 
 static esp_err_t wait_receipt(pv2_presenter_t *p, pv2_receipt_t receipt, uint32_t timeout,
