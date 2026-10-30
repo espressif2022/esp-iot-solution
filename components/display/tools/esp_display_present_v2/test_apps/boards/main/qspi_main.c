@@ -1,7 +1,9 @@
 /* SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0 */
 #include <inttypes.h>
+#include <string.h>
 #include "board_qspi.h"
+#include "esp_display_present.h"
 #include "present_presenter.h"
 #include "driver/gpio.h"
 #include "esp_timer.h"
@@ -534,6 +536,224 @@ static void run_te_matrix_and_cancel_profile(esp_lcd_panel_handle_t panel, esp_l
         }
     }
 }
+
+static void run_v1_vs_v2_qspi_bench(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_handle_t io,
+                                    uint64_t period_min_us, uint64_t period_max_us,
+                                    uint64_t high_us, uint64_t measured_full_tx_us)
+{
+    const unsigned w = 480, h = 480, tile = 16, bench_frames = 16;
+    check(esp_lcd_panel_set_gap(panel, 0, 0), "gap");
+    uint64_t period_avg = (period_min_us + period_max_us) / 2;
+    uint64_t jitter = (period_max_us - period_min_us) + 250;
+    uint64_t guard = jitter + 400;
+    uint64_t edge_to_scan = high_us < period_avg / 4 ? high_us : 536;
+    uint64_t scan_us = period_avg - edge_to_scan;
+    uint32_t budget_us = (uint32_t)(measured_full_tx_us + 1200);
+    pv2_te_timing_t timing = {
+        .period_us = period_avg, .scan_us = scan_us, .edge_to_scan_us = edge_to_scan,
+        .guard_us = guard, .jitter_us = jitter,
+    };
+
+    static const struct {
+        const char *name;
+        bool te;
+        uint8_t compose_buffers;
+        bool partial_dirty;
+    } qcases[] = {
+        {"GRAM_FULL_480x480", false, 0, false},
+        {"TE_COMPOSE1_PARTIAL", true, 1, true},
+        {"TE_COMPOSE2_PARTIAL", true, 2, true},
+        {"TE_COMPOSE2_FULL", true, 2, false},
+    };
+
+    for (size_t i = 0; i < sizeof(qcases) / sizeof(qcases[0]); ++i) {
+        /* Release our TE GPIO ISR while V1 owns QSPI_TE_GPIO. */
+        if (qcases[i].te) {
+            check(gpio_isr_handler_remove(QSPI_TE_GPIO), "remove te isr for v1");
+        }
+        esp_display_presenter_config_t v1_cfg = {
+            .width = w,
+            .height = h,
+            .pixel_format = ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565,
+            .max_damage_areas = 8,
+            .transfer_timeout_ms = 2000,
+            .pipeline_acquire_timeout_ms = 2000,
+            .target = {
+                .hw = {
+                    .panel = panel,
+                    .io = io,
+                    .panel_type = ESP_DISPLAY_PRESENT_PANEL_IO,
+                    .input_pixel_format = ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565,
+                    .rotation = ESP_DISPLAY_PRESENT_ROTATE_0,
+                    .swap_bytes = true,
+                    .te_enabled = qcases[i].te,
+                    .te_sync = qcases[i].te ? (esp_display_present_te_sync_config_t)
+                    {
+                        .gpio_num = QSPI_TE_GPIO,
+                        .bus_freq_hz = 40000000,
+                        .data_lines = 4,
+} : ESP_DISPLAY_PRESENT_TE_SYNC_DISABLED(),
+                },
+                .fb = {
+                    .mode = qcases[i].te ? ESP_DISPLAY_PRESENT_MODE_TE_SYNC : ESP_DISPLAY_PRESENT_MODE_NONE,
+                },
+                .drawbuf = {
+                    .lines = tile,
+                    .buffers = 2,
+                    .in_psram = false,
+                    .te_compose_buffers = qcases[i].compose_buffers,
+                },
+            },
+        };
+        esp_display_presenter_t *v1 = NULL;
+        check(esp_display_presenter_create(&v1_cfg, &v1), "qspi v1 create");
+        if (qcases[i].te) {
+            vTaskDelay(pdMS_TO_TICKS(50));
+        }
+        size_t v1_int_free = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+        size_t v1_psram_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+
+        uint64_t v1_t0 = esp_timer_get_time();
+        for (unsigned f = 0; f < bench_frames; ++f) {
+            bool full = (f == 0) || !qcases[i].partial_dirty;
+            int bx0 = 8 + ((f ? f - 1 : 0) * 16) % (w - 80);
+            int by0 = 8 + ((f ? f - 1 : 0) * 16) % (h - 80);
+            int bx1 = 8 + (f * 16) % (w - 80);
+            int by1 = 8 + (f * 16) % (h - 80);
+            esp_display_present_area_t dirty_v1[2] = {
+                {bx0, by0, bx0 + 63, by0 + 63},
+                {bx1, by1, bx1 + 63, by1 + 63},
+            };
+            esp_display_present_surface_request_t req_v1 = {
+                .dirty_areas = full ? NULL : dirty_v1,
+                .dirty_area_count = full ? 0 : 2,
+            };
+            esp_display_present_area_t render_areas[8];
+            size_t render_count = 0;
+            bool full_cov = false;
+            check(esp_display_presenter_begin_next_frame(v1, &req_v1, render_areas, 8, &render_count, &full_cov), "qspi v1 begin");
+            size_t n_areas = full ? 1 : 2;
+            esp_display_present_area_t full_a = {0, 0, (int)w - 1, (int)h - 1};
+            const esp_display_present_area_t *alist = full ? &full_a : dirty_v1;
+            for (size_t a = 0; a < n_areas; ++a) {
+                int h_total = alist[a].y2 - alist[a].y1 + 1;
+                int w_total = alist[a].x2 - alist[a].x1 + 1;
+                for (int off = 0; off < h_total; off += (int)tile) {
+                    int rows = (h_total - off > (int)tile) ? (int)tile : (h_total - off);
+                    esp_display_presenter_buffer_t buf;
+                    check(esp_display_presenter_acquire_buffer(v1, &buf), "qspi v1 acquire");
+                    memset(buf.surface.pixels, (int)(f + a), (size_t)w_total * rows * 2);
+                    esp_display_present_area_t sub_a = {alist[a].x1, alist[a].y1 + off, alist[a].x2, alist[a].y1 + off + rows - 1};
+                    check(esp_display_presenter_submit_buffer(v1, &buf, &sub_a, (size_t)w_total * 2), "qspi v1 submit");
+                }
+            }
+            esp_display_presenter_submit_t sub = {.coverage = ESP_DISPLAY_PRESENT_COVERAGE_FULL};
+            check(esp_display_presenter_commit_frame(v1, &sub), "qspi v1 commit");
+        }
+        check(esp_display_presenter_quiesce(v1, 5000), "qspi v1 quiesce");
+        uint64_t v1_elapsed_us = esp_timer_get_time() - v1_t0;
+        check(esp_display_presenter_stop(v1), "qspi v1 stop");
+        check(esp_display_presenter_delete(v1), "qspi v1 delete");
+        if (qcases[i].te) {
+            gpio_config_t pin = {.pin_bit_mask = 1ULL << QSPI_TE_GPIO, .mode = GPIO_MODE_INPUT, .intr_type = GPIO_INTR_ANYEDGE};
+            check(gpio_config(&pin), "restore TE gpio");
+            check(gpio_isr_handler_add(QSPI_TE_GPIO, te_isr, NULL), "restore te isr");
+        }
+
+        /* --- Run V2 with identical workload --- */
+        pv2_lcd_spi_t *adapter;
+        pv2_lcd_spi_config_t spi = {.panel = panel, .io = io, .format = PV2_FORMAT_RGB565,
+                                    .byte_order = PV2_ORDER_SWAPPED, .max_inflight = 1, .psram_dma_direct = true
+                                   };
+        check(pv2_lcd_spi_create(&spi, &adapter), "qspi v2 adapter");
+        meter_t meter = {0};
+        check(pv2_lcd_spi_get_interface(adapter, &meter.real), "qspi v2 iface");
+        pv2_presenter_config_t v2_cfg = {
+            .backend_kind = qcases[i].te ? PV2_PRESENTER_TE : PV2_PRESENTER_GRAM,
+            .timeout_ms = 2000, .background_service = true,
+            .backend = {
+                .image_in_psram = qcases[i].te, .compose_count = qcases[i].compose_buffers,
+                .width = w, .height = h, .tile_rows = tile, .buffer_count = 2, .max_frames = 3,
+                .format = PV2_FORMAT_RGB565, .panel_order = PV2_ORDER_SWAPPED, .async_copy = true,
+                .panel = {&meter, metered_attach, metered_submit, metered_stop},
+                .te_timing = timing, .te_transfer_budget_us = budget_us,
+            },
+        };
+        pv2_presenter_t *v2 = NULL;
+        check(pv2_presenter_create(&v2_cfg, &v2), "qspi v2 create");
+        if (qcases[i].te) {
+            portENTER_CRITICAL(&mux);
+            te_presenter = v2;
+            portEXIT_CRITICAL(&mux);
+            vTaskDelay(pdMS_TO_TICKS(50));
+        }
+        size_t v2_int_free = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+        size_t v2_psram_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+
+        pv2_presenter_receipt_t last_r = {0};
+        uint64_t v2_t0 = esp_timer_get_time();
+        for (unsigned f = 0; f < bench_frames; ++f) {
+            if (last_r.value && (!qcases[i].te || qcases[i].compose_buffers == 1)) {
+                pv2_frame_status_t st;
+                check(pv2_presenter_wait_frame(v2, last_r, PV2_COMPLETION_SOURCE_RELEASED, 2000, &st), "qspi v2 wait1");
+                check(pv2_presenter_release_receipt(v2, last_r), "qspi v2 rel1");
+                last_r.value = 0;
+            }
+            bool full = (f == 0) || !qcases[i].partial_dirty;
+            uint32_t bx0 = 8 + ((f ? f - 1 : 0) * 16) % (w - 80);
+            uint32_t by0 = 8 + ((f ? f - 1 : 0) * 16) % (h - 80);
+            uint32_t bx1 = 8 + (f * 16) % (w - 80);
+            uint32_t by1 = 8 + (f * 16) % (h - 80);
+            pv2_rect_t dirty_v2[2] = {{bx0, by0, 64, 64}, {bx1, by1, 64, 64}};
+            pv2_frame_request_t req_v2 = {.full_redraw = full, .damage = full ? NULL : dirty_v2, .damage_count = full ? 0 : 2};
+            check(pv2_presenter_begin_next_frame(v2, &req_v2), "qspi v2 begin");
+            size_t n_areas = full ? 1 : 2;
+            pv2_rect_t full_r = {0, 0, w, h};
+            const pv2_rect_t *rlist = full ? &full_r : dirty_v2;
+            for (size_t a = 0; a < n_areas; ++a) {
+                for (uint32_t off = 0; off < rlist[a].height; off += tile) {
+                    uint32_t rows = (rlist[a].height - off > tile) ? tile : (rlist[a].height - off);
+                    pv2_lease_t l;
+                    check(pv2_presenter_acquire_buffer(v2, &l), "qspi v2 acquire");
+                    memset(l.surface.pixels, (int)(f + a), (size_t)rlist[a].width * rows * 2);
+                    pv2_area_t sub_a = {(int32_t)rlist[a].x, (int32_t)(rlist[a].y + off),
+                                        (int32_t)(rlist[a].x + rlist[a].width - 1), (int32_t)(rlist[a].y + off + rows - 1)
+                                       };
+                    check(pv2_presenter_submit_buffer(v2, &l, &sub_a, (size_t)rlist[a].width * 2), "qspi v2 submit");
+                }
+            }
+            if (last_r.value) {
+                /* Wait for previous in-flight transfer only after building next frame so compose=2 overlaps build & DMA! */
+                pv2_frame_status_t st;
+                check(pv2_presenter_wait_frame(v2, last_r, PV2_COMPLETION_SOURCE_RELEASED, 2000, &st), "qspi v2 wait2");
+                check(pv2_presenter_release_receipt(v2, last_r), "qspi v2 rel2");
+                last_r.value = 0;
+            }
+            check(pv2_presenter_commit_with_receipt(v2, NULL, &last_r), "qspi v2 commit");
+        }
+        if (last_r.value) {
+            pv2_frame_status_t st;
+            check(pv2_presenter_wait_frame(v2, last_r, PV2_COMPLETION_SOURCE_RELEASED, 2000, &st), "qspi v2 final wait");
+            check(pv2_presenter_release_receipt(v2, last_r), "qspi v2 final rel");
+        }
+        uint64_t v2_elapsed_us = esp_timer_get_time() - v2_t0;
+        portENTER_CRITICAL(&mux);
+        te_presenter = NULL;
+        portEXIT_CRITICAL(&mux);
+        check(pv2_presenter_stop(v2, 2000), "qspi v2 stop");
+        check(pv2_presenter_destroy(v2), "qspi v2 destroy");
+        check(pv2_lcd_spi_destroy(adapter), "qspi v2 adapter destroy");
+
+        uint32_t v1_fps_x10 = (uint32_t)((uint64_t)bench_frames * 10000000ULL / v1_elapsed_us);
+        uint32_t v2_fps_x10 = (uint32_t)((uint64_t)bench_frames * 10000000ULL / v2_elapsed_us);
+        ESP_LOGI(TAG, "BENCH_V1_V2 case=%s frames=%u v1_us_per_frame=%"PRIu64" v1_fps=%u.%u v2_us_per_frame=%"PRIu64" v2_fps=%u.%u v1_free=(%u,%u) v2_free=(%u,%u)",
+                 qcases[i].name, bench_frames,
+                 v1_elapsed_us / bench_frames, (unsigned)(v1_fps_x10 / 10), (unsigned)(v1_fps_x10 % 10),
+                 v2_elapsed_us / bench_frames, (unsigned)(v2_fps_x10 / 10), (unsigned)(v2_fps_x10 % 10),
+                 (unsigned)v1_int_free, (unsigned)v1_psram_free,
+                 (unsigned)v2_int_free, (unsigned)v2_psram_free);
+    }
+}
 void app_main(void)
 {
     esp_lcd_panel_handle_t panel;
@@ -555,6 +775,7 @@ void app_main(void)
      * only aligns with an edge; it is NOT a certified scan-phase window. */
     ESP_LOGW(TAG, "Full-frame edge synchronization only; optical phase model UNVERIFIED");
     uint64_t full_tx_max = run(panel, io, true, false, 12, (uint32_t)(3 * min), (uint32_t)(2 * min));
+    run_v1_vs_v2_qspi_bench(panel, io, min, max, high, full_tx_max);
     run_dynamic_phase_te(panel, io, min, max, high, full_tx_max);
     run_te_matrix_and_cancel_profile(panel, io, min, max, high, full_tx_max);
     run_rotation_async(panel, io, false, 0, 0, 0);

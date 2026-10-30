@@ -3,7 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include <inttypes.h>
+#include <string.h>
 #include "board.h"
+#include "esp_display_present.h"
 #include "present_presenter.h"
 #include "present_plan.h"
 #include "present_executor.h"
@@ -590,6 +592,291 @@ static void run_fb_handoff_profile(unsigned cycle, unsigned test)
     check(heap_caps_check_integrity_all(true) ? ESP_OK : ESP_FAIL, "handoff heap integrity");
 }
 
+static void run_v1_vs_v2_benchmark(unsigned cycle)
+{
+    static const struct {
+        const char *name;
+        esp_display_present_mode_t v1_mode;
+        pv2_present_mode_t v2_mode;
+        size_t buffers;
+        pv2_render_contract_t contract;
+        bool rotated;
+    } bench_cases[] = {
+        {"DOUBLE_FULL_0", ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL, PV2_MODE_DOUBLE_FULL, 2, PV2_CONTRACT_FULL, false},
+        {"TRIPLE_FULL_0", ESP_DISPLAY_PRESENT_MODE_TRIPLE_FULL, PV2_MODE_TRIPLE_FULL, 3, PV2_CONTRACT_FULL, false},
+        {"DOUBLE_DIRECT_0", ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT, PV2_MODE_DOUBLE_DIRECT, 2, PV2_CONTRACT_DIRECT, false},
+        {"DOUBLE_PARTIAL_0", ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL, PV2_MODE_DOUBLE_PARTIAL, 2, PV2_CONTRACT_PARTITION, false},
+        {"TRIPLE_PARTIAL_0", ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL, PV2_MODE_TRIPLE_PARTIAL, 3, PV2_CONTRACT_PARTITION, false},
+        {"DOUBLE_FULL_90", ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL, PV2_MODE_DOUBLE_FULL, 2, PV2_CONTRACT_FULL, true},
+        {"TRIPLE_PARTIAL_90", ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL, PV2_MODE_TRIPLE_PARTIAL, 3, PV2_CONTRACT_PARTITION, true},
+    };
+    const unsigned bench_frames = 24;
+    uint64_t v1_us_res[7] = {0}, v2_us_res[7] = {0};
+    size_t v1_int_res[7] = {0}, v2_int_res[7] = {0};
+
+    for (size_t i = 0; i < sizeof(bench_cases) / sizeof(bench_cases[0]); ++i) {
+        uint32_t lw = bench_cases[i].rotated ? HEIGHT : WIDTH;
+        uint32_t lh = bench_cases[i].rotated ? WIDTH : HEIGHT;
+
+        /* --- 1. Run V1 --- */
+        esp_lcd_panel_handle_t panel_v1;
+        check(board_panel_create(&panel_v1, bench_cases[i].buffers), "bench v1 panel create");
+        esp_display_presenter_config_t v1_cfg = {
+            .width = lw,
+            .height = lh,
+            .pixel_format = ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565,
+            .max_damage_areas = 8,
+            .transfer_timeout_ms = 2000,
+            .pipeline_acquire_timeout_ms = 2000,
+            .target = {
+                .hw = {
+                    .panel = panel_v1,
+                    .panel_type = SCANOUT_KIND == PV2_LCD_DSI ? ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI : ESP_DISPLAY_PRESENT_PANEL_RGB,
+                    .input_pixel_format = ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565,
+                    .rotation = bench_cases[i].rotated ? ESP_DISPLAY_PRESENT_ROTATE_90 : ESP_DISPLAY_PRESENT_ROTATE_0,
+                    .te_sync = ESP_DISPLAY_PRESENT_TE_SYNC_DISABLED(),
+                },
+                .fb = {
+                    .mode = bench_cases[i].v1_mode,
+                },
+                .drawbuf = {
+                    .lines = 16,
+                    .buffers = 2,
+                    .in_psram = false,
+                },
+            },
+        };
+        esp_display_presenter_t *v1 = NULL;
+        check(esp_display_presenter_create(&v1_cfg, &v1), "bench v1 create");
+        size_t v1_int_free = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+        size_t v1_psram_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+
+        uint64_t v1_t0 = esp_timer_get_time();
+        for (unsigned f = 0; f < bench_frames; ++f) {
+            bool full = (f == 0) || (bench_cases[i].contract == PV2_CONTRACT_FULL);
+            int bx0 = 8 + ((f ? f - 1 : 0) * 16) % (lw - 80);
+            int by0 = 8 + ((f ? f - 1 : 0) * 12) % (lh - 80);
+            int bx1 = 8 + (f * 16) % (lw - 80);
+            int by1 = 8 + (f * 12) % (lh - 80);
+            esp_display_present_area_t dirty_v1[2] = {
+                {bx0, by0, bx0 + 63, by0 + 63},
+                {bx1, by1, bx1 + 63, by1 + 63},
+            };
+            esp_display_present_surface_request_t req_v1 = {
+                .dirty_areas = full ? NULL : dirty_v1,
+                .dirty_area_count = full ? 0 : 2,
+            };
+            esp_display_present_area_t render_areas[8];
+            size_t render_count = 0;
+            bool full_cov = false;
+            check(esp_display_presenter_begin_next_frame(v1, &req_v1, render_areas, 8, &render_count, &full_cov), "v1 begin");
+            if (bench_cases[i].contract == PV2_CONTRACT_PARTITION) {
+                size_t n_areas = full ? 1 : 2;
+                esp_display_present_area_t full_a = {0, 0, (int)lw - 1, (int)lh - 1};
+                const esp_display_present_area_t *alist = full ? &full_a : dirty_v1;
+                for (size_t a = 0; a < n_areas; ++a) {
+                    int h_total = alist[a].y2 - alist[a].y1 + 1;
+                    int w_total = alist[a].x2 - alist[a].x1 + 1;
+                    for (int off = 0; off < h_total; off += 16) {
+                        int rows = (h_total - off > 16) ? 16 : (h_total - off);
+                        esp_display_presenter_buffer_t buf;
+                        check(esp_display_presenter_acquire_buffer(v1, &buf), "v1 acquire tile");
+                        memset(buf.surface.pixels, (int)(f + a), (size_t)w_total * rows * 2);
+                        esp_display_present_area_t sub_a = {alist[a].x1, alist[a].y1 + off, alist[a].x2, alist[a].y1 + off + rows - 1};
+                        check(esp_display_presenter_submit_buffer(v1, &buf, &sub_a, (size_t)w_total * 2), "v1 submit tile");
+                    }
+                }
+                esp_display_presenter_submit_t sub = {.coverage = ESP_DISPLAY_PRESENT_COVERAGE_FULL};
+                check(esp_display_presenter_commit_frame(v1, &sub), "v1 commit part");
+            } else {
+                esp_display_presenter_buffer_t buf;
+                check(esp_display_presenter_acquire_buffer(v1, &buf), "v1 acquire surf");
+                if (full) {
+                    memset(buf.surface.pixels, (int)f, (size_t)lw * lh * 2);
+                } else {
+                    for (size_t a = 0; a < 2; ++a) {
+                        for (int y = dirty_v1[a].y1; y <= dirty_v1[a].y2; ++y) {
+                            memset((uint8_t *)buf.surface.pixels + (size_t)y * buf.surface.stride_bytes + (size_t)dirty_v1[a].x1 * 2,
+                                   (int)(f + a), 64 * 2);
+                        }
+                    }
+                }
+                esp_display_present_area_t full_a = {0, 0, (int)lw - 1, (int)lh - 1};
+                check(esp_display_presenter_submit_buffer(v1, &buf, &full_a, buf.surface.stride_bytes), "v1 submit surf");
+                esp_display_presenter_submit_t sub = {
+                    .coverage = full ? ESP_DISPLAY_PRESENT_COVERAGE_FULL : ESP_DISPLAY_PRESENT_COVERAGE_AREAS,
+                    .areas = full ? NULL : dirty_v1,
+                    .area_count = full ? 0 : 2,
+                };
+                check(esp_display_presenter_commit_frame(v1, &sub), "v1 commit surf");
+            }
+        }
+        check(esp_display_presenter_quiesce(v1, 5000), "v1 quiesce");
+        uint64_t v1_elapsed_us = esp_timer_get_time() - v1_t0;
+        check(esp_display_presenter_stop(v1), "v1 stop");
+        check(esp_display_presenter_delete(v1), "v1 delete");
+        check(esp_lcd_panel_del(panel_v1), "v1 panel del");
+        check(board_resources_destroy(), "v1 board destroy");
+
+        /* --- 2. Run V2 with identical workload --- */
+        esp_lcd_panel_handle_t panel_v2;
+        check(board_panel_create(&panel_v2, bench_cases[i].buffers), "bench v2 panel create");
+        pv2_lcd_scanout_t *adapter;
+        pv2_lcd_scanout_config_t scan = {.panel = panel_v2, .kind = SCANOUT_KIND,
+                                         .width = WIDTH, .height = HEIGHT, .format = PV2_FORMAT_RGB565, .buffer_count = bench_cases[i].buffers,
+                                         .rgb_bounce_buffer_mode = SCANOUT_KIND == PV2_LCD_RGB_BOUNCE, .delete_panel_on_stop = true
+                                        };
+        check(pv2_lcd_scanout_create(&scan, &adapter), "bench v2 scanout create");
+        void *buffers[3] = {0};
+        size_t count = 0;
+        check(pv2_lcd_scanout_get_buffers(adapter, buffers, 3, &count), "bench v2 get buffers");
+        pv2_panel_adapter_t iface;
+        check(pv2_lcd_scanout_get_interface(adapter, &iface), "bench v2 iface");
+        pv2_executor_t *cpu_exec = NULL, *ppa_exec = NULL;
+        pv2_executor_dispatch_t disp = {0};
+        bool use_async = (bench_cases[i].contract != PV2_CONTRACT_FULL) || bench_cases[i].rotated;
+        if (use_async) {
+            check(pv2_executor_cpu_create(&cpu_exec), "v2 cpu exec");
+#ifdef PV2_BOARD_EXECUTOR_CHECK
+            check(pv2_executor_ppa_create(&ppa_exec), "v2 ppa exec");
+#endif
+            disp.primary = ppa_exec ? ppa_exec : cpu_exec;
+            disp.fallback = ppa_exec ? cpu_exec : NULL;
+        }
+        pv2_presenter_config_t v2_cfg = {
+            .backend_kind = PV2_PRESENTER_FB, .mode = bench_cases[i].v2_mode,
+            .timeout_ms = 2000, .background_service = use_async,
+            .backend = {
+                .width = lw, .height = lh, .tile_rows = 16,
+                .rotation = bench_cases[i].rotated ? PV2_ROTATE_90 : PV2_ROTATE_0,
+                .format = PV2_FORMAT_RGB565, .buffer_count = count, .max_frames = 3,
+                .async_copy = use_async,
+                .external_buffers = buffers, .external_buffer_bytes = WIDTH * HEIGHT * 2,
+                .initial_scanout_buffer = buffers[0], .panel = iface,
+            },
+        };
+        pv2_plan_config_t planned = {
+            .presenter = v2_cfg,
+            .executor = use_async ? &disp : NULL,
+            .resources = {
+                .tile_count = bench_cases[i].contract == PV2_CONTRACT_PARTITION ? 2 : 0,
+                .image_memory = PV2_MEMORY_EXTERNAL,
+                .logical_memory = PV2_MEMORY_EXTERNAL,
+            },
+        };
+        check(pv2_lcd_scanout_get_output_caps(adapter, &planned.output), "v2 caps");
+        pv2_presenter_t *v2 = NULL;
+        check(pv2_presenter_create_planned(&planned, &v2), "bench v2 create");
+        size_t v2_int_free = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+        size_t v2_psram_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+
+        pv2_presenter_receipt_t inflight[3] = {0};
+        size_t head = 0, tail = 0, queued = 0;
+        uint64_t v2_t0 = esp_timer_get_time();
+        for (unsigned f = 0; f < bench_frames; ++f) {
+            if (queued >= count - 1) {
+                pv2_frame_status_t st;
+                check(pv2_presenter_wait_frame(v2, inflight[head], PV2_COMPLETION_PRESENT_CONFIRMED, 2000, &st), "v2 wait");
+                check(pv2_presenter_release_receipt(v2, inflight[head]), "v2 release");
+                head = (head + 1) % 3;
+                queued--;
+            }
+            bool full = (f == 0) || (bench_cases[i].contract == PV2_CONTRACT_FULL);
+            uint32_t bx0 = 8 + ((f ? f - 1 : 0) * 16) % (lw - 80);
+            uint32_t by0 = 8 + ((f ? f - 1 : 0) * 12) % (lh - 80);
+            uint32_t bx1 = 8 + (f * 16) % (lw - 80);
+            uint32_t by1 = 8 + (f * 12) % (lh - 80);
+            pv2_rect_t dirty_v2[2] = {{bx0, by0, 64, 64}, {bx1, by1, 64, 64}};
+            pv2_frame_request_t req_v2 = {.full_redraw = full, .damage = full ? NULL : dirty_v2, .damage_count = full ? 0 : 2};
+            check(pv2_presenter_begin_next_frame(v2, &req_v2), "v2 begin");
+            if (bench_cases[i].contract == PV2_CONTRACT_PARTITION) {
+                size_t n_areas = full ? 1 : 2;
+                pv2_rect_t full_r = {0, 0, lw, lh};
+                const pv2_rect_t *rlist = full ? &full_r : dirty_v2;
+                for (size_t a = 0; a < n_areas; ++a) {
+                    for (uint32_t off = 0; off < rlist[a].height; off += 16) {
+                        uint32_t rows = (rlist[a].height - off > 16) ? 16 : (rlist[a].height - off);
+                        pv2_lease_t lease;
+                        check(pv2_presenter_acquire_buffer(v2, &lease), "v2 acquire tile");
+                        memset(lease.surface.pixels, (int)(f + a), (size_t)rlist[a].width * rows * 2);
+                        pv2_area_t sub_a = {(int32_t)rlist[a].x, (int32_t)(rlist[a].y + off),
+                                            (int32_t)(rlist[a].x + rlist[a].width - 1), (int32_t)(rlist[a].y + off + rows - 1)
+                                           };
+                        check(pv2_presenter_submit_buffer(v2, &lease, &sub_a, (size_t)rlist[a].width * 2), "v2 submit tile");
+                    }
+                }
+            } else {
+                pv2_lease_t lease;
+                check(pv2_presenter_acquire_buffer(v2, &lease), "v2 acquire surf");
+                if (full) {
+                    memset(lease.surface.pixels, (int)f, (size_t)lw * lh * 2);
+                    pv2_area_t full_a = {0, 0, (int32_t)lw - 1, (int32_t)lh - 1};
+                    check(pv2_presenter_submit_buffer(v2, &lease, &full_a, lease.surface.layout.stride_bytes), "v2 submit full");
+                } else {
+                    for (size_t a = 0; a < 2; ++a) {
+                        for (uint32_t y = 0; y < 64; ++y) {
+                            memset((uint8_t *)lease.surface.pixels + (size_t)(dirty_v2[a].y + y) * lease.surface.layout.stride_bytes + (size_t)dirty_v2[a].x * 2,
+                                   (int)(f + a), 64 * 2);
+                        }
+                    }
+                    pv2_area_t a0 = {(int32_t)dirty_v2[0].x, (int32_t)dirty_v2[0].y,
+                                     (int32_t)(dirty_v2[0].x + 63), (int32_t)(dirty_v2[0].y + 63)
+                                    };
+                    check(pv2_presenter_submit_buffer(v2, &lease, &a0, lease.surface.layout.stride_bytes), "v2 submit d0");
+                    check(pv2_presenter_acquire_buffer(v2, &lease), "v2 acquire surf 2");
+                    pv2_area_t a1 = {(int32_t)dirty_v2[1].x, (int32_t)dirty_v2[1].y,
+                                     (int32_t)(dirty_v2[1].x + 63), (int32_t)(dirty_v2[1].y + 63)
+                                    };
+                    check(pv2_presenter_submit_buffer(v2, &lease, &a1, lease.surface.layout.stride_bytes), "v2 submit d1");
+                }
+            }
+            check(pv2_presenter_commit_with_receipt(v2, NULL, &inflight[tail]), "v2 commit");
+            tail = (tail + 1) % 3;
+            queued++;
+        }
+        while (queued > 0) {
+            pv2_frame_status_t st;
+            check(pv2_presenter_wait_frame(v2, inflight[head], PV2_COMPLETION_PRESENT_CONFIRMED, 2000, &st), "v2 drain");
+            check(pv2_presenter_release_receipt(v2, inflight[head]), "v2 drain release");
+            head = (head + 1) % 3;
+            queued--;
+        }
+        uint64_t v2_elapsed_us = esp_timer_get_time() - v2_t0;
+        check(pv2_presenter_stop(v2, 2000), "v2 stop");
+        check(pv2_presenter_destroy(v2), "v2 destroy");
+        if (ppa_exec) {
+            check(pv2_executor_destroy(ppa_exec), "ppa destroy");
+        }
+        if (cpu_exec) {
+            check(pv2_executor_destroy(cpu_exec), "cpu destroy");
+        }
+        check(pv2_lcd_scanout_destroy(adapter), "v2 scanout destroy");
+        check(board_resources_destroy(), "v2 board destroy");
+
+        v1_us_res[i] = v1_elapsed_us / bench_frames;
+        v2_us_res[i] = v2_elapsed_us / bench_frames;
+        v1_int_res[i] = v1_int_free;
+        v2_int_res[i] = v2_int_free;
+        uint32_t v1_fps_x10 = (uint32_t)((uint64_t)bench_frames * 10000000ULL / v1_elapsed_us);
+        uint32_t v2_fps_x10 = (uint32_t)((uint64_t)bench_frames * 10000000ULL / v2_elapsed_us);
+        ESP_LOGI(TAG, "BENCH_V1_V2 cycle=%u case=%s frames=%u v1_us_per_frame=%"PRIu64" v1_fps=%u.%u v2_us_per_frame=%"PRIu64" v2_fps=%u.%u v1_free=(%u,%u) v2_free=(%u,%u)",
+                 cycle, bench_cases[i].name, bench_frames,
+                 v1_elapsed_us / bench_frames, (unsigned)(v1_fps_x10 / 10), (unsigned)(v1_fps_x10 % 10),
+                 v2_elapsed_us / bench_frames, (unsigned)(v2_fps_x10 / 10), (unsigned)(v2_fps_x10 % 10),
+                 (unsigned)v1_int_free, (unsigned)v1_psram_free,
+                 (unsigned)v2_int_free, (unsigned)v2_psram_free);
+    }
+    ESP_LOGI(TAG, "=== BENCH_SUMMARY cycle=%u ===", cycle);
+    for (size_t i = 0; i < sizeof(bench_cases) / sizeof(bench_cases[0]); ++i) {
+        uint32_t f1 = (uint32_t)(10000000ULL / (v1_us_res[i] ? v1_us_res[i] : 1));
+        uint32_t f2 = (uint32_t)(10000000ULL / (v2_us_res[i] ? v2_us_res[i] : 1));
+        ESP_LOGI(TAG, "SUMMARY case=%-18s V1=%"PRIu64"us(%u.%ufps,int=%u) | V2=%"PRIu64"us(%u.%ufps,int=%u)",
+                 bench_cases[i].name,
+                 v1_us_res[i], (unsigned)(f1 / 10), (unsigned)(f1 % 10), (unsigned)v1_int_res[i],
+                 v2_us_res[i], (unsigned)(f2 / 10), (unsigned)(f2 % 10), (unsigned)v2_int_res[i]);
+    }
+}
+
 #ifdef PV2_BOARD_EXECUTOR_CHECK
 void pv2_board_test_executors(void);
 #endif
@@ -600,6 +887,7 @@ void app_main(void)
 #endif
     ESP_LOGI(TAG, "V2 SUITE2 %s %dx%d RGB565 CPU + ROTATION/ASYNC/ACCEL COMBOS", BOARD_NAME, WIDTH, HEIGHT);
     for (unsigned cycle = 0; ; ++cycle) {
+        run_v1_vs_v2_benchmark(cycle);
         for (unsigned test = 0; test < CASE_COUNT; ++test) {
             run_fb_handoff_profile(cycle, test);
         }

@@ -13,7 +13,7 @@ else()
     message(FATAL_ERROR "Only the confirmed S3/P4 boards are supported")
 endif()
 idf_component_register(SRCS ${APP_SOURCE} ${BOARD_SOURCE} INCLUDE_DIRS "."
-    REQUIRES esp_display_present_v2 esp_lcd esp_timer esp_psram esp_driver_gpio esp_driver_i2c ${BOARD_DEPS})
+    REQUIRES esp_display_present_v2 esp_display_present esp_lcd esp_timer esp_psram esp_driver_gpio esp_driver_i2c ${BOARD_DEPS})
 
 if(IDF_TARGET STREQUAL "esp32p4")
     target_compile_definitions(${COMPONENT_LIB} PRIVATE PV2_BOARD_EXECUTOR_CHECK=1)
