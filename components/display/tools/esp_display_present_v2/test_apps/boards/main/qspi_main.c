@@ -544,11 +544,11 @@ static void run_v1_vs_v2_qspi_bench(esp_lcd_panel_handle_t panel, esp_lcd_panel_
     const unsigned w = 480, h = 480, tile = 16, bench_frames = 16;
     check(esp_lcd_panel_set_gap(panel, 0, 0), "gap");
     uint64_t period_avg = (period_min_us + period_max_us) / 2;
-    uint64_t jitter = (period_max_us - period_min_us) + 250;
-    uint64_t guard = jitter + 400;
+    uint64_t jitter = (period_max_us - period_min_us) + 120;
+    uint64_t guard = jitter;
     uint64_t edge_to_scan = high_us < period_avg / 4 ? high_us : 536;
     uint64_t scan_us = period_avg - edge_to_scan;
-    uint32_t budget_us = (uint32_t)(measured_full_tx_us + 1200);
+    uint32_t budget_us = (uint32_t)(measured_full_tx_us + 250);
     pv2_te_timing_t timing = {
         .period_us = period_avg, .scan_us = scan_us, .edge_to_scan_us = edge_to_scan,
         .guard_us = guard, .jitter_us = jitter,
@@ -690,14 +690,17 @@ static void run_v1_vs_v2_qspi_bench(esp_lcd_panel_handle_t panel, esp_lcd_panel_
         size_t v2_int_free = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
         size_t v2_psram_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
 
-        pv2_presenter_receipt_t last_r = {0};
+        pv2_presenter_receipt_t inflight[2] = {0};
+        size_t head = 0, tail = 0, queued = 0;
+        size_t max_q = (qcases[i].te && qcases[i].compose_buffers == 2) ? 2 : 1;
         uint64_t v2_t0 = esp_timer_get_time();
         for (unsigned f = 0; f < bench_frames; ++f) {
-            if (last_r.value && (!qcases[i].te || qcases[i].compose_buffers == 1)) {
+            if (queued >= max_q) {
                 pv2_frame_status_t st;
-                check(pv2_presenter_wait_frame(v2, last_r, PV2_COMPLETION_SOURCE_RELEASED, 2000, &st), "qspi v2 wait1");
-                check(pv2_presenter_release_receipt(v2, last_r), "qspi v2 rel1");
-                last_r.value = 0;
+                check(pv2_presenter_wait_frame(v2, inflight[head], PV2_COMPLETION_SOURCE_RELEASED, 2000, &st), "qspi v2 wait");
+                check(pv2_presenter_release_receipt(v2, inflight[head]), "qspi v2 rel");
+                head = (head + 1) % 2;
+                queued--;
             }
             bool full = (f == 0) || !qcases[i].partial_dirty;
             uint32_t bx0 = 8 + ((f ? f - 1 : 0) * 16) % (w - 80);
@@ -722,19 +725,16 @@ static void run_v1_vs_v2_qspi_bench(esp_lcd_panel_handle_t panel, esp_lcd_panel_
                     check(pv2_presenter_submit_buffer(v2, &l, &sub_a, (size_t)rlist[a].width * 2), "qspi v2 submit");
                 }
             }
-            if (last_r.value) {
-                /* Wait for previous in-flight transfer only after building next frame so compose=2 overlaps build & DMA! */
-                pv2_frame_status_t st;
-                check(pv2_presenter_wait_frame(v2, last_r, PV2_COMPLETION_SOURCE_RELEASED, 2000, &st), "qspi v2 wait2");
-                check(pv2_presenter_release_receipt(v2, last_r), "qspi v2 rel2");
-                last_r.value = 0;
-            }
-            check(pv2_presenter_commit_with_receipt(v2, NULL, &last_r), "qspi v2 commit");
+            check(pv2_presenter_commit_with_receipt(v2, NULL, &inflight[tail]), "qspi v2 commit");
+            tail = (tail + 1) % 2;
+            queued++;
         }
-        if (last_r.value) {
+        while (queued > 0) {
             pv2_frame_status_t st;
-            check(pv2_presenter_wait_frame(v2, last_r, PV2_COMPLETION_SOURCE_RELEASED, 2000, &st), "qspi v2 final wait");
-            check(pv2_presenter_release_receipt(v2, last_r), "qspi v2 final rel");
+            check(pv2_presenter_wait_frame(v2, inflight[head], PV2_COMPLETION_SOURCE_RELEASED, 2000, &st), "qspi v2 final wait");
+            check(pv2_presenter_release_receipt(v2, inflight[head]), "qspi v2 final rel");
+            head = (head + 1) % 2;
+            queued--;
         }
         uint64_t v2_elapsed_us = esp_timer_get_time() - v2_t0;
         portENTER_CRITICAL(&mux);

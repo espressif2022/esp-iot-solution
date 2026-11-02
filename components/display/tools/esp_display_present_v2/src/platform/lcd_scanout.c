@@ -37,7 +37,8 @@ static bool PV2_ISR_ATTR frame_boundary(pv2_lcd_scanout_t *a)
     pv2_panel_event_fn callback = NULL;
     void *user = NULL;
     uint64_t cookie = 0;
-    if (a->attached && a->armed && !a->closing && ++a->boundaries == 2) {
+    unsigned needed = a->config.single_boundary_retire ? 1u : 2u;
+    if (a->attached && a->armed && !a->closing && ++a->boundaries == needed) {
         cookie = a->cookie;
         a->cookie = 0;
         a->armed = false;

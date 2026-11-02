@@ -592,7 +592,16 @@ static esp_err_t submit_buffer_impl(pv2_presenter_t *p, const pv2_lease_t *lease
                                                      (uint32_t)(area->x2 - area->x1) + 1, (uint32_t)(area->y2 - area->y1) + 1
                                                    }, .stride_bytes = stride
                                  };
-    ret = p->ops->submit_region_ex(p->backend, p->frame, p->held.id, &submit);
+    uint64_t start = pv2_now_ms();
+    for (;;) {
+        ret = p->ops->submit_region_ex(p->backend, p->frame, p->held.id, &submit);
+        if (ret != ESP_ERR_NO_MEM && ret != ESP_ERR_TIMEOUT) {
+            break;
+        }
+        if (wait_change(p, start, p->timeout) != ESP_OK) {
+            break;
+        }
+    }
     if (ret == ESP_OK) {
         p->held = (pv2_lease_t) {
             0

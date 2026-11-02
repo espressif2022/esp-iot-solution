@@ -724,7 +724,8 @@ static void run_v1_vs_v2_benchmark(unsigned cycle)
         pv2_lcd_scanout_t *adapter;
         pv2_lcd_scanout_config_t scan = {.panel = panel_v2, .kind = SCANOUT_KIND,
                                          .width = WIDTH, .height = HEIGHT, .format = PV2_FORMAT_RGB565, .buffer_count = bench_cases[i].buffers,
-                                         .rgb_bounce_buffer_mode = SCANOUT_KIND == PV2_LCD_RGB_BOUNCE, .delete_panel_on_stop = true
+                                         .rgb_bounce_buffer_mode = SCANOUT_KIND == PV2_LCD_RGB_BOUNCE,
+                                         .single_boundary_retire = true, .delete_panel_on_stop = true
                                         };
         check(pv2_lcd_scanout_create(&scan, &adapter), "bench v2 scanout create");
         void *buffers[3] = {0};

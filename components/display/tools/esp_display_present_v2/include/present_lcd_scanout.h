@@ -23,6 +23,7 @@ typedef struct {
      * callback, no driver rotation/mirror, and continuous refresh. Non-bounce
      * EOF is not a reliable retirement event on every IDF/SoC. */
     bool rgb_bounce_buffer_mode;
+    bool single_boundary_retire; /* When true, confirm after 1 post-submit frame_buf_complete event (matches V1 default). */
     bool delete_panel_on_stop; /* Alternative safe stop: transfers panel ownership on attach. */
     /** Unless delete_panel_on_stop: required board-owned safe stop: successful return guarantees scanning
      * stopped AND all registered callbacks exited; framebuffer allocations
