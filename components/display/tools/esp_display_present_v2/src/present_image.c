@@ -81,7 +81,11 @@ esp_err_t pv2_image_begin(pv2_image_builder_t *b, size_t candidate, size_t basel
     if (b->baseline_borrow) {
         pv2_allocation_hold(&b->allocations[baseline], PV2_REF_COPY);
     }
-    memset(b->coverage, 0, b->coverage_bytes);
+    if (b->bitmap_dirty) {
+        memset(b->coverage, 0, b->coverage_bytes);
+        b->bitmap_dirty = false;
+    }
+    b->full_covered = false;
     b->writes = (pv2_damage_set_t) {
         0
     };
@@ -95,6 +99,13 @@ esp_err_t pv2_image_begin(pv2_image_builder_t *b, size_t candidate, size_t basel
 void pv2_image_cover(pv2_image_builder_t *b, pv2_rect_t a)
 {
     assert(pv2_valid_rect(b->width, b->height, &a));
+    if (a.x == 0 && a.y == 0 && a.width == b->width && a.height == b->height) {
+        b->full_covered = true;
+        b->writes.full = true;
+        b->writes.count = 0;
+        return;
+    }
+    b->bitmap_dirty = true;
     if (a.x == 0 && a.width == b->width) {
         pv2_coverage_set(b->coverage, (size_t)a.y * b->width, (size_t)a.height * b->width);
     } else {
@@ -106,7 +117,7 @@ void pv2_image_cover(pv2_image_builder_t *b, pv2_rect_t a)
 }
 bool pv2_image_full(const pv2_image_builder_t *b)
 {
-    return pv2_coverage_full(b->coverage, (size_t)b->width * b->height);
+    return b->full_covered || pv2_coverage_full(b->coverage, (size_t)b->width * b->height);
 }
 void pv2_image_prepare_repair(pv2_image_builder_t *b, bool direct)
 {
@@ -114,7 +125,7 @@ void pv2_image_prepare_repair(pv2_image_builder_t *b, bool direct)
         return;
     }
     b->repair_ready = true;
-    if (b->baseline == SIZE_MAX || b->baseline == b->candidate) {
+    if (b->full_covered || b->baseline == SIZE_MAX || b->baseline == b->candidate) {
         return;
     }
     uint64_t from = b->versions[b->candidate], to = b->versions[b->baseline];
@@ -205,6 +216,7 @@ bool pv2_image_next_repair(pv2_image_builder_t *b, pv2_rect_t *out)
 }
 void pv2_image_repaired(pv2_image_builder_t *b, const pv2_rect_t *a)
 {
+    b->bitmap_dirty = true;
     for (uint32_t y = a->y; y < a->y + a->height; y++) {
         pv2_coverage_set(b->coverage, (size_t)y * b->width + a->x, a->width);
     }

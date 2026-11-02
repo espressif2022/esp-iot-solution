@@ -101,7 +101,7 @@ static inline uint16_t swap16(uint16_t v)
     return (uint16_t)((v << 8) | (v >> 8));
 }
 
-static void swap_row_rgb565(uint16_t *dst, const uint16_t *src, uint32_t width)
+static void PV2_ISR_ATTR swap_row_rgb565(uint16_t *dst, const uint16_t *src, uint32_t width)
 {
     uint32_t x = 0;
     if ((((uintptr_t)dst | (uintptr_t)src) & 3u) == 0) {
@@ -117,7 +117,7 @@ static void swap_row_rgb565(uint16_t *dst, const uint16_t *src, uint32_t width)
     }
 }
 
-static void copy_cpu(const pv2_copy_request_t *r)
+static void PV2_ISR_ATTR copy_cpu(const pv2_copy_request_t *r)
 {
     size_t bytes = r->source.layout.format == PV2_FORMAT_RGB565 ? 2 : 3;
     bool swap = r->source.layout.byte_order != r->destination.layout.byte_order;
@@ -221,13 +221,23 @@ static void copy_cpu(const pv2_copy_request_t *r)
                             n--;
                         }
                         uint32_t *dst32 = (uint32_t *)dst_px;
-                        for (; n >= 2; n -= 2) {
-                            uint32_t lo = *src_px;
-                            src_px += src_step;
-                            uint32_t hi = *src_px;
-                            src_px += src_step;
-                            uint32_t pair = lo | (hi << 16);
-                            *dst32++ = swap ? (((pair & 0x00ff00ffu) << 8) | ((pair & 0xff00ff00u) >> 8)) : pair;
+                        if (!swap) {
+                            for (; n >= 2; n -= 2) {
+                                uint32_t lo = *src_px;
+                                src_px += src_step;
+                                uint32_t hi = *src_px;
+                                src_px += src_step;
+                                *dst32++ = lo | (hi << 16);
+                            }
+                        } else {
+                            for (; n >= 2; n -= 2) {
+                                uint32_t lo = *src_px;
+                                src_px += src_step;
+                                uint32_t hi = *src_px;
+                                src_px += src_step;
+                                uint32_t pair = lo | (hi << 16);
+                                *dst32++ = ((pair & 0x00ff00ffu) << 8) | ((pair & 0xff00ff00u) >> 8);
+                            }
                         }
                         if (n != 0) {
                             uint16_t v = *src_px;

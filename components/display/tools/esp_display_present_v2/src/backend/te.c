@@ -262,8 +262,20 @@ static esp_err_t service_frame(pv2_backend_t *backend, size_t index, size_t pend
         if (j->attempted && edge <= j->attempted_edge) {
             return ESP_OK;
         }
+        uint64_t now = pv2_now_us();
         pv2_te_window_t window = pv2_te_window(&backend->config.te_timing,
-                                               backend->config.te_transfer_budget_us, edge, pv2_now_us(), measured);
+                                               backend->config.te_transfer_budget_us, edge, now, measured);
+#ifndef PV2_HOST
+        if (window.admission == PV2_TE_WAIT && measured && now >= edge) {
+            uint64_t open_us = edge + backend->config.te_timing.edge_to_scan_us + window.earliest_phase_us;
+            if (now < open_us && open_us - now <= 1500) {
+                while ((now = pv2_now_us()) < open_us) {
+                }
+                window = pv2_te_window(&backend->config.te_timing,
+                                       backend->config.te_transfer_budget_us, edge, now, measured);
+            }
+        }
+#endif
         if (window.admission != PV2_TE_ALLOW) {
             return ESP_OK;
         }

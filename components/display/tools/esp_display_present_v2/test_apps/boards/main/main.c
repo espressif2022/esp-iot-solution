@@ -610,7 +610,9 @@ static void run_v1_vs_v2_benchmark(unsigned cycle)
         {"DOUBLE_FULL_90", ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL, PV2_MODE_DOUBLE_FULL, 2, PV2_CONTRACT_FULL, true},
         {"TRIPLE_PARTIAL_90", ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL, PV2_MODE_TRIPLE_PARTIAL, 3, PV2_CONTRACT_PARTITION, true},
     };
-    const unsigned bench_frames = 24;
+    const unsigned warmup_frames = 4;
+    const unsigned bench_frames = 20;
+    const unsigned total_run = warmup_frames + bench_frames;
     uint64_t v1_us_res[7] = {0}, v2_us_res[7] = {0};
     size_t v1_int_res[7] = {0}, v2_int_res[7] = {0};
 
@@ -651,8 +653,11 @@ static void run_v1_vs_v2_benchmark(unsigned cycle)
         size_t v1_int_free = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
         size_t v1_psram_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
 
-        uint64_t v1_t0 = esp_timer_get_time();
-        for (unsigned f = 0; f < bench_frames; ++f) {
+        uint64_t v1_t0 = 0;
+        for (unsigned f = 0; f < total_run; ++f) {
+            if (f == warmup_frames) {
+                v1_t0 = esp_timer_get_time();
+            }
             bool full = (f == 0) || (bench_cases[i].contract == PV2_CONTRACT_FULL);
             int bx0 = 8 + ((f ? f - 1 : 0) * 16) % (lw - 80);
             int by0 = 8 + ((f ? f - 1 : 0) * 12) % (lh - 80);
@@ -711,8 +716,8 @@ static void run_v1_vs_v2_benchmark(unsigned cycle)
                 check(esp_display_presenter_commit_frame(v1, &sub), "v1 commit surf");
             }
         }
-        check(esp_display_presenter_quiesce(v1, 5000), "v1 quiesce");
         uint64_t v1_elapsed_us = esp_timer_get_time() - v1_t0;
+        check(esp_display_presenter_quiesce(v1, 5000), "v1 quiesce");
         check(esp_display_presenter_stop(v1), "v1 stop");
         check(esp_display_presenter_delete(v1), "v1 delete");
         check(esp_lcd_panel_del(panel_v1), "v1 panel del");
@@ -735,7 +740,11 @@ static void run_v1_vs_v2_benchmark(unsigned cycle)
         check(pv2_lcd_scanout_get_interface(adapter, &iface), "bench v2 iface");
         pv2_executor_t *cpu_exec = NULL, *ppa_exec = NULL;
         pv2_executor_dispatch_t disp = {0};
-        bool use_async = (bench_cases[i].contract != PV2_CONTRACT_FULL) || bench_cases[i].rotated;
+#ifdef PV2_BOARD_EXECUTOR_CHECK
+        bool use_async = (bench_cases[i].contract == PV2_CONTRACT_PARTITION) || bench_cases[i].rotated;
+#else
+        bool use_async = (bench_cases[i].contract == PV2_CONTRACT_PARTITION);
+#endif
         if (use_async) {
             check(pv2_executor_cpu_create(&cpu_exec), "v2 cpu exec");
 #ifdef PV2_BOARD_EXECUTOR_CHECK
@@ -771,16 +780,10 @@ static void run_v1_vs_v2_benchmark(unsigned cycle)
         size_t v2_int_free = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
         size_t v2_psram_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
 
-        pv2_presenter_receipt_t inflight[3] = {0};
-        size_t head = 0, tail = 0, queued = 0;
-        uint64_t v2_t0 = esp_timer_get_time();
-        for (unsigned f = 0; f < bench_frames; ++f) {
-            if (queued >= count - 1) {
-                pv2_frame_status_t st;
-                check(pv2_presenter_wait_frame(v2, inflight[head], PV2_COMPLETION_PRESENT_CONFIRMED, 2000, &st), "v2 wait");
-                check(pv2_presenter_release_receipt(v2, inflight[head]), "v2 release");
-                head = (head + 1) % 3;
-                queued--;
+        uint64_t v2_t0 = 0;
+        for (unsigned f = 0; f < total_run; ++f) {
+            if (f == warmup_frames) {
+                v2_t0 = esp_timer_get_time();
             }
             bool full = (f == 0) || (bench_cases[i].contract == PV2_CONTRACT_FULL);
             uint32_t bx0 = 8 + ((f ? f - 1 : 0) * 16) % (lw - 80);
@@ -831,18 +834,13 @@ static void run_v1_vs_v2_benchmark(unsigned cycle)
                     check(pv2_presenter_submit_buffer(v2, &lease, &a1, lease.surface.layout.stride_bytes), "v2 submit d1");
                 }
             }
-            check(pv2_presenter_commit_with_receipt(v2, NULL, &inflight[tail]), "v2 commit");
-            tail = (tail + 1) % 3;
-            queued++;
-        }
-        while (queued > 0) {
-            pv2_frame_status_t st;
-            check(pv2_presenter_wait_frame(v2, inflight[head], PV2_COMPLETION_PRESENT_CONFIRMED, 2000, &st), "v2 drain");
-            check(pv2_presenter_release_receipt(v2, inflight[head]), "v2 drain release");
-            head = (head + 1) % 3;
-            queued--;
+            check(pv2_presenter_commit_frame(v2, NULL), "v2 commit");
+            if (!use_async) {
+                check(pv2_presenter_service(v2), "v2 service");
+            }
         }
         uint64_t v2_elapsed_us = esp_timer_get_time() - v2_t0;
+        check(pv2_presenter_drain(v2, 5000), "v2 drain");
         check(pv2_presenter_stop(v2, 2000), "v2 stop");
         check(pv2_presenter_destroy(v2), "v2 destroy");
         if (ppa_exec) {

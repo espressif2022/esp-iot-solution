@@ -30,7 +30,7 @@ typedef struct {
     pv2_image_delta_t history[PV2_IMAGE_HISTORY];
     pv2_damage_set_t writes, repair;
     size_t candidate, baseline, rect, offset;
-    bool repair_ready;
+    bool repair_ready, full_covered, bitmap_dirty;
     size_t repaired_pixels;
 } pv2_image_builder_t;
 esp_err_t pv2_image_init(pv2_image_builder_t *, uint32_t, uint32_t);

@@ -485,14 +485,10 @@ static esp_err_t begin_next_frame_impl(pv2_presenter_t *p, const pv2_frame_reque
                 return ret;
             }
         }
-        /* Only an outstanding receipt can make admission progress. The same
-         * deadline covers record pressure AND TE's single active candidate. */
-        uint32_t budget = remaining(start, timeout);
-        if (!budget) {
-            return ESP_ERR_TIMEOUT;
-        }
-        pv2_frame_status_t status;
-        ret = wait_receipt(p, p->receipts[p->head], budget, &status);
+        /* Wake on any copy drain or VSYNC completion, not only head terminal:
+         * post-seal async copy drain frees b->active in microseconds without
+         * waiting for a full VSYNC period. */
+        ret = wait_change(p, start, timeout);
         if (ret != ESP_OK) {
             return ret;
         }

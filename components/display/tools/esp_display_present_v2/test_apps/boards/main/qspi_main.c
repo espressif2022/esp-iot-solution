@@ -541,7 +541,7 @@ static void run_v1_vs_v2_qspi_bench(esp_lcd_panel_handle_t panel, esp_lcd_panel_
                                     uint64_t period_min_us, uint64_t period_max_us,
                                     uint64_t high_us, uint64_t measured_full_tx_us)
 {
-    const unsigned w = 480, h = 480, tile = 16, bench_frames = 16;
+    const unsigned w = 480, h = 480, tile = 16, warmup_frames = 4, bench_frames = 12, total_run = warmup_frames + bench_frames;
     check(esp_lcd_panel_set_gap(panel, 0, 0), "gap");
     uint64_t period_avg = (period_min_us + period_max_us) / 2;
     uint64_t jitter = (period_max_us - period_min_us) + 120;
@@ -613,8 +613,11 @@ static void run_v1_vs_v2_qspi_bench(esp_lcd_panel_handle_t panel, esp_lcd_panel_
         size_t v1_int_free = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
         size_t v1_psram_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
 
-        uint64_t v1_t0 = esp_timer_get_time();
-        for (unsigned f = 0; f < bench_frames; ++f) {
+        uint64_t v1_t0 = 0;
+        for (unsigned f = 0; f < total_run; ++f) {
+            if (f == warmup_frames) {
+                v1_t0 = esp_timer_get_time();
+            }
             bool full = (f == 0) || !qcases[i].partial_dirty;
             int bx0 = 8 + ((f ? f - 1 : 0) * 16) % (w - 80);
             int by0 = 8 + ((f ? f - 1 : 0) * 16) % (h - 80);
@@ -650,8 +653,8 @@ static void run_v1_vs_v2_qspi_bench(esp_lcd_panel_handle_t panel, esp_lcd_panel_
             esp_display_presenter_submit_t sub = {.coverage = ESP_DISPLAY_PRESENT_COVERAGE_FULL};
             check(esp_display_presenter_commit_frame(v1, &sub), "qspi v1 commit");
         }
-        check(esp_display_presenter_quiesce(v1, 5000), "qspi v1 quiesce");
         uint64_t v1_elapsed_us = esp_timer_get_time() - v1_t0;
+        check(esp_display_presenter_quiesce(v1, 5000), "qspi v1 quiesce");
         check(esp_display_presenter_stop(v1), "qspi v1 stop");
         check(esp_display_presenter_delete(v1), "qspi v1 delete");
         if (qcases[i].te) {
@@ -663,18 +666,19 @@ static void run_v1_vs_v2_qspi_bench(esp_lcd_panel_handle_t panel, esp_lcd_panel_
         /* --- Run V2 with identical workload --- */
         pv2_lcd_spi_t *adapter;
         pv2_lcd_spi_config_t spi = {.panel = panel, .io = io, .format = PV2_FORMAT_RGB565,
-                                    .byte_order = PV2_ORDER_SWAPPED, .max_inflight = 1, .psram_dma_direct = true
+                                    .byte_order = PV2_ORDER_SWAPPED, .max_inflight = qcases[i].te ? 1 : 2, .psram_dma_direct = true
                                    };
         check(pv2_lcd_spi_create(&spi, &adapter), "qspi v2 adapter");
         meter_t meter = {0};
         check(pv2_lcd_spi_get_interface(adapter, &meter.real), "qspi v2 iface");
         pv2_presenter_config_t v2_cfg = {
             .backend_kind = qcases[i].te ? PV2_PRESENTER_TE : PV2_PRESENTER_GRAM,
-            .timeout_ms = 2000, .background_service = true,
+            .timeout_ms = 2000, .background_service = qcases[i].te,
             .backend = {
                 .image_in_psram = qcases[i].te, .compose_count = qcases[i].compose_buffers,
                 .width = w, .height = h, .tile_rows = tile, .buffer_count = 2, .max_frames = 3,
-                .format = PV2_FORMAT_RGB565, .panel_order = PV2_ORDER_SWAPPED, .async_copy = true,
+                .format = PV2_FORMAT_RGB565, .panel_order = PV2_ORDER_SWAPPED,
+                .async_copy = qcases[i].te, .in_place_convert = !qcases[i].te,
                 .panel = {&meter, metered_attach, metered_submit, metered_stop},
                 .te_timing = timing, .te_transfer_budget_us = budget_us,
             },
@@ -690,17 +694,10 @@ static void run_v1_vs_v2_qspi_bench(esp_lcd_panel_handle_t panel, esp_lcd_panel_
         size_t v2_int_free = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
         size_t v2_psram_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
 
-        pv2_presenter_receipt_t inflight[2] = {0};
-        size_t head = 0, tail = 0, queued = 0;
-        size_t max_q = (qcases[i].te && qcases[i].compose_buffers == 2) ? 2 : 1;
-        uint64_t v2_t0 = esp_timer_get_time();
-        for (unsigned f = 0; f < bench_frames; ++f) {
-            if (queued >= max_q) {
-                pv2_frame_status_t st;
-                check(pv2_presenter_wait_frame(v2, inflight[head], PV2_COMPLETION_SOURCE_RELEASED, 2000, &st), "qspi v2 wait");
-                check(pv2_presenter_release_receipt(v2, inflight[head]), "qspi v2 rel");
-                head = (head + 1) % 2;
-                queued--;
+        uint64_t v2_t0 = 0;
+        for (unsigned f = 0; f < total_run; ++f) {
+            if (f == warmup_frames) {
+                v2_t0 = esp_timer_get_time();
             }
             bool full = (f == 0) || !qcases[i].partial_dirty;
             uint32_t bx0 = 8 + ((f ? f - 1 : 0) * 16) % (w - 80);
@@ -725,18 +722,10 @@ static void run_v1_vs_v2_qspi_bench(esp_lcd_panel_handle_t panel, esp_lcd_panel_
                     check(pv2_presenter_submit_buffer(v2, &l, &sub_a, (size_t)rlist[a].width * 2), "qspi v2 submit");
                 }
             }
-            check(pv2_presenter_commit_with_receipt(v2, NULL, &inflight[tail]), "qspi v2 commit");
-            tail = (tail + 1) % 2;
-            queued++;
-        }
-        while (queued > 0) {
-            pv2_frame_status_t st;
-            check(pv2_presenter_wait_frame(v2, inflight[head], PV2_COMPLETION_SOURCE_RELEASED, 2000, &st), "qspi v2 final wait");
-            check(pv2_presenter_release_receipt(v2, inflight[head]), "qspi v2 final rel");
-            head = (head + 1) % 2;
-            queued--;
+            check(pv2_presenter_commit_frame(v2, NULL), "qspi v2 commit");
         }
         uint64_t v2_elapsed_us = esp_timer_get_time() - v2_t0;
+        check(pv2_presenter_drain(v2, 5000), "qspi v2 drain");
         portENTER_CRITICAL(&mux);
         te_presenter = NULL;
         portEXIT_CRITICAL(&mux);
