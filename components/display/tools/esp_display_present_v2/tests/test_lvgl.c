@@ -144,6 +144,29 @@ int main(void)
     assert(pv2_presenter_stop(p, 0) == ESP_OK);
     assert(pv2_presenter_destroy(p) == ESP_OK);
 
+    /* Pooled PARTIAL: non-square rotation must retain a safe tile capacity. */
+    test_panel_t pool_panel = {.width = 16, .height = 12, .bpp = 2, .immediate = true};
+    p = make(&pool_panel);
+    assert(pv2_lvgl_create_pooled(p, 2, &binding) == ESP_OK);
+    display = pv2_lvgl_get_display(binding);
+    screen = lv_display_get_screen_active(display);
+    lv_obj_set_style_bg_color(screen, lv_color_white(), 0);
+    lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, 0);
+    lv_refr_now(display);
+    assert(pv2_lvgl_get_error(binding) == ESP_OK);
+    assert(pv2_presenter_drain(p, 0) == ESP_OK);
+    assert(pv2_lvgl_set_rotation(binding, PV2_ROTATE_90, 0) == ESP_OK);
+    lv_refr_now(display);
+    assert(pv2_lvgl_get_error(binding) == ESP_OK);
+    assert(pv2_presenter_drain(p, 0) == ESP_OK);
+    for (unsigned y = 0; y < 12; ++y)
+        for (unsigned x = 0; x < 16; ++x) {
+            assert(pixel(&pool_panel, x, y) == 0xffff);
+        }
+    assert(pv2_lvgl_destroy(binding) == ESP_OK);
+    assert(pv2_presenter_stop(p, 0) == ESP_OK);
+    assert(pv2_presenter_destroy(p) == ESP_OK);
+
     /* Error after a prior band was accepted: destroy must retain cancellation
      * state until delayed DMA is finished, then allow retry. */
     test_panel_t partial = {.width = 16, .height = 12, .bpp = 2,

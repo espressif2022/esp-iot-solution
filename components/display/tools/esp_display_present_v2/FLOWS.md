@@ -254,3 +254,10 @@ TE/FB 的 coverage 是实际成功写入的精确位图；history 是有界保�
 显式 TE 图像池允许 A 为 INFLIGHT 时 B 构建，图像到 READY 即发布内容基线；若 A 输出失败，后端故障阻断后继发送。旧 compose_count=0 保持串行、发送成功后发布的兼容语义。
 
 分配引用：B 保留最新内容基线，C 保留 copy 源，T 保留 DMA 发送源，S 保留当前扫描源。没有 writer 与 C/T 重叠；只有显式允许单缓冲撕裂时才能写仍被扫描的缓冲。停止须先排空 copy/输出并静默事件源，不能靠 receipt 已完成推断 S 已退出。
+
+
+## PARTIAL 共享池时序
+
+`RENDER_START → begin → acquire(tile A) → render A → flush/submit A → next band layer setup → FLUSH_WAIT_START/acquire(tile B) → render B → ... → last flush/submit → seal`。只有后端完成对 tile 的读取后，`acquire` 才能再次返回该 tile；LVGL 使用单一描述符；下一 band 在其等待事件中只换底层存储指针，保留此前 reshape 的尺寸/stride，避免提前等待及破坏 layer 布局，不依赖 LVGL 与后端恰好采用同一轮转顺序。
+
+失败时 LVGL 9.5 的渲染循环仍可能继续，因此必须切回预留的私有安全缓冲、记录错误并暂停后续刷新；该备份不能在正常运行中被当成 presenter 池。真实 GSP/LVGL 跨任务 handoff 的端到端测试另行验证，当前覆盖 presenter 池与模拟 panel。

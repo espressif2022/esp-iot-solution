@@ -40,6 +40,10 @@ esp_err_t pv2_lvgl_create(pv2_presenter_t *presenter, uint32_t draw_rows, pv2_lv
  * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
  */
 esp_err_t pv2_lvgl_create_zero_copy(pv2_presenter_t *presenter, pv2_lvgl_t **out);
+/* PARTIAL RGB565: acquire each presenter tile before LVGL renders it.
+ * An independent fallback buffer is reserved for failed admission: LVGL 9.5
+ * does not abort rendering when its RENDER_START event reports failure. */
+esp_err_t pv2_lvgl_create_pooled(pv2_presenter_t *presenter, uint32_t rows, pv2_lvgl_t **out);
 lv_display_t *pv2_lvgl_get_display(pv2_lvgl_t *binding);
 
 /**

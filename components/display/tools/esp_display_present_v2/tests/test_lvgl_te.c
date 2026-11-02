@@ -87,7 +87,7 @@ static void finish(sync_panel_t *s, pv2_presenter_t *p, pv2_presenter_backend_t 
     }
 }
 
-static void images(pv2_presenter_backend_t kind, size_t bpp)
+static void images(pv2_presenter_backend_t kind, size_t bpp, bool pooled)
 {
     sync_panel_t s;
     sync_panel_init(&s);
@@ -97,7 +97,11 @@ static void images(pv2_presenter_backend_t kind, size_t bpp)
     s.panel.service_previous = true;
     pv2_presenter_t *p = create(&s, kind, 1000);
     pv2_lvgl_t *binding;
-    OK(pv2_lvgl_create(p, 4, &binding)); /* Split LVGL bands across 2-row leases. */
+    if (pooled) {
+        OK(pv2_lvgl_create_pooled(p, 2, &binding));
+    } else {
+        OK(pv2_lvgl_create(p, 4, &binding));    /* Split LVGL bands across 2-row leases. */
+    }
     lv_display_t *display = pv2_lvgl_get_display(binding);
     background(display, 0x123456);
     lv_refr_now(display);
@@ -135,13 +139,17 @@ static void images(pv2_presenter_backend_t kind, size_t bpp)
     sync_panel_deinit(&s);
 }
 
-static void backpressure(uint32_t timeout, bool deliver)
+static void backpressure(uint32_t timeout, bool deliver, bool pooled)
 {
     sync_panel_t s;
     sync_panel_init(&s);
     pv2_presenter_t *p = create(&s, PV2_PRESENTER_TE, timeout);
     pv2_lvgl_t *binding;
-    OK(pv2_lvgl_create(p, 4, &binding));
+    if (pooled) {
+        OK(pv2_lvgl_create_pooled(p, 2, &binding));
+    } else {
+        OK(pv2_lvgl_create(p, 4, &binding));
+    }
     lv_display_t *display = pv2_lvgl_get_display(binding);
     background(display, 0xffffff);
     lv_refr_now(display);
@@ -227,7 +235,7 @@ static bool copy_notification(void *user, bool isr)
     return false;
 }
 
-static void background_sender(bool async, pv2_presenter_backend_t kind)
+static void background_sender(bool async, pv2_presenter_backend_t kind, bool pooled)
 {
     copy_notifications_t n = {.lock = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER};
     sync_panel_t panel;
@@ -243,7 +251,11 @@ static void background_sender(bool async, pv2_presenter_backend_t kind)
     pv2_presenter_t *p;
     OK(pv2_presenter_create(&config, &p));
     pv2_lvgl_t *binding;
-    OK(pv2_lvgl_create(p, 4, &binding));
+    if (pooled) {
+        OK(pv2_lvgl_create_pooled(p, 2, &binding));
+    } else {
+        OK(pv2_lvgl_create(p, 4, &binding));
+    }
     lv_display_t *display = pv2_lvgl_get_display(binding);
     background(display, 0xffffff);
     lv_refr_now(display);
@@ -292,17 +304,23 @@ static void background_sender(bool async, pv2_presenter_backend_t kind)
 int main(void)
 {
     lv_init();
-    images(PV2_PRESENTER_GRAM, 2);
-    images(PV2_PRESENTER_TE, 2);
-    images(PV2_PRESENTER_GRAM, 3);
-    images(PV2_PRESENTER_TE, 3);
-    backpressure(0, false);
-    backpressure(5, false);
-    backpressure(1000, true);
+    images(PV2_PRESENTER_GRAM, 2, false);
+    images(PV2_PRESENTER_TE, 2, false);
+    images(PV2_PRESENTER_GRAM, 3, false);
+    images(PV2_PRESENTER_TE, 3, false);
+    images(PV2_PRESENTER_GRAM, 2, true);
+    images(PV2_PRESENTER_TE, 2, true);
+    backpressure(0, false, false);
+    backpressure(0, false, true);
+    backpressure(5, false, false);
+    backpressure(1000, true, false);
+    backpressure(1000, true, true);
     multiple_instances();
-    background_sender(false, PV2_PRESENTER_TE);
-    background_sender(true, PV2_PRESENTER_TE);
-    background_sender(true, PV2_PRESENTER_GRAM);
+    background_sender(false, PV2_PRESENTER_TE, false);
+    background_sender(true, PV2_PRESENTER_TE, false);
+    background_sender(true, PV2_PRESENTER_GRAM, false);
+    background_sender(true, PV2_PRESENTER_TE, true);
+    background_sender(true, PV2_PRESENTER_GRAM, true);
     lv_deinit();
     puts("LVGL GRAM/TE: reference images, padding, source lifetime, wait/pause and isolation passed");
     return 0;

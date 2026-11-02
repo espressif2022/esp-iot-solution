@@ -54,40 +54,40 @@ static bool layout_span(pv2_layout_t layout, size_t capacity, size_t *span)
     return *span <= capacity;
 }
 
-static esp_err_t validate(const pv2_copy_request_t *r)
+static esp_err_t validate(const pv2_copy_request_t *request)
 {
     size_t src_span, dst_span;
-    if (!r || !r->source.pixels || !r->destination.pixels ||
-            !layout_span(r->source.layout, r->source.capacity_bytes, &src_span) ||
-            !layout_span(r->destination.layout, r->destination.capacity_bytes, &dst_span) ||
-            r->source.layout.format != r->destination.layout.format ||
-            r->rotation < PV2_ROTATE_0 || r->rotation > PV2_ROTATE_270) {
+    if (!request || !request->source.pixels || !request->destination.pixels ||
+            !layout_span(request->source.layout, request->source.capacity_bytes, &src_span) ||
+            !layout_span(request->destination.layout, request->destination.capacity_bytes, &dst_span) ||
+            request->source.layout.format != request->destination.layout.format ||
+            request->rotation < PV2_ROTATE_0 || request->rotation > PV2_ROTATE_270) {
         return ESP_ERR_INVALID_ARG;
     }
-    pv2_rect_t a = r->source_area;
-    if (!a.width || !a.height || a.x > r->source.layout.width ||
-            a.y > r->source.layout.height ||
-            a.width > r->source.layout.width - a.x || a.height > r->source.layout.height - a.y) {
+    pv2_rect_t a = request->source_area;
+    if (!a.width || !a.height || a.x > request->source.layout.width ||
+            a.y > request->source.layout.height ||
+            a.width > request->source.layout.width - a.x || a.height > request->source.layout.height - a.y) {
         return ESP_ERR_INVALID_ARG;
     }
-    bool quarter = r->rotation == PV2_ROTATE_90 || r->rotation == PV2_ROTATE_270;
+    bool quarter = request->rotation == PV2_ROTATE_90 || request->rotation == PV2_ROTATE_270;
     uint32_t w = quarter ? a.height : a.width, h = quarter ? a.width : a.height;
-    if (r->destination_x > r->destination.layout.width ||
-            r->destination_y > r->destination.layout.height ||
-            w > r->destination.layout.width - r->destination_x ||
-            h > r->destination.layout.height - r->destination_y) {
+    if (request->destination_x > request->destination.layout.width ||
+            request->destination_y > request->destination.layout.height ||
+            w > request->destination.layout.width - request->destination_x ||
+            h > request->destination.layout.height - request->destination_y) {
         return ESP_ERR_INVALID_ARG;
     }
-    uintptr_t src = (uintptr_t)r->source.pixels, dst = (uintptr_t)r->destination.pixels;
+    uintptr_t src = (uintptr_t)request->source.pixels, dst = (uintptr_t)request->destination.pixels;
     if (src > UINTPTR_MAX - src_span || dst > UINTPTR_MAX - dst_span) {
         return ESP_ERR_INVALID_ARG;
     }
     if (src == dst) {
-        if (r->rotation != PV2_ROTATE_0 || a.x != r->destination_x ||
-                a.y != r->destination_y ||
-                r->source.layout.width != r->destination.layout.width ||
-                r->source.layout.height != r->destination.layout.height ||
-                r->source.layout.stride_bytes != r->destination.layout.stride_bytes) {
+        if (request->rotation != PV2_ROTATE_0 || a.x != request->destination_x ||
+                a.y != request->destination_y ||
+                request->source.layout.width != request->destination.layout.width ||
+                request->source.layout.height != request->destination.layout.height ||
+                request->source.layout.stride_bytes != request->destination.layout.stride_bytes) {
             return ESP_ERR_INVALID_ARG;
         }
     } else if (src < dst + dst_span && dst < src + src_span) {
@@ -117,23 +117,23 @@ static void PV2_ISR_ATTR swap_row_rgb565(uint16_t *dst, const uint16_t *src, uin
     }
 }
 
-static void PV2_ISR_ATTR copy_cpu(const pv2_copy_request_t *r)
+static void PV2_ISR_ATTR copy_cpu(const pv2_copy_request_t *request)
 {
-    size_t bytes = r->source.layout.format == PV2_FORMAT_RGB565 ? 2 : 3;
-    bool swap = r->source.layout.byte_order != r->destination.layout.byte_order;
-    bool in_place = r->source.pixels == r->destination.pixels;
+    size_t bytes = request->source.layout.format == PV2_FORMAT_RGB565 ? 2 : 3;
+    bool swap = request->source.layout.byte_order != request->destination.layout.byte_order;
+    bool in_place = request->source.pixels == request->destination.pixels;
     if (in_place && !swap) {
         return;
     }
-    pv2_rect_t a = r->source_area;
-    size_t src_stride = r->source.layout.stride_bytes;
-    size_t dst_stride = r->destination.layout.stride_bytes;
+    pv2_rect_t a = request->source_area;
+    size_t src_stride = request->source.layout.stride_bytes;
+    size_t dst_stride = request->destination.layout.stride_bytes;
 
-    if (r->rotation == PV2_ROTATE_0) {
-        const uint8_t *src_row = (const uint8_t *)r->source.pixels +
+    if (request->rotation == PV2_ROTATE_0) {
+        const uint8_t *src_row = (const uint8_t *)request->source.pixels +
                                  (size_t)a.y * src_stride + (size_t)a.x * bytes;
-        uint8_t *dst_row = (uint8_t *)r->destination.pixels +
-                           (size_t)r->destination_y * dst_stride + (size_t)r->destination_x * bytes;
+        uint8_t *dst_row = (uint8_t *)request->destination.pixels +
+                           (size_t)request->destination_y * dst_stride + (size_t)request->destination_x * bytes;
         if (!swap) {
             size_t row_bytes = (size_t)a.width * bytes;
             if (row_bytes == src_stride && src_stride == dst_stride) {
@@ -157,13 +157,13 @@ static void PV2_ISR_ATTR copy_cpu(const pv2_copy_request_t *r)
         }
     }
 
-    if (bytes == 2 && (((uintptr_t)r->source.pixels | (uintptr_t)r->destination.pixels | src_stride | dst_stride) & 1u) == 0) {
-        if (r->rotation == PV2_ROTATE_180) {
+    if (bytes == 2 && (((uintptr_t)request->source.pixels | (uintptr_t)request->destination.pixels | src_stride | dst_stride) & 1u) == 0) {
+        if (request->rotation == PV2_ROTATE_180) {
             for (uint32_t y = 0; y < a.height; ++y) {
-                const uint16_t *src_px = (const uint16_t *)((const uint8_t *)r->source.pixels +
+                const uint16_t *src_px = (const uint16_t *)((const uint8_t *)request->source.pixels +
                                                             (size_t)(a.y + y) * src_stride) + a.x + a.width - 1;
-                uint16_t *dst_px = (uint16_t *)((uint8_t *)r->destination.pixels +
-                                                (size_t)(r->destination_y + a.height - 1 - y) * dst_stride) + r->destination_x;
+                uint16_t *dst_px = (uint16_t *)((uint8_t *)request->destination.pixels +
+                                                (size_t)(request->destination_y + a.height - 1 - y) * dst_stride) + request->destination_x;
                 uint32_t n = a.width;
                 if (((uintptr_t)dst_px & 3u) != 0 && n > 0) {
                     uint16_t v = *src_px--;
@@ -184,7 +184,7 @@ static void PV2_ISR_ATTR copy_cpu(const pv2_copy_request_t *r)
             }
             return;
         }
-        if (r->rotation == PV2_ROTATE_90 || r->rotation == PV2_ROTATE_270) {
+        if (request->rotation == PV2_ROTATE_90 || request->rotation == PV2_ROTATE_270) {
             const uint32_t bw = 32, bh = 64;
             size_t src_stride_px = src_stride / 2;
             for (uint32_t bx = 0; bx < a.width; bx += bw) {
@@ -196,20 +196,20 @@ static void PV2_ISR_ATTR copy_cpu(const pv2_copy_request_t *r)
                         const uint16_t *src_px;
                         uint16_t *dst_px;
                         ptrdiff_t src_step;
-                        if (r->rotation == PV2_ROTATE_90) {
+                        if (request->rotation == PV2_ROTATE_90) {
                             uint32_t dy = x;
                             uint32_t dx = a.height - y_end;
-                            dst_px = (uint16_t *)((uint8_t *)r->destination.pixels +
-                                                  (size_t)(r->destination_y + dy) * dst_stride) + r->destination_x + dx;
-                            src_px = (const uint16_t *)((const uint8_t *)r->source.pixels +
+                            dst_px = (uint16_t *)((uint8_t *)request->destination.pixels +
+                                                  (size_t)(request->destination_y + dy) * dst_stride) + request->destination_x + dx;
+                            src_px = (const uint16_t *)((const uint8_t *)request->source.pixels +
                                                         (size_t)(a.y + y_end - 1) * src_stride) + a.x + x;
                             src_step = -(ptrdiff_t)src_stride_px;
                         } else {
                             uint32_t dy = a.width - 1 - x;
                             uint32_t dx = by;
-                            dst_px = (uint16_t *)((uint8_t *)r->destination.pixels +
-                                                  (size_t)(r->destination_y + dy) * dst_stride) + r->destination_x + dx;
-                            src_px = (const uint16_t *)((const uint8_t *)r->source.pixels +
+                            dst_px = (uint16_t *)((uint8_t *)request->destination.pixels +
+                                                  (size_t)(request->destination_y + dy) * dst_stride) + request->destination_x + dx;
+                            src_px = (const uint16_t *)((const uint8_t *)request->source.pixels +
                                                         (size_t)(a.y + by) * src_stride) + a.x + x;
                             src_step = (ptrdiff_t)src_stride_px;
                         }
@@ -253,7 +253,7 @@ static void PV2_ISR_ATTR copy_cpu(const pv2_copy_request_t *r)
     for (uint32_t y = 0; y < a.height; ++y) {
         for (uint32_t x = 0; x < a.width; ++x) {
             uint32_t dx = x, dy = y;
-            switch (r->rotation) {
+            switch (request->rotation) {
             case PV2_ROTATE_90:
                 dx = a.height - 1 - y;
                 dy = x;
@@ -269,11 +269,11 @@ static void PV2_ISR_ATTR copy_cpu(const pv2_copy_request_t *r)
             default:
                 break;
             }
-            const uint8_t *src = (const uint8_t *)r->source.pixels +
+            const uint8_t *src = (const uint8_t *)request->source.pixels +
                                  (a.y + y) * src_stride + (a.x + x) * bytes;
-            uint8_t *dst = (uint8_t *)r->destination.pixels +
-                           (r->destination_y + dy) * dst_stride +
-                           (r->destination_x + dx) * bytes;
+            uint8_t *dst = (uint8_t *)request->destination.pixels +
+                           (request->destination_y + dy) * dst_stride +
+                           (request->destination_x + dx) * bytes;
             if (swap) {
                 uint8_t b0 = src[0], b1 = src[1];
                 dst[0] = b1;
@@ -286,82 +286,82 @@ static void PV2_ISR_ATTR copy_cpu(const pv2_copy_request_t *r)
 }
 
 /* The record may be released by the callback; no access to it after cb. */
-static void finish_copy(pv2_pixel_engine_t *e, copy_record_t *record, esp_err_t result)
+static void finish_copy(pv2_pixel_engine_t *engine, copy_record_t *record, esp_err_t result)
 {
-    pv2_lock_enter(&e->lock, false);
+    pv2_lock_enter(&engine->lock, false);
     record->status.state = result == ESP_OK ? PV2_COPY_SUCCEEDED : PV2_COPY_FAILED;
     record->status.result = result;
     pv2_copy_status_t status = record->status;
     pv2_copy_ticket_t ticket = {record->token};
-    pv2_pixel_event_fn cb = e->on_event;
-    e->notifying = cb != NULL;
+    pv2_pixel_event_fn cb = engine->on_event;
+    engine->notifying = cb != NULL;
     if (cb) {
-        e->callback_task = pv2_current_task();
+        engine->callback_task = pv2_current_task();
     }
     /* Publish while record ownership is stable, before callback can release it. */
     pv2_event_t *changed = record->changed;
-    pv2_lock_exit(&e->lock, false);
+    pv2_lock_exit(&engine->lock, false);
     (void)pv2_event_signal(changed, false);
     if (cb) {
-        (void)cb(e->user, ticket, &status, false);
+        (void)cb(engine->user, ticket, &status, false);
     }
-    pv2_lock_enter(&e->lock, false);
-    e->notifying = false;
-    e->executing = false;
-    pv2_lock_exit(&e->lock, false);
-    (void)pv2_event_signal(e->idle, false);
+    pv2_lock_enter(&engine->lock, false);
+    engine->notifying = false;
+    engine->executing = false;
+    pv2_lock_exit(&engine->lock, false);
+    (void)pv2_event_signal(engine->idle, false);
 }
 
 static void copy_worker(void *context)
 {
-    pv2_pixel_engine_t *e = context;
+    pv2_pixel_engine_t *engine = context;
     for (;;) {
-        pv2_lock_enter(&e->lock, false);
+        pv2_lock_enter(&engine->lock, false);
         copy_record_t *next = NULL;
-        for (size_t i = 0; i < e->count; i++) {
-            copy_record_t *record = &e->records[i];
+        for (size_t i = 0; i < engine->count; i++) {
+            copy_record_t *record = &engine->records[i];
             if (record->token && record->status.state == PV2_COPY_QUEUED &&
                     (!next || record->token < next->token)) {
                 next = record;
             }
         }
         if (!next) {
-            bool exit = e->closing;
-            pv2_lock_exit(&e->lock, false);
+            bool exit = engine->closing;
+            pv2_lock_exit(&engine->lock, false);
             if (exit) {
                 return;
             }
-            (void)pv2_event_wait(e->work, UINT32_MAX);
+            (void)pv2_event_wait(engine->work, UINT32_MAX);
             continue;
         }
         bool canceled = next->canceled;
         next->status.state = PV2_COPY_RUNNING;
-        e->executing = true;
+        engine->executing = true;
         pv2_copy_request_t request = next->request;
-        pv2_lock_exit(&e->lock, false);
+        pv2_lock_exit(&engine->lock, false);
         esp_err_t result = ESP_ERR_INVALID_STATE;
         if (!canceled) {
-            if (e->execute) {
-                result = e->execute(e->execute_user, &request);
+            if (engine->execute) {
+                result = engine->execute(engine->execute_user, &request);
             } else {
                 copy_cpu(&request);
                 result = ESP_OK;
             }
         }
-        finish_copy(e, next, result);
+        finish_copy(engine, next, result);
     }
 }
 
-static void free_engine(pv2_pixel_engine_t *e)
+static void free_engine(pv2_pixel_engine_t *engine)
 {
-    for (size_t i = 0; i < e->count; i++) {
-        pv2_event_destroy(e->records[i].changed);
+    for (size_t i = 0; i < engine->count; i++) {
+        pv2_event_destroy(engine->records[i].changed);
     }
-    pv2_worker_destroy(e->worker);
-    pv2_event_destroy(e->work);
-    pv2_event_destroy(e->idle);
-    pv2_lock_destroy(&e->lock);
-    pv2_free(e);
+    pv2_worker_destroy(engine->worker);
+    pv2_event_destroy(engine->work);
+    pv2_event_destroy(engine->idle);
+    pv2_lock_destroy(&engine->lock);
+    pv2_free(engine);
 }
 
 esp_err_t pv2_pixel_create(const pv2_pixel_config_t *config, pv2_pixel_engine_t **out)
@@ -370,123 +370,123 @@ esp_err_t pv2_pixel_create(const pv2_pixel_config_t *config, pv2_pixel_engine_t 
         return ESP_ERR_INVALID_ARG;
     }
     *out = NULL;
-    if (!config || !config->max_jobs || config->max_jobs > PV2_MAX_COPY_JOBS || (config->execute && !config->asynchronous)) {
+    if (!config || !config->max_jobs || config->max_jobs > PV2_MAX_COPY_JOBS) {
         return ESP_ERR_INVALID_ARG;
     }
-    pv2_pixel_engine_t *e = pv2_alloc(sizeof(*e) + config->max_jobs * sizeof(copy_record_t));
-    if (!e) {
+    pv2_pixel_engine_t *engine = pv2_alloc(sizeof(*engine) + config->max_jobs * sizeof(copy_record_t));
+    if (!engine) {
         return ESP_ERR_NO_MEM;
     }
-    if (!pv2_lock_init(&e->lock)) {
-        pv2_free(e);
+    if (!pv2_lock_init(&engine->lock)) {
+        pv2_free(engine);
         return ESP_ERR_NO_MEM;
     }
-    e->count = config->max_jobs;
-    e->on_event = config->on_event;
-    e->user = config->user;
-    e->asynchronous = config->asynchronous;
-    e->execute = config->execute;
-    e->execute_user = config->execute_user;
-    e->work = pv2_event_create();
-    e->idle = pv2_event_create();
-    if (!e->work || !e->idle) {
-        free_engine(e);
+    engine->count = config->max_jobs;
+    engine->on_event = config->on_event;
+    engine->user = config->user;
+    engine->asynchronous = config->asynchronous;
+    engine->execute = config->execute;
+    engine->execute_user = config->execute_user;
+    engine->work = pv2_event_create();
+    engine->idle = pv2_event_create();
+    if (!engine->work || !engine->idle) {
+        free_engine(engine);
         return ESP_ERR_NO_MEM;
     }
-    for (size_t i = 0; i < e->count; i++) {
-        e->records[i].changed = pv2_event_create();
-        if (!e->records[i].changed) {
-            free_engine(e);
+    for (size_t i = 0; i < engine->count; i++) {
+        engine->records[i].changed = pv2_event_create();
+        if (!engine->records[i].changed) {
+            free_engine(engine);
             return ESP_ERR_NO_MEM;
         }
     }
-    if (e->asynchronous) {
-        e->worker = pv2_worker_create(copy_worker, e, 4096, 5);
-        if (!e->worker) {
-            free_engine(e);
+    if (engine->asynchronous) {
+        engine->worker = pv2_worker_create(copy_worker, engine, 4096, 5);
+        if (!engine->worker) {
+            free_engine(engine);
             return ESP_ERR_NO_MEM;
         }
     }
-    *out = e;
+    *out = engine;
     return ESP_OK;
 }
 
-esp_err_t pv2_pixel_submit(pv2_pixel_engine_t *e, const pv2_copy_request_t *r, pv2_copy_ticket_t *out)
+esp_err_t pv2_pixel_submit(pv2_pixel_engine_t *engine, const pv2_copy_request_t *request, pv2_copy_ticket_t *out)
 {
     if (!out) {
         return ESP_ERR_INVALID_ARG;
     }
     out->value = 0;
-    if (!e) {
+    if (!engine) {
         return ESP_ERR_INVALID_ARG;
     }
-    esp_err_t result = validate(r);
+    esp_err_t result = validate(request);
     if (result != ESP_OK) {
         return result;
     }
-    pv2_lock_enter(&e->lock, false);
-    if (e->closing) {
-        pv2_lock_exit(&e->lock, false);
+    pv2_lock_enter(&engine->lock, false);
+    if (engine->closing) {
+        pv2_lock_exit(&engine->lock, false);
         return ESP_ERR_INVALID_STATE;
     }
-    if ((!e->asynchronous && e->executing) ||
-            (e->notifying && pv2_same_task(e->callback_task, pv2_current_task()))) {
-        pv2_lock_exit(&e->lock, false);
+    if ((!engine->asynchronous && engine->executing) ||
+            (engine->notifying && pv2_same_task(engine->callback_task, pv2_current_task()))) {
+        pv2_lock_exit(&engine->lock, false);
         return ESP_ERR_NO_MEM;
     }
     copy_record_t *record = NULL;
-    for (size_t i = 0; i < e->count; i++) {
-        if (!e->records[i].token) {
-            record = &e->records[i];
+    for (size_t i = 0; i < engine->count; i++) {
+        if (!engine->records[i].token) {
+            record = &engine->records[i];
             break;
         }
     }
     uint64_t token = record ? pv2_new_token() : 0;
     if (!token) {
-        pv2_lock_exit(&e->lock, false);
+        pv2_lock_exit(&engine->lock, false);
         return ESP_ERR_NO_MEM;
     }
     record->token = token;
     record->status = (pv2_copy_status_t) {
-        .state = e->asynchronous ? PV2_COPY_QUEUED : PV2_COPY_RUNNING
+        .state = engine->asynchronous ? PV2_COPY_QUEUED : PV2_COPY_RUNNING
     };
-    record->request = *r;
+    record->request = *request;
     record->canceled = false;
     out->value = token;
-    if (!e->asynchronous) {
-        e->executing = true;
+    if (!engine->asynchronous) {
+        engine->executing = true;
     }
-    pv2_lock_exit(&e->lock, false);
-    if (e->asynchronous) {
-        (void)pv2_event_signal(e->work, false);
+    pv2_lock_exit(&engine->lock, false);
+    if (engine->asynchronous) {
+        (void)pv2_event_signal(engine->work, false);
     } else {
-        copy_cpu(r);
-        finish_copy(e, record, ESP_OK);
+        esp_err_t exec_res = engine->execute ? engine->execute(engine->execute_user, request) : (copy_cpu(request), ESP_OK);
+        finish_copy(engine, record, exec_res);
     }
     return ESP_OK;
 }
 
-static copy_record_t *find_record(pv2_pixel_engine_t *e, pv2_copy_ticket_t ticket)
+static copy_record_t *find_record(pv2_pixel_engine_t *engine, pv2_copy_ticket_t ticket)
 {
-    for (size_t i = 0; i < e->count; i++) {
-        if (e->records[i].token == ticket.value) {
-            return &e->records[i];
+    for (size_t i = 0; i < engine->count; i++) {
+        if (engine->records[i].token == ticket.value) {
+            return &engine->records[i];
         }
     }
     return NULL;
 }
 
-esp_err_t pv2_pixel_query(pv2_pixel_engine_t *e, pv2_copy_ticket_t ticket, pv2_copy_status_t *out)
+esp_err_t pv2_pixel_query(pv2_pixel_engine_t *engine, pv2_copy_ticket_t ticket, pv2_copy_status_t *out)
 {
-    if (!e || !out || !ticket.value) {
+    if (!engine || !out || !ticket.value) {
         return ESP_ERR_INVALID_ARG;
     }
-    pv2_lock_enter(&e->lock, false);
-    copy_record_t *record = find_record(e, ticket);
+    pv2_lock_enter(&engine->lock, false);
+    copy_record_t *record = find_record(engine, ticket);
     if (record) {
         *out = record->status;
     }
-    pv2_lock_exit(&e->lock, false);
+    pv2_lock_exit(&engine->lock, false);
     return record ? ESP_OK : ESP_ERR_INVALID_STATE;
 }
 
@@ -495,20 +495,20 @@ static bool terminal(pv2_copy_status_t status)
     return status.state == PV2_COPY_SUCCEEDED || status.state == PV2_COPY_FAILED;
 }
 
-esp_err_t pv2_pixel_wait(pv2_pixel_engine_t *e, pv2_copy_ticket_t ticket, uint32_t timeout, pv2_copy_status_t *out)
+esp_err_t pv2_pixel_wait(pv2_pixel_engine_t *engine, pv2_copy_ticket_t ticket, uint32_t timeout, pv2_copy_status_t *out)
 {
-    if (!e || !out || !ticket.value) {
+    if (!engine || !out || !ticket.value) {
         return ESP_ERR_INVALID_ARG;
     }
     uint64_t start = pv2_now_ms();
-    pv2_lock_enter(&e->lock, false);
-    copy_record_t *record = find_record(e, ticket);
+    pv2_lock_enter(&engine->lock, false);
+    copy_record_t *record = find_record(engine, ticket);
     if (!record || record->waiting) {
-        pv2_lock_exit(&e->lock, false);
+        pv2_lock_exit(&engine->lock, false);
         return ESP_ERR_INVALID_STATE;
     }
-    if (e->notifying && pv2_same_task(e->callback_task, pv2_current_task()) && !terminal(record->status)) {
-        pv2_lock_exit(&e->lock, false);
+    if (engine->notifying && pv2_same_task(engine->callback_task, pv2_current_task()) && !terminal(record->status)) {
+        pv2_lock_exit(&engine->lock, false);
         return ESP_ERR_INVALID_STATE;
     }
     record->waiting = true;
@@ -516,75 +516,75 @@ esp_err_t pv2_pixel_wait(pv2_pixel_engine_t *e, pv2_copy_ticket_t ticket, uint32
         *out = record->status;
         if (terminal(*out) || pv2_expired(start, timeout)) {
             record->waiting = false;
-            pv2_lock_exit(&e->lock, false);
+            pv2_lock_exit(&engine->lock, false);
             return terminal(*out) ? ESP_OK : ESP_ERR_TIMEOUT;
         }
-        pv2_lock_exit(&e->lock, false);
+        pv2_lock_exit(&engine->lock, false);
         uint64_t elapsed = pv2_now_ms() - start;
         uint32_t left = timeout == UINT32_MAX ? UINT32_MAX : elapsed >= timeout ? 0 : timeout - elapsed;
         (void)pv2_event_wait(record->changed, left);
-        pv2_lock_enter(&e->lock, false);
+        pv2_lock_enter(&engine->lock, false);
     }
 }
 
-esp_err_t pv2_pixel_cancel(pv2_pixel_engine_t *e, pv2_copy_ticket_t ticket, uint32_t timeout, pv2_copy_status_t *out)
+esp_err_t pv2_pixel_cancel(pv2_pixel_engine_t *engine, pv2_copy_ticket_t ticket, uint32_t timeout, pv2_copy_status_t *out)
 {
-    if (!e || !ticket.value || !out) {
+    if (!engine || !ticket.value || !out) {
         return ESP_ERR_INVALID_ARG;
     }
-    pv2_lock_enter(&e->lock, false);
-    copy_record_t *record = find_record(e, ticket);
+    pv2_lock_enter(&engine->lock, false);
+    copy_record_t *record = find_record(engine, ticket);
     if (!record) {
-        pv2_lock_exit(&e->lock, false);
+        pv2_lock_exit(&engine->lock, false);
         return ESP_ERR_INVALID_STATE;
     }
     if (record->status.state == PV2_COPY_QUEUED) {
         record->canceled = true;
     }
-    pv2_lock_exit(&e->lock, false);
-    (void)pv2_event_signal(e->work, false);
-    return pv2_pixel_wait(e, ticket, timeout, out);
+    pv2_lock_exit(&engine->lock, false);
+    (void)pv2_event_signal(engine->work, false);
+    return pv2_pixel_wait(engine, ticket, timeout, out);
 }
 
-esp_err_t pv2_pixel_release(pv2_pixel_engine_t *e, pv2_copy_ticket_t ticket)
+esp_err_t pv2_pixel_release(pv2_pixel_engine_t *engine, pv2_copy_ticket_t ticket)
 {
-    if (!e || !ticket.value) {
+    if (!engine || !ticket.value) {
         return ESP_ERR_INVALID_ARG;
     }
-    pv2_lock_enter(&e->lock, false);
-    copy_record_t *record = find_record(e, ticket);
+    pv2_lock_enter(&engine->lock, false);
+    copy_record_t *record = find_record(engine, ticket);
     if (!record || record->waiting || !terminal(record->status)) {
-        pv2_lock_exit(&e->lock, false);
+        pv2_lock_exit(&engine->lock, false);
         return ESP_ERR_INVALID_STATE;
     }
     record->token = 0;
-    pv2_lock_exit(&e->lock, false);
+    pv2_lock_exit(&engine->lock, false);
     return ESP_OK;
 }
 
-esp_err_t pv2_pixel_stop(pv2_pixel_engine_t *e, uint32_t timeout)
+esp_err_t pv2_pixel_stop(pv2_pixel_engine_t *engine, uint32_t timeout)
 {
-    if (!e) {
+    if (!engine) {
         return ESP_ERR_INVALID_ARG;
     }
     uint64_t start = pv2_now_ms();
-    pv2_lock_enter(&e->lock, false);
-    if (e->notifying && pv2_same_task(e->callback_task, pv2_current_task())) {
-        pv2_lock_exit(&e->lock, false);
+    pv2_lock_enter(&engine->lock, false);
+    if (engine->notifying && pv2_same_task(engine->callback_task, pv2_current_task())) {
+        pv2_lock_exit(&engine->lock, false);
         return ESP_ERR_INVALID_STATE;
     }
-    e->closing = true;
-    pv2_lock_exit(&e->lock, false);
-    (void)pv2_event_signal(e->work, false);
-    if (e->asynchronous) {
-        if (!pv2_worker_join(e->worker, timeout)) {
+    engine->closing = true;
+    pv2_lock_exit(&engine->lock, false);
+    (void)pv2_event_signal(engine->work, false);
+    if (engine->asynchronous) {
+        if (!pv2_worker_join(engine->worker, timeout)) {
             return ESP_ERR_TIMEOUT;
         }
     } else {
         for (;;) {
-            pv2_lock_enter(&e->lock, false);
-            bool busy = e->executing;
-            pv2_lock_exit(&e->lock, false);
+            pv2_lock_enter(&engine->lock, false);
+            bool busy = engine->executing;
+            pv2_lock_exit(&engine->lock, false);
             if (!busy) {
                 break;
             }
@@ -592,57 +592,57 @@ esp_err_t pv2_pixel_stop(pv2_pixel_engine_t *e, uint32_t timeout)
             if (timeout != UINT32_MAX && elapsed >= timeout) {
                 return ESP_ERR_TIMEOUT;
             }
-            (void)pv2_event_wait(e->idle, timeout == UINT32_MAX ? UINT32_MAX : timeout - elapsed);
+            (void)pv2_event_wait(engine->idle, timeout == UINT32_MAX ? UINT32_MAX : timeout - elapsed);
         }
     }
-    e->stopped = true;
+    engine->stopped = true;
     return ESP_OK;
 }
 
-esp_err_t pv2_pixel_destroy(pv2_pixel_engine_t *e)
+esp_err_t pv2_pixel_destroy(pv2_pixel_engine_t *engine)
 {
-    if (!e) {
+    if (!engine) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (!e->stopped) {
+    if (!engine->stopped) {
         return ESP_ERR_INVALID_STATE;
     }
-    for (size_t i = 0; i < e->count; i++) {
-        if (e->records[i].token || e->records[i].waiting) {
+    for (size_t i = 0; i < engine->count; i++) {
+        if (engine->records[i].token || engine->records[i].waiting) {
             return ESP_ERR_INVALID_STATE;
         }
     }
-    free_engine(e);
+    free_engine(engine);
     return ESP_OK;
 }
 
 esp_err_t pv2_rotate_rect(uint32_t w, uint32_t h, pv2_rotation_t rotation,
-                          const pv2_rect_t *a, pv2_rect_t *out)
+                          const pv2_rect_t *area, pv2_rect_t *out)
 {
-    if (!a || !out || !w || !h || rotation < PV2_ROTATE_0 || rotation > PV2_ROTATE_270 ||
-            !a->width || !a->height || a->x >= w || a->y >= h || a->width > w - a->x || a->height > h - a->y) {
+    if (!area || !out || !w || !h || rotation < PV2_ROTATE_0 || rotation > PV2_ROTATE_270 ||
+            !area->width || !area->height || area->x >= w || area->y >= h || area->width > w - area->x || area->height > h - area->y) {
         return ESP_ERR_INVALID_ARG;
     }
-    pv2_rect_t r = *a;
+    pv2_rect_t request = *area;
     switch (rotation) {
     case PV2_ROTATE_90:
-        r = (pv2_rect_t) {
-            h - a->y - a->height, a->x, a->height, a->width
+        request = (pv2_rect_t) {
+            h - area->y - area->height, area->x, area->height, area->width
         };
         break;
     case PV2_ROTATE_180:
-        r.x = w - a->x - a->width;
-        r.y = h - a->y - a->height;
+        request.x = w - area->x - area->width;
+        request.y = h - area->y - area->height;
         break;
     case PV2_ROTATE_270:
-        r = (pv2_rect_t) {
-            a->y, w - a->x - a->width, a->height, a->width
+        request = (pv2_rect_t) {
+            area->y, w - area->x - area->width, area->height, area->width
         };
         break;
     default:
         break;
     }
-    *out = r;
+    *out = request;
     return ESP_OK;
 }
 

@@ -25,8 +25,8 @@ static bool PV2_ISR_ATTR completed(async_memcpy_dma2d_handle_t driver, async_mem
 {
     (void)driver;
     (void)event;
-    plugin_t *a = context;
-    return pv2_event_signal(a->done, true);
+    plugin_t *plugin = context;
+    return pv2_event_signal(plugin->done, true);
 }
 static esp_err_t caps(void *context, pv2_executor_caps_t *out)
 {
@@ -40,96 +40,96 @@ static esp_err_t caps(void *context, pv2_executor_caps_t *out)
     };
     return ESP_OK;
 }
-static esp_err_t probe(void *context, const pv2_copy_request_t *r, pv2_executor_reason_t *reason)
+static esp_err_t probe(void *context, const pv2_copy_request_t *request, pv2_executor_reason_t *reason)
 {
     (void)context;
     void *band;
     size_t bytes;
-    esp_err_t error = hw_probe(r, reason, &band, &bytes);
+    esp_err_t error = hw_probe(request, reason, &band, &bytes);
     if (error != ESP_OK) {
         return error;
     }
-    if (r->rotation != PV2_ROTATE_0 || r->source.layout.byte_order != r->destination.layout.byte_order) {
+    if (request->rotation != PV2_ROTATE_0 || request->source.layout.byte_order != request->destination.layout.byte_order) {
         return unsupported(reason, PV2_EXEC_TRANSFORM);
     }
-    size_t bpp = r->source.layout.format == PV2_FORMAT_RGB565 ? 2 : 3;
-    size_t si = dma2d_get_buffer_alignment_constraint(r->source.pixels);
-    size_t di = dma2d_get_buffer_alignment_constraint(r->destination.pixels);
-    if ((si > 1 && ((uintptr_t)r->source.pixels % si || r->source.layout.stride_bytes % si ||
-                    (r->source_area.x * bpp) % si || (r->source_area.width * bpp) % si)) ||
-            (di > 1 && ((uintptr_t)r->destination.pixels % di || r->destination.layout.stride_bytes % di ||
-                        (r->destination_x * bpp) % di || (r->source_area.width * bpp) % di))) {
+    size_t bpp = request->source.layout.format == PV2_FORMAT_RGB565 ? 2 : 3;
+    size_t si = dma2d_get_buffer_alignment_constraint(request->source.pixels);
+    size_t di = dma2d_get_buffer_alignment_constraint(request->destination.pixels);
+    if ((si > 1 && ((uintptr_t)request->source.pixels % si || request->source.layout.stride_bytes % si ||
+                    (request->source_area.x * bpp) % si || (request->source_area.width * bpp) % si)) ||
+            (di > 1 && ((uintptr_t)request->destination.pixels % di || request->destination.layout.stride_bytes % di ||
+                        (request->destination_x * bpp) % di || (request->source_area.width * bpp) % di))) {
         return unsupported(reason, PV2_EXEC_ALIGNMENT);
     }
     return ESP_OK;
 }
-static esp_err_t execute(void *context, const pv2_copy_request_t *r)
+static esp_err_t execute(void *context, const pv2_copy_request_t *request)
 {
-    plugin_t *a = context;
+    plugin_t *plugin = context;
     pv2_executor_reason_t reason;
-    esp_err_t error = probe(context, r, &reason);
+    esp_err_t error = probe(context, request, &reason);
     if (error != ESP_OK) {
         return error;
     }
     void *band;
     size_t band_bytes;
-    error = hw_probe(r, &reason, &band, &band_bytes);
+    error = hw_probe(request, &reason, &band, &band_bytes);
     if (error != ESP_OK) {
         return error;
     }
-    size_t bpp = r->source.layout.format == PV2_FORMAT_RGB565 ? 2 : 3;
-    (void)pv2_mutex_take(a->gate, UINT32_MAX);
+    size_t bpp = request->source.layout.format == PV2_FORMAT_RGB565 ? 2 : 3;
+    (void)pv2_mutex_take(plugin->gate, UINT32_MAX);
     error = hw_sync(band, band_bytes, ESP_CACHE_MSYNC_FLAG_DIR_C2M);
     if (error != ESP_OK) {
         goto done;
     }
-    async_memcpy_dma2d_trans_desc_t op = {.src_buffer = r->source.pixels,
-                                          .src_stride = r->source.layout.stride_bytes / bpp,
-                                          .src_height = r->source.layout.height,
-                                          .src_x = r->source_area.x,
-                                          .src_y = r->source_area.y,
-                                          .dst_buffer = r->destination.pixels,
-                                          .dst_stride = r->destination.layout.stride_bytes / bpp,
-                                          .dst_height = r->destination.layout.height,
-                                          .dst_x = r->destination_x,
-                                          .dst_y = r->destination_y,
-                                          .copy_width = r->source_area.width,
-                                          .copy_height = r->source_area.height,
+    async_memcpy_dma2d_trans_desc_t op = {.src_buffer = request->source.pixels,
+                                          .src_stride = request->source.layout.stride_bytes / bpp,
+                                          .src_height = request->source.layout.height,
+                                          .src_x = request->source_area.x,
+                                          .src_y = request->source_area.y,
+                                          .dst_buffer = request->destination.pixels,
+                                          .dst_stride = request->destination.layout.stride_bytes / bpp,
+                                          .dst_height = request->destination.layout.height,
+                                          .dst_x = request->destination_x,
+                                          .dst_y = request->destination_y,
+                                          .copy_width = request->source_area.width,
+                                          .copy_height = request->source_area.height,
                                           .pixel_format =
                                               bpp == 2 ? ESP_COLOR_FOURCC_RGB16 : ESP_COLOR_FOURCC_BGR24
                                          };
-    (void)pv2_event_wait(a->done, 0);
+    (void)pv2_event_wait(plugin->done, 0);
     /* IDF signals our ISR callback before recycling its descriptor. A
      * following worker may arrive in that brief window. INVALID_STATE is
      * documented definite rejection (no free transaction), safe to retry. */
     uint64_t start = pv2_now_ms();
     do {
-        error = esp_async_memcpy_dma2d(a->dma, &op, completed, a);
+        error = esp_async_memcpy_dma2d(plugin->dma, &op, completed, plugin);
         if (error != ESP_ERR_INVALID_STATE || pv2_expired(start, 1000)) {
             break;
         }
         pv2_pause();
     } while (true);
     if (error == ESP_OK) {
-        (void)pv2_event_wait(a->done, UINT32_MAX);
+        (void)pv2_event_wait(plugin->done, UINT32_MAX);
     }
     if (error == ESP_OK) {
         error = hw_sync(band, band_bytes, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
     }
 done:
-    pv2_mutex_give(a->gate);
+    pv2_mutex_give(plugin->gate);
     return error;
 }
 static esp_err_t destroy(void *context)
 {
-    plugin_t *a = context;
-    esp_err_t error = esp_async_memcpy_uninstall_dma2d(a->dma);
+    plugin_t *plugin = context;
+    esp_err_t error = esp_async_memcpy_uninstall_dma2d(plugin->dma);
     if (error != ESP_OK) {
         return error;
     }
-    pv2_event_destroy(a->done);
-    pv2_mutex_destroy(a->gate);
-    pv2_free(a);
+    pv2_event_destroy(plugin->done);
+    pv2_mutex_destroy(plugin->gate);
+    pv2_free(plugin);
     return ESP_OK;
 }
 static const pv2_executor_ops_t ops = {caps, probe, execute, destroy};
@@ -139,34 +139,34 @@ esp_err_t pv2_executor_dma2d_create(pv2_executor_t **out)
         return ESP_ERR_INVALID_ARG;
     }
     *out = NULL;
-    plugin_t *a = pv2_alloc(sizeof(*a));
-    if (!a) {
+    plugin_t *plugin = pv2_alloc(sizeof(*plugin));
+    if (!plugin) {
         return ESP_ERR_NO_MEM;
     }
-    a->gate = pv2_mutex_create();
-    if (!a->gate) {
-        pv2_free(a);
+    plugin->gate = pv2_mutex_create();
+    if (!plugin->gate) {
+        pv2_free(plugin);
         return ESP_ERR_NO_MEM;
     }
-    a->done = pv2_event_create();
-    if (!a->done) {
-        pv2_mutex_destroy(a->gate);
-        pv2_free(a);
+    plugin->done = pv2_event_create();
+    if (!plugin->done) {
+        pv2_mutex_destroy(plugin->gate);
+        pv2_free(plugin);
         return ESP_ERR_NO_MEM;
     }
     esp_err_t error;
     async_memcpy_dma2d_config_t cfg = {.backlog = 1};
-    error = esp_async_memcpy_install_dma2d(&cfg, &a->dma);
+    error = esp_async_memcpy_install_dma2d(&cfg, &plugin->dma);
     if (error != ESP_OK) {
-        pv2_event_destroy(a->done);
-        pv2_mutex_destroy(a->gate);
-        pv2_free(a);
+        pv2_event_destroy(plugin->done);
+        pv2_mutex_destroy(plugin->gate);
+        pv2_free(plugin);
         return error;
     }
-    a->base = (pv2_executor_t) {
-        &ops, a
+    plugin->base = (pv2_executor_t) {
+        &ops, plugin
     };
-    *out = &a->base;
+    *out = &plugin->base;
     return ESP_OK;
 }
 #else

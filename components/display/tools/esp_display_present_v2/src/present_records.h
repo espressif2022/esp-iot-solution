@@ -17,10 +17,10 @@ typedef struct {
     esp_err_t result;
 } pv2_record_t;
 
-static inline bool pv2_valid_rect(uint32_t width, uint32_t height, const pv2_rect_t *a)
+static inline bool pv2_valid_rect(uint32_t width, uint32_t height, const pv2_rect_t *area)
 {
-    return a && a->width && a->height && a->x < width && a->y < height &&
-           a->width <= width - a->x && a->height <= height - a->y;
+    return area && area->width && area->height && area->x < width && area->y < height &&
+           area->width <= width - area->x && area->height <= height - area->y;
 }
 static inline esp_err_t pv2_validate_damage(uint32_t width, uint32_t height,
                                             const pv2_rect_t *areas, size_t count)

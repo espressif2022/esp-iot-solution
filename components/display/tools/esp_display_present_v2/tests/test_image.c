@@ -63,7 +63,7 @@ int main(void)
     pv2_image_begin(&b, candidate, baseline);
     for (unsigned i = 0; i < 40; i++)
         pv2_image_cover(&b, (pv2_rect_t) {
-        i % W, i / W, 1, 1
+        (i * 2) % W, (i * 2) / W, 1, 1
     });
     assert(b.writes.full && !pv2_image_full(&b));
     pv2_image_prepare_repair(&b, false);
@@ -72,6 +72,15 @@ int main(void)
         pv2_image_repaired(&b, &a);
     }
     assert(b.repaired_pixels == N - 40);
+    /* Adjacent horizontal bands coalesce without overflowing PV2_MAX_DAMAGE_AREAS. */
+    pv2_image_cancel(&b);
+    pv2_image_begin(&b, candidate, baseline);
+    for (unsigned y = 0; y < 8; y++) {
+        pv2_image_cover(&b, (pv2_rect_t) {
+            2, y, 5, 1
+        });
+    }
+    assert(!b.writes.full && b.writes.count == 1 && b.writes.areas[0].height == 8);
     /* Missing history safely requires a full repair, minus successful writes. */
     pv2_image_cancel(&b);
     b.versions[candidate] = 1;

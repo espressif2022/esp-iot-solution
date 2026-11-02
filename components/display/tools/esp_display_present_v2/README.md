@@ -510,3 +510,13 @@ PARTIAL 直接拷转到物理图像，额外逻辑全屏池为零；旋转 FULL/
 显式双 compose 支持构建/发送重叠；未配置后台 service 时仍须由创建任务持续调用 `pv2_presenter_service()`。ISR 只交付事件，不执行发送。未知安全窗口不能超时降级为自由发送。
 
 Host/LVGL 29/29、ASan/UBSan 29/29（detect_leaks=0）。支持与明确拒绝组合、实际板测边界见 [PLAN.md](PLAN.md)。
+
+
+## LVGL PARTIAL 共享 tile（实验性）
+
+`pv2_lvgl_create_pooled(presenter, draw_rows, &binding)` 允许 LVGL 9.5 PARTIAL RGB565/native 直接绘制到 presenter tile。调用者先完成上一个 producer 的交接并调用 `pv2_presenter_rebind_producer()`；绑定持有期间仍是单 producer。创建时查询池容量，每轮刷新开始时获取 lease；每个非末尾 band 的 `flush_cb` 提交当前 lease；在下一 band 的 `LV_EVENT_FLUSH_WAIT_START` 才取得下一 lease，只更新描述符数据地址并保留 LVGL 已计算的 band header，禁止将仍被 copy/DMA 访问的 tile 暴露给实际绘制任务。最后一块提交后封帧，销毁绑定不释放 presenter 池。
+
+LVGL 的 `RENDER_START` 每轮刷新只触发一次，无法用于每个 band。当前实现保留一块私有安全绘制缓冲：准入或发送失败时 LVGL 9.5 不会中止已开始的 render，此缓冲防止它写入在途 tile。正常刷新不使用它，但这意味着本实现尚未消除额外 draw buffer 的内存；不要按零额外内存估算。FULL 仍使用独立的 `pv2_lvgl_create_zero_copy`；DIRECT 和 RGB888 使用复制绑定。底层格式转换、TE 合成或 FB copy 仍可能访问 tile。
+
+
+PARTIAL 异步合成推荐显式配置 `background_service=true`：封帧后的 copy/repair 由完成事件唤醒 sender 推进，不必等待 LVGL owner 下一次调用 service。使用 P4 硬件加速时显式注入 executor（`copy_execute/copy_user` 或 planned dispatcher），`async_copy=true` 本身只表示异步调度，不表示使用 DMA2D/PPA。共享 executor 必须在所有借用 presenter 停止退出后销毁，执行失败不进行 CPU 重写回退。

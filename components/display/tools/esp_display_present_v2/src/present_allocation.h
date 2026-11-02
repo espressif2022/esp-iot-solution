@@ -15,33 +15,33 @@ typedef struct {
     size_t readers[PV2_REF_COUNT];
     bool writer;
 } pv2_allocation_t;
-static inline bool pv2_allocation_write(pv2_allocation_t *a, bool retained, bool tearing)
+static inline bool pv2_allocation_write(pv2_allocation_t *allocation, bool retained, bool tearing)
 {
-    if (a->writer || a->readers[PV2_REF_COPY] || a->readers[PV2_REF_TRANSFER] ||
-            (!retained && a->readers[PV2_REF_BASELINE]) || (!tearing && a->readers[PV2_REF_SCANOUT])) {
+    if (allocation->writer || allocation->readers[PV2_REF_COPY] || allocation->readers[PV2_REF_TRANSFER] ||
+            (!retained && allocation->readers[PV2_REF_BASELINE]) || (!tearing && allocation->readers[PV2_REF_SCANOUT])) {
         return false;
     }
-    a->writer = true;
+    allocation->writer = true;
     return true;
 }
-static inline void pv2_allocation_claim(pv2_allocation_t *a)
+static inline void pv2_allocation_claim(pv2_allocation_t *allocation)
 {
-    bool claimed = pv2_allocation_write(a, false, false);
+    bool claimed = pv2_allocation_write(allocation, false, false);
     assert(claimed);
     (void)claimed;
 }
-static inline void pv2_allocation_written(pv2_allocation_t *a)
+static inline void pv2_allocation_written(pv2_allocation_t *allocation)
 {
-    assert(a->writer);
-    a->writer = false;
+    assert(allocation->writer);
+    allocation->writer = false;
 }
-static inline void pv2_allocation_hold(pv2_allocation_t *a, pv2_ref_kind_t kind)
+static inline void pv2_allocation_hold(pv2_allocation_t *allocation, pv2_ref_kind_t kind)
 {
-    assert(!a->writer && a->readers[kind] != (size_t) -1);
-    a->readers[kind]++;
+    assert(!allocation->writer && allocation->readers[kind] != (size_t) -1);
+    allocation->readers[kind]++;
 }
-static inline void PV2_ISR_ATTR pv2_allocation_drop(pv2_allocation_t *a, pv2_ref_kind_t kind)
+static inline void PV2_ISR_ATTR pv2_allocation_drop(pv2_allocation_t *allocation, pv2_ref_kind_t kind)
 {
-    assert(a->readers[kind]);
-    a->readers[kind]--;
+    assert(allocation->readers[kind]);
+    allocation->readers[kind]--;
 }

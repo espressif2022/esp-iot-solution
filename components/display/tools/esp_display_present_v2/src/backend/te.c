@@ -38,7 +38,7 @@ struct pv2_backend {
     te_tile_t *tiles;
     te_job_t *jobs;
     pv2_frame_core_t core;
-    size_t tile_bytes;
+    size_t tile_bytes, next_tile;
 
     uint64_t latest_edge;
     bool has_edge;
@@ -98,18 +98,18 @@ static bool PV2_ISR_ATTR te_dispatch(void *user, const pv2_backend_event_t *even
             }
         } else
             for (size_t i = 0; i < backend->config.max_frames; i++) {
-                te_job_t *j = &backend->jobs[i];
-                if (!j->cookie || j->cookie != event->transaction_cookie ||
-                        (j->phase != TE_SUBMITTING && j->phase != TE_INFLIGHT)) {
+                te_job_t *job = &backend->jobs[i];
+                if (!job->cookie || job->cookie != event->transaction_cookie ||
+                        (job->phase != TE_SUBMITTING && job->phase != TE_INFLIGHT)) {
                     continue;
                 }
                 if (event->kind == PV2_EVENT_TRANSFER_DONE) {
-                    bool first = pv2_transaction_done(&j->transaction, event->result);
+                    bool first = pv2_transaction_done(&job->transaction, event->result);
                     record_fault(backend, i, first ? event->result : ESP_ERR_INVALID_STATE);
-                    if (backend->config.te_timing.period_us && pv2_now_us() - j->started_us > backend->config.te_transfer_budget_us) {
+                    if (backend->config.te_timing.period_us && pv2_now_us() - job->started_us > backend->config.te_transfer_budget_us) {
                         record_fault(backend, i, ESP_ERR_TIMEOUT);
                     }
-                    j->transaction.done = true;
+                    job->transaction.done = true;
                 } else if (event->kind == PV2_EVENT_FAULT) {
                     record_fault(backend, i, event->result == ESP_OK ? ESP_FAIL : event->result);
                 }
@@ -148,29 +148,29 @@ static bool copy_done(void *user, pv2_copy_ticket_t ticket,
 {
     (void)ticket;
     (void)status;
-    pv2_backend_t *b = user;
-    return b->config.on_progress ? b->config.on_progress(b->config.progress_user, isr) : false;
+    pv2_backend_t *backend = user;
+    return backend->config.on_progress ? backend->config.on_progress(backend->config.progress_user, isr) : false;
 }
 
-static size_t progress_copies(pv2_backend_t *b)
+static size_t progress_copies(pv2_backend_t *backend)
 {
     size_t pending = 0;
-    for (size_t i = 0; i < b->config.buffer_count; ++i) {
-        te_tile_t *tile = &b->tiles[i];
+    for (size_t i = 0; i < backend->config.buffer_count; ++i) {
+        te_tile_t *tile = &backend->tiles[i];
         if (!tile->copy.value) {
             continue;
         }
         esp_err_t result = ESP_OK;
-        esp_err_t error = pv2_te_composer_finish_write(b->composer, tile->copy, &result);
+        esp_err_t error = pv2_te_composer_finish_write(backend->composer, tile->copy, &result);
         if (error != ESP_OK) {
             pending++;
             continue;
         }
         tile->copy.value = 0;
         if (result != ESP_OK) {
-            pv2_lock_enter(&b->lock, false);
-            record_fault(b, tile->frame, result);
-            pv2_lock_exit(&b->lock, false);
+            pv2_lock_enter(&backend->lock, false);
+            record_fault(backend, tile->frame, result);
+            pv2_lock_exit(&backend->lock, false);
         }
     }
     return pending;
@@ -181,14 +181,14 @@ static esp_err_t service_frame(pv2_backend_t *backend, size_t index, size_t pend
     if (!backend) {
         return ESP_ERR_INVALID_ARG;
     }
-    te_job_t *j = &backend->jobs[index];
-    if (!pending && (j->phase == TE_COPY_DRAIN || j->phase == TE_CANCELING)) {
-        bool cancel = j->phase == TE_CANCELING;
+    te_job_t *job = &backend->jobs[index];
+    if (!pending && (job->phase == TE_COPY_DRAIN || job->phase == TE_CANCELING)) {
+        bool cancel = job->phase == TE_CANCELING;
         pv2_lock_enter(&backend->lock, false);
         esp_err_t error = backend->core.fault.result;
         pv2_lock_exit(&backend->lock, false);
         if (!cancel && error == ESP_OK && backend->core.life == PV2_CORE_RUNNING) {
-            error = pv2_te_composer_seal(backend->composer, j->compose_frame, pv2_now_us());
+            error = pv2_te_composer_seal(backend->composer, job->compose_frame, pv2_now_us());
         } else if (!cancel && error == ESP_OK) {
             return ESP_OK; /* stop owns drain, never seals or sends. */
         }
@@ -196,12 +196,12 @@ static esp_err_t service_frame(pv2_backend_t *backend, size_t index, size_t pend
             return ESP_OK;
         }
         if (cancel || error != ESP_OK) {
-            if (pv2_te_composer_cancel(backend->composer, j->compose_frame) == ESP_ERR_TIMEOUT) {
+            if (pv2_te_composer_cancel(backend->composer, job->compose_frame) == ESP_ERR_TIMEOUT) {
                 return ESP_OK;
             }
             pv2_lock_enter(&backend->lock, false);
             if (cancel) {
-                pv2_cancel_publish(&backend->core.canceled, j->compose_frame.value);
+                pv2_cancel_publish(&backend->core.canceled, job->compose_frame.value);
             } else {
                 record_fault(backend, index, error);
             }
@@ -209,7 +209,7 @@ static esp_err_t service_frame(pv2_backend_t *backend, size_t index, size_t pend
             pv2_lock_exit(&backend->lock, false);
         } else {
             pv2_lock_enter(&backend->lock, false);
-            j->phase = TE_READY;
+            job->phase = TE_READY;
             if (!backend->config.te_timing.period_us) {
                 backend->has_edge = false;
             }
@@ -217,19 +217,19 @@ static esp_err_t service_frame(pv2_backend_t *backend, size_t index, size_t pend
         }
     }
     pv2_lock_enter(&backend->lock, false);
-    if (j->phase == TE_INFLIGHT && j->transaction.done) {
+    if (job->phase == TE_INFLIGHT && job->transaction.done) {
         esp_err_t result = backend->core.frames[index].common.result;
         /* This changes only composer metadata, never copies/frees memory. */
-        (void)pv2_te_composer_complete(backend->composer, j->compose_frame, result);
+        (void)pv2_te_composer_complete(backend->composer, job->compose_frame, result);
         retire_frame(backend, index);
     }
-    if (backend->core.life != PV2_CORE_RUNNING || j->phase != TE_READY) {
+    if (backend->core.life != PV2_CORE_RUNNING || job->phase != TE_READY) {
         pv2_lock_exit(&backend->lock, false);
         return ESP_OK;
     }
     if (backend->core.fault.result != ESP_OK) {
         record_fault(backend, index, backend->core.fault.result);
-        if (pv2_te_composer_cancel(backend->composer, j->compose_frame) != ESP_OK) {
+        if (pv2_te_composer_cancel(backend->composer, job->compose_frame) != ESP_OK) {
             pv2_lock_exit(&backend->lock, false);
             return ESP_OK;
         }
@@ -244,7 +244,7 @@ static esp_err_t service_frame(pv2_backend_t *backend, size_t index, size_t pend
         te_job_t *other = &backend->jobs[i];
         if (other->phase == TE_INFLIGHT || other->phase == TE_SUBMITTING ||
                 ((other->phase == TE_READY || other->phase == TE_COPY_DRAIN) &&
-                 other->compose_frame.value < j->compose_frame.value)) {
+                 other->compose_frame.value < job->compose_frame.value)) {
             pv2_lock_exit(&backend->lock, false);
             return ESP_OK;
         }
@@ -259,7 +259,7 @@ static esp_err_t service_frame(pv2_backend_t *backend, size_t index, size_t pend
     pv2_source_t source;
     esp_err_t error;
     if (backend->config.te_timing.period_us) {
-        if (j->attempted && edge <= j->attempted_edge) {
+        if (job->attempted && edge <= job->attempted_edge) {
             return ESP_OK;
         }
         uint64_t now = pv2_now_us();
@@ -279,10 +279,10 @@ static esp_err_t service_frame(pv2_backend_t *backend, size_t index, size_t pend
         if (window.admission != PV2_TE_ALLOW) {
             return ESP_OK;
         }
-        error = pv2_te_composer_pin(backend->composer, j->compose_frame, &source);
+        error = pv2_te_composer_pin(backend->composer, job->compose_frame, &source);
     } else {
         uint64_t window = backend->config.te_window_us - backend->config.te_transfer_budget_us;
-        error = pv2_te_composer_offer(backend->composer, j->compose_frame, edge, pv2_now_us(), window, &source);
+        error = pv2_te_composer_offer(backend->composer, job->compose_frame, edge, pv2_now_us(), window, &source);
     }
     if (error == ESP_ERR_TIMEOUT) {
         return ESP_OK;
@@ -292,14 +292,14 @@ static esp_err_t service_frame(pv2_backend_t *backend, size_t index, size_t pend
     }
     uint64_t cookie = pv2_new_token();
     if (!cookie) {
-        (void)pv2_te_composer_reject(backend->composer, j->compose_frame);
+        (void)pv2_te_composer_reject(backend->composer, job->compose_frame);
         return ESP_ERR_NO_MEM;
     }
     pv2_lock_enter(&backend->lock, false);
     /* Tasks are serialized. A channel fault can arrive while offering. */
     if (backend->core.fault.result != ESP_OK) {
-        (void)pv2_te_composer_reject(backend->composer, j->compose_frame);
-        if (pv2_te_composer_cancel(backend->composer, j->compose_frame) != ESP_OK) {
+        (void)pv2_te_composer_reject(backend->composer, job->compose_frame);
+        if (pv2_te_composer_cancel(backend->composer, job->compose_frame) != ESP_OK) {
             pv2_lock_exit(&backend->lock, false);
             return ESP_OK;
         }
@@ -309,33 +309,33 @@ static esp_err_t service_frame(pv2_backend_t *backend, size_t index, size_t pend
     }
     if (backend->config.te_timing.period_us && pv2_te_window(&backend->config.te_timing,
                                                              backend->config.te_transfer_budget_us, backend->latest_edge, pv2_now_us(), backend->measured).admission != PV2_TE_ALLOW) {
-        (void)pv2_te_composer_reject(backend->composer, j->compose_frame);
+        (void)pv2_te_composer_reject(backend->composer, job->compose_frame);
         pv2_lock_exit(&backend->lock, false);
         return ESP_OK;
     }
-    j->attempted = true;
-    j->attempted_edge = edge;
-    j->started_us = pv2_now_us();
-    j->cookie = cookie;
-    pv2_transaction_prepare(&j->transaction);
-    j->phase = TE_SUBMITTING;
+    job->attempted = true;
+    job->attempted_edge = edge;
+    job->started_us = pv2_now_us();
+    job->cookie = cookie;
+    pv2_transaction_prepare(&job->transaction);
+    job->phase = TE_SUBMITTING;
     pv2_lock_exit(&backend->lock, false);
     pv2_surface_t surface = {(void *)source.pixels, source.capacity_bytes, source.layout};
     pv2_rect_t area = {0, 0, source.layout.width, source.layout.height};
     pv2_tx_result_t tx = backend->config.panel.submit(backend->config.panel.context, &surface, &area, cookie);
     pv2_lock_enter(&backend->lock, false);
-    pv2_transaction_resolution_t resolved = pv2_transaction_resolve(&j->transaction, tx);
+    pv2_transaction_resolution_t resolved = pv2_transaction_resolve(&job->transaction, tx);
     if (resolved.rejected) {
-        j->phase = TE_READY;
-        j->cookie = 0;
-        (void)pv2_te_composer_reject(backend->composer, j->compose_frame);
+        job->phase = TE_READY;
+        job->cookie = 0;
+        (void)pv2_te_composer_reject(backend->composer, job->compose_frame);
         pv2_lock_exit(&backend->lock, false);
         return tx.result == ESP_OK ? ESP_FAIL : tx.result;
     }
     record_fault(backend, index, resolved.result);
-    j->phase = TE_INFLIGHT;
-    if (j->transaction.done) {
-        (void)pv2_te_composer_complete(backend->composer, j->compose_frame,
+    job->phase = TE_INFLIGHT;
+    if (job->transaction.done) {
+        (void)pv2_te_composer_complete(backend->composer, job->compose_frame,
                                        backend->core.frames[index].common.result);
         retire_frame(backend, index);
     }
@@ -343,15 +343,15 @@ static esp_err_t service_frame(pv2_backend_t *backend, size_t index, size_t pend
     return ESP_OK;
 }
 
-esp_err_t pv2_te_service(pv2_backend_t *b)
+esp_err_t pv2_te_service(pv2_backend_t *backend)
 {
-    if (!b) {
+    if (!backend) {
         return ESP_ERR_INVALID_ARG;
     }
-    size_t pending = progress_copies(b);
+    size_t pending = progress_copies(backend);
     esp_err_t first = ESP_OK;
-    for (size_t i = 0; i < b->config.max_frames; i++) {
-        esp_err_t error = service_frame(b, i, pending);
+    for (size_t i = 0; i < backend->config.max_frames; i++) {
+        esp_err_t error = service_frame(backend, i, pending);
         if (first == ESP_OK) {
             first = error;
         }
@@ -577,7 +577,8 @@ static esp_err_t te_acquire(pv2_backend_t *backend, pv2_frame_t frame, const pv2
         return ESP_ERR_INVALID_STATE;
     }
     for (size_t i = 0; i < backend->config.buffer_count; i++) {
-        te_tile_t *tile = &backend->tiles[i];
+        size_t idx = (backend->next_tile + i) % backend->config.buffer_count;
+        te_tile_t *tile = &backend->tiles[idx];
         if (tile->lease.id.value || tile->copy.value) {
             continue;
         }
@@ -585,6 +586,7 @@ static esp_err_t te_acquire(pv2_backend_t *backend, pv2_frame_t frame, const pv2
         if (!token) {
             return ESP_ERR_NO_MEM;
         }
+        backend->next_tile = (idx + 1) % backend->config.buffer_count;
         size_t bpp = backend->config.format == PV2_FORMAT_RGB565 ? 2 : 3;
         tile->frame = backend->core.active;
         tile->lease = (pv2_lease_t) {
@@ -838,18 +840,18 @@ static esp_err_t te_stop(pv2_backend_t *backend, uint32_t timeout)
     }
     pv2_lock_enter(&backend->lock, false);
     for (size_t i = 0; i < backend->config.max_frames; i++) {
-        te_job_t *j = &backend->jobs[i];
-        if (j->phase == TE_IDLE) {
+        te_job_t *job = &backend->jobs[i];
+        if (job->phase == TE_IDLE) {
             continue;
         }
-        if (j->phase == TE_INFLIGHT) {
-            if (!j->transaction.done) {
+        if (job->phase == TE_INFLIGHT) {
+            if (!job->transaction.done) {
                 record_fault(backend, i, ESP_ERR_INVALID_STATE);
             }
-            (void)pv2_te_composer_complete(backend->composer, j->compose_frame, backend->core.frames[i].common.result);
+            (void)pv2_te_composer_complete(backend->composer, job->compose_frame, backend->core.frames[i].common.result);
         } else {
             record_fault(backend, i, ESP_ERR_INVALID_STATE);
-            (void)pv2_te_composer_cancel(backend->composer, j->compose_frame);
+            (void)pv2_te_composer_cancel(backend->composer, job->compose_frame);
         }
         retire_frame(backend, i);
     }
@@ -932,9 +934,9 @@ const pv2_backend_ops_t pv2_te_backend = {
     .set_rotation = te_set_rotation,
 };
 
-size_t pv2_te_memory(const pv2_backend_config_t *c)
+size_t pv2_te_memory(const pv2_backend_config_t *config)
 {
-    return sizeof(pv2_backend_t) + c->buffer_count * sizeof(te_tile_t) +
-           c->max_frames * (sizeof(pv2_core_frame_t) + sizeof(te_job_t)) + pv2_composer_memory() +
-           pv2_pixel_memory(c->buffer_count, c->async_copy);
+    return sizeof(pv2_backend_t) + config->buffer_count * sizeof(te_tile_t) +
+           config->max_frames * (sizeof(pv2_core_frame_t) + sizeof(te_job_t)) + pv2_composer_memory() +
+           pv2_pixel_memory(config->buffer_count, config->async_copy);
 }

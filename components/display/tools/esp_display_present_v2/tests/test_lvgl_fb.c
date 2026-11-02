@@ -80,7 +80,71 @@ static void wait_scan_submit(pv2_presenter_t *p, scan_panel_t *panel, notificati
     }
 }
 
-static void exercise(pv2_present_mode_t mode, size_t bpp, bool async)
+typedef struct {
+    void *buffers[16];
+    size_t count;
+    unsigned seen, deferred_bands;
+    void *submitted;
+} pool_observer_t;
+static void assert_borrowed(lv_event_t *event)
+{
+    pool_observer_t *observer = lv_event_get_user_data(event);
+    lv_display_t *display = lv_event_get_target(event);
+    void *active = lv_display_get_buf_active(display)->data;
+    if (lv_event_get_code(event) == LV_EVENT_FLUSH_START) {
+        observer->submitted = active;
+        return;
+    }
+    if (lv_event_get_code(event) == LV_EVENT_FLUSH_FINISH) {
+        if (!lv_display_flush_is_last(display)) {
+            /* The next tile is not acquired or rebound inside flush. */
+            assert(active == observer->submitted);
+            observer->deferred_bands++;
+        }
+        return;
+    }
+    bool found = false;
+    for (size_t i = 0; i < observer->count; ++i) {
+        found |= observer->buffers[i] == active;
+    }
+    assert(found);
+    observer->seen++;
+}
+
+typedef struct {
+    pv2_presenter_t *presenter;
+    pool_observer_t *observer;
+} handoff_t;
+static void *other_producer(void *arg)
+{
+    handoff_t *handoff = arg;
+    pv2_presenter_t *p = handoff->presenter;
+    OK(pv2_presenter_rebind_producer(p, 1000));
+    void *pool[16];
+    size_t count, bytes;
+    OK(pv2_presenter_get_draw_buffers(p, pool, 16, &count, &bytes));
+    assert(count == handoff->observer->count && bytes);
+    for (size_t i = 0; i < count; ++i) {
+        assert(pool[i] == handoff->observer->buffers[i]);
+    }
+    pv2_frame_request_t request = {0};
+    OK(pv2_presenter_begin_next_frame(p, &request));
+    pv2_lease_t lease;
+    OK(pv2_presenter_acquire_buffer(p, &lease));
+    bool found = false;
+    for (size_t i = 0; i < count; ++i) {
+        found |= pool[i] == lease.surface.pixels;
+    }
+    assert(found);
+    memset(lease.surface.pixels, 0, 2);
+    pv2_area_t area = {0, 0, 0, 0};
+    OK(pv2_presenter_submit_buffer(p, &lease, &area, 2));
+    OK(pv2_presenter_commit_frame(p, NULL));
+    OK(pv2_presenter_service(p));
+    return NULL;
+}
+
+static void exercise(pv2_present_mode_t mode, size_t bpp, bool async, bool pooled)
 {
     notifications_t n = {.lock = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER};
     scan_panel_t panel = {0};
@@ -94,14 +158,32 @@ static void exercise(pv2_present_mode_t mode, size_t bpp, bool async)
     pv2_presenter_t *p;
     OK(pv2_presenter_create(&cfg, &p));
     pv2_lvgl_t *binding;
-    OK(pv2_lvgl_create(p, 4, &binding));
+    pool_observer_t observer = {0};
+    if (pooled) {
+        size_t bytes;
+        OK(pv2_presenter_get_draw_buffers(p, observer.buffers, 16, &observer.count, &bytes));
+        assert(observer.count && bytes);
+    }
+    if (pooled) {
+        OK(pv2_lvgl_create_pooled(p, 2, &binding));
+    } else {
+        OK(pv2_lvgl_create(p, 4, &binding));
+    }
     lv_display_t *display = pv2_lvgl_get_display(binding);
+    if (pooled) {
+        lv_display_add_event_cb(display, assert_borrowed, LV_EVENT_RENDER_START, &observer);
+        lv_display_add_event_cb(display, assert_borrowed, LV_EVENT_FLUSH_START, &observer);
+        lv_display_add_event_cb(display, assert_borrowed, LV_EVENT_FLUSH_FINISH, &observer);
+    }
     lv_obj_t *screen = lv_display_get_screen_active(display);
     lv_obj_remove_style_all(screen);
     lv_obj_set_style_bg_color(screen, lv_color_hex(0x123456), 0);
     lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, 0);
     lv_refr_now(display);
     OK(pv2_lvgl_get_error(binding));
+    if (pooled) {
+        assert(observer.seen && observer.deferred_bands);
+    }
     wait_scan_submit(p, &panel, &n);
     assert(panel.cookie && !panel.current.pixels);
     scan_confirm(&panel);
@@ -129,6 +211,20 @@ static void exercise(pv2_present_mode_t mode, size_t bpp, bool async)
     pv2_presenter_status_t status;
     OK(pv2_presenter_get_status(p, &status));
     assert(status.completed_frames == 2 && status.first_error == ESP_OK);
+    if (pooled) {
+        /* Model a different task, such as GSP, taking ownership of the same
+         * presenter pool between two LVGL bindings. */
+        handoff_t handoff = {p, &observer};
+        pthread_t worker;
+        assert(pthread_create(&worker, NULL, other_producer, &handoff) == 0);
+        assert(pthread_join(worker, NULL) == 0);
+        OK(pv2_presenter_rebind_producer(p, 1000));
+        wait_scan_submit(p, &panel, &n);
+        scan_confirm(&panel);
+        OK(pv2_presenter_drain(p, 1000));
+        OK(pv2_lvgl_create_pooled(p, 2, &binding));
+        OK(pv2_lvgl_destroy(binding));
+    }
     panel.stop_timeout = true;
     assert(pv2_presenter_stop(p, 0) == ESP_ERR_TIMEOUT);
     panel.stop_timeout = false;
@@ -144,13 +240,15 @@ int main(void)
                                        };
     lv_init();
     for (size_t i = 0; i < sizeof(modes) / sizeof(*modes); i++) {
-        exercise(modes[i], 2, false);
-        exercise(modes[i], 3, false);
+        exercise(modes[i], 2, false, false);
+        exercise(modes[i], 3, false, false);
     }
-    exercise(PV2_MODE_DOUBLE_PARTIAL, 2, true);
-    exercise(PV2_MODE_TRIPLE_PARTIAL, 3, true);
-    exercise(PV2_MODE_DOUBLE_DIRECT, 2, true);
-    exercise(PV2_MODE_DOUBLE_DIRECT, 3, true);
+    exercise(PV2_MODE_DOUBLE_PARTIAL, 2, true, false);
+    exercise(PV2_MODE_TRIPLE_PARTIAL, 3, true, false);
+    exercise(PV2_MODE_DOUBLE_DIRECT, 2, true, false);
+    exercise(PV2_MODE_DOUBLE_DIRECT, 3, true, false);
+    exercise(PV2_MODE_DOUBLE_PARTIAL, 2, false, true);
+    exercise(PV2_MODE_DOUBLE_PARTIAL, 2, true, true);
     lv_deinit();
     puts("LVGL FB modes: FULL/DIRECT/PARTIAL, RGB565/888, dirty offsets and scanout lifetime passed");
     return 0;

@@ -32,37 +32,37 @@ static esp_err_t caps(void *context, pv2_executor_caps_t *out)
     };
     return ESP_OK;
 }
-static esp_err_t probe(void *context, const pv2_copy_request_t *r, pv2_executor_reason_t *reason)
+static esp_err_t probe(void *context, const pv2_copy_request_t *request, pv2_executor_reason_t *reason)
 {
     (void)context;
     void *band;
     size_t bytes;
-    esp_err_t error = hw_probe(r, reason, &band, &bytes);
+    esp_err_t error = hw_probe(request, reason, &band, &bytes);
     if (error != ESP_OK) {
         return error;
     }
-    if (dma2d_get_buffer_alignment_constraint(r->source.pixels) > 1 ||
-            dma2d_get_buffer_alignment_constraint(r->destination.pixels) > 1) {
+    if (dma2d_get_buffer_alignment_constraint(request->source.pixels) > 1 ||
+            dma2d_get_buffer_alignment_constraint(request->destination.pixels) > 1) {
         return unsupported(reason, PV2_EXEC_MEMORY);
     }
     return ESP_OK;
 }
-static esp_err_t execute(void *context, const pv2_copy_request_t *r)
+static esp_err_t execute(void *context, const pv2_copy_request_t *request)
 {
-    plugin_t *a = context;
+    plugin_t *plugin = context;
     pv2_executor_reason_t reason;
-    esp_err_t error = probe(context, r, &reason);
+    esp_err_t error = probe(context, request, &reason);
     if (error != ESP_OK) {
         return error;
     }
     void *band;
     size_t band_bytes;
-    error = hw_probe(r, &reason, &band, &band_bytes);
+    error = hw_probe(request, &reason, &band, &band_bytes);
     if (error != ESP_OK) {
         return error;
     }
-    size_t bpp = r->source.layout.format == PV2_FORMAT_RGB565 ? 2 : 3;
-    (void)pv2_mutex_take(a->gate, UINT32_MAX);
+    size_t bpp = request->source.layout.format == PV2_FORMAT_RGB565 ? 2 : 3;
+    (void)pv2_mutex_take(plugin->gate, UINT32_MAX);
     error = hw_sync(band, band_bytes, ESP_CACHE_MSYNC_FLAG_DIR_C2M);
     if (error != ESP_OK) {
         goto done;
@@ -71,46 +71,46 @@ static esp_err_t execute(void *context, const pv2_copy_request_t *r)
     const ppa_srm_rotation_angle_t angles[] = {PPA_SRM_ROTATION_ANGLE_0, PPA_SRM_ROTATION_ANGLE_270,
                                                PPA_SRM_ROTATION_ANGLE_180, PPA_SRM_ROTATION_ANGLE_90
                                               };
-    ppa_srm_oper_config_t op = {.in = {.buffer = r->source.pixels,
-                                       .pic_w = r->source.layout.stride_bytes / bpp,
-                                       .pic_h = r->source.layout.height,
-                                       .block_w = r->source_area.width,
-                                       .block_h = r->source_area.height,
-                                       .block_offset_x = r->source_area.x,
-                                       .block_offset_y = r->source_area.y,
+    ppa_srm_oper_config_t op = {.in = {.buffer = request->source.pixels,
+                                       .pic_w = request->source.layout.stride_bytes / bpp,
+                                       .pic_h = request->source.layout.height,
+                                       .block_w = request->source_area.width,
+                                       .block_h = request->source_area.height,
+                                       .block_offset_x = request->source_area.x,
+                                       .block_offset_y = request->source_area.y,
                                        .srm_cm = format
                                       },
-                                .out = {.buffer = r->destination.pixels,
-                                        .buffer_size = r->destination.capacity_bytes,
-                                        .pic_w = r->destination.layout.stride_bytes / bpp,
-                                        .pic_h = r->destination.layout.height,
-                                        .block_offset_x = r->destination_x,
-                                        .block_offset_y = r->destination_y,
+                                .out = {.buffer = request->destination.pixels,
+                                        .buffer_size = request->destination.capacity_bytes,
+                                        .pic_w = request->destination.layout.stride_bytes / bpp,
+                                        .pic_h = request->destination.layout.height,
+                                        .block_offset_x = request->destination_x,
+                                        .block_offset_y = request->destination_y,
                                         .srm_cm = format
                                        },
-                                .rotation_angle = angles[r->rotation],
+                                .rotation_angle = angles[request->rotation],
                                 .scale_x = 1,
                                 .scale_y = 1,
-                                .byte_swap = r->source.layout.byte_order != r->destination.layout.byte_order,
+                                .byte_swap = request->source.layout.byte_order != request->destination.layout.byte_order,
                                 .mode = PPA_TRANS_MODE_BLOCKING
                                };
-    error = ppa_do_scale_rotate_mirror(a->ppa, &op);
+    error = ppa_do_scale_rotate_mirror(plugin->ppa, &op);
     if (error == ESP_OK) {
         error = hw_sync(band, band_bytes, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
     }
 done:
-    pv2_mutex_give(a->gate);
+    pv2_mutex_give(plugin->gate);
     return error;
 }
 static esp_err_t destroy(void *context)
 {
-    plugin_t *a = context;
-    esp_err_t error = ppa_unregister_client(a->ppa);
+    plugin_t *plugin = context;
+    esp_err_t error = ppa_unregister_client(plugin->ppa);
     if (error != ESP_OK) {
         return error;
     }
-    pv2_mutex_destroy(a->gate);
-    pv2_free(a);
+    pv2_mutex_destroy(plugin->gate);
+    pv2_free(plugin);
     return ESP_OK;
 }
 static const pv2_executor_ops_t ops = {caps, probe, execute, destroy};
@@ -120,27 +120,27 @@ esp_err_t pv2_executor_ppa_create(pv2_executor_t **out)
         return ESP_ERR_INVALID_ARG;
     }
     *out = NULL;
-    plugin_t *a = pv2_alloc(sizeof(*a));
-    if (!a) {
+    plugin_t *plugin = pv2_alloc(sizeof(*plugin));
+    if (!plugin) {
         return ESP_ERR_NO_MEM;
     }
-    a->gate = pv2_mutex_create();
-    if (!a->gate) {
-        pv2_free(a);
+    plugin->gate = pv2_mutex_create();
+    if (!plugin->gate) {
+        pv2_free(plugin);
         return ESP_ERR_NO_MEM;
     }
     esp_err_t error;
     ppa_client_config_t cfg = {.oper_type = PPA_OPERATION_SRM, .max_pending_trans_num = 1};
-    error = ppa_register_client(&cfg, &a->ppa);
+    error = ppa_register_client(&cfg, &plugin->ppa);
     if (error != ESP_OK) {
-        pv2_mutex_destroy(a->gate);
-        pv2_free(a);
+        pv2_mutex_destroy(plugin->gate);
+        pv2_free(plugin);
         return error;
     }
-    a->base = (pv2_executor_t) {
-        &ops, a
+    plugin->base = (pv2_executor_t) {
+        &ops, plugin
     };
-    *out = &a->base;
+    *out = &plugin->base;
     return ESP_OK;
 }
 #else

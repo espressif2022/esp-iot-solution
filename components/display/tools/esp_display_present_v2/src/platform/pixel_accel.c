@@ -17,46 +17,46 @@ esp_err_t pv2_pixel_accel_create(const pv2_pixel_accel_config_t *config, pv2_pix
     if (!config || config->kind < PV2_ACCEL_DMA2D || config->kind > PV2_ACCEL_PPA) {
         return ESP_ERR_INVALID_ARG;
     }
-    pv2_pixel_accel_t *a = pv2_alloc(sizeof(*a));
-    if (!a) {
+    pv2_pixel_accel_t *accel = pv2_alloc(sizeof(*accel));
+    if (!accel) {
         return ESP_ERR_NO_MEM;
     }
     esp_err_t error = ESP_OK;
     /* Allocate CPU first: no fallible hardware teardown on later allocation failure. */
     if (config->cpu_fallback) {
-        error = pv2_executor_cpu_create(&a->dispatch.fallback);
+        error = pv2_executor_cpu_create(&accel->dispatch.fallback);
     }
     if (error == ESP_OK) {
-        error = config->kind == PV2_ACCEL_PPA ? pv2_executor_ppa_create(&a->dispatch.primary)
-                : pv2_executor_dma2d_create(&a->dispatch.primary);
+        error = config->kind == PV2_ACCEL_PPA ? pv2_executor_ppa_create(&accel->dispatch.primary)
+                : pv2_executor_dma2d_create(&accel->dispatch.primary);
     }
     if (error != ESP_OK) {
-        if (a->dispatch.fallback) {
-            (void)pv2_executor_destroy(a->dispatch.fallback);
+        if (accel->dispatch.fallback) {
+            (void)pv2_executor_destroy(accel->dispatch.fallback);
         }
-        pv2_free(a);
+        pv2_free(accel);
         return error;
     }
-    *out = a;
+    *out = accel;
     return ESP_OK;
 }
 esp_err_t pv2_pixel_accel_execute(void *context, const pv2_copy_request_t *request)
 {
-    pv2_pixel_accel_t *a = context;
-    return a ? pv2_executor_dispatch_execute(&a->dispatch, request) : ESP_ERR_INVALID_ARG;
+    pv2_pixel_accel_t *accel = context;
+    return accel ? pv2_executor_dispatch_execute(&accel->dispatch, request) : ESP_ERR_INVALID_ARG;
 }
-esp_err_t pv2_pixel_accel_destroy(pv2_pixel_accel_t *a)
+esp_err_t pv2_pixel_accel_destroy(pv2_pixel_accel_t *accel)
 {
-    if (!a) {
+    if (!accel) {
         return ESP_ERR_INVALID_ARG;
     }
-    esp_err_t error = pv2_executor_destroy(a->dispatch.primary);
+    esp_err_t error = pv2_executor_destroy(accel->dispatch.primary);
     if (error != ESP_OK) {
         return error;
     }
-    if (a->dispatch.fallback) {
-        (void)pv2_executor_destroy(a->dispatch.fallback);
+    if (accel->dispatch.fallback) {
+        (void)pv2_executor_destroy(accel->dispatch.fallback);
     }
-    pv2_free(a);
+    pv2_free(accel);
     return ESP_OK;
 }

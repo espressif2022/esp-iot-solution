@@ -31,30 +31,30 @@ struct pv2_lcd_scanout {
     size_t active_callbacks;
     bool attached, armed, closing, source_stopped, stopped;
 };
-static bool PV2_ISR_ATTR frame_boundary(pv2_lcd_scanout_t *a)
+static bool PV2_ISR_ATTR frame_boundary(pv2_lcd_scanout_t *scanout)
 {
-    pv2_lock_enter(&a->lock, true);
+    pv2_lock_enter(&scanout->lock, true);
     pv2_panel_event_fn callback = NULL;
     void *user = NULL;
     uint64_t cookie = 0;
-    unsigned needed = a->config.single_boundary_retire ? 1u : 2u;
-    if (a->attached && a->armed && !a->closing && ++a->boundaries == needed) {
-        cookie = a->cookie;
-        a->cookie = 0;
-        a->armed = false;
-        callback = a->callback;
-        user = a->callback_user;
-        ++a->active_callbacks;
+    unsigned needed = scanout->config.single_boundary_retire ? 1u : 2u;
+    if (scanout->attached && scanout->armed && !scanout->closing && ++scanout->boundaries == needed) {
+        cookie = scanout->cookie;
+        scanout->cookie = 0;
+        scanout->armed = false;
+        callback = scanout->callback;
+        user = scanout->callback_user;
+        ++scanout->active_callbacks;
     }
-    pv2_lock_exit(&a->lock, true);
+    pv2_lock_exit(&scanout->lock, true);
     if (!callback) {
         return false;
     }
     pv2_backend_event_t event = {.kind = PV2_EVENT_SCANOUT_CONFIRMED, .transaction_cookie = cookie};
     bool need_yield = callback(user, &event, true);
-    pv2_lock_enter(&a->lock, true);
-    --a->active_callbacks;
-    pv2_lock_exit(&a->lock, true);
+    pv2_lock_enter(&scanout->lock, true);
+    --scanout->active_callbacks;
+    pv2_lock_exit(&scanout->lock, true);
     return need_yield;
 }
 #if PV2_DSI_SUPPORTED
@@ -75,62 +75,62 @@ static bool PV2_ISR_ATTR rgb_done(esp_lcd_panel_handle_t panel, const esp_lcd_rg
 #endif
 static esp_err_t attach(void *context, pv2_panel_event_fn callback, void *user)
 {
-    pv2_lcd_scanout_t *a = context;
-    if (!a || !callback) {
+    pv2_lcd_scanout_t *scanout = context;
+    if (!scanout || !callback) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (a->attached || a->closing) {
+    if (scanout->attached || scanout->closing) {
         return ESP_ERR_INVALID_STATE;
     }
-    a->callback = callback;
-    a->callback_user = user;
+    scanout->callback = callback;
+    scanout->callback_user = user;
     esp_err_t error = ESP_ERR_NOT_SUPPORTED;
 #if PV2_DSI_SUPPORTED
-    if (a->config.kind == PV2_LCD_DSI) {
+    if (scanout->config.kind == PV2_LCD_DSI) {
         esp_lcd_dpi_panel_event_callbacks_t callbacks = {.on_frame_buf_complete = dsi_done};
-        error = esp_lcd_dpi_panel_register_event_callbacks(a->config.panel, &callbacks, a);
+        error = esp_lcd_dpi_panel_register_event_callbacks(scanout->config.panel, &callbacks, scanout);
     }
 #endif
 #if PV2_RGB_SUPPORTED
-    if (a->config.kind == PV2_LCD_RGB_BOUNCE) {
+    if (scanout->config.kind == PV2_LCD_RGB_BOUNCE) {
         esp_lcd_rgb_panel_event_callbacks_t callbacks = {.on_frame_buf_complete = rgb_done};
-        error = esp_lcd_rgb_panel_register_event_callbacks(a->config.panel, &callbacks, a);
+        error = esp_lcd_rgb_panel_register_event_callbacks(scanout->config.panel, &callbacks, scanout);
     }
 #endif
-    pv2_lock_enter(&a->lock, false);
+    pv2_lock_enter(&scanout->lock, false);
     if (error == ESP_OK) {
-        a->attached = true;
+        scanout->attached = true;
     }
-    pv2_lock_exit(&a->lock, false);
+    pv2_lock_exit(&scanout->lock, false);
     return error;
 }
 
 static pv2_tx_result_t submit(void *context, const pv2_surface_t *surface, const pv2_rect_t *area, uint64_t cookie)
 {
-    pv2_lcd_scanout_t *a = context;
-    if (!a || !surface || !area || !cookie || area->x || area->y || area->width != a->config.width ||
-            area->height != a->config.height || surface->layout.width != area->width ||
-            surface->layout.height != area->height || surface->layout.format != a->config.format ||
+    pv2_lcd_scanout_t *scanout = context;
+    if (!scanout || !surface || !area || !cookie || area->x || area->y || area->width != scanout->config.width ||
+            area->height != scanout->config.height || surface->layout.width != area->width ||
+            surface->layout.height != area->height || surface->layout.format != scanout->config.format ||
             surface->layout.byte_order != PV2_ORDER_NATIVE)
         return (pv2_tx_result_t) {
         PV2_TX_REJECTED, ESP_ERR_INVALID_ARG
     };
-    size_t bytes = (size_t)a->config.width * a->config.height * (a->config.format == PV2_FORMAT_RGB565 ? 2 : 3);
-    if (surface->layout.stride_bytes != bytes / a->config.height || surface->capacity_bytes < bytes)
+    size_t bytes = (size_t)scanout->config.width * scanout->config.height * (scanout->config.format == PV2_FORMAT_RGB565 ? 2 : 3);
+    if (surface->layout.stride_bytes != bytes / scanout->config.height || surface->capacity_bytes < bytes)
         return (pv2_tx_result_t) {
         PV2_TX_REJECTED, ESP_ERR_INVALID_SIZE
     };
     bool known = false;
-    for (size_t i = 0; i < a->config.buffer_count; ++i) {
-        known |= a->buffers[i] == surface->pixels;
+    for (size_t i = 0; i < scanout->config.buffer_count; ++i) {
+        known |= scanout->buffers[i] == surface->pixels;
     }
     if (!known)
         return (pv2_tx_result_t) {
         PV2_TX_REJECTED, ESP_ERR_INVALID_ARG
     };
-    pv2_lock_enter(&a->lock, false);
-    bool busy = !a->attached || a->closing || a->cookie;
-    pv2_lock_exit(&a->lock, false);
+    pv2_lock_enter(&scanout->lock, false);
+    bool busy = !scanout->attached || scanout->closing || scanout->cookie;
+    pv2_lock_exit(&scanout->lock, false);
     if (busy)
         return (pv2_tx_result_t) {
         PV2_TX_REJECTED, ESP_ERR_INVALID_STATE
@@ -141,18 +141,18 @@ static pv2_tx_result_t submit(void *context, const pv2_surface_t *surface, const
         return (pv2_tx_result_t) {
         PV2_TX_REJECTED, error
     };
-    pv2_lock_enter(&a->lock, false);
-    a->cookie = cookie;
-    a->armed = false;
-    pv2_lock_exit(&a->lock, false);
-    error = esp_lcd_panel_draw_bitmap(a->config.panel, 0, 0, area->width, area->height, surface->pixels);
-    pv2_lock_enter(&a->lock, false);
-    a->boundaries = 0;
-    a->armed = error == ESP_OK;
+    pv2_lock_enter(&scanout->lock, false);
+    scanout->cookie = cookie;
+    scanout->armed = false;
+    pv2_lock_exit(&scanout->lock, false);
+    error = esp_lcd_panel_draw_bitmap(scanout->config.panel, 0, 0, area->width, area->height, surface->pixels);
+    pv2_lock_enter(&scanout->lock, false);
+    scanout->boundaries = 0;
+    scanout->armed = error == ESP_OK;
     if (error != ESP_OK) {
-        a->closing = true;
+        scanout->closing = true;
     }
-    pv2_lock_exit(&a->lock, false);
+    pv2_lock_exit(&scanout->lock, false);
     return (pv2_tx_result_t) {
         error == ESP_OK ? PV2_TX_ACCEPTED : PV2_TX_UNCERTAIN, error
     };
@@ -160,34 +160,34 @@ static pv2_tx_result_t submit(void *context, const pv2_surface_t *surface, const
 
 static esp_err_t quiesce(void *context, uint32_t timeout)
 {
-    pv2_lcd_scanout_t *a = context;
-    if (!a) {
+    pv2_lcd_scanout_t *scanout = context;
+    if (!scanout) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (a->stopped) {
+    if (scanout->stopped) {
         return ESP_OK;
     }
     uint64_t start = pv2_now_ms();
-    pv2_lock_enter(&a->lock, false);
-    a->closing = true;
-    pv2_lock_exit(&a->lock, false);
-    if (!a->source_stopped) {
-        esp_err_t error = a->config.delete_panel_on_stop ? esp_lcd_panel_del(a->config.panel)
-                          : a->config.stop_scanout(a->config.user, timeout);
+    pv2_lock_enter(&scanout->lock, false);
+    scanout->closing = true;
+    pv2_lock_exit(&scanout->lock, false);
+    if (!scanout->source_stopped) {
+        esp_err_t error = scanout->config.delete_panel_on_stop ? esp_lcd_panel_del(scanout->config.panel)
+                          : scanout->config.stop_scanout(scanout->config.user, timeout);
         if (error != ESP_OK) {
             return error;
         }
-        a->source_stopped = true;
+        scanout->source_stopped = true;
     }
     for (;;) {
-        pv2_lock_enter(&a->lock, false);
-        bool busy = a->active_callbacks != 0;
+        pv2_lock_enter(&scanout->lock, false);
+        bool busy = scanout->active_callbacks != 0;
         if (!busy) {
-            a->attached = false;
-            a->stopped = true;
-            a->cookie = 0;
+            scanout->attached = false;
+            scanout->stopped = true;
+            scanout->cookie = 0;
         }
-        pv2_lock_exit(&a->lock, false);
+        pv2_lock_exit(&scanout->lock, false);
         if (!busy) {
             return ESP_OK;
         }
@@ -217,89 +217,89 @@ esp_err_t pv2_lcd_scanout_create(const pv2_lcd_scanout_config_t *config, pv2_lcd
     if (config->width > SIZE_MAX / config->height / bpp) {
         return ESP_ERR_INVALID_SIZE;
     }
-    pv2_lcd_scanout_t *a = pv2_alloc(sizeof(*a));
-    if (!a) {
+    pv2_lcd_scanout_t *scanout = pv2_alloc(sizeof(*scanout));
+    if (!scanout) {
         return ESP_ERR_NO_MEM;
     }
-    if (!pv2_lock_init(&a->lock)) {
-        pv2_free(a);
+    if (!pv2_lock_init(&scanout->lock)) {
+        pv2_free(scanout);
         return ESP_ERR_NO_MEM;
     }
-    a->config = *config;
+    scanout->config = *config;
     esp_err_t error = ESP_ERR_NOT_SUPPORTED;
 #if PV2_DSI_SUPPORTED
     if (config->kind == PV2_LCD_DSI)
-        error = esp_lcd_dpi_panel_get_frame_buffer(config->panel, config->buffer_count, &a->buffers[0], &a->buffers[1],
-                                                   &a->buffers[2]);
+        error = esp_lcd_dpi_panel_get_frame_buffer(config->panel, config->buffer_count, &scanout->buffers[0], &scanout->buffers[1],
+                                                   &scanout->buffers[2]);
 #endif
 #if PV2_RGB_SUPPORTED
     if (config->kind == PV2_LCD_RGB_BOUNCE)
-        error = esp_lcd_rgb_panel_get_frame_buffer(config->panel, config->buffer_count, &a->buffers[0], &a->buffers[1],
-                                                   &a->buffers[2]);
+        error = esp_lcd_rgb_panel_get_frame_buffer(config->panel, config->buffer_count, &scanout->buffers[0], &scanout->buffers[1],
+                                                   &scanout->buffers[2]);
 #endif
     for (size_t i = 0; error == ESP_OK && i < config->buffer_count; ++i) {
-        if (!a->buffers[i] || (uintptr_t)a->buffers[i] % 64) {
+        if (!scanout->buffers[i] || (uintptr_t)scanout->buffers[i] % 64) {
             error = ESP_ERR_INVALID_ARG;
         }
         for (size_t j = 0; j < i; ++j)
-            if (a->buffers[i] == a->buffers[j]) {
+            if (scanout->buffers[i] == scanout->buffers[j]) {
                 error = ESP_ERR_INVALID_ARG;
             }
     }
     if (error != ESP_OK) {
-        pv2_lock_destroy(&a->lock);
-        pv2_free(a);
+        pv2_lock_destroy(&scanout->lock);
+        pv2_free(scanout);
         return error;
     }
-    *out = a;
+    *out = scanout;
     return ESP_OK;
 }
 
-esp_err_t pv2_lcd_scanout_get_buffers(pv2_lcd_scanout_t *a, void **buffers, size_t capacity, size_t *count)
+esp_err_t pv2_lcd_scanout_get_buffers(pv2_lcd_scanout_t *scanout, void **buffers, size_t capacity, size_t *count)
 {
-    if (!a || !count || (capacity && !buffers)) {
+    if (!scanout || !count || (capacity && !buffers)) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (a->stopped) {
+    if (scanout->stopped) {
         return ESP_ERR_INVALID_STATE;
     }
-    *count = a->config.buffer_count;
+    *count = scanout->config.buffer_count;
     if (capacity < *count) {
         return ESP_ERR_INVALID_SIZE;
     }
     for (size_t i = 0; i < *count; ++i) {
-        buffers[i] = a->buffers[i];
+        buffers[i] = scanout->buffers[i];
     }
     return ESP_OK;
 }
 
-esp_err_t pv2_lcd_scanout_get_interface(pv2_lcd_scanout_t *a, pv2_panel_adapter_t *out)
+esp_err_t pv2_lcd_scanout_get_interface(pv2_lcd_scanout_t *scanout, pv2_panel_adapter_t *out)
 {
-    if (!a || !out) {
+    if (!scanout || !out) {
         return ESP_ERR_INVALID_ARG;
     }
     *out = (pv2_panel_adapter_t) {
-        a, attach, submit, quiesce
+        scanout, attach, submit, quiesce
     };
     return ESP_OK;
 }
 
-esp_err_t pv2_lcd_scanout_destroy(pv2_lcd_scanout_t *a)
+esp_err_t pv2_lcd_scanout_destroy(pv2_lcd_scanout_t *scanout)
 {
-    if (!a) {
+    if (!scanout) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (a->attached || (a->closing && !a->stopped)) {
+    if (scanout->attached || (scanout->closing && !scanout->stopped)) {
         return ESP_ERR_INVALID_STATE;
     }
-    pv2_lock_destroy(&a->lock);
-    pv2_free(a);
+    pv2_lock_destroy(&scanout->lock);
+    pv2_free(scanout);
     return ESP_OK;
 }
 
-esp_err_t pv2_lcd_scanout_get_output_caps(pv2_lcd_scanout_t *a, pv2_output_caps_t *out)
+esp_err_t pv2_lcd_scanout_get_output_caps(pv2_lcd_scanout_t *scanout, pv2_output_caps_t *out)
 {
-    if (!a || !out) {
+    if (!scanout || !out) {
         return ESP_ERR_INVALID_ARG;
     }
     *out = (pv2_output_caps_t) {

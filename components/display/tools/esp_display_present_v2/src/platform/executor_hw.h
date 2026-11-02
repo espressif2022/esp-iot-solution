@@ -45,40 +45,40 @@ static inline esp_err_t unsupported(pv2_executor_reason_t *reason, pv2_executor_
     *reason = why;
     return ESP_ERR_NOT_SUPPORTED;
 }
-static inline esp_err_t hw_probe(const pv2_copy_request_t *r, pv2_executor_reason_t *reason,
+static inline esp_err_t hw_probe(const pv2_copy_request_t *request, pv2_executor_reason_t *reason,
                                  void **band, size_t *band_bytes)
 {
     *reason = PV2_EXEC_INVALID_REQUEST;
-    esp_err_t e = pv2_pixel_validate_request(r);
+    esp_err_t e = pv2_pixel_validate_request(request);
     if (e != ESP_OK) {
         return e;
     }
-    size_t bpp = r->source.layout.format == PV2_FORMAT_RGB565 ? 2 : 3;
-    size_t sa = esp_cache_get_line_size_by_addr(r->source.pixels);
-    size_t da = esp_cache_get_line_size_by_addr(r->destination.pixels);
+    size_t bpp = request->source.layout.format == PV2_FORMAT_RGB565 ? 2 : 3;
+    size_t sa = esp_cache_get_line_size_by_addr(request->source.pixels);
+    size_t da = esp_cache_get_line_size_by_addr(request->destination.pixels);
     if (sa < 64) {
         sa = 64;
     }
     if (da < 64) {
         da = 64;
     }
-    if (r->source.pixels == r->destination.pixels) {
+    if (request->source.pixels == request->destination.pixels) {
         return unsupported(reason, PV2_EXEC_IN_PLACE);
     }
-    if ((uintptr_t)r->source.pixels % sa || (uintptr_t)r->destination.pixels % da) {
+    if ((uintptr_t)request->source.pixels % sa || (uintptr_t)request->destination.pixels % da) {
         return unsupported(reason, PV2_EXEC_ALIGNMENT);
     }
-    if (!r->destination.capacity_bytes || r->destination.capacity_bytes % da || r->destination.capacity_bytes > UINT32_MAX) {
+    if (!request->destination.capacity_bytes || request->destination.capacity_bytes % da || request->destination.capacity_bytes > UINT32_MAX) {
         return unsupported(reason, PV2_EXEC_CAPACITY);
     }
-    if (r->source.layout.stride_bytes > UINT32_MAX || r->destination.layout.stride_bytes > UINT32_MAX ||
-            r->source.layout.height > r->source.capacity_bytes / r->source.layout.stride_bytes ||
-            r->destination.layout.height > r->destination.capacity_bytes / r->destination.layout.stride_bytes ||
-            r->source.layout.stride_bytes / bpp > 0x3fff || r->source.layout.height > 0x3fff ||
-            r->destination.layout.stride_bytes / bpp > 0x3fff || r->destination.layout.height > 0x3fff) {
+    if (request->source.layout.stride_bytes > UINT32_MAX || request->destination.layout.stride_bytes > UINT32_MAX ||
+            request->source.layout.height > request->source.capacity_bytes / request->source.layout.stride_bytes ||
+            request->destination.layout.height > request->destination.capacity_bytes / request->destination.layout.stride_bytes ||
+            request->source.layout.stride_bytes / bpp > 0x3fff || request->source.layout.height > 0x3fff ||
+            request->destination.layout.stride_bytes / bpp > 0x3fff || request->destination.layout.height > 0x3fff) {
         return unsupported(reason, PV2_EXEC_LAYOUT);
     }
-    if (!destination_band(r, da, band, band_bytes)) {
+    if (!destination_band(request, da, band, band_bytes)) {
         return unsupported(reason, PV2_EXEC_CAPACITY);
     }
     *reason = PV2_EXEC_SUPPORTED;

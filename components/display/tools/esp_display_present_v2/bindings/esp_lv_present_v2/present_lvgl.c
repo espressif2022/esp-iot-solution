@@ -14,33 +14,36 @@ struct pv2_lvgl {
     pv2_presenter_t *presenter;
     lv_display_t *display;
     lv_draw_buf_t *draw;
+    void *pool_base;
     pv2_backend_caps_t caps;
     size_t bpp;
     bool refreshing;
     bool zero_copy;
+    bool pooled_partial;
+    bool need_tile;
     lv_draw_buf_t borrowed;
     pv2_lease_t lease;
     esp_err_t error;
 };
 
-static esp_err_t copy_flush(pv2_lvgl_t *b, const lv_area_t *area, uint8_t *pixels)
+static esp_err_t copy_flush(pv2_lvgl_t *binding, const lv_area_t *area, uint8_t *pixels)
 {
     if (!area || !pixels || area->x1 < 0 || area->y1 < 0 || area->x2 < area->x1 || area->y2 < area->y1 ||
-            (uint32_t)area->x2 >= b->caps.draw_layout.width || (uint32_t)area->y2 >= b->caps.draw_layout.height) {
+            (uint32_t)area->x2 >= binding->caps.draw_layout.width || (uint32_t)area->y2 >= binding->caps.draw_layout.height) {
         return ESP_ERR_INVALID_ARG;
     }
     size_t width = (uint32_t)(area->x2 - area->x1) + 1;
     uint32_t height = (uint32_t)(area->y2 - area->y1) + 1;
-    if (width > SIZE_MAX / b->bpp) {
+    if (width > SIZE_MAX / binding->bpp) {
         return ESP_ERR_INVALID_SIZE;
     }
-    size_t row = width * b->bpp;
-    lv_draw_buf_t *active = lv_display_get_buf_active(b->display);
+    size_t row = width * binding->bpp;
+    lv_draw_buf_t *active = lv_display_get_buf_active(binding->display);
     if (!active || !active->data) {
         return ESP_ERR_INVALID_STATE;
     }
     size_t stride = active->header.stride;
-    bool full_surface = b->caps.contract != PV2_CONTRACT_PARTITION;
+    bool full_surface = binding->caps.contract != PV2_CONTRACT_PARTITION;
     uintptr_t base = (uintptr_t)active->data, ptr = (uintptr_t)pixels;
     if (full_surface) {
         /* LVGL FULL/DIRECT passes the full draw-buffer base, even for dirty areas. */
@@ -48,7 +51,7 @@ static esp_err_t copy_flush(pv2_lvgl_t *b, const lv_area_t *area, uint8_t *pixel
             return ESP_ERR_INVALID_SIZE;
         }
         size_t offset = (size_t)area->y1 * stride;
-        size_t column = (size_t)area->x1 * b->bpp;
+        size_t column = (size_t)area->x1 * binding->bpp;
         if (offset > active->data_size || column > active->data_size - offset) {
             return ESP_ERR_INVALID_SIZE;
         }
@@ -60,23 +63,23 @@ static esp_err_t copy_flush(pv2_lvgl_t *b, const lv_area_t *area, uint8_t *pixel
             (height - 1) * stride + row > active->data_size - (ptr - base)) {
         return ESP_ERR_INVALID_SIZE;
     }
-    if (!b->refreshing) {
+    if (!binding->refreshing) {
         const pv2_frame_request_t request = {0};
-        esp_err_t ret = pv2_presenter_begin_next_frame(b->presenter, &request);
+        esp_err_t ret = pv2_presenter_begin_next_frame(binding->presenter, &request);
         if (ret != ESP_OK) {
             return ret;
         }
-        b->refreshing = true;
+        binding->refreshing = true;
     }
     for (uint32_t offset = 0; offset < height;) {
         pv2_lease_t lease;
-        esp_err_t ret = pv2_presenter_acquire_buffer(b->presenter, &lease);
+        esp_err_t ret = pv2_presenter_acquire_buffer(binding->presenter, &lease);
         if (ret != ESP_OK) {
             return ret;
         }
         uint32_t rows = height - offset;
         if (!full_surface) {
-            ret = pv2_presenter_resolve_rows(b->presenter, &lease, row, height - offset, &rows);
+            ret = pv2_presenter_resolve_rows(binding->presenter, &lease, row, height - offset, &rows);
             if (ret != ESP_OK) {
                 return ret;
             }
@@ -87,13 +90,13 @@ static esp_err_t copy_flush(pv2_lvgl_t *b, const lv_area_t *area, uint8_t *pixel
         }
         for (uint32_t y = 0; y < rows; ++y) {
             size_t destination_offset = full_surface ?
-                                        ((size_t)area->y1 + offset + y) * destination_stride + (size_t)area->x1 * b->bpp : y * row;
+                                        ((size_t)area->y1 + offset + y) * destination_stride + (size_t)area->x1 * binding->bpp : y * row;
             if (destination_offset > lease.surface.capacity_bytes || row > lease.surface.capacity_bytes - destination_offset) {
                 return ESP_ERR_INVALID_SIZE;
             }
             uint8_t *dst = (uint8_t *)lease.surface.pixels + destination_offset;
             const uint8_t *src = pixels + (offset + y) * stride;
-            if (b->bpp == 2) {
+            if (binding->bpp == 2) {
                 memcpy(dst, src, row);
             } else {
                 /* LVGL RGB888 stores lv_color_t as B,G,R; PV2_FORMAT_RGB888 is R,G,B.
@@ -111,7 +114,7 @@ static esp_err_t copy_flush(pv2_lvgl_t *b, const lv_area_t *area, uint8_t *pixel
         pv2_area_t band = { area->x1, area->y1 + (int32_t)offset,
                             area->x2, area->y1 + (int32_t)(offset + rows - 1)
                           };
-        ret = pv2_presenter_submit_buffer(b->presenter, &lease, &band, destination_stride);
+        ret = pv2_presenter_submit_buffer(binding->presenter, &lease, &band, destination_stride);
         if (ret != ESP_OK) {
             return ret;
         }
@@ -120,116 +123,169 @@ static esp_err_t copy_flush(pv2_lvgl_t *b, const lv_area_t *area, uint8_t *pixel
     return ESP_OK;
 }
 
-static void detach(pv2_lvgl_t *b)
+static void detach(pv2_lvgl_t *binding)
 {
-    lv_display_set_draw_buffers(b->display, b->draw, NULL);
+    lv_display_set_draw_buffers(binding->display, binding->draw, NULL);
 }
 
-static void fail_refresh(pv2_lvgl_t *b, esp_err_t error)
+static void fail_refresh(pv2_lvgl_t *binding, esp_err_t error)
 {
-    if (b->error == ESP_OK) {
-        b->error = error;
+    if (binding->error == ESP_OK) {
+        binding->error = error;
     }
-    lv_timer_pause(lv_display_get_refr_timer(b->display));
-    if (b->zero_copy) {
-        detach(b);
+    lv_timer_pause(lv_display_get_refr_timer(binding->display));
+    if (binding->zero_copy) {
+        binding->need_tile = false;
+        detach(binding);
     }
-    if (pv2_presenter_cancel_frame(b->presenter) == ESP_OK) {
-        b->refreshing = false;
+    if (pv2_presenter_cancel_frame(binding->presenter) == ESP_OK) {
+        binding->refreshing = false;
     }
 }
 
 static void round_area(lv_event_t *event)
 {
-    pv2_lvgl_t *b = lv_event_get_user_data(event);
-    lv_area_t *a = lv_event_get_param(event);
-    if (!a || a->x1 < 0 || a->y1 < 0 || a->x2 < a->x1 || a->y2 < a->y1) {
+    pv2_lvgl_t *binding = lv_event_get_user_data(event);
+    lv_area_t *area = lv_event_get_param(event);
+    if (!area || area->x1 < 0 || area->y1 < 0 || area->x2 < area->x1 || area->y2 < area->y1) {
         return;
     }
-    pv2_rect_t dirty = {a->x1, a->y1, a->x2 - a->x1 + 1, a->y2 - a->y1 + 1}, render;
-    esp_err_t error = pv2_presenter_resolve_render_area(b->presenter, &dirty, &render);
+    pv2_rect_t dirty = {area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1}, render;
+    esp_err_t error = pv2_presenter_resolve_render_area(binding->presenter, &dirty, &render);
     if (error != ESP_OK) {
-        fail_refresh(b, error);
+        fail_refresh(binding, error);
         return;
     }
-    a->x1 = render.x;
-    a->y1 = render.y;
-    a->x2 = render.x + render.width - 1;
-    a->y2 = render.y + render.height - 1;
+    area->x1 = render.x;
+    area->y1 = render.y;
+    area->x2 = render.x + render.width - 1;
+    area->y2 = render.y + render.height - 1;
+}
+
+/* A single LVGL descriptor is rebound only after all drawing for the previous
+ * band has drained. Presenter remains the authority for tile availability. */
+/* LVGL calls this after shaping the next single-buffer band and preparing
+ * its layer, but before adding draw tasks. Preserve that shape: only exchange
+ * storage, never reset the header or layer clip coordinates here. */
+static void acquire_before_draw(lv_event_t *event)
+{
+    pv2_lvgl_t *binding = lv_event_get_user_data(event);
+    if (!binding->need_tile || binding->error != ESP_OK) {
+        return;
+    }
+    binding->need_tile = false;
+    if (!binding->refreshing) {
+        const pv2_frame_request_t request = {0};
+        esp_err_t ret = pv2_presenter_begin_next_frame(binding->presenter, &request);
+        if (ret != ESP_OK) {
+            fail_refresh(binding, ret);
+            return;
+        }
+        binding->refreshing = true;
+    }
+    esp_err_t ret = pv2_presenter_acquire_buffer(binding->presenter, &binding->lease);
+    if (ret != ESP_OK) {
+        binding->borrowed.data = binding->draw->data;
+        binding->borrowed.unaligned_data = binding->draw->unaligned_data;
+        fail_refresh(binding, ret);
+        return;
+    }
+    binding->borrowed.data = binding->lease.surface.pixels;
+    binding->borrowed.unaligned_data = binding->lease.surface.pixels;
 }
 
 static void refresh_event(lv_event_t *event)
 {
-    pv2_lvgl_t *b = lv_event_get_user_data(event);
+    pv2_lvgl_t *binding = lv_event_get_user_data(event);
     if (lv_event_get_code(event) == LV_EVENT_REFR_READY) {
+        binding->need_tile = false;
         /* Defensive cleanup if rendering ended without a submitted full flush. */
-        detach(b);
-        if (b->refreshing) {
-            esp_err_t ret = pv2_presenter_cancel_frame(b->presenter);
+        detach(binding);
+        if (binding->refreshing) {
+            esp_err_t ret = pv2_presenter_cancel_frame(binding->presenter);
             if (ret == ESP_OK) {
-                b->refreshing = false;
+                binding->refreshing = false;
             } else {
-                fail_refresh(b, ret);
+                fail_refresh(binding, ret);
             }
         }
         return;
     }
-    if (lv_event_get_code(event) != LV_EVENT_RENDER_START || b->error != ESP_OK) {
+    if (lv_event_get_code(event) != LV_EVENT_RENDER_START || binding->error != ESP_OK) {
+        return;
+    }
+    if (binding->pooled_partial) {
+        (void)lv_draw_buf_init(&binding->borrowed, binding->caps.draw_layout.width, binding->draw->header.h,
+                               LV_COLOR_FORMAT_RGB565, binding->caps.draw_layout.width * 2,
+                               binding->pool_base, binding->draw->data_size);
+        lv_display_set_draw_buffers(binding->display, &binding->borrowed, NULL);
+        binding->need_tile = true;
         return;
     }
     const pv2_frame_request_t request = {0};
-    esp_err_t ret = pv2_presenter_begin_next_frame(b->presenter, &request);
+    esp_err_t ret = pv2_presenter_begin_next_frame(binding->presenter, &request);
     if (ret != ESP_OK) {
-        fail_refresh(b, ret);
+        fail_refresh(binding, ret);
         return;
     }
-    b->refreshing = true;
-    ret = pv2_presenter_acquire_buffer(b->presenter, &b->lease);
+    binding->refreshing = true;
+    ret = pv2_presenter_acquire_buffer(binding->presenter, &binding->lease);
     if (ret != ESP_OK) {
-        fail_refresh(b, ret);
+        fail_refresh(binding, ret);
         return;
     }
-    if (b->lease.surface.capacity_bytes > UINT32_MAX ||
-            lv_draw_buf_init(&b->borrowed, b->caps.draw_layout.width, b->caps.draw_layout.height,
-                             LV_COLOR_FORMAT_RGB565, b->caps.draw_layout.stride_bytes, b->lease.surface.pixels,
-                             b->lease.surface.capacity_bytes) != LV_RESULT_OK) {
-        fail_refresh(b, ESP_ERR_INVALID_SIZE);
+    if (binding->lease.surface.capacity_bytes > UINT32_MAX ||
+            lv_draw_buf_init(&binding->borrowed, binding->caps.draw_layout.width, binding->caps.draw_layout.height,
+                             LV_COLOR_FORMAT_RGB565, binding->caps.draw_layout.stride_bytes, binding->lease.surface.pixels,
+                             binding->lease.surface.capacity_bytes) != LV_RESULT_OK) {
+        fail_refresh(binding, ESP_ERR_INVALID_SIZE);
         return;
     }
-    lv_display_set_draw_buffers(b->display, &b->borrowed, NULL);
+    lv_display_set_draw_buffers(binding->display, &binding->borrowed, NULL);
 }
 
-static esp_err_t submit_borrowed(pv2_lvgl_t *b, const lv_area_t *area, uint8_t *pixels)
+static esp_err_t submit_borrowed(pv2_lvgl_t *binding, const lv_area_t *area, uint8_t *pixels)
 {
-    if (!b->refreshing || pixels != b->lease.surface.pixels || !area || area->x1 || area->y1 ||
-            area->x2 != (int32_t)b->caps.draw_layout.width - 1 || area->y2 != (int32_t)b->caps.draw_layout.height - 1 ||
-            !lv_display_flush_is_last(b->display)) {
+    if (binding->pooled_partial) {
+        if (!binding->refreshing || !area || pixels != binding->lease.surface.pixels || !binding->borrowed.header.stride) {
+            return ESP_ERR_INVALID_STATE;
+        }
+        pv2_area_t band = {area->x1, area->y1, area->x2, area->y2};
+        return pv2_presenter_submit_buffer(binding->presenter, &binding->lease, &band, binding->borrowed.header.stride);
+    }
+    if (!binding->refreshing || pixels != binding->lease.surface.pixels || !area || area->x1 || area->y1 ||
+            area->x2 != (int32_t)binding->caps.draw_layout.width - 1 || area->y2 != (int32_t)binding->caps.draw_layout.height - 1 ||
+            !lv_display_flush_is_last(binding->display)) {
         return ESP_ERR_INVALID_STATE;
     }
     const pv2_area_t full = {area->x1, area->y1, area->x2, area->y2};
-    return pv2_presenter_submit_buffer(b->presenter, &b->lease, &full, b->lease.surface.layout.stride_bytes);
+    return pv2_presenter_submit_buffer(binding->presenter, &binding->lease, &full, binding->lease.surface.layout.stride_bytes);
 }
 
 static void flush(lv_display_t *display, const lv_area_t *area, uint8_t *pixels)
 {
-    pv2_lvgl_t *b = lv_display_get_user_data(display);
-    if (b->error == ESP_OK) {
-        esp_err_t ret = b->zero_copy ? submit_borrowed(b, area, pixels) : copy_flush(b, area, pixels);
+    pv2_lvgl_t *binding = lv_display_get_user_data(display);
+    if (binding->error == ESP_OK) {
+        esp_err_t ret = binding->zero_copy ? submit_borrowed(binding, area, pixels) : copy_flush(binding, area, pixels);
         if (ret == ESP_OK && lv_display_flush_is_last(display)) {
-            ret = pv2_presenter_commit_frame(b->presenter, NULL);
+            ret = pv2_presenter_commit_frame(binding->presenter, NULL);
             if (ret == ESP_OK) {
-                b->refreshing = false;
+                binding->refreshing = false;
+                (void)pv2_presenter_service(binding->presenter);
             }
         }
+        if (ret == ESP_OK && binding->pooled_partial && binding->refreshing) {
+            binding->need_tile = true;
+        }
         if (ret != ESP_OK) {
-            fail_refresh(b, ret);
+            fail_refresh(binding, ret);
         }
     }
-    if (b->zero_copy) {
-        detach(b);
+    if (binding->zero_copy && (!binding->pooled_partial || !binding->refreshing)) {
+        detach(binding);
     }
-    /* All source reads are synchronous and finished. DMA references private
-     * leases only, so LVGL can reshape/reuse this buffer even on error. */
+    /* Pooled PARTIAL defers acquisition until FLUSH_WAIT_START just before
+     * the next band draws; no draw task may use the old source in between. */
     lv_display_flush_ready(display);
 }
 
@@ -275,35 +331,49 @@ static esp_err_t create_binding(pv2_presenter_t *presenter, uint32_t rows, bool 
     }
     lv_color_format_t cf = bpp == 2 ? LV_COLOR_FORMAT_RGB565 : LV_COLOR_FORMAT_RGB888;
     uint32_t stride = lv_draw_buf_width_to_stride(caps.draw_layout.width, cf);
-    if (zero_copy && (caps.contract != PV2_CONTRACT_FULL || bpp != 2 ||
-                      caps.draw_layout.stride_bytes != stride || caps.writes_active_scanout)) {
+    if (zero_copy && (bpp != 2 || caps.draw_layout.stride_bytes != stride ||
+                      (caps.contract != PV2_CONTRACT_FULL && caps.contract != PV2_CONTRACT_PARTITION) ||
+                      (caps.contract == PV2_CONTRACT_FULL && caps.writes_active_scanout))) {
         return ESP_ERR_NOT_SUPPORTED;
+    }
+    void *pool[16] = {0};
+    if (zero_copy && caps.contract == PV2_CONTRACT_PARTITION) {
+        size_t count = 0, bytes = 0;
+        ret = pv2_presenter_get_draw_buffers(presenter, pool, 16, &count, &bytes);
+        if (ret != ESP_OK) {
+            return ret;
+        }
+        if (!count || bytes < (size_t)stride * rows) {
+            return ESP_ERR_NOT_SUPPORTED;
+        }
     }
     if (!stride || rows > UINT32_MAX / stride) {
         return ESP_ERR_INVALID_SIZE;
     }
-    pv2_lvgl_t *b = lv_malloc_zeroed(sizeof(*b));
-    if (!b) {
+    pv2_lvgl_t *binding = lv_malloc_zeroed(sizeof(*binding));
+    if (!binding) {
         return ESP_ERR_NO_MEM;
     }
-    b->presenter = presenter;
-    b->caps = caps;
-    b->bpp = bpp;
-    b->zero_copy = zero_copy;
-    b->draw = lv_draw_buf_create(caps.draw_layout.width, rows, cf, stride);
-    if (!b->draw) {
-        lv_free(b);
+    binding->presenter = presenter;
+    binding->pool_base = pool[0];
+    binding->caps = caps;
+    binding->bpp = bpp;
+    binding->zero_copy = zero_copy;
+    binding->pooled_partial = zero_copy && caps.contract == PV2_CONTRACT_PARTITION;
+    binding->draw = lv_draw_buf_create(caps.draw_layout.width, rows, cf, stride);
+    if (!binding->draw) {
+        lv_free(binding);
         return ESP_ERR_NO_MEM;
     }
-    b->display = lv_display_create((int32_t)caps.draw_layout.width, (int32_t)caps.draw_layout.height);
-    if (!b->display) {
-        lv_draw_buf_destroy(b->draw);
-        lv_free(b);
+    binding->display = lv_display_create((int32_t)caps.draw_layout.width, (int32_t)caps.draw_layout.height);
+    if (!binding->display) {
+        lv_draw_buf_destroy(binding->draw);
+        lv_free(binding);
         return ESP_ERR_NO_MEM;
     }
-    lv_display_set_color_format(b->display, cf);
-    lv_display_set_user_data(b->display, b);
-    lv_display_set_draw_buffers(b->display, b->draw, NULL);
+    lv_display_set_color_format(binding->display, cf);
+    lv_display_set_user_data(binding->display, binding);
+    lv_display_set_draw_buffers(binding->display, binding->draw, NULL);
     lv_display_render_mode_t mode = LV_DISPLAY_RENDER_MODE_PARTIAL;
     switch (caps.contract) {
     case PV2_CONTRACT_FULL:
@@ -315,82 +385,113 @@ static esp_err_t create_binding(pv2_presenter_t *presenter, uint32_t rows, bool 
     default:
         break;
     }
-    lv_display_set_render_mode(b->display, mode);
-    lv_display_set_flush_cb(b->display, flush);
-    lv_display_add_event_cb(b->display, round_area, LV_EVENT_INVALIDATE_AREA, b);
+    lv_display_set_render_mode(binding->display, mode);
+    lv_display_set_flush_cb(binding->display, flush);
+    lv_display_add_event_cb(binding->display, round_area, LV_EVENT_INVALIDATE_AREA, binding);
+    if (binding->pooled_partial) {
+        lv_display_add_event_cb(binding->display, acquire_before_draw, LV_EVENT_FLUSH_WAIT_START, binding);
+    }
     if (zero_copy) {
-        lv_display_add_event_cb(b->display, refresh_event, LV_EVENT_RENDER_START, b);
-        lv_display_add_event_cb(b->display, refresh_event, LV_EVENT_REFR_READY, b);
+        lv_display_add_event_cb(binding->display, refresh_event, LV_EVENT_RENDER_START, binding);
+        lv_display_add_event_cb(binding->display, refresh_event, LV_EVENT_REFR_READY, binding);
     }
     /* TE has no baseline until actual full coverage has been composed. */
-    lv_obj_invalidate(lv_display_get_screen_active(b->display));
-    *out = b;
+    lv_obj_invalidate(lv_display_get_screen_active(binding->display));
+    *out = binding;
     return ESP_OK;
 }
 
-esp_err_t pv2_lvgl_create(pv2_presenter_t *p, uint32_t rows, pv2_lvgl_t **out)
+esp_err_t pv2_lvgl_create(pv2_presenter_t *presenter, uint32_t rows, pv2_lvgl_t **out)
 {
-    return create_binding(p, rows, false, out);
+    return create_binding(presenter, rows, false, out);
 }
 
-esp_err_t pv2_lvgl_create_zero_copy(pv2_presenter_t *p, pv2_lvgl_t **out)
+esp_err_t pv2_lvgl_create_zero_copy(pv2_presenter_t *presenter, pv2_lvgl_t **out)
 {
-    return create_binding(p, 1, true, out);
+    if (!out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    *out = NULL;
+    pv2_backend_caps_t caps;
+    esp_err_t error = pv2_presenter_get_caps(presenter, &caps);
+    if (error != ESP_OK) {
+        return error;
+    }
+    if (caps.contract != PV2_CONTRACT_FULL) {
+        return ESP_ERR_NOT_SUPPORTED;
+    }
+    return create_binding(presenter, 1, true, out);
+}
+esp_err_t pv2_lvgl_create_pooled(pv2_presenter_t *presenter, uint32_t rows, pv2_lvgl_t **out)
+{
+    if (!out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    *out = NULL;
+    pv2_backend_caps_t caps;
+    esp_err_t error = pv2_presenter_get_caps(presenter, &caps);
+    if (error != ESP_OK) {
+        return error;
+    }
+    if (caps.contract != PV2_CONTRACT_PARTITION) {
+        return ESP_ERR_NOT_SUPPORTED;
+    }
+    return create_binding(presenter, rows, true, out);
 }
 
-lv_display_t *pv2_lvgl_get_display(pv2_lvgl_t *b)
+lv_display_t *pv2_lvgl_get_display(pv2_lvgl_t *binding)
 {
-    return b ? b->display : NULL;
+    return binding ? binding->display : NULL;
 }
 
-esp_err_t pv2_lvgl_get_error(pv2_lvgl_t *b)
+esp_err_t pv2_lvgl_get_error(pv2_lvgl_t *binding)
 {
-    if (!b) {
+    if (!binding) {
         return ESP_ERR_INVALID_ARG;
     }
     pv2_presenter_status_t status;
-    esp_err_t ret = pv2_presenter_get_status(b->presenter, &status);
+    esp_err_t ret = pv2_presenter_get_status(binding->presenter, &status);
     if (ret != ESP_OK) {
         return ret;
     }
-    if (b->error == ESP_OK && status.first_error != ESP_OK) {
-        b->error = status.first_error;
-        lv_timer_pause(lv_display_get_refr_timer(b->display));
+    if (binding->error == ESP_OK && status.first_error != ESP_OK) {
+        binding->error = status.first_error;
+        lv_timer_pause(lv_display_get_refr_timer(binding->display));
     }
-    return b->error;
+    return binding->error;
 }
 
-esp_err_t pv2_lvgl_destroy(pv2_lvgl_t *b)
+esp_err_t pv2_lvgl_destroy(pv2_lvgl_t *binding)
 {
-    if (!b) {
+    if (!binding) {
         return ESP_ERR_INVALID_ARG;
     }
     pv2_presenter_status_t status;
-    esp_err_t ret = pv2_presenter_get_status(b->presenter, &status);
+    esp_err_t ret = pv2_presenter_get_status(binding->presenter, &status);
     if (ret != ESP_OK) {
         return ret;
     }
-    lv_timer_pause(lv_display_get_refr_timer(b->display));
-    ret = pv2_presenter_cancel_frame(b->presenter);
+    lv_timer_pause(lv_display_get_refr_timer(binding->display));
+    ret = pv2_presenter_cancel_frame(binding->presenter);
     if (ret != ESP_OK) {
         return ret;
     }
-    lv_display_delete(b->display);
-    lv_draw_buf_destroy(b->draw);
-    lv_free(b);
+    lv_display_delete(binding->display);
+    lv_draw_buf_destroy(binding->draw);
+    lv_free(binding);
     return ESP_OK;
 }
 
-esp_err_t pv2_lvgl_set_rotation(pv2_lvgl_t *b, pv2_rotation_t rotation, uint32_t timeout)
+esp_err_t pv2_lvgl_set_rotation(pv2_lvgl_t *binding, pv2_rotation_t rotation, uint32_t timeout)
 {
-    if (!b || rotation < PV2_ROTATE_0 || rotation > PV2_ROTATE_270) {
+    if (!binding || rotation < PV2_ROTATE_0 || rotation > PV2_ROTATE_270) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (b->refreshing || b->error != ESP_OK) {
+    if (binding->refreshing || binding->error != ESP_OK) {
         return ESP_ERR_INVALID_STATE;
     }
     pv2_rotation_t old_rotation;
-    esp_err_t error = pv2_presenter_get_rotation(b->presenter, &old_rotation);
+    esp_err_t error = pv2_presenter_get_rotation(binding->presenter, &old_rotation);
     if (error != ESP_OK) {
         return error;
     }
@@ -398,37 +499,55 @@ esp_err_t pv2_lvgl_set_rotation(pv2_lvgl_t *b, pv2_rotation_t rotation, uint32_t
         return ESP_OK;
     }
     bool axes = ((unsigned)old_rotation ^ (unsigned)rotation) & 1;
-    uint32_t width = axes ? b->caps.draw_layout.height : b->caps.draw_layout.width;
-    uint32_t height = axes ? b->caps.draw_layout.width : b->caps.draw_layout.height;
-    uint32_t rows = b->caps.contract == PV2_CONTRACT_PARTITION ? b->draw->header.h : height;
+    uint32_t width = axes ? binding->caps.draw_layout.height : binding->caps.draw_layout.width;
+    uint32_t height = axes ? binding->caps.draw_layout.width : binding->caps.draw_layout.height;
+    uint32_t rows = binding->caps.contract == PV2_CONTRACT_PARTITION ? binding->draw->header.h : height;
     if (rows > height) {
         rows = height;
     }
-    lv_color_format_t format = b->bpp == 2 ? LV_COLOR_FORMAT_RGB565 : LV_COLOR_FORMAT_RGB888;
+    lv_color_format_t format = binding->bpp == 2 ? LV_COLOR_FORMAT_RGB565 : LV_COLOR_FORMAT_RGB888;
     uint32_t stride = lv_draw_buf_width_to_stride(width, format);
-    if (b->zero_copy && stride != (size_t)width * b->bpp) {
+    if (binding->zero_copy && stride != (size_t)width * binding->bpp) {
         return ESP_ERR_NOT_SUPPORTED;
+    }
+    if (binding->pooled_partial) {
+        /* A quarter-turn changes the full-width tile stride; the backing pool
+         * retains its original byte capacity. Reduce the rows before rebinding. */
+        size_t available = binding->caps.drawbuf_capacity_bytes / stride;
+        if (!available) {
+            return ESP_ERR_INVALID_SIZE;
+        }
+        if (rows > available) {
+            rows = available;
+        }
     }
     lv_draw_buf_t *draw = lv_draw_buf_create(width, rows, format, stride);
     if (!draw) {
         return ESP_ERR_NO_MEM;
     }
-    error = pv2_presenter_set_rotation(b->presenter, rotation, timeout);
+    error = pv2_presenter_set_rotation(binding->presenter, rotation, timeout);
     if (error != ESP_OK) {
         lv_draw_buf_destroy(draw);
         return error;
     }
-    error = pv2_presenter_get_caps(b->presenter, &b->caps);
+    error = pv2_presenter_get_caps(binding->presenter, &binding->caps);
     if (error != ESP_OK) {
         lv_draw_buf_destroy(draw);
-        fail_refresh(b, error);
+        fail_refresh(binding, error);
         return error;
     }
-    lv_draw_buf_t *old = b->draw;
-    b->draw = draw;
-    lv_display_set_draw_buffers(b->display, draw, NULL);
-    lv_display_set_resolution(b->display, width, height);
+    if (binding->pooled_partial) {
+        void *pool[16] = {0};
+        size_t count = 0, bytes = 0;
+        if (pv2_presenter_get_draw_buffers(binding->presenter, pool, 16, &count, &bytes) == ESP_OK && count) {
+            binding->pool_base = pool[0];
+        }
+    }
+    lv_draw_buf_t *old = binding->draw;
+    binding->draw = draw;
+    lv_display_set_draw_buffers(binding->display, draw, NULL);
+    lv_display_set_resolution(binding->display, width, height);
     lv_draw_buf_destroy(old);
-    lv_obj_invalidate(lv_display_get_screen_active(b->display));
+    lv_obj_invalidate(lv_display_get_screen_active(binding->display));
     return ESP_OK;
 }

@@ -17,32 +17,32 @@ typedef struct {
     bool rejected, complete;
     esp_err_t result;
 } pv2_transaction_resolution_t;
-static inline void pv2_transaction_prepare(pv2_transaction_t *t)
+static inline void pv2_transaction_prepare(pv2_transaction_t *transaction)
 {
-    *t = (pv2_transaction_t) {
+    *transaction = (pv2_transaction_t) {
         0
     };
 }
-static inline bool PV2_ISR_ATTR pv2_transaction_done(pv2_transaction_t *t, esp_err_t error)
+static inline bool PV2_ISR_ATTR pv2_transaction_done(pv2_transaction_t *transaction, esp_err_t error)
 {
-    if (t->done) {
+    if (transaction->done) {
         return false;
     }
-    t->done = true;
-    if (t->result == ESP_OK) {
-        t->result = error;
+    transaction->done = true;
+    if (transaction->result == ESP_OK) {
+        transaction->result = error;
     }
     return true;
 }
 static inline pv2_transaction_resolution_t pv2_transaction_resolve(
-    const pv2_transaction_t *t, pv2_tx_result_t result)
+    const pv2_transaction_t *transaction, pv2_tx_result_t result)
 {
-    bool rejected = result.acceptance == PV2_TX_REJECTED && !t->done;
-    esp_err_t error = t->result != ESP_OK ? t->result : result.result;
+    bool rejected = result.acceptance == PV2_TX_REJECTED && !transaction->done;
+    esp_err_t error = transaction->result != ESP_OK ? transaction->result : result.result;
     if (result.acceptance != PV2_TX_ACCEPTED && error == ESP_OK) {
         error = ESP_FAIL;
     }
     return (pv2_transaction_resolution_t) {
-        rejected, t->done, error
+        rejected, transaction->done, error
     };
 }
