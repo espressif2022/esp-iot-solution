@@ -490,7 +490,8 @@ static void independent_tiles(void)
 {
     scan_panel_t panel = {0};
     pv2_backend_config_t cfg = config(&panel, 2, PV2_CONTRACT_PARTITION);
-    cfg.tile_rows = 2; cfg.tile_buffer_count = 2;
+    cfg.tile_rows = 2;
+    cfg.tile_buffer_count = 2;
     pv2_backend_t *b;
     OK(ops->create(&cfg, &b));
     pv2_frame_t f = begin(b);
@@ -514,7 +515,8 @@ static void independent_tiles(void)
         assert(((uint16_t*)panel.current.pixels)[i] == (i < 8 ? 0x1111 : 0x2222));
     }
     OK(ops->release_receipt(b, receipt));
-    OK(ops->stop(b, 0)); OK(ops->destroy(b));
+    OK(ops->stop(b, 0));
+    OK(ops->destroy(b));
 }
 
 static void async_pipeline_handoff(size_t buffers, pv2_render_contract_t contract)

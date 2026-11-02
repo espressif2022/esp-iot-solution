@@ -13,15 +13,49 @@
 #include <string.h>
 #include <stdio.h>
 #define OK(x) assert((x)==ESP_OK)
+/* Model an ISR that fetched callback/user before unregister but had not
+ * entered the adapter. active_callbacks cannot see it; the native join must. */
+static dpi_cb_t late_dsi;
+static rgb_cb_t late_rgb;
+static void *late_user;
+static esp_lcd_panel_handle_t late_panel;
+static bool late_joined;
+esp_err_t __real_pv2_isr_barrier(uint32_t timeout);
+esp_err_t __wrap_pv2_isr_barrier(uint32_t timeout)
+{
+    if (late_dsi) {
+        (void)late_dsi(late_panel, NULL, late_user);
+        late_dsi = NULL;
+        late_joined = true;
+    }
+    if (late_rgb) {
+        (void)late_rgb(late_panel, NULL, late_user);
+        late_rgb = NULL;
+        late_joined = true;
+    }
+    return __real_pv2_isr_barrier(timeout);
+}
 struct fake_lcd {
     void *buffers[3];
-    dpi_cb_t dsi;
-    rgb_cb_t rgb;
+    dpi_cb_t dsi, dsi_vsync;
+    rgb_cb_t rgb, rgb_vsync;
     void *user;
-    bool early, fail, stop_timeout, deleted;
+    bool early, fail, stop_timeout, deleted, detach_fail;
     size_t calls;
+    bool no_bounce, one_shot, transformed, custom_bounce, one_fb;
     const void *source;
 };
+esp_err_t esp_lcd_rgb_panel_get_frame_buffer_info(esp_lcd_panel_handle_t panel, esp_lcd_rgb_panel_frame_buffer_info_t *info)
+{
+    *info = (esp_lcd_rgb_panel_frame_buffer_info_t) {
+        .width = 3, .height = 2,
+        .frame_buffer_count = panel->one_fb ? 1 : 2, .frame_buffer_bytes = 12, .bits_per_pixel = 16,
+        .bounce_buffer_bytes = panel->no_bounce ? 0 : 6, .continuous_refresh = !panel->one_shot,
+        .frame_buffer_retirement = !panel->no_bounce, .transformed = panel->transformed,
+        .custom_bounce_callback = panel->custom_bounce
+    };
+    return ESP_OK;
+}
 static void boundary(struct fake_lcd *p)
 {
     if (p->dsi) {
@@ -34,17 +68,37 @@ static void boundary(struct fake_lcd *p)
 
 esp_err_t esp_lcd_dpi_panel_register_event_callbacks(esp_lcd_panel_handle_t p, const esp_lcd_dpi_panel_event_callbacks_t *cb, void *user)
 {
+    if (!user && p->detach_fail) {
+        return ESP_FAIL;
+    }
+    if (!user && p->dsi) {
+        (void)p->dsi(p, NULL, NULL); /* Old callback, newly cleared user_ctx. */
+        if (p->dsi_vsync) {
+            (void)p->dsi_vsync(p, NULL, NULL);
+        }
+    }
     p->dsi = cb->on_frame_buf_complete;
+    p->dsi_vsync = cb->on_vsync;
     p->user = user;
-    assert(!cb->on_color_trans_done && !cb->on_vsync);
+    assert(!cb->on_color_trans_done);
     return ESP_OK;
 }
 
 esp_err_t esp_lcd_rgb_panel_register_event_callbacks(esp_lcd_panel_handle_t p, const esp_lcd_rgb_panel_event_callbacks_t *cb, void *user)
 {
+    if (!user && p->detach_fail) {
+        return ESP_FAIL;
+    }
+    if (!user && p->rgb) {
+        (void)p->rgb(p, NULL, NULL);
+        if (p->rgb_vsync) {
+            (void)p->rgb_vsync(p, NULL, NULL);
+        }
+    }
     p->rgb = cb->on_frame_buf_complete;
+    p->rgb_vsync = cb->on_vsync;
     p->user = user;
-    assert(!cb->on_color_trans_done && !cb->on_vsync);
+    assert(!cb->on_color_trans_done);
     return ESP_OK;
 }
 
@@ -251,12 +305,139 @@ static void test_callback_drain_retry(void)
     }
 }
 
+static bool raw_vsync(void *user, uint64_t timestamp, bool isr)
+{
+    assert(isr && timestamp);
+    ++*(unsigned *)user;
+    return false;
+}
+static void test_retained_scanout(void)
+{
+    for (unsigned rgb = 0; rgb < 2; ++rgb) {
+        struct fake_lcd panel = {0};
+        for (unsigned i = 0; i < 2; ++i) {
+            panel.buffers[i] = aligned_alloc(64, 64);
+            assert(panel.buffers[i]);
+        }
+        unsigned vsyncs = 0;
+        pv2_lcd_scanout_config_t config = {
+            .panel = &panel, .kind = rgb ? PV2_LCD_RGB_BOUNCE : PV2_LCD_DSI,
+            .width = 3, .height = 2, .format = PV2_FORMAT_RGB565, .buffer_count = 2,
+            .rgb_bounce_buffer_mode = true, .retain_driver_scanout = true,
+            .on_vsync = raw_vsync, .vsync_user = &vsyncs,
+        };
+        pv2_lcd_scanout_t *adapter;
+        config.delete_panel_on_stop = true;
+        assert(pv2_lcd_scanout_create(&config, &adapter) == ESP_ERR_INVALID_ARG);
+        config.delete_panel_on_stop = false;
+        OK(pv2_lcd_scanout_create(&config, &adapter));
+        pv2_panel_adapter_t interface;
+        OK(pv2_lcd_scanout_get_interface(adapter, &interface));
+        cb_gate_t gate = {.lock = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER};
+        OK(interface.attach(interface.context, blocking_panel_cb, &gate));
+        if (rgb) {
+            (void)panel.rgb_vsync(&panel, NULL, panel.user);
+        } else {
+            (void)panel.dsi_vsync(&panel, NULL, panel.user);
+        }
+        assert(vsyncs == 1 && !gate.entered); /* Raw VSYNC is never a retire fence. */
+        pv2_surface_t surface = {panel.buffers[1], 64, {3, 2, 6, PV2_FORMAT_RGB565, PV2_ORDER_NATIVE}};
+        pv2_rect_t area = {0, 0, 3, 2};
+        assert(interface.submit(interface.context, &surface, &area, 42).acceptance == PV2_TX_ACCEPTED);
+        assert(interface.quiesce(interface.context, 0) == ESP_ERR_TIMEOUT);
+        assert(pv2_lcd_scanout_destroy(adapter) == ESP_ERR_INVALID_STATE);
+        boundary(&panel);
+        assert(!gate.entered);
+        boundary(&panel); /* Completion still drains while retained adapter closes. */
+        assert(gate.entered);
+        panel.detach_fail = true;
+        assert(interface.quiesce(interface.context, 0) == ESP_FAIL);
+        panel.detach_fail = false;
+        late_dsi = panel.dsi;
+        late_rgb = panel.rgb;
+        late_user = panel.user;
+        late_panel = &panel;
+        late_joined = false;
+        OK(interface.quiesce(interface.context, 0));
+        assert(late_joined); /* Adapter was still alive when the cached ISR ran. */
+        assert(!panel.deleted && !panel.rgb && !panel.dsi && panel.source == panel.buffers[1]);
+        OK(pv2_lcd_scanout_destroy(adapter));
+        pthread_cond_destroy(&gate.changed);
+        pthread_mutex_destroy(&gate.lock);
+        for (unsigned i = 0; i < 2; ++i) {
+            free(panel.buffers[i]);
+        }
+    }
+}
+
+static bool count_single(void *user, const pv2_backend_event_t *event, bool isr)
+{
+    assert(isr && event->kind == PV2_EVENT_SCANOUT_CONFIRMED && event->transaction_cookie == 91);
+    ++*(unsigned *)user;
+    return false;
+}
+static void queried_rgb(void)
+{
+    struct fake_lcd panel = {0};
+    panel.buffers[0] = aligned_alloc(64, 64);
+    panel.buffers[1] = aligned_alloc(64, 64);
+    pv2_lcd_scanout_config_t config = {.panel = &panel, .kind = PV2_LCD_RGB_BOUNCE,
+                                       .width = 3, .height = 2, .format = PV2_FORMAT_RGB565, .buffer_count = 2, .retain_driver_scanout = true
+                                      };
+    pv2_lcd_scanout_t *adapter;
+    /* No confirmation switch: the driver is authoritative. */
+    OK(pv2_lcd_scanout_create(&config, &adapter));
+    OK(pv2_lcd_scanout_destroy(adapter));
+    panel.one_shot = true;
+    assert(pv2_lcd_scanout_create(&config, &adapter) == ESP_ERR_NOT_SUPPORTED);
+    panel.one_shot = false;
+    panel.custom_bounce = true;
+    assert(pv2_lcd_scanout_create(&config, &adapter) == ESP_ERR_NOT_SUPPORTED);
+    panel.custom_bounce = false;
+    panel.transformed = true;
+    assert(pv2_lcd_scanout_create(&config, &adapter) == ESP_ERR_NOT_SUPPORTED);
+    panel.transformed = false;
+    panel.no_bounce = true;
+    config.rgb_bounce_buffer_mode = true; /* A stale caller hint cannot override facts. */
+    assert(pv2_lcd_scanout_create(&config, &adapter) == ESP_ERR_NOT_SUPPORTED);
+    panel.one_fb = true;
+    config.buffer_count = 1;
+    OK(pv2_lcd_scanout_create(&config, &adapter));
+    pv2_panel_adapter_t api;
+    OK(pv2_lcd_scanout_get_interface(adapter, &api));
+    unsigned confirmed = 0;
+    OK(api.attach(api.context, count_single, &confirmed));
+    pv2_surface_t surface = {panel.buffers[0], 12, {3, 2, 6, PV2_FORMAT_RGB565, PV2_ORDER_NATIVE}};
+    pv2_rect_t area = {0, 0, 3, 2};
+    assert(api.submit(api.context, &surface, &area, 91).acceptance == PV2_TX_ACCEPTED);
+    assert(!panel.rgb && panel.rgb_vsync);
+    (void)panel.rgb_vsync(&panel, NULL, panel.user);
+    assert(!confirmed);
+    (void)panel.rgb_vsync(&panel, NULL, panel.user);
+    assert(confirmed == 1);
+    OK(api.quiesce(api.context, 100));
+    OK(pv2_lcd_scanout_destroy(adapter));
+    free(panel.buffers[0]);
+    free(panel.buffers[1]);
+}
 int main(void)
 {
+    /* Direct RGB is deliberately outside the audited bounce adapter contract. */
+    struct fake_lcd unsupported_panel = {.no_bounce = true};
+    pv2_lcd_scanout_config_t unsupported = {
+        .panel = &unsupported_panel, .kind = PV2_LCD_RGB_BOUNCE,
+        .width = 3, .height = 2, .format = PV2_FORMAT_RGB565,
+        .buffer_count = 2, .delete_panel_on_stop = true,
+    };
+    pv2_lcd_scanout_t *unsupported_adapter = NULL;
+    assert(pv2_lcd_scanout_create(&unsupported, &unsupported_adapter) == ESP_ERR_NOT_SUPPORTED);
+    assert(!unsupported_adapter && !unsupported_panel.deleted);
+    queried_rgb();
     exercise(PV2_LCD_DSI, false);
     exercise(PV2_LCD_DSI, true);
     exercise(PV2_LCD_RGB_BOUNCE, false);
     exercise(PV2_LCD_RGB_BOUNCE, true);
     test_callback_drain_retry();
+    test_retained_scanout();
     puts("scanout: real adapter against driver stubs, boundary fence, initial scanout and stop retry passed");
 }

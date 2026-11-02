@@ -1,0 +1,14 @@
+{
+  "impl": "v2",
+  "target": "esp32p4",
+  "files": {
+    "main.c": "1730a2862b06e9b64c1df215f9ec9ff3f7233b33861ca145ae9feb4ba03b18e2",
+    "pv2_compat_probe.map": "6e3dd12f5051cc33c12b997542cd388c9977e23d71c9cdd2da1e6bb55b489fb0",
+    "sdkconfig": "0d926c0f3165bf04f9d6cc0b580f0852ee57d5044bd95ab62346e8671d706568",
+    "pv2_compat_probe.bin": "2c6632b89ed623d383f94831374e89b92256918a745753cd999b63d43296eafa",
+    "flasher_args.json": "1f54ff26dede17754e02a1bc3dac04eeda3b37309b911dd46ccf2f736770c8b3",
+    "bootloader/bootloader.bin": "3962dc0f2d42c9a049234f83b6ee3b6d94d03c747b04a62384dbe71a0446fd72",
+    "config/sdkconfig.h": "09386efe91837217fce1dfab6a1ceab93db892feb96c43fc33256dfbbbd53c07",
+    "partition_table/partition-table.bin": "73c0b5c3e5fcba3a151cc70c453c93dd5f4798899e7f2f8cca76da1f32ffc501"
+  }
+}

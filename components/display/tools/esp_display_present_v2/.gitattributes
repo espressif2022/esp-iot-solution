@@ -1,0 +1,4 @@
+# Preserve raw serial evidence and unified-diff context without treating their
+# carriage returns/context prefixes as source-code whitespace defects.
+test_apps/legacy_compat/evidence/**/*.log -whitespace
+test_apps/driver_patches/*.patch -whitespace

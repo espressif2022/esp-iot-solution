@@ -80,10 +80,7 @@ esp_err_t pv2_image_init(pv2_image_builder_t *builder, uint32_t w, uint32_t h)
     memset(builder, 0, sizeof(*builder));
     size_t pixels = (size_t)w * h;
     builder->coverage_bytes = pixels / 8 + (pixels % 8 != 0);
-    builder->coverage = pv2_alloc(builder->coverage_bytes);
-    if (!builder->coverage) {
-        return ESP_ERR_NO_MEM;
-    }
+    /* Common rectangle path has no resident full-screen bitmap. */
     builder->width = w;
     builder->height = h;
     builder->candidate = builder->baseline = builder->published_baseline = SIZE_MAX;
@@ -119,10 +116,13 @@ esp_err_t pv2_image_begin(pv2_image_builder_t *builder, size_t candidate, size_t
     if (builder->baseline_borrow) {
         pv2_allocation_hold(&builder->allocations[baseline], PV2_REF_COPY);
     }
-    if (builder->bitmap_dirty) {
-        memset(builder->coverage, 0, builder->coverage_bytes);
-        builder->bitmap_dirty = false;
-    }
+    pv2_free(builder->coverage);
+    builder->coverage = NULL;
+    builder->bitmap_dirty = false;
+    builder->coverage_error = ESP_OK;
+    builder->exact = (pv2_damage_set_t) {
+        0
+    };
     builder->full_covered = false;
     builder->writes = (pv2_damage_set_t) {
         0
@@ -134,41 +134,107 @@ esp_err_t pv2_image_begin(pv2_image_builder_t *builder, size_t candidate, size_t
     builder->repair_ready = false;
     return ESP_OK;
 }
-void pv2_image_cover(pv2_image_builder_t *builder, pv2_rect_t a)
+static void bitmap_cover(pv2_image_builder_t *builder, pv2_rect_t area)
 {
-    assert(pv2_valid_rect(builder->width, builder->height, &a));
-    if (a.x == 0 && a.y == 0 && a.width == builder->width && a.height == builder->height) {
+    for (uint32_t y = area.y; y < area.y + area.height; ++y) {
+        pv2_coverage_set(builder->coverage, (size_t)y * builder->width + area.x, area.width);
+    }
+}
+/* Exact union may never widen. On fragmentation overflow preserve every
+ * existing rectangle in a lazy bitmap. Allocation failure invalidates this
+ * build explicitly; it never authorizes baseline repair over new pixels. */
+static esp_err_t cover_exact(pv2_image_builder_t *builder, pv2_rect_t area)
+{
+    if (builder->coverage_error != ESP_OK) {
+        return builder->coverage_error;
+    }
+    if (builder->full_covered) {
+        return ESP_OK;
+    }
+    if (area.x == 0 && area.y == 0 && area.width == builder->width && area.height == builder->height) {
         builder->full_covered = true;
+        return ESP_OK;
+    }
+    if (builder->coverage) {
+        bitmap_cover(builder, area);
+        return ESP_OK;
+    }
+    pv2_damage_set_t previous = builder->exact;
+    damage_add(&builder->exact, area);
+    if (!builder->exact.full && builder->exact.count == 1 &&
+            builder->exact.areas[0].x == 0 && builder->exact.areas[0].y == 0 &&
+            builder->exact.areas[0].width == builder->width && builder->exact.areas[0].height == builder->height) {
+        builder->full_covered = true;
+    }
+    if (builder->exact.full) {
+        builder->coverage = pv2_alloc(builder->coverage_bytes);
+        if (!builder->coverage) {
+            builder->exact = previous;
+            return builder->coverage_error = ESP_ERR_NO_MEM;
+        }
+        for (size_t i = 0; i < previous.count; ++i) {
+            bitmap_cover(builder, previous.areas[i]);
+        }
+        bitmap_cover(builder, area);
+    }
+    return ESP_OK;
+}
+esp_err_t pv2_image_cover(pv2_image_builder_t *builder, pv2_rect_t area)
+{
+    assert(pv2_valid_rect(builder->width, builder->height, &area));
+    esp_err_t error = cover_exact(builder, area);
+    if (error != ESP_OK) {
+        return error;
+    }
+    damage_add(&builder->writes, area);
+    if (builder->full_covered) {
         builder->writes.full = true;
         builder->writes.count = 0;
-        return;
     }
-    builder->bitmap_dirty = true;
-    if (a.x == 0 && a.width == builder->width) {
-        pv2_coverage_set(builder->coverage, (size_t)a.y * builder->width, (size_t)a.height * builder->width);
-    } else {
-        for (uint32_t y = a.y; y < a.y + a.height; y++) {
-            pv2_coverage_set(builder->coverage, (size_t)y * builder->width + a.x, a.width);
+    return ESP_OK;
+}
+static uint32_t exact_run_end(const pv2_image_builder_t *builder, uint32_t x, uint32_t y)
+{
+    uint32_t end = x;
+    for (size_t pass = 0; pass < builder->exact.count; ++pass) {
+        uint32_t before = end;
+        for (size_t i = 0; i < builder->exact.count; ++i) {
+            pv2_rect_t a = builder->exact.areas[i];
+            if (y >= a.y && y - a.y < a.height && a.x <= end && a.x + a.width > end) {
+                end = a.x + a.width;
+            }
+        }
+        if (before == end) {
+            break;
         }
     }
-    damage_add(&builder->writes, a);
-    if (!builder->writes.full && builder->writes.count == 1 &&
-            builder->writes.areas[0].x == 0 && builder->writes.areas[0].y == 0 &&
-            builder->writes.areas[0].width == builder->width && builder->writes.areas[0].height == builder->height) {
-        builder->full_covered = true;
-    }
+    return end;
 }
 bool pv2_image_full(const pv2_image_builder_t *builder)
 {
-    return builder->full_covered || pv2_coverage_full(builder->coverage, (size_t)builder->width * builder->height);
+    if (builder->coverage_error != ESP_OK) {
+        return false;
+    }
+    if (builder->full_covered) {
+        return true;
+    }
+    if (builder->coverage) {
+        return pv2_coverage_full(builder->coverage, (size_t)builder->width * builder->height);
+    }
+    for (uint32_t y = 0; y < builder->height; ++y)
+        if (exact_run_end(builder, 0, y) != builder->width) {
+            return false;
+        }
+    return true;
 }
+
 void pv2_image_prepare_repair(pv2_image_builder_t *builder, bool direct)
 {
     if (builder->repair_ready) {
         return;
     }
     builder->repair_ready = true;
-    if (builder->full_covered || builder->baseline == SIZE_MAX || builder->baseline == builder->candidate) {
+    if (builder->coverage_error != ESP_OK || builder->full_covered || builder->baseline == SIZE_MAX || builder->baseline == builder->candidate) {
         return;
     }
     uint64_t from = builder->versions[builder->candidate], to = builder->versions[builder->baseline];
@@ -195,11 +261,37 @@ void pv2_image_prepare_repair(pv2_image_builder_t *builder, bool direct)
 }
 static bool covered(const pv2_image_builder_t *builder, size_t i)
 {
-    return (builder->coverage[i / 8] & (1u << (i % 8))) != 0;
+    if (builder->full_covered) {
+        return true;
+    }
+    if (builder->coverage) {
+        return (builder->coverage[i / 8] & (1u << (i % 8))) != 0;
+    }
+    uint32_t x = i % builder->width, y = i / builder->width;
+    return exact_run_end(builder, x, y) > x;
+}
+static bool row_uncovered(const pv2_image_builder_t *builder, uint32_t y, uint32_t x, uint32_t width)
+{
+    if (builder->full_covered) {
+        return false;
+    }
+    if (builder->coverage) {
+        return pv2_coverage_all_zero(builder->coverage, (size_t)y * builder->width + x, width);
+    }
+    for (size_t i = 0; i < builder->exact.count; ++i) {
+        pv2_rect_t a = builder->exact.areas[i];
+        if (y >= a.y && y - a.y < a.height && a.x < x + width && x < a.x + a.width) {
+            return false;
+        }
+    }
+    return true;
 }
 bool pv2_image_next_repair(pv2_image_builder_t *builder, pv2_rect_t *out)
 {
     assert(builder->repair_ready);
+    if (builder->coverage_error != ESP_OK) {
+        return false;
+    }
     while (builder->rect < builder->repair.count) {
         pv2_rect_t a = builder->repair.areas[builder->rect];
         size_t count = (size_t)a.width * a.height;
@@ -211,8 +303,16 @@ bool pv2_image_next_repair(pv2_image_builder_t *builder, pv2_rect_t *out)
             /* Fast skip over covered pixels on this row, 8 pixels at a time when byte-aligned. */
             while (rx < a.width) {
                 size_t bit = row_base + a.x + rx;
-                if (bit % 8 == 0 && rx + 8 <= a.width && builder->coverage[bit / 8] == 0xff) {
+                if (builder->coverage && bit % 8 == 0 && rx + 8 <= a.width && builder->coverage[bit / 8] == 0xff) {
                     rx += 8;
+                    continue;
+                }
+                if (!builder->coverage) {
+                    uint32_t end = builder->full_covered ? a.x + a.width : exact_run_end(builder, a.x + rx, y);
+                    if (end == a.x + rx) {
+                        break;
+                    }
+                    rx = end < a.x + a.width ? end - a.x : a.width;
                     continue;
                 }
                 if (!covered(builder, bit)) {
@@ -228,9 +328,20 @@ bool pv2_image_next_repair(pv2_image_builder_t *builder, pv2_rect_t *out)
             uint32_t x = a.x + rx;
             uint32_t end = x + 1;
             uint32_t limit = a.x + a.width;
-            while (end < limit) {
+            if (!builder->coverage) {
+                /* Find the next covered interval from rectangle boundaries. */
+                end = limit;
+                for (size_t i = 0; i < builder->exact.count; ++i) {
+                    pv2_rect_t covered_area = builder->exact.areas[i];
+                    if (y >= covered_area.y && y - covered_area.y < covered_area.height &&
+                            covered_area.x > x && covered_area.x < end) {
+                        end = covered_area.x;
+                    }
+                }
+            }
+            while (builder->coverage && end < limit) {
                 size_t bit = row_base + end;
-                if (bit % 8 == 0 && end + 8 <= limit && builder->coverage[bit / 8] == 0x00) {
+                if (builder->coverage && bit % 8 == 0 && end + 8 <= limit && builder->coverage[bit / 8] == 0x00) {
                     end += 8;
                     continue;
                 }
@@ -242,7 +353,7 @@ bool pv2_image_next_repair(pv2_image_builder_t *builder, pv2_rect_t *out)
             uint32_t span_w = end - x;
             uint32_t rows = 1;
             while (ry + rows < a.height &&
-                    pv2_coverage_all_zero(builder->coverage, (size_t)(y + rows) * builder->width + x, span_w)) {
+                    row_uncovered(builder, y + rows, x, span_w)) {
                 rows++;
             }
             uint32_t next_rx = (end - a.x);
@@ -263,16 +374,20 @@ bool pv2_image_next_repair(pv2_image_builder_t *builder, pv2_rect_t *out)
     }
     return false;
 }
-void pv2_image_repaired(pv2_image_builder_t *builder, const pv2_rect_t *area)
+esp_err_t pv2_image_repaired(pv2_image_builder_t *builder, const pv2_rect_t *area)
 {
-    builder->bitmap_dirty = true;
-    for (uint32_t y = area->y; y < area->y + area->height; y++) {
-        pv2_coverage_set(builder->coverage, (size_t)y * builder->width + area->x, area->width);
+    esp_err_t error = cover_exact(builder, *area);
+    if (error == ESP_OK) {
+        builder->repaired_pixels += (size_t)area->width * area->height;
     }
-    builder->repaired_pixels += (size_t)area->width * area->height;
+    return error;
 }
+
 esp_err_t pv2_image_commit(pv2_image_builder_t *builder)
 {
+    if (builder->coverage_error != ESP_OK) {
+        return builder->coverage_error;
+    }
     if (builder->latest == UINT64_MAX) {
         return ESP_ERR_NO_MEM;
     }

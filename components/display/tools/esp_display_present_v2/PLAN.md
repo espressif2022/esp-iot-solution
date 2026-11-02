@@ -1,5 +1,9 @@
 # V2 实施与验收状态
 
+本轮代码、性能和未通过项统一见 [收敛验收记录](test_apps/legacy_compat/RESULTS_CLOSE_20261102.md)。
+
+> 2026-11-02 当前收敛状态见 [V1 兼容状态](V1_COMPATIBILITY_GAPS.md) 与 [收敛计划](CONVERGENCE_PLAN.md)。下面旧日期的数量和限制属于历史切片，不能替代当前门面验收。
+
 更新：2026-10-30。本轮从执行器前置继续推进公共核心、图像构建、TE/FB、Presenter/LVGL 和三板验证。以下是当前代码状态；早期计划及阶段性测试数保存在 [历史计划](PLAN_HISTORY_2026-10-30.md)。
 
 ## 实施结果
@@ -64,3 +68,45 @@ python3 tools/dev.py idf-build --target esp32p4 --with-lvgl --build-dir build/es
 ```
 
 sanitize 关闭泄漏检测；未声称泄漏检测、竞态穷举或真机所有时序通过。测试工程、身份与原始记录见 [板测结果](test_apps/boards/RESULTS.md)。当前重构代码尚未自动提交 Git。
+
+## 驱动扫描边界专项（2026-11-02）
+
+新增独立 [scanout_boundary 工程](test_apps/scanout_boundary/README.md)：仅在隔离构建副本中给 IDF/V2 注入事件记录，生产接口和运行策略不变。记录源读取区间、每次 bounce EOF、FB 完成、VSYNC、链表配置/切换、restart，以及 V2 提交/确认/退休/构建。溢出、截断、watchdog 或关键证据缺失不得判通过。
+
+本轮 Host + LVGL 与 ASan/UBSan + LSan 为 **31/31**（含 C 记录器测试和 Python 分析器测试，后者有 15 个用例）。实板结果与边界以 [专项 RESULTS](test_apps/scanout_boundary/RESULTS.md) 为准，不把单次画面正确当作生命周期证明。
+
+支持范围保持连续 RGB bounce / MIPI；无 bounce 连续/单次 RGB 只观察 IDF，不接入 V2。默认双边界确认的结果不外推到 single_boundary_retire。仍未受控注入丢 EOF / MIPI underrun；MIPI 驱动原生 underrun 仅日志，生产 FAULT 转发/恢复尚无本轮证据。记录器改变时序，也不证明光学显示完成或无撕裂。
+
+## 短期收敛执行入口（2026-11-02）
+
+后续按 [CONVERGENCE_PLAN.md](CONVERGENCE_PLAN.md) 的 C0～C5 顺序执行；契约、平台装配、V1 门面、默认性能和 coverage 内存分开验收。历史 S0～S6 完成状态不代表兼容门面已经实现。实际 V1/GSP 调用面见 [V1_API_AUDIT.json](V1_API_AUDIT.json)。
+
+## C2 基础兼容入口进度（2026-11-02）
+
+21 个 V1 同名入口、旧 LVGL start/stop/frame_count、32/64 位 lease 映射及私有控制桥已接通。资源聚合归入兼容组件，核心不反向依赖 V1。新增 legacy_facade Host 回归与原工程离线准备工具；原默认组件未切换。六种 FB 模式、tracking/generation/scroll、控制任务和实际 LVGL handoff 已有基础 Host 证据。
+
+C2 尚未整体完成：保留 TE/单 FB 等明确拒绝项，逐笔传输 timeout 尚不等价；原工程/GSP 完整验收仍按 [收敛计划](CONVERGENCE_PLAN.md) 继续。C3 新固件板测、C4 常驻 coverage 位图收敛、C5 条件性优化未完成，不计入已有驱动板测。
+
+本轮 C2 基础切片最终结果：Host/LVGL 33/33、ASan/UBSan/LSan 33/33（泄漏检测开启）、legacy_facade 连续 50 次；S3/P4 组件离线 smoke 及三个原示例的 P4 离线链接通过。showcase 使用缓存 GSP 1.9.0，不等同于原 1.5 发布组合。未烧录、未跑分；详情见 [C2 RESULTS](test_apps/legacy_compat/RESULTS.md)。C2 整体仍未验收完成。
+
+## C2 第二轮收敛（2026-11-02）
+
+已按 V1 源码修正帧计划、band 行数对齐、GRAM 水位、tracking 与 fault/handoff 语义；直接链接原纯几何实现进行 Host 差分。逐笔传输期限放在现有 Presenter 提交/事件入口，启用才分配计时记录；记录不拥有像素，不改后端退休规则，也不新增线程。超时只报 FAULT，真实完成仍须排空。
+
+Host/LVGL 与 ASan/UBSan/LSan 均 34/34，三个相关回归各连续 50 次；S3/P4 组件、三个原示例 P4 离线重新链接及格式/补丁检查通过。无烧录、无新跑分。TE 平台模型/内存事实/事件源、单 FB、非方形旧 API 运行时跨轴、实际 GSP 发布组合和 C3～C5 尚未关闭，详见 [最新 RESULTS](test_apps/legacy_compat/RESULTS_C2_CONTRACTS.md)。
+
+C3 P4 原 GSP/LVGL 交接已完成一整批 5 轮及额外第 6 轮，日志零错误；每轮 LVGL 139 帧，未做官方 benchmark。修正并回归了保留 LVGL 绑定但暂停 raster 时的 quiesce 排空。详见 [P4 交接结果](test_apps/legacy_compat/RESULTS_C3_P4_HANDOFF.md)，三板完整 C3 与 C4/C5 仍未关闭。
+
+P4 交接视觉反馈更正：用户报告仅背光亮、无显示。6 轮串口 PASS 仅证明日志层交接，不能标为显示验收通过；C3 保持未通过，需驻留测试固件并同步排查面板输出。详见交接结果的视觉反馈更正。
+
+## 门面的能力超集原则（2026-11-02）
+
+门面以 V1 已成功调用的契约为底线，向上开放已验证的 V2 能力。旧成功调用的逻辑尺寸、像素、所有权和生命周期语义不变；以前失败的配置可以新增支持。PV2_PLAN_V1_DEFAULTS 选择默认模式/池数量，不充当 V1 能力上限。
+
+已移除 GRAM、DIRECT 非零旋转的纯 V1 限制，联动 buffer-count 查询、资源创建、plan 和 set_rotation。初始非方形旋转保持原配置的逻辑宽高，物理输出按角度映射；运行时非方形跨轴仍拒绝，不会静默交换旧调用方的逻辑宽高。GRAM 四方向及同轴运行时二次提交、DIRECT 四方向及同轴二次提交均以真实 V1 几何函数做逐像素 Host 对照。
+
+真实资源限制仍由核心检查：例如 0° 原地字节交换 GRAM 实例不能运行时切换非零角度，失败保留 generation。需旋转的调用方可在创建时指定角度以获得转换路径；本轮不为原来成功的 0° 配置强行增加转换池。TE 平台装配、单 FB、RGB 无 bounce、非方形运行时跨轴等缺口继续明确记录，不冒充超集已全部实现。
+
+本轮仅 Host 与离线编译，不烧录、不改默认示例选择；之前 P4 黑屏/复位观察仍独立待定位。完整结果见 [超集旋转验收](test_apps/legacy_compat/RESULTS_SUPERSET_ROTATION.md)。
+
+V1 取消契约收敛：void cancel 对外立即撤销 frame/lease，内部保留取消排空；下一次 begin 共用准入预算，超时可重试且不提前释放源。独立控制任务只能处理门面已撤销的 producer frame。见 [取消回归](test_apps/legacy_compat/RESULTS_CANCEL_COMPAT.md) 与 [V1 成功路径缺口](V1_COMPATIBILITY_GAPS.md)。本轮不是整体兼容完成，显示黑屏反馈与创建/旋转缺口仍未关闭。

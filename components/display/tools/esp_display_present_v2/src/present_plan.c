@@ -71,7 +71,16 @@ static bool pool(pv2_plan_pool_t *pool_config, size_t n, pv2_layout_t l, size_t 
         return true;
     }
     size_t span;
-    return mul(l.stride_bytes, l.height, &span) && align_up(span, a, &pool_config->bytes_each) && mul(n, pool_config->bytes_each, &pool_config->total_bytes);
+    if (!mul(l.stride_bytes, l.height, &span)) {
+        return false;
+    }
+    if (borrowed) {
+        /* Base alignment does not grant ownership of tail cache padding. */
+        pool_config->bytes_each = span;
+    } else if (!align_up(span, a, &pool_config->bytes_each)) {
+        return false;
+    }
+    return mul(n, pool_config->bytes_each, &pool_config->total_bytes);
 }
 static bool executor_supports(const pv2_executor_caps_t *caps, const pv2_backend_config_t *config)
 {
@@ -111,10 +120,6 @@ static esp_err_t resolve(const pv2_plan_config_t *config, pv2_resolved_plan_t *p
     }
     bool partial = backend_config->render_contract == PV2_CONTRACT_PARTITION;
     if (kind != PV2_PRESENTER_FB && !partial) {
-        return ESP_ERR_NOT_SUPPORTED;
-    }
-    if (config->defaults == PV2_PLAN_V1_DEFAULTS && backend_config->rotation != PV2_ROTATE_0 &&
-            (kind == PV2_PRESENTER_GRAM || backend_config->render_contract == PV2_CONTRACT_DIRECT)) {
         return ESP_ERR_NOT_SUPPORTED;
     }
     if (backend_config->in_place_convert && (kind != PV2_PRESENTER_GRAM || backend_config->async_copy || backend_config->rotation != PV2_ROTATE_0)) {
@@ -191,7 +196,12 @@ static esp_err_t resolve(const pv2_plan_config_t *config, pv2_resolved_plan_t *p
     if (plan->output.full_frame_only && kind == PV2_PRESENTER_GRAM) {
         return ESP_ERR_NOT_SUPPORTED;
     }
-    bool external_tx = (images ? config->resources.image_memory : config->resources.tile_memory) == PV2_MEMORY_EXTERNAL;
+    if (backend_config->internal_tx_staging && (kind != PV2_PRESENTER_GRAM || !backend_config->async_copy)) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    pv2_plan_memory_t transport_memory = images ? config->resources.image_memory :
+                                         backend_config->internal_tx_staging ? PV2_MEMORY_INTERNAL_DMA : config->resources.tile_memory;
+    bool external_tx = transport_memory == PV2_MEMORY_EXTERNAL;
     size_t length_alignment = plan->output.external_length_alignment ? plan->output.external_length_alignment : 1;
     if (external_tx && kind == PV2_PRESENTER_GRAM) {
         /* Tight rows with this width make every rendered band DMA-legal,
@@ -313,10 +323,10 @@ static esp_err_t resolve(const pv2_plan_config_t *config, pv2_resolved_plan_t *p
             return ESP_ERR_INVALID_SIZE;
         }
     }
-    if (!pool(&plan->conversion, convert ? tiles : 0, converted, alignment, config->resources.tile_memory, false)) {
+    if (!pool(&plan->conversion, convert ? tiles : 0, converted, alignment, backend_config->internal_tx_staging ? PV2_MEMORY_INTERNAL_DMA : config->resources.tile_memory, false)) {
         return ESP_ERR_INVALID_SIZE;
     }
-    pv2_plan_memory_t tx_memory = images ? config->resources.image_memory : config->resources.tile_memory;
+    pv2_plan_memory_t tx_memory = transport_memory;
     if ((tx_memory == PV2_MEMORY_INTERNAL_DMA && !plan->output.internal_dma) || (tx_memory == PV2_MEMORY_EXTERNAL && !plan->output.external_memory)) {
         return ESP_ERR_NOT_SUPPORTED;
     }
@@ -380,11 +390,11 @@ static esp_err_t resolve(const pv2_plan_config_t *config, pv2_resolved_plan_t *p
             return ESP_ERR_INVALID_ARG;
         }
     }
-    if (kind == PV2_PRESENTER_TE && backend_config->te_timing.period_us &&
+    if (kind == PV2_PRESENTER_TE && !backend_config->te_gate.admit && backend_config->te_timing.period_us &&
             pv2_te_window(&backend_config->te_timing, backend_config->te_transfer_budget_us, 0, 0, false).admission == PV2_TE_UNSUPPORTED) {
         return ESP_ERR_NOT_SUPPORTED;
     }
-    if (kind == PV2_PRESENTER_TE && !backend_config->te_timing.period_us && (!backend_config->te_transfer_budget_us || backend_config->te_transfer_budget_us >= backend_config->te_window_us)) {
+    if (kind == PV2_PRESENTER_TE && !backend_config->te_gate.admit && !backend_config->te_timing.period_us && (!backend_config->te_transfer_budget_us || backend_config->te_transfer_budget_us >= backend_config->te_window_us)) {
         return ESP_ERR_NOT_SUPPORTED;
     }
     if (plan->physical_layout.stride_bytes != (size_t)pw * bpp || plan->logical_layout.stride_bytes != (size_t)backend_config->width * bpp || alignment != PV2_BUFFER_ALIGNMENT) {

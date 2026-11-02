@@ -41,7 +41,8 @@ def main():
         options += ['--add-braces', '--break-one-line-headers', '--suffix=none']
         if args.check:
             options.append('--dry-run')
-        files = sorted(str(p) for directory in ('src', 'include', 'bindings', 'tests', 'test_apps/smoke/main')
+        files = sorted(str(p) for directory in ('src', 'include', 'bindings', 'tests', 'test_apps/smoke/main',
+                                                            'compat/esp_display_present/src', 'compat/esp_lv_present/src')
                        for p in (ROOT / directory).rglob('*') if p.suffix in ('.c', '.h', '.cpp'))
         result = subprocess.run([formatter, *options, *files], check=True, text=True, capture_output=True)
         print(result.stdout, end='')

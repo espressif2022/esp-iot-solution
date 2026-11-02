@@ -84,6 +84,10 @@ typedef enum {
 
 typedef struct {
     bool sealed;
+    /** Conservative frame-source completion: accepted frame work has drained.
+     * May lag individual tile reuse; does not grant permission to write a
+     * retained scanout/baseline allocation. Acquire a new lease before writes.
+     * Terminal failure may release sources without confirming presentation. */
     bool source_released;
     bool present_confirmed;
     bool terminal; /* No further progress for this frame receipt. */
@@ -158,7 +162,10 @@ typedef struct {
      */
     pv2_tx_result_t (*submit)(void *context, const pv2_surface_t *surface, const pv2_rect_t *area, uint64_t cookie);
     /**
-     * @brief Success guarantees no hardware accesses and no active/future callbacks.
+     * @brief Success guarantees no accesses to framework-owned pixels and no
+     * active/future callbacks. An explicitly retained, immutable driver-owned
+     * external FB may continue scanout until its panel owner deletes it; it
+     * must never be freed by this backend. All other accesses must end.
      * Failure leaves registration/resources valid for retry. Must honor total
      * timeout budget; may safely abort hardware rather than finish display.
      *
@@ -170,6 +177,19 @@ typedef struct {
 } pv2_panel_adapter_t;
 
 typedef bool (*pv2_progress_fn)(void *user, bool from_isr);
+
+/* Optional injected TE admission policy. Borrowed until stop; task-side admit
+ * runs outside backend locks and may wait for a bounded hardware window.
+ * TIMEOUT means no admission (retry), never sticky fault. A successful return
+ * supplies the actual selected edge; rejected transfers must wait for a newer
+ * edge. done is ISR-safe and observes real completion, or definite rejection.
+ * No source ownership, image pools or frame lifecycle belongs to this policy. */
+typedef struct {
+    esp_err_t (*admit)(void *, size_t transfer_bytes, uint64_t after_edge, uint64_t *edge);
+    void (*start)(void *);
+    void (*done)(void *, esp_err_t);
+    void *user;
+} pv2_te_gate_t;
 
 struct pv2_backend_config {
     uint32_t width, height;     /* Logical dimensions seen by the producer. */
@@ -209,7 +229,10 @@ struct pv2_backend_config {
     pv2_progress_fn on_progress;
     void *progress_user;
     bool tile_in_psram, image_in_psram, logical_in_psram;
+    bool fixed_logical_rotation; /* Runtime rotation preserves producer dimensions; physical view may transpose. */
+    bool internal_tx_staging; /* GRAM async copies from external tiles to internal DMA conversion slots. */
     size_t transfer_capacity; /* GRAM: 0 uses tile count. */
+    pv2_te_gate_t te_gate; /* Explicit injection; default retains native timing model. */
     pv2_te_timing_t te_timing; /* period_us=0 retains the explicit fixed edge window. */
     size_t tile_buffer_count; /* FB PARTIAL: independent draw pool; 0 legacy one. */
     size_t compose_count; /* TE: 0 legacy serialized dual-image, explicit 1/2 enables pool scheduling. */

@@ -21,6 +21,8 @@ typedef struct {
     pv2_pixel_format_t format; /* Must match the panel driver's input format. */
     pv2_byte_order_t byte_order; /* Wire byte order; adapter does not convert. */
     size_t max_inflight; /* 1..16; independent of the SPI driver's queue size. */
+    size_t staging_bytes; /* Optional bounded internal DMA staging; serializes whole transactions. */
+    uint32_t staging_timeout_ms; /* Per transaction; 0 uses 1000 ms. Failure retains in-flight storage. */
     bool psram_dma_direct; /* Opt-in: underlying LCD SPI IO must enable the same flag on a capable SPI host. */
 } pv2_lcd_spi_config_t;
 

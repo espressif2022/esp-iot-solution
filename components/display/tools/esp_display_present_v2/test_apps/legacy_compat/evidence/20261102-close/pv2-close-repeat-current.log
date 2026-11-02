@@ -1,0 +1,706 @@
+Internal ctest changing into directory: /tmp/pv2-pool-host
+Test project /tmp/pv2-pool-host
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+    Test  #2: image ............................   Passed    0.01 sec
+    Start  2: image
+1/7 Test  #2: image ............................   Passed    0.01 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+    Test  #4: plan .............................   Passed    0.00 sec
+    Start  4: plan
+2/7 Test  #4: plan .............................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+    Test  #9: scanout ..........................   Passed    0.00 sec
+    Start  9: scanout
+3/7 Test  #9: scanout ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+    Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 13: lcd_spi
+4/7 Test #13: lcd_spi ..........................   Passed    0.00 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+    Test #20: scheduler ........................   Passed    0.01 sec
+    Start 20: scheduler
+5/7 Test #20: scheduler ........................   Passed    0.01 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+    Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 32: legacy_resources
+6/7 Test #32: legacy_resources .................   Passed    0.00 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.07 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.07 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.07 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.07 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.07 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.07 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+    Test #33: legacy_facade ....................   Passed    0.08 sec
+    Start 33: legacy_facade
+7/7 Test #33: legacy_facade ....................   Passed    0.08 sec
+
+100% tests passed, 0 tests failed out of 7
+
+Total Test time (real) =   5.08 sec

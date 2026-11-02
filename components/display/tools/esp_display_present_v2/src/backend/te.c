@@ -105,6 +105,9 @@ static bool PV2_ISR_ATTR te_dispatch(void *user, const pv2_backend_event_t *even
                 }
                 if (event->kind == PV2_EVENT_TRANSFER_DONE) {
                     bool first = pv2_transaction_done(&job->transaction, event->result);
+                    if (first && backend->config.te_gate.done) {
+                        backend->config.te_gate.done(backend->config.te_gate.user, event->result);
+                    }
                     record_fault(backend, i, first ? event->result : ESP_ERR_INVALID_STATE);
                     if (backend->config.te_timing.period_us && pv2_now_us() - job->started_us > backend->config.te_transfer_budget_us) {
                         record_fault(backend, i, ESP_ERR_TIMEOUT);
@@ -249,7 +252,7 @@ static esp_err_t service_frame(pv2_backend_t *backend, size_t index, size_t pend
             return ESP_OK;
         }
     }
-    if (!backend->has_edge) {
+    if (!backend->has_edge && !backend->config.te_gate.admit) {
         pv2_lock_exit(&backend->lock, false);
         return ESP_OK;
     }
@@ -258,7 +261,19 @@ static esp_err_t service_frame(pv2_backend_t *backend, size_t index, size_t pend
     pv2_lock_exit(&backend->lock, false);
     pv2_source_t source;
     esp_err_t error;
-    if (backend->config.te_timing.period_us) {
+    if (backend->config.te_gate.admit) {
+        size_t bytes = (size_t)backend->config.width * backend->config.height *
+                       (backend->config.format == PV2_FORMAT_RGB565 ? 2 : 3);
+        error = backend->config.te_gate.admit(backend->config.te_gate.user, bytes,
+                                              job->attempted ? job->attempted_edge : 0, &edge);
+        if (error == ESP_ERR_TIMEOUT) {
+            return ESP_OK;
+        }
+        if (error != ESP_OK) {
+            return error;
+        }
+        error = pv2_te_composer_pin(backend->composer, job->compose_frame, &source);
+    } else if (backend->config.te_timing.period_us) {
         if (job->attempted && edge <= job->attempted_edge) {
             return ESP_OK;
         }
@@ -322,9 +337,15 @@ static esp_err_t service_frame(pv2_backend_t *backend, size_t index, size_t pend
     pv2_lock_exit(&backend->lock, false);
     pv2_surface_t surface = {(void *)source.pixels, source.capacity_bytes, source.layout};
     pv2_rect_t area = {0, 0, source.layout.width, source.layout.height};
+    if (backend->config.te_gate.start) {
+        backend->config.te_gate.start(backend->config.te_gate.user);
+    }
     pv2_tx_result_t tx = backend->config.panel.submit(backend->config.panel.context, &surface, &area, cookie);
     pv2_lock_enter(&backend->lock, false);
     pv2_transaction_resolution_t resolved = pv2_transaction_resolve(&job->transaction, tx);
+    if (resolved.rejected && backend->config.te_gate.done) {
+        backend->config.te_gate.done(backend->config.te_gate.user, tx.result == ESP_OK ? ESP_FAIL : tx.result);
+    }
     if (resolved.rejected) {
         job->phase = TE_READY;
         job->cookie = 0;
@@ -401,10 +422,10 @@ static esp_err_t te_create(const pv2_backend_config_t *config, pv2_backend_t **o
     if (config->render_contract != PV2_CONTRACT_PARTITION || (config->rotation < PV2_ROTATE_0 || config->rotation > PV2_ROTATE_270) || config->initial_scanout_buffer || config->external_buffers || config->external_buffer_bytes || config->in_place_convert) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (!config->te_transfer_budget_us || (!config->te_timing.period_us &&
-                                           config->te_transfer_budget_us >= config->te_window_us) ||
-            (config->te_timing.period_us && pv2_te_window(&config->te_timing,
-                                                          config->te_transfer_budget_us, 0, 0, false).admission == PV2_TE_UNSUPPORTED)) {
+    if (!config->te_gate.admit && (!config->te_transfer_budget_us || (!config->te_timing.period_us &&
+                                                                      config->te_transfer_budget_us >= config->te_window_us) ||
+                                   (config->te_timing.period_us && pv2_te_window(&config->te_timing,
+                                                                                 config->te_transfer_budget_us, 0, 0, false).admission == PV2_TE_UNSUPPORTED))) {
         return ESP_ERR_INVALID_ARG;
     }
     pv2_backend_t *backend = pv2_alloc(sizeof(*backend));
@@ -891,7 +912,7 @@ static esp_err_t te_set_rotation(pv2_backend_t *backend, pv2_rotation_t rotation
     if (backend->config.in_place_convert && rotation != PV2_ROTATE_0) {
         return ESP_ERR_NOT_SUPPORTED;
     }
-    bool change_axes = ((unsigned)backend->config.rotation ^ (unsigned)rotation) & 1;
+    bool change_axes = !backend->config.fixed_logical_rotation && (((unsigned)backend->config.rotation ^ (unsigned)rotation) & 1);
     uint32_t width = change_axes ? backend->config.height : backend->config.width;
     uint32_t height = change_axes ? backend->config.width : backend->config.height;
     size_t bpp = backend->config.format == PV2_FORMAT_RGB565 ? 2 : 3;
@@ -899,7 +920,8 @@ static esp_err_t te_set_rotation(pv2_backend_t *backend, pv2_rotation_t rotation
     if (!rows) {
         return ESP_ERR_INVALID_SIZE;
     }
-    esp_err_t error = pv2_te_composer_set_rotation(backend->composer, rotation);
+    esp_err_t error = pv2_te_composer_reorient(backend->composer, rotation,
+                                               rotation & 1 ? height : width, rotation & 1 ? width : height);
     if (error != ESP_OK) {
         return error;
     }

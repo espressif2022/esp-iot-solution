@@ -10,6 +10,7 @@
 extern "C" {
 #endif
 
+/* Select default pool/mode policy, not a ceiling on supported capabilities. */
 typedef enum { PV2_PLAN_V2_DEFAULTS, PV2_PLAN_V1_DEFAULTS } pv2_plan_defaults_t;
 typedef enum { PV2_MEMORY_INTERNAL_DMA, PV2_MEMORY_EXTERNAL } pv2_plan_memory_t;
 typedef enum {
@@ -62,7 +63,7 @@ typedef struct {
     pv2_plan_pool_t tiles, images, logical, conversion;
     pv2_output_caps_t output;
     size_t tx_capacity, record_capacity, base_alignment;
-    size_t pixel_bytes, coverage_bytes;
+    size_t pixel_bytes, coverage_bytes; /* coverage_bytes reserves worst-case lazy bitmap, not resident allocation. */
     size_t metadata_bytes, stack_bytes, reserved_bytes, required_bytes;
     /* required_bytes includes pixel + coverage + framework metadata + requested
      * task stacks + caller reservation. Add driver/renderer/allocator overhead

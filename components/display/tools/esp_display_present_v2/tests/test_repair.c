@@ -4,6 +4,7 @@
  */
 #include "../src/backend/te_composer.h"
 #include "scan_panel.h"
+#include "present_presenter.h"
 #include <pthread.h>
 #include <stdio.h>
 #define OK(x) assert((x)==ESP_OK)
@@ -12,6 +13,7 @@ typedef struct {
     pthread_cond_t changed;
     bool block, entered;
     unsigned done;
+    esp_err_t result;
 } gate_t;
 static esp_err_t execute(void *user, const pv2_copy_request_t *r)
 {
@@ -22,8 +24,9 @@ static esp_err_t execute(void *user, const pv2_copy_request_t *r)
     while (g->block) {
         pthread_cond_wait(&g->changed, &g->lock);
     }
+    esp_err_t result = g->result;
     pthread_mutex_unlock(&g->lock);
-    return pv2_pixel_execute_cpu(r);
+    return result == ESP_OK ? pv2_pixel_execute_cpu(r) : result;
 }
 
 static bool event(void *user, pv2_copy_ticket_t t, const pv2_copy_status_t *status, bool fault)
@@ -228,8 +231,135 @@ static void fb(bool cancel)
     pthread_cond_destroy(&g.changed);
     pthread_mutex_destroy(&g.lock);
 }
+/* Sealing a frame cannot release a source that the copy worker still reads.
+ * Modes: success, accepted-copy failure, and stop timeout with retained access. */
+static void fb_source_completion(unsigned mode)
+{
+    gate_t gate = {.lock = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER,
+                   .result = mode == 1 ? ESP_FAIL : ESP_OK
+                  };
+    scan_panel_t panel = {0};
+    const pv2_backend_ops_t *ops = &pv2_fb_backend;
+    pv2_backend_config_t config = {
+        .width = 4, .height = 4, .tile_rows = 4, .buffer_count = 2, .max_frames = 3,
+        .format = PV2_FORMAT_RGB565, .render_contract = PV2_CONTRACT_PARTITION,
+        .panel = scan_interface(&panel), .async_copy = true,
+        .copy_execute = execute, .copy_user = &gate, .on_progress = progress, .progress_user = &gate,
+    };
+    pv2_backend_t *backend;
+    OK(ops->create(&config, &backend));
+    pv2_frame_t frame;
+    pv2_frame_request_t request = {.full_redraw = true};
+    OK(ops->begin(backend, &request, &frame));
+    pv2_lease_t lease;
+    OK(ops->acquire(backend, frame, NULL, 0, &lease));
+    memset(lease.surface.pixels, 0x5a, 32);
+    arm(&gate);
+    unsigned completed = count(&gate);
+    OK(ops->submit_region(backend, frame, lease.id));
+    wait_enter(&gate);
+    pv2_receipt_t receipt;
+    OK(ops->end(backend, frame, &receipt));
+    pv2_frame_status_t status;
+    OK(ops->query(backend, receipt, &status));
+    assert(status.sealed && !status.source_released && !status.terminal && !status.present_confirmed);
+    assert(ops->wait(backend, receipt, PV2_COMPLETION_SOURCE_RELEASED, 0, &status) == ESP_ERR_TIMEOUT);
+    assert(ops->wait(backend, receipt, PV2_COMPLETION_PRESENT_CONFIRMED, 0, &status) == ESP_ERR_TIMEOUT);
+    assert(ops->release_receipt(backend, receipt) == ESP_ERR_INVALID_STATE);
+    assert(panel.submissions == 0);
+    if (mode == 2) {
+        assert(ops->stop(backend, 0) == ESP_ERR_TIMEOUT);
+        OK(ops->query(backend, receipt, &status));
+        assert(!status.source_released && !status.terminal);
+    }
+    unblock(&gate);
+    wait_done(&gate, completed);
+    if (mode == 2) {
+        OK(ops->stop(backend, UINT32_MAX));
+    } else {
+        OK(pv2_fb_service(backend));
+        if (mode == 0) {
+            assert(panel.submissions == 1);
+            OK(ops->query(backend, receipt, &status));
+            assert(!status.source_released && !status.terminal);
+            assert(ops->wait(backend, receipt, PV2_COMPLETION_SOURCE_RELEASED, 0, &status) == ESP_ERR_TIMEOUT);
+            scan_confirm(&panel);
+        } else {
+            assert(panel.submissions == 0);
+        }
+    }
+    OK(ops->wait(backend, receipt, PV2_COMPLETION_SOURCE_RELEASED, 0, &status));
+    assert(status.terminal && status.source_released);
+    assert(status.present_confirmed == (mode == 0));
+    assert(status.result == (mode == 0 ? ESP_OK : mode == 1 ? ESP_FAIL : ESP_ERR_INVALID_STATE));
+    if (mode != 0) {
+        /* Source drain does not clear the accepted-operation sticky fault. */
+        pv2_backend_fault_t fault;
+        OK(ops->get_fault(backend, &fault));
+        assert(fault.result == status.result);
+        assert(ops->begin(backend, &request, &frame) == ESP_ERR_INVALID_STATE);
+    }
+    OK(ops->release_receipt(backend, receipt));
+    OK(ops->stop(backend, UINT32_MAX));
+    OK(ops->destroy(backend));
+    pthread_cond_destroy(&gate.changed);
+    pthread_mutex_destroy(&gate.lock);
+}
+
+static void presenter_source_completion(void)
+{
+    gate_t gate = {.lock = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER};
+    scan_panel_t panel = {0};
+    pv2_presenter_config_t config = {
+        .backend_kind = PV2_PRESENTER_FB, .mode = PV2_MODE_DOUBLE_PARTIAL,
+        .backend = {
+            .width = 4, .height = 4, .tile_rows = 4, .buffer_count = 2, .max_frames = 3,
+            .format = PV2_FORMAT_RGB565, .panel = scan_interface(&panel), .async_copy = true,
+            .copy_execute = execute, .copy_user = &gate, .on_progress = progress, .progress_user = &gate,
+        },
+    };
+    pv2_presenter_t *presenter;
+    OK(pv2_presenter_create(&config, &presenter));
+    pv2_frame_request_t request = {.full_redraw = true};
+    OK(pv2_presenter_begin_next_frame(presenter, &request));
+    pv2_lease_t lease;
+    OK(pv2_presenter_acquire_buffer(presenter, &lease));
+    memset(lease.surface.pixels, 0x5a, 32);
+    arm(&gate);
+    unsigned completed = count(&gate);
+    pv2_area_t area = {0, 0, 3, 3};
+    OK(pv2_presenter_submit_buffer(presenter, &lease, &area, 8));
+    wait_enter(&gate);
+    pv2_presenter_receipt_t receipt;
+    OK(pv2_presenter_commit_with_receipt(presenter, NULL, &receipt));
+    pv2_frame_status_t status;
+    OK(pv2_presenter_query_frame(presenter, receipt, &status));
+    assert(!status.source_released && !status.terminal && !status.present_confirmed);
+    assert(pv2_presenter_wait_frame(presenter, receipt, PV2_COMPLETION_SOURCE_RELEASED, 0, &status) == ESP_ERR_TIMEOUT);
+    assert(pv2_presenter_release_receipt(presenter, receipt) == ESP_ERR_INVALID_STATE);
+    unblock(&gate);
+    wait_done(&gate, completed);
+    OK(pv2_presenter_service(presenter));
+    assert(panel.cookie);
+    OK(pv2_presenter_query_frame(presenter, receipt, &status));
+    assert(!status.source_released && !status.terminal);
+    scan_confirm(&panel);
+    OK(pv2_presenter_service(presenter));
+    OK(pv2_presenter_wait_frame(presenter, receipt, PV2_COMPLETION_SOURCE_RELEASED, 0, &status));
+    assert(status.source_released && status.terminal && status.present_confirmed);
+    OK(pv2_presenter_release_receipt(presenter, receipt));
+    OK(pv2_presenter_stop(presenter, UINT32_MAX));
+    OK(pv2_presenter_destroy(presenter));
+    pthread_cond_destroy(&gate.changed);
+    pthread_mutex_destroy(&gate.lock);
+}
+
 int main(void)
 {
+    for (unsigned mode = 0; mode < 3; ++mode) {
+        fb_source_completion(mode);
+    }
+    presenter_source_completion();
     te(false);
     te(true);
     fb(false);

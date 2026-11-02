@@ -101,11 +101,11 @@ int main(void)
     assert(pv2_frame_core_seal(&other, of, &receipt) == ESP_OK);
     pv2_frame_status_t st;
     assert(pv2_frame_core_query(&other, &lock, receipt, true, &st) == ESP_OK);
-    assert(st.sealed && st.source_released && !st.terminal && !st.present_confirmed);
+    assert(st.sealed && !st.source_released && !st.terminal && !st.present_confirmed);
     assert(pv2_frame_core_release_receipt(&other, &lock, receipt) == ESP_ERR_INVALID_STATE);
     pv2_frame_core_terminal(&other, of);
     assert(pv2_frame_core_query(&other, &lock, receipt, true, &st) == ESP_OK);
-    assert(st.terminal && st.present_confirmed);
+    assert(st.terminal && st.source_released && st.present_confirmed);
     assert(pv2_frame_core_release_receipt(&other, &lock, receipt) == ESP_OK);
     other.life = PV2_CORE_CLOSING;
     assert(pv2_frame_core_quiescent(&other) == ESP_OK);

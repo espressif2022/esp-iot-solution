@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "present_lcd_scanout.h"
+#include "lcd_scanout_internal.h"
 #include "present_os.h"
 #include "esp_cache.h"
 #include <limits.h>
@@ -29,16 +29,22 @@ struct pv2_lcd_scanout {
     uint64_t cookie;
     unsigned boundaries;
     size_t active_callbacks;
-    bool attached, armed, closing, source_stopped, stopped;
+    bool attached, armed, closing, source_stopped, stopped, callbacks_removed;
+    bool initial_started, initial_ready, single_vsync;
 };
 static bool PV2_ISR_ATTR frame_boundary(pv2_lcd_scanout_t *scanout)
 {
+    /* IDF unregister updates callback and user_ctx separately. An ISR that
+     * loaded the old function may already observe the cleared context. */
+    if (!scanout) {
+        return false;
+    }
     pv2_lock_enter(&scanout->lock, true);
     pv2_panel_event_fn callback = NULL;
     void *user = NULL;
     uint64_t cookie = 0;
     unsigned needed = scanout->config.single_boundary_retire ? 1u : 2u;
-    if (scanout->attached && scanout->armed && !scanout->closing && ++scanout->boundaries == needed) {
+    if (scanout->attached && scanout->armed && (!scanout->closing || scanout->config.retain_driver_scanout) && ++scanout->boundaries == needed) {
         cookie = scanout->cookie;
         scanout->cookie = 0;
         scanout->armed = false;
@@ -57,7 +63,35 @@ static bool PV2_ISR_ATTR frame_boundary(pv2_lcd_scanout_t *scanout)
     pv2_lock_exit(&scanout->lock, true);
     return need_yield;
 }
+static bool PV2_ISR_ATTR vsync(pv2_lcd_scanout_t *scanout)
+{
+    /* IDF unregister updates callback and user_ctx separately. An ISR that
+     * loaded the old function may already observe the cleared context. */
+    if (!scanout) {
+        return false;
+    }
+    pv2_lock_enter(&scanout->lock, true);
+    pv2_scanout_vsync_fn callback = scanout->attached && !scanout->closing ? scanout->config.on_vsync : NULL;
+    if (callback) {
+        ++scanout->active_callbacks;
+    }
+    pv2_lock_exit(&scanout->lock, true);
+    if (!callback) {
+        return false;
+    }
+    bool yield = callback(scanout->config.vsync_user, pv2_now_us(), true);
+    pv2_lock_enter(&scanout->lock, true);
+    --scanout->active_callbacks;
+    pv2_lock_exit(&scanout->lock, true);
+    return yield;
+}
 #if PV2_DSI_SUPPORTED
+static bool PV2_ISR_ATTR dsi_vsync(esp_lcd_panel_handle_t panel, esp_lcd_dpi_panel_event_data_t *data, void *user)
+{
+    (void)panel;
+    (void)data;
+    return vsync(user);
+}
 static bool PV2_ISR_ATTR dsi_done(esp_lcd_panel_handle_t panel, esp_lcd_dpi_panel_event_data_t *data, void *user)
 {
     (void)panel;
@@ -66,6 +100,19 @@ static bool PV2_ISR_ATTR dsi_done(esp_lcd_panel_handle_t panel, esp_lcd_dpi_pane
 }
 #endif
 #if PV2_RGB_SUPPORTED
+static bool PV2_ISR_ATTR rgb_vsync(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_event_data_t *data, void *user)
+{
+    (void)panel;
+    (void)data;
+    pv2_lcd_scanout_t *scanout = user;
+    bool yield = vsync(scanout);
+    /* A sole driver buffer never switches allocations. Explicit active-write
+     * mode confirms exposure at VSYNC, without claiming old-FB retirement. */
+    if (scanout && scanout->single_vsync) {
+        yield |= frame_boundary(scanout);
+    }
+    return yield;
+}
 static bool PV2_ISR_ATTR rgb_done(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_event_data_t *data, void *user)
 {
     (void)panel;
@@ -87,13 +134,13 @@ static esp_err_t attach(void *context, pv2_panel_event_fn callback, void *user)
     esp_err_t error = ESP_ERR_NOT_SUPPORTED;
 #if PV2_DSI_SUPPORTED
     if (scanout->config.kind == PV2_LCD_DSI) {
-        esp_lcd_dpi_panel_event_callbacks_t callbacks = {.on_frame_buf_complete = dsi_done};
+        esp_lcd_dpi_panel_event_callbacks_t callbacks = {.on_frame_buf_complete = dsi_done, .on_vsync = scanout->config.on_vsync ? dsi_vsync : NULL};
         error = esp_lcd_dpi_panel_register_event_callbacks(scanout->config.panel, &callbacks, scanout);
     }
 #endif
 #if PV2_RGB_SUPPORTED
     if (scanout->config.kind == PV2_LCD_RGB_BOUNCE) {
-        esp_lcd_rgb_panel_event_callbacks_t callbacks = {.on_frame_buf_complete = rgb_done};
+        esp_lcd_rgb_panel_event_callbacks_t callbacks = {.on_frame_buf_complete = scanout->single_vsync ? NULL : rgb_done, .on_vsync = (scanout->config.on_vsync || scanout->single_vsync) ? rgb_vsync : NULL};
         error = esp_lcd_rgb_panel_register_event_callbacks(scanout->config.panel, &callbacks, scanout);
     }
 #endif
@@ -111,7 +158,7 @@ static pv2_tx_result_t submit(void *context, const pv2_surface_t *surface, const
     if (!scanout || !surface || !area || !cookie || area->x || area->y || area->width != scanout->config.width ||
             area->height != scanout->config.height || surface->layout.width != area->width ||
             surface->layout.height != area->height || surface->layout.format != scanout->config.format ||
-            surface->layout.byte_order != PV2_ORDER_NATIVE)
+            surface->layout.byte_order != scanout->config.byte_order)
         return (pv2_tx_result_t) {
         PV2_TX_REJECTED, ESP_ERR_INVALID_ARG
     };
@@ -158,6 +205,52 @@ static pv2_tx_result_t submit(void *context, const pv2_surface_t *surface, const
     };
 }
 
+static esp_err_t detach_retained(pv2_lcd_scanout_t *scanout, uint32_t timeout)
+{
+    uint64_t start = pv2_now_ms();
+    for (;;) {
+        pv2_lock_enter(&scanout->lock, false);
+        bool busy = (scanout->cookie && scanout->armed) || scanout->active_callbacks;
+        pv2_lock_exit(&scanout->lock, false);
+        if (!busy) {
+            break;
+        }
+        if (pv2_expired(start, timeout)) {
+            return ESP_ERR_TIMEOUT;
+        }
+        pv2_pause();
+    }
+    if (!scanout->callbacks_removed) {
+        esp_err_t error = ESP_ERR_NOT_SUPPORTED;
+#if PV2_DSI_SUPPORTED
+        if (scanout->config.kind == PV2_LCD_DSI) {
+            esp_lcd_dpi_panel_event_callbacks_t empty = {0};
+            error = esp_lcd_dpi_panel_register_event_callbacks(scanout->config.panel, &empty, NULL);
+        }
+#endif
+#if PV2_RGB_SUPPORTED
+        if (scanout->config.kind == PV2_LCD_RGB_BOUNCE) {
+            esp_lcd_rgb_panel_event_callbacks_t empty = {0};
+            error = esp_lcd_rgb_panel_register_event_callbacks(scanout->config.panel, &empty, NULL);
+        }
+#endif
+        if (error != ESP_OK) {
+            return error;
+        }
+        scanout->callbacks_removed = true;
+    }
+    uint64_t elapsed = pv2_now_ms() - start;
+    uint32_t left = timeout == UINT32_MAX ? UINT32_MAX : elapsed >= timeout ? 0 : timeout - (uint32_t)elapsed;
+    esp_err_t error = pv2_isr_barrier(left);
+    if (error != ESP_OK) {
+        return error;
+    }
+    pv2_lock_enter(&scanout->lock, false);
+    bool busy = scanout->active_callbacks != 0;
+    pv2_lock_exit(&scanout->lock, false);
+    return busy ? ESP_ERR_TIMEOUT : ESP_OK;
+}
+
 static esp_err_t quiesce(void *context, uint32_t timeout)
 {
     pv2_lcd_scanout_t *scanout = context;
@@ -172,8 +265,9 @@ static esp_err_t quiesce(void *context, uint32_t timeout)
     scanout->closing = true;
     pv2_lock_exit(&scanout->lock, false);
     if (!scanout->source_stopped) {
-        esp_err_t error = scanout->config.delete_panel_on_stop ? esp_lcd_panel_del(scanout->config.panel)
-                          : scanout->config.stop_scanout(scanout->config.user, timeout);
+        esp_err_t error = scanout->config.retain_driver_scanout ? detach_retained(scanout, timeout) :
+                          scanout->config.delete_panel_on_stop ? esp_lcd_panel_del(scanout->config.panel) :
+                          scanout->config.stop_scanout(scanout->config.user, timeout);
         if (error != ESP_OK) {
             return error;
         }
@@ -204,15 +298,43 @@ esp_err_t pv2_lcd_scanout_create(const pv2_lcd_scanout_config_t *config, pv2_lcd
         return ESP_ERR_INVALID_ARG;
     }
     *out = NULL;
-    if (!config || !config->panel || (!config->stop_scanout && !config->delete_panel_on_stop) || !config->width ||
-            !config->height || config->width > INT_MAX || config->height > INT_MAX || config->buffer_count < 2 ||
+    if (!config || !config->panel || (!config->stop_scanout && !config->delete_panel_on_stop && !config->retain_driver_scanout) || !config->width ||
+            !config->height || config->width > INT_MAX || config->height > INT_MAX || config->buffer_count < 1 ||
             config->buffer_count > 3 || (config->format != PV2_FORMAT_RGB565 && config->format != PV2_FORMAT_RGB888) ||
             config->kind < PV2_LCD_DSI || config->kind > PV2_LCD_RGB_BOUNCE) {
         return ESP_ERR_INVALID_ARG;
     }
+    if (config->byte_order < PV2_ORDER_NATIVE || config->byte_order > PV2_ORDER_SWAPPED ||
+            (config->format == PV2_FORMAT_RGB888 && config->byte_order != PV2_ORDER_NATIVE)) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (config->retain_driver_scanout && (config->delete_panel_on_stop || config->stop_scanout)) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    bool single_vsync = false;
+#if PV2_RGB_SUPPORTED && defined(ESP_LCD_RGB_PANEL_HAS_FRAME_BUFFER_INFO)
+    if (config->kind == PV2_LCD_RGB_BOUNCE) {
+        esp_lcd_rgb_panel_frame_buffer_info_t info;
+        esp_err_t error = esp_lcd_rgb_panel_get_frame_buffer_info(config->panel, &info);
+        if (error != ESP_OK) {
+            return error;
+        }
+        size_t bpp = config->format == PV2_FORMAT_RGB565 ? 2 : 3;
+        if (!info.continuous_refresh || info.custom_bounce_callback || info.transformed ||
+                info.bits_per_pixel != bpp * 8 || info.frame_buffer_count < config->buffer_count ||
+                info.frame_buffer_bytes != (uint64_t)config->width * config->height * bpp) {
+            return ESP_ERR_NOT_SUPPORTED;
+        }
+        single_vsync = config->buffer_count == 1 && info.frame_buffer_count == 1 && !info.frame_buffer_retirement;
+        if (!info.frame_buffer_retirement && !single_vsync) {
+            return ESP_ERR_NOT_SUPPORTED;
+        }
+    }
+#else
     if (config->kind == PV2_LCD_RGB_BOUNCE && !config->rgb_bounce_buffer_mode) {
         return ESP_ERR_NOT_SUPPORTED;
     }
+#endif
     size_t bpp = config->format == PV2_FORMAT_RGB565 ? 2 : 3;
     if (config->width > SIZE_MAX / config->height / bpp) {
         return ESP_ERR_INVALID_SIZE;
@@ -226,6 +348,7 @@ esp_err_t pv2_lcd_scanout_create(const pv2_lcd_scanout_config_t *config, pv2_lcd
         return ESP_ERR_NO_MEM;
     }
     scanout->config = *config;
+    scanout->single_vsync = single_vsync;
     esp_err_t error = ESP_ERR_NOT_SUPPORTED;
 #if PV2_DSI_SUPPORTED
     if (config->kind == PV2_LCD_DSI)
@@ -253,6 +376,55 @@ esp_err_t pv2_lcd_scanout_create(const pv2_lcd_scanout_config_t *config, pv2_lcd
     }
     *out = scanout;
     return ESP_OK;
+}
+
+/* Compatibility factory calls this before its first producer lease. A new
+ * presenter may borrow a panel still scanning a previous presenter's last FB.
+ * Establish FB0 explicitly instead of guessing which buffer is initially safe.
+ * Timeout retains this adapter/presenter for retry; create never submits pixels. */
+esp_err_t pv2_lcd_scanout_initialize(pv2_lcd_scanout_t *scanout, uint32_t timeout)
+{
+    if (!scanout || !scanout->attached || scanout->closing) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    if (scanout->initial_ready) {
+        return ESP_OK;
+    }
+    uint64_t start = pv2_now_ms();
+    if (!scanout->initial_started) {
+        size_t bytes = (size_t)scanout->config.width * scanout->config.height * (scanout->config.format == PV2_FORMAT_RGB565 ? 2 : 3);
+        pv2_surface_t surface = {scanout->buffers[0], bytes,
+            {
+                scanout->config.width, scanout->config.height, bytes / scanout->config.height,
+                scanout->config.format, scanout->config.byte_order
+            }
+        };
+        pv2_rect_t area = {0, 0, scanout->config.width, scanout->config.height};
+        uint64_t cookie = pv2_new_token();
+        if (!cookie) {
+            return ESP_ERR_NO_MEM;
+        }
+        pv2_tx_result_t tx = submit(scanout, &surface, &area, cookie);
+        if (tx.acceptance != PV2_TX_REJECTED) {
+            scanout->initial_started = true;
+        }
+        if (tx.result != ESP_OK) {
+            return tx.result;
+        }
+    }
+    for (;;) {
+        pv2_lock_enter(&scanout->lock, false);
+        bool busy = scanout->cookie || scanout->active_callbacks;
+        pv2_lock_exit(&scanout->lock, false);
+        if (!busy) {
+            scanout->initial_ready = true;
+            return ESP_OK;
+        }
+        if (pv2_expired(start, timeout)) {
+            return ESP_ERR_TIMEOUT;
+        }
+        pv2_pause();
+    }
 }
 
 esp_err_t pv2_lcd_scanout_get_buffers(pv2_lcd_scanout_t *scanout, void **buffers, size_t capacity, size_t *count)
@@ -309,4 +481,20 @@ esp_err_t pv2_lcd_scanout_get_output_caps(pv2_lcd_scanout_t *scanout, pv2_output
         .max_inflight = 1
     };
     return ESP_OK;
+}
+
+esp_err_t pv2_lcd_scanout_set_layout(pv2_lcd_scanout_t *scanout, uint32_t width, uint32_t height)
+{
+    if (!scanout || !width || !height || width > INT_MAX || height > INT_MAX ||
+            (uint64_t)width * height != (uint64_t)scanout->config.width * scanout->config.height) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    pv2_lock_enter(&scanout->lock, false);
+    bool busy = scanout->closing || scanout->cookie;
+    if (!busy) {
+        scanout->config.width = width;
+        scanout->config.height = height;
+    }
+    pv2_lock_exit(&scanout->lock, false);
+    return busy ? ESP_ERR_INVALID_STATE : ESP_OK;
 }

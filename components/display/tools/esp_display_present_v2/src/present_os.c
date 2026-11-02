@@ -11,6 +11,9 @@
 #include "esp_heap_caps.h"
 #include "esp_timer.h"
 #include "freertos/task.h"
+#if CONFIG_ESP_IPC_ENABLE
+#include "esp_ipc.h"
+#endif
 #endif
 
 #ifdef PV2_HOST
@@ -169,5 +172,45 @@ bool pv2_same_task(pv2_task_t a, pv2_task_t b)
     return pthread_equal(a, b) != 0;
 #else
     return a == b;
+#endif
+}
+
+#if !defined(PV2_HOST) && CONFIG_ESP_IPC_ENABLE
+static void isr_barrier(void *unused)
+{
+    (void)unused;
+}
+#endif
+esp_err_t pv2_isr_barrier(uint32_t timeout)
+{
+#ifdef PV2_HOST
+    (void)timeout;
+    /* Host event producers have no preempted ISR; their callback joins remain
+     * the mock driver's responsibility. Active calls are counted by adapter. */
+    return ESP_OK;
+#else
+#if CONFIG_ESP_IPC_ENABLE
+    uint64_t start = pv2_now_ms();
+    for (unsigned core = 0; core < portNUM_PROCESSORS; ++core) {
+        if (pv2_expired(start, timeout)) {
+            return ESP_ERR_TIMEOUT;
+        }
+        /* Include this CPU too: callers may migrate between iterations. A task
+         * on that CPU cannot run until an ISR holding an old user_ctx exits. */
+        esp_err_t error = esp_ipc_call_blocking(core, isr_barrier, NULL);
+        if (error != ESP_OK) {
+            return error;
+        }
+    }
+    return pv2_expired(start, timeout) ? ESP_ERR_TIMEOUT : ESP_OK;
+#else
+#if CONFIG_FREERTOS_UNICORE
+    (void)timeout;
+    return ESP_OK;
+#else
+    (void)timeout;
+    return ESP_ERR_NOT_SUPPORTED;
+#endif
+#endif
 #endif
 }

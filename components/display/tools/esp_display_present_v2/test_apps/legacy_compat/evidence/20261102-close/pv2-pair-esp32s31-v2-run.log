@@ -1,0 +1,84 @@
+I (231) esp_image: segment 1: paddr=00074778 vaddr=2f000000 sizeESP-ROM:esp32s31-20251218
+Build:Dec 18 2025
+rst:0x17 (CHIP_USB_UART_RESET),boot:0x58 (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x2f80c5f8
+Core1 Saved PC:0x2f0098de
+SPI mode:DIO, clock div:1
+load:0x2f0740c0,len:0x1600
+load:0x2f06a2b0,len:0xbc4
+load:0x2f06cfb0,len:0x2ff0
+entry 0x2f06a2ba
+I (52) boot: ESP-IDF v6.2-dev-2221-g7b9cc1ac79f8-dir 2nd stage bootloader
+I (52) boot: compile time Nov  2 2026 20:03:57
+I (54) boot: chip revision: v0.0
+I (54) boot.esp32s31: SPI Speed      : 80MHz
+I (55) boot.esp32s31: SPI Mode       : DIO
+I (55) boot.esp32s31: SPI Flash Size : 16MB
+I (55) boot: Partition Table:
+I (55) boot: ## Label            Usage          Type ST Offset   Length
+I (56) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (57) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (57) boot:  2 factory          factory app      00 00 00010000 00300000
+I (59) esp_image: segment 0: paddr=00010020 vaddr=40090020 size=64750h (411472) map
+I (128) esp_image: segment 1: paddr=00074778 vaddr=2f000000 size=0b8a0h ( 47264) load
+I (139) esp_image: segment 2: paddr=00080020 vaddr=40000020 size=8e584h (583044) map
+I (235) esp_image: segment 3: paddr=0010e5ac vaddr=2f00b8a0 size=059f4h ( 23028) load
+I (241) esp_image: segment 4: paddr=00113fa8 vaddr=2f011300 size=039a8h ( 14760) load
+I (250) boot: Loaded app from partition at offset 0x10000
+I (253) oct_psram: vendor id    : 0x1a (UNKNOWN)
+I (253) oct_psram: Latency      : 0x01 (Fixed)
+I (254) oct_psram: DriveStr.    : 0x00 (25 Ohm)
+I (254) oct_psram: dev id       : 0x00 (generation 1)
+I (254) oct_psram: density      : 0x05 (128 Mbit)
+I (255) oct_psram: good-die     : 0x06 (Pass)
+I (255) oct_psram: SRF          : 0x02 (Slow Refresh)
+I (255) oct_psram: BurstType    : 0x00 ( Wrap)
+I (256) oct_psram: BurstLen     : 0x03 (2048 Byte)
+I (256) oct_psram: BitMode      : 0x00 (X8 Mode)
+I (256) oct_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (257) oct_psram: DriveStrength: 0x00 (1/1)
+I (257) MSPI Timing: Enter psram timing tuning
+I (409) esp_psram: Found 16MB PSRAM device
+I (409) esp_psram: Speed: 200MHz
+I (410) cpu_start: Multicore app
+I (723) esp_psram: SPI SRAM memory test OK
+I (732) cpu_start: Pro cpu start user code
+I (732) cpu_start: cpu freq: 320000000 Hz
+I (732) app_init: Application information:
+I (732) app_init: Project name:     pv2_compat_probe
+I (733) app_init: App version:      1
+I (733) app_init: Compile time:     Nov  2 2026 19:59:24
+I (733) app_init: ELF file SHA256:  8850a7eaa...
+I (733) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (734) efuse_init: Min chip rev:     v0.0
+I (734) efuse_init: Max chip rev:     v0.99 
+I (734) efuse_init: Chip rev:         v0.0
+I (734) heap_init: Initializing. RAM available for dynamic allocation:
+I (735) heap_init: At 2F0168D0 len 000646E0 (401 KiB): RAM
+I (735) heap_init: At 2F07AFB0 len 000041C0 (16 KiB): RAM
+I (735) heap_init: At 2E000000 len 00007FE8 (31 KiB): RTCRAM
+I (735) esp_psram: Adding pool of 16384K of PSRAM memory to heap allocator
+I (736) spi_flash: detected chip: gd
+I (736) spi_flash: flash io: dio
+I (737) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (737) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (738) main_task: Started on CPU0
+I (739) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (739) main_task: Calling app_main()
+I (739) compat_probe: START impl=v2
+I (740) qspi: BSP revision=0100 clk=44 rst=42 TE=43 CS=50 QSPI=40MHz
+I (740) main_task: Returned from app_main()
+I (840) co5300: version: 2.2.0
+I (841) co5300_spi: LCD panel create success, version: 2.2.0
+W (1601) co5300_spi: The 3Ah command has been used and will be overwritten by external initialization sequence
+I (2201) compat_probe: CASE impl=v2 mode=0 compose=0 rotation=0
+I (2235) compat_probe: CANCEL_RESUME_PASS impl=v2 mode=0
+I (2603) compat_probe: PASS impl=v2 mode=0 compose=0 rotation=0 frames=12 elapsed_us=399806 submitted=12 completed=12 heap=391807
+W (2603) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (2605) compat_probe: CASE impl=v2 mode=5 compose=1 rotation=0
+I (2606) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+I (2607) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (2634) compat_probe: CANCEL_RESUME_PASS impl=v2 mode=5
+I (2634) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16749/537/16212/23040 phase=[0,9921] blank_reuse=0 required=138%
+W (2697) present_te: TE schedule=overrun/end edge=fall Tf/Tb/Ta/Ttx=16743/539/16204/35411 required=212%; no safe full-frame window
+E (5697) compat_probe: FAIL impl=v2 operation=begin error=ESP_ERR_TIMEOUT; resources retained

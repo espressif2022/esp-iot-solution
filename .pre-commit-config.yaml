@@ -3,6 +3,8 @@
 ---
 minimum_pre_commit_version: 3.3.0
 default_install_hook_types: [pre-commit,commit-msg]
+# Archived byte-for-byte test evidence is not editable production source.
+exclude: ^components/display/tools/esp_display_present_v2/test_apps/legacy_compat/evidence/
 
 repos:
   - repo: https://github.com/espressif/check-copyright/

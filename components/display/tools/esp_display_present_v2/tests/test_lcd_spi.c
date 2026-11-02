@@ -18,11 +18,17 @@ struct fake_lcd {
     size_t draws, pending;
     int x0, y0, x1, y1;
     uint8_t bytes[64];
+    bool staged;
+    const void *pending_source;
+    size_t band_bytes, history_bytes;
+    uint8_t history[192];
 };
 
 static esp_err_t cache_result;
 static bool internal = true, dma_capable = true;
 static size_t cache_calls;
+static pthread_mutex_t stage_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t stage_changed = PTHREAD_COND_INITIALIZER;
 
 bool esp_ptr_internal(const void *p)
 {
@@ -63,6 +69,25 @@ esp_err_t esp_lcd_panel_io_register_event_callbacks(esp_lcd_panel_io_handle_t io
 esp_err_t esp_lcd_panel_draw_bitmap(esp_lcd_panel_handle_t p,
                                     int x0, int y0, int x1, int y1, const void *pixels)
 {
+    if (p->staged) {
+        pthread_mutex_lock(&stage_lock);
+        ++p->draws;
+        p->band_bytes = (size_t)(x1 - x0) * (y1 - y0) * 2;
+        p->pending_source = pixels;
+        assert(p->band_bytes <= 64);
+        if (p->early) {
+            memcpy(p->history + p->history_bytes, pixels, p->band_bytes);
+            p->history_bytes += p->band_bytes;
+        } else {
+            ++p->pending;
+        }
+        pthread_cond_broadcast(&stage_changed);
+        pthread_mutex_unlock(&stage_lock);
+        if (p->early) {
+            (void)p->done(p, NULL, p->user);
+        }
+        return p->draw_result;
+    }
     ++p->draws;
     assert(cache_calls >= p->draws);
     p->x0 = x0;
@@ -82,6 +107,16 @@ esp_err_t esp_lcd_panel_draw_bitmap(esp_lcd_panel_handle_t p,
 
 static void complete(struct fake_lcd *p)
 {
+    if (p->staged) {
+        pthread_mutex_lock(&stage_lock);
+        assert(p->pending && p->done);
+        memcpy(p->history + p->history_bytes, p->pending_source, p->band_bytes);
+        p->history_bytes += p->band_bytes;
+        --p->pending;
+        pthread_mutex_unlock(&stage_lock);
+        (void)p->done(p, NULL, p->user);
+        return;
+    }
     assert(p->pending && p->done);
     --p->pending;
     (void)p->done(p, NULL, p->user);
@@ -307,9 +342,92 @@ static void external_dma(void)
     assert(pv2_lcd_spi_destroy(adapter) == ESP_OK);
 }
 
+typedef struct {
+    pv2_panel_adapter_t api;
+    pv2_surface_t surface;
+    pv2_rect_t area;
+    pv2_tx_result_t result;
+    unsigned completions;
+    esp_err_t completion_result;
+} staged_test_t;
+static bool staged_event(void *context, const pv2_backend_event_t *event, bool isr)
+{
+    (void)isr;
+    staged_test_t *test = context;
+    assert(event->transaction_cookie == 91 && event->kind == PV2_EVENT_TRANSFER_DONE);
+    ++test->completions;
+    test->completion_result = event->result;
+    return false;
+}
+static void *staged_submit(void *context)
+{
+    staged_test_t *test = context;
+    test->result = test->api.submit(test->api.context, &test->surface, &test->area, 91);
+    return NULL;
+}
+static void staged_transfer(void)
+{
+    for (unsigned path = 0; path < 3; ++path) {
+        struct fake_lcd lcd = {.staged = true, .early = path == 0};
+        pv2_lcd_spi_config_t config = {.panel = &lcd, .io = &lcd,
+                                       .format = PV2_FORMAT_RGB565, .max_inflight = 2, .staging_bytes = 64,
+                                       .staging_timeout_ms = path == 2 ? 1 : 1000
+                                      };
+        pv2_lcd_spi_t *adapter;
+        assert(pv2_lcd_spi_create(&config, &adapter) == ESP_OK);
+        staged_test_t test = {0};
+        assert(pv2_lcd_spi_get_interface(adapter, &test.api) == ESP_OK);
+        assert(test.api.attach(test.api.context, staged_event, &test) == ESP_OK);
+        _Alignas(64) uint8_t source[192];
+        for (unsigned i = 0; i < 192; ++i) {
+            source[i] = i;
+        }
+        test.surface = (pv2_surface_t) {
+            source, sizeof(source), {8, 12, 16, PV2_FORMAT_RGB565, PV2_ORDER_NATIVE}
+        };
+        test.area = (pv2_rect_t) {
+            0, 0, 8, 12
+        };
+        internal = dma_capable = false; /* CPU-readable source, never direct DMA. */
+        pthread_t worker;
+        assert(!pthread_create(&worker, NULL, staged_submit, &test));
+        if (path == 1) {
+            for (unsigned band = 1; band <= 3; ++band) {
+                pthread_mutex_lock(&stage_lock);
+                while (lcd.draws < band) {
+                    pthread_cond_wait(&stage_changed, &stage_lock);
+                }
+                assert(lcd.pending_source != source && lcd.pending == 1);
+                assert(!memcmp(lcd.pending_source, source + (band - 1) * 64, 64));
+                pthread_mutex_unlock(&stage_lock);
+                complete(&lcd); /* Delayed DMA read only here, before reuse. */
+            }
+        }
+        assert(!pthread_join(worker, NULL));
+        if (path == 2) {
+            assert(test.result.acceptance == PV2_TX_UNCERTAIN && test.result.result == ESP_ERR_TIMEOUT);
+            assert(test.completions == 0 && lcd.pending == 1);
+            assert(test.api.quiesce(test.api.context, 0) == ESP_ERR_TIMEOUT);
+            assert(pv2_lcd_spi_destroy(adapter) == ESP_ERR_INVALID_STATE);
+            assert(!memcmp(lcd.pending_source, source, 64));
+            complete(&lcd);
+            assert(test.completions == 1 && test.completion_result == ESP_ERR_TIMEOUT);
+            assert(lcd.history_bytes == 64);
+        } else {
+            assert(test.result.acceptance == PV2_TX_ACCEPTED && test.result.result == ESP_OK);
+            assert(test.completions == 1 && test.completion_result == ESP_OK);
+            assert(lcd.draws == 3 && lcd.history_bytes == sizeof(source));
+            assert(!memcmp(lcd.history, source, sizeof(source)));
+        }
+        assert(test.api.quiesce(test.api.context, 100) == ESP_OK);
+        assert(pv2_lcd_spi_destroy(adapter) == ESP_OK);
+        internal = dma_capable = true;
+    }
+}
 int main(void)
 {
     external_dma();
+    staged_transfer();
     fifo_and_validation();
     early_and_uncertain();
     callback_exit_barrier();

@@ -1,0 +1,109 @@
+ESP-ROM:esp32p4-eco7-20260109
+Build:Jan  9 2026
+rst:0x17 (CHIP_USB_UART_RESET),boot:0xc (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x4fc04830
+Core1 Saved PC:0x4fc06020
+SPI mode:DIO, clock div:1
+load:0x4ffb60d0,len:0x1408
+load:0x4ffab2c0,len:0xcd4
+load:0x4ffadfc0,len:0x361c
+entry 0x4ffab2ca
+I (10) boot: ESP-IDF v6.2-dev-2221-g7b9cc1ac79f8-dir 2nd stage bootloader
+I (11) boot: compile time Nov  2 2026 20:35:57
+I (12) boot: chip revision: v3.2
+I (13) boot.esp32p4: SPI Speed      : 80MHz
+I (13) boot.esp32p4: SPI Mode       : DIO
+I (13) boot.esp32p4: SPI Flash Size : 8MB
+I (14) boot: Partition Table:
+I (14) boot: ## Label            Usage          Type ST Offset   Length
+I (15) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (16) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (17) boot:  2 factory          factory app      00 00 00010000 00300000
+I (18) esp_image: segment 0: paddr=00010020 vaddr=480b0020 size=5691ch (354588) map
+I (61) esp_image: segment 1: paddr=00066944 vaddr=30100000 size=00224h (   548) load
+I (62) esp_image: segment 2: paddr=00066b70 vaddr=30100230 size=00058h (    88) load
+I (64) esp_image: segment 3: paddr=00066bd0 vaddr=4ff40000 size=09448h ( 37960) load
+I (70) esp_image: segment 4: paddr=00070020 vaddr=48000020 size=ae7e0h (714720) map
+I (153) esp_image: segment 5: paddr=0011e808 vaddr=4ff49448 size=0d3fch ( 54268) load
+I (162) esp_image: segment 6: paddr=0012bc0c vaddr=4ff56880 size=0534ch ( 21324) load
+I (170) boot: Loaded app from partition at offset 0x10000
+I (174) hex_psram: vendor id    : 0x0d (AP)
+I (174) hex_psram: Latency      : 0x01 (Fixed)
+I (175) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (175) hex_psram: dev id       : 0x03 (generation 4)
+I (176) hex_psram: density      : 0x07 (256 Mbit)
+I (176) hex_psram: good-die     : 0x06 (Pass)
+I (177) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (177) hex_psram: BurstType    : 0x00 ( Wrap)
+I (178) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (178) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (179) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (179) hex_psram: DriveStrength: 0x00 (1/1)
+I (180) MSPI Timing: Enter psram timing tuning
+I esp_psram: Found 32MB PSRAM device
+I esp_psram: Speed: 200MHz
+I (367) mmu_psram: .rodata xip on psram
+I (418) mmu_psram: .text xip on psram
+I (421) cpu_start: Multicore app
+I (919) esp_psram: SPI SRAM memory test OK
+I (927) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
+I (928) cpu_start: Pro cpu start user code
+I (928) cpu_start: cpu freq: 400000000 Hz
+I (928) app_init: Application information:
+I (928) app_init: Project name:     gsp_showcase
+I (928) app_init: App version:      1
+I (929) app_init: Compile time:     Nov  2 2026 20:35:51
+I (929) app_init: ELF file SHA256:  14a4b6098...
+I (929) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (930) efuse_init: Min chip rev:     v3.1
+I (930) efuse_init: Max chip rev:     v3.99 
+I (930) efuse_init: Chip rev:         v3.2
+I (930) heap_init: Initializing. RAM available for dynamic allocation:
+I (931) heap_init: At 4FF5E670 len 0005C950 (370 KiB): RETENT_RAM
+I (931) heap_init: At 4FFBAFC0 len 00004BF0 (18 KiB): RAM
+I (932) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (932) heap_init: At 30100288 len 00001D78 (7 KiB): SPM
+I (932) esp_psram: Adding pool of 31680K of PSRAM memory to heap allocator
+I (933) esp_psram: Adding pool of 6K of PSRAM memory gap generated due to end address alignment of irom to the heap allocator
+I (933) esp_psram: Adding pool of 37K of PSRAM memory gap generated due to end address alignment of drom to the heap allocator
+I (934) spi_flash: detected chip: gd
+I (934) spi_flash: flash io: dio
+W (935) spi_flash: Detected size(16384k) larger than the size in the binary image header(8192k). Using the size in the binary image header.
+I (935) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (936) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (937) sleep_clock: System sleep clock ICG setting initialization
+I (938) main_task: Started on CPU0
+I (938) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (939) main_task: Calling app_main()
+I (940) hw_lcd_init: Install panel IO
+I (940) hw_lcd_init: Install LCD driver of ek79007
+I (940) ek79007: version: 2.0.2
+I (1110) hw_touch_init: Initializing touch controller (GT911)
+I (1110) GT911: I2C address initialization procedure skipped - using default GT9xx setup
+I (1111) GT911: TouchPad_ID:0x39,0x31,0x31
+I (1111) GT911: TouchPad_Config_Version:89
+I (1122) gsp_instance: Initialized instance pool: slots=8 states_per_slot=1
+I (1123) gsp_dma2d: DMA2D M2M copy engine ready
+I (1123) gsp_accel_ppa: PPA blend ready (+/-1 LSB from scalar reference)
+I (1123) gsp_accel_ppa: PPA backend ready: fill>=32768 px, async blit on (>=8192 px)
+I (1124) esp_gsp_esp_lcd: Acceleration: esp-idf-ppa
+I (1125) gsp_lcd_display: Partition canvas: region_capacity=32768 bytes
+I (1125) gsp_lcd_display: Display bound: 1024x600 contract=partition owner=gsp region-cost=3/24/512
+I (1125) gsp_decode_task: Started decode task: stack=4096 memory=internal priority=3 poll=100 ms
+I (1126) gsp_esp_runtime: Background decode started
+I (1126) gsp_esp: Vector assets raise render stack: 12288 -> 32768 bytes
+I (1127) gsp_esp: Started render task: stack=32768 memory=internal priority=4
+I (1179) esp_gsp_esp_lcd: UI live: 4 scene(s), 1024x600
+I (1199) gsp_showcase: ESP-GSP showcase started: 1024x600 RGB565, four scenes
+I (1199) main_task: Returned from app_main()
+I (32632) esp_gsp: scene swipe begin: current=0 target=3 direction=previous press=(728,380)
+I (32721) esp_gsp: scene swipe release: current=0 target=3 distance=35 velocity=257px/s settle_velocity=1166px/s timed=1 flick=35 samples=2 delta=(35,5) duration=129ms settle=128ms commit=1
+I (32908) gsp_app: scene switch: current=0 target=3
+I (33892) esp_gsp: scene swipe begin: current=3 target=0 direction=next press=(428,470)
+I (34633) esp_gsp: scene swipe release: current=3 target=0 distance=0 velocity=-2030px/s settle_velocity=-2030px/s timed=1 flick=-206 samples=25 delta=(53,57) duration=781ms settle=0ms commit=0
+I (35061) esp_gsp: scene swipe begin: current=3 target=0 direction=next press=(522,475)
+I (35150) esp_gsp: scene swipe release: current=3 target=0 distance=54 velocity=422px/s settle_velocity=1536px/s timed=1 flick=54 samples=2 delta=(-54,-3) duration=128ms settle=105ms commit=1
+I (35310) gsp_app: scene switch: current=3 target=0
+I (35501) esp_gsp: scene swipe begin: current=0 target=3 direction=previous press=(334,475)
+I (35591) esp_gsp: scene swipe release: current=0 target=3 distance=51 velocity=436px/s settle_velocity=1536px/s timed=1 flick=51 samples=2 delta=(51,-2) duration=118ms settle=105ms commit=1
+I (35740) gsp_app: scene switch: current=0 target=3

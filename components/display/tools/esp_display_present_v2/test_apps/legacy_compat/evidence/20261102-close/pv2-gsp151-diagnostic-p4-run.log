@@ -1,0 +1,1517 @@
+ESP-ROM:esp32p4-eco7-20260109
+Build:Jan  9 2026
+rst:0x17 (CHIP_USB_UART_RESET),boot:0xc (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x4fc04868
+Core1 Saved PC:0x4fc06020
+SPI mode:DIO, clock div:1
+load:0x4ffb60d0,len:0x1408
+load:0x4ffab2c0,len:0xcd4
+load:0x4ffadfc0,len:0x361c
+entry 0x4ffab2ca
+I (10) boot: ESP-IDF v6.2-dev-2221-g7b9cc1ac79f8-dir 2nd stage bootloader
+I (11) boot: compile time Nov  2 2026 20:35:57
+I (12) boot: chip revision: v3.2
+I (13) boot.esp32p4: SPI Speed      : 80MHz
+I (13) boot.esp32p4: SPI Mode       : DIO
+I (13) boot.esp32p4: SPI Flash Size : 8MB
+I (14) boot: Partition Table:
+I (14) boot: ## Label            Usage          Type ST Offset   Length
+I (15) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (16) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (17) boot:  2 factory          factory app      00 00 00010000 00300000
+I (18) esp_image: segment 0: paddr=00010020 vaddr=480b0020 size=55804h (350212) map
+I (60) esp_image: segment 1: paddr=0006582c vaddr=30100000 size=00224h (   548) load
+I (62) esp_image: segment 2: paddr=00065a58 vaddr=30100230 size=00058h (    88) load
+I (63) esp_image: segment 3: paddr=00065ab8 vaddr=4ff40000 size=0a560h ( 42336) load
+I (70) esp_image: segment 4: paddr=00070020 vaddr=48000020 size=ae160h (713056) map
+I (153) esp_image: segment 5: paddr=0011e188 vaddr=4ff4a560 size=09c44h ( 40004) load
+I (160) esp_image: segment 6: paddr=00127dd4 vaddr=4ff54200 size=05120h ( 20768) load
+I (168) boot: Loaded app from partition at offset 0x10000
+I (172) hex_psram: vendor id    : 0x0d (AP)
+I (172) hex_psram: Latency      : 0x01 (Fixed)
+I (173) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (173) hex_psram: dev id       : 0x03 (generation 4)
+I (174) hex_psram: density      : 0x07 (256 Mbit)
+I (174) hex_psram: good-die     : 0x06 (Pass)
+I (175) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (175) hex_psram: BurstType    : 0x00 ( Wrap)
+I (176) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (176) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (177) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (177) hex_psram: DriveStrength: 0x00 (1/1)
+I (178) MSPI Timing: Enter psram timing tuning
+I esp_psram: Found 32MB PSRAM device
+I esp_psram: Speed: 200MHz
+I (365) mmu_psram: .rodata xip on psram
+I (416) mmu_psram: .text xip on psram
+I (419) cpu_start: Multicore app
+I (916) esp_psram: SPI SRAM memory test OK
+I (925) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
+I (926) cpu_start: Pro cpu start user code
+I (926) cpu_start: cpu freq: 400000000 Hz
+I (926) app_init: Application information:
+I (926) app_init: Project name:     gsp_showcase
+I (927) app_init: App version:      1
+I (927) app_init: Compile time:     Nov  2 2026 20:35:51
+I (927) app_init: ELF file SHA256:  5631e2419...
+I (927) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (928) efuse_init: Min chip rev:     v3.1
+I (928) efuse_init: Max chip rev:     v3.99 
+I (928) efuse_init: Chip rev:         v3.2
+I (928) heap_init: Initializing. RAM available for dynamic allocation:
+I (929) heap_init: At 4FF5BDB0 len 0005F210 (380 KiB): RETENT_RAM
+I (929) heap_init: At 4FFBAFC0 len 00004BF0 (18 KiB): RAM
+I (930) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (930) heap_init: At 30100288 len 00001D78 (7 KiB): SPM
+I (930) esp_psram: Adding pool of 31680K of PSRAM memory to heap allocator
+I (931) esp_psram: Adding pool of 7K of PSRAM memory gap generated due to end address alignment of irom to the heap allocator
+I (931) esp_psram: Adding pool of 41K of PSRAM memory gap generated due to end address alignment of drom to the heap allocator
+I (932) spi_flash: detected chip: gd
+I (932) spi_flash: flash io: dio
+W (933) spi_flash: Detected size(16384k) larger than the size in the binary image header(8192k). Using the size in the binary image header.
+I (933) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (934) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (935) sleep_clock: System sleep clock ICG setting initialization
+I (936) main_task: Started on CPU0
+I (936) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (937) main_task: Calling app_main()
+I (938) hw_lcd_init: Install panel IO
+I (938) hw_lcd_init: Install LCD driver of ek79007
+I (938) ek79007: version: 2.0.2
+I (1108) hw_touch_init: Initializing touch controller (GT911)
+I (1108) GT911: I2C address initialization procedure skipped - using default GT9xx setup
+I (1109) GT911: TouchPad_ID:0x39,0x31,0x31
+I (1109) GT911: TouchPad_Config_Version:89
+I (1120) gsp_instance: Initialized instance pool: slots=8 states_per_slot=1
+I (1121) gsp_dma2d: DMA2D M2M copy engine ready
+I (1121) gsp_accel_ppa: PPA blend ready (+/-1 LSB from scalar reference)
+I (1121) gsp_accel_ppa: PPA backend ready: fill>=32768 px, async blit on (>=8192 px)
+I (1122) esp_gsp_esp_lcd: Acceleration: esp-idf-ppa
+E (1122) present_v2: create failed=ESP_ERR_INVALID_ARG size=1024x600 format=0 input=0 damage=128 mode=7 rows=0 tiles=0 fb=0
+ESP_ERROR_CHECK failed: esp_err_t 0x102 (ESP_ERR_INVALID_ARG) at 0x48009982
+file: "./main/app_main.c" line 101
+func: app_main
+expression: esp_gsp_esp_lcd_start(&app_config, &lcd_config, &ui)
+
+abort() was called at PC 0x4ff4d6f3 on core 0
+Core  0 register dump:
+MEPC    : 0x4ff4dc44  RA      : 0x4ff4d6fc  SP      : 0x4ff637f0  GP      : 0x4ff54a00  
+TP      : 0x4ff63a20  T0      : 0x37363534  T1      : 0x7271706f  T2      : 0x33323130  
+S0/FP   : 0x00000004  S1      : 0x4ff63854  A0      : 0x4ff6381c  A1      : 0x4ff63852  
+A2      : 0x00000000  A3      : 0x4ff63849  A4      : 0x00000001  A5      : 0x4ff5c000  
+A6      : 0x00000000  A7      : 0x76757473  S2      : 0x00000000  S3      : 0x00000000  
+S4      : 0x00000000  S5      : 0x00000000  S6      : 0x00000000  S7      : 0x00000000  
+S8      : 0x00000000  S9      : 0x00000000  S10     : 0x00000000  S11     : 0x00000000  
+T3      : 0x6e6d6c6b  T4      : 0x6a696867  T5      : 0x66656463  T6      : 0x62613938  
+MSTATUS : 0x00011881  MTVEC   : 0x4ff40003  MCAUSE  : 0x00000002  MTVAL   : 0x00000000  
+MHARTID : 0x00000000  
+
+Stack memory:
+4ff637f0: 0x480b4a44 0x48009986 0x4ff63850 0x4ff4b21c 0x4ffbb3a0 0x4ffbb354 0x00000001 0x4ff58690
+4ff63810: 0x4ff63854 0x4ff586ac 0x4ff63850 0x726f6261 0x20292874 0x20736177 0x6c6c6163 0x61206465
+4ff63830: 0x43502074 0x34783020 0x64346666 0x20336636 0x63206e6f 0x2065726f 0x00000030 0x00000000
+4ff63850: 0xffff0030 0x34666634 0x33663664 0x00000000 0x00000000 0x4ff63978 0xffffffff 0x4ff4d6f6
+4ff63870: 0x00000000 0x4ff63978 0xffffffff 0x48009986 0x00000026 0x00000000 0x00000070 0x4ffbb3a0
+4ff63890: 0x4ffbb354 0x00000001 0x00000000 0x00000000 0x00000000 0xffffffff 0x00000000 0x00000000
+4ff638b0: 0x00000007 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff638d0: 0x481060b8 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff638f0: 0x00000000 0x00000000 0x00000078 0x00000002 0x00000003 0x00000000 0x00000000 0x00000000
+4ff63910: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63930: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x480c7b00
+4ff63950: 0x00038350 0x00000000 0x480c7328 0x00000004 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63970: 0x481060b8 0x03000000 0x4ffbb3a0 0x4ffbb354 0x00000001 0x00000000 0x00000000 0x00000000
+4ff63990: 0xffffffff 0x00000000 0x00000000 0x00000007 0x00000000 0x00000000 0x00000000 0x00000000
+4ff639b0: 0x00000000 0x00000000 0x4ffbb354 0x4ffbb3a0 0x480b3150 0x00000000 0x480b3000 0x4800805e
+4ff639d0: 0x00000000 0x00001388 0x00000003 0x00000000 0x00000000 0x00000000 0x00000000 0x480aadfc
+4ff639f0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63a10: 0x00000000 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000000 0x4ff54598 0x4ff54548 0x4ff544f8
+4ff63a30: 0x00000001 0x4ff5e860 0x4ff5e860 0x00000000 0x00000000 0x00000000 0xa5a5a5a5 0xa5a5a5a5
+4ff63a50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000064 0x4ff636b0 0x000000ac 0x4ff59598
+4ff63a70: 0x4ff59598 0x4ff63a64 0x4ff59590 0x00000018 0x48106048 0x48106048 0x4ff63a64 0x00000000
+4ff63a90: 0x00000001 0x4ff5e860 0x6e69616d 0x00000000 0x00000000 0x00000000 0x00000000 0x4ff63a50
+4ff63ab0: 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000600 0xa5a5a5a5
+4ff63ad0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63af0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b10: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b30: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b70: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b90: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63bb0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63bd0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+
+
+
+ELF file SHA256: 5631e2419
+
+Rebooting...
+ESP-ROM:esp32p4-eco7-20260109
+Build:Jan  9 2026
+rst:0xc (SW_CPU_RESET),boot:0xc (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x4ff46dba
+Core1 Saved PC:0x4ff46efc
+SPI mode:DIO, clock div:1
+load:0x4ffb60d0,len:0x1408
+load:0x4ffab2c0,len:0xcd4
+load:0x4ffadfc0,len:0x361c
+entry 0x4ffab2ca
+I (19) boot: ESP-IDF v6.2-dev-2221-g7b9cc1ac79f8-dir 2nd stage bootloader
+I (20) boot: compile time Nov  2 2026 20:35:57
+I (21) boot: chip revision: v3.2
+I (21) boot.esp32p4: SPI Speed      : 80MHz
+I (21) boot.esp32p4: SPI Mode       : DIO
+I (22) boot.esp32p4: SPI Flash Size : 8MB
+I (22) boot: Partition Table:
+I (23) boot: ## Label            Usage          Type ST Offset   Length
+I (23) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (24) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (25) boot:  2 factory          factory app      00 00 00010000 00300000
+I (26) esp_image: segment 0: paddr=00010020 vaddr=480b0020 size=55804h (350212) map
+I (68) esp_image: segment 1: paddr=0006582c vaddr=30100000 size=00224h (   548) load
+I (69) esp_image: segment 2: paddr=00065a58 vaddr=30100230 size=00058h (    88) load
+I (71) esp_image: segment 3: paddr=00065ab8 vaddr=4ff40000 size=0a560h ( 42336) load
+I (78) esp_image: segment 4: paddr=00070020 vaddr=48000020 size=ae160h (713056) map
+I (161) esp_image: segment 5: paddr=0011e188 vaddr=4ff4a560 size=09c44h ( 40004) load
+I (167) esp_image: segment 6: paddr=00127dd4 vaddr=4ff54200 size=05120h ( 20768) load
+I (175) boot: Loaded app from partition at offset 0x10000
+I (179) hex_psram: vendor id    : 0x0d (AP)
+I (179) hex_psram: Latency      : 0x01 (Fixed)
+I (180) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (180) hex_psram: dev id       : 0x03 (generation 4)
+I (180) hex_psram: density      : 0x07 (256 Mbit)
+I (181) hex_psram: good-die     : 0x06 (Pass)
+I (181) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (182) hex_psram: BurstType    : 0x00 ( Wrap)
+I (182) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (183) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (183) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (184) hex_psram: DriveStrength: 0x00 (1/1)
+I (184) MSPI Timing: Enter psram timing tuning
+I esp_psram: Found 32MB PSRAM device
+I esp_psram: Speed: 200MHz
+I (371) mmu_psram: .rodata xip on psram
+I (422) mmu_psram: .text xip on psram
+I (424) cpu_start: Multicore app
+I (922) esp_psram: SPI SRAM memory test OK
+I (931) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
+I (931) cpu_start: Pro cpu start user code
+I (931) cpu_start: cpu freq: 400000000 Hz
+I (931) app_init: Application information:
+I (932) app_init: Project name:     gsp_showcase
+I (932) app_init: App version:      1
+I (932) app_init: Compile time:     Nov  2 2026 20:35:51
+I (932) app_init: ELF file SHA256:  5631e2419...
+I (933) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (933) efuse_init: Min chip rev:     v3.1
+I (933) efuse_init: Max chip rev:     v3.99 
+I (934) efuse_init: Chip rev:         v3.2
+I (934) heap_init: Initializing. RAM available for dynamic allocation:
+I (934) heap_init: At 4FF5BDB0 len 0005F210 (380 KiB): RETENT_RAM
+I (935) heap_init: At 4FFBAFC0 len 00004BF0 (18 KiB): RAM
+I (935) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (936) heap_init: At 30100288 len 00001D78 (7 KiB): SPM
+I (936) esp_psram: Adding pool of 31680K of PSRAM memory to heap allocator
+I (936) esp_psram: Adding pool of 7K of PSRAM memory gap generated due to end address alignment of irom to the heap allocator
+I (937) esp_psram: Adding pool of 41K of PSRAM memory gap generated due to end address alignment of drom to the heap allocator
+I (938) spi_flash: detected chip: gd
+I (938) spi_flash: flash io: dio
+W (938) spi_flash: Detected size(16384k) larger than the size in the binary image header(8192k). Using the size in the binary image header.
+I (939) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (940) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (941) sleep_clock: System sleep clock ICG setting initialization
+I (942) main_task: Started on CPU0
+I (942) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (943) main_task: Calling app_main()
+I (944) hw_lcd_init: Install panel IO
+I (944) hw_lcd_init: Install LCD driver of ek79007
+I (944) ek79007: version: 2.0.2
+I (1114) hw_touch_init: Initializing touch controller (GT911)
+I (1114) GT911: I2C address initialization procedure skipped - using default GT9xx setup
+I (1115) GT911: TouchPad_ID:0x39,0x31,0x31
+I (1115) GT911: TouchPad_Config_Version:89
+I (1126) gsp_instance: Initialized instance pool: slots=8 states_per_slot=1
+I (1127) gsp_dma2d: DMA2D M2M copy engine ready
+I (1127) gsp_accel_ppa: PPA blend ready (+/-1 LSB from scalar reference)
+I (1127) gsp_accel_ppa: PPA backend ready: fill>=32768 px, async blit on (>=8192 px)
+I (1128) esp_gsp_esp_lcd: Acceleration: esp-idf-ppa
+E (1128) present_v2: create failed=ESP_ERR_INVALID_ARG size=1024x600 format=0 input=0 damage=128 mode=7 rows=0 tiles=0 fb=0
+ESP_ERROR_CHECK failed: esp_err_t 0x102 (ESP_ERR_INVALID_ARG) at 0x48009982
+file: "./main/app_main.c" line 101
+func: app_main
+expression: esp_gsp_esp_lcd_start(&app_config, &lcd_config, &ui)
+
+abort() was called at PC 0x4ff4d6f3 on core 0
+Core  0 register dump:
+MEPC    : 0x4ff4dc44  RA      : 0x4ff4d6fc  SP      : 0x4ff637f0  GP      : 0x4ff54a00  
+TP      : 0x4ff63a20  T0      : 0x37363534  T1      : 0x7271706f  T2      : 0x33323130  
+S0/FP   : 0x00000004  S1      : 0x4ff63854  A0      : 0x4ff6381c  A1      : 0x4ff63852  
+A2      : 0x00000000  A3      : 0x4ff63849  A4      : 0x00000001  A5      : 0x4ff5c000  
+A6      : 0x00000000  A7      : 0x76757473  S2      : 0x00000000  S3      : 0x00000000  
+S4      : 0x00000000  S5      : 0x00000000  S6      : 0x00000000  S7      : 0x00000000  
+S8      : 0x00000000  S9      : 0x00000000  S10     : 0x00000000  S11     : 0x00000000  
+T3      : 0x6e6d6c6b  T4      : 0x6a696867  T5      : 0x66656463  T6      : 0x62613938  
+MSTATUS : 0x00011881  MTVEC   : 0x4ff40003  MCAUSE  : 0x00000002  MTVAL   : 0x00000000  
+MHARTID : 0x00000000  
+
+Stack memory:
+4ff637f0: 0x480b4a44 0x48009986 0x4ff63850 0x4ff4b21c 0x4ffbb3a0 0x4ffbb354 0x00000001 0x4ff58690
+4ff63810: 0x4ff63854 0x4ff586ac 0x4ff63850 0x726f6261 0x20292874 0x20736177 0x6c6c6163 0x61206465
+4ff63830: 0x43502074 0x34783020 0x64346666 0x20336636 0x63206e6f 0x2065726f 0x00000030 0x00000000
+4ff63850: 0xffff0030 0x34666634 0x33663664 0x00000000 0x00000000 0x4ff63978 0xffffffff 0x4ff4d6f6
+4ff63870: 0x00000000 0x4ff63978 0xffffffff 0x48009986 0x00000026 0x00000000 0x00000070 0x4ffbb3a0
+4ff63890: 0x4ffbb354 0x00000001 0x00000000 0x00000000 0x00000000 0xffffffff 0x00000000 0x00000000
+4ff638b0: 0x00000007 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff638d0: 0x481060b8 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff638f0: 0x00000000 0x00000000 0x00000078 0x00000002 0x00000003 0x00000000 0x00000000 0x00000000
+4ff63910: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63930: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x480c7b00
+4ff63950: 0x00038350 0x00000000 0x480c7328 0x00000004 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63970: 0x481060b8 0x03000000 0x4ffbb3a0 0x4ffbb354 0x00000001 0x00000000 0x00000000 0x00000000
+4ff63990: 0xffffffff 0x00000000 0x00000000 0x00000007 0x00000000 0x00000000 0x00000000 0x00000000
+4ff639b0: 0x00000000 0x00000000 0x4ffbb354 0x4ffbb3a0 0x480b3150 0x00000000 0x480b3000 0x4800805e
+4ff639d0: 0x00000000 0x00001388 0x00000003 0x00000000 0x00000000 0x00000000 0x00000000 0x480aadfc
+4ff639f0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63a10: 0x00000000 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000000 0x4ff54598 0x4ff54548 0x4ff544f8
+4ff63a30: 0x00000001 0x4ff5e860 0x4ff5e860 0x00000000 0x00000000 0x00000000 0xa5a5a5a5 0xa5a5a5a5
+4ff63a50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000064 0x4ff636b0 0x000000ac 0x4ff59598
+4ff63a70: 0x4ff59598 0x4ff63a64 0x4ff59590 0x00000018 0x48106048 0x48106048 0x4ff63a64 0x00000000
+4ff63a90: 0x00000001 0x4ff5e860 0x6e69616d 0x00000000 0x00000000 0x00000000 0x00000000 0x4ff63a50
+4ff63ab0: 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000600 0xa5a5a5a5
+4ff63ad0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63af0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b10: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b30: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b70: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b90: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63bb0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63bd0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+
+
+
+ELF file SHA256: 5631e2419
+
+Rebooting...
+ESP-ROM:esp32p4-eco7-20260109
+Build:Jan  9 2026
+rst:0xc (SW_CPU_RESET),boot:0xc (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x4ff46dba
+Core1 Saved PC:0x4ff46efc
+SPI mode:DIO, clock div:1
+load:0x4ffb60d0,len:0x1408
+load:0x4ffab2c0,len:0xcd4
+load:0x4ffadfc0,len:0x361c
+entry 0x4ffab2ca
+I (19) boot: ESP-IDF v6.2-dev-2221-g7b9cc1ac79f8-dir 2nd stage bootloader
+I (20) boot: compile time Nov  2 2026 20:35:57
+I (21) boot: chip revision: v3.2
+I (21) boot.esp32p4: SPI Speed      : 80MHz
+I (21) boot.esp32p4: SPI Mode       : DIO
+I (22) boot.esp32p4: SPI Flash Size : 8MB
+I (22) boot: Partition Table:
+I (23) boot: ## Label            Usage          Type ST Offset   Length
+I (23) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (24) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (25) boot:  2 factory          factory app      00 00 00010000 00300000
+I (26) esp_image: segment 0: paddr=00010020 vaddr=480b0020 size=55804h (350212) map
+I (68) esp_image: segment 1: paddr=0006582c vaddr=30100000 size=00224h (   548) load
+I (69) esp_image: segment 2: paddr=00065a58 vaddr=30100230 size=00058h (    88) load
+I (71) esp_image: segment 3: paddr=00065ab8 vaddr=4ff40000 size=0a560h ( 42336) load
+I (78) esp_image: segment 4: paddr=00070020 vaddr=48000020 size=ae160h (713056) map
+I (161) esp_image: segment 5: paddr=0011e188 vaddr=4ff4a560 size=09c44h ( 40004) load
+I (167) esp_image: segment 6: paddr=00127dd4 vaddr=4ff54200 size=05120h ( 20768) load
+I (175) boot: Loaded app from partition at offset 0x10000
+I (179) hex_psram: vendor id    : 0x0d (AP)
+I (179) hex_psram: Latency      : 0x01 (Fixed)
+I (180) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (180) hex_psram: dev id       : 0x03 (generation 4)
+I (181) hex_psram: density      : 0x07 (256 Mbit)
+I (181) hex_psram: good-die     : 0x06 (Pass)
+I (181) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (182) hex_psram: BurstType    : 0x00 ( Wrap)
+I (182) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (183) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (183) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (184) hex_psram: DriveStrength: 0x00 (1/1)
+I (184) MSPI Timing: Enter psram timing tuning
+I esp_psram: Found 32MB PSRAM device
+I esp_psram: Speed: 200MHz
+I (371) mmu_psram: .rodata xip on psram
+I (422) mmu_psram: .text xip on psram
+I (424) cpu_start: Multicore app
+I (922) esp_psram: SPI SRAM memory test OK
+I (931) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
+I (931) cpu_start: Pro cpu start user code
+I (931) cpu_start: cpu freq: 400000000 Hz
+I (932) app_init: Application information:
+I (932) app_init: Project name:     gsp_showcase
+I (932) app_init: App version:      1
+I (932) app_init: Compile time:     Nov  2 2026 20:35:51
+I (933) app_init: ELF file SHA256:  5631e2419...
+I (933) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (933) efuse_init: Min chip rev:     v3.1
+I (934) efuse_init: Max chip rev:     v3.99 
+I (934) efuse_init: Chip rev:         v3.2
+I (934) heap_init: Initializing. RAM available for dynamic allocation:
+I (935) heap_init: At 4FF5BDB0 len 0005F210 (380 KiB): RETENT_RAM
+I (935) heap_init: At 4FFBAFC0 len 00004BF0 (18 KiB): RAM
+I (935) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (936) heap_init: At 30100288 len 00001D78 (7 KiB): SPM
+I (936) esp_psram: Adding pool of 31680K of PSRAM memory to heap allocator
+I (936) esp_psram: Adding pool of 7K of PSRAM memory gap generated due to end address alignment of irom to the heap allocator
+I (937) esp_psram: Adding pool of 41K of PSRAM memory gap generated due to end address alignment of drom to the heap allocator
+I (938) spi_flash: detected chip: gd
+I (938) spi_flash: flash io: dio
+W (938) spi_flash: Detected size(16384k) larger than the size in the binary image header(8192k). Using the size in the binary image header.
+I (939) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (940) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (941) sleep_clock: System sleep clock ICG setting initialization
+I (942) main_task: Started on CPU0
+I (942) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (943) main_task: Calling app_main()
+I (944) hw_lcd_init: Install panel IO
+I (944) hw_lcd_init: Install LCD driver of ek79007
+I (944) ek79007: version: 2.0.2
+I (1114) hw_touch_init: Initializing touch controller (GT911)
+I (1114) GT911: I2C address initialization procedure skipped - using default GT9xx setup
+I (1115) GT911: TouchPad_ID:0x39,0x31,0x31
+I (1115) GT911: TouchPad_Config_Version:89
+I (1126) gsp_instance: Initialized instance pool: slots=8 states_per_slot=1
+I (1127) gsp_dma2d: DMA2D M2M copy engine ready
+I (1127) gsp_accel_ppa: PPA blend ready (+/-1 LSB from scalar reference)
+I (1127) gsp_accel_ppa: PPA backend ready: fill>=32768 px, async blit on (>=8192 px)
+I (1128) esp_gsp_esp_lcd: Acceleration: esp-idf-ppa
+E (1128) present_v2: create failed=ESP_ERR_INVALID_ARG size=1024x600 format=0 input=0 damage=128 mode=7 rows=0 tiles=0 fb=0
+ESP_ERROR_CHECK failed: esp_err_t 0x102 (ESP_ERR_INVALID_ARG) at 0x48009982
+file: "./main/app_main.c" line 101
+func: app_main
+expression: esp_gsp_esp_lcd_start(&app_config, &lcd_config, &ui)
+
+abort() was called at PC 0x4ff4d6f3 on core 0
+Core  0 register dump:
+MEPC    : 0x4ff4dc44  RA      : 0x4ff4d6fc  SP      : 0x4ff637f0  GP      : 0x4ff54a00  
+TP      : 0x4ff63a20  T0      : 0x37363534  T1      : 0x7271706f  T2      : 0x33323130  
+S0/FP   : 0x00000004  S1      : 0x4ff63854  A0      : 0x4ff6381c  A1      : 0x4ff63852  
+A2      : 0x00000000  A3      : 0x4ff63849  A4      : 0x00000001  A5      : 0x4ff5c000  
+A6      : 0x00000000  A7      : 0x76757473  S2      : 0x00000000  S3      : 0x00000000  
+S4      : 0x00000000  S5      : 0x00000000  S6      : 0x00000000  S7      : 0x00000000  
+S8      : 0x00000000  S9      : 0x00000000  S10     : 0x00000000  S11     : 0x00000000  
+T3      : 0x6e6d6c6b  T4      : 0x6a696867  T5      : 0x66656463  T6      : 0x62613938  
+MSTATUS : 0x00011881  MTVEC   : 0x4ff40003  MCAUSE  : 0x00000002  MTVAL   : 0x00000000  
+MHARTID : 0x00000000  
+
+Stack memory:
+4ff637f0: 0x480b4a44 0x48009986 0x4ff63850 0x4ff4b21c 0x4ffbb3a0 0x4ffbb354 0x00000001 0x4ff58690
+4ff63810: 0x4ff63854 0x4ff586ac 0x4ff63850 0x726f6261 0x20292874 0x20736177 0x6c6c6163 0x61206465
+4ff63830: 0x43502074 0x34783020 0x64346666 0x20336636 0x63206e6f 0x2065726f 0x00000030 0x00000000
+4ff63850: 0xffff0030 0x34666634 0x33663664 0x00000000 0x00000000 0x4ff63978 0xffffffff 0x4ff4d6f6
+4ff63870: 0x00000000 0x4ff63978 0xffffffff 0x48009986 0x00000026 0x00000000 0x00000070 0x4ffbb3a0
+4ff63890: 0x4ffbb354 0x00000001 0x00000000 0x00000000 0x00000000 0xffffffff 0x00000000 0x00000000
+4ff638b0: 0x00000007 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff638d0: 0x481060b8 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff638f0: 0x00000000 0x00000000 0x00000078 0x00000002 0x00000003 0x00000000 0x00000000 0x00000000
+4ff63910: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63930: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x480c7b00
+4ff63950: 0x00038350 0x00000000 0x480c7328 0x00000004 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63970: 0x481060b8 0x03000000 0x4ffbb3a0 0x4ffbb354 0x00000001 0x00000000 0x00000000 0x00000000
+4ff63990: 0xffffffff 0x00000000 0x00000000 0x00000007 0x00000000 0x00000000 0x00000000 0x00000000
+4ff639b0: 0x00000000 0x00000000 0x4ffbb354 0x4ffbb3a0 0x480b3150 0x00000000 0x480b3000 0x4800805e
+4ff639d0: 0x00000000 0x00001388 0x00000003 0x00000000 0x00000000 0x00000000 0x00000000 0x480aadfc
+4ff639f0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63a10: 0x00000000 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000000 0x4ff54598 0x4ff54548 0x4ff544f8
+4ff63a30: 0x00000001 0x4ff5e860 0x4ff5e860 0x00000000 0x00000000 0x00000000 0xa5a5a5a5 0xa5a5a5a5
+4ff63a50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000064 0x4ff636b0 0x000000ac 0x4ff59598
+4ff63a70: 0x4ff59598 0x4ff63a64 0x4ff59590 0x00000018 0x48106048 0x48106048 0x4ff63a64 0x00000000
+4ff63a90: 0x00000001 0x4ff5e860 0x6e69616d 0x00000000 0x00000000 0x00000000 0x00000000 0x4ff63a50
+4ff63ab0: 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000600 0xa5a5a5a5
+4ff63ad0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63af0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b10: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b30: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b70: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b90: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63bb0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63bd0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+
+
+
+ELF file SHA256: 5631e2419
+
+Rebooting...
+ESP-ROM:esp32p4-eco7-20260109
+Build:Jan  9 2026
+rst:0xc (SW_CPU_RESET),boot:0xc (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x4ff46dba
+Core1 Saved PC:0x4ff46efc
+SPI mode:DIO, clock div:1
+load:0x4ffb60d0,len:0x1408
+load:0x4ffab2c0,len:0xcd4
+load:0x4ffadfc0,len:0x361c
+entry 0x4ffab2ca
+I (19) boot: ESP-IDF v6.2-dev-2221-g7b9cc1ac79f8-dir 2nd stage bootloader
+I (20) boot: compile time Nov  2 2026 20:35:57
+I (21) boot: chip revision: v3.2
+I (21) boot.esp32p4: SPI Speed      : 80MHz
+I (21) boot.esp32p4: SPI Mode       : DIO
+I (22) boot.esp32p4: SPI Flash Size : 8MB
+I (22) boot: Partition Table:
+I (23) boot: ## Label            Usage          Type ST Offset   Length
+I (23) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (24) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (25) boot:  2 factory          factory app      00 00 00010000 00300000
+I (26) esp_image: segment 0: paddr=00010020 vaddr=480b0020 size=55804h (350212) map
+I (68) esp_image: segment 1: paddr=0006582c vaddr=30100000 size=00224h (   548) load
+I (69) esp_image: segment 2: paddr=00065a58 vaddr=30100230 size=00058h (    88) load
+I (71) esp_image: segment 3: paddr=00065ab8 vaddr=4ff40000 size=0a560h ( 42336) load
+I (78) esp_image: segment 4: paddr=00070020 vaddr=48000020 size=ae160h (713056) map
+I (161) esp_image: segment 5: paddr=0011e188 vaddr=4ff4a560 size=09c44h ( 40004) load
+I (167) esp_image: segment 6: paddr=00127dd4 vaddr=4ff54200 size=05120h ( 20768) load
+I (175) boot: Loaded app from partition at offset 0x10000
+I (179) hex_psram: vendor id    : 0x0d (AP)
+I (179) hex_psram: Latency      : 0x01 (Fixed)
+I (180) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (180) hex_psram: dev id       : 0x03 (generation 4)
+I (180) hex_psram: density      : 0x07 (256 Mbit)
+I (181) hex_psram: good-die     : 0x06 (Pass)
+I (181) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (182) hex_psram: BurstType    : 0x00 ( Wrap)
+I (182) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (183) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (183) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (184) hex_psram: DriveStrength: 0x00 (1/1)
+I (184) MSPI Timing: Enter psram timing tuning
+I esp_psram: Found 32MB PSRAM device
+I esp_psram: Speed: 200MHz
+I (371) mmu_psram: .rodata xip on psram
+I (422) mmu_psram: .text xip on psram
+I (424) cpu_start: Multicore app
+I (922) esp_psram: SPI SRAM memory test OK
+I (931) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
+I (931) cpu_start: Pro cpu start user code
+I (931) cpu_start: cpu freq: 400000000 Hz
+I (931) app_init: Application information:
+I (932) app_init: Project name:     gsp_showcase
+I (932) app_init: App version:      1
+I (932) app_init: Compile time:     Nov  2 2026 20:35:51
+I (932) app_init: ELF file SHA256:  5631e2419...
+I (933) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (933) efuse_init: Min chip rev:     v3.1
+I (933) efuse_init: Max chip rev:     v3.99 
+I (934) efuse_init: Chip rev:         v3.2
+I (934) heap_init: Initializing. RAM available for dynamic allocation:
+I (934) heap_init: At 4FF5BDB0 len 0005F210 (380 KiB): RETENT_RAM
+I (935) heap_init: At 4FFBAFC0 len 00004BF0 (18 KiB): RAM
+I (935) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (936) heap_init: At 30100288 len 00001D78 (7 KiB): SPM
+I (936) esp_psram: Adding pool of 31680K of PSRAM memory to heap allocator
+I (936) esp_psram: Adding pool of 7K of PSRAM memory gap generated due to end address alignment of irom to the heap allocator
+I (937) esp_psram: Adding pool of 41K of PSRAM memory gap generated due to end address alignment of drom to the heap allocator
+I (938) spi_flash: detected chip: gd
+I (938) spi_flash: flash io: dio
+W (938) spi_flash: Detected size(16384k) larger than the size in the binary image header(8192k). Using the size in the binary image header.
+I (939) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (939) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (941) sleep_clock: System sleep clock ICG setting initialization
+I (941) main_task: Started on CPU0
+I (941) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (942) main_task: Calling app_main()
+I (943) hw_lcd_init: Install panel IO
+I (943) hw_lcd_init: Install LCD driver of ek79007
+I (943) ek79007: version: 2.0.2
+I (1113) hw_touch_init: Initializing touch controller (GT911)
+I (1113) GT911: I2C address initialization procedure skipped - using default GT9xx setup
+I (1114) GT911: TouchPad_ID:0x39,0x31,0x31
+I (1114) GT911: TouchPad_Config_Version:89
+I (1125) gsp_instance: Initialized instance pool: slots=8 states_per_slot=1
+I (1126) gsp_dma2d: DMA2D M2M copy engine ready
+I (1126) gsp_accel_ppa: PPA blend ready (+/-1 LSB from scalar reference)
+I (1126) gsp_accel_ppa: PPA backend ready: fill>=32768 px, async blit on (>=8192 px)
+I (1127) esp_gsp_esp_lcd: Acceleration: esp-idf-ppa
+E (1127) present_v2: create failed=ESP_ERR_INVALID_ARG size=1024x600 format=0 input=0 damage=128 mode=7 rows=0 tiles=0 fb=0
+ESP_ERROR_CHECK failed: esp_err_t 0x102 (ESP_ERR_INVALID_ARG) at 0x48009982
+file: "./main/app_main.c" line 101
+func: app_main
+expression: esp_gsp_esp_lcd_start(&app_config, &lcd_config, &ui)
+
+abort() was called at PC 0x4ff4d6f3 on core 0
+Core  0 register dump:
+MEPC    : 0x4ff4dc44  RA      : 0x4ff4d6fc  SP      : 0x4ff637f0  GP      : 0x4ff54a00  
+TP      : 0x4ff63a20  T0      : 0x37363534  T1      : 0x7271706f  T2      : 0x33323130  
+S0/FP   : 0x00000004  S1      : 0x4ff63854  A0      : 0x4ff6381c  A1      : 0x4ff63852  
+A2      : 0x00000000  A3      : 0x4ff63849  A4      : 0x00000001  A5      : 0x4ff5c000  
+A6      : 0x00000000  A7      : 0x76757473  S2      : 0x00000000  S3      : 0x00000000  
+S4      : 0x00000000  S5      : 0x00000000  S6      : 0x00000000  S7      : 0x00000000  
+S8      : 0x00000000  S9      : 0x00000000  S10     : 0x00000000  S11     : 0x00000000  
+T3      : 0x6e6d6c6b  T4      : 0x6a696867  T5      : 0x66656463  T6      : 0x62613938  
+MSTATUS : 0x00011881  MTVEC   : 0x4ff40003  MCAUSE  : 0x00000002  MTVAL   : 0x00000000  
+MHARTID : 0x00000000  
+
+Stack memory:
+4ff637f0: 0x480b4a44 0x48009986 0x4ff63850 0x4ff4b21c 0x4ffbb3a0 0x4ffbb354 0x00000001 0x4ff58690
+4ff63810: 0x4ff63854 0x4ff586ac 0x4ff63850 0x726f6261 0x20292874 0x20736177 0x6c6c6163 0x61206465
+4ff63830: 0x43502074 0x34783020 0x64346666 0x20336636 0x63206e6f 0x2065726f 0x00000030 0x00000000
+4ff63850: 0xffff0030 0x34666634 0x33663664 0x00000000 0x00000000 0x4ff63978 0xffffffff 0x4ff4d6f6
+4ff63870: 0x00000000 0x4ff63978 0xffffffff 0x48009986 0x00000026 0x00000000 0x00000070 0x4ffbb3a0
+4ff63890: 0x4ffbb354 0x00000001 0x00000000 0x00000000 0x00000000 0xffffffff 0x00000000 0x00000000
+4ff638b0: 0x00000007 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff638d0: 0x481060b8 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff638f0: 0x00000000 0x00000000 0x00000078 0x00000002 0x00000003 0x00000000 0x00000000 0x00000000
+4ff63910: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63930: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x480c7b00
+4ff63950: 0x00038350 0x00000000 0x480c7328 0x00000004 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63970: 0x481060b8 0x03000000 0x4ffbb3a0 0x4ffbb354 0x00000001 0x00000000 0x00000000 0x00000000
+4ff63990: 0xffffffff 0x00000000 0x00000000 0x00000007 0x00000000 0x00000000 0x00000000 0x00000000
+4ff639b0: 0x00000000 0x00000000 0x4ffbb354 0x4ffbb3a0 0x480b3150 0x00000000 0x480b3000 0x4800805e
+4ff639d0: 0x00000000 0x00001388 0x00000003 0x00000000 0x00000000 0x00000000 0x00000000 0x480aadfc
+4ff639f0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63a10: 0x00000000 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000000 0x4ff54598 0x4ff54548 0x4ff544f8
+4ff63a30: 0x00000001 0x4ff5e860 0x4ff5e860 0x00000000 0x00000000 0x00000000 0xa5a5a5a5 0xa5a5a5a5
+4ff63a50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000064 0x4ff636c0 0x000000ac 0x4ff59598
+4ff63a70: 0x4ff59598 0x4ff63a64 0x4ff59590 0x00000018 0x48106048 0x48106048 0x4ff63a64 0x00000000
+4ff63a90: 0x00000001 0x4ff5e860 0x6e69616d 0x00000000 0x00000000 0x00000000 0x00000000 0x4ff63a50
+4ff63ab0: 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000600 0xa5a5a5a5
+4ff63ad0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63af0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b10: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b30: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b70: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b90: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63bb0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63bd0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+
+
+
+ELF file SHA256: 5631e2419
+
+Rebooting...
+ESP-ROM:esp32p4-eco7-20260109
+Build:Jan  9 2026
+rst:0xc (SW_CPU_RESET),boot:0xc (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x4ff46dba
+Core1 Saved PC:0x4ff46efc
+SPI mode:DIO, clock div:1
+load:0x4ffb60d0,len:0x1408
+load:0x4ffab2c0,len:0xcd4
+load:0x4ffadfc0,len:0x361c
+entry 0x4ffab2ca
+I (19) boot: ESP-IDF v6.2-dev-2221-g7b9cc1ac79f8-dir 2nd stage bootloader
+I (20) boot: compile time Nov  2 2026 20:35:57
+I (21) boot: chip revision: v3.2
+I (21) boot.esp32p4: SPI Speed      : 80MHz
+I (21) boot.esp32p4: SPI Mode       : DIO
+I (22) boot.esp32p4: SPI Flash Size : 8MB
+I (22) boot: Partition Table:
+I (23) boot: ## Label            Usage          Type ST Offset   Length
+I (23) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (24) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (25) boot:  2 factory          factory app      00 00 00010000 00300000
+I (26) esp_image: segment 0: paddr=00010020 vaddr=480b0020 size=55804h (350212) map
+I (68) esp_image: segment 1: paddr=0006582c vaddr=30100000 size=00224h (   548) load
+I (69) esp_image: segment 2: paddr=00065a58 vaddr=30100230 size=00058h (    88) load
+I (71) esp_image: segment 3: paddr=00065ab8 vaddr=4ff40000 size=0a560h ( 42336) load
+I (78) esp_image: segment 4: paddr=00070020 vaddr=48000020 size=ae160h (713056) map
+I (161) esp_image: segment 5: paddr=0011e188 vaddr=4ff4a560 size=09c44h ( 40004) load
+I (167) esp_image: segment 6: paddr=00127dd4 vaddr=4ff54200 size=05120h ( 20768) load
+I (175) boot: Loaded app from partition at offset 0x10000
+I (179) hex_psram: vendor id    : 0x0d (AP)
+I (179) hex_psram: Latency      : 0x01 (Fixed)
+I (180) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (180) hex_psram: dev id       : 0x03 (generation 4)
+I (181) hex_psram: density      : 0x07 (256 Mbit)
+I (181) hex_psram: good-die     : 0x06 (Pass)
+I (181) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (182) hex_psram: BurstType    : 0x00 ( Wrap)
+I (182) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (183) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (183) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (184) hex_psram: DriveStrength: 0x00 (1/1)
+I (184) MSPI Timing: Enter psram timing tuning
+I esp_psram: Found 32MB PSRAM device
+I esp_psram: Speed: 200MHz
+I (371) mmu_psram: .rodata xip on psram
+I (422) mmu_psram: .text xip on psram
+I (424) cpu_start: Multicore app
+I (922) esp_psram: SPI SRAM memory test OK
+I (931) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
+I (931) cpu_start: Pro cpu start user code
+I (931) cpu_start: cpu freq: 400000000 Hz
+I (932) app_init: Application information:
+I (932) app_init: Project name:     gsp_showcase
+I (932) app_init: App version:      1
+I (932) app_init: Compile time:     Nov  2 2026 20:35:51
+I (933) app_init: ELF file SHA256:  5631e2419...
+I (933) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (933) efuse_init: Min chip rev:     v3.1
+I (933) efuse_init: Max chip rev:     v3.99 
+I (934) efuse_init: Chip rev:         v3.2
+I (934) heap_init: Initializing. RAM available for dynamic allocation:
+I (934) heap_init: At 4FF5BDB0 len 0005F210 (380 KiB): RETENT_RAM
+I (935) heap_init: At 4FFBAFC0 len 00004BF0 (18 KiB): RAM
+I (935) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (936) heap_init: At 30100288 len 00001D78 (7 KiB): SPM
+I (936) esp_psram: Adding pool of 31680K of PSRAM memory to heap allocator
+I (936) esp_psram: Adding pool of 7K of PSRAM memory gap generated due to end address alignment of irom to the heap allocator
+I (937) esp_psram: Adding pool of 41K of PSRAM memory gap generated due to end address alignment of drom to the heap allocator
+I (938) spi_flash: detected chip: gd
+I (938) spi_flash: flash io: dio
+W (938) spi_flash: Detected size(16384k) larger than the size in the binary image header(8192k). Using the size in the binary image header.
+I (939) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (940) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (941) sleep_clock: System sleep clock ICG setting initialization
+I (941) main_task: Started on CPU0
+I (941) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (942) main_task: Calling app_main()
+I (943) hw_lcd_init: Install panel IO
+I (943) hw_lcd_init: Install LCD driver of ek79007
+I (943) ek79007: version: 2.0.2
+I (1113) hw_touch_init: Initializing touch controller (GT911)
+I (1113) GT911: I2C address initialization procedure skipped - using default GT9xx setup
+I (1114) GT911: TouchPad_ID:0x39,0x31,0x31
+I (1114) GT911: TouchPad_Config_Version:89
+I (1125) gsp_instance: Initialized instance pool: slots=8 states_per_slot=1
+I (1126) gsp_dma2d: DMA2D M2M copy engine ready
+I (1126) gsp_accel_ppa: PPA blend ready (+/-1 LSB from scalar reference)
+I (1126) gsp_accel_ppa: PPA backend ready: fill>=32768 px, async blit on (>=8192 px)
+I (1127) esp_gsp_esp_lcd: Acceleration: esp-idf-ppa
+E (1127) present_v2: create failed=ESP_ERR_INVALID_ARG size=1024x600 format=0 input=0 damage=128 mode=7 rows=0 tiles=0 fb=0
+ESP_ERROR_CHECK failed: esp_err_t 0x102 (ESP_ERR_INVALID_ARG) at 0x48009982
+file: "./main/app_main.c" line 101
+func: app_main
+expression: esp_gsp_esp_lcd_start(&app_config, &lcd_config, &ui)
+
+abort() was called at PC 0x4ff4d6f3 on core 0
+Core  0 register dump:
+MEPC    : 0x4ff4dc44  RA      : 0x4ff4d6fc  SP      : 0x4ff637f0  GP      : 0x4ff54a00  
+TP      : 0x4ff63a20  T0      : 0x37363534  T1      : 0x7271706f  T2      : 0x33323130  
+S0/FP   : 0x00000004  S1      : 0x4ff63854  A0      : 0x4ff6381c  A1      : 0x4ff63852  
+A2      : 0x00000000  A3      : 0x4ff63849  A4      : 0x00000001  A5      : 0x4ff5c000  
+A6      : 0x00000000  A7      : 0x76757473  S2      : 0x00000000  S3      : 0x00000000  
+S4      : 0x00000000  S5      : 0x00000000  S6      : 0x00000000  S7      : 0x00000000  
+S8      : 0x00000000  S9      : 0x00000000  S10     : 0x00000000  S11     : 0x00000000  
+T3      : 0x6e6d6c6b  T4      : 0x6a696867  T5      : 0x66656463  T6      : 0x62613938  
+MSTATUS : 0x00011881  MTVEC   : 0x4ff40003  MCAUSE  : 0x00000002  MTVAL   : 0x00000000  
+MHARTID : 0x00000000  
+
+Stack memory:
+4ff637f0: 0x480b4a44 0x48009986 0x4ff63850 0x4ff4b21c 0x4ffbb3a0 0x4ffbb354 0x00000001 0x4ff58690
+4ff63810: 0x4ff63854 0x4ff586ac 0x4ff63850 0x726f6261 0x20292874 0x20736177 0x6c6c6163 0x61206465
+4ff63830: 0x43502074 0x34783020 0x64346666 0x20336636 0x63206e6f 0x2065726f 0x00000030 0x00000000
+4ff63850: 0xffff0030 0x34666634 0x33663664 0x00000000 0x00000000 0x4ff63978 0xffffffff 0x4ff4d6f6
+4ff63870: 0x00000000 0x4ff63978 0xffffffff 0x48009986 0x00000026 0x00000000 0x00000070 0x4ffbb3a0
+4ff63890: 0x4ffbb354 0x00000001 0x00000000 0x00000000 0x00000000 0xffffffff 0x00000000 0x00000000
+4ff638b0: 0x00000007 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff638d0: 0x481060b8 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff638f0: 0x00000000 0x00000000 0x00000078 0x00000002 0x00000003 0x00000000 0x00000000 0x00000000
+4ff63910: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63930: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x480c7b00
+4ff63950: 0x00038350 0x00000000 0x480c7328 0x00000004 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63970: 0x481060b8 0x03000000 0x4ffbb3a0 0x4ffbb354 0x00000001 0x00000000 0x00000000 0x00000000
+4ff63990: 0xffffffff 0x00000000 0x00000000 0x00000007 0x00000000 0x00000000 0x00000000 0x00000000
+4ff639b0: 0x00000000 0x00000000 0x4ffbb354 0x4ffbb3a0 0x480b3150 0x00000000 0x480b3000 0x4800805e
+4ff639d0: 0x00000000 0x00001388 0x00000003 0x00000000 0x00000000 0x00000000 0x00000000 0x480aadfc
+4ff639f0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63a10: 0x00000000 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000000 0x4ff54598 0x4ff54548 0x4ff544f8
+4ff63a30: 0x00000001 0x4ff5e860 0x4ff5e860 0x00000000 0x00000000 0x00000000 0xa5a5a5a5 0xa5a5a5a5
+4ff63a50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000064 0x4ff636c0 0x000000ac 0x4ff59598
+4ff63a70: 0x4ff59598 0x4ff63a64 0x4ff59590 0x00000018 0x48106048 0x48106048 0x4ff63a64 0x00000000
+4ff63a90: 0x00000001 0x4ff5e860 0x6e69616d 0x00000000 0x00000000 0x00000000 0x00000000 0x4ff63a50
+4ff63ab0: 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000600 0xa5a5a5a5
+4ff63ad0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63af0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b10: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b30: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b70: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b90: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63bb0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63bd0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+
+
+
+ELF file SHA256: 5631e2419
+
+Rebooting...
+ESP-ROM:esp32p4-eco7-20260109
+Build:Jan  9 2026
+rst:0xc (SW_CPU_RESET),boot:0xc (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x4ff46dba
+Core1 Saved PC:0x4ff46efc
+SPI mode:DIO, clock div:1
+load:0x4ffb60d0,len:0x1408
+load:0x4ffab2c0,len:0xcd4
+load:0x4ffadfc0,len:0x361c
+entry 0x4ffab2ca
+I (19) boot: ESP-IDF v6.2-dev-2221-g7b9cc1ac79f8-dir 2nd stage bootloader
+I (20) boot: compile time Nov  2 2026 20:35:57
+I (21) boot: chip revision: v3.2
+I (21) boot.esp32p4: SPI Speed      : 80MHz
+I (21) boot.esp32p4: SPI Mode       : DIO
+I (22) boot.esp32p4: SPI Flash Size : 8MB
+I (22) boot: Partition Table:
+I (23) boot: ## Label            Usage          Type ST Offset   Length
+I (23) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (24) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (25) boot:  2 factory          factory app      00 00 00010000 00300000
+I (27) esp_image: segment 0: paddr=00010020 vaddr=480b0020 size=55804h (350212) map
+I (68) esp_image: segment 1: paddr=0006582c vaddr=30100000 size=00224h (   548) load
+I (70) esp_image: segment 2: paddr=00065a58 vaddr=30100230 size=00058h (    88) load
+I (71) esp_image: segment 3: paddr=00065ab8 vaddr=4ff40000 size=0a560h ( 42336) load
+I (78) esp_image: segment 4: paddr=00070020 vaddr=48000020 size=ae160h (713056) map
+I (161) esp_image: segment 5: paddr=0011e188 vaddr=4ff4a560 size=09c44h ( 40004) load
+I (168) esp_image: segment 6: paddr=00127dd4 vaddr=4ff54200 size=05120h ( 20768) load
+I (176) boot: Loaded app from partition at offset 0x10000
+I (179) hex_psram: vendor id    : 0x0d (AP)
+I (179) hex_psram: Latency      : 0x01 (Fixed)
+I (180) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (180) hex_psram: dev id       : 0x03 (generation 4)
+I (181) hex_psram: density      : 0x07 (256 Mbit)
+I (181) hex_psram: good-die     : 0x06 (Pass)
+I (181) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (182) hex_psram: BurstType    : 0x00 ( Wrap)
+I (182) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (183) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (183) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (184) hex_psram: DriveStrength: 0x00 (1/1)
+I (184) MSPI Timing: Enter psram timing tuning
+I esp_psram: Found 32MB PSRAM device
+I esp_psram: Speed: 200MHz
+I (371) mmu_psram: .rodata xip on psram
+I (422) mmu_psram: .text xip on psram
+I (425) cpu_start: Multicore app
+I (922) esp_psram: SPI SRAM memory test OK
+I (931) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
+I (931) cpu_start: Pro cpu start user code
+I (931) cpu_start: cpu freq: 400000000 Hz
+I (932) app_init: Application information:
+I (932) app_init: Project name:     gsp_showcase
+I (932) app_init: App version:      1
+I (932) app_init: Compile time:     Nov  2 2026 20:35:51
+I (933) app_init: ELF file SHA256:  5631e2419...
+I (933) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (933) efuse_init: Min chip rev:     v3.1
+I (934) efuse_init: Max chip rev:     v3.99 
+I (934) efuse_init: Chip rev:         v3.2
+I (934) heap_init: Initializing. RAM available for dynamic allocation:
+I (935) heap_init: At 4FF5BDB0 len 0005F210 (380 KiB): RETENT_RAM
+I (935) heap_init: At 4FFBAFC0 len 00004BF0 (18 KiB): RAM
+I (936) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (936) heap_init: At 30100288 len 00001D78 (7 KiB): SPM
+I (936) esp_psram: Adding pool of 31680K of PSRAM memory to heap allocator
+I (937) esp_psram: Adding pool of 7K of PSRAM memory gap generated due to end address alignment of irom to the heap allocator
+I (937) esp_psram: Adding pool of 41K of PSRAM memory gap generated due to end address alignment of drom to the heap allocator
+I (938) spi_flash: detected chip: gd
+I (938) spi_flash: flash io: dio
+W (938) spi_flash: Detected size(16384k) larger than the size in the binary image header(8192k). Using the size in the binary image header.
+I (939) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (940) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (941) sleep_clock: System sleep clock ICG setting initialization
+I (942) main_task: Started on CPU0
+I (942) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (943) main_task: Calling app_main()
+I (944) hw_lcd_init: Install panel IO
+I (944) hw_lcd_init: Install LCD driver of ek79007
+I (944) ek79007: version: 2.0.2
+I (1114) hw_touch_init: Initializing touch controller (GT911)
+I (1114) GT911: I2C address initialization procedure skipped - using default GT9xx setup
+I (1115) GT911: TouchPad_ID:0x39,0x31,0x31
+I (1115) GT911: TouchPad_Config_Version:89
+I (1126) gsp_instance: Initialized instance pool: slots=8 states_per_slot=1
+I (1127) gsp_dma2d: DMA2D M2M copy engine ready
+I (1127) gsp_accel_ppa: PPA blend ready (+/-1 LSB from scalar reference)
+I (1127) gsp_accel_ppa: PPA backend ready: fill>=32768 px, async blit on (>=8192 px)
+I (1128) esp_gsp_esp_lcd: Acceleration: esp-idf-ppa
+E (1128) present_v2: create failed=ESP_ERR_INVALID_ARG size=1024x600 format=0 input=0 damage=128 mode=7 rows=0 tiles=0 fb=0
+ESP_ERROR_CHECK failed: esp_err_t 0x102 (ESP_ERR_INVALID_ARG) at 0x48009982
+file: "./main/app_main.c" line 101
+func: app_main
+expression: esp_gsp_esp_lcd_start(&app_config, &lcd_config, &ui)
+
+abort() was called at PC 0x4ff4d6f3 on core 0
+Core  0 register dump:
+MEPC    : 0x4ff4dc44  RA      : 0x4ff4d6fc  SP      : 0x4ff637f0  GP      : 0x4ff54a00  
+TP      : 0x4ff63a20  T0      : 0x37363534  T1      : 0x7271706f  T2      : 0x33323130  
+S0/FP   : 0x00000004  S1      : 0x4ff63854  A0      : 0x4ff6381c  A1      : 0x4ff63852  
+A2      : 0x00000000  A3      : 0x4ff63849  A4      : 0x00000001  A5      : 0x4ff5c000  
+A6      : 0x00000000  A7      : 0x76757473  S2      : 0x00000000  S3      : 0x00000000  
+S4      : 0x00000000  S5      : 0x00000000  S6      : 0x00000000  S7      : 0x00000000  
+S8      : 0x00000000  S9      : 0x00000000  S10     : 0x00000000  S11     : 0x00000000  
+T3      : 0x6e6d6c6b  T4      : 0x6a696867  T5      : 0x66656463  T6      : 0x62613938  
+MSTATUS : 0x00011881  MTVEC   : 0x4ff40003  MCAUSE  : 0x00000002  MTVAL   : 0x00000000  
+MHARTID : 0x00000000  
+
+Stack memory:
+4ff637f0: 0x480b4a44 0x48009986 0x4ff63850 0x4ff4b21c 0x4ffbb3a0 0x4ffbb354 0x00000001 0x4ff58690
+4ff63810: 0x4ff63854 0x4ff586ac 0x4ff63850 0x726f6261 0x20292874 0x20736177 0x6c6c6163 0x61206465
+4ff63830: 0x43502074 0x34783020 0x64346666 0x20336636 0x63206e6f 0x2065726f 0x00000030 0x00000000
+4ff63850: 0xffff0030 0x34666634 0x33663664 0x00000000 0x00000000 0x4ff63978 0xffffffff 0x4ff4d6f6
+4ff63870: 0x00000000 0x4ff63978 0xffffffff 0x48009986 0x00000026 0x00000000 0x00000070 0x4ffbb3a0
+4ff63890: 0x4ffbb354 0x00000001 0x00000000 0x00000000 0x00000000 0xffffffff 0x00000000 0x00000000
+4ff638b0: 0x00000007 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff638d0: 0x481060b8 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff638f0: 0x00000000 0x00000000 0x00000078 0x00000002 0x00000003 0x00000000 0x00000000 0x00000000
+4ff63910: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63930: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x480c7b00
+4ff63950: 0x00038350 0x00000000 0x480c7328 0x00000004 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63970: 0x481060b8 0x03000000 0x4ffbb3a0 0x4ffbb354 0x00000001 0x00000000 0x00000000 0x00000000
+4ff63990: 0xffffffff 0x00000000 0x00000000 0x00000007 0x00000000 0x00000000 0x00000000 0x00000000
+4ff639b0: 0x00000000 0x00000000 0x4ffbb354 0x4ffbb3a0 0x480b3150 0x00000000 0x480b3000 0x4800805e
+4ff639d0: 0x00000000 0x00001388 0x00000003 0x00000000 0x00000000 0x00000000 0x00000000 0x480aadfc
+4ff639f0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63a10: 0x00000000 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000000 0x4ff54598 0x4ff54548 0x4ff544f8
+4ff63a30: 0x00000001 0x4ff5e860 0x4ff5e860 0x00000000 0x00000000 0x00000000 0xa5a5a5a5 0xa5a5a5a5
+4ff63a50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000064 0x4ff636b0 0x000000ac 0x4ff59598
+4ff63a70: 0x4ff59598 0x4ff63a64 0x4ff59590 0x00000018 0x48106048 0x48106048 0x4ff63a64 0x00000000
+4ff63a90: 0x00000001 0x4ff5e860 0x6e69616d 0x00000000 0x00000000 0x00000000 0x00000000 0x4ff63a50
+4ff63ab0: 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000600 0xa5a5a5a5
+4ff63ad0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63af0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b10: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b30: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b70: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b90: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63bb0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63bd0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+
+
+
+ELF file SHA256: 5631e2419
+
+Rebooting...
+ESP-ROM:esp32p4-eco7-20260109
+Build:Jan  9 2026
+rst:0xc (SW_CPU_RESET),boot:0xc (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x4ff46dba
+Core1 Saved PC:0x4ff46efc
+SPI mode:DIO, clock div:1
+load:0x4ffb60d0,len:0x1408
+load:0x4ffab2c0,len:0xcd4
+load:0x4ffadfc0,len:0x361c
+entry 0x4ffab2ca
+I (19) boot: ESP-IDF v6.2-dev-2221-g7b9cc1ac79f8-dir 2nd stage bootloader
+I (20) boot: compile time Nov  2 2026 20:35:57
+I (21) boot: chip revision: v3.2
+I (21) boot.esp32p4: SPI Speed      : 80MHz
+I (21) boot.esp32p4: SPI Mode       : DIO
+I (22) boot.esp32p4: SPI Flash Size : 8MB
+I (22) boot: Partition Table:
+I (23) boot: ## Label            Usage          Type ST Offset   Length
+I (23) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (24) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (25) boot:  2 factory          factory app      00 00 00010000 00300000
+I (27) esp_image: segment 0: paddr=00010020 vaddr=480b0020 size=55804h (350212) map
+I (68) esp_image: segment 1: paddr=0006582c vaddr=30100000 size=00224h (   548) load
+I (70) esp_image: segment 2: paddr=00065a58 vaddr=30100230 size=00058h (    88) load
+I (71) esp_image: segment 3: paddr=00065ab8 vaddr=4ff40000 size=0a560h ( 42336) load
+I (78) esp_image: segment 4: paddr=00070020 vaddr=48000020 size=ae160h (713056) map
+I (161) esp_image: segment 5: paddr=0011e188 vaddr=4ff4a560 size=09c44h ( 40004) load
+I (168) esp_image: segment 6: paddr=00127dd4 vaddr=4ff54200 size=05120h ( 20768) load
+I (176) boot: Loaded app from partition at offset 0x10000
+I (179) hex_psram: vendor id    : 0x0d (AP)
+I (179) hex_psram: Latency      : 0x01 (Fixed)
+I (180) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (180) hex_psram: dev id       : 0x03 (generation 4)
+I (181) hex_psram: density      : 0x07 (256 Mbit)
+I (181) hex_psram: good-die     : 0x06 (Pass)
+I (181) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (182) hex_psram: BurstType    : 0x00 ( Wrap)
+I (182) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (183) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (183) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (184) hex_psram: DriveStrength: 0x00 (1/1)
+I (184) MSPI Timing: Enter psram timing tuning
+I esp_psram: Found 32MB PSRAM device
+I esp_psram: Speed: 200MHz
+I (371) mmu_psram: .rodata xip on psram
+I (422) mmu_psram: .text xip on psram
+I (424) cpu_start: Multicore app
+I (922) esp_psram: SPI SRAM memory test OK
+I (931) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
+I (931) cpu_start: Pro cpu start user code
+I (931) cpu_start: cpu freq: 400000000 Hz
+I (932) app_init: Application information:
+I (932) app_init: Project name:     gsp_showcase
+I (932) app_init: App version:      1
+I (932) app_init: Compile time:     Nov  2 2026 20:35:51
+I (933) app_init: ELF file SHA256:  5631e2419...
+I (933) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (933) efuse_init: Min chip rev:     v3.1
+I (933) efuse_init: Max chip rev:     v3.99 
+I (934) efuse_init: Chip rev:         v3.2
+I (934) heap_init: Initializing. RAM available for dynamic allocation:
+I (935) heap_init: At 4FF5BDB0 len 0005F210 (380 KiB): RETENT_RAM
+I (935) heap_init: At 4FFBAFC0 len 00004BF0 (18 KiB): RAM
+I (936) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (936) heap_init: At 30100288 len 00001D78 (7 KiB): SPM
+I (936) esp_psram: Adding pool of 31680K of PSRAM memory to heap allocator
+I (937) esp_psram: Adding pool of 7K of PSRAM memory gap generated due to end address alignment of irom to the heap allocator
+I (937) esp_psram: Adding pool of 41K of PSRAM memory gap generated due to end address alignment of drom to the heap allocator
+I (938) spi_flash: detected chip: gd
+I (938) spi_flash: flash io: dio
+W (938) spi_flash: Detected size(16384k) larger than the size in the binary image header(8192k). Using the size in the binary image header.
+I (939) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (940) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (941) sleep_clock: System sleep clock ICG setting initialization
+I (942) main_task: Started on CPU0
+I (942) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (943) main_task: Calling app_main()
+I (944) hw_lcd_init: Install panel IO
+I (944) hw_lcd_init: Install LCD driver of ek79007
+I (944) ek79007: version: 2.0.2
+I (1114) hw_touch_init: Initializing touch controller (GT911)
+I (1114) GT911: I2C address initialization procedure skipped - using default GT9xx setup
+I (1115) GT911: TouchPad_ID:0x39,0x31,0x31
+I (1115) GT911: TouchPad_Config_Version:89
+I (1126) gsp_instance: Initialized instance pool: slots=8 states_per_slot=1
+I (1127) gsp_dma2d: DMA2D M2M copy engine ready
+I (1127) gsp_accel_ppa: PPA blend ready (+/-1 LSB from scalar reference)
+I (1127) gsp_accel_ppa: PPA backend ready: fill>=32768 px, async blit on (>=8192 px)
+I (1128) esp_gsp_esp_lcd: Acceleration: esp-idf-ppa
+E (1128) present_v2: create failed=ESP_ERR_INVALID_ARG size=1024x600 format=0 input=0 damage=128 mode=7 rows=0 tiles=0 fb=0
+ESP_ERROR_CHECK failed: esp_err_t 0x102 (ESP_ERR_INVALID_ARG) at 0x48009982
+file: "./main/app_main.c" line 101
+func: app_main
+expression: esp_gsp_esp_lcd_start(&app_config, &lcd_config, &ui)
+
+abort() was called at PC 0x4ff4d6f3 on core 0
+Core  0 register dump:
+MEPC    : 0x4ff4dc44  RA      : 0x4ff4d6fc  SP      : 0x4ff637f0  GP      : 0x4ff54a00  
+TP      : 0x4ff63a20  T0      : 0x37363534  T1      : 0x7271706f  T2      : 0x33323130  
+S0/FP   : 0x00000004  S1      : 0x4ff63854  A0      : 0x4ff6381c  A1      : 0x4ff63852  
+A2      : 0x00000000  A3      : 0x4ff63849  A4      : 0x00000001  A5      : 0x4ff5c000  
+A6      : 0x00000000  A7      : 0x76757473  S2      : 0x00000000  S3      : 0x00000000  
+S4      : 0x00000000  S5      : 0x00000000  S6      : 0x00000000  S7      : 0x00000000  
+S8      : 0x00000000  S9      : 0x00000000  S10     : 0x00000000  S11     : 0x00000000  
+T3      : 0x6e6d6c6b  T4      : 0x6a696867  T5      : 0x66656463  T6      : 0x62613938  
+MSTATUS : 0x00011881  MTVEC   : 0x4ff40003  MCAUSE  : 0x00000002  MTVAL   : 0x00000000  
+MHARTID : 0x00000000  
+
+Stack memory:
+4ff637f0: 0x480b4a44 0x48009986 0x4ff63850 0x4ff4b21c 0x4ffbb3a0 0x4ffbb354 0x00000001 0x4ff58690
+4ff63810: 0x4ff63854 0x4ff586ac 0x4ff63850 0x726f6261 0x20292874 0x20736177 0x6c6c6163 0x61206465
+4ff63830: 0x43502074 0x34783020 0x64346666 0x20336636 0x63206e6f 0x2065726f 0x00000030 0x00000000
+4ff63850: 0xffff0030 0x34666634 0x33663664 0x00000000 0x00000000 0x4ff63978 0xffffffff 0x4ff4d6f6
+4ff63870: 0x00000000 0x4ff63978 0xffffffff 0x48009986 0x00000026 0x00000000 0x00000070 0x4ffbb3a0
+4ff63890: 0x4ffbb354 0x00000001 0x00000000 0x00000000 0x00000000 0xffffffff 0x00000000 0x00000000
+4ff638b0: 0x00000007 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff638d0: 0x481060b8 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff638f0: 0x00000000 0x00000000 0x00000078 0x00000002 0x00000003 0x00000000 0x00000000 0x00000000
+4ff63910: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63930: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x480c7b00
+4ff63950: 0x00038350 0x00000000 0x480c7328 0x00000004 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63970: 0x481060b8 0x03000000 0x4ffbb3a0 0x4ffbb354 0x00000001 0x00000000 0x00000000 0x00000000
+4ff63990: 0xffffffff 0x00000000 0x00000000 0x00000007 0x00000000 0x00000000 0x00000000 0x00000000
+4ff639b0: 0x00000000 0x00000000 0x4ffbb354 0x4ffbb3a0 0x480b3150 0x00000000 0x480b3000 0x4800805e
+4ff639d0: 0x00000000 0x00001388 0x00000003 0x00000000 0x00000000 0x00000000 0x00000000 0x480aadfc
+4ff639f0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63a10: 0x00000000 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000000 0x4ff54598 0x4ff54548 0x4ff544f8
+4ff63a30: 0x00000001 0x4ff5e860 0x4ff5e860 0x00000000 0x00000000 0x00000000 0xa5a5a5a5 0xa5a5a5a5
+4ff63a50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000064 0x4ff636b0 0x000000ac 0x4ff59598
+4ff63a70: 0x4ff59598 0x4ff63a64 0x4ff59590 0x00000018 0x48106048 0x48106048 0x4ff63a64 0x00000000
+4ff63a90: 0x00000001 0x4ff5e860 0x6e69616d 0x00000000 0x00000000 0x00000000 0x00000000 0x4ff63a50
+4ff63ab0: 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000600 0xa5a5a5a5
+4ff63ad0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63af0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b10: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b30: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b70: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b90: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63bb0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63bd0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+
+
+
+ELF file SHA256: 5631e2419
+
+Rebooting...
+ESP-ROM:esp32p4-eco7-20260109
+Build:Jan  9 2026
+rst:0xc (SW_CPU_RESET),boot:0xc (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x4ff46dba
+Core1 Saved PC:0x4ff46efc
+SPI mode:DIO, clock div:1
+load:0x4ffb60d0,len:0x1408
+load:0x4ffab2c0,len:0xcd4
+load:0x4ffadfc0,len:0x361c
+entry 0x4ffab2ca
+I (19) boot: ESP-IDF v6.2-dev-2221-g7b9cc1ac79f8-dir 2nd stage bootloader
+I (20) boot: compile time Nov  2 2026 20:35:57
+I (21) boot: chip revision: v3.2
+I (21) boot.esp32p4: SPI Speed      : 80MHz
+I (21) boot.esp32p4: SPI Mode       : DIO
+I (22) boot.esp32p4: SPI Flash Size : 8MB
+I (22) boot: Partition Table:
+I (23) boot: ## Label            Usage          Type ST Offset   Length
+I (23) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (24) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (25) boot:  2 factory          factory app      00 00 00010000 00300000
+I (26) esp_image: segment 0: paddr=00010020 vaddr=480b0020 size=55804h (350212) map
+I (68) esp_image: segment 1: paddr=0006582c vaddr=30100000 size=00224h (   548) load
+I (69) esp_image: segment 2: paddr=00065a58 vaddr=30100230 size=00058h (    88) load
+I (71) esp_image: segment 3: paddr=00065ab8 vaddr=4ff40000 size=0a560h ( 42336) load
+I (78) esp_image: segment 4: paddr=00070020 vaddr=48000020 size=ae160h (713056) map
+I (161) esp_image: segment 5: paddr=0011e188 vaddr=4ff4a560 size=09c44h ( 40004) load
+I (167) esp_image: segment 6: paddr=00127dd4 vaddr=4ff54200 size=05120h ( 20768) load
+I (175) boot: Loaded app from partition at offset 0x10000
+I (179) hex_psram: vendor id    : 0x0d (AP)
+I (179) hex_psram: Latency      : 0x01 (Fixed)
+I (180) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (180) hex_psram: dev id       : 0x03 (generation 4)
+I (180) hex_psram: density      : 0x07 (256 Mbit)
+I (181) hex_psram: good-die     : 0x06 (Pass)
+I (181) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (182) hex_psram: BurstType    : 0x00 ( Wrap)
+I (182) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (183) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (183) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (184) hex_psram: DriveStrength: 0x00 (1/1)
+I (184) MSPI Timing: Enter psram timing tuning
+I esp_psram: Found 32MB PSRAM device
+I esp_psram: Speed: 200MHz
+I (371) mmu_psram: .rodata xip on psram
+I (422) mmu_psram: .text xip on psram
+I (424) cpu_start: Multicore app
+I (922) esp_psram: SPI SRAM memory test OK
+I (931) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
+I (931) cpu_start: Pro cpu start user code
+I (931) cpu_start: cpu freq: 400000000 Hz
+I (931) app_init: Application information:
+I (932) app_init: Project name:     gsp_showcase
+I (932) app_init: App version:      1
+I (932) app_init: Compile time:     Nov  2 2026 20:35:51
+I (932) app_init: ELF file SHA256:  5631e2419...
+I (933) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (933) efuse_init: Min chip rev:     v3.1
+I (933) efuse_init: Max chip rev:     v3.99 
+I (934) efuse_init: Chip rev:         v3.2
+I (934) heap_init: Initializing. RAM available for dynamic allocation:
+I (934) heap_init: At 4FF5BDB0 len 0005F210 (380 KiB): RETENT_RAM
+I (935) heap_init: At 4FFBAFC0 len 00004BF0 (18 KiB): RAM
+I (935) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (935) heap_init: At 30100288 len 00001D78 (7 KiB): SPM
+I (936) esp_psram: Adding pool of 31680K of PSRAM memory to heap allocator
+I (936) esp_psram: Adding pool of 7K of PSRAM memory gap generated due to end address alignment of irom to the heap allocator
+I (937) esp_psram: Adding pool of 41K of PSRAM memory gap generated due to end address alignment of drom to the heap allocator
+I (938) spi_flash: detected chip: gd
+I (938) spi_flash: flash io: dio
+W (938) spi_flash: Detected size(16384k) larger than the size in the binary image header(8192k). Using the size in the binary image header.
+I (939) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (939) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (941) sleep_clock: System sleep clock ICG setting initialization
+I (941) main_task: Started on CPU0
+I (941) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (942) main_task: Calling app_main()
+I (943) hw_lcd_init: Install panel IO
+I (943) hw_lcd_init: Install LCD driver of ek79007
+I (943) ek79007: version: 2.0.2
+I (1113) hw_touch_init: Initializing touch controller (GT911)
+I (1113) GT911: I2C address initialization procedure skipped - using default GT9xx setup
+I (1114) GT911: TouchPad_ID:0x39,0x31,0x31
+I (1114) GT911: TouchPad_Config_Version:89
+I (1125) gsp_instance: Initialized instance pool: slots=8 states_per_slot=1
+I (1126) gsp_dma2d: DMA2D M2M copy engine ready
+I (1126) gsp_accel_ppa: PPA blend ready (+/-1 LSB from scalar reference)
+I (1126) gsp_accel_ppa: PPA backend ready: fill>=32768 px, async blit on (>=8192 px)
+I (1127) esp_gsp_esp_lcd: Acceleration: esp-idf-ppa
+E (1127) present_v2: create failed=ESP_ERR_INVALID_ARG size=1024x600 format=0 input=0 damage=128 mode=7 rows=0 tiles=0 fb=0
+ESP_ERROR_CHECK failed: esp_err_t 0x102 (ESP_ERR_INVALID_ARG) at 0x48009982
+file: "./main/app_main.c" line 101
+func: app_main
+expression: esp_gsp_esp_lcd_start(&app_config, &lcd_config, &ui)
+
+abort() was called at PC 0x4ff4d6f3 on core 0
+Core  0 register dump:
+MEPC    : 0x4ff4dc44  RA      : 0x4ff4d6fc  SP      : 0x4ff637f0  GP      : 0x4ff54a00  
+TP      : 0x4ff63a20  T0      : 0x37363534  T1      : 0x7271706f  T2      : 0x33323130  
+S0/FP   : 0x00000004  S1      : 0x4ff63854  A0      : 0x4ff6381c  A1      : 0x4ff63852  
+A2      : 0x00000000  A3      : 0x4ff63849  A4      : 0x00000001  A5      : 0x4ff5c000  
+A6      : 0x00000000  A7      : 0x76757473  S2      : 0x00000000  S3      : 0x00000000  
+S4      : 0x00000000  S5      : 0x00000000  S6      : 0x00000000  S7      : 0x00000000  
+S8      : 0x00000000  S9      : 0x00000000  S10     : 0x00000000  S11     : 0x00000000  
+T3      : 0x6e6d6c6b  T4      : 0x6a696867  T5      : 0x66656463  T6      : 0x62613938  
+MSTATUS : 0x00011881  MTVEC   : 0x4ff40003  MCAUSE  : 0x00000002  MTVAL   : 0x00000000  
+MHARTID : 0x00000000  
+
+Stack memory:
+4ff637f0: 0x480b4a44 0x48009986 0x4ff63850 0x4ff4b21c 0x4ffbb3a0 0x4ffbb354 0x00000001 0x4ff58690
+4ff63810: 0x4ff63854 0x4ff586ac 0x4ff63850 0x726f6261 0x20292874 0x20736177 0x6c6c6163 0x61206465
+4ff63830: 0x43502074 0x34783020 0x64346666 0x20336636 0x63206e6f 0x2065726f 0x00000030 0x00000000
+4ff63850: 0xffff0030 0x34666634 0x33663664 0x00000000 0x00000000 0x4ff63978 0xffffffff 0x4ff4d6f6
+4ff63870: 0x00000000 0x4ff63978 0xffffffff 0x48009986 0x00000026 0x00000000 0x00000070 0x4ffbb3a0
+4ff63890: 0x4ffbb354 0x00000001 0x00000000 0x00000000 0x00000000 0xffffffff 0x00000000 0x00000000
+4ff638b0: 0x00000007 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff638d0: 0x481060b8 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff638f0: 0x00000000 0x00000000 0x00000078 0x00000002 0x00000003 0x00000000 0x00000000 0x00000000
+4ff63910: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63930: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x480c7b00
+4ff63950: 0x00038350 0x00000000 0x480c7328 0x00000004 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63970: 0x481060b8 0x03000000 0x4ffbb3a0 0x4ffbb354 0x00000001 0x00000000 0x00000000 0x00000000
+4ff63990: 0xffffffff 0x00000000 0x00000000 0x00000007 0x00000000 0x00000000 0x00000000 0x00000000
+4ff639b0: 0x00000000 0x00000000 0x4ffbb354 0x4ffbb3a0 0x480b3150 0x00000000 0x480b3000 0x4800805e
+4ff639d0: 0x00000000 0x00001388 0x00000003 0x00000000 0x00000000 0x00000000 0x00000000 0x480aadfc
+4ff639f0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63a10: 0x00000000 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000000 0x4ff54598 0x4ff54548 0x4ff544f8
+4ff63a30: 0x00000001 0x4ff5e860 0x4ff5e860 0x00000000 0x00000000 0x00000000 0xa5a5a5a5 0xa5a5a5a5
+4ff63a50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000064 0x4ff636b0 0x000000ac 0x4ff59598
+4ff63a70: 0x4ff59598 0x4ff63a64 0x4ff59590 0x00000018 0x48106048 0x48106048 0x4ff63a64 0x00000000
+4ff63a90: 0x00000001 0x4ff5e860 0x6e69616d 0x00000000 0x00000000 0x00000000 0x00000000 0x4ff63a50
+4ff63ab0: 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000600 0xa5a5a5a5
+4ff63ad0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63af0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b10: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b30: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b70: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b90: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63bb0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63bd0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+
+
+
+ELF file SHA256: 5631e2419
+
+Rebooting...
+ESP-ROM:esp32p4-eco7-20260109
+Build:Jan  9 2026
+rst:0xc (SW_CPU_RESET),boot:0xc (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x4ff46dba
+Core1 Saved PC:0x4ff46efc
+SPI mode:DIO, clock div:1
+load:0x4ffb60d0,len:0x1408
+load:0x4ffab2c0,len:0xcd4
+load:0x4ffadfc0,len:0x361c
+entry 0x4ffab2ca
+I (19) boot: ESP-IDF v6.2-dev-2221-g7b9cc1ac79f8-dir 2nd stage bootloader
+I (20) boot: compile time Nov  2 2026 20:35:57
+I (21) boot: chip revision: v3.2
+I (21) boot.esp32p4: SPI Speed      : 80MHz
+I (21) boot.esp32p4: SPI Mode       : DIO
+I (22) boot.esp32p4: SPI Flash Size : 8MB
+I (22) boot: Partition Table:
+I (23) boot: ## Label            Usage          Type ST Offset   Length
+I (23) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (24) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (25) boot:  2 factory          factory app      00 00 00010000 00300000
+I (26) esp_image: segment 0: paddr=00010020 vaddr=480b0020 size=55804h (350212) map
+I (68) esp_image: segment 1: paddr=0006582c vaddr=30100000 size=00224h (   548) load
+I (69) esp_image: segment 2: paddr=00065a58 vaddr=30100230 size=00058h (    88) load
+I (71) esp_image: segment 3: paddr=00065ab8 vaddr=4ff40000 size=0a560h ( 42336) load
+I (78) esp_image: segment 4: paddr=00070020 vaddr=48000020 size=ae160h (713056) map
+I (161) esp_image: segment 5: paddr=0011e188 vaddr=4ff4a560 size=09c44h ( 40004) load
+I (167) esp_image: segment 6: paddr=00127dd4 vaddr=4ff54200 size=05120h ( 20768) load
+I (175) boot: Loaded app from partition at offset 0x10000
+I (179) hex_psram: vendor id    : 0x0d (AP)
+I (179) hex_psram: Latency      : 0x01 (Fixed)
+I (180) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (180) hex_psram: dev id       : 0x03 (generation 4)
+I (180) hex_psram: density      : 0x07 (256 Mbit)
+I (181) hex_psram: good-die     : 0x06 (Pass)
+I (181) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (182) hex_psram: BurstType    : 0x00 ( Wrap)
+I (182) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (183) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (183) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (184) hex_psram: DriveStrength: 0x00 (1/1)
+I (184) MSPI Timing: Enter psram timing tuning
+I esp_psram: Found 32MB PSRAM device
+I esp_psram: Speed: 200MHz
+I (371) mmu_psram: .rodata xip on psram
+I (422) mmu_psram: .text xip on psram
+I (424) cpu_start: Multicore app
+I (922) esp_psram: SPI SRAM memory test OK
+I (931) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
+I (931) cpu_start: Pro cpu start user code
+I (931) cpu_start: cpu freq: 400000000 Hz
+I (931) app_init: Application information:
+I (932) app_init: Project name:     gsp_showcase
+I (932) app_init: App version:      1
+I (932) app_init: Compile time:     Nov  2 2026 20:35:51
+I (932) app_init: ELF file SHA256:  5631e2419...
+I (933) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (933) efuse_init: Min chip rev:     v3.1
+I (933) efuse_init: Max chip rev:     v3.99 
+I (934) efuse_init: Chip rev:         v3.2
+I (934) heap_init: Initializing. RAM available for dynamic allocation:
+I (934) heap_init: At 4FF5BDB0 len 0005F210 (380 KiB): RETENT_RAM
+I (935) heap_init: At 4FFBAFC0 len 00004BF0 (18 KiB): RAM
+I (935) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (936) heap_init: At 30100288 len 00001D78 (7 KiB): SPM
+I (936) esp_psram: Adding pool of 31680K of PSRAM memory to heap allocator
+I (936) esp_psram: Adding pool of 7K of PSRAM memory gap generated due to end address alignment of irom to the heap allocator
+I (937) esp_psram: Adding pool of 41K of PSRAM memory gap generated due to end address alignment of drom to the heap allocator
+I (938) spi_flash: detected chip: gd
+I (938) spi_flash: flash io: dio
+W (938) spi_flash: Detected size(16384k) larger than the size in the binary image header(8192k). Using the size in the binary image header.
+I (939) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (939) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (941) sleep_clock: System sleep clock ICG setting initialization
+I (941) main_task: Started on CPU0
+I (941) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (942) main_task: Calling app_main()
+I (943) hw_lcd_init: Install panel IO
+I (943) hw_lcd_init: Install LCD driver of ek79007
+I (943) ek79007: version: 2.0.2
+I (1113) hw_touch_init: Initializing touch controller (GT911)
+I (1113) GT911: I2C address initialization procedure skipped - using default GT9xx setup
+I (1114) GT911: TouchPad_ID:0x39,0x31,0x31
+I (1114) GT911: TouchPad_Config_Version:89
+I (1125) gsp_instance: Initialized instance pool: slots=8 states_per_slot=1
+I (1126) gsp_dma2d: DMA2D M2M copy engine ready
+I (1126) gsp_accel_ppa: PPA blend ready (+/-1 LSB from scalar reference)
+I (1126) gsp_accel_ppa: PPA backend ready: fill>=32768 px, async blit on (>=8192 px)
+I (1127) esp_gsp_esp_lcd: Acceleration: esp-idf-ppa
+E (1127) present_v2: create failed=ESP_ERR_INVALID_ARG size=1024x600 format=0 input=0 damage=128 mode=7 rows=0 tiles=0 fb=0
+ESP_ERROR_CHECK failed: esp_err_t 0x102 (ESP_ERR_INVALID_ARG) at 0x48009982
+file: "./main/app_main.c" line 101
+func: app_main
+expression: esp_gsp_esp_lcd_start(&app_config, &lcd_config, &ui)
+
+abort() was called at PC 0x4ff4d6f3 on core 0
+Core  0 register dump:
+MEPC    : 0x4ff4dc44  RA      : 0x4ff4d6fc  SP      : 0x4ff637f0  GP      : 0x4ff54a00  
+TP      : 0x4ff63a20  T0      : 0x37363534  T1      : 0x7271706f  T2      : 0x33323130  
+S0/FP   : 0x00000004  S1      : 0x4ff63854  A0      : 0x4ff6381c  A1      : 0x4ff63852  
+A2      : 0x00000000  A3      : 0x4ff63849  A4      : 0x00000001  A5      : 0x4ff5c000  
+A6      : 0x00000000  A7      : 0x76757473  S2      : 0x00000000  S3      : 0x00000000  
+S4      : 0x00000000  S5      : 0x00000000  S6      : 0x00000000  S7      : 0x00000000  
+S8      : 0x00000000  S9      : 0x00000000  S10     : 0x00000000  S11     : 0x00000000  
+T3      : 0x6e6d6c6b  T4      : 0x6a696867  T5      : 0x66656463  T6      : 0x62613938  
+MSTATUS : 0x00011881  MTVEC   : 0x4ff40003  MCAUSE  : 0x00000002  MTVAL   : 0x00000000  
+MHARTID : 0x00000000  
+
+Stack memory:
+4ff637f0: 0x480b4a44 0x48009986 0x4ff63850 0x4ff4b21c 0x4ffbb3a0 0x4ffbb354 0x00000001 0x4ff58690
+4ff63810: 0x4ff63854 0x4ff586ac 0x4ff63850 0x726f6261 0x20292874 0x20736177 0x6c6c6163 0x61206465
+4ff63830: 0x43502074 0x34783020 0x64346666 0x20336636 0x63206e6f 0x2065726f 0x00000030 0x00000000
+4ff63850: 0xffff0030 0x34666634 0x33663664 0x00000000 0x00000000 0x4ff63978 0xffffffff 0x4ff4d6f6
+4ff63870: 0x00000000 0x4ff63978 0xffffffff 0x48009986 0x00000026 0x00000000 0x00000070 0x4ffbb3a0
+4ff63890: 0x4ffbb354 0x00000001 0x00000000 0x00000000 0x00000000 0xffffffff 0x00000000 0x00000000
+4ff638b0: 0x00000007 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff638d0: 0x481060b8 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff638f0: 0x00000000 0x00000000 0x00000078 0x00000002 0x00000003 0x00000000 0x00000000 0x00000000
+4ff63910: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63930: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x480c7b00
+4ff63950: 0x00038350 0x00000000 0x480c7328 0x00000004 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63970: 0x481060b8 0x03000000 0x4ffbb3a0 0x4ffbb354 0x00000001 0x00000000 0x00000000 0x00000000
+4ff63990: 0xffffffff 0x00000000 0x00000000 0x00000007 0x00000000 0x00000000 0x00000000 0x00000000
+4ff639b0: 0x00000000 0x00000000 0x4ffbb354 0x4ffbb3a0 0x480b3150 0x00000000 0x480b3000 0x4800805e
+4ff639d0: 0x00000000 0x00001388 0x00000003 0x00000000 0x00000000 0x00000000 0x00000000 0x480aadfc
+4ff639f0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63a10: 0x00000000 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000000 0x4ff54598 0x4ff54548 0x4ff544f8
+4ff63a30: 0x00000001 0x4ff5e860 0x4ff5e860 0x00000000 0x00000000 0x00000000 0xa5a5a5a5 0xa5a5a5a5
+4ff63a50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000064 0x4ff636f0 0x000000ac 0x4ff59598
+4ff63a70: 0x4ff59598 0x4ff63a64 0x4ff59590 0x00000018 0x48106048 0x48106048 0x4ff63a64 0x00000000
+4ff63a90: 0x00000001 0x4ff5e860 0x6e69616d 0x00000000 0x00000000 0x00000000 0x00000000 0x4ff63a50
+4ff63ab0: 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000600 0xa5a5a5a5
+4ff63ad0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63af0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b10: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b30: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b70: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b90: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63bb0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63bd0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+
+
+
+ELF file SHA256: 5631e2419
+
+Rebooting...
+ESP-ROM:esp32p4-eco7-20260109
+Build:Jan  9 2026
+rst:0xc (SW_CPU_RESET),boot:0xc (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x4ff46dba
+Core1 Saved PC:0x4ff46efc
+SPI mode:DIO, clock div:1
+load:0x4ffb60d0,len:0x1408
+load:0x4ffab2c0,len:0xcd4
+load:0x4ffadfc0,len:0x361c
+entry 0x4ffab2ca
+I (19) boot: ESP-IDF v6.2-dev-2221-g7b9cc1ac79f8-dir 2nd stage bootloader
+I (20) boot: compile time Nov  2 2026 20:35:57
+I (21) boot: chip revision: v3.2
+I (21) boot.esp32p4: SPI Speed      : 80MHz
+I (21) boot.esp32p4: SPI Mode       : DIO
+I (22) boot.esp32p4: SPI Flash Size : 8MB
+I (22) boot: Partition Table:
+I (23) boot: ## Label            Usage          Type ST Offset   Length
+I (23) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (24) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (25) boot:  2 factory          factory app      00 00 00010000 00300000
+I (26) esp_image: segment 0: paddr=00010020 vaddr=480b0020 size=55804h (350212) map
+I (68) esp_image: segment 1: paddr=0006582c vaddr=30100000 size=00224h (   548) load
+I (69) esp_image: segment 2: paddr=00065a58 vaddr=30100230 size=00058h (    88) load
+I (71) esp_image: segment 3: paddr=00065ab8 vaddr=4ff40000 size=0a560h ( 42336) load
+I (78) esp_image: segment 4: paddr=00070020 vaddr=48000020 size=ae160h (713056) map
+I (161) esp_image: segment 5: paddr=0011e188 vaddr=4ff4a560 size=09c44h ( 40004) load
+I (167) esp_image: segment 6: paddr=00127dd4 vaddr=4ff54200 size=05120h ( 20768) load
+I (175) boot: Loaded app from partition at offset 0x10000
+I (179) hex_psram: vendor id    : 0x0d (AP)
+I (179) hex_psram: Latency      : 0x01 (Fixed)
+I (180) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (180) hex_psram: dev id       : 0x03 (generation 4)
+I (180) hex_psram: density      : 0x07 (256 Mbit)
+I (181) hex_psram: good-die     : 0x06 (Pass)
+I (181) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (182) hex_psram: BurstType    : 0x00 ( Wrap)
+I (182) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (183) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (183) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (184) hex_psram: DriveStrength: 0x00 (1/1)
+I (184) MSPI Timing: Enter psram timing tuning
+I esp_psram: Found 32MB PSRAM device
+I esp_psram: Speed: 200MHz
+I (371) mmu_psram: .rodata xip on psram
+I (422) mmu_psram: .text xip on psram
+I (424) cpu_start: Multicore app
+I (922) esp_psram: SPI SRAM memory test OK
+I (931) cpu_start: GPIO 38 and 37 are used as console UART I/O pins
+I (931) cpu_start: Pro cpu start user code
+I (931) cpu_start: cpu freq: 400000000 Hz
+I (931) app_init: Application information:
+I (932) app_init: Project name:     gsp_showcase
+I (932) app_init: App version:      1
+I (932) app_init: Compile time:     Nov  2 2026 20:35:51
+I (932) app_init: ELF file SHA256:  5631e2419...
+I (933) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (933) efuse_init: Min chip rev:     v3.1
+I (933) efuse_init: Max chip rev:     v3.99 
+I (934) efuse_init: Chip rev:         v3.2
+I (934) heap_init: Initializing. RAM available for dynamic allocation:
+I (934) heap_init: At 4FF5BDB0 len 0005F210 (380 KiB): RETENT_RAM
+I (935) heap_init: At 4FFBAFC0 len 00004BF0 (18 KiB): RAM
+I (935) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (936) heap_init: At 30100288 len 00001D78 (7 KiB): SPM
+I (936) esp_psram: Adding pool of 31680K of PSRAM memory to heap allocator
+I (936) esp_psram: Adding pool of 7K of PSRAM memory gap generated due to end address alignment of irom to the heap allocator
+I (937) esp_psram: Adding pool of 41K of PSRAM memory gap generated due to end address alignment of drom to the heap allocator
+I (938) spi_flash: detected chip: gd
+I (938) spi_flash: flash io: dio
+W (938) spi_flash: Detected size(16384k) larger than the size in the binary image header(8192k). Using the size in the binary image header.
+I (939) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (940) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (941) sleep_clock: System sleep clock ICG setting initialization
+I (942) main_task: Started on CPU0
+I (942) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (943) main_task: Calling app_main()
+I (944) hw_lcd_init: Install panel IO
+I (944) hw_lcd_init: Install LCD driver of ek79007
+I (944) ek79007: version: 2.0.2
+I (1114) hw_touch_init: Initializing touch controller (GT911)
+I (1114) GT911: I2C address initialization procedure skipped - using default GT9xx setup
+I (1115) GT911: TouchPad_ID:0x39,0x31,0x31
+I (1115) GT911: TouchPad_Config_Version:89
+I (1126) gsp_instance: Initialized instance pool: slots=8 states_per_slot=1
+I (1127) gsp_dma2d: DMA2D M2M copy engine ready
+I (1127) gsp_accel_ppa: PPA blend ready (+/-1 LSB from scalar reference)
+I (1127) gsp_accel_ppa: PPA backend ready: fill>=32768 px, async blit on (>=8192 px)
+I (1128) esp_gsp_esp_lcd: Acceleration: esp-idf-ppa
+E (1128) present_v2: create failed=ESP_ERR_INVALID_ARG size=1024x600 format=0 input=0 damage=128 mode=7 rows=0 tiles=0 fb=0
+ESP_ERROR_CHECK failed: esp_err_t 0x102 (ESP_ERR_INVALID_ARG) at 0x48009982
+file: "./main/app_main.c" line 101
+func: app_main
+expression: esp_gsp_esp_lcd_start(&app_config, &lcd_config, &ui)
+
+abort() was called at PC 0x4ff4d6f3 on core 0
+Core  0 register dump:
+MEPC    : 0x4ff4dc44  RA      : 0x4ff4d6fc  SP      : 0x4ff637f0  GP      : 0x4ff54a00  
+TP      : 0x4ff63a20  T0      : 0x37363534  T1      : 0x7271706f  T2      : 0x33323130  
+S0/FP   : 0x00000004  S1      : 0x4ff63854  A0      : 0x4ff6381c  A1      : 0x4ff63852  
+A2      : 0x00000000  A3      : 0x4ff63849  A4      : 0x00000001  A5      : 0x4ff5c000  
+A6      : 0x00000000  A7      : 0x76757473  S2      : 0x00000000  S3      : 0x00000000  
+S4      : 0x00000000  S5      : 0x00000000  S6      : 0x00000000  S7      : 0x00000000  
+S8      : 0x00000000  S9      : 0x00000000  S10     : 0x00000000  S11     : 0x00000000  
+T3      : 0x6e6d6c6b  T4      : 0x6a696867  T5      : 0x66656463  T6      : 0x62613938  
+MSTATUS : 0x00011881  MTVEC   : 0x4ff40003  MCAUSE  : 0x00000002  MTVAL   : 0x00000000  
+MHARTID : 0x00000000  
+
+Stack memory:
+4ff637f0: 0x480b4a44 0x48009986 0x4ff63850 0x4ff4b21c 0x4ffbb3a0 0x4ffbb354 0x00000001 0x4ff58690
+4ff63810: 0x4ff63854 0x4ff586ac 0x4ff63850 0x726f6261 0x20292874 0x20736177 0x6c6c6163 0x61206465
+4ff63830: 0x43502074 0x34783020 0x64346666 0x20336636 0x63206e6f 0x2065726f 0x00000030 0x00000000
+4ff63850: 0xffff0030 0x34666634 0x33663664 0x00000000 0x00000000 0x4ff63978 0xffffffff 0x4ff4d6f6
+4ff63870: 0x00000000 0x4ff63978 0xffffffff 0x48009986 0x00000026 0x00000000 0x00000070 0x4ffbb3a0
+4ff63890: 0x4ffbb354 0x00000001 0x00000000 0x00000000 0x00000000 0xffffffff 0x00000000 0x00000000
+4ff638b0: 0x00000007 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff638d0: 0x481060b8 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff638f0: 0x00000000 0x00000000 0x00000078 0x00000002 0x00000003 0x00000000 0x00000000 0x00000000
+4ff63910: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63930: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x480c7b00
+4ff63950: 0x00038350 0x00000000 0x480c7328 0x00000004 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63970: 0x481060b8 0x03000000 0x4ffbb3a0 0x4ffbb354 0x00000001 0x00000000 0x00000000 0x00000000
+4ff63990: 0xffffffff 0x00000000 0x00000000 0x00000007 0x00000000 0x00000000 0x00000000 0x00000000
+4ff639b0: 0x00000000 0x00000000 0x4ffbb354 0x4ffbb3a0 0x480b3150 0x00000000 0x480b3000 0x4800805e
+4ff639d0: 0x00000000 0x00001388 0x00000003 0x00000000 0x00000000 0x00000000 0x00000000 0x480aadfc
+4ff639f0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff63a10: 0x00000000 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000000 0x4ff54598 0x4ff54548 0x4ff544f8
+4ff63a30: 0x00000001 0x4ff5e860 0x4ff5e860 0x00000000 0x00000000 0x00000000 0xa5a5a5a5 0xa5a5a5a5
+4ff63a50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000064 0x4ff636b0 0x000000ac 0x4ff59598
+4ff63a70: 0x4ff59598 0x4ff63a64 0x4ff59590 0x00000018 0x48106048 0x48106048 0x4ff63a64 0x00000000
+4ff63a90: 0x00000001 0x4ff5e860 0x6e69616d 0x00000000 0x00000000 0x00000000 0x00000000 0x4ff63a50
+4ff63ab0: 0x00000001 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000600 0xa5a5a5a5
+4ff63ad0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63af0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b10: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b30: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b70: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63b90: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63bb0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff63bd0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+
+
+
+ELF file SHA256: 5631e2419
+
+Rebooting...
+ESP-ROM:esp32p4-eco7-20260109
+Build:Jan  9 2026
+rst:0xc (SW_CPU_RESET),boot:0xc (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x4ff46dba
+Core1 Saved PC:0x4ff46efc
+SPI mode:DIO, clock div:1
+load:0x4ffb60d0,len:0x1408
+load:0x4ffab2c0,len:0xcd4
+load:0x4ffadfc0,len:0x361c
+entry 0x4ffab2ca
+I (19) boot: ESP-IDF v6.2-dev-2221-g7b9cc1ac79f8-dir 2nd stage bootloader
+I (20) boot: compile time Nov  2 2026 20:35:57
+I (21) boot: chip revision: v3.2
+I (21) boot.esp32p4: SPI Speed      : 80MHz
+I (21) boot.esp32p4: SPI Mode       : DIO
+I (22) boot.esp32p4: SPI Flash Size : 8MB
+I (22) boot: Partition Table:
+I (23) boot: ## Label            Usage          Type ST Offset   Length
+I (23) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (24) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (25) boot:  2 factory          factory app      00 00 00010000 00300000
+I (26) esp_image: segment 0: paddr=00010020 vaddr=480b0020 size=55804h (350212) map
+I (68) esp_image: segment 1: paddr=0006582c vaddr=30100000 size=00224h (   548) load
+I (69) esp_image: segment 2: paddr=00065a58 vaddr=30100230 size=00058h (    88) load
+I (71) esp_image: segment 3: paddr=00065ab8 vaddr=4ff40000 size=0a560h ( 42336) load
+I (78) esp_image: segment 4: paddr=00070020 vaddr=48000020 size=ae160h (713056) map
+I (161) esp_image: segment 5: paddr=0011e188 vaddr=4ff4a560 size=09c44h ( 40004) load
+I (167) esp_image: segment 6: paddr=00127dd4 vaddr=4ff54200 size=05120h ( 20768) load
+I (175) boot: Loaded app from partition at offset 0x10000
+I (179) hex_psram: vendor id    : 0x0d (AP)
+I (179) hex_psram: Latency      : 0x01 (Fixed)
+I (180) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (180) hex_psram: dev id       : 0x03 (generation 4)
+I (180) hex_psram: density      : 0x07 (256 Mbit)
+I (181) hex_psram: good-die     : 0x06 (Pass)
+I (181) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (182) hex_psram: BurstType    : 0x00 ( Wrap)
+I (182) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (183) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (183) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (184) hex_psram: DriveStrength: 0x00 (1/1)
+I (184) MSPI Timing: Enter psram timing tuning
+I esp_psram: Found 32MB PSRAM device
+I esp_psram: Speed: 200MHz
+I (371) mmu_psram: .rodata xip on psram
+I (422) mmu_psram: .text xip on psram
+I (424) cpu_start: Multicore app

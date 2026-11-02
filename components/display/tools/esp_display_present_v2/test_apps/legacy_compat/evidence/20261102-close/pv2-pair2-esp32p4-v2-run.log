@@ -1,0 +1,111 @@
+ESP-ROM:esp32p4-eco7-20260109
+Build:Jan  9 2026
+rst:0x17 (CHIP_USB_UART_RESET),boot:0xc (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x4fc04816
+Core1 Saved PC:0x4fc06020
+SPI mode:DIO, clock div:1
+load:0x4ffb60d0,len:0x14b8
+load:0x4ffab2c0,len:0xc98
+load:0x4ffadfc0,len:0x3630
+entry 0x4ffab2ca
+I (10) boot: ESP-IDF v6.2-dev-2221-g7b9cc1ac79f8-dir 2nd stage bootloader
+I (10) boot: compile time Nov  2 2026 20:03:48
+I (12) boot: chip revision: v3.2
+I (12) boot.esp32p4: SPI Speed      : 80MHz
+I (12) boot.esp32p4: SPI Mode       : DIO
+I (12) boot.esp32p4: SPI Flash Size : 16MB
+I (13) boot: Partition Table:
+I (13) boot: ## Label            Usage          Type ST Offset   Length
+I (14) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (14) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (15) boot:  2 factory          factory app      00 00 00010000 00300000
+I (16) esp_image: segment 0: paddr=00010020 vaddr=40090020 size=62bd4h (404436) map
+I (72) esp_image: segment 1: paddr=00072bfc vaddr=30100000 size=00224h (   548) load
+I (73) esp_image: segment 2: paddr=00072e28 vaddr=30100230 size=00058h (    88) load
+I (75) esp_image: segment 3: paddr=00072e88 vaddr=4ff20000 size=0d190h ( 53648) load
+I (84) esp_image: segment 4: paddr=00080020 vaddr=40000020 size=8cb08h (576264) map
+I (163) esp_image: segment 5: paddr=0010cb30 vaddr=4ff2d190 size=0377ch ( 14204) load
+I (166) esp_image: segment 6: paddr=001102b4 vaddr=4ff30980 size=0398ch ( 14732) load
+I (173) boot: Loaded app from partition at offset 0x10000
+I (176) hex_psram: vendor id    : 0x0d (AP)
+I (176) hex_psram: Latency      : 0x01 (Fixed)
+I (177) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (177) hex_psram: dev id       : 0x03 (generation 4)
+I (177) hex_psram: density      : 0x07 (256 Mbit)
+I (178) hex_psram: good-die     : 0x06 (Pass)
+I (178) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (178) hex_psram: BurstType    : 0x00 ( Wrap)
+I (179) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (179) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (179) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (180) hex_psram: DriveStrength: 0x00 (1/1)
+I (180) MSPI Timing: Enter psram timing tuning
+I (334) esp_psram: Found 32MB PSRAM device
+I (334) esp_psram: Speed: 200MHz
+I (337) cpu_start: Multicore app
+I (1185) esp_psram: SPI SRAM memory test OK
+I (1194) cpu_start: Pro cpu start user code
+I (1194) cpu_start: cpu freq: 400000000 Hz
+I (1195) app_init: Application information:
+I (1195) app_init: Project name:     pv2_compat_probe
+I (1195) app_init: App version:      1
+I (1195) app_init: Compile time:     Nov  2 2026 19:59:25
+I (1195) app_init: ELF file SHA256:  55c9366c2...
+I (1196) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (1196) efuse_init: Min chip rev:     v3.1
+I (1196) efuse_init: Max chip rev:     v3.99 
+I (1196) efuse_init: Chip rev:         v3.2
+I (1196) heap_init: Initializing. RAM available for dynamic allocation:
+I (1197) heap_init: At 4FF35E70 len 00085150 (532 KiB): RETENT_RAM
+I (1197) heap_init: At 4FFBAFC0 len 00004BF0 (18 KiB): RAM
+I (1197) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (1198) heap_init: At 30100288 len 00001D78 (7 KiB): SPM
+I (1198) esp_psram: Adding pool of 32768K of PSRAM memory to heap allocator
+I (1199) spi_flash: detected chip: gd
+I (1199) spi_flash: flash io: dio
+I (1199) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (1200) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (1201) sleep_clock: System sleep clock ICG setting initialization
+I (1202) main_task: Started on CPU0
+I (1202) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (1203) main_task: Calling app_main()
+I (1203) compat_probe: START impl=v2
+I (1203) main_task: Returned from app_main()
+I (1204) ek79007: version: 2.0.2
+I (1396) compat_probe: CASE impl=v2 mode=0 compose=0 rotation=0
+I (1505) compat_probe: CANCEL_RESUME_PASS impl=v2 mode=0
+I (2438) compat_probe: PASS impl=v2 mode=0 compose=0 rotation=0 frames=12 elapsed_us=993144 submitted=12 completed=12 heap=553467
+I (2441) compat_probe: CASE impl=v2 mode=6 compose=0 rotation=0
+I (2524) compat_probe: CANCEL_RESUME_PASS impl=v2 mode=6
+I (3465) compat_probe: PASS impl=v2 mode=6 compose=0 rotation=0 frames=12 elapsed_us=992474 submitted=12 completed=12 heap=487535
+I (3466) compat_probe: CASE impl=v2 mode=1 compose=0 rotation=0
+I (3575) compat_probe: CANCEL_RESUME_PASS impl=v2 mode=1
+I (4509) compat_probe: PASS impl=v2 mode=1 compose=0 rotation=0 frames=12 elapsed_us=994272 submitted=12 completed=12 heap=553467
+I (4512) compat_probe: CASE impl=v2 mode=3 compose=0 rotation=0
+I (4619) compat_probe: CANCEL_RESUME_PASS impl=v2 mode=3
+I (5734) compat_probe: PASS impl=v2 mode=3 compose=0 rotation=0 frames=12 elapsed_us=1175092 submitted=12 completed=12 heap=553467
+I (5737) compat_probe: CASE impl=v2 mode=4 compose=0 rotation=0
+I (5820) compat_probe: CANCEL_RESUME_PASS impl=v2 mode=4
+I (6463) compat_probe: PASS impl=v2 mode=4 compose=0 rotation=0 frames=12 elapsed_us=694474 submitted=12 completed=12 heap=487535
+I (6464) compat_probe: CASE impl=v2 mode=2 compose=0 rotation=0
+I (6573) compat_probe: CANCEL_RESUME_PASS impl=v2 mode=2
+I (7324) compat_probe: PASS impl=v2 mode=2 compose=0 rotation=0 frames=12 elapsed_us=811261 submitted=12 completed=12 heap=553467
+I (7363) compat_probe: BENCH_START impl=v2 width=1024 height=600
+I (76792) compat_probe: SCENE impl=v2 name="Empty screen" fps=241 cpu=192 render=45 flush=24
+I (76792) compat_probe: SCENE impl=v2 name="Moving wallpaper" fps=270 cpu=303 render=85 flush=13
+I (76793) compat_probe: SCENE impl=v2 name="Single rectangle" fps=248 cpu=262 render=32 flush=86
+I (76793) compat_probe: SCENE impl=v2 name="Multiple rectangles" fps=28 cpu=479 render=27 flush=761
+I (76794) compat_probe: SCENE impl=v2 name="Multiple RGB images" fps=46 cpu=590 render=40 flush=362
+I (76794) compat_probe: SCENE impl=v2 name="Multiple ARGB images" fps=13 cpu=400 render=69 flush=1194
+I (76794) compat_probe: SCENE impl=v2 name="Rotated ARGB images" fps=141 cpu=796 render=156 flush=164
+I (76795) compat_probe: SCENE impl=v2 name="Multiple labels" fps=10 cpu=396 render=25 flush=1565
+I (76795) compat_probe: SCENE impl=v2 name="Screen sized text" fps=251 cpu=1500 render=860 flush=6
+I (76796) compat_probe: SCENE impl=v2 name="Multiple arcs" fps=269 cpu=540 render=128 flush=6
+I (76796) compat_probe: SCENE impl=v2 name="Containers" fps=180 cpu=568 render=67 flush=370
+I (76796) compat_probe: SCENE impl=v2 name="Containers with overlay" fps=270 cpu=760 render=241 flush=2
+I (76797) compat_probe: SCENE impl=v2 name="Containers with opa" fps=165 cpu=654 render=101 flush=284
+I (76797) compat_probe: SCENE impl=v2 name="Containers with opa_layer" fps=70 cpu=739 render=322 flush=231
+I (76797) compat_probe: SCENE impl=v2 name="Containers with scrolling" fps=450 cpu=1306 render=404 flush=3
+I (76798) compat_probe: SCENE impl=v2 name="Widgets demo" fps=322 cpu=5679 render=2362 flush=44
+I (76798) compat_probe: BENCH_DONE impl=v2 scenes=16 fps=17 cpu=78 render=18 flush=65
+I (76837) compat_probe: ALL_PASS impl=v2

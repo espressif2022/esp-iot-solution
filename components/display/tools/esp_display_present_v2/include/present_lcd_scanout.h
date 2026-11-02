@@ -11,6 +11,7 @@ extern "C" {
 #endif
 typedef struct pv2_lcd_scanout pv2_lcd_scanout_t;
 typedef enum { PV2_LCD_DSI, PV2_LCD_RGB_BOUNCE } pv2_lcd_scanout_kind_t;
+typedef bool (*pv2_scanout_vsync_fn)(void *user, uint64_t timestamp_us, bool from_isr);
 typedef esp_err_t (*pv2_stop_scanout_fn)(void *user, uint32_t timeout_ms);
 
 typedef struct {
@@ -18,14 +19,15 @@ typedef struct {
     pv2_lcd_scanout_kind_t kind;
     uint32_t width, height;
     pv2_pixel_format_t format;
-    size_t buffer_count; /* 2..3 driver-owned framebuffers. */
+    size_t buffer_count; /* 1..3 driver-owned framebuffers; one permits active writes. */
+    pv2_byte_order_t byte_order; /* Driver-visible representation; no conversion here. */
     /** RGB requires an actual bounce-buffer panel with no application bounce
      * callback, no driver rotation/mirror, and continuous refresh. Non-bounce
      * EOF is not a reliable retirement event on every IDF/SoC. */
     bool rgb_bounce_buffer_mode;
     bool single_boundary_retire; /* When true, confirm after 1 post-submit frame_buf_complete event (matches V1 default). */
     bool delete_panel_on_stop; /* Alternative safe stop: transfers panel ownership on attach. */
-    /** Unless delete_panel_on_stop: required board-owned safe stop: successful return guarantees scanning
+    /** Unless delete_panel_on_stop or retain_driver_scanout: required board-owned safe stop: successful return guarantees scanning
      * stopped AND all registered callbacks exited; framebuffer allocations
      * may be freed after stopping DMA; backend stop does not read them again.
      * May return TIMEOUT and retry.
@@ -33,6 +35,15 @@ typedef struct {
      * of timeout_ms; a bounded board stop hook is needed for a hard deadline. */
     pv2_stop_scanout_fn stop_scanout;
     void *user;
+    /** FB external driver pool only: final stop drains the pending switch and
+     * detaches/joins callbacks, but leaves immutable driver-owned FBs scanning.
+     * Mutually exclusive with delete_panel_on_stop and stop_scanout. Panel and
+     * its FB pool must outlive this adapter/backend. No backend-owned pixels
+     * may remain visible. Normal presenter drain / V1 quiesce must not call
+     * this final-stop path. */
+    bool retain_driver_scanout;
+    pv2_scanout_vsync_fn on_vsync; /* Raw observation only; ISR-safe, nonblocking; never retirement. */
+    void *vsync_user;
 } pv2_lcd_scanout_config_t;
 
 /**
@@ -42,7 +53,8 @@ typedef struct {
  * delete_panel_on_stop. Driver must use periodic frame_buf_complete events; two events after submit returns fence one
  * already-running ISR that sampled the old framebuffer. Source is a whole exact driver FB, tight/native layout; no copy
  * fallback. COLOR_DONE/raw VSYNC never confirms a frame. Hardware timing still requires board validation; compatibility
- * is with the audited local IDF 6.2 APIs.
+ * is with the audited local IDF 6.2 APIs. The private compatibility factory
+ * explicitly fences FB0 before any producer lease when reusing a borrowed panel.
  *
  * @param config Configuration; the pointer is not retained.
  * @param out_adapter Output adapter.

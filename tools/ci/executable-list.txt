@@ -1,3 +1,5 @@
+components/display/tools/esp_display_present_v2/test_apps/legacy_compat/prepare.py
+components/display/tools/esp_display_present_v2/test_apps/legacy_compat/prepare_board.py
 components/display/tools/esp_lvgl_adapter/benchmark/metrics/convert_xunit_to_metric_json.py
 components/display/tools/esp_painter/tools/font_gen.py
 components/elf_loader/tool/symbols.py

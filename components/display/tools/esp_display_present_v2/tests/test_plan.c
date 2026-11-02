@@ -83,7 +83,11 @@ static void modes(void)
     assert(pv2_plan_resolve(&c, &p) == ESP_OK && p.images.count == 3);
     c.presenter.backend.rotation = PV2_ROTATE_90;
     c.presenter.mode = PV2_MODE_DOUBLE_DIRECT;
-    assert(pv2_plan_resolve(&c, &p) == ESP_ERR_NOT_SUPPORTED);
+    assert(pv2_plan_resolve(&c, &p) == ESP_OK && p.logical.count == 1);
+    c = config(PV2_PRESENTER_GRAM);
+    c.defaults = PV2_PLAN_V1_DEFAULTS;
+    c.presenter.backend.rotation = PV2_ROTATE_90;
+    assert(pv2_plan_resolve(&c, &p) == ESP_OK && p.conversion.count == p.tiles.count);
 }
 static void topology_and_budget(void)
 {

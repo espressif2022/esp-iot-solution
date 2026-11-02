@@ -1,0 +1,24 @@
+{
+  "gsp_package": "/home/xuxin/.cache/Espressif/ComponentManager/service_d92d8f1e/espressif__esp-gsp_1.5.1_595b3b43",
+  "version": "1.5.1",
+  "archive_sha256": "5ab508eda956a05966ddbe16b186a367e2f19e90dc5fbce0cc1b668eb8a78cab",
+  "business_sources": {
+    "app_main.c": {
+      "source": "b60241fdd73ef81266e794f938e031bcc3b7da60ad2407a7a782d1947af65ef6",
+      "staged": "b60241fdd73ef81266e794f938e031bcc3b7da60ad2407a7a782d1947af65ef6"
+    },
+    "showcase_ui.c": {
+      "source": "348e8c01fa86f1e619a6b464bb8c1a6a6c68a7a150381e913207e70cb748aa0a",
+      "staged": "348e8c01fa86f1e619a6b464bb8c1a6a6c68a7a150381e913207e70cb748aa0a"
+    },
+    "showcase_ui.h": {
+      "source": "05c86143f86be794aaa21dd12197ddaae55f302c3ed2c98a0b67eea582fdf9b7",
+      "staged": "05c86143f86be794aaa21dd12197ddaae55f302c3ed2c98a0b67eea582fdf9b7"
+    }
+  },
+  "board_helper_changes": [
+    "GPIO26 backlight",
+    "DSI 1000 Mbps"
+  ],
+  "visual_confirmation": "user: 界面正常可见"
+}

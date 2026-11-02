@@ -202,7 +202,12 @@ static void terminal(pv2_backend_t *backend, size_t index)
 
 static void cover(pv2_backend_t *backend, pv2_rect_t area)
 {
-    pv2_image_cover(&backend->image, area);
+    esp_err_t error = pv2_image_cover(&backend->image, area);
+    if (error != ESP_OK) {
+        pv2_lock_enter(&backend->lock, false);
+        fault(backend, backend->active, error);
+        pv2_lock_exit(&backend->lock, false);
+    }
 }
 
 /* Reconstruct a logical region from the immutable physical baseline. FULL /
@@ -512,7 +517,16 @@ static fb_advance_result_t advance_build_pipeline(pv2_backend_t *backend, fb_sea
             };
         }
         pv2_lock_enter(&backend->lock, false);
-        (void)pv2_image_commit(&backend->image);
+        error = pv2_image_commit(&backend->image);
+        if (error != ESP_OK) {
+            pv2_lock_exit(&backend->lock, false);
+            if (context == FB_SEAL_ACCEPTED) {
+                fail_active_build(backend, error);
+            }
+            return (fb_advance_result_t) {
+                FB_ADVANCE_FAILED, error
+            };
+        }
         slot->sequence = ++backend->sequence;
         slot->state = FB_SLOT_READY;
         backend->baseline = backend->active;
@@ -1290,7 +1304,7 @@ static esp_err_t fb_set_rotation(pv2_backend_t *backend, pv2_rotation_t rotation
     if (rotation == backend->config.rotation) {
         return ESP_OK;
     }
-    bool axes = ((unsigned)rotation ^ (unsigned)backend->config.rotation) & 1;
+    bool axes = !backend->config.fixed_logical_rotation && (((unsigned)rotation ^ (unsigned)backend->config.rotation) & 1);
     uint32_t width = axes ? backend->config.height : backend->config.width;
     uint32_t height = axes ? backend->config.width : backend->config.height;
     size_t bpp = backend->config.format == PV2_FORMAT_RGB565 ? 2 : 3;
@@ -1298,13 +1312,20 @@ static esp_err_t fb_set_rotation(pv2_backend_t *backend, pv2_rotation_t rotation
     if (!rows) {
         return ESP_ERR_INVALID_SIZE;
     }
+    uint32_t physical_width = rotation & 1 ? height : width;
+    uint32_t physical_height = rotation & 1 ? width : height;
     if (backend->config.render_contract == PV2_CONTRACT_PARTITION) {
+        for (size_t i = 0; i < backend->config.buffer_count; ++i) {
+            backend->slots[i].surface.layout.width = physical_width;
+            backend->slots[i].surface.layout.height = physical_height;
+            backend->slots[i].surface.layout.stride_bytes = (size_t)physical_width * bpp;
+        }
         backend->config.width = width;
         backend->config.height = height;
         backend->config.rotation = rotation;
         backend->config.tile_rows = rows > height ? height : rows;
         backend->baseline = SIZE_MAX;
-        pv2_image_reset(&backend->image, backend->image.width, backend->image.height);
+        pv2_image_reset(&backend->image, physical_width, physical_height);
         return ESP_OK;
     }
     bool need_scan_storage = rotation != PV2_ROTATE_0 || backend->config.draw_order != backend->config.panel_order;
@@ -1343,6 +1364,11 @@ static esp_err_t fb_set_rotation(pv2_backend_t *backend, pv2_rotation_t rotation
         backend->slots[i].surface.layout.height = height;
         backend->slots[i].surface.layout.stride_bytes = width * bpp;
         backend->slots[i].surface.layout.byte_order = backend->config.draw_order;
+        if (backend->scan_storage) {
+            backend->slots[i].scan.layout.width = physical_width;
+            backend->slots[i].scan.layout.height = physical_height;
+            backend->slots[i].scan.layout.stride_bytes = (size_t)physical_width * bpp;
+        }
     }
     backend->config.width = width;
     backend->config.height = height;

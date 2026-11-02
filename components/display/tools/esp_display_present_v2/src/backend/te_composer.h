@@ -66,3 +66,6 @@ esp_err_t pv2_te_composer_set_rotation(pv2_te_composer_t *, pv2_rotation_t);
 
 /* Output policy has already established admission; no timing model here. */
 esp_err_t pv2_te_composer_pin(pv2_te_composer_t *, pv2_te_frame_t, pv2_source_t *);
+
+/* Drained topology-preserving reinterpretation, same pixel count. */
+esp_err_t pv2_te_composer_reorient(pv2_te_composer_t *, pv2_rotation_t, uint32_t, uint32_t);

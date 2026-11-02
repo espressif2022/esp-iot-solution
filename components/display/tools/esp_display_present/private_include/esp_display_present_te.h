@@ -50,3 +50,17 @@ void esp_display_present_te_sync_get_timing(
 #ifdef __cplusplus
 }
 #endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+/* Optional embedding hooks; not part of the public presenter ABI. */
+typedef bool (*esp_display_present_te_wakeup_fn)(void *, bool from_isr);
+void esp_display_present_te_sync_set_wakeup(esp_display_present_te_sync_context_t *, esp_display_present_te_wakeup_fn, void *);
+esp_err_t esp_display_present_te_sync_destroy_checked(esp_display_present_te_sync_context_t *);
+esp_err_t esp_display_present_te_sync_admit(esp_display_present_te_sync_context_t *, size_t, uint64_t, uint64_t *);
+void esp_display_present_te_sync_abort_tx(esp_display_present_te_sync_context_t *);
+
+#ifdef __cplusplus
+}
+#endif

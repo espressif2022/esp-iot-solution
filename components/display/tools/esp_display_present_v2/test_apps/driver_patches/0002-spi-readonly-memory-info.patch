@@ -1,0 +1,45 @@
+diff --git a/components/esp_lcd/include/esp_lcd_io_spi.h b/components/esp_lcd/include/esp_lcd_io_spi.h
+index 7f498331bad..13fec2fb800 100644
+--- a/components/esp_lcd/include/esp_lcd_io_spi.h
++++ b/components/esp_lcd/include/esp_lcd_io_spi.h
+@@ -16,6 +16,15 @@ extern "C" {
+ 
+ typedef int esp_lcd_spi_bus_handle_t;  /*!< Type of LCD SPI bus handle */
+ 
++/** Immutable SPI IO facts. Serialize with IO deletion. This query performs
++ * no transfer and does not install callbacks or change driver configuration. */
++#define ESP_LCD_SPI_IO_HAS_MEMORY_INFO 1
++typedef struct {
++    bool psram_dma_direct; /*!< Configured SPI_TRANS_DMA_USE_PSRAM path. */
++} esp_lcd_panel_io_spi_memory_info_t;
++esp_err_t esp_lcd_panel_io_spi_get_memory_info(esp_lcd_panel_io_handle_t io,
++                                              esp_lcd_panel_io_spi_memory_info_t *info);
++
+ /**
+  * @brief Panel IO configuration structure, for SPI interface
+  */
+diff --git a/components/esp_lcd/spi/esp_lcd_panel_io_spi.c b/components/esp_lcd/spi/esp_lcd_panel_io_spi.c
+index 09064bc6aa1..b2b1a2796cf 100644
+--- a/components/esp_lcd/spi/esp_lcd_panel_io_spi.c
++++ b/components/esp_lcd/spi/esp_lcd_panel_io_spi.c
+@@ -69,6 +69,20 @@ typedef struct {
+     lcd_spi_trans_descriptor_t trans_pool[]; // Transaction pool
+ } esp_lcd_panel_io_spi_t;
+ 
++esp_err_t esp_lcd_panel_io_spi_get_memory_info(esp_lcd_panel_io_handle_t io,
++                                              esp_lcd_panel_io_spi_memory_info_t *info)
++{
++    ESP_RETURN_ON_FALSE(io && info, ESP_ERR_INVALID_ARG, TAG, "invalid argument");
++    if (io->tx_color != panel_io_spi_tx_color) {
++        return ESP_ERR_NOT_SUPPORTED;
++    }
++    const esp_lcd_panel_io_spi_t *spi_panel_io = __containerof(io, esp_lcd_panel_io_spi_t, base);
++    *info = (esp_lcd_panel_io_spi_memory_info_t) {
++        .psram_dma_direct = spi_panel_io->flags.psram_dma_direct,
++    };
++    return ESP_OK;
++}
++
+ esp_err_t esp_lcd_new_panel_io_spi(esp_lcd_spi_bus_handle_t bus, const esp_lcd_panel_io_spi_config_t *io_config, esp_lcd_panel_io_handle_t *ret_io)
+ {
+ #if CONFIG_LCD_ENABLE_DEBUG_LOG

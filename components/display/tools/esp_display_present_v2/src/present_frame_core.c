@@ -136,7 +136,10 @@ esp_err_t pv2_frame_core_query(pv2_frame_core_t *core, pv2_lock_t *lock, pv2_rec
         return ESP_ERR_INVALID_STATE;
     }
     bool done = record->common.terminal || (record->sealed && record->pending == 0);
-    bool released = supports_present ? true : (record->common.terminal || record->pending == 0);
+    /* Presentation capability is not evidence that asynchronous source access
+     * ended. Keep the existing conservative completion point: finish the frame
+     * before reporting source release; retained scanout still requires a lease. */
+    bool released = done && record->pending == 0 && record->leased == 0;
     *out = pv2_record_status(&record->common, record->sealed || record->common.terminal, released, done,
                              supports_present && done && record->common.result == ESP_OK);
     pv2_lock_exit(lock, false);

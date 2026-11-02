@@ -43,6 +43,13 @@ typedef struct {
      * -> PARTITION, FB 1 -> NONE; IO with both TE budgets -> TE, otherwise GRAM.
      * Named FB modes set buffer_count; external array must have that many entries. */
     pv2_output_caps_t output_caps; /* Zero region alignments mean 1. */
+    /** Per physical panel.submit completion deadline, including driver call
+     * and callback dispatch. Zero disables (legacy V2 behavior). Timeout is a
+     * sticky fault, never synthetic completion or permission to free pixels.
+     * Checked by service/task APIs and completion ingress; an existing sender
+     * wakes at the next deadline. No extra task; a blocking driver call cannot
+     * be interrupted. Not a deadline for drawing, copy, repair or waiting TE. */
+    uint32_t transfer_timeout_ms;
 } pv2_presenter_config_t;
 
 typedef enum { PV2_PRESENTER_RUNNING, PV2_PRESENTER_CLOSING, PV2_PRESENTER_STOPPED } pv2_presenter_state_t;

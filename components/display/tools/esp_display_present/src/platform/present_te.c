@@ -59,7 +59,9 @@ struct esp_display_present_te_sync_context {
     int64_t estimated_tx_duration_us;
     int64_t blanking_duration_us;
     bool tx_in_progress;
-    bool isr_registered;
+    bool isr_registered, isr_removed;
+    esp_display_present_te_wakeup_fn wakeup;
+    void *wakeup_user;
     gpio_int_type_t blanking_start_edge;
     gpio_int_type_t blanking_end_edge;
     gpio_int_type_t sync_edge;
@@ -329,6 +331,13 @@ static void IRAM_ATTR te_gpio_isr(void *arg)
 
     if (selected_edge) {
         xSemaphoreGiveFromISR(ctx->te_vsync_sem, &need_yield);
+        portENTER_CRITICAL_ISR(&ctx->lock);
+        esp_display_present_te_wakeup_fn wakeup = ctx->wakeup;
+        void *user = ctx->wakeup_user;
+        portEXIT_CRITICAL_ISR(&ctx->lock);
+        if (wakeup && wakeup(user, true)) {
+            need_yield = pdTRUE;
+        }
     }
     if (need_yield) {
         portYIELD_FROM_ISR();
@@ -355,6 +364,13 @@ static void te_phase_wakeup(void *arg)
 {
     esp_display_present_te_sync_context_t *ctx = arg;
     (void)xSemaphoreGive(ctx->te_vsync_sem);
+    portENTER_CRITICAL(&ctx->lock);
+    esp_display_present_te_wakeup_fn wakeup = ctx->wakeup;
+    void *user = ctx->wakeup_user;
+    portEXIT_CRITICAL(&ctx->lock);
+    if (wakeup) {
+        (void)wakeup(user, false);
+    }
 }
 
 static bool te_phase_timer_destroy(esp_display_present_te_sync_context_t *ctx)
@@ -363,7 +379,7 @@ static bool te_phase_timer_destroy(esp_display_present_te_sync_context_t *ctx)
         return true;
     }
     esp_err_t ret = esp_timer_stop_blocking(ctx->phase_timer, portMAX_DELAY);
-    if (ret == ESP_OK) {
+    if (ret == ESP_OK || ret == ESP_ERR_INVALID_STATE) {
         ret = esp_timer_delete(ctx->phase_timer);
     }
     if (ret != ESP_OK) {
@@ -455,6 +471,7 @@ fail:
     }
 #if PRESENT_TE_PHASE_TIMER
     if (!te_phase_timer_destroy(ctx)) {
+        *out_ctx = ctx; /* Checked embedders can retain and retry failed cleanup. */
         return ret;
     }
 #endif
@@ -478,7 +495,13 @@ static bool te_gpio_detach(esp_display_present_te_sync_context_t *ctx)
     if (!ctx->isr_registered) {
         return true;
     }
-    esp_err_t ret = gpio_isr_handler_remove(ctx->cfg.gpio_num);
+    esp_err_t ret = ESP_OK;
+    if (!ctx->isr_removed) {
+        ret = gpio_isr_handler_remove(ctx->cfg.gpio_num);
+        if (ret == ESP_OK) {
+            ctx->isr_removed = true;
+        }
+    }
 #if CONFIG_ESP_IPC_ENABLE
     /* Removal stops new invocations. A task on each other core runs only
      * after an already-entered GPIO ISR has returned. */
@@ -496,17 +519,17 @@ static bool te_gpio_detach(esp_display_present_te_sync_context_t *ctx)
     return true;
 }
 
-void esp_display_present_te_sync_destroy(esp_display_present_te_sync_context_t *ctx)
+esp_err_t esp_display_present_te_sync_destroy_checked(esp_display_present_te_sync_context_t *ctx)
 {
     if (!ctx) {
-        return;
+        return ESP_OK;
     }
     if (!te_gpio_detach(ctx)) {
-        return;
+        return ESP_FAIL;
     }
 #if PRESENT_TE_PHASE_TIMER
     if (!te_phase_timer_destroy(ctx)) {
-        return;
+        return ESP_FAIL;
     }
 #endif
     if (ctx->te_vsync_sem) {
@@ -514,6 +537,12 @@ void esp_display_present_te_sync_destroy(esp_display_present_te_sync_context_t *
     }
     ESP_LOGI(TAG, "TE sync destroyed: gpio=%d", ctx->cfg.gpio_num);
     free(ctx);
+    return ESP_OK;
+}
+
+void esp_display_present_te_sync_destroy(esp_display_present_te_sync_context_t *ctx)
+{
+    (void)esp_display_present_te_sync_destroy_checked(ctx);
 }
 
 void esp_display_present_te_sync_begin_frame(esp_display_present_te_sync_context_t *ctx, size_t transfer_bytes)
@@ -740,4 +769,51 @@ void esp_display_present_te_sync_get_timing(
         *out_blanking_us = ctx->blanking_duration_us;
     }
     portEXIT_CRITICAL((portMUX_TYPE *)&ctx->lock);
+}
+
+void esp_display_present_te_sync_set_wakeup(esp_display_present_te_sync_context_t *ctx,
+                                            esp_display_present_te_wakeup_fn callback, void *user)
+{
+    portENTER_CRITICAL(&ctx->lock);
+    ctx->wakeup = callback;
+    ctx->wakeup_user = user;
+    portEXIT_CRITICAL(&ctx->lock);
+}
+
+esp_err_t esp_display_present_te_sync_admit(esp_display_present_te_sync_context_t *ctx,
+                                            size_t bytes, uint64_t after, uint64_t *edge)
+{
+    if (!ctx || !edge) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    esp_display_present_te_sync_begin_frame(ctx, bytes);
+    portENTER_CRITICAL(&ctx->lock);
+    bool measured = ctx->te_period_us > 0 && ctx->blanking_duration_us > 0;
+    bool safe = ctx->schedule.strategy != TE_STRATEGY_UNKNOWN && ctx->schedule.strategy != TE_STRATEGY_OVERRUN;
+    portEXIT_CRITICAL(&ctx->lock);
+    if (!measured || !safe) {
+        return ESP_ERR_TIMEOUT;
+    }
+    esp_err_t error = esp_display_present_te_sync_wait_for_vsync(ctx);
+    if (error != ESP_OK) {
+        return error;
+    }
+    portENTER_CRITICAL(&ctx->lock);
+    uint64_t selected = ctx->last_te_isr_time_us;
+    portEXIT_CRITICAL(&ctx->lock);
+    if (selected <= after) {
+        return ESP_ERR_TIMEOUT;
+    }
+    *edge = selected;
+    return ESP_OK;
+}
+
+void IRAM_ATTR esp_display_present_te_sync_abort_tx(esp_display_present_te_sync_context_t *ctx)
+{
+    if (!ctx) {
+        return;
+    }
+    portENTER_CRITICAL_SAFE(&ctx->lock);
+    ctx->tx_in_progress = false;
+    portEXIT_CRITICAL_SAFE(&ctx->lock);
 }

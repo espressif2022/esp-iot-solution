@@ -7,7 +7,7 @@ set(PRESENT_SOURCES src/present_os.c src/present_event.c src/present_te_timing.c
 if(COMMAND idf_component_register)
     idf_component_register(SRCS ${PRESENT_SOURCES} INCLUDE_DIRS include
         PRIV_INCLUDE_DIRS src REQUIRES esp_common esp_lcd
-        PRIV_REQUIRES freertos esp_timer heap esp_mm esp_hw_support esp_driver_ppa esp_driver_dma)
+        PRIV_REQUIRES freertos esp_timer heap esp_mm esp_hw_support esp_driver_ppa esp_driver_dma esp_system)
     target_compile_features(${COMPONENT_LIB} PRIVATE c_std_11)
     return()
 endif()
@@ -38,11 +38,24 @@ foreach(name te_timing image frame_core plan records coverage repair accel scano
     add_test(NAME ${name} COMMAND test_${name})
     set_tests_properties(${name} PROPERTIES TIMEOUT 15)
 endforeach()
+target_link_options(test_image PRIVATE -Wl,--wrap=pv2_alloc)
+target_link_options(test_scanout PRIVATE -Wl,--wrap=pv2_isr_barrier)
 target_link_options(test_rotation PRIVATE -Wl,--wrap=pv2_alloc_pixels -Wl,--wrap=pv2_alloc_pixels_in -Wl,--wrap=pv2_free)
 add_executable(header_smoke tests/header_smoke.cpp)
 target_link_libraries(header_smoke PRIVATE present_v2)
 target_compile_options(header_smoke PRIVATE -Wall -Wextra -Werror)
 add_test(NAME headers_cpp COMMAND header_smoke)
+
+# Test-only driver-boundary recorder and trace checker. No production hooks.
+add_executable(test_boundary_trace test_apps/scanout_boundary/main/boundary_trace.c
+    test_apps/scanout_boundary/test_trace.c)
+target_compile_definitions(test_boundary_trace PRIVATE BOUNDARY_HOST=1)
+target_compile_options(test_boundary_trace PRIVATE -Wall -Wextra -Werror -UNDEBUG)
+target_link_libraries(test_boundary_trace PRIVATE present_v2)
+add_test(NAME boundary_trace COMMAND test_boundary_trace)
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+add_test(NAME boundary_analyze COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_apps/scanout_boundary/test_analyze.py)
 
 set(PRESENT_LVGL_DIR "" CACHE PATH "Optional existing LVGL 9.5+ source directory")
 if(PRESENT_LVGL_DIR)
@@ -104,3 +117,58 @@ foreach(variant cpu ppa dma2d both)
     add_test(NAME executor_${variant} COMMAND test_executor_${variant})
     set_tests_properties(executor_${variant} PROPERTIES TIMEOUT 15)
 endforeach()
+
+# Private V1-facade resource aggregate; the original component stays default.
+add_executable(test_legacy_resources tests/test_legacy_resources.c)
+target_compile_options(test_legacy_resources PRIVATE -Wall -Wextra -Werror -UNDEBUG)
+target_include_directories(test_legacy_resources PRIVATE compat/esp_display_present/include)
+target_link_libraries(test_legacy_resources PRIVATE present_legacy_resources)
+add_test(NAME legacy_resources COMMAND test_legacy_resources)
+set_tests_properties(legacy_resources PROPERTIES TIMEOUT 15)
+
+# Opt-in V1 symbols live outside the core: benchmarks may still link V1+V2.
+add_library(present_legacy_resources STATIC compat/esp_display_present/src/resources.c)
+target_include_directories(present_legacy_resources PUBLIC compat/esp_display_present/include
+    PRIVATE src compat/esp_display_present/src ../esp_display_present/private_include)
+target_compile_definitions(present_legacy_resources PRIVATE PV2_HOST=1)
+target_compile_options(present_legacy_resources PRIVATE -Wall -Wextra -Werror)
+target_link_libraries(present_legacy_resources PUBLIC present_v2)
+add_library(present_legacy STATIC compat/esp_display_present/src/facade.c)
+target_include_directories(present_legacy PUBLIC compat/esp_display_present/include
+    PRIVATE src compat/esp_display_present/src)
+target_link_libraries(present_legacy PUBLIC present_legacy_resources)
+target_compile_definitions(present_legacy PRIVATE PV2_HOST=1)
+target_compile_options(present_legacy PRIVATE -Wall -Wextra -Werror)
+if(PRESENT_LVGL_DIR)
+    add_library(present_legacy_lvgl STATIC compat/esp_lv_present/src/legacy_lvgl.c)
+    target_include_directories(present_legacy_lvgl PUBLIC compat/esp_lv_present/include
+        PRIVATE src compat/esp_display_present/src)
+    target_compile_definitions(present_legacy_lvgl PRIVATE PV2_HOST=1)
+    target_compile_options(present_legacy_lvgl PRIVATE -Wall -Wextra -Werror)
+    target_link_libraries(present_legacy_lvgl PUBLIC present_legacy present_lvgl_v2)
+endif()
+
+add_executable(test_legacy_facade tests/test_legacy_facade.c)
+target_include_directories(test_legacy_facade PRIVATE src compat/esp_display_present/src)
+target_compile_definitions(test_legacy_facade PRIVATE PV2_HOST=1)
+target_compile_options(test_legacy_facade PRIVATE -Wall -Wextra -Werror -UNDEBUG)
+target_link_libraries(test_legacy_facade PRIVATE present_legacy)
+if(PRESENT_LVGL_DIR)
+    target_compile_definitions(test_legacy_facade PRIVATE LEGACY_WITH_LVGL=1)
+    target_link_libraries(test_legacy_facade PRIVATE present_legacy_lvgl m)
+endif()
+add_test(NAME legacy_facade COMMAND test_legacy_facade)
+set_tests_properties(legacy_facade PROPERTIES TIMEOUT 20)
+
+add_executable(test_transfer_timeout tests/test_transfer_timeout.c)
+target_include_directories(test_transfer_timeout PRIVATE src)
+target_compile_definitions(test_transfer_timeout PRIVATE PV2_HOST=1)
+target_compile_options(test_transfer_timeout PRIVATE -Wall -Wextra -Werror -UNDEBUG)
+target_link_libraries(test_transfer_timeout PRIVATE present_v2)
+target_link_options(test_transfer_timeout PRIVATE -Wl,--wrap=pv2_now_us -Wl,--wrap=pv2_alloc)
+add_test(NAME transfer_timeout COMMAND test_transfer_timeout)
+set_tests_properties(transfer_timeout PROPERTIES TIMEOUT 10)
+
+# Compile the actual V1 pure geometry implementation as a Host oracle only.
+target_sources(test_legacy_facade PRIVATE ../esp_display_present/src/pixel/present_geometry.c)
+target_include_directories(test_legacy_facade PRIVATE ../esp_display_present/include)

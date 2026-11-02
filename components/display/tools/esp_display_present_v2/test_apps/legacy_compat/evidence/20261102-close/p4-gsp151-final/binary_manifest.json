@@ -1,0 +1,6 @@
+{
+  "bootloader/bootloader.bin": "869220961346ba4b6545a9b73d6f7889284b45df5ce23be00b1646ae75d889a7",
+  "partition_table/partition-table.bin": "73c0b5c3e5fcba3a151cc70c453c93dd5f4798899e7f2f8cca76da1f32ffc501",
+  "gsp_showcase.bin": "4d11ba7ee5e8bb0b0e4074e54794623e4b95eea1654e724f2dd196e850b394ef",
+  "gsp_showcase.elf": "14a4b60985770a4d8759860968efb33f78f0c90326b12048f116c768b622183d"
+}

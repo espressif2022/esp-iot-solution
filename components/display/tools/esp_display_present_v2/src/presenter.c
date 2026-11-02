@@ -9,12 +9,20 @@
 #include "present_os.h"
 #include "present_limits.h"
 #include <limits.h>
+#include <stdatomic.h>
+#include "presenter_control.h"
 
 typedef struct {
     uint64_t token;
     pv2_receipt_t backend;
     pv2_frame_status_t status;
 } observer_t;
+
+/* Timing evidence only. Backend/adapter retain all pixel ownership. */
+typedef struct {
+    uint64_t cookie, started_us;
+    bool reported;
+} transfer_watch_t;
 
 struct pv2_presenter {
     pv2_backend_t *backend;
@@ -23,6 +31,8 @@ struct pv2_presenter {
     pv2_event_t *work;
     pv2_worker_t *worker;
     pv2_lock_t control;
+    uint64_t transfer_timeout_us; /* Immutable before callback registration. */
+    transfer_watch_t *transfers; /* Allocated only when the deadline policy is enabled. */
     bool exit_requested;
     pv2_panel_adapter_t panel;
     pv2_progress_fn user_progress;
@@ -44,7 +54,7 @@ struct pv2_presenter {
     size_t head, count, limit;
     uint32_t timeout;
     bool canceling;
-    pv2_presenter_state_t state;
+    _Atomic pv2_presenter_state_t state;
     uint64_t committed, completed;
     esp_err_t first_error;
 };
@@ -54,6 +64,93 @@ static bool PV2_ISR_ATTR notify(pv2_presenter_t *presenter, bool isr)
     bool yield = pv2_event_signal(presenter->changed, isr);
     yield |= pv2_event_signal(presenter->work, isr);
     return yield;
+}
+
+/* The control lock protects timing stamps; never call the backend under it.
+ * A completion which races the task timeout reports FAULT before the genuine
+ * DONE itself, so a successful receipt cannot escape ahead of the timeout. */
+static bool PV2_ISR_ATTR finish_transfer(pv2_presenter_t *presenter, const pv2_backend_event_t *event, bool isr)
+{
+    if (!presenter->transfer_timeout_us ||
+            (event->kind != PV2_EVENT_TRANSFER_DONE && event->kind != PV2_EVENT_SCANOUT_CONFIRMED)) {
+        return false;
+    }
+    uint64_t now = pv2_now_us();
+    bool expired = false;
+    pv2_lock_enter(&presenter->control, isr);
+    for (size_t i = 0; i < PV2_MAX_FRAMES; ++i) {
+        transfer_watch_t *watch = &presenter->transfers[i];
+        if (watch->cookie && watch->cookie == event->transaction_cookie) {
+            expired = now - watch->started_us >= presenter->transfer_timeout_us;
+            watch->cookie = 0;
+            break;
+        }
+    }
+    pv2_lock_exit(&presenter->control, isr);
+    if (!expired) {
+        return false;
+    }
+    const pv2_backend_event_t failure = {.kind = PV2_EVENT_FAULT,
+                                         .transaction_cookie = event->transaction_cookie, .timestamp_us = now, .result = ESP_ERR_TIMEOUT
+                                        };
+    return presenter->backend_event(presenter->backend_event_user, &failure, isr);
+}
+
+/* Task-only, presenter gate held: submissions cannot start during the scan. */
+static void expire_transfers(pv2_presenter_t *presenter)
+{
+    if (!presenter->transfer_timeout_us) {
+        return;
+    }
+    uint64_t expired[PV2_MAX_FRAMES];
+    size_t count = 0;
+    uint64_t now = pv2_now_us();
+    pv2_lock_enter(&presenter->control, false);
+    for (size_t i = 0; i < PV2_MAX_FRAMES; ++i) {
+        transfer_watch_t *watch = &presenter->transfers[i];
+        if (watch->cookie && !watch->reported && now - watch->started_us >= presenter->transfer_timeout_us) {
+            watch->reported = true;
+            expired[count++] = watch->cookie;
+        }
+    }
+    pv2_lock_exit(&presenter->control, false);
+    for (size_t i = 0; i < count; ++i) {
+        const pv2_backend_event_t event = {.kind = PV2_EVENT_FAULT,
+                                           .transaction_cookie = expired[i], .timestamp_us = now, .result = ESP_ERR_TIMEOUT
+                                          };
+        (void)presenter->backend_event(presenter->backend_event_user, &event, false);
+    }
+    if (count) {
+        (void)notify(presenter, false);
+    }
+}
+
+static uint32_t transfer_wait_ms(pv2_presenter_t *presenter)
+{
+    if (!presenter->transfer_timeout_us) {
+        return UINT32_MAX;
+    }
+    uint64_t remaining_us = UINT64_MAX, now = pv2_now_us();
+    pv2_lock_enter(&presenter->control, false);
+    for (size_t i = 0; i < PV2_MAX_FRAMES; ++i) {
+        transfer_watch_t *watch = &presenter->transfers[i];
+        if (!watch->cookie || watch->reported) {
+            continue;
+        }
+        /* Sender computes its next wait outside gate; a producer may have
+         * inserted a newer stamp after this clock snapshot. */
+        uint64_t elapsed = now >= watch->started_us ? now - watch->started_us : 0;
+        uint64_t left = elapsed >= presenter->transfer_timeout_us ? 0 : presenter->transfer_timeout_us - elapsed;
+        if (left < remaining_us) {
+            remaining_us = left;
+        }
+    }
+    pv2_lock_exit(&presenter->control, false);
+    if (remaining_us == UINT64_MAX) {
+        return UINT32_MAX;
+    }
+    uint64_t ms = (remaining_us + 999) / 1000;
+    return ms >= UINT32_MAX ? UINT32_MAX - 1 : (uint32_t)ms;
 }
 
 static bool copy_progress(void *user, bool isr)
@@ -69,7 +166,8 @@ static bool copy_progress(void *user, bool isr)
 static bool PV2_ISR_ATTR panel_event(void *context, const pv2_backend_event_t *event, bool isr)
 {
     pv2_presenter_t *presenter = context;
-    bool yield = presenter->backend_event(presenter->backend_event_user, event, isr);
+    bool yield = finish_transfer(presenter, event, isr);
+    yield |= presenter->backend_event(presenter->backend_event_user, event, isr);
     yield |= notify(presenter, isr);
     return yield;
 }
@@ -91,14 +189,63 @@ static pv2_tx_result_t panel_submit(void *context, const pv2_surface_t *surface,
         return (pv2_tx_result_t) {
         PV2_TX_REJECTED, ESP_ERR_INVALID_ARG
     };
-    return presenter->panel.submit(presenter->panel.context, surface, area, cookie);
+    if (!presenter->transfer_timeout_us) {
+        return presenter->panel.submit(presenter->panel.context, surface, area, cookie);
+    }
+    expire_transfers(presenter);
+    pv2_backend_fault_t fault;
+    esp_err_t error = presenter->ops->get_fault(presenter->backend, &fault);
+    if (error != ESP_OK || fault.result != ESP_OK) {
+        return (pv2_tx_result_t) {
+            PV2_TX_REJECTED, error != ESP_OK ? error : fault.result
+        };
+    }
+    size_t index = PV2_MAX_FRAMES;
+    pv2_lock_enter(&presenter->control, false);
+    for (size_t i = 0; i < PV2_MAX_FRAMES; ++i) {
+        if (!presenter->transfers[i].cookie) {
+            index = i;
+            presenter->transfers[i] = (transfer_watch_t) {
+                .cookie = cookie, .started_us = pv2_now_us()
+            };
+            break;
+        }
+    }
+    pv2_lock_exit(&presenter->control, false);
+    if (index == PV2_MAX_FRAMES) {
+        return (pv2_tx_result_t) {
+            PV2_TX_REJECTED, ESP_ERR_NO_MEM
+        };
+    }
+    pv2_tx_result_t result = presenter->panel.submit(presenter->panel.context, surface, area, cookie);
+    if (result.acceptance == PV2_TX_REJECTED) {
+        pv2_lock_enter(&presenter->control, false);
+        /* An early completion may already have consumed this timing record. */
+        if (presenter->transfers[index].cookie == cookie) {
+            presenter->transfers[index].cookie = 0;
+        }
+        pv2_lock_exit(&presenter->control, false);
+    }
+    expire_transfers(presenter);
+    (void)pv2_event_signal(presenter->work, false);
+    return result;
 }
 
 static esp_err_t panel_quiesce(void *context, uint32_t timeout)
 {
     pv2_presenter_t *presenter = context;
     /* Underlying quiesce joins the entire panel_event callback, including notify. */
-    return presenter->panel.quiesce(presenter->panel.context, timeout);
+    expire_transfers(presenter);
+    esp_err_t error = presenter->panel.quiesce(presenter->panel.context, timeout);
+    expire_transfers(presenter);
+    if (error == ESP_OK && presenter->transfers) {
+        pv2_lock_enter(&presenter->control, false);
+        for (size_t i = 0; i < PV2_MAX_FRAMES; ++i) {
+            presenter->transfers[i].cookie = 0;
+        }
+        pv2_lock_exit(&presenter->control, false);
+    }
+    return error;
 }
 
 static bool exiting(pv2_presenter_t *presenter)
@@ -119,6 +266,7 @@ static void request_exit(pv2_presenter_t *presenter)
 
 static esp_err_t pump_backend(pv2_presenter_t *presenter)
 {
+    expire_transfers(presenter);
     return presenter->kind == PV2_PRESENTER_TE ? pv2_te_service(presenter->backend) :
            presenter->kind == PV2_PRESENTER_FB ? pv2_fb_service(presenter->backend) : pv2_gram_service(presenter->backend);
 }
@@ -127,7 +275,7 @@ static void sender(void *context)
 {
     pv2_presenter_t *presenter = context;
     for (;;) {
-        (void)pv2_event_wait(presenter->work, UINT32_MAX);
+        (void)pv2_event_wait(presenter->work, transfer_wait_ms(presenter));
         if (exiting(presenter)) {
             return;
         }
@@ -150,6 +298,7 @@ static void free_presenter(pv2_presenter_t *presenter)
     pv2_event_destroy(presenter->changed);
     pv2_mutex_destroy(presenter->gate);
     pv2_lock_destroy(&presenter->control);
+    pv2_free(presenter->transfers);
     pv2_free(presenter);
 }
 
@@ -179,6 +328,7 @@ static void record_error(pv2_presenter_t *presenter, esp_err_t error)
 
 static esp_err_t refresh_fault(pv2_presenter_t *presenter)
 {
+    expire_transfers(presenter);
     pv2_backend_fault_t fault;
     esp_err_t ret = presenter->ops->get_fault(presenter->backend, &fault);
     if (ret == ESP_OK) {
@@ -224,6 +374,10 @@ static esp_err_t wait_change(pv2_presenter_t *presenter, uint64_t start, uint32_
     if (!budget) {
         return ESP_ERR_TIMEOUT;
     }
+    uint32_t transfer_budget = transfer_wait_ms(presenter);
+    if (transfer_budget < budget) {
+        budget = transfer_budget;
+    }
     uint32_t slice = (presenter->kind == PV2_PRESENTER_TE && budget > 1) ? 1 : budget;
     pv2_mutex_give(presenter->gate);
     bool signaled = pv2_event_wait(presenter->changed, slice);
@@ -231,6 +385,7 @@ static esp_err_t wait_change(pv2_presenter_t *presenter, uint64_t start, uint32_
      * backend state concurrently. Latency of an already running driver call
      * is not a hard real-time bound; adapter submit must return promptly. */
     (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    expire_transfers(presenter);
     return (signaled || remaining(start, timeout) > 0) ? ESP_OK : ESP_ERR_TIMEOUT;
 }
 
@@ -339,6 +494,7 @@ esp_err_t pv2_presenter_create(const pv2_presenter_config_t *config, pv2_present
     if (!presenter) {
         return ESP_ERR_NO_MEM;
     }
+    atomic_init(&presenter->state, PV2_PRESENTER_RUNNING);
     if (!pv2_lock_init(&presenter->control)) {
         pv2_free(presenter);
         return ESP_ERR_NO_MEM;
@@ -370,6 +526,14 @@ esp_err_t pv2_presenter_create(const pv2_presenter_config_t *config, pv2_present
     presenter->event_isr = presenter->ops->on_event_isr;
     presenter->owner = pv2_current_task();
     presenter->timeout = config->timeout_ms;
+    presenter->transfer_timeout_us = (uint64_t)config->transfer_timeout_ms * 1000;
+    if (presenter->transfer_timeout_us) {
+        presenter->transfers = pv2_alloc(PV2_MAX_FRAMES * sizeof(*presenter->transfers));
+        if (!presenter->transfers) {
+            free_presenter(presenter);
+            return ESP_ERR_NO_MEM;
+        }
+    }
     presenter->limit = config->backend.max_frames;
     presenter->panel = config->backend.panel;
     presenter->user_progress = config->backend.on_progress;
@@ -514,6 +678,10 @@ static esp_err_t acquire_buffer_impl(pv2_presenter_t *presenter, pv2_lease_t *ou
     }
     uint64_t start = pv2_now_ms();
     for (;;) {
+        ret = refresh_fault(presenter);
+        if (ret != ESP_OK || presenter->first_error != ESP_OK) {
+            return ret != ESP_OK ? ret : presenter->first_error;
+        }
         ret = presenter->ops->acquire(presenter->backend, presenter->frame, NULL, 0, &presenter->held);
         if (ret != ESP_ERR_TIMEOUT) {
             break;
@@ -590,6 +758,10 @@ static esp_err_t submit_buffer_impl(pv2_presenter_t *presenter, const pv2_lease_
                                  };
     uint64_t start = pv2_now_ms();
     for (;;) {
+        ret = refresh_fault(presenter);
+        if (ret != ESP_OK || presenter->first_error != ESP_OK) {
+            return ret != ESP_OK ? ret : presenter->first_error;
+        }
         ret = presenter->ops->submit_region_ex(presenter->backend, presenter->frame, presenter->held.id, &submit);
         if (ret != ESP_ERR_NO_MEM && ret != ESP_ERR_TIMEOUT) {
             break;
@@ -628,12 +800,11 @@ static esp_err_t commit_frame_impl(pv2_presenter_t *presenter, const pv2_frame_c
     return ESP_OK;
 }
 
+/* Gate held. Public cancellation requires the owner. The private facade
+ * bridge requires its producer session to have already revoked the frame. */
 static esp_err_t cancel_frame_impl(pv2_presenter_t *presenter, uint32_t timeout)
 {
-    esp_err_t ret = check_owner(presenter);
-    if (ret != ESP_OK) {
-        return ret;
-    }
+    esp_err_t ret;
     if (!presenter->frame.value) {
         return ESP_OK;
     }
@@ -686,31 +857,22 @@ static esp_err_t drain_impl(pv2_presenter_t *presenter, uint32_t timeout)
 
 static esp_err_t get_status_impl(pv2_presenter_t *presenter, pv2_presenter_status_t *out)
 {
-    esp_err_t ret = check_owner(presenter);
-    if (ret != ESP_OK) {
-        return ret;
-    }
+    esp_err_t ret;
     if (!out) {
         return ESP_ERR_INVALID_ARG;
     }
     ret = reap_ready(presenter);
-    if (ret != ESP_OK) {
-        return ret;
-    }
     *out = (pv2_presenter_status_t) {
         .state = presenter->state, .frame_active = presenter->frame.value != 0,
         .cancel_pending = presenter->canceling, .pending_frames = presenter->count,
         .committed_frames = presenter->committed, .completed_frames = presenter->completed, .first_error = presenter->first_error, .last_service_error = presenter->last_service_error
     };
-    return ESP_OK;
+    return ret;
 }
 
 static esp_err_t stop_impl(pv2_presenter_t *presenter, uint32_t timeout)
 {
-    esp_err_t ret = check_owner(presenter);
-    if (ret != ESP_OK) {
-        return ret;
-    }
+    esp_err_t ret;
     presenter->state = PV2_PRESENTER_CLOSING;
     ret = presenter->ops->stop(presenter->backend, timeout);
     presenter->held = (pv2_lease_t) {
@@ -731,10 +893,7 @@ static esp_err_t stop_impl(pv2_presenter_t *presenter, uint32_t timeout)
 
 static esp_err_t destroy_impl(pv2_presenter_t *presenter)
 {
-    esp_err_t ret = check_owner(presenter);
-    if (ret != ESP_OK) {
-        return ret;
-    }
+    esp_err_t ret;
     if (presenter->state != PV2_PRESENTER_STOPPED || presenter->count || presenter->frame.value) {
         return ESP_ERR_INVALID_STATE;
     }
@@ -770,7 +929,7 @@ esp_err_t pv2_presenter_get_caps(pv2_presenter_t *presenter, pv2_backend_caps_t 
     return ret;
 }
 
-esp_err_t pv2_presenter_begin_next_frame(pv2_presenter_t *presenter, const pv2_frame_request_t *request)
+esp_err_t pv2_presenter_begin_budget(pv2_presenter_t *presenter, const pv2_frame_request_t *request, uint32_t timeout)
 {
     esp_err_t ret = check_owner(presenter);
     if (ret != ESP_OK) {
@@ -780,12 +939,17 @@ esp_err_t pv2_presenter_begin_next_frame(pv2_presenter_t *presenter, const pv2_f
     if (presenter->state != PV2_PRESENTER_RUNNING) {
         return ESP_ERR_INVALID_STATE;
     }
-    if (!pv2_mutex_take(presenter->gate, presenter->timeout)) {
+    if (!pv2_mutex_take(presenter->gate, timeout)) {
         return ESP_ERR_TIMEOUT;
     }
-    ret = begin_next_frame_impl(presenter, request, remaining(start, presenter->timeout));
+    ret = begin_next_frame_impl(presenter, request, remaining(start, timeout));
     pv2_mutex_give(presenter->gate);
     return ret;
+}
+
+esp_err_t pv2_presenter_begin_next_frame(pv2_presenter_t *presenter, const pv2_frame_request_t *request)
+{
+    return presenter ? pv2_presenter_begin_budget(presenter, request, presenter->timeout) : ESP_ERR_INVALID_ARG;
 }
 
 esp_err_t pv2_presenter_acquire_buffer(pv2_presenter_t *presenter, pv2_lease_t *out)
@@ -842,19 +1006,38 @@ esp_err_t pv2_presenter_commit_frame(pv2_presenter_t *presenter, const pv2_frame
     return ret;
 }
 
-esp_err_t pv2_presenter_cancel_frame(pv2_presenter_t *presenter)
+esp_err_t pv2_presenter_cancel_budget(pv2_presenter_t *presenter, uint32_t timeout)
 {
     esp_err_t ret = check_owner(presenter);
     if (ret != ESP_OK) {
         return ret;
     }
     uint64_t start = pv2_now_ms();
-    if (!pv2_mutex_take(presenter->gate, presenter->timeout)) {
+    if (!pv2_mutex_take(presenter->gate, timeout)) {
         return ESP_ERR_TIMEOUT;
     }
-    ret = cancel_frame_impl(presenter, remaining(start, presenter->timeout));
+    ret = cancel_frame_impl(presenter, remaining(start, timeout));
     pv2_mutex_give(presenter->gate);
     return ret;
+}
+
+esp_err_t pv2_presenter_cancel_frame(pv2_presenter_t *presenter)
+{
+    return presenter ? pv2_presenter_cancel_budget(presenter, presenter->timeout) : ESP_ERR_INVALID_ARG;
+}
+
+esp_err_t pv2_presenter_control_finish_cancel(pv2_presenter_t *presenter, uint32_t timeout)
+{
+    if (!presenter) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    uint64_t start = pv2_now_ms();
+    if (!pv2_mutex_take(presenter->gate, timeout)) {
+        return ESP_ERR_TIMEOUT;
+    }
+    esp_err_t error = cancel_frame_impl(presenter, remaining(start, timeout));
+    pv2_mutex_give(presenter->gate);
+    return error;
 }
 
 esp_err_t pv2_presenter_drain(pv2_presenter_t *presenter, uint32_t timeout)
@@ -872,9 +1055,9 @@ esp_err_t pv2_presenter_drain(pv2_presenter_t *presenter, uint32_t timeout)
     return ret;
 }
 
-esp_err_t pv2_presenter_get_status(pv2_presenter_t *presenter, pv2_presenter_status_t *out)
+esp_err_t pv2_presenter_control_get_status(pv2_presenter_t *presenter, pv2_presenter_status_t *out)
 {
-    esp_err_t ret = check_owner(presenter);
+    esp_err_t ret = presenter ? ESP_OK : ESP_ERR_INVALID_ARG;
     if (ret != ESP_OK) {
         return ret;
     }
@@ -884,15 +1067,21 @@ esp_err_t pv2_presenter_get_status(pv2_presenter_t *presenter, pv2_presenter_sta
     return ret;
 }
 
-esp_err_t pv2_presenter_stop(pv2_presenter_t *presenter, uint32_t timeout)
+esp_err_t pv2_presenter_get_status(pv2_presenter_t *presenter, pv2_presenter_status_t *out)
 {
-    esp_err_t ret = check_owner(presenter);
+    esp_err_t error = check_owner(presenter);
+    return error == ESP_OK ? pv2_presenter_control_get_status(presenter, out) : error;
+}
+
+esp_err_t pv2_presenter_control_stop(pv2_presenter_t *presenter, uint32_t timeout)
+{
+    esp_err_t ret = presenter ? ESP_OK : ESP_ERR_INVALID_ARG;
     if (ret != ESP_OK) {
         return ret;
     }
     uint64_t start = pv2_now_ms();
-    /* Owner state is not accessed by sender. Once closing, no new UI frame
-     * may be admitted even if sender join times out. */
+    /* Publish closing before joining sender. Private control callers have
+     * stopped the producer; task-neutral observation reads this atomically. */
     presenter->state = PV2_PRESENTER_CLOSING;
     request_exit(presenter);
     if (presenter->worker && !pv2_worker_join(presenter->worker, remaining(start, timeout))) {
@@ -906,9 +1095,15 @@ esp_err_t pv2_presenter_stop(pv2_presenter_t *presenter, uint32_t timeout)
     return ret;
 }
 
-esp_err_t pv2_presenter_destroy(pv2_presenter_t *presenter)
+esp_err_t pv2_presenter_stop(pv2_presenter_t *presenter, uint32_t timeout)
 {
-    esp_err_t ret = check_owner(presenter);
+    esp_err_t error = check_owner(presenter);
+    return error == ESP_OK ? pv2_presenter_control_stop(presenter, timeout) : error;
+}
+
+esp_err_t pv2_presenter_control_destroy(pv2_presenter_t *presenter)
+{
+    esp_err_t ret = presenter ? ESP_OK : ESP_ERR_INVALID_ARG;
     if (ret != ESP_OK) {
         return ret;
     }
@@ -922,6 +1117,12 @@ esp_err_t pv2_presenter_destroy(pv2_presenter_t *presenter)
         free_presenter(presenter);
     }
     return ret;
+}
+
+esp_err_t pv2_presenter_destroy(pv2_presenter_t *presenter)
+{
+    esp_err_t error = check_owner(presenter);
+    return error == ESP_OK ? pv2_presenter_control_destroy(presenter) : error;
 }
 
 static observer_t *find_observer(pv2_presenter_t *presenter, pv2_presenter_receipt_t receipt)
@@ -970,6 +1171,7 @@ esp_err_t pv2_presenter_commit_with_receipt(pv2_presenter_t *presenter, const pv
 
 static esp_err_t query_observer(pv2_presenter_t *presenter, observer_t *observer, pv2_frame_status_t *out)
 {
+    expire_transfers(presenter);
     if (!observer) {
         return ESP_ERR_INVALID_STATE;
     }
@@ -983,12 +1185,12 @@ static esp_err_t query_observer(pv2_presenter_t *presenter, observer_t *observer
     return ESP_OK;
 }
 
-esp_err_t pv2_presenter_query_frame(pv2_presenter_t *presenter, pv2_presenter_receipt_t receipt, pv2_frame_status_t *out)
+esp_err_t pv2_presenter_control_query_frame(pv2_presenter_t *presenter, pv2_presenter_receipt_t receipt, pv2_frame_status_t *out)
 {
     if (!out || !receipt.value) {
         return ESP_ERR_INVALID_ARG;
     }
-    esp_err_t error = check_owner(presenter);
+    esp_err_t error = presenter ? ESP_OK : ESP_ERR_INVALID_ARG;
     if (error != ESP_OK) {
         return error;
     }
@@ -996,6 +1198,12 @@ esp_err_t pv2_presenter_query_frame(pv2_presenter_t *presenter, pv2_presenter_re
     error = query_observer(presenter, find_observer(presenter, receipt), out);
     pv2_mutex_give(presenter->gate);
     return error;
+}
+
+esp_err_t pv2_presenter_query_frame(pv2_presenter_t *presenter, pv2_presenter_receipt_t receipt, pv2_frame_status_t *out)
+{
+    esp_err_t error = check_owner(presenter);
+    return error == ESP_OK ? pv2_presenter_control_query_frame(presenter, receipt, out) : error;
 }
 
 esp_err_t pv2_presenter_wait_frame(pv2_presenter_t *presenter, pv2_presenter_receipt_t receipt,
@@ -1035,7 +1243,7 @@ static esp_err_t untrack(pv2_presenter_t *presenter, pv2_presenter_receipt_t rec
     if (!receipt.value) {
         return ESP_ERR_INVALID_ARG;
     }
-    esp_err_t error = check_owner(presenter);
+    esp_err_t error = presenter ? ESP_OK : ESP_ERR_INVALID_ARG;
     if (error != ESP_OK) {
         return error;
     }
@@ -1059,12 +1267,14 @@ static esp_err_t untrack(pv2_presenter_t *presenter, pv2_presenter_receipt_t rec
 
 esp_err_t pv2_presenter_release_receipt(pv2_presenter_t *presenter, pv2_presenter_receipt_t receipt)
 {
-    return untrack(presenter, receipt, true);
+    esp_err_t error = check_owner(presenter);
+    return error == ESP_OK ? untrack(presenter, receipt, true) : error;
 }
 
 esp_err_t pv2_presenter_cancel_tracking(pv2_presenter_t *presenter, pv2_presenter_receipt_t receipt)
 {
-    return untrack(presenter, receipt, false);
+    esp_err_t error = check_owner(presenter);
+    return error == ESP_OK ? untrack(presenter, receipt, false) : error;
 }
 
 esp_err_t pv2_presenter_set_rotation(pv2_presenter_t *presenter, pv2_rotation_t rotation, uint32_t timeout)
@@ -1135,7 +1345,7 @@ esp_err_t pv2_presenter_resolve_render_area(pv2_presenter_t *presenter, const pv
 
 size_t pv2_presenter_memory(const pv2_presenter_config_t *config)
 {
-    return sizeof(pv2_presenter_t) + pv2_mutex_memory() + 2 * pv2_event_memory() +
+    return sizeof(pv2_presenter_t) + (config->transfer_timeout_ms ? PV2_MAX_FRAMES * sizeof(transfer_watch_t) : 0) + pv2_mutex_memory() + 2 * pv2_event_memory() +
            (config->background_service ? pv2_worker_memory() : 0);
 }
 
@@ -1152,4 +1362,15 @@ esp_err_t pv2_presenter_get_rotation(pv2_presenter_t *presenter, pv2_rotation_t 
     *out = presenter->rotation;
     pv2_mutex_give(presenter->gate);
     return ESP_OK;
+}
+
+/* Control-plane observation owns no producer lease. Caller excludes deletion. */
+esp_err_t pv2_presenter_control_release(pv2_presenter_t *presenter, pv2_presenter_receipt_t receipt)
+{
+    return untrack(presenter, receipt, true);
+}
+
+esp_err_t pv2_presenter_control_cancel_tracking(pv2_presenter_t *presenter, pv2_presenter_receipt_t receipt)
+{
+    return untrack(presenter, receipt, false);
 }

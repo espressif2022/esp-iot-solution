@@ -1,0 +1,135 @@
+{
+  "date": "2026-11-02",
+  "public_symbols": [
+    "esp_display_present_get_required_frame_buffer_count",
+    "esp_display_presenter_acquire_buffer",
+    "esp_display_presenter_begin_next_frame",
+    "esp_display_presenter_cancel_frame",
+    "esp_display_presenter_cancel_frame_tracking",
+    "esp_display_presenter_commit_frame",
+    "esp_display_presenter_commit_frame_with_receipt",
+    "esp_display_presenter_create",
+    "esp_display_presenter_delete",
+    "esp_display_presenter_get_buffer_alignment",
+    "esp_display_presenter_get_caps",
+    "esp_display_presenter_get_drawbuf",
+    "esp_display_presenter_get_fault_reason",
+    "esp_display_presenter_get_frame_status",
+    "esp_display_presenter_get_state",
+    "esp_display_presenter_map_point",
+    "esp_display_presenter_quiesce",
+    "esp_display_presenter_rebind_producer",
+    "esp_display_presenter_set_rotation",
+    "esp_display_presenter_stop",
+    "esp_display_presenter_submit_buffer"
+  ],
+  "source_consumers": {
+    "examples/display/gui/lvgl_present_benchmark/main": [
+      "esp_display_present_get_required_frame_buffer_count",
+      "esp_display_presenter_create",
+      "esp_display_presenter_delete",
+      "esp_display_presenter_quiesce",
+      "esp_lv_present_get_frame_count",
+      "esp_lv_present_start",
+      "esp_lv_present_stop"
+    ],
+    "examples/display/gui/gsp_lvgl_present_handoff/main": [
+      "esp_display_present_get_required_frame_buffer_count",
+      "esp_display_presenter_create",
+      "esp_display_presenter_quiesce",
+      "esp_lv_present_get_frame_count",
+      "esp_lv_present_start",
+      "esp_lv_present_stop"
+    ],
+    "examples/display/gui/gsp_showcase/main": [
+      "esp_display_present_get_required_frame_buffer_count"
+    ],
+    "components/display/tools/esp_lv_present/src": [
+      "esp_display_presenter_acquire_buffer",
+      "esp_display_presenter_begin_next_frame",
+      "esp_display_presenter_cancel_frame",
+      "esp_display_presenter_commit_frame",
+      "esp_display_presenter_get_buffer_alignment",
+      "esp_display_presenter_get_caps",
+      "esp_display_presenter_get_drawbuf",
+      "esp_display_presenter_rebind_producer",
+      "esp_display_presenter_submit_buffer",
+      "esp_lv_present_get_frame_count",
+      "esp_lv_present_start",
+      "esp_lv_present_stop"
+    ]
+  },
+  "gsp": {
+    "version": "1.9.0",
+    "dependency": "espressif/esp_display_present ^1.2.0",
+    "binaries": {
+      "esp32s3": {
+        "path": "examples/display/gui/gsp_lvgl_present_handoff/managed_components/espressif__esp-gsp/prebuilt/esp32s3/libesp-gsp.a",
+        "sha256": "84bb5f9273baf4c7baf0cef38d81f10a0fc1acac12ae67e44da7ffe7ff18caa1",
+        "required_symbols": [
+          "esp_display_presenter_acquire_buffer",
+          "esp_display_presenter_begin_next_frame",
+          "esp_display_presenter_cancel_frame",
+          "esp_display_presenter_cancel_frame_tracking",
+          "esp_display_presenter_commit_frame_with_receipt",
+          "esp_display_presenter_create",
+          "esp_display_presenter_delete",
+          "esp_display_presenter_get_caps",
+          "esp_display_presenter_get_frame_status",
+          "esp_display_presenter_map_point",
+          "esp_display_presenter_quiesce",
+          "esp_display_presenter_rebind_producer",
+          "esp_display_presenter_stop",
+          "esp_display_presenter_submit_buffer"
+        ]
+      },
+      "esp32p4": {
+        "path": "examples/display/gui/gsp_lvgl_present_handoff/managed_components/espressif__esp-gsp/prebuilt/esp32p4/libesp-gsp.a",
+        "sha256": "acfdbeac893a480b5479db0ab3545b365f9ad13277321714f8ecea34c872b4dc",
+        "required_symbols": [
+          "esp_display_presenter_acquire_buffer",
+          "esp_display_presenter_begin_next_frame",
+          "esp_display_presenter_cancel_frame",
+          "esp_display_presenter_cancel_frame_tracking",
+          "esp_display_presenter_commit_frame_with_receipt",
+          "esp_display_presenter_create",
+          "esp_display_presenter_delete",
+          "esp_display_presenter_get_caps",
+          "esp_display_presenter_get_frame_status",
+          "esp_display_presenter_map_point",
+          "esp_display_presenter_quiesce",
+          "esp_display_presenter_rebind_producer",
+          "esp_display_presenter_stop",
+          "esp_display_presenter_submit_buffer"
+        ]
+      },
+      "esp32s31": {
+        "path": "examples/display/gui/gsp_lvgl_present_handoff/managed_components/espressif__esp-gsp/prebuilt/esp32s31/libesp-gsp.a",
+        "sha256": "f13a314d6bc08a046fde8491fec892ed5352ebb6adfdfbb0f254acd59998b36c",
+        "required_symbols": [
+          "esp_display_presenter_acquire_buffer",
+          "esp_display_presenter_begin_next_frame",
+          "esp_display_presenter_cancel_frame",
+          "esp_display_presenter_cancel_frame_tracking",
+          "esp_display_presenter_commit_frame_with_receipt",
+          "esp_display_presenter_create",
+          "esp_display_presenter_delete",
+          "esp_display_presenter_get_caps",
+          "esp_display_presenter_get_frame_status",
+          "esp_display_presenter_map_point",
+          "esp_display_presenter_quiesce",
+          "esp_display_presenter_rebind_producer",
+          "esp_display_presenter_stop",
+          "esp_display_presenter_submit_buffer"
+        ]
+      }
+    }
+  },
+  "header_sha256": {
+    "components/display/tools/esp_display_present/include/esp_display_present.h": "bd3a1ebdd356e31c29a221c8084093a692381599d10c9a1b3d2c1f559a507429",
+    "components/display/tools/esp_display_present/include/esp_display_present_config.h": "e6d9733bc054fb841a5897cabaa24a1e273681bd989f183ebc8e8b6e3328b4e8",
+    "components/display/tools/esp_display_present/include/esp_display_present_types.h": "0b9789193a85f6dbfd9d1ca2ea4d7a13eb40d0b988c71a486d1822bc42e69232",
+    "components/display/tools/esp_lv_present/include/esp_lv_present.h": "fb2ce8e0081e0bece48296d3371a6b77dad27f4c0399a7756ab66eb1f7832587"
+  },
+  "abi_status": "Not yet verified: symbols alone do not prove layout/behavior compatibility."
+}

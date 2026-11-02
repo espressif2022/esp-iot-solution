@@ -231,7 +231,7 @@ esp_err_t pv2_te_composer_finish_write(pv2_te_composer_t *composer, pv2_copy_tic
     *result = status.result;
     if (status.result == ESP_OK) {
         pv2_rect_t a = composer->writes[slot].area;
-        pv2_image_cover(&composer->image, a);
+        *result = pv2_image_cover(&composer->image, a);
     }
     error = pv2_pixel_release(composer->pixel, ticket);
     if (error != ESP_OK) {
@@ -317,6 +317,9 @@ esp_err_t pv2_te_composer_seal(pv2_te_composer_t *composer, pv2_te_frame_t f, ui
                 return error;
             }
         }
+    }
+    if (composer->image.coverage_error != ESP_OK) {
+        return composer->image.coverage_error;
     }
     if (composer->pipelined) {
         esp_err_t commit = pv2_image_commit(&composer->image);
@@ -464,18 +467,31 @@ esp_err_t pv2_te_composer_destroy(pv2_te_composer_t *composer)
     return ESP_OK;
 }
 
-esp_err_t pv2_te_composer_set_rotation(pv2_te_composer_t *composer, pv2_rotation_t rotation)
+esp_err_t pv2_te_composer_reorient(pv2_te_composer_t *composer, pv2_rotation_t rotation, uint32_t width, uint32_t height)
 {
     if (!composer || rotation < PV2_ROTATE_0 || rotation > PV2_ROTATE_270) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (!width || !height || (uint64_t)width * height != (uint64_t)composer->image.width * composer->image.height) {
         return ESP_ERR_INVALID_ARG;
     }
     if (composer->jobs[0].state != IDLE || composer->jobs[1].state != IDLE) {
         return ESP_ERR_INVALID_STATE;
     }
     composer->rotation = rotation;
-    pv2_image_reset(&composer->image, composer->image.width, composer->image.height);
+    for (size_t i = 0; i < composer->image_count; ++i) {
+        composer->buffers[i].layout.width = width;
+        composer->buffers[i].layout.height = height;
+        composer->buffers[i].layout.stride_bytes = (size_t)width * (composer->buffers[i].layout.format == PV2_FORMAT_RGB565 ? 2 : 3);
+    }
+    pv2_image_reset(&composer->image, width, height);
     composer->baseline = -1;
     return ESP_OK;
+}
+
+esp_err_t pv2_te_composer_set_rotation(pv2_te_composer_t *composer, pv2_rotation_t rotation)
+{
+    return composer ? pv2_te_composer_reorient(composer, rotation, composer->image.width, composer->image.height) : ESP_ERR_INVALID_ARG;
 }
 
 size_t pv2_composer_memory(void)

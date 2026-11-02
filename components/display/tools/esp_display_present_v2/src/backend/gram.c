@@ -245,7 +245,8 @@ static esp_err_t gram_create(const pv2_backend_config_t *config, pv2_backend_t *
     if (config && config->copy_execute && !config->async_copy) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (config && (config->async_copy || config->rotation != PV2_ROTATE_0) && config->in_place_convert) {
+    if (config && ((config->internal_tx_staging && !config->async_copy) ||
+                   ((config->async_copy || config->rotation != PV2_ROTATE_0) && config->in_place_convert))) {
         return ESP_ERR_NOT_SUPPORTED;
     }
     if (!config || !config->panel.attach || !config->panel.submit || !config->panel.quiesce) {
@@ -289,7 +290,7 @@ static esp_err_t gram_create(const pv2_backend_config_t *config, pv2_backend_t *
     for (size_t i = 0; i < config->buffer_count; ++i) {
         backend->slots[i].pixels = pv2_alloc_pixels_in(backend->tile_bytes, backend->config.tile_in_psram);
         if (convert) {
-            backend->slots[i].converted = pv2_alloc_pixels_in(backend->tile_bytes, backend->config.tile_in_psram);
+            backend->slots[i].converted = pv2_alloc_pixels_in(backend->tile_bytes, backend->config.tile_in_psram && !backend->config.internal_tx_staging);
         }
         if (!backend->slots[i].pixels || (convert && !backend->slots[i].converted)) {
             free_backend(backend);
@@ -463,7 +464,7 @@ static esp_err_t prepare_pixels(pv2_backend_t *backend, gram_slot_t *slot,
     }
     if (need_pack || !backend->config.in_place_convert || backend->config.rotation != PV2_ROTATE_0) {
         if (!slot->converted) {
-            slot->converted = pv2_alloc_pixels_in(backend->tile_bytes, backend->config.tile_in_psram);
+            slot->converted = pv2_alloc_pixels_in(backend->tile_bytes, backend->config.tile_in_psram && !backend->config.internal_tx_staging);
             if (!slot->converted) {
                 return ESP_ERR_NO_MEM;
             }
@@ -873,7 +874,7 @@ static esp_err_t gram_set_rotation(pv2_backend_t *backend, pv2_rotation_t rotati
     if (backend->config.in_place_convert && rotation != PV2_ROTATE_0) {
         return ESP_ERR_NOT_SUPPORTED;
     }
-    bool change_axes = ((unsigned)backend->config.rotation ^ (unsigned)rotation) & 1;
+    bool change_axes = !backend->config.fixed_logical_rotation && (((unsigned)backend->config.rotation ^ (unsigned)rotation) & 1);
     uint32_t width = change_axes ? backend->config.height : backend->config.width;
     uint32_t height = change_axes ? backend->config.width : backend->config.height;
     size_t bpp = backend->config.format == PV2_FORMAT_RGB565 ? 2 : 3;

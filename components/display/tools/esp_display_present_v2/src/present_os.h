@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #pragma once
+#include "esp_err.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -64,3 +65,8 @@ pv2_worker_t *pv2_worker_create(pv2_worker_entry_fn entry, void *user, uint32_t 
  * object/thread. Success joins its final exit and allows destroy. */
 bool pv2_worker_join(pv2_worker_t *worker, uint32_t timeout_ms);
 void pv2_worker_destroy(pv2_worker_t *worker);
+
+/* Task-only join for driver ISRs after callback unregister. No argument is
+ * retained. IDF IPC calls can block independently of the poll budget; timeout
+ * is checked before/after each native join, as for native panel deletion. */
+esp_err_t pv2_isr_barrier(uint32_t timeout_ms);

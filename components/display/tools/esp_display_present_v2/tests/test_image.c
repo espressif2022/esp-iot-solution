@@ -6,9 +6,119 @@
 #include "../src/present_image.h"
 #include <assert.h>
 #include <string.h>
+#include <stdlib.h>
 
+static bool fail_coverage_alloc;
+void *__real_pv2_alloc(size_t);
+void *__wrap_pv2_alloc(size_t bytes)
+{
+    return fail_coverage_alloc ? NULL : __real_pv2_alloc(bytes);
+}
+static void lazy_coverage(void)
+{
+    pv2_image_builder_t image;
+    assert(pv2_image_init(&image, 1024, 600) == ESP_OK);
+    assert(!image.coverage && image.coverage_bytes == 76800);
+    assert(pv2_image_begin(&image, 0, SIZE_MAX) == ESP_OK);
+    assert(pv2_image_cover(&image, (pv2_rect_t) {
+        0, 0, 1024, 300
+    }) == ESP_OK);
+    assert(pv2_image_cover(&image, (pv2_rect_t) {
+        0, 300, 1024, 300
+    }) == ESP_OK);
+    assert(pv2_image_full(&image) && !image.coverage);
+    assert(pv2_image_commit(&image) == ESP_OK);
+    assert(pv2_image_begin(&image, 1, 0) == ESP_OK);
+    for (unsigned i = 0; i < PV2_MAX_DAMAGE_AREAS; ++i)
+        assert(pv2_image_cover(&image, (pv2_rect_t) {
+        i * 2, 0, 1, 1
+    }) == ESP_OK);
+    fail_coverage_alloc = true;
+    assert(pv2_image_cover(&image, (pv2_rect_t) {
+        100, 0, 1, 1
+    }) == ESP_ERR_NO_MEM);
+    fail_coverage_alloc = false;
+    assert(!image.coverage && !pv2_image_full(&image));
+    pv2_image_prepare_repair(&image, false);
+    pv2_rect_t area;
+    assert(!pv2_image_next_repair(&image, &area));
+    assert(pv2_image_commit(&image) == ESP_ERR_NO_MEM);
+    pv2_image_cancel(&image);
+    assert(pv2_image_begin(&image, 1, 0) == ESP_OK);
+    for (unsigned i = 0; i < 40; ++i)
+        assert(pv2_image_cover(&image, (pv2_rect_t) {
+        i * 2, 0, 1, 1
+    }) == ESP_OK);
+    assert(image.coverage && !pv2_image_full(&image));
+    pv2_image_cancel(&image);
+    assert(pv2_image_begin(&image, 1, 0) == ESP_OK);
+    assert(!image.coverage && image.coverage_error == ESP_OK);
+    pv2_image_cancel(&image);
+    pv2_image_deinit(&image);
+}
+static uint32_t rng = 0x42abcdef;
+static unsigned random_u(unsigned limit)
+{
+    rng ^= rng << 13;
+    rng ^= rng >> 17;
+    rng ^= rng << 5;
+    return rng % limit;
+}
+static void rectangle_reference(void)
+{
+    enum {W = 17, H = 9, N = W * H};
+    pv2_image_builder_t image;
+    assert(pv2_image_init(&image, W, H) == ESP_OK);
+    assert(pv2_image_begin(&image, 0, SIZE_MAX) == ESP_OK);
+    assert(pv2_image_cover(&image, (pv2_rect_t) {
+        0, 0, W, H
+    }) == ESP_OK);
+    assert(pv2_image_commit(&image) == ESP_OK);
+    for (unsigned trial = 0; trial < 256; ++trial) {
+        bool written[N] = {0};
+        bool repaired[N] = {0};
+        assert(pv2_image_begin(&image, 1, 0) == ESP_OK);
+        unsigned n = 1 + random_u(80);
+        for (unsigned i = 0; i < n; ++i) {
+            unsigned x = random_u(W), y = random_u(H);
+            unsigned w = 1 + random_u(W - x), h = 1 + random_u(H - y);
+            if (trial & 1) {
+                w = h = 1;
+            }
+            assert(pv2_image_cover(&image, (pv2_rect_t) {
+                x, y, w, h
+            }) == ESP_OK);
+            for (unsigned yy = y; yy < y + h; ++yy)
+                for (unsigned xx = x; xx < x + w; ++xx) {
+                    written[yy * W + xx] = true;
+                }
+        }
+        bool full = true;
+        for (unsigned i = 0; i < N; ++i) {
+            full &= written[i];
+        }
+        assert(pv2_image_full(&image) == full);
+        pv2_image_prepare_repair(&image, true);
+        pv2_rect_t area;
+        while (pv2_image_next_repair(&image, &area)) {
+            for (unsigned y = area.y; y < area.y + area.height; ++y)
+                for (unsigned x = area.x; x < area.x + area.width; ++x) {
+                    assert(!written[y * W + x] && !repaired[y * W + x]);
+                    repaired[y * W + x] = true;
+                }
+            assert(pv2_image_repaired(&image, &area) == ESP_OK);
+        }
+        for (unsigned i = 0; i < N; ++i) {
+            assert(written[i] != repaired[i]);
+        }
+        pv2_image_cancel(&image);
+    }
+    pv2_image_deinit(&image);
+}
 int main(void)
 {
+    lazy_coverage();
+    rectangle_reference();
     enum { W = 17, H = 9, N = W * H };
     pv2_image_builder_t b;
     assert(pv2_image_init(&b, W, H) == ESP_OK);

@@ -1,0 +1,915 @@
+/* SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
+ * SPDX-License-Identifier: Apache-2.0 */
+#include "legacy_internal.h"
+#include "resources.h"
+#include "presenter_control.h"
+#include "present_os.h"
+#include <limits.h>
+#include <string.h>
+#ifndef PV2_HOST
+#include "esp_log.h"
+#endif
+
+struct esp_display_presenter {
+    pv2_legacy_resources_t *resources;
+    pv2_mutex_t *gate;
+    pv2_lock_t events;
+    pv2_task_t producer;
+    esp_display_presenter_config_t config;
+    pv2_backend_caps_t caps;
+    esp_display_presenter_drawbuf_t drawbuf;
+    esp_display_presenter_frame_status_t timeline;
+    esp_display_presenter_state_t state;
+    pv2_lease_t lease;
+    esp_display_present_render_alignment_t render_alignment;
+    uint32_t lease_id, next_lease;
+    bool active, full_next, lvgl_bound, cancel_pending;
+    uint64_t vsyncs, confirm_after, tracked_id;
+    pv2_presenter_receipt_t tracked;
+};
+
+static pv2_presenter_t *core(esp_display_presenter_t *presenter)
+{
+    return pv2_legacy_resources_presenter(presenter->resources);
+}
+static bool PV2_ISR_ATTR vsync(void *user, uint64_t timestamp, bool isr)
+{
+    (void)timestamp;
+    esp_display_presenter_t *presenter = user;
+    pv2_lock_enter(&presenter->events, isr);
+    if (presenter->vsyncs != UINT64_MAX) {
+        ++presenter->vsyncs;
+    }
+    pv2_lock_exit(&presenter->events, isr);
+    return false;
+}
+static uint64_t edges(esp_display_presenter_t *presenter)
+{
+    pv2_lock_enter(&presenter->events, false);
+    uint64_t n = presenter->vsyncs;
+    pv2_lock_exit(&presenter->events, false);
+    return n;
+}
+static void fault(esp_display_presenter_t *presenter, esp_display_present_fault_reason_t reason)
+{
+    if (presenter->timeline.fault_reason == ESP_DISPLAY_PRESENT_FAULT_NONE) {
+        presenter->timeline.fault_reason = reason;
+    }
+    if (presenter->state == ESP_DISPLAY_PRESENTER_STATE_OPEN) {
+        presenter->state = ESP_DISPLAY_PRESENTER_STATE_FAULTED;
+    }
+}
+static uint32_t budget(esp_display_presenter_t *presenter)
+{
+    return presenter->config.pipeline_acquire_timeout_ms ? presenter->config.pipeline_acquire_timeout_ms : 1000;
+}
+static uint32_t remaining_budget(esp_display_presenter_t *presenter, uint64_t start)
+{
+    uint32_t timeout = budget(presenter);
+    uint64_t elapsed = pv2_now_ms() - start;
+    return timeout == UINT32_MAX ? timeout : elapsed >= timeout ? 0 : timeout - (uint32_t)elapsed;
+}
+static esp_err_t producer(esp_display_presenter_t *presenter)
+{
+    if (!pv2_same_task(presenter->producer, pv2_current_task()) || presenter->lvgl_bound) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    return ESP_OK;
+}
+/* Logical cancellation is immediate. Only true backend drain releases pixels.
+ * Called under the facade gate; a pending cancel prevents all new producers. */
+static esp_err_t finish_cancel(esp_display_presenter_t *presenter, uint32_t timeout)
+{
+    if (!presenter->cancel_pending) {
+        return ESP_OK;
+    }
+    esp_err_t error = pv2_same_task(presenter->producer, pv2_current_task()) ?
+                      pv2_presenter_cancel_budget(core(presenter), timeout) :
+                      pv2_presenter_control_finish_cancel(core(presenter), timeout);
+    if (error == ESP_OK) {
+        presenter->cancel_pending = false;
+    } else if (error != ESP_ERR_TIMEOUT) {
+        fault(presenter, ESP_DISPLAY_PRESENT_FAULT_PRODUCER_PROTOCOL);
+    }
+    return error;
+}
+static esp_err_t refresh_caps(esp_display_presenter_t *presenter)
+{
+    esp_err_t error = pv2_presenter_get_caps(core(presenter), &presenter->caps);
+    if (error != ESP_OK) {
+        return error;
+    }
+    void *buffers[3];
+    size_t count, bytes;
+    error = pv2_presenter_get_draw_buffers(core(presenter), buffers, 3, &count, &bytes);
+    if (error != ESP_OK) {
+        return error;
+    }
+    presenter->drawbuf = (esp_display_presenter_drawbuf_t) {
+        .count = count > 2 ? 2 : count,
+        .lines = presenter->caps.max_tile_rows, .bytes = bytes
+    };
+    for (size_t i = 0; i < presenter->drawbuf.count; ++i) {
+        presenter->drawbuf.buffers[i] = buffers[i];
+    }
+    return ESP_OK;
+}
+/* Observation never grants buffer ownership. A failed frame cannot advance a
+ * successful completion watermark. Untracked LVGL commits share core numbering. */
+static esp_err_t poll(esp_display_presenter_t *presenter)
+{
+    if (!core(presenter)) {
+        return ESP_OK;
+    }
+    pv2_presenter_status_t status = {0};
+    esp_err_t error = pv2_presenter_control_get_status(core(presenter), &status);
+    presenter->timeline.last_submitted_frame = status.committed_frames;
+    if (error != ESP_OK || status.first_error != ESP_OK) {
+        esp_err_t failure = status.first_error != ESP_OK ? status.first_error : error;
+        fault(presenter, failure == ESP_ERR_INVALID_ARG || failure == ESP_ERR_INVALID_STATE ?
+              ESP_DISPLAY_PRESENT_FAULT_PRODUCER_PROTOCOL : ESP_DISPLAY_PRESENT_FAULT_TRANSFER_TIMEOUT);
+    } else {
+        presenter->timeline.completed_transfer_frame = status.completed_frames;
+        /* V1's present watermark is an ownership fence. For GRAM it follows
+         * transfer completion too; only confirmed_present requires VSYNC. */
+        presenter->timeline.completed_present_frame = status.completed_frames;
+    }
+    if (presenter->tracked.value) {
+        pv2_frame_status_t observed;
+        esp_err_t query = pv2_presenter_control_query_frame(core(presenter), presenter->tracked, &observed);
+        if (query != ESP_OK) {
+            return query;
+        }
+        if (observed.terminal) {
+            if (observed.result == ESP_OK && observed.present_confirmed && presenter->tracked_id) {
+                uint64_t n = edges(presenter);
+                presenter->confirm_after = n <= UINT64_MAX - 2 ? n + 2 : UINT64_MAX;
+            } else if (observed.result != ESP_OK) {
+                fault(presenter, ESP_DISPLAY_PRESENT_FAULT_TRANSFER_TIMEOUT);
+                presenter->tracked_id = 0;
+            }
+            query = pv2_presenter_control_release(core(presenter), presenter->tracked);
+            if (query != ESP_OK) {
+                return query;
+            }
+            presenter->tracked.value = 0;
+        }
+    }
+    if (presenter->tracked_id && presenter->confirm_after && edges(presenter) >= presenter->confirm_after) {
+        presenter->timeline.confirmed_present_frame = presenter->tracked_id;
+        presenter->tracked_id = presenter->confirm_after = 0;
+    }
+    return error;
+}
+
+esp_err_t esp_display_present_get_required_frame_buffer_count(const esp_display_present_target_config_t *t, uint8_t *out)
+{
+    if (!out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    *out = 0;
+    if (!t || (t->hw.rotation != 0 && t->hw.rotation != 90 && t->hw.rotation != 180 && t->hw.rotation != 270) ||
+            t->fb.mode < ESP_DISPLAY_PRESENT_MODE_NONE || t->fb.mode > ESP_DISPLAY_PRESENT_MODE_AUTO) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (t->hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_AUTO && !t->hw.io) {
+        return ESP_ERR_NOT_SUPPORTED;
+    }
+    if (t->hw.panel_type < ESP_DISPLAY_PRESENT_PANEL_AUTO || t->hw.panel_type > ESP_DISPLAY_PRESENT_PANEL_IO) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    bool fb = t->hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB || t->hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI;
+    if (!fb) {
+        bool te = t->hw.te_enabled && t->hw.te_sync.gpio_num >= 0;
+        if (t->fb.mode == ESP_DISPLAY_PRESENT_MODE_TE_SYNC && !te) {
+            return ESP_ERR_NOT_SUPPORTED;
+        }
+        if (t->hw.panel_type != ESP_DISPLAY_PRESENT_PANEL_IO && !(t->hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_AUTO && t->hw.io)) {
+            return ESP_ERR_NOT_SUPPORTED;
+        }
+        return t->fb.mode == ESP_DISPLAY_PRESENT_MODE_NONE || t->fb.mode == ESP_DISPLAY_PRESENT_MODE_TE_SYNC || t->fb.mode == ESP_DISPLAY_PRESENT_MODE_AUTO ? ESP_OK : ESP_ERR_NOT_SUPPORTED;
+    }
+    switch (t->fb.mode) {
+    case ESP_DISPLAY_PRESENT_MODE_NONE:
+        *out = 1;
+        return ESP_OK;
+    case ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL:
+    case ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT:
+    case ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL:
+        *out = 2;
+        return ESP_OK;
+    case ESP_DISPLAY_PRESENT_MODE_TRIPLE_FULL:
+    case ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL:
+    case ESP_DISPLAY_PRESENT_MODE_AUTO:
+        *out = 3;
+        return ESP_OK;
+    default:
+        return ESP_ERR_NOT_SUPPORTED;
+    }
+}
+
+esp_err_t esp_display_presenter_create(const esp_display_presenter_config_t *cfg, esp_display_presenter_t **out)
+{
+    if (!out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    *out = NULL;
+    if (!cfg) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    esp_display_presenter_t *presenter = pv2_alloc(sizeof(*presenter));
+    if (!presenter) {
+        return ESP_ERR_NO_MEM;
+    }
+    presenter->gate = pv2_mutex_create();
+    if (!presenter->gate || !pv2_lock_init(&presenter->events)) {
+        pv2_mutex_destroy(presenter->gate);
+        pv2_free(presenter);
+        return ESP_ERR_NO_MEM;
+    }
+    presenter->config = *cfg;
+    presenter->producer = pv2_current_task();
+    presenter->full_next = true;
+    presenter->next_lease = 1;
+    presenter->timeline.generation = 1;
+    bool bounce = false;
+#ifdef CONFIG_PV2_LEGACY_RGB_BOUNCE_CONFIRMED
+    bounce = CONFIG_PV2_LEGACY_RGB_BOUNCE_CONFIRMED;
+#endif
+    esp_err_t error = pv2_legacy_resources_create(cfg, bounce, vsync, presenter, &presenter->resources);
+    if (error == ESP_OK) {
+        /* These read-only queries cannot fail for a successfully created core. */
+        error = refresh_caps(presenter);
+    }
+    if (error != ESP_OK) {
+#ifndef PV2_HOST
+        ESP_LOGE("present_v2", "create failed=%s size=%ux%u format=%d input=%d damage=%u mode=%d rows=%u tiles=%u fb=%u",
+                 esp_err_to_name(error), (unsigned)cfg->width, (unsigned)cfg->height,
+                 cfg->pixel_format, cfg->target.hw.input_pixel_format, (unsigned)cfg->max_damage_areas,
+                 cfg->target.fb.mode, (unsigned)cfg->target.drawbuf.lines,
+                 (unsigned)cfg->target.drawbuf.buffers, (unsigned)cfg->target.fb.frame_buffer_count);
+#endif
+        if (presenter->resources) {
+            (void)pv2_legacy_resources_destroy(presenter->resources, UINT32_MAX);
+        }
+        pv2_lock_destroy(&presenter->events);
+        pv2_mutex_destroy(presenter->gate);
+        pv2_free(presenter);
+        return error;
+    }
+    presenter->timeline.completion = presenter->caps.supports_present_confirmation ? ESP_DISPLAY_PRESENT_COMPLETION_FRAMEBUFFER : ESP_DISPLAY_PRESENT_COMPLETION_TRANSFER;
+    presenter->timeline.tracks_transfer = !presenter->caps.supports_present_confirmation;
+    presenter->timeline.accepting_callbacks = true;
+    *out = presenter;
+    return ESP_OK;
+}
+
+static bool legacy_framebuffer(const esp_display_presenter_t *presenter)
+{
+    return presenter->config.target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB ||
+           presenter->config.target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI;
+}
+static bool previous_readable(const esp_display_presenter_t *presenter)
+{
+    return legacy_framebuffer(presenter) && presenter->config.target.fb.mode == ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT &&
+           !presenter->config.target.hw.rotation && !presenter->config.target.hw.swap_bytes;
+}
+esp_err_t esp_display_presenter_get_caps(const esp_display_presenter_t *input, esp_display_presenter_caps_t *out)
+{
+    if (!input || !out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    esp_display_presenter_t *presenter = (esp_display_presenter_t *)input;
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    const pv2_backend_caps_t *caps = &presenter->caps;
+    *out = (esp_display_presenter_caps_t) {
+        .contract = caps->contract == PV2_CONTRACT_PARTITION ? ESP_DISPLAY_PRESENT_CONTRACT_PARTITION : caps->contract == PV2_CONTRACT_DIRECT ? ESP_DISPLAY_PRESENT_CONTRACT_DIRECT : ESP_DISPLAY_PRESENT_CONTRACT_FULL,
+        .supports_coverage_areas = legacy_framebuffer(presenter) && caps->contract != PV2_CONTRACT_FULL,
+        .surface_retains_content = legacy_framebuffer(presenter) && presenter->config.target.fb.mode == ESP_DISPLAY_PRESENT_MODE_NONE,
+        .previous_surface_readable = previous_readable(presenter),
+        .width = caps->draw_layout.width, .height = caps->draw_layout.height, .stride_bytes = caps->draw_layout.stride_bytes,
+        .pixel_format = presenter->config.pixel_format, .drawbuf_bytes = caps->contract == PV2_CONTRACT_PARTITION ? caps->drawbuf_capacity_bytes : 0,
+        .max_damage_areas = presenter->config.max_damage_areas ? presenter->config.max_damage_areas : caps->max_damage_areas
+    };
+    pv2_mutex_give(presenter->gate);
+    return ESP_OK;
+}
+esp_err_t esp_display_presenter_get_drawbuf(const esp_display_presenter_t *input, esp_display_presenter_drawbuf_t *out)
+{
+    if (!input || !out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    esp_display_presenter_t *presenter = (esp_display_presenter_t *)input;
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    *out = presenter->drawbuf;
+    esp_err_t error = presenter->caps.contract == PV2_CONTRACT_PARTITION ? ESP_OK : ESP_ERR_INVALID_STATE;
+    if (error != ESP_OK) {
+        memset(out, 0, sizeof(*out));
+    }
+    pv2_mutex_give(presenter->gate);
+    return error;
+}
+esp_err_t esp_display_presenter_get_buffer_alignment(const esp_display_presenter_t *input, size_t *out)
+{
+    if (!input || !out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    esp_display_presenter_t *presenter = (esp_display_presenter_t *)input;
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    *out = presenter->caps.buffer_alignment;
+    pv2_mutex_give(presenter->gate);
+    return ESP_OK;
+}
+esp_err_t esp_display_presenter_get_frame_status(esp_display_presenter_t *presenter, esp_display_presenter_frame_status_t *out)
+{
+    if (!presenter || !out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    esp_err_t error = poll(presenter);
+    *out = presenter->timeline;
+    pv2_mutex_give(presenter->gate);
+    return error;
+}
+esp_err_t esp_display_presenter_get_state(const esp_display_presenter_t *input, esp_display_presenter_state_t *out)
+{
+    esp_display_presenter_t *presenter = (esp_display_presenter_t *)input;
+    if (!presenter || !out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    (void)poll(presenter);
+    *out = presenter->state;
+    pv2_mutex_give(presenter->gate);
+    return ESP_OK;
+}
+esp_err_t esp_display_presenter_get_fault_reason(const esp_display_presenter_t *input, esp_display_present_fault_reason_t *out)
+{
+    esp_display_presenter_t *presenter = (esp_display_presenter_t *)input;
+    if (!presenter || !out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    (void)poll(presenter);
+    *out = presenter->timeline.fault_reason;
+    pv2_mutex_give(presenter->gate);
+    return ESP_OK;
+}
+esp_err_t esp_display_presenter_rebind_producer(esp_display_presenter_t *presenter)
+{
+    if (!presenter) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    esp_err_t error = presenter->active || presenter->lvgl_bound ? ESP_ERR_INVALID_STATE :
+                      finish_cancel(presenter, budget(presenter));
+    if (error == ESP_OK) {
+        error = poll(presenter);
+    }
+    if (error == ESP_OK) {
+        error = presenter->active || presenter->lvgl_bound || presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN ? ESP_ERR_INVALID_STATE : pv2_presenter_rebind_producer(core(presenter), budget(presenter));
+    }
+    if (error == ESP_OK) {
+        presenter->producer = pv2_current_task();
+    }
+    pv2_mutex_give(presenter->gate);
+    return error;
+}
+static esp_err_t rectangle(const esp_display_present_area_t *a, uint32_t width, uint32_t height, pv2_rect_t *r)
+{
+    if (!a || a->x1 < 0 || a->y1 < 0 || a->x2 < a->x1 || a->y2 < a->y1 || (uint32_t)a->x2 >= width || (uint32_t)a->y2 >= height) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    *r = (pv2_rect_t) {
+        a->x1, a->y1, a->x2 - a->x1 + 1, a->y2 - a->y1 + 1
+    };
+    return ESP_OK;
+}
+static uint32_t align_down(uint32_t n, uint32_t a)
+{
+    return a ? n / a * a : n;
+}
+static uint32_t align_up(uint32_t n, uint32_t a)
+{
+    return a ? (n + a - 1) / a * a : n;
+}
+/* V1 validates damage even when the negotiated raster is full. Full raster
+ * is represented by full=true, count=0; the flag never supplies pixel coverage. */
+static esp_err_t plan_frame(esp_display_presenter_t *presenter,
+                            const esp_display_present_surface_request_t *input,
+                            pv2_rect_t *areas, bool has_output, size_t capacity,
+                            size_t *count, bool *full)
+{
+    const esp_display_present_surface_request_t empty = {0};
+    const esp_display_present_surface_request_t *request = input ? input : &empty;
+    size_t n = request->dirty_area_count;
+    size_t max_damage = presenter->config.max_damage_areas ? presenter->config.max_damage_areas : 32;
+    uint32_t width = presenter->caps.draw_layout.width, height = presenter->caps.draw_layout.height;
+    if ((!request->dirty_areas) != (n == 0) || n > max_damage || n > capacity || (n && !has_output)) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    for (size_t i = 0; i < n; ++i) {
+        pv2_rect_t validated;
+        esp_err_t error = rectangle(&request->dirty_areas[i], width, height, &validated);
+        if (error == ESP_OK && i < 32) {
+            areas[i] = validated;
+        }
+        if (error != ESP_OK) {
+            return error;
+        }
+    }
+    if (request->has_scroll) {
+        pv2_rect_t viewport;
+        if (rectangle(&request->scroll_viewport, width, height, &viewport) != ESP_OK ||
+                (!request->scroll_dx && !request->scroll_dy)) {
+            return ESP_ERR_INVALID_ARG;
+        }
+        if (presenter->caps.contract == PV2_CONTRACT_PARTITION) {
+            return ESP_ERR_NOT_SUPPORTED;
+        }
+    }
+    bool whole_dirty = n == 1 && areas[0].x == 0 && areas[0].y == 0 &&
+                       areas[0].width == width && areas[0].height == height;
+    /* DIRECT inherits a coherent previous logical image before acquire.
+     * FULL, transforms, scroll and persistent single-FB keep V1's full raster. */
+    /* More producer damage than the core's bounded hint list requests a
+     * genuine full raster; coverage still comes from successful writes. */
+    *full = presenter->full_next || !n || n > 32 || whole_dirty ||
+            presenter->caps.contract == PV2_CONTRACT_FULL ||
+            (presenter->caps.contract == PV2_CONTRACT_DIRECT && (!previous_readable(presenter) || request->has_scroll));
+    *count = *full ? 0 : n;
+    for (size_t i = 0; i < *count; ++i) {
+        pv2_rect_t r = areas[i];
+        const esp_display_present_render_alignment_t *alignment = &request->render_alignment;
+        uint32_t x = align_down(r.x, alignment->x_pixels), y = align_down(r.y, alignment->y_pixels);
+        uint32_t right = x + align_up(r.x + r.width - x, alignment->width_pixels);
+        uint32_t bottom = y + align_up(r.y + r.height - y, alignment->height_pixels);
+        r = (pv2_rect_t) {
+            x, y, (right < width ? right : width) - x, (bottom < height ? bottom : height) - y
+        };
+        esp_err_t error = pv2_presenter_resolve_render_area(core(presenter), &r, &areas[i]);
+        if (error != ESP_OK) {
+            return error;
+        }
+    }
+    return ESP_OK;
+}
+esp_err_t esp_display_presenter_begin_next_frame(esp_display_presenter_t *presenter, const esp_display_present_surface_request_t *request,
+                                                 esp_display_present_area_t *out, size_t capacity, size_t *count, bool *full)
+{
+    if (count) {
+        *count = 0;
+    }
+    if (full) {
+        *full = false;
+    }
+    if (!presenter || !count || !full) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    esp_err_t error = producer(presenter);
+    if (error == ESP_OK && (presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN || presenter->active)) {
+        error = ESP_ERR_INVALID_STATE;
+    }
+    pv2_rect_t areas[32];
+    size_t n = 0;
+    bool all = false;
+    if (error == ESP_OK) {
+        error = plan_frame(presenter, request, areas, out != NULL, capacity, &n, &all);
+    }
+    if (error == ESP_OK) {
+        error = poll(presenter);
+    }
+    if (error == ESP_OK && presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN) {
+        error = ESP_ERR_INVALID_STATE;
+    }
+    uint64_t start = pv2_now_ms();
+    if (error == ESP_OK) {
+        error = finish_cancel(presenter, remaining_budget(presenter, start));
+    }
+    while (error == ESP_OK && presenter->tracked_id) {
+        if (pv2_expired(start, budget(presenter))) {
+            error = ESP_ERR_TIMEOUT;
+            break;
+        }
+        /* Completion and cancellation are independent control ingress. The
+         * caller must exclude deletion for the entire API call, not just while
+         * the mutex is held (same rule as V1 status/control APIs). */
+        pv2_mutex_give(presenter->gate);
+        pv2_pause();
+        (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+        error = producer(presenter);
+        if (error == ESP_OK && presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN) {
+            error = ESP_ERR_INVALID_STATE;
+        }
+        if (error == ESP_OK) {
+            error = poll(presenter);
+        }
+    }
+    if (error == ESP_OK) {
+        error = pv2_legacy_resources_prepare(presenter->resources, remaining_budget(presenter, start));
+    }
+    pv2_frame_request_t req = {.damage = areas, .damage_count = n, .full_redraw = all};
+    if (error == ESP_OK) {
+        error = pv2_presenter_begin_budget(core(presenter), &req, remaining_budget(presenter, start));
+    }
+    if (error == ESP_OK) {
+        presenter->active = true;
+        presenter->render_alignment = request ? request->render_alignment : (esp_display_present_render_alignment_t) {
+            0
+        };
+        for (size_t i = 0; i < n; ++i) {
+            out[i] = (esp_display_present_area_t) {
+                areas[i].x, areas[i].y, areas[i].x + areas[i].width - 1, areas[i].y + areas[i].height - 1
+            };
+        }
+        *count = n;
+        *full = all;
+    }
+    pv2_mutex_give(presenter->gate);
+    return error;
+}
+static esp_err_t resolve_rows(void *user, uint32_t id, size_t stride, size_t requested, size_t *out)
+{
+    if (!user || !out || requested > UINT32_MAX) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    *out = 0;
+    esp_display_presenter_t *presenter = user;
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    esp_err_t error = producer(presenter);
+    if (error == ESP_OK && presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN) {
+        error = ESP_ERR_INVALID_STATE;
+    }
+    uint32_t rows = 0;
+    if (error == ESP_OK) {
+        error = id && id == presenter->lease_id ? pv2_presenter_resolve_rows(core(presenter), &presenter->lease, stride, requested, &rows) : ESP_ERR_INVALID_STATE;
+    }
+    if (error == ESP_OK) {
+        uint16_t alignment = presenter->render_alignment.height_pixels;
+        if (presenter->caps.contract == PV2_CONTRACT_PARTITION && rows < requested && alignment > 1) {
+            rows -= rows % alignment;
+        }
+        if (!rows || rows > UINT16_MAX) {
+            error = ESP_ERR_INVALID_SIZE;
+        }
+    }
+    if (error == ESP_OK) {
+        *out = rows;
+    }
+    pv2_mutex_give(presenter->gate);
+    return error;
+}
+esp_err_t esp_display_presenter_acquire_buffer(esp_display_presenter_t *presenter, esp_display_presenter_buffer_t *out)
+{
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!presenter || !out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    esp_err_t error = producer(presenter);
+    if (error == ESP_OK && (!presenter->active || presenter->lease_id || !presenter->next_lease || presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN)) {
+        error = ESP_ERR_INVALID_STATE;
+    }
+    if (error == ESP_OK) {
+        error = pv2_presenter_acquire_buffer(core(presenter), &presenter->lease);
+    }
+    if (error == ESP_OK) {
+        presenter->lease_id = presenter->next_lease++;
+        *out = (esp_display_presenter_buffer_t) {
+            .surface = {presenter->lease.surface.pixels, presenter->lease.surface.layout.stride_bytes,
+                        presenter->lease.surface.layout.width, presenter->lease.surface.layout.height, presenter->config.pixel_format
+                       },
+            .capacity_bytes = presenter->lease.surface.capacity_bytes, .lease_id = presenter->lease_id,
+            .resolve_rows = resolve_rows, .resolve_rows_ctx = presenter
+        };
+    }
+    pv2_mutex_give(presenter->gate);
+    return error;
+}
+esp_err_t esp_display_presenter_submit_buffer(esp_display_presenter_t *presenter, const esp_display_presenter_buffer_t *buffer,
+                                              const esp_display_present_area_t *area, size_t stride)
+{
+    if (!presenter || !buffer || !area) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    esp_err_t error = producer(presenter);
+    if (error == ESP_OK && (!presenter->lease_id || buffer->lease_id != presenter->lease_id || buffer->surface.pixels != presenter->lease.surface.pixels || presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN)) {
+        error = ESP_ERR_INVALID_STATE;
+    }
+    pv2_rect_t valid;
+    if (error == ESP_OK) {
+        error = rectangle(area, presenter->caps.draw_layout.width, presenter->caps.draw_layout.height, &valid);
+    }
+    pv2_area_t a = {area->x1, area->y1, area->x2, area->y2};
+    if (error == ESP_OK) {
+        error = pv2_presenter_submit_buffer(core(presenter), &presenter->lease, &a, stride);
+    }
+    if (error == ESP_OK) {
+        presenter->lease_id = 0;
+        memset(&presenter->lease, 0, sizeof(presenter->lease));
+    }
+    pv2_mutex_give(presenter->gate);
+    return error;
+}
+esp_err_t esp_display_presenter_commit_frame_with_receipt(esp_display_presenter_t *presenter, const esp_display_presenter_submit_t *submit,
+                                                          bool tracking, esp_display_presenter_frame_receipt_t *out)
+{
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!presenter || !out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    esp_err_t error = producer(presenter);
+    if (error == ESP_OK && (!presenter->active || presenter->lease_id || presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN)) {
+        error = ESP_ERR_INVALID_STATE;
+    }
+    if (error == ESP_OK && tracking && presenter->tracked.value) {
+        error = ESP_ERR_NO_MEM;
+    }
+    if (error == ESP_OK && tracking && !presenter->caps.supports_present_confirmation) {
+        error = ESP_ERR_NOT_SUPPORTED;
+    }
+    pv2_rect_t areas[32];
+    pv2_frame_coverage_t coverage = {.full_coverage = true};
+    if (error == ESP_OK && submit) {
+        if (submit->coverage == ESP_DISPLAY_PRESENT_COVERAGE_AREAS) {
+            if (!submit->areas || !submit->area_count ||
+                    submit->area_count > (presenter->config.max_damage_areas ? presenter->config.max_damage_areas : 32)) {
+                error = ESP_ERR_INVALID_ARG;
+            }
+            for (size_t i = 0; i < submit->area_count && error == ESP_OK; ++i) {
+                pv2_rect_t validated;
+                error = rectangle(&submit->areas[i], presenter->caps.draw_layout.width, presenter->caps.draw_layout.height, &validated);
+                if (error == ESP_OK && i < 32) {
+                    areas[i] = validated;
+                }
+            }
+            coverage = (pv2_frame_coverage_t) {
+                submit->area_count <= 32 ? areas : NULL,
+                       submit->area_count <= 32 ? submit->area_count : 0, false
+            };
+            /* The core derives coverage/history from successful submissions.
+             * Omitting oversized, validated hints never fabricates coverage. */
+        } else if (submit->coverage != ESP_DISPLAY_PRESENT_COVERAGE_FULL) {
+            error = ESP_ERR_INVALID_ARG;
+        }
+    }
+    if (error == ESP_OK) {
+        error = tracking ? pv2_presenter_commit_with_receipt(core(presenter), &coverage, &presenter->tracked) : pv2_presenter_commit_frame(core(presenter), &coverage);
+    }
+    if (error == ESP_OK) {
+        presenter->active = false;
+        presenter->full_next = false;
+        (void)poll(presenter);
+        *out = (esp_display_presenter_frame_receipt_t) {
+            presenter->timeline.last_submitted_frame, presenter->timeline.generation, tracking
+        };
+        if (tracking) {
+            presenter->tracked_id = out->frame_id;
+        }
+    }
+    pv2_mutex_give(presenter->gate);
+    return error;
+}
+esp_err_t esp_display_presenter_commit_frame(esp_display_presenter_t *presenter, const esp_display_presenter_submit_t *submit)
+{
+    esp_display_presenter_frame_receipt_t receipt;
+    return esp_display_presenter_commit_frame_with_receipt(presenter, submit, false, &receipt);
+}
+esp_err_t esp_display_presenter_cancel_frame_tracking(esp_display_presenter_t *presenter, uint64_t id, uint32_t generation)
+{
+    if (!presenter || !id || !generation) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    (void)poll(presenter); /* Observe a confirmation which already arrived. */
+    esp_err_t error = ESP_ERR_NOT_FOUND;
+    if (presenter->tracked_id == id && presenter->timeline.generation == generation) {
+        /* Explicit observation cancellation leaves the backend receipt and
+         * its hardware ownership untouched. It frees the observer immediately. */
+        error = presenter->tracked.value ? pv2_presenter_control_cancel_tracking(core(presenter), presenter->tracked) : ESP_OK;
+        if (error == ESP_OK) {
+            presenter->tracked.value = 0;
+            presenter->tracked_id = presenter->confirm_after = 0;
+        }
+    }
+    pv2_mutex_give(presenter->gate);
+    return error;
+}
+void esp_display_presenter_cancel_frame(esp_display_presenter_t *presenter)
+{
+    if (!presenter) {
+        return;
+    }
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    if (producer(presenter) == ESP_OK && (presenter->active || presenter->cancel_pending)) {
+        presenter->active = false;
+        presenter->lease_id = 0;
+        memset(&presenter->lease, 0, sizeof(presenter->lease));
+        presenter->full_next = true;
+        presenter->cancel_pending = true;
+        (void)finish_cancel(presenter, 0);
+    }
+    pv2_mutex_give(presenter->gate);
+}
+esp_err_t esp_display_presenter_quiesce(esp_display_presenter_t *presenter, uint32_t timeout)
+{
+    if (!presenter || !timeout) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    esp_err_t error = presenter->active || presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN ? ESP_ERR_INVALID_STATE : ESP_OK;
+    uint64_t start = pv2_now_ms();
+    pv2_presenter_status_t status;
+    if (error == ESP_OK) {
+        error = finish_cancel(presenter, timeout);
+    }
+    if (error == ESP_OK) {
+        error = pv2_presenter_control_get_status(core(presenter), &status);
+        if (error == ESP_OK && (status.frame_active || status.cancel_pending)) {
+            error = ESP_ERR_INVALID_STATE;
+        }
+    }
+    while (error == ESP_OK) {
+        error = poll(presenter);
+        if (error == ESP_OK && presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN) {
+            error = ESP_ERR_INVALID_STATE;
+        }
+        if (error != ESP_OK || presenter->timeline.completed_transfer_frame >= presenter->timeline.last_submitted_frame) {
+            break;
+        }
+        if (pv2_expired(start, timeout)) {
+            error = ESP_ERR_TIMEOUT;
+            break;
+        }
+        pv2_pause();
+    }
+    pv2_mutex_give(presenter->gate);
+    return error;
+}
+esp_err_t esp_display_presenter_set_rotation(esp_display_presenter_t *presenter, esp_display_present_rotation_t rotation)
+{
+    if (!presenter || (rotation != 0 && rotation != 90 && rotation != 180 && rotation != 270)) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    esp_err_t error = producer(presenter);
+    if (error == ESP_OK && (presenter->active || presenter->tracked_id || presenter->tracked.value || presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN || presenter->timeline.generation == UINT32_MAX)) {
+        error = ESP_ERR_INVALID_STATE;
+    }
+    if (error == ESP_OK) {
+        error = finish_cancel(presenter, budget(presenter));
+    }
+    if (error == ESP_OK && presenter->config.target.hw.rotation == rotation) {
+        pv2_mutex_give(presenter->gate);
+        return ESP_OK;
+    }
+    if (error == ESP_OK) {
+        error = pv2_legacy_resources_set_rotation(presenter->resources, (pv2_rotation_t)(rotation / 90), budget(presenter));
+    }
+    if (error == ESP_OK) {
+        presenter->config.target.hw.rotation = rotation;
+        (void)pv2_legacy_resources_select_executor(presenter->resources, (pv2_rotation_t)(rotation / 90));
+        ++presenter->timeline.generation;
+        presenter->full_next = true;
+        error = refresh_caps(presenter);
+    }
+    pv2_mutex_give(presenter->gate);
+    return error;
+}
+esp_err_t esp_display_presenter_map_point(const esp_display_presenter_t *input, int32_t *x, int32_t *y)
+{
+    if (!input || !x || !y) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    esp_display_presenter_t *presenter = (esp_display_presenter_t *)input;
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    int64_t width = presenter->caps.draw_layout.width, height = presenter->caps.draw_layout.height;
+    unsigned rotation = presenter->config.target.hw.rotation / 90;
+    int64_t logical_x = *x, logical_y = *y;
+    switch (rotation) {
+    case 1:
+        logical_x = *y;
+        logical_y = height - 1 - *x;
+        break;
+    case 2:
+        logical_x = width - 1 - *x;
+        logical_y = height - 1 - *y;
+        break;
+    case 3:
+        logical_x = width - 1 - *y;
+        logical_y = *x;
+        break;
+    default:
+        break;
+    }
+    /* V1 maps input outside the viewport too. Use wide intermediates so
+     * extreme int32 coordinates cannot overflow while preserving that rule. */
+    esp_err_t error = logical_x < INT32_MIN || logical_x > INT32_MAX ||
+                      logical_y < INT32_MIN || logical_y > INT32_MAX ? ESP_ERR_INVALID_ARG : ESP_OK;
+    if (error == ESP_OK) {
+        *x = (int32_t)logical_x;
+        *y = (int32_t)logical_y;
+    }
+    pv2_mutex_give(presenter->gate);
+    return error;
+}
+esp_err_t esp_display_presenter_stop(esp_display_presenter_t *presenter)
+{
+    if (!presenter) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    presenter->state = ESP_DISPLAY_PRESENTER_STATE_CLOSING;
+    esp_err_t error = presenter->active || presenter->lvgl_bound ? ESP_ERR_INVALID_STATE : pv2_legacy_resources_stop(presenter->resources, budget(presenter));
+    if (error == ESP_OK) {
+        (void)poll(presenter);
+        if (presenter->tracked.value) {
+            error = pv2_presenter_control_release(core(presenter), presenter->tracked);
+            if (error == ESP_OK) {
+                presenter->tracked.value = 0;
+            }
+        }
+        if (error == ESP_OK) {
+            presenter->cancel_pending = false;
+            presenter->state = ESP_DISPLAY_PRESENTER_STATE_STOPPED;
+            presenter->timeline.accepting_callbacks = false;
+        }
+    }
+    pv2_mutex_give(presenter->gate);
+    return error == ESP_ERR_TIMEOUT ? ESP_ERR_INVALID_STATE : error;
+}
+esp_err_t esp_display_presenter_delete(esp_display_presenter_t *presenter)
+{
+    if (!presenter) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    esp_err_t error = esp_display_presenter_stop(presenter);
+    if (error != ESP_OK) {
+        return error;
+    }
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    error = pv2_legacy_resources_destroy(presenter->resources, budget(presenter));
+    pv2_mutex_give(presenter->gate);
+    if (error == ESP_OK) {
+        pv2_mutex_destroy(presenter->gate);
+        pv2_lock_destroy(&presenter->events);
+        pv2_free(presenter);
+    }
+    return error == ESP_ERR_TIMEOUT ? ESP_ERR_INVALID_STATE : error;
+}
+
+esp_err_t pv2_legacy_bind(esp_display_presenter_t *presenter, pv2_presenter_t **out)
+{
+    if (!presenter || !out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    *out = NULL;
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    esp_err_t error = presenter->active || presenter->lvgl_bound ? ESP_ERR_INVALID_STATE :
+                      finish_cancel(presenter, budget(presenter));
+    if (error == ESP_OK) {
+        error = poll(presenter);
+    }
+    if (error == ESP_OK && (presenter->active || presenter->lvgl_bound || presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN || presenter->tracked_id)) {
+        error = ESP_ERR_INVALID_STATE;
+    }
+    if (error == ESP_OK) {
+        error = pv2_presenter_rebind_producer(core(presenter), budget(presenter));
+    }
+    if (error == ESP_OK) {
+        error = pv2_legacy_resources_prepare(presenter->resources, budget(presenter));
+    }
+    if (error == ESP_OK) {
+        error = pv2_presenter_drain(core(presenter), budget(presenter));
+    }
+    if (error == ESP_OK) {
+        presenter->producer = pv2_current_task();
+        presenter->lvgl_bound = true;
+        *out = core(presenter);
+    }
+    pv2_mutex_give(presenter->gate);
+    return error;
+}
+void pv2_legacy_unbind(esp_display_presenter_t *presenter)
+{
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    presenter->lvgl_bound = false;
+    presenter->full_next = true;
+    pv2_mutex_give(presenter->gate);
+}
+
+uint64_t pv2_legacy_committed(esp_display_presenter_t *presenter)
+{
+    (void)pv2_mutex_take(presenter->gate, UINT32_MAX);
+    (void)poll(presenter);
+    uint64_t committed = presenter->timeline.last_submitted_frame;
+    pv2_mutex_give(presenter->gate);
+    return committed;
+}

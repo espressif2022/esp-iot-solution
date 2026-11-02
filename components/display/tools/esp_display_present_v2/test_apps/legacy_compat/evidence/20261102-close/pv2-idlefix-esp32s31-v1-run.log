@@ -1,0 +1,107 @@
+I (232) esp_image: segment 1: paddr=00075bc0 vaddr=2f000000 sizeESP-ROM:esp32s31-20251218
+Build:Dec 18 2025
+rst:0x17 (CHIP_USB_UART_RESET),boot:0x58 (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x2f06ef30
+Core1 Saved PC:0x2f008e9a
+SPI mode:DIO, clock div:1
+load:0x2f0740c0,len:0x1600
+load:0x2f06a2b0,len:0xbc4
+load:0x2f06cfb0,len:0x2ff0
+entry 0x2f06a2ba
+I (52) boot: ESP-IDF v6.2-dev-2221-g7b9cc1ac79f8-dir 2nd stage bootloader
+I (52) boot: compile time Nov  2 2026 20:03:57
+I (54) boot: chip revision: v0.0
+I (54) boot.esp32s31: SPI Speed      : 80MHz
+I (54) boot.esp32s31: SPI Mode       : DIO
+I (55) boot.esp32s31: SPI Flash Size : 16MB
+I (55) boot: Partition Table:
+I (55) boot: ## Label            Usage          Type ST Offset   Length
+I (56) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (56) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (57) boot:  2 factory          factory app      00 00 00010000 00300000
+I (59) esp_image: segment 0: paddr=00010020 vaddr=40090020 size=65b98h (416664) map
+I (129) esp_image: segment 1: paddr=00075bc0 vaddr=2f000000 size=0a458h ( 42072) load
+I (139) esp_image: segment 2: paddr=00080020 vaddr=40000020 size=87874h (555124) map
+I (230) esp_image: segment 3: paddr=0010789c vaddr=2f00a458 size=06be0h ( 27616) load
+I (237) esp_image: segment 4: paddr=0010e484 vaddr=2f011080 size=039a0h ( 14752) load
+I (245) boot: Loaded app from partition at offset 0x10000
+I (249) oct_psram: vendor id    : 0x1a (UNKNOWN)
+I (249) oct_psram: Latency      : 0x01 (Fixed)
+I (249) oct_psram: DriveStr.    : 0x00 (25 Ohm)
+I (250) oct_psram: dev id       : 0x00 (generation 1)
+I (250) oct_psram: density      : 0x05 (128 Mbit)
+I (250) oct_psram: good-die     : 0x06 (Pass)
+I (251) oct_psram: SRF          : 0x02 (Slow Refresh)
+I (251) oct_psram: BurstType    : 0x00 ( Wrap)
+I (251) oct_psram: BurstLen     : 0x03 (2048 Byte)
+I (252) oct_psram: BitMode      : 0x00 (X8 Mode)
+I (252) oct_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (252) oct_psram: DriveStrength: 0x00 (1/1)
+I (253) MSPI Timing: Enter psram timing tuning
+I (399) esp_psram: Found 16MB PSRAM device
+I (399) esp_psram: Speed: 200MHz
+I (400) cpu_start: Multicore app
+I (714) esp_psram: SPI SRAM memory test OK
+I (722) cpu_start: Pro cpu start user code
+I (722) cpu_start: cpu freq: 320000000 Hz
+I (723) app_init: Application information:
+I (723) app_init: Project name:     pv2_compat_probe
+I (723) app_init: App version:      1
+I (723) app_init: Compile time:     Nov  2 2026 19:59:24
+I (723) app_init: ELF file SHA256:  f1ec28bd4...
+I (724) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (724) efuse_init: Min chip rev:     v0.0
+I (724) efuse_init: Max chip rev:     v0.99 
+I (724) efuse_init: Chip rev:         v0.0
+I (725) heap_init: Initializing. RAM available for dynamic allocation:
+I (725) heap_init: At 2F0168A0 len 00064710 (401 KiB): RAM
+I (725) heap_init: At 2F07AFB0 len 000041C0 (16 KiB): RAM
+I (725) heap_init: At 2E000000 len 00007FE8 (31 KiB): RTCRAM
+I (726) esp_psram: Adding pool of 16384K of PSRAM memory to heap allocator
+I (726) spi_flash: detected chip: gd
+I (727) spi_flash: flash io: dio
+I (727) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (728) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (728) main_task: Started on CPU0
+I (729) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (729) main_task: Calling app_main()
+I (729) compat_probe: START impl=v1
+I (730) qspi: BSP revision=0100 clk=44 rst=42 TE=43 CS=50 QSPI=40MHz
+I (730) main_task: Returned from app_main()
+I (830) co5300: version: 2.2.0
+I (831) co5300_spi: LCD panel create success, version: 2.2.0
+W (1591) co5300_spi: The 3Ah command has been used and will be overwritten by external initialization sequence
+I (2191) present_target: target: mode=NONE panel=IO/GRAM gram=1 rotation=0 te=0 fb=0 drawbuf=16x2
+I (2191) present_target: pipeline: commit=wait_inflight slot=16x2
+I (2191) present_gram: ready: 2 x 16-line GRAM drawbufs
+I (2192) presenter: presenter: contract=PARTITION endpoint=gram mode=gram_dma areas=0 retain=0 previous=0 drawbuf=15360
+I (2192) compat_probe: CASE impl=v1 mode=0 compose=0 rotation=0
+I (2222) compat_probe: CANCEL_RESUME_PASS impl=v1 mode=0
+I (2554) compat_probe: PASS impl=v1 mode=0 compose=0 rotation=0 frames=12 elapsed_us=360648 submitted=13 completed=13 heap=396311
+W (2554) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+W (2555) compat_probe: TE cases explicitly excluded from this GRAM benchmark run
+I (2555) present_target: target: mode=NONE panel=IO/GRAM gram=1 rotation=0 te=0 fb=0 drawbuf=50x2
+I (2555) present_target: pipeline: commit=wait_inflight slot=50x2
+I (2556) present_gram: ready: 2 x 50-line GRAM drawbufs
+I (2556) presenter: presenter: contract=PARTITION endpoint=gram mode=gram_dma areas=0 retain=0 previous=0 drawbuf=48000
+I (2561) esp_lv_present: LVGL display 480x480 on presenter (PARTITION, RGB565, rows=50, presenter drawbuf)
+I (2564) compat_probe: BENCH_START impl=v1 width=480 height=480
+I (71698) compat_probe: SCENE impl=v1 name="Empty screen" fps=27 cpu=75 render=10 flush=16
+I (71698) compat_probe: SCENE impl=v1 name="Moving wallpaper" fps=30 cpu=88 render=18 flush=9
+I (71699) compat_probe: SCENE impl=v1 name="Single rectangle" fps=30 cpu=19 render=1 flush=2
+I (71699) compat_probe: SCENE impl=v1 name="Multiple rectangles" fps=30 cpu=49 render=7 flush=8
+I (71699) compat_probe: SCENE impl=v1 name="Multiple RGB images" fps=30 cpu=34 render=4 flush=4
+I (71700) compat_probe: SCENE impl=v1 name="Multiple ARGB images" fps=30 cpu=40 render=8 flush=3
+I (71700) compat_probe: SCENE impl=v1 name="Rotated ARGB images" fps=30 cpu=36 render=8 flush=3
+I (71701) compat_probe: SCENE impl=v1 name="Multiple labels" fps=30 cpu=74 render=21 flush=3
+I (71701) compat_probe: SCENE impl=v1 name="Screen sized text" fps=14 cpu=97 render=59 flush=7
+I (71701) compat_probe: SCENE impl=v1 name="Multiple arcs" fps=30 cpu=37 render=6 flush=1
+I (71702) compat_probe: SCENE impl=v1 name="Containers" fps=29 cpu=40 render=12 flush=3
+I (71702) compat_probe: SCENE impl=v1 name="Containers with overlay" fps=20 cpu=92 render=35 flush=8
+I (71702) compat_probe: SCENE impl=v1 name="Containers with opa" fps=30 cpu=53 render=14 flush=3
+I (71702) compat_probe: SCENE impl=v1 name="Containers with opa_layer" fps=24 cpu=80 render=31 flush=2
+I (71703) compat_probe: SCENE impl=v1 name="Containers with scrolling" fps=18 cpu=97 render=40 flush=9
+I (71703) compat_probe: SCENE impl=v1 name="Widgets demo" fps=9 cpu=98 render=67 flush=7
+I (71704) compat_probe: BENCH_DONE impl=v1 scenes=16 fps=25 cpu=63 render=21 flush=5
+W (71737) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (71738) compat_probe: ALL_PASS impl=v1

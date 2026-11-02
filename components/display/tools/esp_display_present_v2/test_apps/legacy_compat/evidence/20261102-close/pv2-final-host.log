@@ -1,0 +1,160 @@
+-- /home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present_v2/tests/lv_conf.h
+-- Using configuration: /home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present_v2/tests/lv_conf.h
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /tmp/pv2-pool-host
+Consolidate compiler generated dependencies of target test_executor_dma2d
+Consolidate compiler generated dependencies of target test_executor_cpu
+Consolidate compiler generated dependencies of target test_executor_ppa
+Consolidate compiler generated dependencies of target test_executor_both
+Consolidate compiler generated dependencies of target present_v2
+[  6%] Built target test_executor_cpu
+[  6%] Built target test_executor_both
+[  6%] Built target test_executor_dma2d
+[  5%] Built target test_executor_ppa
+[ 10%] Built target present_v2
+Consolidate compiler generated dependencies of target test_records
+Consolidate compiler generated dependencies of target test_coverage
+Consolidate compiler generated dependencies of target test_frame_core
+Consolidate compiler generated dependencies of target test_te_timing
+Consolidate compiler generated dependencies of target test_image
+Consolidate compiler generated dependencies of target test_plan
+Consolidate compiler generated dependencies of target test_repair
+[ 11%] Built target test_coverage
+[ 11%] Built target test_plan
+[ 11%] Built target test_te_timing
+[ 12%] Built target test_frame_core
+[ 12%] Built target test_records
+[ 12%] Built target test_image
+[ 12%] Built target test_repair
+Consolidate compiler generated dependencies of target test_accel
+Consolidate compiler generated dependencies of target test_pixel
+Consolidate compiler generated dependencies of target test_gram
+Consolidate compiler generated dependencies of target test_scanout
+Consolidate compiler generated dependencies of target test_rotation
+Consolidate compiler generated dependencies of target test_lcd_spi
+Consolidate compiler generated dependencies of target test_presenter
+[ 12%] Built target test_accel
+[ 12%] Built target test_pixel
+[ 13%] Built target test_rotation
+[ 13%] Built target test_gram
+[ 13%] Built target test_scanout
+[ 14%] Built target test_presenter
+[ 14%] Built target test_lcd_spi
+Consolidate compiler generated dependencies of target test_te_composer
+Consolidate compiler generated dependencies of target test_presenter_te
+Consolidate compiler generated dependencies of target test_event
+Consolidate compiler generated dependencies of target test_te
+Consolidate compiler generated dependencies of target test_fb
+[ 15%] Built target test_presenter_te
+[ 15%] Built target test_event
+Consolidate compiler generated dependencies of target test_scheduler
+Consolidate compiler generated dependencies of target header_smoke
+[ 15%] Built target test_te_composer
+[ 16%] Built target test_te
+[ 16%] Built target test_fb
+[ 16%] Built target header_smoke
+Consolidate compiler generated dependencies of target present_legacy_resources
+Consolidate compiler generated dependencies of target test_boundary_trace
+[ 16%] Built target test_scheduler
+Consolidate compiler generated dependencies of target test_transfer_timeout
+[ 16%] Built target test_boundary_trace
+[ 16%] Built target present_legacy_resources
+[ 17%] Built target test_transfer_timeout
+Consolidate compiler generated dependencies of target present_legacy
+Consolidate compiler generated dependencies of target test_legacy_resources
+[ 18%] Built target test_legacy_resources
+[ 18%] Built target present_legacy
+Scanning dependencies of target lvgl
+Consolidate compiler generated dependencies of target lvgl
+[ 98%] Built target lvgl
+Consolidate compiler generated dependencies of target present_lvgl_v2
+[ 98%] Built target present_lvgl_v2
+Consolidate compiler generated dependencies of target present_legacy_lvgl
+Consolidate compiler generated dependencies of target test_lvgl
+Consolidate compiler generated dependencies of target test_lvgl_zero
+Consolidate compiler generated dependencies of target test_lvgl_fb
+Consolidate compiler generated dependencies of target test_lvgl_te
+[100%] Built target test_lvgl_fb
+[100%] Built target present_legacy_lvgl
+[100%] Built target test_lvgl_te
+[100%] Built target test_lvgl_zero
+[100%] Built target test_lvgl
+Consolidate compiler generated dependencies of target test_legacy_facade
+[100%] Building C object CMakeFiles/test_legacy_facade.dir/tests/test_legacy_facade.c.o
+[100%] Linking CXX executable test_legacy_facade
+[100%] Built target test_legacy_facade
+Internal ctest changing into directory: /tmp/pv2-pool-host
+Test project /tmp/pv2-pool-host
+      Start  1: te_timing
+ 1/34 Test  #1: te_timing ........................   Passed    0.00 sec
+      Start  2: image
+ 2/34 Test  #2: image ............................   Passed    0.01 sec
+      Start  3: frame_core
+ 3/34 Test  #3: frame_core .......................   Passed    0.00 sec
+      Start  4: plan
+ 4/34 Test  #4: plan .............................   Passed    0.00 sec
+      Start  5: records
+ 5/34 Test  #5: records ..........................   Passed    0.00 sec
+      Start  6: coverage
+ 6/34 Test  #6: coverage .........................   Passed    0.03 sec
+      Start  7: repair
+ 7/34 Test  #7: repair ...........................   Passed    0.00 sec
+      Start  8: accel
+ 8/34 Test  #8: accel ............................   Passed    0.00 sec
+      Start  9: scanout
+ 9/34 Test  #9: scanout ..........................   Passed    0.00 sec
+      Start 10: rotation
+10/34 Test #10: rotation .........................   Passed    0.00 sec
+      Start 11: pixel
+11/34 Test #11: pixel ............................   Passed    0.00 sec
+      Start 12: gram
+12/34 Test #12: gram .............................   Passed    0.01 sec
+      Start 13: lcd_spi
+13/34 Test #13: lcd_spi ..........................   Passed    0.00 sec
+      Start 14: presenter
+14/34 Test #14: presenter ........................   Passed    0.00 sec
+      Start 15: te_composer
+15/34 Test #15: te_composer ......................   Passed    0.00 sec
+      Start 16: te
+16/34 Test #16: te ...............................   Passed    0.03 sec
+      Start 17: presenter_te
+17/34 Test #17: presenter_te .....................   Passed    0.01 sec
+      Start 18: fb
+18/34 Test #18: fb ...............................   Passed    0.03 sec
+      Start 19: event
+19/34 Test #19: event ............................   Passed    0.01 sec
+      Start 20: scheduler
+20/34 Test #20: scheduler ........................   Passed    0.01 sec
+      Start 21: headers_cpp
+21/34 Test #21: headers_cpp ......................   Passed    0.00 sec
+      Start 22: boundary_trace
+22/34 Test #22: boundary_trace ...................   Passed    0.00 sec
+      Start 23: boundary_analyze
+23/34 Test #23: boundary_analyze .................   Passed    0.07 sec
+      Start 24: lvgl_zero
+24/34 Test #24: lvgl_zero ........................   Passed    0.00 sec
+      Start 25: lvgl
+25/34 Test #25: lvgl .............................   Passed    0.00 sec
+      Start 26: lvgl_te
+26/34 Test #26: lvgl_te ..........................   Passed    0.01 sec
+      Start 27: lvgl_fb
+27/34 Test #27: lvgl_fb ..........................   Passed    0.00 sec
+      Start 28: executor_cpu
+28/34 Test #28: executor_cpu .....................   Passed    0.00 sec
+      Start 29: executor_ppa
+29/34 Test #29: executor_ppa .....................   Passed    0.00 sec
+      Start 30: executor_dma2d
+30/34 Test #30: executor_dma2d ...................   Passed    0.00 sec
+      Start 31: executor_both
+31/34 Test #31: executor_both ....................   Passed    0.00 sec
+      Start 32: legacy_resources
+32/34 Test #32: legacy_resources .................   Passed    0.00 sec
+      Start 33: legacy_facade
+33/34 Test #33: legacy_facade ....................   Passed    0.08 sec
+      Start 34: transfer_timeout
+34/34 Test #34: transfer_timeout .................   Passed    0.01 sec
+
+100% tests passed, 0 tests failed out of 34
+
+Total Test time (real) =   0.35 sec
