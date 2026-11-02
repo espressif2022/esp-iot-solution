@@ -95,8 +95,12 @@ esp_err_t pv2_image_begin(pv2_image_builder_t *b, size_t candidate, size_t basel
 void pv2_image_cover(pv2_image_builder_t *b, pv2_rect_t a)
 {
     assert(pv2_valid_rect(b->width, b->height, &a));
-    for (uint32_t y = a.y; y < a.y + a.height; y++) {
-        pv2_coverage_set(b->coverage, (size_t)y * b->width + a.x, a.width);
+    if (a.x == 0 && a.width == b->width) {
+        pv2_coverage_set(b->coverage, (size_t)a.y * b->width, (size_t)a.height * b->width);
+    } else {
+        for (uint32_t y = a.y; y < a.y + a.height; y++) {
+            pv2_coverage_set(b->coverage, (size_t)y * b->width + a.x, a.width);
+        }
     }
     damage_add(&b->writes, a);
 }
@@ -145,37 +149,55 @@ bool pv2_image_next_repair(pv2_image_builder_t *b, pv2_rect_t *out)
     while (b->rect < b->repair.count) {
         pv2_rect_t a = b->repair.areas[b->rect];
         size_t count = (size_t)a.width * a.height;
-        while (b->offset < count) {
-            uint32_t x = a.x + b->offset % a.width, y = a.y + b->offset / a.width;
-            if (covered(b, (size_t)y * b->width + x)) {
-                b->offset++;
+        uint32_t ry = (uint32_t)(b->offset / a.width);
+        uint32_t rx = (uint32_t)(b->offset % a.width);
+        while (ry < a.height) {
+            uint32_t y = a.y + ry;
+            size_t row_base = (size_t)y * b->width;
+            /* Fast skip over covered pixels on this row, 8 pixels at a time when byte-aligned. */
+            while (rx < a.width) {
+                size_t bit = row_base + a.x + rx;
+                if (bit % 8 == 0 && rx + 8 <= a.width && b->coverage[bit / 8] == 0xff) {
+                    rx += 8;
+                    continue;
+                }
+                if (!covered(b, bit)) {
+                    break;
+                }
+                rx++;
+            }
+            if (rx >= a.width) {
+                ry++;
+                rx = 0;
                 continue;
             }
+            uint32_t x = a.x + rx;
             uint32_t end = x + 1;
-            while (end < a.x + a.width && !covered(b, (size_t)y * b->width + end)) {
+            uint32_t limit = a.x + a.width;
+            while (end < limit) {
+                size_t bit = row_base + end;
+                if (bit % 8 == 0 && end + 8 <= limit && b->coverage[bit / 8] == 0x00) {
+                    end += 8;
+                    continue;
+                }
+                if (covered(b, bit)) {
+                    break;
+                }
                 end++;
             }
+            uint32_t span_w = end - x;
             uint32_t rows = 1;
-            if (x == a.x && end == a.x + a.width) {
-                while (y + rows < a.y + a.height) {
-                    bool row_uncovered = true;
-                    for (uint32_t cx = a.x; cx < end; cx++) {
-                        if (covered(b, (size_t)(y + rows) * b->width + cx)) {
-                            row_uncovered = false;
-                            break;
-                        }
-                    }
-                    if (!row_uncovered) {
-                        break;
-                    }
-                    rows++;
-                }
+            while (ry + rows < a.height &&
+                    pv2_coverage_all_zero(b->coverage, (size_t)(y + rows) * b->width + x, span_w)) {
+                rows++;
             }
+            b->offset = (size_t)ry * a.width + rx;
             *out = (pv2_rect_t) {
-                x, y, end - x, rows
+                x, y, span_w, rows
             };
             return true;
         }
+        b->offset = count;
         b->rect++;
         b->offset = 0;
     }
@@ -183,9 +205,10 @@ bool pv2_image_next_repair(pv2_image_builder_t *b, pv2_rect_t *out)
 }
 void pv2_image_repaired(pv2_image_builder_t *b, const pv2_rect_t *a)
 {
-    size_t count = (size_t)a->width * a->height;
-    b->offset += count;
-    b->repaired_pixels += count;
+    for (uint32_t y = a->y; y < a->y + a->height; y++) {
+        pv2_coverage_set(b->coverage, (size_t)y * b->width + a->x, a->width);
+    }
+    b->repaired_pixels += (size_t)a->width * a->height;
 }
 esp_err_t pv2_image_commit(pv2_image_builder_t *b)
 {

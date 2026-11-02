@@ -122,6 +122,7 @@ struct pv2_backend {
     size_t repair_pos;
     bool scan_storage;
     bool converted;
+    bool damage_declared;
     uint64_t sequence;
 
     bool submitted;
@@ -423,7 +424,8 @@ static fb_advance_result_t advance_build_pipeline(pv2_backend_t *b, fb_seal_cont
     if (slot->state == FB_SLOT_REPAIR) {
         if (b->config.render_contract != PV2_CONTRACT_FULL &&
                 b->baseline != SIZE_MAX && b->baseline != b->active) {
-            pv2_image_prepare_repair(&b->image, b->config.render_contract == PV2_CONTRACT_DIRECT);
+            pv2_image_prepare_repair(&b->image,
+                                     b->config.render_contract == PV2_CONTRACT_DIRECT && !b->damage_declared);
             pv2_rect_t area;
             while (pv2_image_next_repair(&b->image, &area)) {
                 pv2_copy_request_t copy = baseline_copy(b, b->active, area);
@@ -860,14 +862,36 @@ static esp_err_t fb_begin(pv2_backend_t *b, const pv2_frame_request_t *request, 
     /* Prepopulate a stable latest sealed frame. Sealed buffers are immutable;
      * single-producer pump cannot retire/reuse it during this CPU copy. */
     bool prefill = b->baseline != SIZE_MAX && b->baseline != slot && b->config.render_contract == PV2_CONTRACT_DIRECT;
+    bool selective_direct = prefill && !request->full_redraw && request->damage_count > 0 &&
+                            !b->scan_storage && b->image.versions[slot] != 0;
+    pv2_rect_t prefill_area = {0, 0, b->config.width, b->config.height};
+    if (selective_direct) {
+        uint32_t x1 = request->damage[0].x, y1 = request->damage[0].y;
+        uint32_t x2 = x1 + request->damage[0].width, y2 = y1 + request->damage[0].height;
+        for (size_t i = 1; i < request->damage_count; ++i) {
+            if (request->damage[i].x < x1) {
+                x1 = request->damage[i].x;
+            }
+            if (request->damage[i].y < y1) {
+                y1 = request->damage[i].y;
+            }
+            if (request->damage[i].x + request->damage[i].width > x2) {
+                x2 = request->damage[i].x + request->damage[i].width;
+            }
+            if (request->damage[i].y + request->damage[i].height > y2) {
+                y2 = request->damage[i].y + request->damage[i].height;
+            }
+        }
+        prefill_area = (pv2_rect_t) {
+            x1, y1, x2 - x1, y2 - y1
+        };
+    }
     error = pv2_image_begin(&b->image, slot, b->baseline);
     if (error != ESP_OK) {
         return error;
     }
     if (prefill && !b->config.async_copy) {
-        pv2_copy_request_t copy = baseline_copy(b, slot, (pv2_rect_t) {
-            0, 0, b->config.width, b->config.height
-        });
+        pv2_copy_request_t copy = baseline_copy(b, slot, prefill_area);
         error = pv2_pixel_execute_cpu(&copy);
         if (error != ESP_OK) {
             pv2_image_cancel(&b->image);
@@ -885,10 +909,9 @@ static esp_err_t fb_begin(pv2_backend_t *b, const pv2_frame_request_t *request, 
     b->submitted = false;
     b->repair_pos = 0;
     b->converted = false;
+    b->damage_declared = selective_direct;
     if (prefill && b->config.async_copy) {
-        pv2_copy_request_t copy = baseline_copy(b, slot, (pv2_rect_t) {
-            0, 0, b->config.width, b->config.height
-        });
+        pv2_copy_request_t copy = baseline_copy(b, slot, prefill_area);
         error = pv2_pixel_submit(b->pixel, &copy, &b->copy);
         if (error != ESP_OK) {
             pv2_lock_enter(&b->lock, false);
