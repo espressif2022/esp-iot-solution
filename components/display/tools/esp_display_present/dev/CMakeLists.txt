@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(PRESENT_SANITIZE "Enable address and undefined-behavior sanitizers" OFF)
 find_package(Threads REQUIRED)
 add_library(present_engine STATIC ${PRESENT_SOURCES})
-target_include_directories(present_engine PUBLIC ../include/advanced tests/support PRIVATE ../src)
+target_include_directories(present_engine PUBLIC ../src tests/support)
 target_compile_definitions(present_engine PRIVATE PRESENT_HOST=1)
 target_compile_options(present_engine PRIVATE -Wall -Wextra -Werror)
 target_link_libraries(present_engine PUBLIC Threads::Threads)
@@ -63,7 +63,7 @@ if(PRESENT_LVGL_DIR)
         target_compile_options(lvgl PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer -fno-pie)
     endif()
     add_library(present_lvgl_binding STATIC ../../esp_lv_present/src/present_lvgl.c)
-    target_include_directories(present_lvgl_binding PUBLIC ../../esp_lv_present/include/advanced)
+    target_include_directories(present_lvgl_binding PUBLIC ../../esp_lv_present/src)
     target_link_libraries(present_lvgl_binding PUBLIC present_engine lvgl)
     target_compile_options(present_lvgl_binding PRIVATE -Wall -Wextra -Werror)
     add_executable(test_lvgl_zero tests/test_lvgl_zero.c)
@@ -103,7 +103,7 @@ foreach(variant cpu ppa dma2d both)
         ../src/present_os.c ../src/present_event.c ../src/pixel/present_pixel_engine.c
         ../src/pixel/present_executor.c ../src/pixel/present_executor_cpu.c ../src/platform/present_executor_ppa.c
         ../src/platform/present_executor_dma2d.c ../src/platform/present_pixel_accel.c)
-    target_include_directories(test_executor_${variant} PRIVATE ../include/advanced ../src tests/support)
+    target_include_directories(test_executor_${variant} PRIVATE ../src tests/support)
     target_compile_definitions(test_executor_${variant} PRIVATE PRESENT_HOST=1
         PRESENT_HOST_PPA=${has_ppa} PRESENT_HOST_DMA2D=${has_dma2d})
     target_compile_options(test_executor_${variant} PRIVATE -Wall -Wextra -Werror -UNDEBUG)
@@ -187,20 +187,6 @@ target_compile_options(test_legacy_te_gate_old PRIVATE -Wall -Wextra -Werror -UN
 target_link_libraries(test_legacy_te_gate_old PRIVATE present_engine)
 add_test(NAME legacy_te_gate_old COMMAND test_legacy_te_gate_old)
 set_tests_properties(legacy_te_gate_old PROPERTIES TIMEOUT 5)
-
-
-# Source migration: the stable and old extension API coexist in one translation unit.
-add_executable(test_pv2_compat tests/test_pv2_compat.c)
-target_include_directories(test_pv2_compat PRIVATE ../include)
-target_compile_options(test_pv2_compat PRIVATE -Wall -Wextra -Werror)
-target_link_libraries(test_pv2_compat PRIVATE present_engine)
-add_test(NAME pv2_source_compat COMMAND test_pv2_compat)
-if(PRESENT_LVGL_DIR)
-    add_executable(test_pv2_lvgl_compat tests/test_pv2_lvgl_compat.c)
-    target_compile_options(test_pv2_lvgl_compat PRIVATE -Wall -Wextra -Werror)
-    target_link_libraries(test_pv2_lvgl_compat PRIVATE present_lvgl_binding m)
-    add_test(NAME pv2_lvgl_source_compat COMMAND test_pv2_lvgl_compat)
-endif()
 
 # Private direct-backend unit tests; never propagate the internal header to consumers.
 target_include_directories(test_fb PRIVATE ../src)

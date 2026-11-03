@@ -15,12 +15,6 @@ extern "C" {
 #endif
 
 typedef enum {
-    ESP_DISPLAY_PRESENT_PANEL_IF_RGB = 0,
-    ESP_DISPLAY_PRESENT_PANEL_IF_MIPI_DSI = 1,
-    ESP_DISPLAY_PRESENT_PANEL_IF_OTHER = 2,
-} esp_display_present_panel_interface_t;
-
-typedef enum {
     ESP_DISPLAY_PRESENT_ROTATE_0 = 0,
     ESP_DISPLAY_PRESENT_ROTATE_90 = 90,
     ESP_DISPLAY_PRESENT_ROTATE_180 = 180,
@@ -129,13 +123,6 @@ typedef struct {
     int16_t scroll_dx; /**< Horizontal scroll displacement in pixels. */
     int16_t scroll_dy; /**< Vertical scroll displacement in pixels. */
 } esp_display_present_surface_request_t;
-
-/** Framebuffer storage returned by a panel driver. */
-typedef struct {
-    void *buffers[3]; /**< Framebuffer addresses. */
-    uint8_t count;    /**< Number of valid framebuffer addresses. */
-    size_t size_bytes; /**< Size of each framebuffer in bytes. */
-} esp_display_present_frame_buffers_t;
 
 #ifdef __cplusplus
 }

@@ -18,6 +18,8 @@ else()
 endif()
 idf_component_register(SRCS ${APP_SOURCE} ${BOARD_SOURCE} INCLUDE_DIRS "."
     REQUIRES esp_display_present esp_lcd esp_timer esp_psram esp_driver_gpio esp_driver_i2c ${BOARD_DEPS})
+idf_component_get_property(_present_dir esp_display_present COMPONENT_DIR)
+target_include_directories(${COMPONENT_LIB} PRIVATE "${_present_dir}/src")
 
 if(IDF_TARGET STREQUAL "esp32p4")
     target_compile_definitions(${COMPONENT_LIB} PRIVATE PRESENT_BOARD_EXECUTOR_CHECK=1)

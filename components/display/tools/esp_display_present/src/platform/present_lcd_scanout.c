@@ -120,7 +120,7 @@ static bool PRESENT_ISR_ATTR rgb_done(esp_lcd_panel_handle_t panel, const esp_lc
     return frame_boundary(user);
 }
 #endif
-static esp_err_t attach(void *context, esp_display_present_panel_event_fn callback, void *user)
+static esp_err_t scanout_attach(void *context, esp_display_present_panel_event_fn callback, void *user)
 {
     esp_display_present_lcd_scanout_t *scanout = context;
     if (!scanout || !callback) {
@@ -152,7 +152,7 @@ static esp_err_t attach(void *context, esp_display_present_panel_event_fn callba
     return error;
 }
 
-static esp_display_present_tx_result_t submit(void *context, const esp_display_present_surface_t *surface, const esp_display_present_rect_t *area, uint64_t cookie)
+static esp_display_present_tx_result_t scanout_submit(void *context, const esp_display_present_surface_t *surface, const esp_display_present_rect_t *area, uint64_t cookie)
 {
     esp_display_present_lcd_scanout_t *scanout = context;
     if (!scanout || !surface || !area || !cookie || area->x || area->y || area->width != scanout->config.width ||
@@ -251,7 +251,7 @@ static esp_err_t detach_retained(esp_display_present_lcd_scanout_t *scanout, uin
     return busy ? ESP_ERR_TIMEOUT : ESP_OK;
 }
 
-static esp_err_t quiesce(void *context, uint32_t timeout)
+static esp_err_t scanout_quiesce(void *context, uint32_t timeout)
 {
     esp_display_present_lcd_scanout_t *scanout = context;
     if (!scanout) {
@@ -404,7 +404,7 @@ esp_err_t present_lcd_scanout_initialize(esp_display_present_lcd_scanout_t *scan
         if (!cookie) {
             return ESP_ERR_NO_MEM;
         }
-        esp_display_present_tx_result_t tx = submit(scanout, &surface, &area, cookie);
+        esp_display_present_tx_result_t tx = scanout_submit(scanout, &surface, &area, cookie);
         if (tx.acceptance != ESP_DISPLAY_PRESENT_TX_REJECTED) {
             scanout->initial_started = true;
         }
@@ -451,7 +451,7 @@ esp_err_t esp_display_present_lcd_scanout_get_interface(esp_display_present_lcd_
         return ESP_ERR_INVALID_ARG;
     }
     *out = (esp_display_present_panel_adapter_t) {
-        scanout, attach, submit, quiesce
+        scanout, scanout_attach, scanout_submit, scanout_quiesce
     };
     return ESP_OK;
 }

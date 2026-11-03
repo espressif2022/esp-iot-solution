@@ -80,7 +80,7 @@ static bool PRESENT_ISR_ATTR color_done(esp_lcd_panel_io_handle_t io,
     return user ? finish_color(user, true) : false;
 }
 
-static esp_err_t attach(void *context, esp_display_present_panel_event_fn callback, void *user)
+static esp_err_t spi_attach(void *context, esp_display_present_panel_event_fn callback, void *user)
 {
     esp_display_present_lcd_spi_t *spi = context;
     if (!spi || !callback) {
@@ -214,8 +214,8 @@ static esp_err_t stage_transfer(esp_display_present_lcd_spi_t *spi, const esp_di
     return error;
 }
 
-static esp_display_present_tx_result_t submit(void *context, const esp_display_present_surface_t *surface,
-                                              const esp_display_present_rect_t *area, uint64_t cookie)
+static esp_display_present_tx_result_t spi_submit(void *context, const esp_display_present_surface_t *surface,
+                                                  const esp_display_present_rect_t *area, uint64_t cookie)
 {
     esp_display_present_lcd_spi_t *spi = context;
     if (!spi) {
@@ -274,7 +274,7 @@ static esp_display_present_tx_result_t submit(void *context, const esp_display_p
     };
 }
 
-static esp_err_t quiesce(void *context, uint32_t timeout)
+static esp_err_t spi_quiesce(void *context, uint32_t timeout)
 {
     esp_display_present_lcd_spi_t *spi = context;
     if (!spi) {
@@ -361,7 +361,7 @@ esp_err_t esp_display_present_lcd_spi_get_interface(esp_display_present_lcd_spi_
         return ESP_ERR_INVALID_ARG;
     }
     *out = (esp_display_present_panel_adapter_t) {
-        spi, attach, submit, quiesce
+        spi, spi_attach, spi_submit, spi_quiesce
     };
     return ESP_OK;
 }
