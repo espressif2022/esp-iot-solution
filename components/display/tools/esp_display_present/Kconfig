@@ -1,0 +1,17 @@
+menu "Display presenter"
+config PV2_LEGACY_CALLBACK_JOIN
+    bool
+    default y
+    select ESP_IPC_ENABLE if !ESP_SYSTEM_SINGLE_CORE_MODE
+    help
+        Borrowed display callbacks require a cross-core join before freeing
+        their context. Enable the IDF IPC dependency as part of this component.
+
+config PV2_LEGACY_RGB_BOUNCE_CONFIRMED
+    bool "Application confirms borrowed RGB panel uses bounce buffers"
+    default n
+    help
+        For older RGB drivers without a framebuffer capability query, enable
+        only if the borrowed panel was created with RGB bounce buffers. When
+        the query is available, the driver-reported configuration is used.
+endmenu

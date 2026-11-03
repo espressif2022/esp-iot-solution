@@ -1,0 +1,11 @@
+if(IDF_TARGET STREQUAL "esp32s3")
+    set(BOARD_SOURCE board_s3.c)
+    set(BOARD_DEPS esp_lcd_gc9503 esp_lcd_panel_io_additions esp_io_expander_tca9554)
+elseif(IDF_TARGET STREQUAL "esp32p4")
+    set(BOARD_SOURCE board_p4.c)
+    set(BOARD_DEPS esp_lcd_ek79007 esp_hw_support)
+else()
+    message(FATAL_ERROR "Only the identified S3 RGB and P4 MIPI boards are supported")
+endif()
+idf_component_register(SRCS main.c boundary_trace.c ${BOARD_SOURCE} INCLUDE_DIRS "."
+    REQUIRES esp_display_present esp_lcd esp_timer esp_psram esp_driver_gpio esp_driver_i2c ${BOARD_DEPS})

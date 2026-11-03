@@ -14,6 +14,7 @@ examples:
 files:
   exclude:
     - "dist/**/*"
+    - "dev/**/*"
 sbom:
   supplier: 'Organization: Espressif Systems (Shanghai) CO LTD'
   originator: 'Organization: Espressif Systems (Shanghai) CO LTD'

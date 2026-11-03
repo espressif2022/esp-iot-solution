@@ -1,0 +1,181 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
+ * SPDX-License-Identifier: Apache-2.0
+ */
+#include "present_executor.h"
+#ifdef PRESENT_HOST
+#ifndef PRESENT_HOST_DMA2D
+#define PRESENT_HOST_DMA2D 1
+#endif
+#define PRESENT_PLUGIN_ENABLED PRESENT_HOST_DMA2D
+#else
+#include "soc/soc_caps.h"
+#define PRESENT_PLUGIN_ENABLED SOC_DMA2D_SUPPORTED
+#endif
+#if PRESENT_PLUGIN_ENABLED
+#include "present_executor_hw.h"
+#include "esp_private/async_memcpy_dma2d.h"
+typedef struct {
+    esp_display_present_executor_t base;
+    present_mutex_t *gate;
+    present_os_event_t *done;
+    async_memcpy_dma2d_handle_t dma;
+} plugin_t;
+static bool PRESENT_ISR_ATTR completed(async_memcpy_dma2d_handle_t driver, async_memcpy_dma2d_event_data_t *event, void *context)
+{
+    (void)driver;
+    (void)event;
+    plugin_t *plugin = context;
+    return present_event_signal(plugin->done, true);
+}
+static esp_err_t caps(void *context, esp_display_present_executor_caps_t *out)
+{
+    (void)context;
+    *out = (esp_display_present_executor_caps_t) {
+        .name = "dma2d", .format_mask = 3,
+        .rotation_mask = 1, .byte_swap = false,
+        .base_alignment = 64, .destination_capacity_alignment = 64, .stride_alignment_bytes = 1,
+        .max_stride_pixels = 0x3fff, .max_height = 0x3fff,
+        .address_dependent_constraints = true, .requires_full_stride_capacity = true
+    };
+    return ESP_OK;
+}
+static esp_err_t probe(void *context, const esp_display_present_copy_request_t *request, esp_display_present_executor_reason_t *reason)
+{
+    (void)context;
+    void *band;
+    size_t bytes;
+    esp_err_t error = hw_probe(request, reason, &band, &bytes);
+    if (error != ESP_OK) {
+        return error;
+    }
+    if (request->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || request->source.layout.byte_order != request->destination.layout.byte_order) {
+        return unsupported(reason, ESP_DISPLAY_PRESENT_EXEC_TRANSFORM);
+    }
+    size_t bpp = request->source.layout.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
+    size_t si = dma2d_get_buffer_alignment_constraint(request->source.pixels);
+    size_t di = dma2d_get_buffer_alignment_constraint(request->destination.pixels);
+    if ((si > 1 && ((uintptr_t)request->source.pixels % si || request->source.layout.stride_bytes % si ||
+                    (request->source_area.x * bpp) % si || (request->source_area.width * bpp) % si)) ||
+            (di > 1 && ((uintptr_t)request->destination.pixels % di || request->destination.layout.stride_bytes % di ||
+                        (request->destination_x * bpp) % di || (request->source_area.width * bpp) % di))) {
+        return unsupported(reason, ESP_DISPLAY_PRESENT_EXEC_ALIGNMENT);
+    }
+    return ESP_OK;
+}
+static esp_err_t execute(void *context, const esp_display_present_copy_request_t *request)
+{
+    plugin_t *plugin = context;
+    esp_display_present_executor_reason_t reason;
+    esp_err_t error = probe(context, request, &reason);
+    if (error != ESP_OK) {
+        return error;
+    }
+    void *band;
+    size_t band_bytes;
+    error = hw_probe(request, &reason, &band, &band_bytes);
+    if (error != ESP_OK) {
+        return error;
+    }
+    size_t bpp = request->source.layout.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
+    (void)present_mutex_take(plugin->gate, UINT32_MAX);
+    error = hw_sync(band, band_bytes, ESP_CACHE_MSYNC_FLAG_DIR_C2M);
+    if (error != ESP_OK) {
+        goto done;
+    }
+    async_memcpy_dma2d_trans_desc_t op = {.src_buffer = request->source.pixels,
+                                          .src_stride = request->source.layout.stride_bytes / bpp,
+                                          .src_height = request->source.layout.height,
+                                          .src_x = request->source_area.x,
+                                          .src_y = request->source_area.y,
+                                          .dst_buffer = request->destination.pixels,
+                                          .dst_stride = request->destination.layout.stride_bytes / bpp,
+                                          .dst_height = request->destination.layout.height,
+                                          .dst_x = request->destination_x,
+                                          .dst_y = request->destination_y,
+                                          .copy_width = request->source_area.width,
+                                          .copy_height = request->source_area.height,
+                                          .pixel_format =
+                                              bpp == 2 ? ESP_COLOR_FOURCC_RGB16 : ESP_COLOR_FOURCC_BGR24
+                                         };
+    (void)present_event_wait(plugin->done, 0);
+    /* IDF signals our ISR callback before recycling its descriptor. A
+     * following worker may arrive in that brief window. INVALID_STATE is
+     * documented definite rejection (no free transaction), safe to retry. */
+    uint64_t start = present_now_ms();
+    do {
+        error = esp_async_memcpy_dma2d(plugin->dma, &op, completed, plugin);
+        if (error != ESP_ERR_INVALID_STATE || present_expired(start, 1000)) {
+            break;
+        }
+        present_pause();
+    } while (true);
+    if (error == ESP_OK) {
+        (void)present_event_wait(plugin->done, UINT32_MAX);
+    }
+    if (error == ESP_OK) {
+        error = hw_sync(band, band_bytes, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
+    }
+done:
+    present_mutex_give(plugin->gate);
+    return error;
+}
+static esp_err_t destroy(void *context)
+{
+    plugin_t *plugin = context;
+    esp_err_t error = esp_async_memcpy_uninstall_dma2d(plugin->dma);
+    if (error != ESP_OK) {
+        return error;
+    }
+    present_event_destroy(plugin->done);
+    present_mutex_destroy(plugin->gate);
+    present_free(plugin);
+    return ESP_OK;
+}
+static const esp_display_present_executor_ops_t ops = {caps, probe, execute, destroy};
+esp_err_t esp_display_present_executor_dma2d_create(esp_display_present_executor_t **out)
+{
+    if (!out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    *out = NULL;
+    plugin_t *plugin = present_alloc(sizeof(*plugin));
+    if (!plugin) {
+        return ESP_ERR_NO_MEM;
+    }
+    plugin->gate = present_mutex_create();
+    if (!plugin->gate) {
+        present_free(plugin);
+        return ESP_ERR_NO_MEM;
+    }
+    plugin->done = present_event_create();
+    if (!plugin->done) {
+        present_mutex_destroy(plugin->gate);
+        present_free(plugin);
+        return ESP_ERR_NO_MEM;
+    }
+    esp_err_t error;
+    async_memcpy_dma2d_config_t cfg = {.backlog = 1};
+    error = esp_async_memcpy_install_dma2d(&cfg, &plugin->dma);
+    if (error != ESP_OK) {
+        present_event_destroy(plugin->done);
+        present_mutex_destroy(plugin->gate);
+        present_free(plugin);
+        return error;
+    }
+    plugin->base = (esp_display_present_executor_t) {
+        &ops, plugin
+    };
+    *out = &plugin->base;
+    return ESP_OK;
+}
+#else
+esp_err_t esp_display_present_executor_dma2d_create(esp_display_present_executor_t **out)
+{
+    if (!out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    *out = NULL;
+    return ESP_ERR_NOT_SUPPORTED;
+}
+#endif

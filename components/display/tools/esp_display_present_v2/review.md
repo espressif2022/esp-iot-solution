@@ -1,6 +1,25 @@
+> 2026-11-03 默认入口已切到 V2，旧实现已移除；当前布局、支持范围及验证见 [DEFAULT_SWITCH.md](DEFAULT_SWITCH.md)。下文旧阶段中的“尚未切换”与 V1 源码路径只用于历史追溯。
+
+## 2026-11-03：兼容阻塞与交付边界修复
+
+本轮完成前次检查点的三项缺陷与交付边界修复：
+
+| 项目 | 实现及回归 |
+| --- | --- |
+| TE gate 阻塞 | 独立非阻塞窗口查询，移除旧 semaphore wait；双边沿与 phase timer 驱动。真实 gate 实现使用虚拟时钟测试无边沿、窗口前/边界/过期、after-edge、超窗与 timer 销毁重试 |
+| stop 未封帧 | GRAM/TE/FB 无 lease 构建先取消再停止；DIRECT prefill 阻塞时保留对象，重试成功且无 sticky fault |
+| TE_CANCELING | copy 排空后正常发布取消，再执行 panel quiesce；测试 cancel(0)→stop(0)→放行 copy→stop 成功，无假故障 |
+| 自动双 tile | GRAM、异步 GRAM、TE、FB 实际像素分配故障注入；自动降为一块且 plan 与池一致，显式两块保留 NO_MEM |
+| 内存预估 | TE 内部 compose 与 GRAM 转换槽计入预留；PSRAM 一块可用时保留外部内存偏好 |
+| 独立交付 | 兼容组件拥有 TE/geometry 实现、四份公开头文件与 esp_lcd 公开依赖；不引用 V1 私有目录 |
+
+普通 Host＋真实 LVGL 35/35、ASan/UBSan/LSan 35/35（`ASAN_OPTIONS=detect_leaks=1`）通过。P4／S3／S31 独立兼容组件离线编译、链接通过；四组相关回归各连续 50 次（共 200 次）通过。`git diff --check` 与组件格式检查通过。
+
+本轮不上板、不切换默认组件。GPIO IPC join 的原生调用仍没有硬超时保证；框架在前后检查预算并保留超时对象。Host 不证明真实 TE 光学窗口或竞态穷举。
+
 # `esp_display_present_v2` 设计与代码风格 Review 报告
 
-## 2026-11-02 检查点：待修复 Review 项
+## 2026-11-02 检查点：当时待修复项（本轮已处理）
 
 本次提交保存现有实现与验收结果，不表示以下问题已解决，默认依赖仍不切换。
 
@@ -289,7 +308,7 @@ FB 推进结果已明确分离 IDLE/PENDING/COMPLETE/FAILED 与 esp_err_t，封�
 
 ## C1 基础资源层（2026-11-02）
 
-新增私有资源聚合而非应用新 API：CPU/可选硬件创建、驱动 FB、默认 tile/service、失败清理与逆序销毁。新增 retained-driver-scanout 停止路径，只保留驱动自有外部 FB，先排空 sender/copy 与回调；原默认 stop 不变。新 presenter 在第一次 producer lease 前显式建立 FB0，避免复用借用 panel 时猜测初始源。原始 VSYNC 观察不参与退休 fence。详情和未覆盖边界见 compat/esp_display_present/README.md。
+新增私有资源聚合而非应用新 API：CPU/可选硬件创建、驱动 FB、默认 tile/service、失败清理与逆序销毁。新增 retained-driver-scanout 停止路径，只保留驱动自有外部 FB，先排空 sender/copy 与回调；原默认 stop 不变。新 presenter 在第一次 producer lease 前显式建立 FB0，避免复用借用 panel 时猜测初始源。原始 VSYNC 观察不参与退休 fence。详情和未覆盖边界见 ../esp_display_present/README.md。
 
 C1 时点 C2 同名门面尚未实现（当前进度见下文）；TE/单 FB 等明确拒绝，不能按已迁移计。新增 native IPC join 尚无本轮实板时序证据；超时保证也受原生同步 API 限制。
 

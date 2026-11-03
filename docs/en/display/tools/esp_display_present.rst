@@ -2,6 +2,10 @@ ESP Display Present
 ===================
 :link_to_translation:`zh_CN:[中文]`
 
+.. note::
+
+   The repository default now uses V2 behind the existing component name and public API. The V1 implementation has been removed. LVGL integration requires 9.5 or later; see the component README for validated paths and driver restrictions.
+
 ``esp_display_present`` connects a renderer-produced pixel surface to an
 ``esp_lcd`` panel. It does not depend on scene, widget, or input semantics.
 The pixel path is abstracted so LVGL, GSP, or a custom GUI can share the same

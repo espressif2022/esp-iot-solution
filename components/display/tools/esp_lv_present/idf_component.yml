@@ -14,7 +14,6 @@ dependencies:
     public: true
   espressif/esp_display_present:
     version: "^1.1.2"
-    override_path: "../esp_display_present"
     public: true
 examples:
   - path: ../../../../examples/display/gui/lvgl_present_benchmark

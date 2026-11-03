@@ -1,0 +1,1210 @@
+{
+  "root": "/home/xuxin/xuxin/esp-iot-solution-sensor-MR",
+  "moves": [
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/backend/fb.c",
+      "destination": "components/display/tools/esp_display_present/src/engine/backend/fb.c",
+      "sha256": "a914a411b16f5291f80ba88eeede738dd16a6743bb78e5c86a206f4c54b9404a",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/backend/gram.c",
+      "destination": "components/display/tools/esp_display_present/src/engine/backend/gram.c",
+      "sha256": "637137f79b7ab0e3924fe7a3b5be937f80c6e516a561db4a2586c0b39eebb3a0",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/backend/te.c",
+      "destination": "components/display/tools/esp_display_present/src/engine/backend/te.c",
+      "sha256": "c71ec1d7f8ddd8f615d4d87f7f14e8319a551dbd802b474fb57f10e0231bf091",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/backend/te_composer.c",
+      "destination": "components/display/tools/esp_display_present/src/engine/backend/te_composer.c",
+      "sha256": "650c1ddcf3232e50ff413e8cad5452468ada29eb7dd961632281f7865b442aa7",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/backend/te_composer.h",
+      "destination": "components/display/tools/esp_display_present/src/engine/backend/te_composer.h",
+      "sha256": "8efd919799dbcbafe8a1dd2a8a1f450f86955890bbeea38923426009944a246f",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/pixel/executor.c",
+      "destination": "components/display/tools/esp_display_present/src/engine/pixel/executor.c",
+      "sha256": "d67fd8eb931bcd63f1719de0b6fdb57c3a2666ed9889705332439e1c1d05582c",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/pixel/executor_cpu.c",
+      "destination": "components/display/tools/esp_display_present/src/engine/pixel/executor_cpu.c",
+      "sha256": "17ae7c45adfd1a2c46dde061bcd553661c070151aedb958b361407e20aa7cb88",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/pixel/pixel_engine.c",
+      "destination": "components/display/tools/esp_display_present/src/engine/pixel/pixel_engine.c",
+      "sha256": "4fb4cf2f3aa28571fc0241e5d761eb3d215d8601609c5f8917ccfea430540132",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/platform/executor_dma2d.c",
+      "destination": "components/display/tools/esp_display_present/src/engine/platform/executor_dma2d.c",
+      "sha256": "78811b06e96c98201495f0f0b628247b1a66b468383b06dc3ecb0041348849ba",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/platform/executor_hw.h",
+      "destination": "components/display/tools/esp_display_present/src/engine/platform/executor_hw.h",
+      "sha256": "802290e15067413f5f4e7bce85f2b1e33abcf7277dc9b392880735cc0dd1ce9c",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/platform/executor_ppa.c",
+      "destination": "components/display/tools/esp_display_present/src/engine/platform/executor_ppa.c",
+      "sha256": "80aaa17cb50df37f0cfee904ae909a55adf7f227d762f540d950cf44f894a762",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/platform/lcd_scanout.c",
+      "destination": "components/display/tools/esp_display_present/src/engine/platform/lcd_scanout.c",
+      "sha256": "86d931565de4ebdf71107e50e05063966529112cda6a62380b31383d42d57477",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/platform/lcd_scanout_internal.h",
+      "destination": "components/display/tools/esp_display_present/src/engine/platform/lcd_scanout_internal.h",
+      "sha256": "3864fd31d4e8c755907fe5c60739bcd87b6f89b7173acae510ec5f3f2d2b95f0",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/platform/lcd_spi.c",
+      "destination": "components/display/tools/esp_display_present/src/engine/platform/lcd_spi.c",
+      "sha256": "676a6ccb7cb38877168e71105a34107718b602c1c84af77b82726bbc9dd3c3a3",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/platform/pixel_accel.c",
+      "destination": "components/display/tools/esp_display_present/src/engine/platform/pixel_accel.c",
+      "sha256": "f8b1adcd6801b46c32caeedc6e81180cf1ce29e79b9671888902df060e93f9ed",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/present_allocation.h",
+      "destination": "components/display/tools/esp_display_present/src/engine/present_allocation.h",
+      "sha256": "4cdd51cb671455ac9973852fa97185ecb1ece8986b7404482f66485ee7345c3c",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/present_config.c",
+      "destination": "components/display/tools/esp_display_present/src/engine/present_config.c",
+      "sha256": "7d58b4eaeab39c530d4bc2aab1a25dd7d7e06f044a235a4e8ae634eb95334d1d",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/present_config.h",
+      "destination": "components/display/tools/esp_display_present/src/engine/present_config.h",
+      "sha256": "b9591786135dd9c4b774444b9e201b35aa4907dda0f9dad7bb8d5086d2997188",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/present_coverage.h",
+      "destination": "components/display/tools/esp_display_present/src/engine/present_coverage.h",
+      "sha256": "b3e8ce6162ad8f5389223783a6d9ababb13259629ebfa2772dc6ec2d267c3d3a",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/present_event.c",
+      "destination": "components/display/tools/esp_display_present/src/engine/present_event.c",
+      "sha256": "5c0b29c8ad1b4a411ab7581aa91607ddb50598222221f4b114ebeb332969d058",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/present_frame_core.c",
+      "destination": "components/display/tools/esp_display_present/src/engine/present_frame_core.c",
+      "sha256": "f5f14945c0306ede6d270fe26cbe81c1bcad5ee261c70b170a3f765871e1d85a",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/present_frame_core.h",
+      "destination": "components/display/tools/esp_display_present/src/engine/present_frame_core.h",
+      "sha256": "2405357aa1b87011dddc525b7e509078a2d68275e96d7f557caa5caffeff3294",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/present_image.c",
+      "destination": "components/display/tools/esp_display_present/src/engine/present_image.c",
+      "sha256": "60151024ffe2e0574158c1c3830b340651cec8f390cf5f4ad7b745eb74046f3e",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/present_image.h",
+      "destination": "components/display/tools/esp_display_present/src/engine/present_image.h",
+      "sha256": "ca10d6eb6443d607df3bb2aa35cdf07e1a12c369ff2580a7c2905364dba55cf7",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/present_limits.h",
+      "destination": "components/display/tools/esp_display_present/src/engine/present_limits.h",
+      "sha256": "55ac48df4ff22f1d1da74504834b6a84df5df3b3f15b98148102dd2afa4f6415",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/present_memory.h",
+      "destination": "components/display/tools/esp_display_present/src/engine/present_memory.h",
+      "sha256": "912130b25ea0ca8a84a8bc702c9236b5510d6ce7b438e32e83352e0d3f86fdbf",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/present_os.c",
+      "destination": "components/display/tools/esp_display_present/src/engine/present_os.c",
+      "sha256": "ada14aa831b2a8874ec08449b8c19ed84db53d239603727e88661f8606f91284",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/present_os.h",
+      "destination": "components/display/tools/esp_display_present/src/engine/present_os.h",
+      "sha256": "2825ae91d226a97f198fe28cea305ba2b59e85255e1761f92aeef6bb119a6327",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/present_plan.c",
+      "destination": "components/display/tools/esp_display_present/src/engine/present_plan.c",
+      "sha256": "ebb7ad724a1b9f4ac3cb71cc3f1b4fec1a28d0a68adb7ae600b21f1e176df04f",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/present_records.h",
+      "destination": "components/display/tools/esp_display_present/src/engine/present_records.h",
+      "sha256": "ce841714c2abb8a520ddd46dd77d62707c963cbb0c40952a270a64f447b43c81",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/present_te_timing.c",
+      "destination": "components/display/tools/esp_display_present/src/engine/present_te_timing.c",
+      "sha256": "76fba6208c48b8f1220c0972bf667f048f505197adaca5bc5d008c272060c9b6",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/present_transaction.h",
+      "destination": "components/display/tools/esp_display_present/src/engine/present_transaction.h",
+      "sha256": "be60be422239ee6f46f02130163b3e3b33df5c4959ee95103c0b54a39aa6ca29",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/presenter.c",
+      "destination": "components/display/tools/esp_display_present/src/engine/presenter.c",
+      "sha256": "7413eb05c5b1c1f7e4f5fd66375c900a8134a1ae435dde1f8d90dc4505920f97",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/src/presenter_control.h",
+      "destination": "components/display/tools/esp_display_present/src/engine/presenter_control.h",
+      "sha256": "1f50bbc76248f990a2e5f03f564f8e4df1e54f7550edbfbf141a7cdb278147ed",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/include/present_backend.h",
+      "destination": "components/display/tools/esp_display_present/include/advanced/present_backend.h",
+      "sha256": "270f5bbacd077f9a994e1a4d10b3ab432b79c556595f2423f895105c319aff0e",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/include/present_executor.h",
+      "destination": "components/display/tools/esp_display_present/include/advanced/present_executor.h",
+      "sha256": "aae0a2af0b3352e0e8d3b6f327aff2b5803abe03ff26bce08c0a018632387379",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/include/present_lcd_scanout.h",
+      "destination": "components/display/tools/esp_display_present/include/advanced/present_lcd_scanout.h",
+      "sha256": "abb5d67882b48eb51012ae74fc20ab13af1551a64a9134b8940505e67e913bbb",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/include/present_lcd_spi.h",
+      "destination": "components/display/tools/esp_display_present/include/advanced/present_lcd_spi.h",
+      "sha256": "8318a08fdd20175c514db4b44fa72a477198336d1dc5de3ca658e8a0a51bf23e",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/include/present_output_caps.h",
+      "destination": "components/display/tools/esp_display_present/include/advanced/present_output_caps.h",
+      "sha256": "5ac074315d16c59eaaf3f2a4e3928f437c01d1dac5d84207c26846610bf16e0e",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/include/present_pixel_accel.h",
+      "destination": "components/display/tools/esp_display_present/include/advanced/present_pixel_accel.h",
+      "sha256": "9df7e74449cb46324b76144895afc520bf775a302b793032e2598625012189ee",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/include/present_pixel_engine.h",
+      "destination": "components/display/tools/esp_display_present/include/advanced/present_pixel_engine.h",
+      "sha256": "4721c14836cf4efc0c461ac7716675915fbdf6a85b9f3ab35576221dc013c390",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/include/present_plan.h",
+      "destination": "components/display/tools/esp_display_present/include/advanced/present_plan.h",
+      "sha256": "a6781489a3904490cf14f8a376a0a2be2e220653d5e72ffe6cbb4ce16da82b09",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/include/present_presenter.h",
+      "destination": "components/display/tools/esp_display_present/include/advanced/present_presenter.h",
+      "sha256": "da67a69c5e3befd59ac48fbac2cc87b828b7f8e394318bc67a973ef686ddf2b9",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/include/present_pv2_compat.h",
+      "destination": "components/display/tools/esp_display_present/include/advanced/present_pv2_compat.h",
+      "sha256": "b824e8e5f5bce038532f1fd32dc68822b27aaf01a32848630a933b1bc4281386",
+      "tracked": false,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/include/present_te_timing.h",
+      "destination": "components/display/tools/esp_display_present/include/advanced/present_te_timing.h",
+      "sha256": "2b4b883cf76a27a158a89f0496db8466204c80bf8a5e9ee308c61665cc695a19",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/bindings/esp_lv_present_v2/include/present_lvgl.h",
+      "destination": "components/display/tools/esp_lv_present/include/advanced/present_lvgl.h",
+      "sha256": "a0ed53d682d98562e2ebe4e4b83ba4a76fcd97023da709a797fc9e7c719652ad",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/bindings/esp_lv_present_v2/include/present_lvgl_pv2_compat.h",
+      "destination": "components/display/tools/esp_lv_present/include/advanced/present_lvgl_pv2_compat.h",
+      "sha256": "7e11fff66bd1f064f6dc06beb8c9bb444aa52b45252f21e05484942c49793d8d",
+      "tracked": false,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/bindings/esp_lv_present_v2/present_lvgl.c",
+      "destination": "components/display/tools/esp_lv_present/src/present_lvgl.c",
+      "sha256": "ce3515a88db869632597f4b403bc0ea978a1a7e4e063c369e6610dacf94b7270",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/header_smoke.cpp",
+      "destination": "components/display/tools/esp_display_present/dev/tests/header_smoke.cpp",
+      "sha256": "9bc363433ec52211ca567a0ddf47d047942a89c29a6afce00ee5569bd92c5b74",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/lv_conf.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/lv_conf.h",
+      "sha256": "0532a6a5dc7eb531a4136365dff49f767f4dde59fbc28a750b2e86b8b1c1f4ed",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/driver/ppa.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/driver/ppa.h",
+      "sha256": "8505c6f983023b93f675be768136961df2ec1a763f1b0bc724f71fdab9cda3d0",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/esp_cache.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/esp_cache.h",
+      "sha256": "ea799a7bf5078323676432fa55c16db13472a037af98b6424c9ad8f5c65d6b16",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/esp_err.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/esp_err.h",
+      "sha256": "f740f79ad80c710ea2c0e89134c943dca844cd58d407a40ce73609772ed5376f",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/esp_lcd_io_spi.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/esp_lcd_io_spi.h",
+      "sha256": "0df305bb906b2a8fee5311ee5428320ea5ebba14659798aa68b964a94a6c9a4e",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/esp_lcd_mipi_dsi.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/esp_lcd_mipi_dsi.h",
+      "sha256": "2e6e6f8651f53481ff86a1ea128201f303b1afb2a74259a0ae1b303ab2453c6b",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/esp_lcd_panel_io.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/esp_lcd_panel_io.h",
+      "sha256": "3b66ee069074fac68c740ece7dc7f16845d26cdb4e46e138f0dbf53fa545f0e6",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/esp_lcd_panel_ops.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/esp_lcd_panel_ops.h",
+      "sha256": "3aed51b0fcd07daabcf268ffa25eb72f9a9db07a6624e0818d1660735a509583",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/esp_lcd_panel_rgb.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/esp_lcd_panel_rgb.h",
+      "sha256": "0ffda529963e68a9efc0012846857f0d277eb88a4b4ff3f0f0ec4c20f595357d",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/esp_memory_utils.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/esp_memory_utils.h",
+      "sha256": "2ce2b284291630ae1cde5df1731ac2596411948b3e046a3d6e5957b34e3cd636",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/esp_private/async_memcpy_dma2d.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/esp_private/async_memcpy_dma2d.h",
+      "sha256": "fa5ca9300e1f27f3e195dc20afec93371420a6140ba3837ebf64cf2d65e48d53",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/esp_private/dma2d.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/esp_private/dma2d.h",
+      "sha256": "d973a74502a2bc3c4f8f6b9ca025728a052ffa219321bae95a79c9b78249669f",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/legacy_panel.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/legacy_panel.h",
+      "sha256": "815ac33daba823d09ab82ebcd3bb2d4fdc96943c31dc52ce2e5e55a2edf89119",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/scan_panel.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/scan_panel.h",
+      "sha256": "e01fd239626b7d6488e5134dd574c48d0887721f25dfc227bf6bf199f27dec98",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/sync_panel.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/sync_panel.h",
+      "sha256": "457b869cfd576c9d46275a83c08c5a0beb0674fb23125c8acefb680888d1572b",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/te_platform/driver/gpio.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/te_platform/driver/gpio.h",
+      "sha256": "a372ad1dd0dcfa53b2c178319d7de62db548d45aac73f96503d486f28bce0e51",
+      "tracked": false,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/te_platform/esp_check.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/te_platform/esp_check.h",
+      "sha256": "a372ad1dd0dcfa53b2c178319d7de62db548d45aac73f96503d486f28bce0e51",
+      "tracked": false,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/te_platform/esp_idf_version.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/te_platform/esp_idf_version.h",
+      "sha256": "a372ad1dd0dcfa53b2c178319d7de62db548d45aac73f96503d486f28bce0e51",
+      "tracked": false,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/te_platform/esp_intr_alloc.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/te_platform/esp_intr_alloc.h",
+      "sha256": "a372ad1dd0dcfa53b2c178319d7de62db548d45aac73f96503d486f28bce0e51",
+      "tracked": false,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/te_platform/esp_log.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/te_platform/esp_log.h",
+      "sha256": "a372ad1dd0dcfa53b2c178319d7de62db548d45aac73f96503d486f28bce0e51",
+      "tracked": false,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/te_platform/esp_timer.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/te_platform/esp_timer.h",
+      "sha256": "a372ad1dd0dcfa53b2c178319d7de62db548d45aac73f96503d486f28bce0e51",
+      "tracked": false,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/te_platform/freertos/FreeRTOS.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/te_platform/freertos/FreeRTOS.h",
+      "sha256": "a372ad1dd0dcfa53b2c178319d7de62db548d45aac73f96503d486f28bce0e51",
+      "tracked": false,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/te_platform/freertos/semphr.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/te_platform/freertos/semphr.h",
+      "sha256": "a372ad1dd0dcfa53b2c178319d7de62db548d45aac73f96503d486f28bce0e51",
+      "tracked": false,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/te_platform/freertos/task.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/te_platform/freertos/task.h",
+      "sha256": "a372ad1dd0dcfa53b2c178319d7de62db548d45aac73f96503d486f28bce0e51",
+      "tracked": false,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/te_platform/platform.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/te_platform/platform.h",
+      "sha256": "d963ad7f27b04661917235c98f9819cec0e03dd143f2c9476a1e639b2fe6ae63",
+      "tracked": false,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/support/test_panel.h",
+      "destination": "components/display/tools/esp_display_present/dev/tests/support/test_panel.h",
+      "sha256": "e58f61991f06fbda80b4fc876d89ae02fd35041ae1a018058a8886c1840aee8d",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_accel.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_accel.c",
+      "sha256": "a5e3f45cb7f2e4e71beae2556b8cd8b6da68e04490032ce3ed3ed54435db97b0",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_coverage.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_coverage.c",
+      "sha256": "d67e50d3c9d474c83b8cdd8ab2534eecdafdd46bb99f357b58b0d769f1ad16c8",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_event.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_event.c",
+      "sha256": "31c8c5435492cf54eb65dfc716f648ec1a0741c077af13247780d891675e9cfc",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_executor.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_executor.c",
+      "sha256": "2c47ac57210c01184bd2cd6d6b6a1552e5c04da5f812868ea0f58877494b033c",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_fb.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_fb.c",
+      "sha256": "f011b77c8191507c25dfada3ab03bbcc783a45ae6b4336f0f9b4fea9e1d41d13",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_frame_core.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_frame_core.c",
+      "sha256": "53fa3733b34d657c4a16b2c5ed6eb113ff3e08e8482b1b4fbd73a5cb5d86d5fc",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_gram.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_gram.c",
+      "sha256": "559a37f8ff30749c16877c2ef5b13c6219105ca8f78fd2bb0c9d30031de8f331",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_image.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_image.c",
+      "sha256": "997d731a0d82debf5b222da2b003524c6c9169b46571ed907e02dad7849e0d6b",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_lcd_spi.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_lcd_spi.c",
+      "sha256": "240d1a6ce8a35270a0631449470aa5a66f79d0a4286960b09393029aae06ea01",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_legacy_facade.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_legacy_facade.c",
+      "sha256": "bdca5478ccf689fdf9ccda2b92417f918daa48c600fa9953c690473b54fdd4d8",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_legacy_resources.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_legacy_resources.c",
+      "sha256": "b174f88d7a44df9eadaff21a2178e14c034b8fd1543c7cf37e1cba46c74cbb44",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_legacy_te_gate.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_legacy_te_gate.c",
+      "sha256": "5f80710356813dca2c0e50337fc95bb623127127120a0546c5840f40bd344d02",
+      "tracked": false,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_lvgl.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_lvgl.c",
+      "sha256": "d3ae94eb7a14c84f53e984cdf2bb98975d4b7407478d9309c0f1acc3b033f62a",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_lvgl_fb.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_lvgl_fb.c",
+      "sha256": "0308c42880e698a1f8c971d0d9384f3ea33fbbed960519adb4d36c248ed78c44",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_lvgl_te.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_lvgl_te.c",
+      "sha256": "68a278bb745f02c609d6fcf9b97417c8dcdda64aaa796ebdc6b5b7949766bba3",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_lvgl_zero.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_lvgl_zero.c",
+      "sha256": "9c025a75546cc1fcbf62cd0c5b48d85b372c849482bd0efc8ecd05f668d3aa41",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_pixel.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_pixel.c",
+      "sha256": "9f2d6f0132cf8a4c86113e5393d4f4e0bc902cb8e7d9a811d058d55b69b8335e",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_plan.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_plan.c",
+      "sha256": "2eaee68ea460e52bb860a39dbef031aefc5c7a9ef5ad628f7ffc0f906ee0c2cc",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_presenter.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_presenter.c",
+      "sha256": "27f721fdac900f2dae57577216f03e04f9df7dcdfb5140a7fa6c7e407aa4f966",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_presenter_te.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_presenter_te.c",
+      "sha256": "d81f7f84bc9f811769338e4697b49c0a54352900a3be5cf066f4062129f157a2",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_pv2_compat.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_pv2_compat.c",
+      "sha256": "280bbe30fd63441e20cd64af4d29f5864c4a5184482226d2a750ab868ebea267",
+      "tracked": false,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_pv2_lvgl_compat.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_pv2_lvgl_compat.c",
+      "sha256": "b4fe105aeb4f0841f2ccce91939e429e91661dbf75100ab6a96caa02591288bc",
+      "tracked": false,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_records.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_records.c",
+      "sha256": "b0a06f8e2dfac3c227fbd0dcb98f588a332b5fc4076cbf8fbc9dc7f0e5382470",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_repair.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_repair.c",
+      "sha256": "8d36c6e21d0fb47b60bfe52ce8e40167e67bdf52ae875200635a339644700314",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_rotation.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_rotation.c",
+      "sha256": "cf55819b42b978362f26e504219bf0ace145fe16521151e5b259eb3b3b872612",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_scanout.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_scanout.c",
+      "sha256": "eb8ae6f7a8f5676c207188522a9a4ce77b7657758ece766a4faa7206ee82550c",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_scheduler.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_scheduler.c",
+      "sha256": "a110241e044131c3670442aac49412f49f06d3e45b41c42406754f0b1fd6446b",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_te.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_te.c",
+      "sha256": "1c54af866a4a07c8f4163be5eebb58a019c72c5d49df97c52e3a8e3f593e3a70",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_te_composer.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_te_composer.c",
+      "sha256": "53df4aa8cb59d7fe404f1d8464fadd194e523c01cba7d19ca763abadc1ceb5eb",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_te_timing.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_te_timing.c",
+      "sha256": "484754c327130428e1a7ec96e873e250283090f165486a27c5064b4e4fab8472",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tests/test_transfer_timeout.c",
+      "destination": "components/display/tools/esp_display_present/dev/tests/test_transfer_timeout.c",
+      "sha256": "23e2ad8c95b9c7bbdd4abcd44f1fd10b01b8e992842a741668d08b69d12b820f",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/tools/dev.py",
+      "destination": "components/display/tools/esp_display_present/dev/tools/dev.py",
+      "sha256": "b884513fc819eb1f4d1bdd62907d1af835f513367536486f81bb218b7ad26eb6",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/.gitignore",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/.gitignore",
+      "sha256": "b4725cbed4ee172a84b75bbffe20281024236b4a73ce92b1c684e0e2a52fdbbc",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/CMakeLists.txt",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/CMakeLists.txt",
+      "sha256": "9f5536d7b6e7522f31ec4e6a875605b92c3d4ee3e59975229b9d9b5caf88763a",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/LVGL_BENCHMARK_20261102.md",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/LVGL_BENCHMARK_20261102.md",
+      "sha256": "acaf7ace44a1ea2d5eebb7b753df4b1bd6da33b09b1729066a3125d5d789d55f",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/LVGL_BENCHMARK_ALL_20261102.md",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/LVGL_BENCHMARK_ALL_20261102.md",
+      "sha256": "565581776bcd60e2c02d37e1b511eff2d25a14ef52b08ae07e24894532f0d925",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/LVGL_BENCHMARK_ALL_20261102_scenes.csv",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/LVGL_BENCHMARK_ALL_20261102_scenes.csv",
+      "sha256": "7d8d51318c4ef2153d272cded6db2ebefa5af7aef9b12e1ea0e17be4ca6d6b75",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/LVGL_BENCHMARK_ALL_20261102_summary.csv",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/LVGL_BENCHMARK_ALL_20261102_summary.csv",
+      "sha256": "b145bffdecff37ed9b002597f970e7aa6e027fca6eeea557fdd91fb6b8dbfea4",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/README.md",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/README.md",
+      "sha256": "6ffd350a733eb9f0fcc8c5dc818898265f6f5a33fdf0da73037aa52d8d677d1d",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/RESULTS.md",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/RESULTS.md",
+      "sha256": "77c9375bc770ee11c9b0196d6564f3004f55d9f61f52f2a3938628fceac1b91a",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/analyze_suite.py",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/analyze_suite.py",
+      "sha256": "68dfcf9d8515ba3f60acb5186e0710b6015467474d74e094efcaca0355743fbc",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/capture.py",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/capture.py",
+      "sha256": "169e147181e639719b62b9cef01eab40b82d6f2a39813d747d5aa07009abe392",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/main/CMakeLists.txt",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/main/CMakeLists.txt",
+      "sha256": "74b11b3f844f7a8190f0bfa1a1f37e8af708930032c5fbd1c3a082e7f0bf548f",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/main/board.h",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/main/board.h",
+      "sha256": "f8eb57036bf8907ee9c53538ff6bdf9a2048a8e2c716021c2af131e26a799307",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/main/board_p4.c",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/main/board_p4.c",
+      "sha256": "c81a226cfb7d60726ef9e4ec498f990871174b0613a79f2b8b06102ffa06e5be",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/main/board_qspi.c",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/main/board_qspi.c",
+      "sha256": "0ce34f357f7777e7200139062971ce19c12d1780bd0ad780df01acd15412b09c",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/main/board_qspi.h",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/main/board_qspi.h",
+      "sha256": "ab2f67db6d8e9ba9f42d148578d11a3ea68015202c175e0d12f16ab18f864f22",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/main/board_s3.c",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/main/board_s3.c",
+      "sha256": "aae22a903343e6b24b9b9f0be61ef6e682b5219765edd82b82699038ac17ae4b",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/main/executor_check.c",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/main/executor_check.c",
+      "sha256": "36a7bdc352b38a4b72386a8bcce8c84419353bf6d1306706f88cb175e9c8014b",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/main/main.c",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/main/main.c",
+      "sha256": "79eb1a80b0d8b4fdbf047a895269bdb9e987fe10987a224fae758a52d681f2a6",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/main/qspi_main.c",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/main/qspi_main.c",
+      "sha256": "3d5d790a2c91161506e3eedef180f75880062b30665e8ea6bbc0df4bcfb69568",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/prepare_deps.py",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/prepare_deps.py",
+      "sha256": "9b7ea3b2e61888e46a8d02251bca9a109885c190e215e6d9045d2815c5c99f7d",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/sdkconfig.defaults",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/sdkconfig.defaults",
+      "sha256": "1adf0afc58ac455df3c724ab50c97138163b7d62f375bcea075430915b903837",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/sdkconfig.defaults.esp32p4",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/sdkconfig.defaults.esp32p4",
+      "sha256": "99658223e4f9f57d0140f0ea1de06d6071f90882a2bc5679dd2827089d3a61c6",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/sdkconfig.defaults.esp32s3",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/sdkconfig.defaults.esp32s3",
+      "sha256": "b2628b250521c96055adfd624cee3717a2f6746c36b7d687f38ce1caf5adc6f1",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/boards/sdkconfig.defaults.esp32s31",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/boards/sdkconfig.defaults.esp32s31",
+      "sha256": "38e42cabfd9a8ab830ac080caa52093e6b9cc76c9d257163c4a9ea7334600554",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/driver_patches/0001-rgb-readonly-frame-buffer-info.patch",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/driver_patches/0001-rgb-readonly-frame-buffer-info.patch",
+      "sha256": "e5dc2775bbfc4607dd3476879942dbdd307fa9889c8337fb6354a3a9f9c54536",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/driver_patches/0002-spi-readonly-memory-info.patch",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/driver_patches/0002-spi-readonly-memory-info.patch",
+      "sha256": "d9eef7f7b19d2aaf8bfc3cdbf0df360d890f73e4cfe0160823152663a68c0f94",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/driver_patches/README.md",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/driver_patches/README.md",
+      "sha256": "0ae31d9c57904424bf71a4c6f0cbdb9d28de6666a2511a434fe3739ecda5ffc2",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/legacy_compat/.gitignore",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/legacy_compat/.gitignore",
+      "sha256": "7fec622d304c6ec1ffd6659d73cbfedf28a91c3f34e6f117e7ec6d3b419a1f98",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/legacy_compat/README.md",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/legacy_compat/README.md",
+      "sha256": "bd8c865ec8f5dd898312c809b77c4b5372297e15638b99f457c6d7857234856b",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/legacy_compat/RESULTS.md",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/legacy_compat/RESULTS.md",
+      "sha256": "5cad00007cb4e5ec762bab6c7c2bcdb0719e8667f774356c4d4b7b8a40fcc49e",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/legacy_compat/RESULTS_C2_CONTRACTS.md",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/legacy_compat/RESULTS_C2_CONTRACTS.md",
+      "sha256": "9e5cb4071cf3f969320e27838b86e73412e6a950672b60eea4e899ff3dddbb26",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/legacy_compat/RESULTS_C3_P4_HANDOFF.md",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/legacy_compat/RESULTS_C3_P4_HANDOFF.md",
+      "sha256": "fdc9b69a3ded47cb9f307dc90a95be1a4c3f8f70e630bb134053aeb3d9bd4da8",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/legacy_compat/RESULTS_CANCEL_COMPAT.md",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/legacy_compat/RESULTS_CANCEL_COMPAT.md",
+      "sha256": "233a21ee32338633ba95b4c1c7257e944642bcf88a5b35ea94320587a5d72a43",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/legacy_compat/RESULTS_CLOSE_20261102.md",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/legacy_compat/RESULTS_CLOSE_20261102.md",
+      "sha256": "adf7d7932d479998e085c21c0f663a9fa8b03c614b58abd2b9a457c56dc8df39",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/legacy_compat/RESULTS_SUPERSET_ROTATION.md",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/legacy_compat/RESULTS_SUPERSET_ROTATION.md",
+      "sha256": "c7edafc30c26f1ed1c90c9c754a7e2f6d9d7775bb3111e3e768ef1584084fbdf",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/legacy_compat/board_probe/README.md",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/legacy_compat/board_probe/README.md",
+      "sha256": "d8850b91376dbb6d56d049a32a033f1780d353301fb672fcc191f845a1a224eb",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/legacy_compat/board_probe/main.c",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/legacy_compat/board_probe/main.c",
+      "sha256": "db8fcdba71b43127897d88a42e9131562ff35c59f073470d58a34262256769c4",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/legacy_compat/board_probe/sdkconfig.defaults",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/legacy_compat/board_probe/sdkconfig.defaults",
+      "sha256": "247c59aefe7df913341b477be2c9f5906fdc06fae3883644b3dbd9a64c747af5",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/legacy_compat/compile/CMakeLists.txt",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/legacy_compat/compile/CMakeLists.txt",
+      "sha256": "a52cba4cc66f81a9a8fdec405a17635fa37165ee319eff5b884c6b9091de2e90",
+      "tracked": false,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/legacy_compat/compile/README.md",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/legacy_compat/compile/README.md",
+      "sha256": "bb05e9a2c58012475dd24856a4bfc37709e0d3db1face4d54486bc4f860e6b9e",
+      "tracked": false,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/legacy_compat/compile/main/CMakeLists.txt",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/legacy_compat/compile/main/CMakeLists.txt",
+      "sha256": "b7450052e017f0a85745563e6bf755386c624d4c8a08b7b9cc2d8f1ceb83d38e",
+      "tracked": false,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/legacy_compat/compile/main/idf_component.yml",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/legacy_compat/compile/main/idf_component.yml",
+      "sha256": "1a68c9df9c065a232cbc4cd9eee7e6e2fafca0627a66ab2d319961f27d2e876e",
+      "tracked": false,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/legacy_compat/compile/main/main.c",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/legacy_compat/compile/main/main.c",
+      "sha256": "31dcc69e3561c993726ecbb5b0c77bcb73b8ff8c79ef6ec67d534b067405128d",
+      "tracked": false,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/legacy_compat/prepare.py",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/legacy_compat/prepare.py",
+      "sha256": "67c788bff0460116cb2ae6d225b3754fab1230d52d04655a3ef13a491e4d7686",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/legacy_compat/prepare_board.py",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/legacy_compat/prepare_board.py",
+      "sha256": "3c2389f44c4f08c1e6ab35e71161e6a7c266b61a012dce988cd0c87d156df0fe",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/scanout_boundary/.gitignore",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/scanout_boundary/.gitignore",
+      "sha256": "1b1de30bcc7f52a465018a3b70d38bd4c032bced91a84c385547a285bbab33d2",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/scanout_boundary/CMakeLists.txt",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/scanout_boundary/CMakeLists.txt",
+      "sha256": "c6b27f91ae22db866d85e378be0968508ae948cc385022043d0a9c4a4bac8002",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/scanout_boundary/README.md",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/scanout_boundary/README.md",
+      "sha256": "38c38e7e4027a790588a7f30ef42337dcc4734a285775f992eb07f325a1c66cd",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/scanout_boundary/RESULTS.md",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/scanout_boundary/RESULTS.md",
+      "sha256": "0f502202a26c86a512e4f22bb8ba4599fdd0e3cc1d032f7339276c521dcb32ee",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/scanout_boundary/analyze.py",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/scanout_boundary/analyze.py",
+      "sha256": "9ed77bf2fcfaa3ea1aa8b334c45a6d4fc95d23c73da726562b15384097015337",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/scanout_boundary/capture.py",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/scanout_boundary/capture.py",
+      "sha256": "d6279c2f1ca46d1e919882f88646e4ae46ed1a40d3c376c59afe6365880191eb",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/scanout_boundary/main/CMakeLists.txt",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/scanout_boundary/main/CMakeLists.txt",
+      "sha256": "5c90a748e751e0deeda750b23f3f2d1e4d898f65913ce319cedb501998577b5e",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/scanout_boundary/main/Kconfig.projbuild",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/scanout_boundary/main/Kconfig.projbuild",
+      "sha256": "2f1c958b1e3e724ba5d315db6d1563dc2bcd7f97c7bd910a2e65d2c560f492db",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/scanout_boundary/main/boundary_trace.c",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/scanout_boundary/main/boundary_trace.c",
+      "sha256": "ed2fa3efe83776c5c6db5beddb92ca7aec9f3da8e07ef1ae8ab2daed8d9b07b0",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/scanout_boundary/main/boundary_trace.h",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/scanout_boundary/main/boundary_trace.h",
+      "sha256": "f712744bfe7976eec4b17b636eed49a0c8b0c801882b997b2a18d9268c61736d",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/scanout_boundary/main/main.c",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/scanout_boundary/main/main.c",
+      "sha256": "07f8f801dd1f504d289a9414e9020a66af346d25e0701338da51137b6918d3d5",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/scanout_boundary/prepare.py",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/scanout_boundary/prepare.py",
+      "sha256": "e8791343ae5cad4b958d62d206ea04bb4f5fe2cab431ab60f02cf83e13e37efb",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/scanout_boundary/results.json",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/scanout_boundary/results.json",
+      "sha256": "19b5c9de248fff96ebdd7d7863457e63edc02f10637ef81f67b73ba9c2fc85ef",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/scanout_boundary/test_analyze.py",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/scanout_boundary/test_analyze.py",
+      "sha256": "9880ce6e5e495834043277e43847bcfa72ed79ac48de6b43558b622c4f80661e",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/scanout_boundary/test_trace.c",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/scanout_boundary/test_trace.c",
+      "sha256": "d59d8db09eff5e34fbf38613d0a44ef9faef51d928be4d44199ad137d71178dc",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/smoke/CMakeLists.txt",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/smoke/CMakeLists.txt",
+      "sha256": "215ea45a915075e0f73395e6195f741145f22ab70fd05f72c0388459ecee93a4",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/smoke/main/CMakeLists.txt",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/smoke/main/CMakeLists.txt",
+      "sha256": "5d96e4c1e8c19516c0b1f606e8c898c005da8805d294d5a337d1b4b5dfbfc4d1",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/test_apps/smoke/main/main.c",
+      "destination": "components/display/tools/esp_display_present/dev/test_apps/smoke/main/main.c",
+      "sha256": "d573b3d08cbf168a3eb4b4f8f692b045dcfc019ca6fca13351c22070982ab8cc",
+      "tracked": true,
+      "collision": false
+    },
+    {
+      "source": "components/display/tools/esp_display_present_v2/CMakeLists.txt",
+      "destination": "components/display/tools/esp_display_present/dev/CMakeLists.txt",
+      "sha256": "e3d4e4fb5d53c3cd88ed18c3a455d43d21ff95fc63abe84e525d7c9e98304e4c",
+      "tracked": true,
+      "collision": false
+    }
+  ],
+  "excluded_untracked": [
+    "components/display/tools/esp_display_present_v2/test_apps/boards/sdkconfig.p4",
+    "components/display/tools/esp_display_present_v2/test_apps/boards/sdkconfig.s3",
+    "components/display/tools/esp_display_present_v2/test_apps/boards/sdkconfig.s31",
+    "components/display/tools/esp_display_present_v2/test_apps/smoke/dependencies.lock"
+  ],
+  "warning": "Review all paths and untracked files; no N1 snapshot is final until its completion.",
+  "note": "迁移时散列；后续仅按需要更新路径及拆分 backend 私有接口。历史 evidence 和生成目录未移动。"
+}

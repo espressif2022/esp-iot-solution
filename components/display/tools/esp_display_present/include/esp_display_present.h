@@ -136,13 +136,6 @@ typedef struct {
     size_t area_count; /**< Number of entries in @c areas. */
 } esp_display_presenter_submit_t;
 
-/** @brief Drawable logical region leased for the current frame. */
-typedef struct {
-    esp_display_presenter_surface_t surface; /**< Region pixel storage. */
-    uint16_t origin_x; /**< Logical X origin of the region. */
-    uint16_t origin_y; /**< Logical Y origin of the region. */
-} esp_display_presenter_region_t;
-
 /**
  * @brief Producer-neutral drawable buffer lease.
  *

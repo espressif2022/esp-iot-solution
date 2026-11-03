@@ -1,3 +1,7 @@
+> 2026-11-03 默认入口已切到 V2，旧实现已移除；当前布局、支持范围及验证见 [DEFAULT_SWITCH.md](DEFAULT_SWITCH.md)。下文旧阶段中的“尚未切换”与 V1 源码路径只用于历史追溯。
+
+> 2026-11-03：完成兼容 TE 非阻塞准入、未封帧 stop／TE 取消收尾、自动单 tile 回退和独立组件交付修复。最新验证与限制见 [review.md](review.md)。
+
 # Display Present 第二版
 
 本轮代码、性能和未通过项统一见 [收敛验收记录](test_apps/legacy_compat/RESULTS_CLOSE_20261102.md)。

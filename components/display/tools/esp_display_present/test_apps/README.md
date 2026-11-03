@@ -1,11 +1,3 @@
-# esp_display_present Test App
+# Public API smoke
 
-Unity tests for presenter lifecycle and exact rendered pixels on a software
-`esp_lcd` panel. RGB-capable targets exercise PARTITION, DIRECT, and FULL with
-all four rotations, padded partition strides, multi-band submissions, and
-partial-frame repair. Assertions inspect the in-memory framebuffer directly;
-the suite writes no image artifacts and requires no LCD hardware.
-
-```sh
-idf.py set-target esp32c3 build flash monitor
-```
+This IDF Unity app checks public configuration queries and geometry linkage. It has no panel setup. Host coverage for the engine, compatibility facade, tracking and real LVGL is under `../dev/tests`; run `python3 ../dev/tools/dev.py test --with-lvgl` from this directory. Device-oriented projects are under `../dev/test_apps`. See [current validation](../MIGRATION_STATUS.md).

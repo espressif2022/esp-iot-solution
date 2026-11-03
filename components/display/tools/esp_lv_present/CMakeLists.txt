@@ -1,16 +1,10 @@
 # SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
-#
 # SPDX-License-Identifier: Apache-2.0
+# Stable LVGL API and native binding share the presentation engine.
+idf_component_register(SRCS src/esp_lv_present.c src/present_lvgl.c INCLUDE_DIRS include include/advanced
+    REQUIRES esp_display_present lvgl PRIV_REQUIRES esp_timer)
 
-idf_component_register(
-    SRCS "src/esp_lv_present.c"
-    INCLUDE_DIRS "include"
-    REQUIRES esp_display_present lvgl
-    PRIV_REQUIRES esp_timer
-)
-
-# IDF's atomic.h defines unused static helpers in the LVGL FreeRTOS backend.
-# Keep this compatibility flag local to that source, not the whole LVGL target.
+# Same narrow IDF atomic.h workaround as the original esp_lv_present component.
 idf_build_get_property(build_components BUILD_COMPONENTS)
 if("lvgl" IN_LIST build_components)
     set(lvgl_component lvgl)

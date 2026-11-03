@@ -1,7 +1,0 @@
-version: "1.2.0"
-description: Experimental V2 implementation of the V1 presenter API; see README for supported configurations.
-license: "Apache-2.0"
-dependencies:
-  idf: ">=6.1"
-  esp_display_present_v2:
-    path: "../.."

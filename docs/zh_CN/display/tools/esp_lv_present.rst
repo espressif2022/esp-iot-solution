@@ -2,6 +2,10 @@ ESP LV Present
 ==============
 :link_to_translation:`en:[English]`
 
+.. note::
+
+   仓库默认入口已切到 V2，保留原组件名与公开 API，旧 V1 实现已移除。LVGL 接入要求 9.5 及以上；已验证路径和驱动限制以组件 README 为准。
+
 ``esp_lv_present`` 是 ``esp_display_present`` 的 LVGL 9 flush 挂钩。应用持有
 ``esp_lcd`` 面板和 Presenter；本组件只把 LVGL display 接到这个 Presenter 上。
 

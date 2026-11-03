@@ -1,12 +1,12 @@
 # V1 成功路径兼容状态
 
-更新：2026-11-02。以下区分代码实现、Host 和实板证据。默认示例仍链接原组件，尚未整体切换。
+更新：2026-11-03。默认组件已使用 V2，旧实现移除。以下实板证据仍属于此前版本；本轮切换的验证见 [DEFAULT_SWITCH.md](DEFAULT_SWITCH.md)。
 
 | 路径 | 当前实现及证据 | 仍有边界 |
 | --- | --- | --- |
 | void cancel_frame 与异步访问 | 对外撤销 frame/lease，内部保留源，后续准入排空；Host 通过 | P4/S3 新固件取消后重绘通过；不允许提前释放在途源 |
 | 非方形运行时跨轴旋转 | 门面固定逻辑尺寸，更新物理布局；PARTIAL/FULL/DIRECT Host 像素对照通过 | 原生 V2 默认尺寸语义不变；不是任意修改面板扫描时序 |
-| TE_SYNC | 借用 V1 测量策略，通过注入 gate 接原生 TE；GPIO/定时器停止和 join 可重试；Host 通过 | S31 经 SPI 只读事实确认直传后，单 compose 0°/双 compose 90°各 12 帧通过；未知路径仍 staging/超窗暂停，不借历史 native TE 代替 |
+| TE_SYNC | 兼容叶模块独占测量策略，通过注入 gate 接原生 TE；GPIO/定时器停止和 join 可重试；Host 通过 | S31 经 SPI 只读事实确认直传后，单 compose 0°/双 compose 90°各 12 帧通过；未知路径仍 staging/超窗暂停，不借历史 native TE 代替 |
 | RGB/DSI MODE_NONE | 单图像、持久 DIRECT；明确允许扫描中写入；Host、P4/S3 功能测试通过 | 单 FB 本身可能撕裂；不能套用多 FB 的退休含义 |
 | RGB 自动能力识别 | 新增公开只读 IDF 查询，旧应用调用不变；Host 和 SDK 编译通过 | 需要本地 SDK 补丁；未修补 SDK 仍用显式确认。见 driver_patches |
 | SPI PSRAM drawbuf | GRAM 使用内部 DMA 转换池；TE 使用有界内部 DMA staging；Host 延迟 DMA/超时测试通过 | 确认 direct-PSRAM 的 IO 不再重复 staging；未知配置继续保守 staging，仍须窗口准入 |

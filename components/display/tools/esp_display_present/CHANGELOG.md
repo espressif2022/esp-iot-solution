@@ -1,3 +1,9 @@
+## Unreleased — V2 default implementation
+
+- Keep the existing public API and component name; route through V2.
+- Remove the superseded V1 implementation and private-source dependencies.
+- See `../esp_display_present_v2/DEFAULT_SWITCH.md` for scope and validation.
+
 # Changelog
 
 ## 1.2.0 - 2026-10-27

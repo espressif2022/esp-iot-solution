@@ -1,3 +1,23 @@
+> 当前执行（2026-11-03）：生命周期、符号与私有导出收敛已落地，核心／binding 已并入 `esp_display_present`／`esp_lv_present`；Host、三目标离线与 GSP 链接通过，最终记录见新组件 MIGRATION_STATUS.md。旧目录仅用于历史记录，不再是生产组件。详见 [执行记录](TRANSITION_DESIGN.md#13-执行记录两组件候选2026-11-03)。未上板、未发布、未提交。
+
+## 下一轮：旧契约与 V2 状态收敛（2026-11-03）
+
+设计与逐项验收以 [TRANSITION_DESIGN.md](TRANSITION_DESIGN.md) 为准。下列步骤已完成至本地 T3 验收；T4 上板尚未执行。
+
+1. T0：核对字段读写与契约，补基线缺口。
+2. T1：先收敛撤销／关闭；核心管理执行事实，门面保留旧句柄及应用意图。
+3. T2：再拆 poll 的时间线投影、receipt 回收、tracking 水位；额外两个原始 VSYNC 语义不变。
+4. N0／N1：先盘点公开／私有符号，再独立迁移为正式 `esp_*` 命名；`pv2_image_repaired` 作为私有操作改名为 `present_image_mark_repaired`。兼容、导出和目录边界见设计第 11 节。
+5. N2：N1 完成后将核心和 binding 分别合并到 `esp_display_present`、`esp_lv_present`，同步构建与交付依赖。
+6. T3：全量 Host／sanitizer、默认入口离线构建与 GSP／LVGL 链接评审。
+7. T4：三板候选短回归后收口；不以历史板测代替。
+
+各阶段独立评审：旧应用 API 保持不变；扩展与内部接口命名单独迁移，不增加模式、不夹带性能优化。N0 可提前盘点，N1 在 T2 后执行，N2 随后实施，T3 验收最终候选。生命周期独立复审、命名迁移、组件合并与最终本地验收已完成；实板和发布另行验收。
+
+> 2026-11-03 默认入口已切到 V2，旧实现已移除；当前布局、支持范围及验证见 [DEFAULT_SWITCH.md](DEFAULT_SWITCH.md)。下文旧阶段中的“尚未切换”与 V1 源码路径只用于历史追溯。
+
+> 2026-11-03：完成兼容 TE 非阻塞准入、未封帧 stop／TE 取消收尾、自动单 tile 回退和独立组件交付修复。最新验证与限制见 [review.md](review.md)。
+
 # V2 实施与验收状态
 
 本轮代码、性能和未通过项统一见 [收敛验收记录](test_apps/legacy_compat/RESULTS_CLOSE_20261102.md)。

@@ -2,6 +2,10 @@ ESP LV Present
 ==============
 :link_to_translation:`zh_CN:[中文]`
 
+.. note::
+
+   The repository default now uses V2 behind the existing component name and public API. The V1 implementation has been removed. LVGL integration requires 9.5 or later; see the component README for validated paths and driver restrictions.
+
 ``esp_lv_present`` is the LVGL 9 flush binding for
 ``esp_display_present``. The application owns the ``esp_lcd`` panel and the
 presenter; this component only attaches an LVGL display to that presenter.

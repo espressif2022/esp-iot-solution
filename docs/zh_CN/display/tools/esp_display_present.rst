@@ -2,6 +2,10 @@ ESP Display Present
 ===================
 :link_to_translation:`en:[English]`
 
+.. note::
+
+   仓库默认入口已切到 V2，保留原组件名与公开 API，旧 V1 实现已移除。LVGL 接入要求 9.5 及以上；已验证路径和驱动限制以组件 README 为准。
+
 ``esp_display_present`` 用于连接渲染器生成的像素表面与 ``esp_lcd`` 面板，不依赖
 场景、控件或输入语义。送屏路径从 GUI 中抽出，LVGL、GSP 或其他自绘 GUI 可以共用
 同一套 Presenter。

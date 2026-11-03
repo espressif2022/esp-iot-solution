@@ -6,3 +6,8 @@ __pycache__/
 /build-p4-executors/
 
 /build-s3-all/
+
+/test_apps/boards/artifacts/
+/test_apps/boards/deps/
+/test_apps/scanout_boundary/overlay/
+/test_apps/**/build*/

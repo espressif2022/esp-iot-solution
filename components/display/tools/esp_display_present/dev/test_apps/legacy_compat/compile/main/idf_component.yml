@@ -1,0 +1,3 @@
+dependencies:
+  esp_display_present:
+    path: "../../../../.."
