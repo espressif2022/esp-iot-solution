@@ -72,18 +72,6 @@ typedef struct {
     bool accepting_callbacks; /**< Whether completion callbacks are currently accepted. */
 } esp_display_presenter_frame_status_t;
 
-/** Logical pixel coordinate. */
-typedef struct {
-    int32_t x; /**< Horizontal coordinate. */
-    int32_t y; /**< Vertical coordinate. */
-} esp_display_present_point_t;
-
-/** Two-dimensional size in pixels. */
-typedef struct {
-    uint16_t width;  /**< Width in pixels. */
-    uint16_t height; /**< Height in pixels. */
-} esp_display_present_size_t;
-
 /** Inclusive logical pixel area. */
 typedef struct {
     /** Inclusive logical coordinates (closed interval): x2/y2 name the

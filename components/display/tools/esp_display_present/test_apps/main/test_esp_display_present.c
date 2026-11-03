@@ -3,7 +3,6 @@
 /* Public API smoke. Lifecycle/pixel tests live in the V2 Host suites. */
 #include <stdio.h>
 #include "esp_display_present.h"
-#include "esp_display_present_geometry.h"
 #include "unity.h"
 #include "unity_test_runner.h"
 #include "unity_test_utils_memory.h"
@@ -82,17 +81,6 @@ TEST_CASE("framebuffer query ignores resources and clears errors",
     TEST_ASSERT_EQUAL_UINT8(0, count);
     TEST_ESP_ERR(ESP_ERR_INVALID_ARG,
                  esp_display_present_get_required_frame_buffer_count(&config, NULL));
-}
-
-TEST_CASE("geometry remains a public linked API", "[present][geometry]")
-{
-    esp_display_present_area_t area = {1, 1, 2, 2}, output;
-    esp_display_present_render_alignment_t alignment = {.x_pixels = 2, .y_pixels = 2};
-    TEST_ESP_OK(esp_display_present_geometry_align_area((esp_display_present_size_t) {
-        8, 8
-    }, &area, &alignment, &output));
-    TEST_ASSERT_EQUAL(0, output.x1);
-    TEST_ASSERT_EQUAL(0, output.y1);
 }
 void setUp(void) {}
 void tearDown(void) {}

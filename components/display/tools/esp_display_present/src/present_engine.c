@@ -2,16 +2,14 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "present_backend_internal.h"
+#include "present_backend.h"
 #include "present_memory.h"
 #include "present_presenter.h"
-#include "present_config.h"
 #include "present_plan.h"
 #include "present_os.h"
 #include "present_limits.h"
 #include <limits.h>
 #include <stdatomic.h>
-#include "present_engine_control.h"
 
 typedef struct {
     uint64_t token;
@@ -411,33 +409,6 @@ static bool valid_lease(esp_display_present_engine_t *presenter, const esp_displ
     return lease && presenter->held.id.value && lease->id.value == presenter->held.id.value &&
            lease->surface.pixels == presenter->held.surface.pixels &&
            lease->surface.capacity_bytes == presenter->held.surface.capacity_bytes;
-}
-
-esp_err_t esp_display_present_engine_get_required_frame_buffer_count(const esp_display_present_engine_config_t *config, size_t *count)
-{
-    if (!count) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    *count = 0;
-    if (!config) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    esp_display_present_engine_config_t input = *config, resolved;
-    input.backend.external_buffers = NULL;
-    esp_err_t error = present_config_resolve_legacy(&input, &resolved);
-    if (error != ESP_OK) {
-        return error;
-    }
-    if (resolved.backend.rotation < ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || resolved.backend.rotation > ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    if (resolved.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB) {
-        if (!resolved.backend.buffer_count || resolved.backend.buffer_count > 3) {
-            return ESP_ERR_INVALID_ARG;
-        }
-        *count = resolved.backend.buffer_count;
-    }
-    return ESP_OK;
 }
 
 esp_err_t esp_display_present_engine_rebind_producer(esp_display_present_engine_t *presenter, uint32_t timeout)
@@ -1320,18 +1291,6 @@ esp_err_t esp_display_present_engine_set_rotation(esp_display_present_engine_t *
         presenter->rotation = rotation;
         error = presenter->ops->get_caps(presenter->backend, &presenter->caps);
     }
-    present_mutex_give(presenter->gate);
-    return error;
-}
-
-esp_err_t esp_display_present_engine_map_point(esp_display_present_engine_t *presenter, uint32_t x, uint32_t y, uint32_t *lx, uint32_t *ly)
-{
-    esp_err_t error = check_owner(presenter);
-    if (error != ESP_OK) {
-        return error;
-    }
-    (void)present_mutex_take(presenter->gate, UINT32_MAX);
-    error = esp_display_present_unrotate_point(presenter->caps.draw_layout.width, presenter->caps.draw_layout.height, presenter->rotation, x, y, lx, ly);
     present_mutex_give(presenter->gate);
     return error;
 }

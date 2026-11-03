@@ -2,16 +2,15 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "present_backend_internal.h"
-#include "present_memory.h"
 #include "present_backend.h"
+#include "present_memory.h"
 #include "present_os.h"
 #include "present_limits.h"
 #include "present_frame_core.h"
 #include "present_transaction.h"
 #include "present_te_composer.h"
 #include "platform/present_te_timer.h"
-#include "platform/present_te_timing_internal.h"
+#include "platform/present_te_timing.h"
 
 enum { TE_MAX_BUFFERS = PRESENT_MAX_TILE_BUFFERS, TE_MAX_FRAMES = PRESENT_MAX_FRAMES, TE_MAX_DAMAGE = PRESENT_MAX_DAMAGE_AREAS };
 

@@ -6,11 +6,11 @@
 #include "present_os.h"
 #include "present_records.h"
 #include "present_memory.h"
-#include "present_engine_control.h"
+#include "present_presenter.h"
 #include "present_lcd_spi.h"
 #include "esp_lcd_io_spi.h"
 #include "platform/present_te_sync.h"
-#include "platform/present_lcd_scanout_internal.h"
+#include "present_lcd_scanout.h"
 #include <string.h>
 #ifndef PRESENT_HOST
 #include "esp_heap_caps.h"

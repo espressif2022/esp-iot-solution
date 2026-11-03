@@ -20,7 +20,7 @@ typedef struct {
     present_mutex_t *gate;
     ppa_client_handle_t ppa;
 } plugin_t;
-static esp_err_t caps(void *context, esp_display_present_executor_caps_t *out)
+static esp_err_t ppa_caps(void *context, esp_display_present_executor_caps_t *out)
 {
     (void)context;
     *out = (esp_display_present_executor_caps_t) {
@@ -32,7 +32,7 @@ static esp_err_t caps(void *context, esp_display_present_executor_caps_t *out)
     };
     return ESP_OK;
 }
-static esp_err_t probe(void *context, const esp_display_present_copy_request_t *request, esp_display_present_executor_reason_t *reason)
+static esp_err_t ppa_probe(void *context, const esp_display_present_copy_request_t *request, esp_display_present_executor_reason_t *reason)
 {
     (void)context;
     void *band;
@@ -47,11 +47,11 @@ static esp_err_t probe(void *context, const esp_display_present_copy_request_t *
     }
     return ESP_OK;
 }
-static esp_err_t execute(void *context, const esp_display_present_copy_request_t *request)
+static esp_err_t ppa_execute(void *context, const esp_display_present_copy_request_t *request)
 {
     plugin_t *plugin = context;
     esp_display_present_executor_reason_t reason;
-    esp_err_t error = probe(context, request, &reason);
+    esp_err_t error = ppa_probe(context, request, &reason);
     if (error != ESP_OK) {
         return error;
     }
@@ -102,7 +102,7 @@ done:
     present_mutex_give(plugin->gate);
     return error;
 }
-static esp_err_t destroy(void *context)
+static esp_err_t ppa_destroy(void *context)
 {
     plugin_t *plugin = context;
     esp_err_t error = ppa_unregister_client(plugin->ppa);
@@ -113,7 +113,7 @@ static esp_err_t destroy(void *context)
     present_free(plugin);
     return ESP_OK;
 }
-static const esp_display_present_executor_ops_t ops = {caps, probe, execute, destroy};
+static const esp_display_present_executor_ops_t ppa_ops = {ppa_caps, ppa_probe, ppa_execute, ppa_destroy};
 esp_err_t esp_display_present_executor_ppa_create(esp_display_present_executor_t **out)
 {
     if (!out) {
@@ -138,7 +138,7 @@ esp_err_t esp_display_present_executor_ppa_create(esp_display_present_executor_t
         return error;
     }
     plugin->base = (esp_display_present_executor_t) {
-        &ops, plugin
+        &ppa_ops, plugin
     };
     *out = &plugin->base;
     return ESP_OK;

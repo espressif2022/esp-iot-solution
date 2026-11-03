@@ -3,11 +3,78 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include "present_plan.h"
-#include "present_config.h"
 #include "present_limits.h"
 #include "present_memory.h"
 #include <limits.h>
 #include <string.h>
+
+esp_err_t present_config_resolve_legacy(const esp_display_present_engine_config_t *input, esp_display_present_engine_config_t *out)
+{
+    if (!input || input->backend_kind < ESP_DISPLAY_PRESENT_ENGINE_GRAM || input->backend_kind > ESP_DISPLAY_PRESENT_ENGINE_FB ||
+            input->mode < ESP_DISPLAY_PRESENT_MODE_DEFAULT || input->mode > ESP_DISPLAY_PRESENT_ENGINE_MODE_AUTO) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    *out = *input;
+    esp_display_present_present_mode_t mode = input->mode;
+    if (mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_AUTO) {
+        if (input->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB) {
+            if (input->backend.buffer_count == 1) {
+                mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE;
+            } else if (input->backend.buffer_count == 2) {
+                mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL;
+            } else if (input->backend.buffer_count == 3) {
+                mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_PARTIAL;
+            } else {
+                return ESP_ERR_INVALID_ARG;
+            }
+        } else {
+            mode = input->backend.te_window_us && input->backend.te_transfer_budget_us ? ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC : ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE;
+        }
+    }
+    if (mode == ESP_DISPLAY_PRESENT_MODE_DEFAULT) {
+        return ESP_OK;
+    }
+    if (mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE) {
+        out->backend.render_contract = ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION;
+        if (input->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB) {
+            if (input->backend.external_buffers && input->backend.buffer_count != 1) {
+                return ESP_ERR_INVALID_ARG;
+            }
+            out->backend.buffer_count = 1;
+        } else {
+            out->backend_kind = ESP_DISPLAY_PRESENT_ENGINE_GRAM;
+        }
+        return ESP_OK;
+    }
+    if (mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC) {
+        if (input->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB) {
+            return ESP_ERR_NOT_SUPPORTED;
+        }
+        out->backend_kind = ESP_DISPLAY_PRESENT_ENGINE_TE;
+        out->backend.render_contract = ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION;
+        return ESP_OK;
+    }
+    if (input->backend_kind != ESP_DISPLAY_PRESENT_ENGINE_FB) {
+        return ESP_ERR_NOT_SUPPORTED;
+    }
+    out->backend.buffer_count = mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_FULL || mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_PARTIAL ? 3 : 2;
+    if (input->backend.external_buffers && input->backend.buffer_count != out->backend.buffer_count) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    switch (mode) {
+    case ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT:
+        out->backend.render_contract = ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT;
+        break;
+    case ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_FULL:
+    case ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_FULL:
+        out->backend.render_contract = ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL;
+        break;
+    default:
+        out->backend.render_contract = ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION;
+        break;
+    }
+    return ESP_OK;
+}
 
 static size_t gcd(size_t a, size_t backend_config)
 {
@@ -442,25 +509,6 @@ esp_err_t esp_display_present_plan_resolve(const esp_display_present_plan_config
     }
     return e;
 }
-static esp_display_present_rect_t rotate(esp_display_present_rect_t a, uint32_t w, uint32_t h, esp_display_present_engine_rotation_t r)
-{
-    switch (r) {
-    case ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90:
-        return (esp_display_present_rect_t) {
-            h - a.y - a.height, a.x, a.height, a.width
-        };
-    case ESP_DISPLAY_PRESENT_ENGINE_ROTATE_180:
-        return (esp_display_present_rect_t) {
-            w - a.x - a.width, h - a.y - a.height, a.width, a.height
-        };
-    case ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270:
-        return (esp_display_present_rect_t) {
-            a.y, w - a.x - a.width, a.height, a.width
-        };
-    default:
-        return a;
-    }
-}
 esp_err_t esp_display_present_plan_render_area(const esp_display_present_resolved_plan_t *plan, const esp_display_present_rect_t *dirty, esp_display_present_rect_t *render, esp_display_present_rect_t *physical)
 {
     if (!plan || !dirty || !render || !physical || !dirty->width || !dirty->height ||
@@ -469,7 +517,11 @@ esp_err_t esp_display_present_plan_render_area(const esp_display_present_resolve
             !plan->output.x_alignment || !plan->output.y_alignment || !plan->output.width_alignment || !plan->output.height_alignment) {
         return ESP_ERR_INVALID_ARG;
     }
-    esp_display_present_rect_t a = rotate(*dirty, plan->logical_layout.width, plan->logical_layout.height, plan->normalized.backend.rotation);
+    esp_display_present_rect_t a;
+    esp_err_t err = esp_display_present_rotate_rect(plan->logical_layout.width, plan->logical_layout.height, plan->normalized.backend.rotation, dirty, &a);
+    if (err != ESP_OK) {
+        return err;
+    }
     if (plan->normalized.backend.render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL) {
         a = (esp_display_present_rect_t) {
             0, 0, plan->physical_layout.width, plan->physical_layout.height
@@ -507,8 +559,7 @@ esp_err_t esp_display_present_plan_render_area(const esp_display_present_resolve
     }
     *physical = a;
     esp_display_present_engine_rotation_t inverse = (4 - plan->normalized.backend.rotation) % 4;
-    *render = rotate(a, plan->physical_layout.width, plan->physical_layout.height, inverse);
-    return ESP_OK;
+    return esp_display_present_rotate_rect(plan->physical_layout.width, plan->physical_layout.height, inverse, &a, render);
 }
 esp_err_t esp_display_present_engine_create_planned(const esp_display_present_plan_config_t *config, esp_display_present_engine_t **out)
 {

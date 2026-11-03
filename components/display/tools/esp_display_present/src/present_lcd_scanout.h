@@ -93,6 +93,14 @@ esp_err_t esp_display_present_lcd_scanout_destroy(esp_display_present_lcd_scanou
 /* Transport constraints only; panel command alignment may be stricter. */
 esp_err_t esp_display_present_lcd_scanout_get_output_caps(esp_display_present_lcd_scanout_t *adapter, esp_display_present_output_caps_t *caps);
 
+/* Before any producer frame; attaches through the existing presenter and
+ * fences FB0 selection. Only the factory may submit while this is pending. */
+esp_err_t present_lcd_scanout_initialize(esp_display_present_lcd_scanout_t *, uint32_t timeout_ms);
+
+/* Drained presenter only. Changes the tightly packed view, not driver storage
+ * or physical panel timings. Pixel count and exact borrowed capacities stay fixed. */
+esp_err_t present_lcd_scanout_set_layout(esp_display_present_lcd_scanout_t *, uint32_t, uint32_t);
+
 #ifdef __cplusplus
 }
 #endif

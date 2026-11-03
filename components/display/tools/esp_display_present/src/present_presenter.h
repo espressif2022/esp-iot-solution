@@ -77,17 +77,6 @@ typedef struct {
 esp_err_t esp_display_present_engine_create(const esp_display_present_engine_config_t *config, esp_display_present_engine_t **out_presenter);
 
 /**
- * @brief Pure policy query, no allocation/hardware. Ignores panel handles and external
- * buffer addresses/count mismatch. Returns scanout buffers (IO/TE return 0).
- * Full create validation still applies, including rotation/memory policies.
- *
- * @param config Configuration; the pointer is not retained.
- * @param count Receives the buffer count.
- * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
- */
-esp_err_t esp_display_present_engine_get_required_frame_buffer_count(const esp_display_present_engine_config_t *config, size_t *count);
-
-/**
  * @brief New owner calls only after the old owner has stopped ALL task API calls.
  * Rejects open builds/cancellation; sealed pending frames continue normally.
  * Does not transfer an LVGL binding (LVGL task/locking remains caller-owned).
@@ -162,18 +151,6 @@ esp_err_t esp_display_present_engine_get_caps(esp_display_present_engine_t *pres
  * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
  */
 esp_err_t esp_display_present_engine_set_rotation(esp_display_present_engine_t *presenter, esp_display_present_engine_rotation_t rotation, uint32_t timeout_ms);
-
-/**
- * @brief Presenter map point.
- *
- * @param presenter Presenter owned by the calling task.
- * @param physical_x Physical panel X coordinate in pixels.
- * @param physical_y Physical panel Y coordinate in pixels.
- * @param logical_x Receives the logical X coordinate.
- * @param logical_y Receives the logical Y coordinate.
- * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
- */
-esp_err_t esp_display_present_engine_map_point(esp_display_present_engine_t *presenter, uint32_t physical_x, uint32_t physical_y, uint32_t *logical_x, uint32_t *logical_y);
 
 /**
  * @brief Pending frames are waited within one timeout_ms budget. Timeout leaves the
@@ -339,6 +316,22 @@ struct esp_display_presenter;
 esp_err_t present_session_bind(struct esp_display_presenter *presenter, esp_display_present_engine_t **out_engine);
 void present_session_unbind(struct esp_display_presenter *presenter);
 uint64_t present_session_committed(struct esp_display_presenter *presenter);
+
+esp_err_t present_presenter_control_get_status(esp_display_present_engine_t *, esp_display_present_engine_status_t *);
+esp_err_t present_presenter_control_get_status_snapshot(esp_display_present_engine_t *, esp_display_present_engine_status_t *, bool *valid);
+esp_err_t present_presenter_control_query_frame(esp_display_present_engine_t *, esp_display_present_engine_receipt_t, esp_display_present_frame_status_t *);
+esp_err_t present_presenter_control_release(esp_display_present_engine_t *, esp_display_present_engine_receipt_t);
+esp_err_t present_presenter_control_stop(esp_display_present_engine_t *, uint32_t);
+esp_err_t present_presenter_control_destroy(esp_display_present_engine_t *);
+esp_err_t present_presenter_begin_budget(esp_display_present_engine_t *, const esp_display_present_frame_request_t *, uint32_t);
+esp_err_t present_presenter_control_cancel_tracking(esp_display_present_engine_t *, esp_display_present_engine_receipt_t);
+esp_err_t present_presenter_cancel_budget(esp_display_present_engine_t *, uint32_t);
+esp_err_t present_presenter_control_finish_cancel(esp_display_present_engine_t *, uint32_t);
+
+#ifdef PRESENT_HOST
+void present_presenter_test_gate_lock(esp_display_present_engine_t *);
+void present_presenter_test_gate_unlock(esp_display_present_engine_t *);
+#endif
 
 #ifdef __cplusplus
 }

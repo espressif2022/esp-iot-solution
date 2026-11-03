@@ -12,7 +12,6 @@
 #include "esp_intr_alloc.h"
 #include "present_os.h"
 #include "present_te_timing.h"
-#include "present_te_timing_internal.h"
 #include "present_te_timer.h"
 #include "present_records.h"
 #include "esp_idf_version.h"

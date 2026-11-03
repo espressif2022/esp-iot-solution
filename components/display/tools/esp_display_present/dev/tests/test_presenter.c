@@ -160,13 +160,7 @@ static void *new_producer(void *user)
 
 static void handoff_and_policy(void)
 {
-    esp_display_present_engine_config_t cfg = {.backend_kind = ESP_DISPLAY_PRESENT_ENGINE_FB, .mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_FULL};
     size_t count;
-    assert(esp_display_present_engine_get_required_frame_buffer_count(&cfg, &count) == ESP_OK && count == 3);
-    cfg.backend_kind = ESP_DISPLAY_PRESENT_ENGINE_GRAM;
-    assert(esp_display_present_engine_get_required_frame_buffer_count(&cfg, &count) == ESP_ERR_NOT_SUPPORTED && count == 0);
-    cfg.mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC;
-    assert(esp_display_present_engine_get_required_frame_buffer_count(&cfg, &count) == ESP_OK && count == 0);
     test_panel_t panel = {.width = 4, .height = 4, .bpp = 2};
     esp_display_present_engine_t *p = make(&panel, 2);
     void *buffers[2];
@@ -265,9 +259,6 @@ static void rotation_and_confirmation(void)
     assert(esp_display_present_engine_wait_frame(p, receipt, ESP_DISPLAY_PRESENT_COMPLETION_PRESENT_CONFIRMED, 0, &status) == ESP_OK && status.present_confirmed);
     assert(esp_display_present_engine_set_rotation(p, ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90, 0) == ESP_OK);
     assert(esp_display_present_engine_get_caps(p, &caps) == ESP_OK && caps.draw_layout.width == 2 && caps.draw_layout.height == 4);
-    uint32_t x, y;
-    assert(esp_display_present_engine_map_point(p, 3, 0, &x, &y) == ESP_OK && x == 0 && y == 0);
-    assert(esp_display_present_engine_map_point(p, 4, 0, &x, &y) == ESP_ERR_INVALID_ARG);
     assert(esp_display_present_engine_query_frame(p, receipt, &status) == ESP_OK && status.present_confirmed);
     assert(esp_display_present_engine_release_receipt(p, receipt) == ESP_OK);
     assert(esp_display_present_engine_stop(p, 1000) == ESP_OK);

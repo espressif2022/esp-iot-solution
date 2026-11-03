@@ -2,11 +2,9 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "present_backend_internal.h"
 #include "present_backend.h"
 #include "present_lcd_spi.h"
 #include "present_presenter.h"
-#include "present_pixel_accel.h"
 #include "present_lcd_scanout.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -101,10 +99,6 @@ static void async_fb_smoke(void)
 void app_main(void)
 {
     /* Force real esp_lcd adapter compilation/linkage without touching hardware. */
-    esp_display_present_pixel_accel_t *accel = NULL;
-    assert(esp_display_present_pixel_accel_create(NULL, &accel) == ESP_ERR_INVALID_ARG);
-    assert(esp_display_present_pixel_accel_execute(NULL, NULL) == ESP_ERR_INVALID_ARG);
-    assert(esp_display_present_pixel_accel_destroy(NULL) == ESP_ERR_INVALID_ARG);
     esp_display_present_lcd_scanout_t *scanout = NULL;
     assert(esp_display_present_lcd_scanout_create(NULL, &scanout) == ESP_ERR_INVALID_ARG);
     esp_display_present_panel_adapter_t scanout_api;

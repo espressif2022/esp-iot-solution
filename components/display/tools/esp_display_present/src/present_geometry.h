@@ -16,6 +16,16 @@
 extern "C" {
 #endif
 
+typedef struct {
+    int32_t x;
+    int32_t y;
+} esp_display_present_point_t;
+
+typedef struct {
+    uint16_t width;
+    uint16_t height;
+} esp_display_present_size_t;
+
 static inline bool esp_display_present_geometry_area_is_valid(
     const esp_display_present_area_t *area, uint16_t width, uint16_t height)
 {
@@ -46,11 +56,6 @@ esp_err_t esp_display_present_geometry_map_physical_point_to_logical(
     esp_display_present_size_t logical_size,
     const esp_display_present_point_t *physical_point,
     esp_display_present_point_t *out_logical_point);
-
-esp_err_t esp_display_present_geometry_map_logical_area_to_physical(
-    esp_display_present_rotation_t rotation,
-    esp_display_present_size_t logical_size, const esp_display_present_area_t *logical,
-    esp_display_present_area_t *out_physical);
 
 #ifdef __cplusplus
 }

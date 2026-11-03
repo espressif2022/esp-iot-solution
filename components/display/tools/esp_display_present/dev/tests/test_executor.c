@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include "present_executor.h"
-#include "present_pixel_accel.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -257,9 +256,6 @@ int main(void)
     assert(esp_display_present_executor_destroy(e) == ESP_OK);
 #else
     assert(esp_display_present_executor_ppa_create(&e) == ESP_ERR_NOT_SUPPORTED && !e);
-    esp_display_present_pixel_accel_t *a = NULL;
-    esp_display_present_pixel_accel_config_t c = {ESP_DISPLAY_PRESENT_ACCEL_PPA, true};
-    assert(esp_display_present_pixel_accel_create(&c, &a) == ESP_ERR_NOT_SUPPORTED && !a);
 #endif
     e = NULL;
 #if PRESENT_HOST_DMA2D

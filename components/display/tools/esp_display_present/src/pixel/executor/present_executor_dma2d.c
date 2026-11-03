@@ -21,14 +21,14 @@ typedef struct {
     present_os_event_t *done;
     async_memcpy_dma2d_handle_t dma;
 } plugin_t;
-static bool PRESENT_ISR_ATTR completed(async_memcpy_dma2d_handle_t driver, async_memcpy_dma2d_event_data_t *event, void *context)
+static bool PRESENT_ISR_ATTR dma2d_completed(async_memcpy_dma2d_handle_t driver, async_memcpy_dma2d_event_data_t *event, void *context)
 {
     (void)driver;
     (void)event;
     plugin_t *plugin = context;
     return present_event_signal(plugin->done, true);
 }
-static esp_err_t caps(void *context, esp_display_present_executor_caps_t *out)
+static esp_err_t dma2d_caps(void *context, esp_display_present_executor_caps_t *out)
 {
     (void)context;
     *out = (esp_display_present_executor_caps_t) {
@@ -40,7 +40,7 @@ static esp_err_t caps(void *context, esp_display_present_executor_caps_t *out)
     };
     return ESP_OK;
 }
-static esp_err_t probe(void *context, const esp_display_present_copy_request_t *request, esp_display_present_executor_reason_t *reason)
+static esp_err_t dma2d_probe(void *context, const esp_display_present_copy_request_t *request, esp_display_present_executor_reason_t *reason)
 {
     (void)context;
     void *band;
@@ -63,11 +63,11 @@ static esp_err_t probe(void *context, const esp_display_present_copy_request_t *
     }
     return ESP_OK;
 }
-static esp_err_t execute(void *context, const esp_display_present_copy_request_t *request)
+static esp_err_t dma2d_execute(void *context, const esp_display_present_copy_request_t *request)
 {
     plugin_t *plugin = context;
     esp_display_present_executor_reason_t reason;
-    esp_err_t error = probe(context, request, &reason);
+    esp_err_t error = dma2d_probe(context, request, &reason);
     if (error != ESP_OK) {
         return error;
     }
@@ -104,7 +104,7 @@ static esp_err_t execute(void *context, const esp_display_present_copy_request_t
      * documented definite rejection (no free transaction), safe to retry. */
     uint64_t start = present_now_ms();
     do {
-        error = esp_async_memcpy_dma2d(plugin->dma, &op, completed, plugin);
+        error = esp_async_memcpy_dma2d(plugin->dma, &op, dma2d_completed, plugin);
         if (error != ESP_ERR_INVALID_STATE || present_expired(start, 1000)) {
             break;
         }
@@ -120,7 +120,7 @@ done:
     present_mutex_give(plugin->gate);
     return error;
 }
-static esp_err_t destroy(void *context)
+static esp_err_t dma2d_destroy(void *context)
 {
     plugin_t *plugin = context;
     esp_err_t error = esp_async_memcpy_uninstall_dma2d(plugin->dma);
@@ -132,7 +132,7 @@ static esp_err_t destroy(void *context)
     present_free(plugin);
     return ESP_OK;
 }
-static const esp_display_present_executor_ops_t ops = {caps, probe, execute, destroy};
+static const esp_display_present_executor_ops_t dma2d_ops = {dma2d_caps, dma2d_probe, dma2d_execute, dma2d_destroy};
 esp_err_t esp_display_present_executor_dma2d_create(esp_display_present_executor_t **out)
 {
     if (!out) {
@@ -164,7 +164,7 @@ esp_err_t esp_display_present_executor_dma2d_create(esp_display_present_executor
         return error;
     }
     plugin->base = (esp_display_present_executor_t) {
-        &ops, plugin
+        &dma2d_ops, plugin
     };
     *out = &plugin->base;
     return ESP_OK;

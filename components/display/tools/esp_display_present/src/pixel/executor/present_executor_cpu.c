@@ -8,7 +8,7 @@ typedef struct {
     esp_display_present_executor_t base;
     present_mutex_t *gate;
 } cpu_t;
-static esp_err_t caps(void *context, esp_display_present_executor_caps_t *out)
+static esp_err_t cpu_caps(void *context, esp_display_present_executor_caps_t *out)
 {
     (void)context;
     *out = (esp_display_present_executor_caps_t) {
@@ -18,14 +18,14 @@ static esp_err_t caps(void *context, esp_display_present_executor_caps_t *out)
     };
     return ESP_OK;
 }
-static esp_err_t probe(void *context, const esp_display_present_copy_request_t *request, esp_display_present_executor_reason_t *reason)
+static esp_err_t cpu_probe(void *context, const esp_display_present_copy_request_t *request, esp_display_present_executor_reason_t *reason)
 {
     (void)context;
     esp_err_t error = esp_display_present_pixel_validate_request(request);
     *reason = error == ESP_OK ? ESP_DISPLAY_PRESENT_EXEC_SUPPORTED : ESP_DISPLAY_PRESENT_EXEC_INVALID_REQUEST;
     return error;
 }
-static esp_err_t execute(void *context, const esp_display_present_copy_request_t *request)
+static esp_err_t cpu_execute(void *context, const esp_display_present_copy_request_t *request)
 {
     cpu_t *cpu = context;
     (void)present_mutex_take(cpu->gate, UINT32_MAX);
@@ -33,14 +33,14 @@ static esp_err_t execute(void *context, const esp_display_present_copy_request_t
     present_mutex_give(cpu->gate);
     return error;
 }
-static esp_err_t destroy(void *context)
+static esp_err_t cpu_destroy(void *context)
 {
     cpu_t *cpu = context;
     present_mutex_destroy(cpu->gate);
     present_free(cpu);
     return ESP_OK;
 }
-static const esp_display_present_executor_ops_t ops = {caps, probe, execute, destroy};
+static const esp_display_present_executor_ops_t cpu_ops = {cpu_caps, cpu_probe, cpu_execute, cpu_destroy};
 esp_err_t esp_display_present_executor_cpu_create(esp_display_present_executor_t **out)
 {
     if (!out) {
@@ -57,7 +57,7 @@ esp_err_t esp_display_present_executor_cpu_create(esp_display_present_executor_t
         return ESP_ERR_NO_MEM;
     }
     cpu->base = (esp_display_present_executor_t) {
-        &ops, cpu
+        &cpu_ops, cpu
     };
     *out = &cpu->base;
     return ESP_OK;

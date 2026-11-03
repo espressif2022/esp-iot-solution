@@ -1,6 +1,6 @@
-set(PRESENT_SOURCES ../src/present_os.c ../src/present_event.c ../src/platform/present_te_timing.c ../src/platform/present_te_timer.c ../src/backend/present_image_repair.c ../src/backend/present_frame_core.c ../src/present_config.c ../src/present_plan.c ../src/present_engine.c ../src/pixel/present_pixel_engine.c ../src/backend/present_backend_gram.c
-    ../src/pixel/present_executor.c ../src/pixel/present_executor_cpu.c ../src/platform/present_executor_ppa.c ../src/platform/present_executor_dma2d.c
-    ../src/platform/present_pixel_accel.c ../src/platform/present_lcd_spi.c ../src/platform/present_lcd_scanout.c ../src/backend/present_te_composer.c ../src/backend/present_backend_te.c ../src/backend/present_backend_fb.c)
+set(PRESENT_SOURCES ../src/present_os.c ../src/platform/present_te_timing.c ../src/platform/present_te_timer.c ../src/backend/present_image_repair.c ../src/backend/present_frame_core.c ../src/present_plan.c ../src/present_engine.c ../src/pixel/present_pixel_engine.c ../src/backend/present_backend_gram.c
+    ../src/pixel/executor/present_executor.c ../src/pixel/executor/present_executor_cpu.c ../src/pixel/executor/present_executor_ppa.c ../src/pixel/executor/present_executor_dma2d.c
+    ../src/platform/present_lcd_spi.c ../src/platform/present_lcd_scanout.c ../src/backend/present_te_composer.c ../src/backend/present_backend_te.c ../src/backend/present_backend_fb.c)
 cmake_minimum_required(VERSION 3.16)
 project(esp_display_present_host LANGUAGES C CXX)
 set(CMAKE_C_STANDARD 11)
@@ -19,7 +19,7 @@ if(PRESENT_SANITIZE)
     target_link_options(present_engine PUBLIC -fsanitize=address,undefined -no-pie)
 endif()
 enable_testing()
-foreach(name te_timing image frame_core plan records coverage repair accel scanout rotation pixel gram lcd_spi presenter te_composer te presenter_te fb event scheduler)
+foreach(name te_timing image frame_core plan records coverage repair scanout rotation pixel gram lcd_spi presenter te_composer te presenter_te fb event scheduler)
     add_executable(test_${name} tests/test_${name}.c)
     target_link_libraries(test_${name} PRIVATE present_engine)
     target_compile_definitions(test_${name} PRIVATE PRESENT_HOST=1)
@@ -100,9 +100,9 @@ foreach(variant cpu ppa dma2d both)
         set(has_dma2d 1)
     endif()
     add_executable(test_executor_${variant} tests/test_executor.c
-        ../src/present_os.c ../src/present_event.c ../src/pixel/present_pixel_engine.c
-        ../src/pixel/present_executor.c ../src/pixel/present_executor_cpu.c ../src/platform/present_executor_ppa.c
-        ../src/platform/present_executor_dma2d.c ../src/platform/present_pixel_accel.c)
+        ../src/present_os.c ../src/pixel/present_pixel_engine.c
+        ../src/pixel/executor/present_executor.c ../src/pixel/executor/present_executor_cpu.c ../src/pixel/executor/present_executor_ppa.c
+        ../src/pixel/executor/present_executor_dma2d.c)
     target_include_directories(test_executor_${variant} PRIVATE ../src tests/support)
     target_compile_definitions(test_executor_${variant} PRIVATE PRESENT_HOST=1
         PRESENT_HOST_PPA=${has_ppa} PRESENT_HOST_DMA2D=${has_dma2d})

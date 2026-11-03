@@ -2,9 +2,8 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "present_backend_internal.h"
-#include "present_memory.h"
 #include "present_backend.h"
+#include "present_memory.h"
 #include "present_os.h"
 #include "present_limits.h"
 #include "present_frame_core.h"

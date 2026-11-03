@@ -77,6 +77,7 @@ typedef struct {
 /* Pure planning: no allocation/attach/driver calls; get_caps only. Invalid or
  * unsupported physical constraints return errors; valid future topologies are
  * described with pending_runtime bits and cannot be created by today's bridge. */
+esp_err_t present_config_resolve_legacy(const esp_display_present_engine_config_t *input, esp_display_present_engine_config_t *out);
 esp_err_t esp_display_present_plan_resolve(const esp_display_present_plan_config_t *config, esp_display_present_resolved_plan_t *plan);
 /* Dirty L -> aligned P -> required render L, before rasterization. No clipping
  * of an expanded physical edge that would violate alignment. No pixel reads. */

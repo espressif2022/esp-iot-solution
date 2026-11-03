@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "esp_display_present_geometry.h"
+#include "present_geometry.h"
 #include <limits.h>
 
 static int32_t align_down(int32_t value, uint16_t alignment)
@@ -148,54 +148,5 @@ esp_err_t esp_display_present_geometry_map_physical_point_to_logical(
     *out_logical_point = (esp_display_present_point_t) {
         .x = (int32_t)x, .y = (int32_t)y,
     };
-    return ESP_OK;
-}
-
-esp_err_t esp_display_present_geometry_map_logical_area_to_physical(
-    esp_display_present_rotation_t rotation,
-    esp_display_present_size_t logical_size, const esp_display_present_area_t *logical,
-    esp_display_present_area_t *out_physical)
-{
-    if (logical_size.width == 0 || logical_size.height == 0 || logical == NULL ||
-            out_physical == NULL || logical->x1 < 0 || logical->y1 < 0 ||
-            logical->x2 < logical->x1 || logical->y2 < logical->y1 ||
-            logical->x2 >= logical_size.width || logical->y2 >= logical_size.height) {
-        return ESP_ERR_INVALID_ARG;
-    }
-
-    int32_t physical_width;
-    int32_t physical_height;
-    physical_size(rotation, logical_size.width, logical_size.height, &physical_width,
-                  &physical_height);
-    switch (rotation) {
-    case ESP_DISPLAY_PRESENT_ROTATE_90:
-        *out_physical = (esp_display_present_area_t) {
-            .x1 = physical_width - (logical->y2 + 1),
-            .y1 = logical->x1,
-            .x2 = physical_width - logical->y1 - 1,
-            .y2 = logical->x2,
-        };
-        break;
-    case ESP_DISPLAY_PRESENT_ROTATE_180:
-        *out_physical = (esp_display_present_area_t) {
-            .x1 = physical_width - (logical->x2 + 1),
-            .y1 = physical_height - (logical->y2 + 1),
-            .x2 = physical_width - logical->x1 - 1,
-            .y2 = physical_height - logical->y1 - 1,
-        };
-        break;
-    case ESP_DISPLAY_PRESENT_ROTATE_270:
-        *out_physical = (esp_display_present_area_t) {
-            .x1 = logical->y1,
-            .y1 = physical_height - (logical->x2 + 1),
-            .x2 = logical->y2,
-            .y2 = physical_height - logical->x1 - 1,
-        };
-        break;
-    case ESP_DISPLAY_PRESENT_ROTATE_0:
-    default:
-        *out_physical = *logical;
-        break;
-    }
     return ESP_OK;
 }
