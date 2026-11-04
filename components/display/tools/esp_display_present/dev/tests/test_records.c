@@ -38,7 +38,7 @@ static void backend_contracts(void)
         const present_backend_ops_t *ops = all[i];
         esp_display_present_backend_config_t cfg = {.width = 4, .height = 4, .tile_rows = 2,
                                                     .buffer_count = 2, .max_frames = 2, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
-                                                    .panel = {NULL, attach, submit, stop}, .te_window_us = 1000000, .te_transfer_budget_us = 1000
+                                                    .panel = {NULL, attach, submit, stop}, .te_window_us = 1000000, .te_budget_us = 1000
                                                    };
         present_backend_t *b;
         assert(ops->create(&cfg, &b) == ESP_OK);
@@ -99,7 +99,7 @@ int main(void)
     assert(fault.result == ESP_FAIL && fault.frame.value == 11 && fault.transaction_cookie == 12);
     /* Terminal failed transfer must not become successful presentation. */
     esp_display_present_frame_status_t status = present_record_status(&pool[0].common, true, true, true, false);
-    assert(status.terminal && status.source_released && !status.present_confirmed && status.result == ESP_FAIL);
+    assert(status.terminal && status.src_released && !status.present_confirmed && status.result == ESP_FAIL);
     present_cancel_history_t canceled = {0};
     assert(!present_cancel_matches(&canceled, 0));
     present_cancel_publish(&canceled, 11);

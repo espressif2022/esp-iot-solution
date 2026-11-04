@@ -134,7 +134,7 @@ static void release(present_backend_t *g, esp_display_present_receipt_t r, esp_e
 {
     esp_display_present_frame_status_t status;
     assert(ops->wait(g, r, ESP_DISPLAY_PRESENT_COMPLETION_SOURCE_RELEASED, 0, &status) == ESP_OK);
-    assert(status.terminal && status.source_released && !status.present_confirmed && status.result == result);
+    assert(status.terminal && status.src_released && !status.present_confirmed && status.result == result);
     assert(ops->release_receipt(g, r) == ESP_OK);
     assert(ops->query(g, r, &status) == ESP_ERR_INVALID_STATE);
 }
@@ -249,7 +249,7 @@ static void faults_and_uncertain(void)
             emit(&p, p.last_cookie, ESP_DISPLAY_PRESENT_EVENT_FAULT, ESP_FAIL);
             esp_display_present_frame_status_t status;
             assert(ops->wait(g, r, ESP_DISPLAY_PRESENT_COMPLETION_SOURCE_RELEASED, 0, &status) == ESP_ERR_TIMEOUT);
-            assert(status.result == ESP_FAIL && !status.source_released);
+            assert(status.result == ESP_FAIL && !status.src_released);
             complete(&p);
         }
         release(g, r, ESP_FAIL);
@@ -436,7 +436,7 @@ static void extended_contracts(void)
     /* 3. In-place byte-order swap and automatic rollback on driver rejection. */
     p = normal_panel();
     esp_display_present_backend_config_t cfg = config(&p, true);
-    cfg.in_place_convert = true;
+    cfg.in_place = true;
     assert(ops->create(&cfg, &g) == ESP_OK);
     esp_display_present_frame_t f = begin(g);
     esp_display_present_lease_t lease = acquire(g, f);
@@ -465,7 +465,7 @@ static void retained_fault_and_packing(void)
     for (int inplace = 0; inplace < 2; ++inplace) {
         panel_t p = normal_panel();
         esp_display_present_backend_config_t cfg = config(&p, true);
-        cfg.in_place_convert = inplace;
+        cfg.in_place = inplace;
         present_backend_t *g;
         assert(ops->create(&cfg, &g) == ESP_OK);
         esp_display_present_frame_t f = begin(g);
@@ -527,10 +527,10 @@ static esp_err_t gated_copy(void *arg, const esp_display_present_copy_request_t 
     if (g->fail) {
         return ESP_FAIL;
     }
-    for (uint32_t y = 0; y < r->source_area.height; ++y) {
-        memcpy((uint8_t *)r->destination.pixels + (r->destination_y + y) * r->destination.layout.stride_bytes + r->destination_x * 2,
-               (const uint8_t *)r->source.pixels + (r->source_area.y + y) * r->source.layout.stride_bytes + r->source_area.x * 2,
-               r->source_area.width * 2);
+    for (uint32_t y = 0; y < r->src_area.height; ++y) {
+        memcpy((uint8_t *)r->dst.pixels + (r->dst_y + y) * r->dst.layout.stride_bytes + r->dst_x * 2,
+               (const uint8_t *)r->src.pixels + (r->src_area.y + y) * r->src.layout.stride_bytes + r->src_area.x * 2,
+               r->src_area.width * 2);
     }
     return ESP_OK;
 }

@@ -63,7 +63,7 @@ enum {
  *      to FB_SLOT_FREE and promotes pending slot to FB_SLOT_SCANNING.
  *
  * 8. FB_SLOT_SCANNING:
- *    - Entry: initial_scanout_buffer or confirmed switch.
+ *    - Entry: scan_buf or confirmed switch.
  *    - Holds: continuous scanout borrow until replaced by a confirmed newer frame
  *      or stopped via panel.quiesce.
  */
@@ -219,18 +219,18 @@ static void cover(present_backend_t *backend, esp_display_present_rect_t area)
 static esp_display_present_copy_request_t baseline_copy(present_backend_t *backend, size_t target, esp_display_present_rect_t area)
 {
     esp_display_present_surface_t source = backend->scan_storage ? backend->slots[backend->baseline].scan : backend->slots[backend->baseline].surface;
-    esp_display_present_rect_t source_area = area;
+    esp_display_present_rect_t src_area = area;
     esp_display_present_engine_rotation_t rotation = ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0;
     if (backend->scan_storage) {
-        (void)esp_display_present_rotate_rect(backend->config.width, backend->config.height, backend->config.rotation, &area, &source_area);
+        (void)esp_display_present_rotate_rect(backend->config.width, backend->config.height, backend->config.rotation, &area, &src_area);
         rotation = (4 - backend->config.rotation) % 4;
     }
     return (esp_display_present_copy_request_t) {
-        .source = {source.pixels, source.capacity_bytes, source.layout},
-        .destination = backend->slots[target].surface,
-        .source_area = source_area,
-        .destination_x = area.x,
-        .destination_y = area.y,
+        .src = {source.pixels, source.capacity_bytes, source.layout},
+        .dst = backend->slots[target].surface,
+        .src_area = src_area,
+        .dst_x = area.x,
+        .dst_y = area.y,
         .rotation = rotation
     };
 }
@@ -489,9 +489,9 @@ static fb_advance_result_t advance_build_pipeline(present_backend_t *backend, fb
         if (backend->scan_storage && !backend->converted) {
             esp_display_present_surface_t source = slot->surface;
             esp_display_present_copy_request_t copy = {
-                .source = {source.pixels, source.capacity_bytes, source.layout},
-                .destination = slot->scan,
-                .source_area = {0, 0, backend->config.width, backend->config.height},
+                .src = {source.pixels, source.capacity_bytes, source.layout},
+                .dst = slot->scan,
+                .src_area = {0, 0, backend->config.width, backend->config.height},
                 .rotation = backend->config.rotation
             };
             error = esp_display_present_pixel_submit(backend->pixel, &copy, &backend->copy);
@@ -671,7 +671,7 @@ static esp_err_t fb_create(const esp_display_present_backend_config_t *config, p
     if (!config || !config->panel.attach || !config->panel.submit || !config->panel.quiesce) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (config->tile_buffer_count > PRESENT_MAX_TILE_BUFFERS || !config->width || !config->height || !config->buffer_count || config->buffer_count > FB_LIMIT ||
+    if (config->tile_bufs > PRESENT_MAX_TILE_BUFFERS || !config->width || !config->height || !config->buffer_count || config->buffer_count > FB_LIMIT ||
             !config->max_frames || config->max_frames > RECORD_LIMIT) {
         return ESP_ERR_INVALID_ARG;
     }
@@ -681,9 +681,9 @@ static esp_err_t fb_create(const esp_display_present_backend_config_t *config, p
             (config->format == ESP_DISPLAY_PRESENT_FORMAT_RGB888 && (config->draw_order != ESP_DISPLAY_PRESENT_ORDER_NATIVE || config->panel_order != ESP_DISPLAY_PRESENT_ORDER_NATIVE))) {
         return ESP_ERR_INVALID_ARG;
     }
-    if ((config->rotation < ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || config->rotation > ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270) || config->in_place_convert ||
+    if ((config->rotation < ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || config->rotation > ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270) || config->in_place ||
             config->render_contract > ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT || config->render_contract < ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION ||
-            (config->buffer_count == 1 && !config->allow_active_scanout_writes)) {
+            (config->buffer_count == 1 && !config->active_writes)) {
         return ESP_ERR_INVALID_ARG;
     }
     if (config->render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION && (!config->tile_rows || config->tile_rows > config->height)) {
@@ -694,19 +694,19 @@ static esp_err_t fb_create(const esp_display_present_backend_config_t *config, p
         return ESP_ERR_INVALID_SIZE;
     }
     size_t pixels = (size_t)config->width * config->height, bytes = pixels * bpp;
-    if ((!config->external_buffers && config->external_buffer_bytes) ||
-            (config->external_buffers && config->external_buffer_bytes < bytes)) {
+    if ((!config->ext_bufs && config->ext_bytes) ||
+            (config->ext_bufs && config->ext_bytes < bytes)) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (config->external_buffers) {
+    if (config->ext_bufs) {
         for (size_t i = 0; i < config->buffer_count; i++) {
-            uintptr_t p = (uintptr_t)config->external_buffers[i];
-            if (!p || p % PRESENT_BUFFER_ALIGNMENT || p > UINTPTR_MAX - config->external_buffer_bytes) {
+            uintptr_t p = (uintptr_t)config->ext_bufs[i];
+            if (!p || p % PRESENT_BUFFER_ALIGNMENT || p > UINTPTR_MAX - config->ext_bytes) {
                 return ESP_ERR_INVALID_ARG;
             }
             for (size_t j = 0; j < i; j++) {
-                uintptr_t q = (uintptr_t)config->external_buffers[j];
-                if (p < q + config->external_buffer_bytes && q < p + config->external_buffer_bytes) {
+                uintptr_t q = (uintptr_t)config->ext_bufs[j];
+                if (p < q + config->ext_bytes && q < p + config->ext_bytes) {
                     return ESP_ERR_INVALID_ARG;
                 }
             }
@@ -733,9 +733,9 @@ static esp_err_t fb_create(const esp_display_present_backend_config_t *config, p
     esp_err_t image_error = present_image_init(&backend->image,
                                                physical_partial && quarter ? config->height : config->width,
                                                physical_partial && quarter ? config->width : config->height);
-    backend->image.allow_scanout_writes = config->allow_active_scanout_writes;
+    backend->image.allow_scanout_writes = config->active_writes;
     if (config->render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION) {
-        backend->tile_count = config->tile_buffer_count ? config->tile_buffer_count : 1;
+        backend->tile_count = config->tile_bufs ? config->tile_bufs : 1;
         backend->tiles = present_alloc(backend->tile_count * sizeof(*backend->tiles));
         if (!backend->tiles) {
             free_backend(backend);
@@ -755,10 +755,10 @@ static esp_err_t fb_create(const esp_display_present_backend_config_t *config, p
     }
     for (size_t i = 0; i < config->buffer_count; i++) {
         backend->slots[i].surface = (esp_display_present_surface_t) {
-            config->external_buffers ? config->external_buffers[i] : present_alloc_pixels_in(bytes, config->image_in_psram), bytes,
+            config->ext_bufs ? config->ext_bufs[i] : present_alloc_pixels_in(bytes, config->image_in_psram), bytes,
             {config->width, config->height, config->width * bpp, config->format, config->panel_order}
         };
-        backend->slots[i].draw_owned = !config->external_buffers;
+        backend->slots[i].draw_owned = !config->ext_bufs;
         if (!backend->slots[i].surface.pixels) {
             free_backend(backend);
             return ESP_ERR_NO_MEM;
@@ -784,13 +784,13 @@ static esp_err_t fb_create(const esp_display_present_backend_config_t *config, p
             backend->scan_storage = true;
         }
     }
-    if (config->initial_scanout_buffer) {
-        if (!config->external_buffers) {
+    if (config->scan_buf) {
+        if (!config->ext_bufs) {
             free_backend(backend);
             return ESP_ERR_INVALID_ARG;
         }
         for (size_t i = 0; i < config->buffer_count; ++i) {
-            if (config->external_buffers[i] == config->initial_scanout_buffer) {
+            if (config->ext_bufs[i] == config->scan_buf) {
                 backend->slots[i].state = FB_SLOT_SCANNING;
                 backend->scanning = i;
                 present_allocation_hold(&backend->image.allocations[i], PRESENT_REF_SCANOUT);
@@ -938,6 +938,8 @@ static esp_err_t fb_begin(present_backend_t *backend, const esp_display_present_
             present_image_cancel(&backend->image);
             return error;
         }
+        /* Record the initialized area only. It is not application coverage. */
+        present_image_seed(&backend->image, prefill_area);
     }
     present_lock_enter(&backend->lock, false);
     backend->active = slot;
@@ -964,6 +966,7 @@ static esp_err_t fb_begin(present_backend_t *backend, const esp_display_present_
             present_lock_exit(&backend->lock, false);
             return error;
         }
+        present_image_seed(&backend->image, prefill_area);
         backend->copy_is_tile = false;
     }
     out->value = token;
@@ -1079,11 +1082,11 @@ static esp_err_t fb_submit_region_ex(present_backend_t *backend, esp_display_pre
             return map_error;
         }
         esp_display_present_copy_request_t copy = {
-            .source = {tile->pixels, backend->tile_bytes, {area.width, area.height, stride, backend->config.format, backend->config.draw_order}},
-            .source_area = {0, 0, area.width, area.height},
-            .destination = backend->slots[backend->active].surface,
-            .destination_x = physical.x,
-            .destination_y = physical.y,
+            .src = {tile->pixels, backend->tile_bytes, {area.width, area.height, stride, backend->config.format, backend->config.draw_order}},
+            .src_area = {0, 0, area.width, area.height},
+            .dst = backend->slots[backend->active].surface,
+            .dst_x = physical.x,
+            .dst_y = physical.y,
             .rotation = backend->config.rotation
         };
         esp_display_present_copy_ticket_t ticket;
@@ -1103,6 +1106,7 @@ static esp_err_t fb_submit_region_ex(present_backend_t *backend, esp_display_pre
         if (error != ESP_OK || status.result != ESP_OK) {
             return error != ESP_OK ? error : status.result;
         }
+        cover(backend, physical);
     } else {
         if (submit && submit->stride_bytes && submit->stride_bytes != draw->surface.layout.stride_bytes) {
             return ESP_ERR_INVALID_ARG;
@@ -1111,12 +1115,6 @@ static esp_err_t fb_submit_region_ex(present_backend_t *backend, esp_display_pre
                 (area.x || area.y || area.width != backend->config.width || area.height != backend->config.height)) {
             return ESP_ERR_INVALID_ARG;
         }
-    }
-    if (backend->config.render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION) {
-        esp_display_present_rect_t physical;
-        (void)esp_display_present_rotate_rect(backend->config.width, backend->config.height, backend->config.rotation, &area, &physical);
-        cover(backend, physical);
-    } else {
         cover(backend, area);
     }
     backend->submitted = true;
@@ -1338,7 +1336,7 @@ static esp_err_t fb_set_rotation(present_backend_t *backend, esp_display_present
     if (rotation == backend->config.rotation) {
         return ESP_OK;
     }
-    bool axes = !backend->config.fixed_logical_rotation && (((unsigned)rotation ^ (unsigned)backend->config.rotation) & 1);
+    bool axes = !backend->config.fixed_rotation && (((unsigned)rotation ^ (unsigned)backend->config.rotation) & 1);
     uint32_t width = axes ? backend->config.height : backend->config.width;
     uint32_t height = axes ? backend->config.width : backend->config.height;
     size_t bpp = backend->config.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
@@ -1439,7 +1437,7 @@ const present_backend_ops_t present_fb_backend = {
 
 size_t present_fb_memory(const esp_display_present_backend_config_t *config)
 {
-    size_t tiles = config->render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION ? (config->tile_buffer_count ? config->tile_buffer_count : 1) : 0;
+    size_t tiles = config->render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION ? (config->tile_bufs ? config->tile_bufs : 1) : 0;
     return sizeof(present_backend_t) + tiles * sizeof(fb_tile_t) + config->max_frames * sizeof(present_core_frame_t) +
            present_pixel_memory(tiles ? tiles : 1, config->async_copy);
 }

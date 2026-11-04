@@ -57,11 +57,11 @@ static esp_err_t copy(present_te_composer_t *composer, compose_job_t *job, const
                       const esp_display_present_rect_t *area, uint32_t x, uint32_t y)
 {
     esp_display_present_copy_request_t request = {
-        .source = *source,
-        .destination = composer->buffers[job->candidate],
-        .source_area = *area,
-        .destination_x = x,
-        .destination_y = y,
+        .src = *source,
+        .dst = composer->buffers[job->candidate],
+        .src_area = *area,
+        .dst_x = x,
+        .dst_y = y,
         .rotation = ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0,
     };
     esp_display_present_copy_ticket_t ticket;
@@ -205,11 +205,11 @@ esp_err_t present_te_composer_queue_write(present_te_composer_t *composer, prese
         return ESP_ERR_NO_MEM;
     }
     esp_display_present_copy_request_t r = {
-        .source = *source,
-        .destination = composer->buffers[job->candidate],
-        .source_area = *area,
-        .destination_x = x,
-        .destination_y = y,
+        .src = *source,
+        .dst = composer->buffers[job->candidate],
+        .src_area = *area,
+        .dst_x = x,
+        .dst_y = y,
         .rotation = composer->rotation,
     };
     esp_err_t error = esp_display_present_pixel_submit(composer->pixel, &r, ticket);

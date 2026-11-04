@@ -138,7 +138,7 @@ static bool PRESENT_ISR_ATTR te_dispatch(void *user, const esp_display_present_b
                         backend->config.te_gate.done(backend->config.te_gate.user, event->result);
                     }
                     record_fault(backend, i, first ? event->result : ESP_ERR_INVALID_STATE);
-                    if (backend->config.te_timing.period_us && present_now_us() - job->started_us > backend->config.te_transfer_budget_us) {
+                    if (backend->config.te_timing.period_us && present_now_us() - job->started_us > backend->config.te_budget_us) {
                         record_fault(backend, i, ESP_ERR_TIMEOUT);
                     }
                     job->transaction.done = true;
@@ -296,7 +296,7 @@ static esp_err_t service_frame(present_backend_t *backend, size_t index, size_t 
         }
         uint64_t now = present_now_us();
         esp_display_present_te_window_t window = esp_display_present_te_window(&backend->config.te_timing,
-                                                                               backend->config.te_transfer_budget_us, edge, now, measured);
+                                                                               backend->config.te_budget_us, edge, now, measured);
         if (window.admission == ESP_DISPLAY_PRESENT_TE_WAIT && backend->phase_timer) {
             uint64_t opening;
             if (present_te_next_open(&backend->config.te_timing, &window, edge, now, &opening)) {
@@ -314,7 +314,7 @@ static esp_err_t service_frame(present_backend_t *backend, size_t index, size_t 
         /* Legacy fixed edge window: no inferred scan model. This frame can
          * use only an actual edge observed after its image became READY. */
         uint64_t now = present_now_us();
-        uint64_t window = backend->config.te_window_us - backend->config.te_transfer_budget_us;
+        uint64_t window = backend->config.te_window_us - backend->config.te_budget_us;
         if (now < edge || edge < job->ready_us || now - edge >= window ||
                 (job->attempted && edge <= job->attempted_edge)) {
             return ESP_OK;
@@ -365,9 +365,9 @@ static esp_err_t service_frame(present_backend_t *backend, size_t index, size_t 
         bool allowed;
         if (backend->config.te_timing.period_us) {
             allowed = fresh && esp_display_present_te_window(&backend->config.te_timing,
-                                                             backend->config.te_transfer_budget_us, edge, now, backend->measured).admission == ESP_DISPLAY_PRESENT_TE_ALLOW;
+                                                             backend->config.te_budget_us, edge, now, backend->measured).admission == ESP_DISPLAY_PRESENT_TE_ALLOW;
         } else {
-            uint64_t window = backend->config.te_window_us - backend->config.te_transfer_budget_us;
+            uint64_t window = backend->config.te_window_us - backend->config.te_budget_us;
             allowed = fresh && edge >= job->ready_us && now >= edge && now - edge < window;
         }
         if (!allowed) {
@@ -473,16 +473,16 @@ static esp_err_t te_create_common(const esp_display_present_backend_config_t *co
             (config->format == ESP_DISPLAY_PRESENT_FORMAT_RGB888 && config->draw_order != ESP_DISPLAY_PRESENT_ORDER_NATIVE)) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (config->render_contract != ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION || (config->rotation < ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || config->rotation > ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270) || config->initial_scanout_buffer || config->external_buffers || config->external_buffer_bytes || config->in_place_convert) {
+    if (config->render_contract != ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION || (config->rotation < ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || config->rotation > ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270) || config->scan_buf || config->ext_bufs || config->ext_bytes || config->in_place) {
         return ESP_ERR_INVALID_ARG;
     }
     if (config->te_gate.admit && config->te_timing.period_us) {
         return ESP_ERR_INVALID_ARG; /* One admission policy per instance. */
     }
-    if (!config->te_gate.admit && (!config->te_transfer_budget_us || (!config->te_timing.period_us &&
-                                                                      config->te_transfer_budget_us >= config->te_window_us) ||
+    if (!config->te_gate.admit && (!config->te_budget_us || (!config->te_timing.period_us &&
+                                                             config->te_budget_us >= config->te_window_us) ||
                                    (config->te_timing.period_us && esp_display_present_te_window(&config->te_timing,
-                                                                                                 config->te_transfer_budget_us, 0, 0, false).admission == ESP_DISPLAY_PRESENT_TE_UNSUPPORTED))) {
+                                                                                                 config->te_budget_us, 0, 0, false).admission == ESP_DISPLAY_PRESENT_TE_UNSUPPORTED))) {
         return ESP_ERR_INVALID_ARG;
     }
     present_backend_t *backend = present_alloc(sizeof(*backend));
@@ -749,14 +749,14 @@ static esp_err_t te_submit_region_ex(present_backend_t *backend, esp_display_pre
     if (mapped != ESP_OK) {
         return mapped;
     }
-    esp_display_present_rect_t source_area = {0, 0, area.width, area.height};
+    esp_display_present_rect_t src_area = {0, 0, area.width, area.height};
     esp_err_t error;
     if (backend->config.async_copy) {
         error = present_te_composer_queue_write(backend->composer, backend->jobs[backend->core.active].compose_frame,
-                                                &source, &source_area, physical.x, physical.y, &tile->copy);
+                                                &source, &src_area, physical.x, physical.y, &tile->copy);
     } else {
         error = present_te_composer_write(backend->composer, backend->jobs[backend->core.active].compose_frame,
-                                          &source, &source_area, physical.x, physical.y);
+                                          &source, &src_area, physical.x, physical.y);
     }
     if (error == ESP_OK) {
         tile->lease.id.value = 0;
@@ -1007,10 +1007,10 @@ static esp_err_t te_set_rotation(present_backend_t *backend, esp_display_present
         if (backend->core.frames[i].common.token) {
             return ESP_ERR_INVALID_STATE;
         }
-    if (backend->config.in_place_convert && rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0) {
+    if (backend->config.in_place && rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0) {
         return ESP_ERR_NOT_SUPPORTED;
     }
-    bool change_axes = !backend->config.fixed_logical_rotation && (((unsigned)backend->config.rotation ^ (unsigned)rotation) & 1);
+    bool change_axes = !backend->config.fixed_rotation && (((unsigned)backend->config.rotation ^ (unsigned)rotation) & 1);
     uint32_t width = change_axes ? backend->config.height : backend->config.width;
     uint32_t height = change_axes ? backend->config.width : backend->config.height;
     size_t bpp = backend->config.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;

@@ -60,37 +60,37 @@ static bool layout_span(esp_display_present_layout_t layout, size_t capacity, si
 static esp_err_t validate(const esp_display_present_copy_request_t *request)
 {
     size_t src_span, dst_span;
-    if (!request || !request->source.pixels || !request->destination.pixels ||
-            !layout_span(request->source.layout, request->source.capacity_bytes, &src_span) ||
-            !layout_span(request->destination.layout, request->destination.capacity_bytes, &dst_span) ||
-            request->source.layout.format != request->destination.layout.format ||
+    if (!request || !request->src.pixels || !request->dst.pixels ||
+            !layout_span(request->src.layout, request->src.capacity_bytes, &src_span) ||
+            !layout_span(request->dst.layout, request->dst.capacity_bytes, &dst_span) ||
+            request->src.layout.format != request->dst.layout.format ||
             request->rotation < ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || request->rotation > ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270) {
         return ESP_ERR_INVALID_ARG;
     }
-    esp_display_present_rect_t a = request->source_area;
-    if (!a.width || !a.height || a.x > request->source.layout.width ||
-            a.y > request->source.layout.height ||
-            a.width > request->source.layout.width - a.x || a.height > request->source.layout.height - a.y) {
+    esp_display_present_rect_t a = request->src_area;
+    if (!a.width || !a.height || a.x > request->src.layout.width ||
+            a.y > request->src.layout.height ||
+            a.width > request->src.layout.width - a.x || a.height > request->src.layout.height - a.y) {
         return ESP_ERR_INVALID_ARG;
     }
     bool quarter = request->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90 || request->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270;
     uint32_t w = quarter ? a.height : a.width, h = quarter ? a.width : a.height;
-    if (request->destination_x > request->destination.layout.width ||
-            request->destination_y > request->destination.layout.height ||
-            w > request->destination.layout.width - request->destination_x ||
-            h > request->destination.layout.height - request->destination_y) {
+    if (request->dst_x > request->dst.layout.width ||
+            request->dst_y > request->dst.layout.height ||
+            w > request->dst.layout.width - request->dst_x ||
+            h > request->dst.layout.height - request->dst_y) {
         return ESP_ERR_INVALID_ARG;
     }
-    uintptr_t src = (uintptr_t)request->source.pixels, dst = (uintptr_t)request->destination.pixels;
+    uintptr_t src = (uintptr_t)request->src.pixels, dst = (uintptr_t)request->dst.pixels;
     if (src > UINTPTR_MAX - src_span || dst > UINTPTR_MAX - dst_span) {
         return ESP_ERR_INVALID_ARG;
     }
     if (src == dst) {
-        if (request->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || a.x != request->destination_x ||
-                a.y != request->destination_y ||
-                request->source.layout.width != request->destination.layout.width ||
-                request->source.layout.height != request->destination.layout.height ||
-                request->source.layout.stride_bytes != request->destination.layout.stride_bytes) {
+        if (request->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || a.x != request->dst_x ||
+                a.y != request->dst_y ||
+                request->src.layout.width != request->dst.layout.width ||
+                request->src.layout.height != request->dst.layout.height ||
+                request->src.layout.stride_bytes != request->dst.layout.stride_bytes) {
             return ESP_ERR_INVALID_ARG;
         }
     } else if (src < dst + dst_span && dst < src + src_span) {
@@ -122,21 +122,21 @@ static void PRESENT_ISR_ATTR swap_row_rgb565(uint16_t *dst, const uint16_t *src,
 
 static void PRESENT_ISR_ATTR copy_cpu(const esp_display_present_copy_request_t *request)
 {
-    size_t bytes = request->source.layout.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
-    bool swap = request->source.layout.byte_order != request->destination.layout.byte_order;
-    bool in_place = request->source.pixels == request->destination.pixels;
+    size_t bytes = request->src.layout.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
+    bool swap = request->src.layout.byte_order != request->dst.layout.byte_order;
+    bool in_place = request->src.pixels == request->dst.pixels;
     if (in_place && !swap) {
         return;
     }
-    esp_display_present_rect_t a = request->source_area;
-    size_t src_stride = request->source.layout.stride_bytes;
-    size_t dst_stride = request->destination.layout.stride_bytes;
+    esp_display_present_rect_t a = request->src_area;
+    size_t src_stride = request->src.layout.stride_bytes;
+    size_t dst_stride = request->dst.layout.stride_bytes;
 
     if (request->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0) {
-        const uint8_t *src_row = (const uint8_t *)request->source.pixels +
+        const uint8_t *src_row = (const uint8_t *)request->src.pixels +
                                  (size_t)a.y * src_stride + (size_t)a.x * bytes;
-        uint8_t *dst_row = (uint8_t *)request->destination.pixels +
-                           (size_t)request->destination_y * dst_stride + (size_t)request->destination_x * bytes;
+        uint8_t *dst_row = (uint8_t *)request->dst.pixels +
+                           (size_t)request->dst_y * dst_stride + (size_t)request->dst_x * bytes;
         if (!swap) {
             size_t row_bytes = (size_t)a.width * bytes;
             if (row_bytes == src_stride && src_stride == dst_stride) {
@@ -160,13 +160,13 @@ static void PRESENT_ISR_ATTR copy_cpu(const esp_display_present_copy_request_t *
         }
     }
 
-    if (bytes == 2 && (((uintptr_t)request->source.pixels | (uintptr_t)request->destination.pixels | src_stride | dst_stride) & 1u) == 0) {
+    if (bytes == 2 && (((uintptr_t)request->src.pixels | (uintptr_t)request->dst.pixels | src_stride | dst_stride) & 1u) == 0) {
         if (request->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_180) {
             for (uint32_t y = 0; y < a.height; ++y) {
-                const uint16_t *src_px = (const uint16_t *)((const uint8_t *)request->source.pixels +
+                const uint16_t *src_px = (const uint16_t *)((const uint8_t *)request->src.pixels +
                                                             (size_t)(a.y + y) * src_stride) + a.x + a.width - 1;
-                uint16_t *dst_px = (uint16_t *)((uint8_t *)request->destination.pixels +
-                                                (size_t)(request->destination_y + a.height - 1 - y) * dst_stride) + request->destination_x;
+                uint16_t *dst_px = (uint16_t *)((uint8_t *)request->dst.pixels +
+                                                (size_t)(request->dst_y + a.height - 1 - y) * dst_stride) + request->dst_x;
                 uint32_t n = a.width;
                 if (((uintptr_t)dst_px & 3u) != 0 && n > 0) {
                     uint16_t v = *src_px--;
@@ -202,17 +202,17 @@ static void PRESENT_ISR_ATTR copy_cpu(const esp_display_present_copy_request_t *
                         if (request->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90) {
                             uint32_t dy = x;
                             uint32_t dx = a.height - y_end;
-                            dst_px = (uint16_t *)((uint8_t *)request->destination.pixels +
-                                                  (size_t)(request->destination_y + dy) * dst_stride) + request->destination_x + dx;
-                            src_px = (const uint16_t *)((const uint8_t *)request->source.pixels +
+                            dst_px = (uint16_t *)((uint8_t *)request->dst.pixels +
+                                                  (size_t)(request->dst_y + dy) * dst_stride) + request->dst_x + dx;
+                            src_px = (const uint16_t *)((const uint8_t *)request->src.pixels +
                                                         (size_t)(a.y + y_end - 1) * src_stride) + a.x + x;
                             src_step = -(ptrdiff_t)src_stride_px;
                         } else {
                             uint32_t dy = a.width - 1 - x;
                             uint32_t dx = by;
-                            dst_px = (uint16_t *)((uint8_t *)request->destination.pixels +
-                                                  (size_t)(request->destination_y + dy) * dst_stride) + request->destination_x + dx;
-                            src_px = (const uint16_t *)((const uint8_t *)request->source.pixels +
+                            dst_px = (uint16_t *)((uint8_t *)request->dst.pixels +
+                                                  (size_t)(request->dst_y + dy) * dst_stride) + request->dst_x + dx;
+                            src_px = (const uint16_t *)((const uint8_t *)request->src.pixels +
                                                         (size_t)(a.y + by) * src_stride) + a.x + x;
                             src_step = (ptrdiff_t)src_stride_px;
                         }
@@ -272,11 +272,11 @@ static void PRESENT_ISR_ATTR copy_cpu(const esp_display_present_copy_request_t *
             default:
                 break;
             }
-            const uint8_t *src = (const uint8_t *)request->source.pixels +
+            const uint8_t *src = (const uint8_t *)request->src.pixels +
                                  (a.y + y) * src_stride + (a.x + x) * bytes;
-            uint8_t *dst = (uint8_t *)request->destination.pixels +
-                           (request->destination_y + dy) * dst_stride +
-                           (request->destination_x + dx) * bytes;
+            uint8_t *dst = (uint8_t *)request->dst.pixels +
+                           (request->dst_y + dy) * dst_stride +
+                           (request->dst_x + dx) * bytes;
             if (swap) {
                 uint8_t b0 = src[0], b1 = src[1];
                 dst[0] = b1;

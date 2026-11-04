@@ -115,9 +115,9 @@ static void exercise(unsigned kind, esp_display_present_render_contract_t contra
     esp_display_present_backend_config_t cfg = {.width = initial % 2 ? 2 : 3, .height = initial % 2 ? 3 : 2, .rotation = initial, .tile_rows = initial % 2 ? 3 : 2, .buffer_count = 2, .max_frames = 2,
                                                 .format = bpp == 2 ? ESP_DISPLAY_PRESENT_FORMAT_RGB565 : ESP_DISPLAY_PRESENT_FORMAT_RGB888, .render_contract = contract,
                                                 .panel = kind == 2 ? scan_interface(&scan) : test_panel_interface(&io),
-                                                .te_window_us = 1000000, .te_transfer_budget_us = 1, .async_copy = async,
-                                                .on_progress = notify, .progress_user = &n, .external_buffers = external ? buffers : NULL,
-                                                .external_buffer_bytes = external ? 64 : 0
+                                                .te_window_us = 1000000, .te_budget_us = 1, .async_copy = async,
+                                                .on_progress = notify, .progress_user = &n, .ext_bufs = external ? buffers : NULL,
+                                                .ext_bytes = external ? 64 : 0
                                                };
     present_backend_t *b;
     size_t before_create = pixel_bytes;
@@ -225,7 +225,7 @@ static void exercise_swapped_fb(esp_display_present_render_contract_t contract, 
     esp_display_present_backend_config_t cfg = {.width = 3, .height = 2, .tile_rows = 2, .buffer_count = 2, .max_frames = 2,
                                                 .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .draw_order = ESP_DISPLAY_PRESENT_ORDER_NATIVE, .panel_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED,
                                                 .render_contract = contract, .panel = scan_interface(&scan), .async_copy = async,
-                                                .on_progress = notify, .progress_user = &n, .external_buffers = buffers, .external_buffer_bytes = 64
+                                                .on_progress = notify, .progress_user = &n, .ext_bufs = buffers, .ext_bytes = 64
                                                };
     present_backend_t *b;
     size_t before_create = pixel_bytes;

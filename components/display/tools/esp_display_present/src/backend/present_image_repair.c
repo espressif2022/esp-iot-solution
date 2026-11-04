@@ -130,6 +130,9 @@ esp_err_t present_image_begin(present_image_builder_t *builder, size_t candidate
     builder->repair = (present_damage_set_t) {
         0
     };
+    builder->seeded = (present_damage_set_t) {
+        0
+    };
     builder->rect = builder->offset = builder->repaired_pixels = 0;
     builder->repair_ready = false;
     return ESP_OK;
@@ -193,6 +196,12 @@ esp_err_t present_image_cover(present_image_builder_t *builder, esp_display_pres
     }
     return ESP_OK;
 }
+esp_err_t present_image_seed(present_image_builder_t *builder, esp_display_present_rect_t area)
+{
+    assert(present_valid_rect(builder->width, builder->height, &area));
+    damage_add(&builder->seeded, area);
+    return ESP_OK;
+}
 static uint32_t exact_run_end(const present_image_builder_t *builder, uint32_t x, uint32_t y)
 {
     uint32_t end = x;
@@ -209,6 +218,39 @@ static uint32_t exact_run_end(const present_image_builder_t *builder, uint32_t x
         }
     }
     return end;
+}
+static uint32_t seeded_run_end(const present_image_builder_t *builder, uint32_t x, uint32_t y)
+{
+    if (builder->seeded.full) {
+        return builder->width;
+    }
+    uint32_t end = x;
+    for (size_t pass = 0; pass < builder->seeded.count; ++pass) {
+        uint32_t before = end;
+        for (size_t i = 0; i < builder->seeded.count; ++i) {
+            esp_display_present_rect_t a = builder->seeded.areas[i];
+            if (y >= a.y && y - a.y < a.height && a.x <= end && a.x + a.width > end) {
+                end = a.x + a.width;
+            }
+        }
+        if (before == end) {
+            break;
+        }
+    }
+    return end;
+}
+static bool seeded_contains(const present_image_builder_t *builder, uint32_t x, uint32_t y)
+{
+    if (builder->seeded.full) {
+        return true;
+    }
+    for (size_t i = 0; i < builder->seeded.count; ++i) {
+        esp_display_present_rect_t a = builder->seeded.areas[i];
+        if (x >= a.x && y >= a.y && x - a.x < a.width && y - a.y < a.height) {
+            return true;
+        }
+    }
+    return false;
 }
 bool present_image_full(const present_image_builder_t *builder)
 {
@@ -261,7 +303,7 @@ void present_image_prepare_repair(present_image_builder_t *builder, bool direct)
 }
 static bool covered(const present_image_builder_t *builder, size_t i)
 {
-    if (builder->full_covered) {
+    if (builder->full_covered || seeded_contains(builder, (uint32_t)(i % builder->width), (uint32_t)(i / builder->width))) {
         return true;
     }
     if (builder->coverage) {
@@ -272,7 +314,7 @@ static bool covered(const present_image_builder_t *builder, size_t i)
 }
 static bool row_uncovered(const present_image_builder_t *builder, uint32_t y, uint32_t x, uint32_t width)
 {
-    if (builder->full_covered) {
+    if (builder->full_covered || builder->seeded.full) {
         return false;
     }
     if (builder->coverage) {
@@ -280,6 +322,12 @@ static bool row_uncovered(const present_image_builder_t *builder, uint32_t y, ui
     }
     for (size_t i = 0; i < builder->exact.count; ++i) {
         esp_display_present_rect_t a = builder->exact.areas[i];
+        if (y >= a.y && y - a.y < a.height && a.x < x + width && x < a.x + a.width) {
+            return false;
+        }
+    }
+    for (size_t i = 0; i < builder->seeded.count; ++i) {
+        esp_display_present_rect_t a = builder->seeded.areas[i];
         if (y >= a.y && y - a.y < a.height && a.x < x + width && x < a.x + a.width) {
             return false;
         }
@@ -309,6 +357,10 @@ bool present_image_next_repair(present_image_builder_t *builder, esp_display_pre
                 }
                 if (!builder->coverage) {
                     uint32_t end = builder->full_covered ? a.x + a.width : exact_run_end(builder, a.x + rx, y);
+                    uint32_t seeded_end = seeded_run_end(builder, a.x + rx, y);
+                    if (seeded_end > end) {
+                        end = seeded_end;
+                    }
                     if (end == a.x + rx) {
                         break;
                     }
@@ -333,6 +385,13 @@ bool present_image_next_repair(present_image_builder_t *builder, esp_display_pre
                 end = limit;
                 for (size_t i = 0; i < builder->exact.count; ++i) {
                     esp_display_present_rect_t covered_area = builder->exact.areas[i];
+                    if (y >= covered_area.y && y - covered_area.y < covered_area.height &&
+                            covered_area.x > x && covered_area.x < end) {
+                        end = covered_area.x;
+                    }
+                }
+                for (size_t i = 0; i < builder->seeded.count; ++i) {
+                    esp_display_present_rect_t covered_area = builder->seeded.areas[i];
                     if (y >= covered_area.y && y - covered_area.y < covered_area.height &&
                             covered_area.x > x && covered_area.x < end) {
                         end = covered_area.x;

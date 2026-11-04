@@ -251,9 +251,9 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
                 .rotation = (esp_display_present_engine_rotation_t)(hw->rotation / 90),
                 .async_copy = async,
                 .deferred_submit = deferred,
-                .fixed_logical_rotation = true,
-                .allow_active_scanout_writes = framebuffer && mode == ESP_DISPLAY_PRESENT_MODE_NONE,
-                .internal_tx_staging = !framebuffer && !te && input->target.drawbuf.in_psram,
+                .fixed_rotation = true,
+                .active_writes = framebuffer && mode == ESP_DISPLAY_PRESENT_MODE_NONE,
+                .tx_staging = !framebuffer && !te && input->target.drawbuf.in_psram,
                 .te_gate = te ? (esp_display_present_te_gate_t)
                 {
                     te_admit, te_start, te_done, NULL
@@ -262,10 +262,10 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
                     0
                 },
                 .panel_order = hw->swap_bytes ? ESP_DISPLAY_PRESENT_ORDER_SWAPPED : ESP_DISPLAY_PRESENT_ORDER_NATIVE,
-                .in_place_convert = !framebuffer && !async && hw->swap_bytes,
+                .in_place = !framebuffer && !async && hw->swap_bytes,
             },
         },
-        .additional_budget_bytes = sizeof(present_resources_t) + (te ? te_staging_bytes(input->width, input->height, hw->rotation / 90, bytes_per_pixel) + 64 + present_event_memory() + esp_display_present_te_sync_memory() : 0),
+        .extra_bytes = sizeof(present_resources_t) + (te ? te_staging_bytes(input->width, input->height, hw->rotation / 90, bytes_per_pixel) + 64 + present_event_memory() + esp_display_present_te_sync_memory() : 0),
         .resources = {
             .tile_count = tiles,
             .image_count = images,
@@ -353,6 +353,126 @@ static esp_err_t free_resources(present_resources_t *resources)
     return ESP_OK;
 }
 
+/* The driver owns the scanout framebuffers; the backend borrows their addresses. */
+static esp_err_t create_scanout_adapter(present_resources_t *resources, const esp_display_presenter_config_t *input,
+                                        bool bounce, esp_display_present_scanout_vsync_fn on_vsync, void *vsync_user,
+                                        esp_display_present_plan_config_t *config)
+{
+    esp_err_t error;
+    bool quarter = config->presenter.backend.rotation & 1;
+    esp_display_present_lcd_scanout_config_t scan = {
+        .panel = input->target.hw.panel,
+        .kind = input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB ? ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE : ESP_DISPLAY_PRESENT_LCD_DSI,
+        .width = quarter ? input->height : input->width,
+        .height = quarter ? input->width : input->height,
+        .format = config->presenter.backend.format,
+        .buffer_count = config->resources.image_count,
+        .byte_order = config->presenter.backend.panel_order,
+        .bounce = bounce,
+        .retain_scanout = true,
+        .on_vsync = on_vsync,
+        .vsync_user = vsync_user,
+    };
+    error = esp_display_present_lcd_scanout_create(&scan, &resources->scanout);
+    if (error != ESP_OK) {
+        return error;
+    }
+    size_t count;
+    error = esp_display_present_lcd_scanout_get_buffers(resources->scanout, resources->buffers, 3, &count);
+    if (error != ESP_OK) {
+        return error;
+    }
+    if (input->target.fb.frame_buffer_count) {
+        for (size_t i = 0; i < count; ++i) {
+            if (input->target.fb.frame_buffers[i] != resources->buffers[i]) {
+                return ESP_ERR_INVALID_ARG;
+            }
+        }
+    }
+    size_t bpp = input->pixel_format == ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 ? 2 : 3;
+    config->presenter.backend.ext_bufs = resources->buffers;
+    config->presenter.backend.ext_bytes = (size_t)input->width * input->height * bpp;
+    config->presenter.backend.scan_buf = resources->buffers[0];
+    error = esp_display_present_lcd_scanout_get_interface(resources->scanout, &config->presenter.backend.panel);
+    return error != ESP_OK ? error : esp_display_present_lcd_scanout_get_output_caps(resources->scanout, &config->output);
+}
+
+/* Select direct external DMA only from driver facts; TE staging must hold a full frame. */
+static esp_err_t create_spi_adapter(present_resources_t *resources, const esp_display_presenter_config_t *input,
+                                    esp_display_present_plan_config_t *config)
+{
+    esp_err_t error;
+    size_t bpp = input->pixel_format == ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 ? 2 : 3;
+    bool quarter = config->presenter.backend.rotation & 1;
+    size_t staging = resources->te_required ? te_staging_bytes(input->width, input->height,
+                                                               config->presenter.backend.rotation, bpp) : 0;
+    bool direct_psram = false;
+#ifdef ESP_LCD_SPI_IO_HAS_MEMORY_INFO
+    esp_lcd_panel_io_spi_memory_info_t memory;
+    if (esp_lcd_panel_io_spi_get_memory_info(input->target.hw.io, &memory) == ESP_OK) {
+        direct_psram = memory.psram_dma_direct;
+    }
+#endif
+    if (direct_psram) {
+        staging = 0; /* Driver facts establish the configured direct path. */
+    }
+    if (resources->te_required && staging) {
+        size_t row = (size_t)(quarter ? input->height : input->width) * bpp;
+        size_t rows = row ? staging / row : 0;
+        uint32_t physical_height = quarter ? input->width : input->height;
+        /* TE timing assumes one continuous window. A staging band that cannot
+         * hold the physical frame would split draw_bitmap. */
+        if (rows < physical_height) {
+            return ESP_ERR_NOT_SUPPORTED;
+        }
+    }
+    esp_display_present_lcd_spi_config_t spi = {
+        .panel = input->target.hw.panel,
+        .io = input->target.hw.io,
+        .psram_dma_direct = direct_psram,
+        .staging_bytes = staging,
+        .staging_timeout_ms = input->transfer_timeout_ms,
+        .format = config->presenter.backend.format,
+        .byte_order = config->presenter.backend.panel_order,
+        .max_inflight = config->resources.tile_count,
+    };
+    error = esp_display_present_lcd_spi_create(&spi, &resources->spi);
+    if (error != ESP_OK) {
+        return error;
+    }
+    error = esp_display_present_lcd_spi_get_interface(resources->spi, &config->presenter.backend.panel);
+    if (error != ESP_OK) {
+        return error;
+    }
+    return esp_display_present_lcd_spi_get_output_caps(resources->spi, &config->output);
+}
+
+static esp_err_t create_planned_engine(present_resources_t *resources, const esp_display_presenter_config_t *input,
+                                       esp_display_present_plan_config_t *config)
+{
+    esp_err_t error = esp_display_present_plan_resolve(config, &resources->status.plan);
+    if (error != ESP_OK) {
+        return error;
+    }
+    error = esp_display_present_engine_create_planned(config, &resources->presenter);
+    if (error != ESP_ERR_NO_MEM || input->target.drawbuf.buffers != 0 || config->resources.tile_count != 2) {
+        return error;
+    }
+
+    /* No pixels were submitted; only an automatically selected count may shrink. */
+    config->resources.tile_count = 1;
+    if (config->presenter.backend_kind != ESP_DISPLAY_PRESENT_ENGINE_FB) {
+        config->presenter.backend.buffer_count = 1;
+    }
+    if (input->target.drawbuf.in_psram) {
+        size_t bpp = input->pixel_format == ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 ? 2 : 3;
+        size_t bytes = (size_t)input->width * config->presenter.backend.tile_rows * bpp;
+        config->resources.tile_memory = preferred_external_memory(bytes, 1);
+    }
+    error = esp_display_present_plan_resolve(config, &resources->status.plan);
+    return error != ESP_OK ? error : esp_display_present_engine_create_planned(config, &resources->presenter);
+}
+
 esp_err_t present_resources_create(const esp_display_presenter_config_t *input, bool bounce,
                                    esp_display_present_scanout_vsync_fn on_vsync, void *vsync_user, present_resources_t **out)
 {
@@ -385,109 +505,15 @@ esp_err_t present_resources_create(const esp_display_presenter_config_t *input, 
     resources->te_required = config.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_TE;
     resources->te_config = input->target.hw.te_sync;
     if (config.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB) {
-        bool quarter = config.presenter.backend.rotation & 1;
-        esp_display_present_lcd_scanout_config_t scan = {
-            .panel = input->target.hw.panel,
-            .kind = input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB ? ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE : ESP_DISPLAY_PRESENT_LCD_DSI,
-            .width = quarter ? input->height : input->width,
-            .height = quarter ? input->width : input->height,
-            .format = config.presenter.backend.format,
-            .buffer_count = config.resources.image_count,
-            .byte_order = config.presenter.backend.panel_order,
-            .rgb_bounce_buffer_mode = bounce,
-            .retain_driver_scanout = true,
-            .on_vsync = on_vsync,
-            .vsync_user = vsync_user,
-        };
-        error = esp_display_present_lcd_scanout_create(&scan, &resources->scanout);
-        if (error == ESP_OK) {
-            size_t count;
-            error = esp_display_present_lcd_scanout_get_buffers(resources->scanout, resources->buffers, 3, &count);
-            if (error == ESP_OK && input->target.fb.frame_buffer_count) {
-                for (size_t i = 0; i < count; ++i) {
-                    if (input->target.fb.frame_buffers[i] != resources->buffers[i]) {
-                        error = ESP_ERR_INVALID_ARG;
-                    }
-                }
-            }
-            config.presenter.backend.external_buffers = resources->buffers;
-            config.presenter.backend.external_buffer_bytes = (size_t)input->width * input->height * (input->pixel_format == 0 ? 2 : 3);
-            config.presenter.backend.initial_scanout_buffer = resources->buffers[0];
-        }
-        if (error == ESP_OK) {
-            error = esp_display_present_lcd_scanout_get_interface(resources->scanout, &config.presenter.backend.panel);
-        }
-        if (error == ESP_OK) {
-            error = esp_display_present_lcd_scanout_get_output_caps(resources->scanout, &config.output);
-        }
+        error = create_scanout_adapter(resources, input, bounce, on_vsync, vsync_user, &config);
     } else {
-        size_t staging = resources->te_required ? te_staging_bytes(input->width, input->height,
-                                                                   config.presenter.backend.rotation, input->pixel_format == ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 ? 2 : 3) : 0;
-        bool direct_psram = false;
-#ifdef ESP_LCD_SPI_IO_HAS_MEMORY_INFO
-        esp_lcd_panel_io_spi_memory_info_t memory;
-        if (esp_lcd_panel_io_spi_get_memory_info(input->target.hw.io, &memory) == ESP_OK) {
-            direct_psram = memory.psram_dma_direct;
-        }
-#endif
-        if (direct_psram) {
-            staging = 0; /* Driver facts establish the configured direct path. */
-        }
-        if (resources->te_required && staging) {
-            size_t row = (size_t)(config.presenter.backend.rotation & 1 ? input->height : input->width) *
-                         (input->pixel_format == ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 ? 2 : 3);
-            size_t rows = row ? staging / row : 0;
-            uint32_t physical_height = config.presenter.backend.rotation & 1 ? input->width : input->height;
-            /* TE timing assumes one continuous window. A staging band that cannot
-             * hold the physical frame would split draw_bitmap. */
-            if (rows < physical_height) {
-                (void)free_resources(resources);
-                return ESP_ERR_NOT_SUPPORTED;
-            }
-        }
-        esp_display_present_lcd_spi_config_t spi = {
-            .panel = input->target.hw.panel,
-            .io = input->target.hw.io,
-            .psram_dma_direct = direct_psram,
-            .staging_bytes = staging,
-            .staging_timeout_ms = input->transfer_timeout_ms,
-            .format = config.presenter.backend.format,
-            .byte_order = config.presenter.backend.panel_order,
-            .max_inflight = config.resources.tile_count,
-        };
-        error = esp_display_present_lcd_spi_create(&spi, &resources->spi);
-        if (error == ESP_OK) {
-            error = esp_display_present_lcd_spi_get_interface(resources->spi, &config.presenter.backend.panel);
-        }
-        if (error == ESP_OK) {
-            error = esp_display_present_lcd_spi_get_output_caps(resources->spi, &config.output);
-        }
+        error = create_spi_adapter(resources, input, &config);
     }
     config.presenter.backend.copy_execute = config.presenter.backend.async_copy ? copy_execute : NULL;
     config.presenter.backend.copy_user = resources;
     config.presenter.backend.te_gate.user = resources;
     if (error == ESP_OK) {
-        error = esp_display_present_plan_resolve(&config, &resources->status.plan);
-    }
-    if (error == ESP_OK) {
-        error = esp_display_present_engine_create_planned(&config, &resources->presenter);
-        /* Creation has not submitted pixels. The failed constructor releases
-         * its pools and worker before returning; only automatic counts may shrink. */
-        if (error == ESP_ERR_NO_MEM && input->target.drawbuf.buffers == 0 && config.resources.tile_count == 2) {
-            config.resources.tile_count = 1;
-            if (config.presenter.backend_kind != ESP_DISPLAY_PRESENT_ENGINE_FB) {
-                config.presenter.backend.buffer_count = 1;
-            }
-            if (input->target.drawbuf.in_psram) {
-                size_t bytes = (size_t)input->width * config.presenter.backend.tile_rows *
-                               (input->pixel_format == ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 ? 2 : 3);
-                config.resources.tile_memory = preferred_external_memory(bytes, 1);
-            }
-            error = esp_display_present_plan_resolve(&config, &resources->status.plan);
-            if (error == ESP_OK) {
-                error = esp_display_present_engine_create_planned(&config, &resources->presenter);
-            }
-        }
+        error = create_planned_engine(resources, input, &config);
     }
     if (error != ESP_OK) {
         /* No hardware work has been submitted. Attach failure guarantees no

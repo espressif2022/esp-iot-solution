@@ -42,7 +42,7 @@ typedef struct {
     uint32_t worker_stack_bytes; /* 0 selects default; ignored by Host. */
     unsigned worker_priority; /* 0 selects default; ignored by Host. */
     /** FB named modes require backend_kind FB. NONE selects a single FB and
-     * requires backend.allow_active_scanout_writes; IO NONE selects GRAM.
+     * requires backend.active_writes; IO NONE selects GRAM.
      * AUTO uses explicit backend kind (no hardware detection): FB 2/3 buffers
      * -> PARTITION, FB 1 -> NONE; IO with both TE budgets -> TE, otherwise GRAM.
      * Named FB modes set buffer_count; external array must have that many entries. */

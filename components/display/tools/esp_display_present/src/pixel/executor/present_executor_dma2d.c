@@ -37,12 +37,12 @@ static esp_err_t dma2d_caps(void *context, esp_display_present_executor_caps_t *
         .rotation_mask = 1,
         .byte_swap = false,
         .base_alignment = 64,
-        .destination_capacity_alignment = 64,
-        .stride_alignment_bytes = 1,
+        .dst_cap_align = 64,
+        .stride_align = 1,
         .max_stride_pixels = 0x3fff,
         .max_height = 0x3fff,
-        .address_dependent_constraints = true,
-        .requires_full_stride_capacity = true
+        .addr_constraints = true,
+        .full_stride_cap = true
     };
     return ESP_OK;
 }
@@ -55,16 +55,16 @@ static esp_err_t dma2d_probe(void *context, const esp_display_present_copy_reque
     if (error != ESP_OK) {
         return error;
     }
-    if (request->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || request->source.layout.byte_order != request->destination.layout.byte_order) {
+    if (request->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || request->src.layout.byte_order != request->dst.layout.byte_order) {
         return unsupported(reason, ESP_DISPLAY_PRESENT_EXEC_TRANSFORM);
     }
-    size_t bpp = request->source.layout.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
-    size_t si = dma2d_get_buffer_alignment_constraint(request->source.pixels);
-    size_t di = dma2d_get_buffer_alignment_constraint(request->destination.pixels);
-    if ((si > 1 && ((uintptr_t)request->source.pixels % si || request->source.layout.stride_bytes % si ||
-                    (request->source_area.x * bpp) % si || (request->source_area.width * bpp) % si)) ||
-            (di > 1 && ((uintptr_t)request->destination.pixels % di || request->destination.layout.stride_bytes % di ||
-                        (request->destination_x * bpp) % di || (request->source_area.width * bpp) % di))) {
+    size_t bpp = request->src.layout.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
+    size_t si = dma2d_get_buffer_alignment_constraint(request->src.pixels);
+    size_t di = dma2d_get_buffer_alignment_constraint(request->dst.pixels);
+    if ((si > 1 && ((uintptr_t)request->src.pixels % si || request->src.layout.stride_bytes % si ||
+                    (request->src_area.x * bpp) % si || (request->src_area.width * bpp) % si)) ||
+            (di > 1 && ((uintptr_t)request->dst.pixels % di || request->dst.layout.stride_bytes % di ||
+                        (request->dst_x * bpp) % di || (request->src_area.width * bpp) % di))) {
         return unsupported(reason, ESP_DISPLAY_PRESENT_EXEC_ALIGNMENT);
     }
     return ESP_OK;
@@ -83,24 +83,24 @@ static esp_err_t dma2d_execute(void *context, const esp_display_present_copy_req
     if (error != ESP_OK) {
         return error;
     }
-    size_t bpp = request->source.layout.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
+    size_t bpp = request->src.layout.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
     (void)present_mutex_take(plugin->gate, UINT32_MAX);
     error = hw_sync(band, band_bytes, ESP_CACHE_MSYNC_FLAG_DIR_C2M);
     if (error != ESP_OK) {
         goto done;
     }
-    async_memcpy_dma2d_trans_desc_t op = {.src_buffer = request->source.pixels,
-                                          .src_stride = request->source.layout.stride_bytes / bpp,
-                                          .src_height = request->source.layout.height,
-                                          .src_x = request->source_area.x,
-                                          .src_y = request->source_area.y,
-                                          .dst_buffer = request->destination.pixels,
-                                          .dst_stride = request->destination.layout.stride_bytes / bpp,
-                                          .dst_height = request->destination.layout.height,
-                                          .dst_x = request->destination_x,
-                                          .dst_y = request->destination_y,
-                                          .copy_width = request->source_area.width,
-                                          .copy_height = request->source_area.height,
+    async_memcpy_dma2d_trans_desc_t op = {.src_buffer = request->src.pixels,
+                                          .src_stride = request->src.layout.stride_bytes / bpp,
+                                          .src_height = request->src.layout.height,
+                                          .src_x = request->src_area.x,
+                                          .src_y = request->src_area.y,
+                                          .dst_buffer = request->dst.pixels,
+                                          .dst_stride = request->dst.layout.stride_bytes / bpp,
+                                          .dst_height = request->dst.layout.height,
+                                          .dst_x = request->dst_x,
+                                          .dst_y = request->dst_y,
+                                          .copy_width = request->src_area.width,
+                                          .copy_height = request->src_area.height,
                                           .pixel_format =
                                               bpp == 2 ? ESP_COLOR_FOURCC_RGB16 : ESP_COLOR_FOURCC_BGR24
                                          };

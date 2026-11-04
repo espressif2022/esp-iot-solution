@@ -181,13 +181,13 @@ static void exercise(esp_display_present_lcd_scanout_kind_t kind, bool fail, boo
         assert(panel.buffers[i]);
     }
     esp_display_present_lcd_scanout_config_t cfg = {.panel = &panel, .kind = kind, .width = 3, .height = 2,
-                                                    .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = 2, .rgb_bounce_buffer_mode = true, .delete_panel_on_stop = true
+                                                    .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = 2, .bounce = true, .delete_panel = true
                                                    };
     esp_display_present_lcd_scanout_t *a;
     OK(esp_display_present_lcd_scanout_create(&cfg, &a));
     esp_display_present_output_caps_t output_caps;
     OK(esp_display_present_lcd_scanout_get_output_caps(a, &output_caps));
-    assert(output_caps.full_frame_only && output_caps.external_buffers_required && output_caps.max_inflight == 1);
+    assert(output_caps.full_only && output_caps.ext_bufs_required && output_caps.max_inflight == 1);
     void *buffers[3];
     size_t count;
     OK(esp_display_present_lcd_scanout_get_buffers(a, buffers, 3, &count));
@@ -195,8 +195,8 @@ static void exercise(esp_display_present_lcd_scanout_kind_t kind, bool fail, boo
     esp_display_present_panel_adapter_t interface;
     OK(esp_display_present_lcd_scanout_get_interface(a, &interface));
     esp_display_present_backend_config_t bc = {.width = 3, .height = 2, .tile_rows = 2, .buffer_count = 2, .max_frames = 2,
-                                               .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .render_contract = ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL, .external_buffers = buffers,
-                                               .external_buffer_bytes = 64, .initial_scanout_buffer = buffers[0], .panel = interface
+                                               .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .render_contract = ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL, .ext_bufs = buffers,
+                                               .ext_bytes = 64, .scan_buf = buffers[0], .panel = interface
                                               };
     const present_backend_ops_t *ops = &present_fb_backend;
     present_backend_t *b;
@@ -281,7 +281,7 @@ static void test_callback_drain_retry(void)
     }
     cb_gate_t gate = {.lock = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER, .block = true};
     esp_display_present_lcd_scanout_config_t cfg = {.panel = &panel, .kind = ESP_DISPLAY_PRESENT_LCD_DSI, .width = 3, .height = 2,
-                                                    .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = 2, .delete_panel_on_stop = true
+                                                    .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = 2, .delete_panel = true
                                                    };
     esp_display_present_lcd_scanout_t *a;
     OK(esp_display_present_lcd_scanout_create(&cfg, &a));
@@ -338,13 +338,13 @@ static void test_retained_scanout(void)
         esp_display_present_lcd_scanout_config_t config = {
             .panel = &panel, .kind = rgb ? ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE : ESP_DISPLAY_PRESENT_LCD_DSI,
             .width = 3, .height = 2, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = 2,
-            .rgb_bounce_buffer_mode = true, .retain_driver_scanout = true,
+            .bounce = true, .retain_scanout = true,
             .on_vsync = raw_vsync, .vsync_user = &vsyncs,
         };
         esp_display_present_lcd_scanout_t *adapter;
-        config.delete_panel_on_stop = true;
+        config.delete_panel = true;
         assert(esp_display_present_lcd_scanout_create(&config, &adapter) == ESP_ERR_INVALID_ARG);
-        config.delete_panel_on_stop = false;
+        config.delete_panel = false;
         OK(esp_display_present_lcd_scanout_create(&config, &adapter));
         esp_display_present_panel_adapter_t interface;
         OK(esp_display_present_lcd_scanout_get_interface(adapter, &interface));
@@ -396,7 +396,7 @@ static void queried_rgb(void)
     panel.buffers[0] = aligned_alloc(64, 64);
     panel.buffers[1] = aligned_alloc(64, 64);
     esp_display_present_lcd_scanout_config_t config = {.panel = &panel, .kind = ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE,
-                                                       .width = 3, .height = 2, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = 2, .retain_driver_scanout = true
+                                                       .width = 3, .height = 2, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = 2, .retain_scanout = true
                                                       };
     esp_display_present_lcd_scanout_t *adapter;
     /* No confirmation switch: the driver is authoritative. */
@@ -412,7 +412,7 @@ static void queried_rgb(void)
     assert(esp_display_present_lcd_scanout_create(&config, &adapter) == ESP_ERR_NOT_SUPPORTED);
     panel.transformed = false;
     panel.no_bounce = true;
-    config.rgb_bounce_buffer_mode = true; /* A stale caller hint cannot override facts. */
+    config.bounce = true; /* A stale caller hint cannot override facts. */
     assert(esp_display_present_lcd_scanout_create(&config, &adapter) == ESP_ERR_NOT_SUPPORTED);
     panel.one_fb = true;
     config.buffer_count = 1;
@@ -442,7 +442,7 @@ int main(void)
         esp_display_present_lcd_scanout_config_t config = {
             .panel = &one_boundary_panel, .kind = kind, .width = 3, .height = 2,
             .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = 2,
-            .delete_panel_on_stop = true, .single_boundary_retire = true,
+            .delete_panel = true, .single_retire = true,
         };
         esp_display_present_lcd_scanout_t *adapter = (void *)1;
         assert(esp_display_present_lcd_scanout_create(&config, &adapter) == ESP_ERR_NOT_SUPPORTED);
@@ -453,7 +453,7 @@ int main(void)
     esp_display_present_lcd_scanout_config_t unsupported = {
         .panel = &unsupported_panel, .kind = ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE,
         .width = 3, .height = 2, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
-        .buffer_count = 2, .delete_panel_on_stop = true,
+        .buffer_count = 2, .delete_panel = true,
     };
     esp_display_present_lcd_scanout_t *unsupported_adapter = NULL;
     assert(esp_display_present_lcd_scanout_create(&unsupported, &unsupported_adapter) == ESP_ERR_NOT_SUPPORTED);

@@ -31,7 +31,7 @@ typedef struct {
     size_t coverage_bytes;
     uint64_t versions[PRESENT_IMAGE_SLOTS], latest;
     present_image_delta_t history[PRESENT_IMAGE_HISTORY];
-    present_damage_set_t writes, repair, exact;
+    present_damage_set_t writes, repair, exact, seeded;
     esp_err_t coverage_error;
     size_t candidate, baseline, rect, offset;
     bool repair_ready, full_covered, bitmap_dirty;
@@ -42,6 +42,9 @@ void present_image_deinit(present_image_builder_t *);
 void present_image_reset(present_image_builder_t *, uint32_t, uint32_t);
 esp_err_t present_image_begin(present_image_builder_t *, size_t candidate, size_t baseline);
 esp_err_t present_image_cover(present_image_builder_t *, esp_display_present_rect_t);
+/* Pixels already copied from the baseline. Repair will not copy them again.
+ * This is not application coverage: full-frame checks and commit history ignore it. */
+esp_err_t present_image_seed(present_image_builder_t *, esp_display_present_rect_t);
 bool present_image_full(const present_image_builder_t *);
 void present_image_prepare_repair(present_image_builder_t *, bool defensive_direct);
 bool present_image_next_repair(present_image_builder_t *, esp_display_present_rect_t *);

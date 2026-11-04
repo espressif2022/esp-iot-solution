@@ -27,10 +27,10 @@ typedef struct {
     /** RGB requires an actual bounce-buffer panel with no application bounce
      * callback, no driver rotation/mirror, and continuous refresh. Non-bounce
      * EOF is not a reliable retirement event on every IDF/SoC. */
-    bool rgb_bounce_buffer_mode;
-    bool single_boundary_retire; /* Single-FB exposure only; unsupported for multiple FBs. */
-    bool delete_panel_on_stop; /* Alternative safe stop: transfers panel ownership on attach. */
-    /** Unless delete_panel_on_stop or retain_driver_scanout: required board-owned safe stop: successful return guarantees scanning
+    bool bounce;
+    bool single_retire; /* Single-FB exposure only; unsupported for multiple FBs. */
+    bool delete_panel; /* Alternative safe stop: transfers panel ownership on attach. */
+    /** Unless delete_panel or retain_scanout: required board-owned safe stop: successful return guarantees scanning
      * stopped AND all registered callbacks exited; framebuffer allocations
      * may be freed after stopping DMA; backend stop does not read them again.
      * May return TIMEOUT and retry.
@@ -40,11 +40,11 @@ typedef struct {
     void *user;
     /** FB external driver pool only: final stop drains the pending switch and
      * detaches/joins callbacks, but leaves immutable driver-owned FBs scanning.
-     * Mutually exclusive with delete_panel_on_stop and stop_scanout. Panel and
+     * Mutually exclusive with delete_panel and stop_scanout. Panel and
      * its FB pool must outlive this adapter/backend. No backend-owned pixels
      * may remain visible. Normal presenter drain / V1 quiesce must not call
      * this final-stop path. */
-    bool retain_driver_scanout;
+    bool retain_scanout;
     esp_display_present_scanout_vsync_fn on_vsync; /* Raw observation only; ISR-safe, nonblocking; never retirement. */
     void *vsync_user;
 } esp_display_present_lcd_scanout_config_t;
@@ -52,8 +52,8 @@ typedef struct {
 /**
  * @brief Exclusive initialized panel; no previous submissions or callback owner.
  * Driver FB0 is initially scanning. Bind get_buffers output as backend external
- * buffers and set initial_scanout_buffer=FB0. Bus ownership stays with the caller; panel ownership follows
- * delete_panel_on_stop. Driver must use periodic frame_buf_complete events. A task-context ISR join after submit
+ * buffers and set scan_buf=FB0. Bus ownership stays with the caller; panel ownership follows
+ * delete_panel. Driver must use periodic frame_buf_complete events. A task-context ISR join after submit
  * drains an already-running ISR that sampled the old FB; the next event then confirms the switch. If the join is
  * unavailable or fails, two events remain the fallback. Source is a whole exact driver FB, tight/native layout; no copy
  * fallback. COLOR_DONE/raw VSYNC never confirms a frame. Hardware timing still requires board validation; compatibility
@@ -88,7 +88,7 @@ esp_err_t esp_display_present_lcd_scanout_get_interface(esp_display_present_lcd_
 
 /**
  * @brief Backend must first stop/destroy. Caller destroys bus; panel only if not
- * transferred to delete_panel_on_stop.
+ * transferred to delete_panel.
  *
  * @param adapter Panel adapter instance.
  * @return ESP_OK on success, or an error as specified by the lifecycle contract above.

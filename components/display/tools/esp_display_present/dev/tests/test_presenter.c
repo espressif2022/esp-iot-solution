@@ -202,7 +202,7 @@ static void explicit_receipts(void)
     assert(esp_display_present_engine_release_receipt(p, receipt) == ESP_ERR_INVALID_STATE);
     test_panel_complete(&panel);
     assert(esp_display_present_engine_drain(p, 0) == ESP_OK);
-    assert(esp_display_present_engine_query_frame(p, receipt, &status) == ESP_OK && status.terminal && status.source_released && !status.present_confirmed);
+    assert(esp_display_present_engine_query_frame(p, receipt, &status) == ESP_OK && status.terminal && status.src_released && !status.present_confirmed);
     assert(esp_display_present_engine_release_receipt(p, receipt) == ESP_OK);
     assert(esp_display_present_engine_query_frame(p, receipt, &status) == ESP_ERR_INVALID_STATE);
     begin(p);

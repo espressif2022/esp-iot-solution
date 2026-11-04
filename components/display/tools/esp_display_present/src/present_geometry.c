@@ -36,14 +36,14 @@ esp_err_t esp_display_present_geometry_align_area(
                            ? alignment->x_pixels : 1;
     uint16_t y_alignment = alignment->y_pixels != 0
                            ? alignment->y_pixels : 1;
-    uint16_t width_alignment = alignment->width_pixels != 0
-                               ? alignment->width_pixels : 1;
-    uint16_t height_alignment = alignment->height_pixels != 0
-                                ? alignment->height_pixels : 1;
+    uint16_t w_align = alignment->width_pixels != 0
+                       ? alignment->width_pixels : 1;
+    uint16_t h_align = alignment->height_pixels != 0
+                       ? alignment->height_pixels : 1;
     int32_t x1 = align_down(area->x1, x_alignment);
     int32_t y1 = align_down(area->y1, y_alignment);
-    int32_t x2 = x1 + align_up(area->x2 - x1 + 1, width_alignment) - 1;
-    int32_t y2 = y1 + align_up(area->y2 - y1 + 1, height_alignment) - 1;
+    int32_t x2 = x1 + align_up(area->x2 - x1 + 1, w_align) - 1;
+    int32_t y2 = y1 + align_up(area->y2 - y1 + 1, h_align) - 1;
     if (x2 >= logical_size.width) {
         x2 = logical_size.width - 1;
     }

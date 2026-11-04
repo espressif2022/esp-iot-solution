@@ -16,7 +16,7 @@ static esp_display_present_backend_config_t config(scan_panel_t *p, size_t count
     return (esp_display_present_backend_config_t) {
         .width = 4, .height = 4, .tile_rows = 2,
         .buffer_count = count, .max_frames = 8, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
-        .render_contract = contract, .panel = scan_interface(p), .allow_active_scanout_writes = count == 1
+        .render_contract = contract, .panel = scan_interface(p), .active_writes = count == 1
     };
 }
 
@@ -233,8 +233,8 @@ static void errors_and_external(void)
     esp_display_present_backend_config_t cfg = config(&p, 2, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL);
     void *external[2] = {aligned_alloc(64, 64), aligned_alloc(64, 64)};
     assert(external[0] && external[1]);
-    cfg.external_buffers = external;
-    cfg.external_buffer_bytes = 64;
+    cfg.ext_bufs = external;
+    cfg.ext_bytes = 64;
     present_backend_t *b;
     OK(ops->create(&cfg, &b));
     esp_display_present_frame_t f = begin(b);
@@ -264,7 +264,7 @@ static void named_modes(void)
         esp_display_present_engine_config_t cfg = {.backend = config(&panel, 3, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION),
                                                    .backend_kind = ESP_DISPLAY_PRESENT_ENGINE_FB, .mode = modes[i]
                                                   };
-        cfg.backend.allow_active_scanout_writes = true;
+        cfg.backend.active_writes = true;
         esp_display_present_engine_t *p;
         OK(esp_display_present_engine_create(&cfg, &p));
         esp_display_present_backend_caps_t caps;
@@ -341,14 +341,14 @@ static void validation(void)
     scan_panel_t p = {0};
     present_backend_t *b;
     esp_display_present_backend_config_t cfg = config(&p, 1, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION);
-    cfg.allow_active_scanout_writes = false;
+    cfg.active_writes = false;
     assert(ops->create(&cfg, &b) == ESP_ERR_INVALID_ARG);
     void *memory = aligned_alloc(64, 128);
     assert(memory);
     void *buffers[2] = {memory, memory};
     cfg = config(&p, 2, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT);
-    cfg.external_buffers = buffers;
-    cfg.external_buffer_bytes = 64;
+    cfg.ext_bufs = buffers;
+    cfg.ext_bytes = 64;
     assert(ops->create(&cfg, &b) == ESP_ERR_INVALID_ARG);
     buffers[1] = (uint8_t *)memory + 1;
     assert(ops->create(&cfg, &b) == ESP_ERR_INVALID_ARG);
@@ -389,10 +389,10 @@ static esp_err_t gated_copy(void *arg, const esp_display_present_copy_request_t 
     if (g->fail) {
         return ESP_FAIL;
     }
-    for (uint32_t y = 0; y < r->source_area.height; ++y) {
-        memcpy((uint8_t *)r->destination.pixels + (r->destination_y + y) * r->destination.layout.stride_bytes + r->destination_x * 2,
-               (const uint8_t *)r->source.pixels + (r->source_area.y + y) * r->source.layout.stride_bytes + r->source_area.x * 2,
-               r->source_area.width * 2);
+    for (uint32_t y = 0; y < r->src_area.height; ++y) {
+        memcpy((uint8_t *)r->dst.pixels + (r->dst_y + y) * r->dst.layout.stride_bytes + r->dst_x * 2,
+               (const uint8_t *)r->src.pixels + (r->src_area.y + y) * r->src.layout.stride_bytes + r->src_area.x * 2,
+               r->src_area.width * 2);
     }
     return ESP_OK;
 }
@@ -492,7 +492,7 @@ static void independent_tiles(void)
     scan_panel_t panel = {0};
     esp_display_present_backend_config_t cfg = config(&panel, 2, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION);
     cfg.tile_rows = 2;
-    cfg.tile_buffer_count = 2;
+    cfg.tile_bufs = 2;
     present_backend_t *b;
     OK(ops->create(&cfg, &b));
     esp_display_present_frame_t f = begin(b);
@@ -528,13 +528,13 @@ static void async_pipeline_handoff(size_t buffers, esp_display_present_render_co
     assert(ext[0] && ext[1] && ext[2]);
     esp_display_present_backend_config_t cfg = config(&p, buffers, contract);
     cfg.tile_rows = 2;
-    cfg.tile_buffer_count = contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION ? 2 : 0;
+    cfg.tile_bufs = contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION ? 2 : 0;
     cfg.rotation = contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL ? ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90 : ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0;
     cfg.async_copy = true;
     cfg.on_progress = copied;
     cfg.progress_user = &g;
-    cfg.external_buffers = ext;
-    cfg.external_buffer_bytes = 64;
+    cfg.ext_bufs = ext;
+    cfg.ext_bytes = 64;
     present_backend_t *b;
     OK(ops->create(&cfg, &b));
 
@@ -590,8 +590,11 @@ static void async_pipeline_handoff(size_t buffers, esp_display_present_render_co
         }
         esp_display_present_receipt_t *target = step == 1 ? &r1 : step == 2 ? &r2 : &r3;
         OK(ops->end(b, f, target));
-        /* Pump until async tile/repair/convert copies finish and frame reaches PENDING or READY. */
-        for (;;) {
+        /* Pump until async tile/prefill/convert copies finish and the frame reaches PENDING or READY.
+         * A full DIRECT prefill is already the baseline, so it does not start a second repair copy. */
+        size_t settled = SIZE_MAX;
+        for (unsigned spins = 0;; ++spins) {
+            assert(spins < 10000);
             OK(present_fb_service(b));
             if (step <= 2 && p.cookie) {
                 break;
@@ -599,14 +602,14 @@ static void async_pipeline_handoff(size_t buffers, esp_display_present_render_co
             if (step == 3) {
                 esp_display_present_frame_request_t probe_req = {0};
                 esp_display_present_frame_t probe;
-                /* Once Frame 3 finishes async repair/convert and reaches READY, begin() remains NO_MEM and copy is idle. */
                 assert(ops->begin(b, &probe_req, &probe) == ESP_ERR_NO_MEM);
                 pthread_mutex_lock(&g.mutex);
                 size_t done = g.completed;
                 pthread_mutex_unlock(&g.mutex);
-                if (done >= 3) {
+                if (done == settled) {
                     break;
                 }
+                settled = done;
             }
             present_pause();
         }
@@ -690,8 +693,8 @@ static void direct_full_redraw_skips_prefill(void)
         memset(buffers[0], 0xa5, 64);
         memset(buffers[1], 0x7b, 64);
         esp_display_present_backend_config_t cfg = config(&panel, 2, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT);
-        cfg.external_buffers = buffers;
-        cfg.external_buffer_bytes = 64;
+        cfg.ext_bufs = buffers;
+        cfg.ext_bytes = 64;
         cfg.async_copy = asynchronous;
         present_backend_t *backend;
         OK(ops->create(&cfg, &backend));

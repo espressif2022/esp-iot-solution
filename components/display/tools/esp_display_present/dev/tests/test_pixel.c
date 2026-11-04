@@ -59,15 +59,15 @@ static void async_worker_priority(void)
     uint8_t src[2] = {1, 2}, dst[2] = {0};
     esp_display_present_pixel_config_t cfg = {.max_jobs = 1, .asynchronous = true};
     priority_submit_t submit = {.request = {
-            .source = {src, sizeof(src), {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
-            .destination = {dst, sizeof(dst), {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
-            .source_area = {0, 0, 1, 1},
+            .src = {src, sizeof(src), {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+            .dst = {dst, sizeof(dst), {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+            .src_area = {0, 0, 1, 1},
         }
     };
     atomic_store(&priority_set_calls, 0);
     assert(esp_display_present_pixel_create(&cfg, &submit.engine) == ESP_OK);
     esp_display_present_copy_request_t invalid = submit.request;
-    invalid.source.pixels = NULL;
+    invalid.src.pixels = NULL;
     assert(esp_display_present_pixel_submit(submit.engine, &invalid, &submit.ticket) == ESP_ERR_INVALID_ARG);
     assert(atomic_load(&priority_set_calls) == 0);
 
@@ -103,9 +103,9 @@ static void stop_during_priority_setup(void)
     uint8_t src[2] = {0x12, 0x34}, dst[2] = {0};
     esp_display_present_pixel_config_t cfg = {.max_jobs = 1, .asynchronous = true};
     esp_display_present_copy_request_t request = {
-        .source = {src, sizeof(src), {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
-        .destination = {dst, sizeof(dst), {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
-        .source_area = {0, 0, 1, 1},
+        .src = {src, sizeof(src), {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+        .dst = {dst, sizeof(dst), {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+        .src_area = {0, 0, 1, 1},
     };
     esp_display_present_pixel_engine_t *engine;
     assert(esp_display_present_pixel_create(&cfg, &engine) == ESP_OK);
@@ -190,9 +190,9 @@ static void pixels_and_padding(bool asynchronous)
                     }
                 }
                 esp_display_present_copy_request_t r = {
-                    .source = { src, sizeof(src), { 5, 4, 6 * bpp, format, ESP_DISPLAY_PRESENT_ORDER_NATIVE } },
-                    .destination = { dst, sizeof(dst), { 6, 6, 8 * bpp, format, swap } },
-                    .source_area = { 1, 1, 3, 2 }, .destination_x = 1, .destination_y = 2,
+                    .src = { src, sizeof(src), { 5, 4, 6 * bpp, format, ESP_DISPLAY_PRESENT_ORDER_NATIVE } },
+                    .dst = { dst, sizeof(dst), { 6, 6, 8 * bpp, format, swap } },
+                    .src_area = { 1, 1, 3, 2 }, .dst_x = 1, .dst_y = 2,
                     .rotation = rot,
                 };
                 esp_display_present_copy_ticket_t ticket;
@@ -215,44 +215,44 @@ static void validation_and_records(void)
     uint8_t src[32] = {0}, dst[32];
     memset(dst, 0xB6, sizeof(dst));
     esp_display_present_copy_request_t valid = {
-        .source = { src, sizeof(src), { 2, 2, 4, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE } },
-        .destination = { dst, sizeof(dst), { 2, 2, 4, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE } },
-        .source_area = { 0, 0, 2, 2 },
+        .src = { src, sizeof(src), { 2, 2, 4, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE } },
+        .dst = { dst, sizeof(dst), { 2, 2, 4, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE } },
+        .src_area = { 0, 0, 2, 2 },
     };
     esp_display_present_pixel_engine_t *a = make_engine(1), *b = make_engine(1);
     for (int variant = 0; variant < 10; ++variant) {
         esp_display_present_copy_request_t r = valid;
         switch (variant) {
         case 0:
-            r.source.layout.stride_bytes = 5;
+            r.src.layout.stride_bytes = 5;
             break;
         case 1:
-            r.destination.layout.stride_bytes = 5;
+            r.dst.layout.stride_bytes = 5;
             break;
         case 2:
-            r.source.capacity_bytes = 7;
+            r.src.capacity_bytes = 7;
             break;
         case 3:
-            r.destination.capacity_bytes = 7;
+            r.dst.capacity_bytes = 7;
             break;
         case 4:
-            r.destination.pixels = src + 2;
+            r.dst.pixels = src + 2;
             break;
         case 5:
-            r.source_area.x = UINT32_MAX;
+            r.src_area.x = UINT32_MAX;
             break;
         case 6:
-            r.destination_x = UINT32_MAX;
+            r.dst_x = UINT32_MAX;
             break;
         case 7:
-            r.source.layout.stride_bytes = SIZE_MAX - 1;
-            r.source.layout.height = 3;
+            r.src.layout.stride_bytes = SIZE_MAX - 1;
+            r.src.layout.height = 3;
             break;
         case 8:
             r.rotation = (esp_display_present_engine_rotation_t)99;
             break;
         case 9:
-            r.source.layout.format = (esp_display_present_engine_pixel_format_t)99;
+            r.src.layout.format = (esp_display_present_engine_pixel_format_t)99;
             break;
         }
         esp_display_present_copy_ticket_t t = {123};
@@ -300,10 +300,10 @@ static void in_place_and_events(void)
 
     uint8_t buf[8] = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88 };
     esp_display_present_copy_request_t r = {
-        .source = { buf, sizeof(buf), { 2, 2, 4, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE } },
-        .destination = { buf, sizeof(buf), { 2, 2, 4, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_SWAPPED } },
-        .source_area = { 0, 0, 2, 2 },
-        .destination_x = 0, .destination_y = 0, .rotation = ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0,
+        .src = { buf, sizeof(buf), { 2, 2, 4, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE } },
+        .dst = { buf, sizeof(buf), { 2, 2, 4, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_SWAPPED } },
+        .src_area = { 0, 0, 2, 2 },
+        .dst_x = 0, .dst_y = 0, .rotation = ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0,
     };
     esp_display_present_copy_ticket_t t;
     assert(esp_display_present_pixel_submit(e, &r, &t) == ESP_OK);
@@ -361,9 +361,9 @@ static void callback_lifetime(bool asynchronous)
     uint8_t src[2] = {0x12, 0x34}, dst[2] = {0};
     callback_gate_t gate = { .lock = PTHREAD_MUTEX_INITIALIZER,
                              .changed = PTHREAD_COND_INITIALIZER,
-                             .request = { .source = { src, 2, {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE} },
-                                          .destination = { dst, 2, {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE} },
-                                          .source_area = {0, 0, 1, 1}
+                             .request = { .src = { src, 2, {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE} },
+                                          .dst = { dst, 2, {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE} },
+                                          .src_area = {0, 0, 1, 1}
                                         }
                            };
     esp_display_present_pixel_config_t config = { .max_jobs = 1, .on_event = blocking_callback, .user = &gate, .asynchronous = asynchronous };
@@ -408,7 +408,7 @@ static esp_err_t delayed_executor(void *user, const esp_display_present_copy_req
     }
     pthread_mutex_unlock(&gate->lock);
     /* Test executor intentionally supports only these two-byte requests. */
-    memcpy(r->destination.pixels, r->source.pixels, 2);
+    memcpy(r->dst.pixels, r->src.pixels, 2);
     return ESP_OK;
 }
 
@@ -424,9 +424,9 @@ static void queued_lifetime(void)
     esp_display_present_pixel_engine_t *e;
     assert(esp_display_present_pixel_create(&cfg, &e) == ESP_OK);
     esp_display_present_copy_request_t r = {
-        .source = {src[0], 2, {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
-        .destination = {dst, 2, {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
-        .source_area = {0, 0, 1, 1}
+        .src = {src[0], 2, {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+        .dst = {dst, 2, {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+        .src_area = {0, 0, 1, 1}
     };
     esp_display_present_copy_ticket_t tickets[3], extra;
     assert(esp_display_present_pixel_submit(e, &r, &tickets[0]) == ESP_OK);
@@ -436,12 +436,12 @@ static void queued_lifetime(void)
     }
     pthread_mutex_unlock(&gate.lock);
     for (unsigned i = 1; i < 3; ++i) {
-        r.source.pixels = src[i];
+        r.src.pixels = src[i];
         assert(esp_display_present_pixel_submit(e, &r, &tickets[i]) == ESP_OK);
     }
     assert(esp_display_present_pixel_submit(e, &r, &extra) == ESP_ERR_NO_MEM && !extra.value);
     /* Mutating the descriptor after submit must not alter queued requests. */
-    r.source.pixels = NULL;
+    r.src.pixels = NULL;
     esp_display_present_copy_status_t status;
     assert(esp_display_present_pixel_wait(e, tickets[0], 2, &status) == ESP_ERR_TIMEOUT);
     assert(status.state == ESP_DISPLAY_PRESENT_COPY_RUNNING);
@@ -449,7 +449,7 @@ static void queued_lifetime(void)
     assert(esp_display_present_pixel_release(e, tickets[2]) == ESP_ERR_INVALID_STATE);
     assert(esp_display_present_pixel_stop(e, 0) == ESP_ERR_TIMEOUT);
     assert(esp_display_present_pixel_destroy(e) == ESP_ERR_INVALID_STATE);
-    r.source.pixels = src[0];
+    r.src.pixels = src[0];
     assert(esp_display_present_pixel_submit(e, &r, &extra) == ESP_ERR_INVALID_STATE);
     pthread_mutex_lock(&gate.lock);
     gate.leave = true;

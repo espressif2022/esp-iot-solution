@@ -119,7 +119,7 @@ static esp_display_present_engine_t *create(panel_t *panel, bool fb)
     esp_display_present_engine_config_t config = {.backend = {
             .width = 4, .height = 4, .tile_rows = 2, .buffer_count = fb ? 3 : 2, .max_frames = 4,
             .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = {panel, attach, submit, quiesce},
-            .te_window_us = 1000000, .te_transfer_budget_us = 1000
+            .te_window_us = 1000000, .te_budget_us = 1000
         },
         .backend_kind = fb ? ESP_DISPLAY_PRESENT_ENGINE_FB : ESP_DISPLAY_PRESENT_ENGINE_TE,
         .timeout_ms = 1000, .background_service = true

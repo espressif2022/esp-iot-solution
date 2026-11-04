@@ -30,7 +30,7 @@ struct esp_display_present_lcd_scanout {
     unsigned boundaries;
     unsigned required_boundaries;
     size_t active_callbacks;
-    bool attached, armed, closing, source_stopped, stopped, callbacks_removed;
+    bool attached, armed, closing, src_stopped, stopped, callbacks_removed;
     bool initial_started, initial_ready, single_vsync;
 };
 static bool PRESENT_ISR_ATTR frame_boundary(esp_display_present_lcd_scanout_t *scanout)
@@ -45,7 +45,7 @@ static bool PRESENT_ISR_ATTR frame_boundary(esp_display_present_lcd_scanout_t *s
     void *user = NULL;
     uint64_t cookie = 0;
     unsigned needed = scanout->required_boundaries;
-    if (scanout->attached && scanout->armed && (!scanout->closing || scanout->config.retain_driver_scanout) && ++scanout->boundaries == needed) {
+    if (scanout->attached && scanout->armed && (!scanout->closing || scanout->config.retain_scanout) && ++scanout->boundaries == needed) {
         cookie = scanout->cookie;
         scanout->cookie = 0;
         scanout->armed = false;
@@ -214,7 +214,7 @@ static esp_display_present_tx_result_t scanout_submit(void *context, const esp_d
     }
     present_lock_enter(&scanout->lock, false);
     scanout->boundaries = 0;
-    scanout->required_boundaries = (joined == ESP_OK || scanout->config.single_boundary_retire) ? 1u : 2u;
+    scanout->required_boundaries = (joined == ESP_OK || scanout->config.single_retire) ? 1u : 2u;
     scanout->armed = error == ESP_OK;
     if (error != ESP_OK) {
         scanout->closing = true;
@@ -284,14 +284,14 @@ static esp_err_t scanout_quiesce(void *context, uint32_t timeout)
     present_lock_enter(&scanout->lock, false);
     scanout->closing = true;
     present_lock_exit(&scanout->lock, false);
-    if (!scanout->source_stopped) {
-        esp_err_t error = scanout->config.retain_driver_scanout ? detach_retained(scanout, timeout) :
-                          scanout->config.delete_panel_on_stop ? esp_lcd_panel_del(scanout->config.panel) :
+    if (!scanout->src_stopped) {
+        esp_err_t error = scanout->config.retain_scanout ? detach_retained(scanout, timeout) :
+                          scanout->config.delete_panel ? esp_lcd_panel_del(scanout->config.panel) :
                           scanout->config.stop_scanout(scanout->config.user, timeout);
         if (error != ESP_OK) {
             return error;
         }
-        scanout->source_stopped = true;
+        scanout->src_stopped = true;
     }
     for (;;) {
         present_lock_enter(&scanout->lock, false);
@@ -318,7 +318,7 @@ esp_err_t esp_display_present_lcd_scanout_create(const esp_display_present_lcd_s
         return ESP_ERR_INVALID_ARG;
     }
     *out = NULL;
-    if (!config || !config->panel || (!config->stop_scanout && !config->delete_panel_on_stop && !config->retain_driver_scanout) || !config->width ||
+    if (!config || !config->panel || (!config->stop_scanout && !config->delete_panel && !config->retain_scanout) || !config->width ||
             !config->height || config->width > INT_MAX || config->height > INT_MAX || config->buffer_count < 1 ||
             config->buffer_count > 3 || (config->format != ESP_DISPLAY_PRESENT_FORMAT_RGB565 && config->format != ESP_DISPLAY_PRESENT_FORMAT_RGB888) ||
             config->kind < ESP_DISPLAY_PRESENT_LCD_DSI || config->kind > ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE) {
@@ -328,12 +328,12 @@ esp_err_t esp_display_present_lcd_scanout_create(const esp_display_present_lcd_s
             (config->format == ESP_DISPLAY_PRESENT_FORMAT_RGB888 && config->byte_order != ESP_DISPLAY_PRESENT_ORDER_NATIVE)) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (config->retain_driver_scanout && (config->delete_panel_on_stop || config->stop_scanout)) {
+    if (config->retain_scanout && (config->delete_panel || config->stop_scanout)) {
         return ESP_ERR_INVALID_ARG;
     }
     /* A plain frame-complete callback does not identify the FB or submission
      * selected by the driver. One callback cannot prove an old FB retired. */
-    if (config->single_boundary_retire && config->buffer_count > 1) {
+    if (config->single_retire && config->buffer_count > 1) {
         return ESP_ERR_NOT_SUPPORTED;
     }
     bool single_vsync = false;
@@ -356,7 +356,7 @@ esp_err_t esp_display_present_lcd_scanout_create(const esp_display_present_lcd_s
         }
     }
 #else
-    if (config->kind == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE && !config->rgb_bounce_buffer_mode) {
+    if (config->kind == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE && !config->bounce) {
         return ESP_ERR_NOT_SUPPORTED;
     }
 #endif
@@ -502,15 +502,15 @@ esp_err_t esp_display_present_lcd_scanout_get_output_caps(esp_display_present_lc
     *out = (esp_display_present_output_caps_t) {
         .x_alignment = 1,
         .y_alignment = 1,
-        .width_alignment = 1,
-        .height_alignment = 1,
+        .w_align = 1,
+        .h_align = 1,
         .base_alignment = 64,
-        .stride_alignment = 1,
+        .stride_align = 1,
         .tight_stride = true,
-        .full_frame_only = true,
-        .external_buffers_required = true,
+        .full_only = true,
+        .ext_bufs_required = true,
         .internal_dma = true,
-        .external_memory = true,
+        .ext_mem = true,
         .max_inflight = 1
     };
     return ESP_OK;

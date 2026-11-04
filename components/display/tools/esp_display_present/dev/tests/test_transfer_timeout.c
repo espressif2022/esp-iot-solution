@@ -124,17 +124,17 @@ static void per_push_and_instances(void)
     clock_us += 4999;
     esp_display_present_frame_status_t status;
     OK(esp_display_present_engine_query_frame(first, one, &status));
-    assert(!status.terminal && !status.source_released && status.result == ESP_OK);
+    assert(!status.terminal && !status.src_released && status.result == ESP_OK);
     test_panel_complete(&b); /* The other instance must not inherit A's fault. */
     clock_us += 1;
     OK(esp_display_present_engine_query_frame(first, one, &status));
-    assert(!status.terminal && !status.source_released && status.result == ESP_ERR_TIMEOUT);
+    assert(!status.terminal && !status.src_released && status.result == ESP_ERR_TIMEOUT);
     assert(esp_display_present_engine_release_receipt(first, one) == ESP_ERR_INVALID_STATE);
     OK(esp_display_present_engine_query_frame(second, two, &status));
     assert(status.terminal && status.result == ESP_OK);
     test_panel_complete(&a);
     OK(esp_display_present_engine_query_frame(first, one, &status));
-    assert(status.terminal && status.source_released && status.result == ESP_ERR_TIMEOUT && !status.present_confirmed);
+    assert(status.terminal && status.src_released && status.result == ESP_ERR_TIMEOUT && !status.present_confirmed);
     OK(esp_display_present_engine_release_receipt(first, one));
     OK(esp_display_present_engine_release_receipt(second, two));
     destroy(first);
@@ -198,12 +198,12 @@ static void uncertain_retains_sources(void)
     clock_us += 5000;
     esp_display_present_frame_status_t status;
     OK(esp_display_present_engine_query_frame(presenter, receipt, &status));
-    assert(status.result == ESP_FAIL && !status.terminal && !status.source_released);
+    assert(status.result == ESP_FAIL && !status.terminal && !status.src_released);
     assert(esp_display_present_engine_stop(presenter, 0) == ESP_ERR_TIMEOUT);
     assert(panel.callback && panel.count == 1);
     test_panel_complete(&panel);
     OK(esp_display_present_engine_query_frame(presenter, receipt, &status));
-    assert(status.result == ESP_FAIL && status.terminal && status.source_released);
+    assert(status.result == ESP_FAIL && status.terminal && status.src_released);
     OK(esp_display_present_engine_release_receipt(presenter, receipt));
     destroy(presenter); /* Preserve the first driver failure, not later timeout. */
 }
@@ -232,12 +232,12 @@ static void late_scanout_confirmation(bool poll_first)
     esp_display_present_frame_status_t status;
     if (poll_first) {
         OK(esp_display_present_engine_query_frame(presenter, receipt, &status));
-        assert(status.result == ESP_ERR_TIMEOUT && !status.terminal && !status.source_released);
+        assert(status.result == ESP_ERR_TIMEOUT && !status.terminal && !status.src_released);
         assert(esp_display_present_engine_stop(presenter, 0) == ESP_ERR_TIMEOUT);
     }
     scan_confirm(&panel); /* True ownership evidence must still be consumed. */
     OK(esp_display_present_engine_query_frame(presenter, receipt, &status));
-    assert(status.terminal && status.source_released && status.result == ESP_ERR_TIMEOUT && !status.present_confirmed);
+    assert(status.terminal && status.src_released && status.result == ESP_ERR_TIMEOUT && !status.present_confirmed);
     OK(esp_display_present_engine_release_receipt(presenter, receipt));
     panel.stop_timeout = false;
     destroy(presenter);
@@ -250,7 +250,7 @@ static void te_wait_is_not_transfer_time(void)
     esp_display_present_engine_config_t config = {.backend_kind = ESP_DISPLAY_PRESENT_ENGINE_TE,
                                                   .backend = {.width = 4, .height = 4, .tile_rows = 2, .buffer_count = 2,
                                                               .max_frames = 4, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = test_panel_interface(&panel),
-                                                              .te_window_us = 100000, .te_transfer_budget_us = 1000
+                                                              .te_window_us = 100000, .te_budget_us = 1000
                                                              }, .transfer_timeout_ms = 5
                                                  };
     esp_display_present_engine_t *presenter;
@@ -269,10 +269,10 @@ static void te_wait_is_not_transfer_time(void)
     assert(panel.count == 1);
     clock_us += 5000;
     OK(esp_display_present_engine_query_frame(presenter, receipt, &observed));
-    assert(observed.result == ESP_ERR_TIMEOUT && !observed.terminal && !observed.source_released);
+    assert(observed.result == ESP_ERR_TIMEOUT && !observed.terminal && !observed.src_released);
     test_panel_complete(&panel);
     OK(esp_display_present_engine_query_frame(presenter, receipt, &observed));
-    assert(observed.terminal && observed.source_released && observed.result == ESP_ERR_TIMEOUT);
+    assert(observed.terminal && observed.src_released && observed.result == ESP_ERR_TIMEOUT);
     OK(esp_display_present_engine_release_receipt(presenter, receipt));
     destroy(presenter);
 }
@@ -365,7 +365,7 @@ static void automatic_sender(void)
     /* A real fault notification arrived with no owner pump/status call. */
     esp_display_present_frame_status_t status;
     OK(esp_display_present_engine_query_frame(presenter, receipt, &status));
-    assert(status.result == ESP_ERR_TIMEOUT && !status.source_released && !status.terminal);
+    assert(status.result == ESP_ERR_TIMEOUT && !status.src_released && !status.terminal);
     assert(esp_display_present_engine_stop(presenter, 1000) == ESP_ERR_TIMEOUT);
     uint16_t pixel;
     memcpy(&pixel, retained.pixels, sizeof(pixel));
@@ -378,7 +378,7 @@ static void automatic_sender(void)
     pthread_mutex_unlock(&panel.lock);
     (void)callback(user, &done, false);
     OK(esp_display_present_engine_query_frame(presenter, receipt, &status));
-    assert(status.terminal && status.source_released && status.result == ESP_ERR_TIMEOUT);
+    assert(status.terminal && status.src_released && status.result == ESP_ERR_TIMEOUT);
     OK(esp_display_present_engine_release_receipt(presenter, receipt));
     destroy(presenter);
     pthread_mutex_destroy(&panel.lock);

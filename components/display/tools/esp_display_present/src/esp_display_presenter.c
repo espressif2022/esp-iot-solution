@@ -621,9 +621,8 @@ esp_err_t esp_display_presenter_submit_buffer(esp_display_presenter_t *presenter
     if (error == ESP_OK && (!presenter->lease_id || buffer->lease_id != presenter->lease_id || buffer->surface.pixels != presenter->lease.surface.pixels || presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN)) {
         error = ESP_ERR_INVALID_STATE;
     }
-    esp_display_present_rect_t valid;
-    if (error == ESP_OK) {
-        error = rectangle(area, presenter->caps.draw_layout.width, presenter->caps.draw_layout.height, &valid);
+    if (error == ESP_OK && !esp_display_present_geometry_area_is_valid(area, presenter->caps.draw_layout.width, presenter->caps.draw_layout.height)) {
+        error = ESP_ERR_INVALID_ARG;
     }
     esp_display_present_engine_area_t a = {area->x1, area->y1, area->x2, area->y2};
     if (error == ESP_OK) {

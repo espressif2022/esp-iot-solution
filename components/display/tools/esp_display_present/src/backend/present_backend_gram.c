@@ -254,8 +254,8 @@ static esp_err_t gram_create(const esp_display_present_backend_config_t *config,
     if (config && config->copy_execute && !config->async_copy) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (config && ((config->internal_tx_staging && !config->async_copy) ||
-                   ((config->async_copy || config->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0) && config->in_place_convert))) {
+    if (config && ((config->tx_staging && !config->async_copy) ||
+                   ((config->async_copy || config->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0) && config->in_place))) {
         return ESP_ERR_NOT_SUPPORTED;
     }
     if (!config || !config->panel.attach || !config->panel.submit || !config->panel.quiesce) {
@@ -271,7 +271,7 @@ static esp_err_t gram_create(const esp_display_present_backend_config_t *config,
             (config->format == ESP_DISPLAY_PRESENT_FORMAT_RGB888 && (config->draw_order != ESP_DISPLAY_PRESENT_ORDER_NATIVE || config->panel_order != ESP_DISPLAY_PRESENT_ORDER_NATIVE))) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (config->render_contract != ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION || (config->rotation < ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || config->rotation > ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270) || config->initial_scanout_buffer || config->external_buffers || config->external_buffer_bytes) {
+    if (config->render_contract != ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION || (config->rotation < ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || config->rotation > ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270) || config->scan_buf || config->ext_bufs || config->ext_bytes) {
         return ESP_ERR_INVALID_ARG;
     }
     size_t bytes = config->format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
@@ -295,11 +295,11 @@ static esp_err_t gram_create(const esp_display_present_backend_config_t *config,
         free_backend(backend);
         return ESP_ERR_NO_MEM;
     }
-    bool convert = config->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || config->async_copy || (config->draw_order != config->panel_order && !config->in_place_convert);
+    bool convert = config->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || config->async_copy || (config->draw_order != config->panel_order && !config->in_place);
     for (size_t i = 0; i < config->buffer_count; ++i) {
         backend->slots[i].pixels = present_alloc_pixels_in(backend->tile_bytes, backend->config.tile_in_psram);
         if (convert) {
-            backend->slots[i].converted = present_alloc_pixels_in(backend->tile_bytes, backend->config.tile_in_psram && !backend->config.internal_tx_staging);
+            backend->slots[i].converted = present_alloc_pixels_in(backend->tile_bytes, backend->config.tile_in_psram && !backend->config.tx_staging);
         }
         if (!backend->slots[i].pixels || (convert && !backend->slots[i].converted)) {
             free_backend(backend);
@@ -472,14 +472,14 @@ static esp_err_t prepare_pixels(present_backend_t *backend, gram_slot_t *slot,
     if (!need_swap && !need_pack && backend->config.rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0) {
         return ESP_OK;
     }
-    if (!need_pack && backend->config.in_place_convert && backend->config.rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 && bytes == 2) {
+    if (!need_pack && backend->config.in_place && backend->config.rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 && bytes == 2) {
         revert_in_place_swap(slot->pixels, (size_t)area->height * tight_stride);
         *out_swapped_in_place = true;
         return ESP_OK;
     }
-    if (need_pack || !backend->config.in_place_convert || backend->config.rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0) {
+    if (need_pack || !backend->config.in_place || backend->config.rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0) {
         if (!slot->converted) {
-            slot->converted = present_alloc_pixels_in(backend->tile_bytes, backend->config.tile_in_psram && !backend->config.internal_tx_staging);
+            slot->converted = present_alloc_pixels_in(backend->tile_bytes, backend->config.tile_in_psram && !backend->config.tx_staging);
             if (!slot->converted) {
                 return ESP_ERR_NO_MEM;
             }
@@ -487,7 +487,7 @@ static esp_err_t prepare_pixels(present_backend_t *backend, gram_slot_t *slot,
         out->pixels = slot->converted;
     }
     esp_display_present_copy_request_t request = {
-        .source = {
+        .src = {
             .pixels = slot->pixels,
             .capacity_bytes = backend->tile_bytes,
             .layout = {
@@ -495,10 +495,10 @@ static esp_err_t prepare_pixels(present_backend_t *backend, gram_slot_t *slot,
                 backend->config.format, backend->config.draw_order
             },
         },
-        .destination = *out,
-        .source_area = { 0, 0, area->width, area->height },
-        .destination_x = 0,
-        .destination_y = 0,
+        .dst = *out,
+        .src_area = { 0, 0, area->width, area->height },
+        .dst_x = 0,
+        .dst_y = 0,
         .rotation = backend->config.rotation,
     };
     esp_display_present_copy_ticket_t ticket;
@@ -518,13 +518,29 @@ static esp_err_t prepare_pixels(present_backend_t *backend, gram_slot_t *slot,
     return ret;
 }
 
-static esp_err_t gram_submit_region_ex(present_backend_t *backend, esp_display_present_frame_t frame,
-                                       esp_display_present_lease_id_t lease,
-                                       const esp_display_present_region_submit_t *sub)
+typedef struct {
+    frame_record_t *record;
+    gram_slot_t *slot;
+    esp_display_present_rect_t submit_area;
+    esp_display_present_rect_t physical_area;
+    size_t bytes;
+    size_t src_stride;
+    size_t row_bytes;
+} gram_submit_context_t;
+
+static void revert_submit_swap(const gram_submit_context_t *ctx, bool swapped_in_place)
 {
-    if (!backend) {
-        return ESP_ERR_INVALID_ARG;
+    if (swapped_in_place) {
+        revert_in_place_swap(ctx->slot->pixels, ctx->submit_area.height * ctx->row_bytes);
     }
+}
+
+/* Lock is not held on return. The direct-sync channel check stays here, before
+ * unlock, so a full channel never reaches pixel preparation. */
+static esp_err_t gram_prepare_submit_context(present_backend_t *backend, esp_display_present_frame_t frame,
+                                             esp_display_present_lease_id_t lease, const esp_display_present_region_submit_t *sub,
+                                             gram_submit_context_t *ctx)
+{
     present_lock_enter(&backend->lock, false);
     frame_record_t *record = find_frame(backend, frame.value);
     gram_slot_t *slot = record ? find_lease(backend, lease.value, (size_t)(record - backend->core.frames)) : NULL;
@@ -553,90 +569,128 @@ static esp_err_t gram_submit_region_ex(present_backend_t *backend, esp_display_p
         present_lock_exit(&backend->lock, false);
         return ESP_ERR_INVALID_ARG;
     }
+    if (!backend->config.async_copy && !backend->config.deferred_submit && channel_full(backend)) {
+        present_lock_exit(&backend->lock, false);
+        return ESP_ERR_NO_MEM;
+    }
     present_lock_exit(&backend->lock, false);
-
     esp_display_present_rect_t physical_area;
     esp_err_t geometry = esp_display_present_rotate_rect(backend->config.width, backend->config.height, backend->config.rotation, &submit_area, &physical_area);
     if (geometry != ESP_OK) {
         return geometry;
     }
-    if (backend->config.async_copy) {
-        uint64_t cookie = present_new_token();
-        if (!cookie) {
-            return ESP_ERR_NO_MEM;
-        }
-        esp_display_present_surface_t target = {slot->converted, backend->tile_bytes,
-            {physical_area.width, physical_area.height, physical_area.width * bytes, backend->config.format, backend->config.panel_order}
-        };
-        esp_display_present_copy_request_t request = {
-            .source = {
-                slot->pixels, backend->tile_bytes,
-                {submit_area.width, submit_area.height, src_stride, backend->config.format, backend->config.draw_order}
-            },
-            .destination = target,
-            .source_area = {0, 0, submit_area.width, submit_area.height},
-            .rotation = backend->config.rotation
-        };
-        esp_display_present_copy_ticket_t ticket;
-        esp_err_t error = esp_display_present_pixel_submit(backend->pixel, &request, &ticket);
-        if (error != ESP_OK) {
-            return error;
-        }
-        /* Task APIs serialized. Callback only wakes, never accesses this slot. */
-        present_lock_enter(&backend->lock, false);
-        slot->copy = ticket;
-        slot->cookie = cookie;
-        slot->tx = target;
-        slot->area = physical_area;
-        present_allocation_written(&slot->storage);
-        present_allocation_hold(&slot->storage, PRESENT_REF_COPY);
-        present_allocation_hold(&slot->storage, PRESENT_REF_TRANSFER);
-        slot->state = SLOT_COPYING;
-        --record->leased;
-        ++record->pending;
-        present_lock_exit(&backend->lock, false);
-        return ESP_OK;
-    }
+    *ctx = (gram_submit_context_t) {
+        record, slot, submit_area, physical_area, bytes, src_stride, row_bytes
+    };
+    return ESP_OK;
+}
 
+static esp_err_t gram_submit_async_copy(present_backend_t *backend, const gram_submit_context_t *ctx)
+{
+    uint64_t cookie = present_new_token();
+    if (!cookie) {
+        return ESP_ERR_NO_MEM;
+    }
+    esp_display_present_surface_t target = {ctx->slot->converted, backend->tile_bytes,
+        {ctx->physical_area.width, ctx->physical_area.height, ctx->physical_area.width * ctx->bytes, backend->config.format, backend->config.panel_order}
+    };
+    esp_display_present_copy_request_t request = {
+        .src = {
+            ctx->slot->pixels, backend->tile_bytes,
+            {ctx->submit_area.width, ctx->submit_area.height, ctx->src_stride, backend->config.format, backend->config.draw_order}
+        },
+        .dst = target,
+        .src_area = {0, 0, ctx->submit_area.width, ctx->submit_area.height},
+        .rotation = backend->config.rotation
+    };
+    esp_display_present_copy_ticket_t ticket;
+    esp_err_t error = esp_display_present_pixel_submit(backend->pixel, &request, &ticket);
+    if (error != ESP_OK) {
+        return error;
+    }
+    /* Task APIs serialized. Callback only wakes, never accesses this slot. */
+    present_lock_enter(&backend->lock, false);
+    ctx->slot->copy = ticket;
+    ctx->slot->cookie = cookie;
+    ctx->slot->tx = target;
+    ctx->slot->area = ctx->physical_area;
+    present_allocation_written(&ctx->slot->storage);
+    present_allocation_hold(&ctx->slot->storage, PRESENT_REF_COPY);
+    present_allocation_hold(&ctx->slot->storage, PRESENT_REF_TRANSFER);
+    ctx->slot->state = SLOT_COPYING;
+    --ctx->record->leased;
+    ++ctx->record->pending;
+    present_lock_exit(&backend->lock, false);
+    return ESP_OK;
+}
+
+/* Slot is already SUBMITTING and the lock is released. Driver rejection returns
+ * the lease and undoes an in-place swap. Service rejection keeps READY instead. */
+static esp_err_t gram_submit_prepared_direct(present_backend_t *backend, gram_submit_context_t *ctx,
+                                             const esp_display_present_surface_t *tx, uint64_t cookie, bool swapped_in_place)
+{
+    esp_display_present_tx_result_t result = backend->config.panel.submit(backend->config.panel.context, tx, &ctx->physical_area, cookie);
+    present_lock_enter(&backend->lock, false);
+    present_transaction_resolution_t resolved = present_transaction_resolve(&ctx->slot->transaction, result);
+    if (resolved.rejected) {
+        --ctx->record->pending;
+        present_allocation_drop(&ctx->slot->storage, PRESENT_REF_TRANSFER);
+        present_allocation_claim(&ctx->slot->storage);
+        ctx->slot->state = SLOT_LEASED;
+        ctx->slot->cookie = 0;
+        esp_err_t ret = result.result != ESP_OK ? result.result : ESP_FAIL;
+        present_lock_exit(&backend->lock, false);
+        revert_submit_swap(ctx, swapped_in_place);
+        return ret;
+    }
+    /* Early completion proves acceptance even if the adapter returned an
+     * inconsistent rejection. Uncertain acceptance never returns a lease. */
+    --ctx->record->leased;
+    record_fault(backend, ctx->record, cookie, resolved.result);
+    if (resolved.complete) {
+        complete_slot(backend, ctx->slot);
+    } else {
+        ctx->slot->state = SLOT_INFLIGHT;
+    }
+    present_lock_exit(&backend->lock, false);
+    return ESP_OK;
+}
+
+static esp_err_t gram_submit_sync_pixels(present_backend_t *backend, gram_submit_context_t *ctx)
+{
     esp_display_present_surface_t tx;
     bool swapped_in_place = false;
-    esp_err_t ret = prepare_pixels(backend, slot, &submit_area, src_stride, &tx, &swapped_in_place);
+    esp_err_t ret = prepare_pixels(backend, ctx->slot, &ctx->submit_area, ctx->src_stride, &tx, &swapped_in_place);
     if (ret != ESP_OK) {
         return ret;
     }
     uint64_t cookie = present_new_token();
     if (!cookie) {
-        if (swapped_in_place) {
-            revert_in_place_swap(slot->pixels, submit_area.height * row_bytes);
-        }
+        revert_submit_swap(ctx, swapped_in_place);
         return ESP_ERR_NO_MEM;
     }
     present_lock_enter(&backend->lock, false);
     /* An older transfer may have faulted while the CPU was converting. */
-    if (record->common.result != ESP_OK) {
+    if (ctx->record->common.result != ESP_OK) {
         present_lock_exit(&backend->lock, false);
-        if (swapped_in_place) {
-            revert_in_place_swap(slot->pixels, submit_area.height * row_bytes);
-        }
+        revert_submit_swap(ctx, swapped_in_place);
         return ESP_ERR_INVALID_STATE;
     }
     if (!backend->config.deferred_submit && channel_full(backend)) {
         present_lock_exit(&backend->lock, false);
-        if (swapped_in_place) {
-            revert_in_place_swap(slot->pixels, submit_area.height * row_bytes);
-        }
+        revert_submit_swap(ctx, swapped_in_place);
         return ESP_ERR_NO_MEM;
     }
-    present_allocation_written(&slot->storage);
-    present_allocation_hold(&slot->storage, PRESENT_REF_TRANSFER);
-    slot->state = backend->config.deferred_submit ? SLOT_READY : SLOT_SUBMITTING;
-    slot->cookie = cookie;
-    slot->tx = tx;
-    slot->area = physical_area;
-    present_transaction_prepare(&slot->transaction);
-    ++record->pending;
+    present_allocation_written(&ctx->slot->storage);
+    present_allocation_hold(&ctx->slot->storage, PRESENT_REF_TRANSFER);
+    ctx->slot->state = backend->config.deferred_submit ? SLOT_READY : SLOT_SUBMITTING;
+    ctx->slot->cookie = cookie;
+    ctx->slot->tx = tx;
+    ctx->slot->area = ctx->physical_area;
+    present_transaction_prepare(&ctx->slot->transaction);
+    ++ctx->record->pending;
     if (backend->config.deferred_submit) {
-        --record->leased;
+        --ctx->record->leased;
         present_lock_exit(&backend->lock, false);
         if (backend->config.on_progress) {
             (void)backend->config.on_progress(backend->config.progress_user, false);
@@ -644,36 +698,25 @@ static esp_err_t gram_submit_region_ex(present_backend_t *backend, esp_display_p
         return ESP_OK;
     }
     present_lock_exit(&backend->lock, false);
+    return gram_submit_prepared_direct(backend, ctx, &tx, cookie, swapped_in_place);
+}
 
-    esp_display_present_tx_result_t result = backend->config.panel.submit(backend->config.panel.context, &tx, &physical_area, cookie);
-
-    present_lock_enter(&backend->lock, false);
-    present_transaction_resolution_t resolved = present_transaction_resolve(&slot->transaction, result);
-    if (resolved.rejected) {
-        --record->pending;
-        present_allocation_drop(&slot->storage, PRESENT_REF_TRANSFER);
-        present_allocation_claim(&slot->storage);
-        slot->state = SLOT_LEASED;
-        slot->cookie = 0;
-        ret = result.result != ESP_OK ? result.result : ESP_FAIL;
-        present_lock_exit(&backend->lock, false);
-        if (swapped_in_place) {
-            revert_in_place_swap(slot->pixels, submit_area.height * row_bytes);
-        }
-        return ret;
+static esp_err_t gram_submit_region_ex(present_backend_t *backend, esp_display_present_frame_t frame,
+                                       esp_display_present_lease_id_t lease,
+                                       const esp_display_present_region_submit_t *sub)
+{
+    if (!backend) {
+        return ESP_ERR_INVALID_ARG;
     }
-    /* Early completion proves acceptance even if the adapter returned an
-     * inconsistent rejection. Uncertain acceptance never returns a lease. */
-    --record->leased;
-    record_fault(backend, record, cookie, resolved.result);
-    if (resolved.complete) {
-        complete_slot(backend, slot);
-    } else {
-        slot->state = SLOT_INFLIGHT;
+    gram_submit_context_t ctx;
+    esp_err_t error = gram_prepare_submit_context(backend, frame, lease, sub, &ctx);
+    if (error != ESP_OK) {
+        return error;
     }
-    ret = ESP_OK;
-    present_lock_exit(&backend->lock, false);
-    return ret;
+    if (backend->config.async_copy) {
+        return gram_submit_async_copy(backend, &ctx);
+    }
+    return gram_submit_sync_pixels(backend, &ctx);
 }
 
 static esp_err_t gram_submit_region(present_backend_t *backend, esp_display_present_frame_t frame, esp_display_present_lease_id_t lease)
@@ -898,10 +941,10 @@ static esp_err_t gram_set_rotation(present_backend_t *backend, esp_display_prese
         if (backend->core.frames[i].common.token) {
             return ESP_ERR_INVALID_STATE;
         }
-    if (backend->config.in_place_convert && rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0) {
+    if (backend->config.in_place && rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0) {
         return ESP_ERR_NOT_SUPPORTED;
     }
-    bool change_axes = !backend->config.fixed_logical_rotation && (((unsigned)backend->config.rotation ^ (unsigned)rotation) & 1);
+    bool change_axes = !backend->config.fixed_rotation && (((unsigned)backend->config.rotation ^ (unsigned)rotation) & 1);
     uint32_t width = change_axes ? backend->config.height : backend->config.width;
     uint32_t height = change_axes ? backend->config.width : backend->config.height;
     size_t bpp = backend->config.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;

@@ -22,7 +22,7 @@ static esp_display_present_engine_t *create(sync_panel_t *s, uint32_t timeout)
     esp_display_present_engine_config_t config = {.backend = {
             .width = 4, .height = 4, .tile_rows = 2, .buffer_count = 2, .max_frames = 2,
             .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = sync_panel_interface(s),
-            .te_window_us = 1000000, .te_transfer_budget_us = 1000
+            .te_window_us = 1000000, .te_budget_us = 1000
         },
         .backend_kind = ESP_DISPLAY_PRESENT_ENGINE_TE, .timeout_ms = timeout
     };
@@ -135,7 +135,7 @@ static void io_modes(void)
         esp_display_present_engine_config_t cfg = {.backend = {
                 .width = 4, .height = 4, .tile_rows = 2, .buffer_count = 2, .max_frames = 2,
                 .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = sync_panel_interface(&panel),
-                .te_window_us = i == 3 ? 0 : 1000000, .te_transfer_budget_us = i == 3 ? 0 : 1000
+                .te_window_us = i == 3 ? 0 : 1000000, .te_budget_us = i == 3 ? 0 : 1000
             },
             .mode = modes[i]
         };
@@ -157,7 +157,7 @@ static void manual_without_phase_timer(void)
     esp_display_present_engine_config_t config = {.backend = {
             .width = 4, .height = 4, .tile_rows = 2, .buffer_count = 2, .max_frames = 2,
             .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = sync_panel_interface(&panel),
-            .te_transfer_budget_us = 100000,
+            .te_budget_us = 100000,
             .te_timing = {.period_us = 500000, .scan_us = 400000, .guard_us = 1000}
         }, .backend_kind = ESP_DISPLAY_PRESENT_ENGINE_TE, .timeout_ms = 1000
     };

@@ -154,7 +154,7 @@ static void exercise(esp_display_present_present_mode_t mode, size_t bpp, bool a
     scan_panel_t panel = {0};
     esp_display_present_engine_config_t cfg = {.backend = {
             .width = W, .height = H, .tile_rows = 2, .buffer_count = 3, .max_frames = 4,
-            .format = bpp == 2 ? ESP_DISPLAY_PRESENT_FORMAT_RGB565 : ESP_DISPLAY_PRESENT_FORMAT_RGB888, .allow_active_scanout_writes = true,
+            .format = bpp == 2 ? ESP_DISPLAY_PRESENT_FORMAT_RGB565 : ESP_DISPLAY_PRESENT_FORMAT_RGB888, .active_writes = true,
             .panel = scan_interface(&panel), .async_copy = async, .on_progress = progress, .progress_user = &n
         },
         .timeout_ms = 1000, .backend_kind = ESP_DISPLAY_PRESENT_ENGINE_FB, .mode = mode

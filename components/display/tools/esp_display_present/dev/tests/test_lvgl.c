@@ -20,7 +20,7 @@ static esp_display_present_engine_t *make(test_panel_t *panel)
                                                  };
     if (!(panel->width % 2) && !(panel->height % 2))
         config.output_caps = (esp_display_present_output_caps_t) {
-        .x_alignment = 2, .y_alignment = 2, .width_alignment = 2, .height_alignment = 2
+        .x_alignment = 2, .y_alignment = 2, .w_align = 2, .h_align = 2
     };
     esp_display_present_engine_t *p;
     assert(esp_display_present_engine_create(&config, &p) == ESP_OK);

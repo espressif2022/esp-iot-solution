@@ -223,7 +223,7 @@ static esp_display_present_tx_result_t panel_submit(void *context, const esp_dis
         };
     }
     if (area->x % presenter->output.x_alignment || area->y % presenter->output.y_alignment ||
-            area->width % presenter->output.width_alignment || area->height % presenter->output.height_alignment)
+            area->width % presenter->output.w_align || area->height % presenter->output.h_align)
         return (esp_display_present_tx_result_t) {
         ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_ARG
     };
@@ -530,11 +530,11 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
     if (!presenter->output.y_alignment) {
         presenter->output.y_alignment = 1;
     }
-    if (!presenter->output.width_alignment) {
-        presenter->output.width_alignment = 1;
+    if (!presenter->output.w_align) {
+        presenter->output.w_align = 1;
     }
-    if (!presenter->output.height_alignment) {
-        presenter->output.height_alignment = 1;
+    if (!presenter->output.h_align) {
+        presenter->output.h_align = 1;
     }
     presenter->rotation = config->backend.rotation;
     presenter->ops = presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_TE ? &present_te_backend :
@@ -728,10 +728,8 @@ static esp_err_t resolve_rows_impl(esp_display_present_engine_t *presenter, cons
     if (out) {
         *out = 0;
     }
-    esp_err_t ret = check_owner(presenter);
-    if (ret != ESP_OK) {
-        return ret;
-    }
+    /* Caller checked the owner and holds the gate. valid_lease rejects a lease
+     * that belonged to the previous owner. */
     if (!out || !stride || !requested) {
         return ESP_ERR_INVALID_ARG;
     }
@@ -747,7 +745,7 @@ static esp_err_t resolve_rows_impl(esp_display_present_engine_t *presenter, cons
     if (presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM && *out < requested) {
         bool quarter = presenter->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90 || presenter->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270;
         uint32_t a = quarter ? presenter->output.x_alignment : presenter->output.y_alignment;
-        uint32_t extent = quarter ? presenter->output.width_alignment : presenter->output.height_alignment;
+        uint32_t extent = quarter ? presenter->output.w_align : presenter->output.h_align;
         uint32_t u = a, v = extent;
         while (v) {
             uint32_t t = u % v;
@@ -766,10 +764,8 @@ static esp_err_t resolve_rows_impl(esp_display_present_engine_t *presenter, cons
 static esp_err_t submit_buffer_impl(esp_display_present_engine_t *presenter, const esp_display_present_lease_t *lease,
                                     const esp_display_present_engine_area_t *area, size_t stride)
 {
-    esp_err_t ret = check_owner(presenter);
-    if (ret != ESP_OK) {
-        return ret;
-    }
+    /* Caller already checked the owner and then took the gate. rebind cannot
+     * replace the owner while this held lease still exists. */
     if (!area || !stride || area->x1 < 0 || area->y1 < 0 || area->x2 < area->x1 || area->y2 < area->y1 ||
             (uint32_t)area->x2 >= presenter->caps.draw_layout.width || (uint32_t)area->y2 >= presenter->caps.draw_layout.height) {
         return ESP_ERR_INVALID_ARG;
@@ -781,6 +777,7 @@ static esp_err_t submit_buffer_impl(esp_display_present_engine_t *presenter, con
                                                                      (uint32_t)(area->x2 - area->x1) + 1, (uint32_t)(area->y2 - area->y1) + 1
                                                                    }, .stride_bytes = stride
                                                  };
+    esp_err_t ret;
     uint64_t start = present_now_ms();
     for (;;) {
         ret = refresh_fault(presenter);

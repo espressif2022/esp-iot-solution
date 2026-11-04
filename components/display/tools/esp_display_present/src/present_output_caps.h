@@ -11,15 +11,15 @@ extern "C" {
  * Device-specific command restrictions must augment the adapter's transport caps. */
 typedef struct {
     uint32_t x_alignment, y_alignment;
-    uint32_t width_alignment, height_alignment;
-    size_t base_alignment, stride_alignment;
+    uint32_t w_align, h_align;
+    size_t base_alignment, stride_align;
     bool tight_stride;
-    bool full_frame_only;
-    bool external_buffers_required; /* Exact driver pool checked by adapter. */
+    bool full_only;
+    bool ext_bufs_required; /* Exact driver pool checked by adapter. */
     bool internal_dma;
-    bool external_memory;
+    bool ext_mem;
     size_t max_inflight; /* 0: not specified by this descriptor. */
-    size_t external_length_alignment; /* External DMA byte count; 0 means 1. */
+    size_t ext_len_align; /* External DMA byte count; 0 means 1. */
 } esp_display_present_output_caps_t;
 #ifdef __cplusplus
 }

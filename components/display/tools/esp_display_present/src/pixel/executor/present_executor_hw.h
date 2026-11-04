@@ -13,13 +13,13 @@ static bool destination_band(const esp_display_present_copy_request_t *request, 
                              void **address, size_t *bytes)
 {
     bool quarter = request->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90 || request->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270;
-    size_t rows = quarter ? request->source_area.width : request->source_area.height;
-    size_t stride = request->destination.layout.stride_bytes;
-    size_t capacity = request->destination.capacity_bytes;
-    if (!alignment || !stride || request->destination_y > capacity / stride) {
+    size_t rows = quarter ? request->src_area.width : request->src_area.height;
+    size_t stride = request->dst.layout.stride_bytes;
+    size_t capacity = request->dst.capacity_bytes;
+    if (!alignment || !stride || request->dst_y > capacity / stride) {
         return false;
     }
-    size_t start = request->destination_y * stride;
+    size_t start = request->dst_y * stride;
     if (rows > (capacity - start) / stride) {
         return false;
     }
@@ -30,7 +30,7 @@ static bool destination_band(const esp_display_present_copy_request_t *request, 
     }
     start -= start % alignment;
     end += padding;
-    *address = (uint8_t *)request->destination.pixels + start;
+    *address = (uint8_t *)request->dst.pixels + start;
     *bytes = end - start;
     return true;
 }
@@ -53,29 +53,29 @@ static inline esp_err_t hw_probe(const esp_display_present_copy_request_t *reque
     if (e != ESP_OK) {
         return e;
     }
-    size_t bpp = request->source.layout.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
-    size_t sa = esp_cache_get_line_size_by_addr(request->source.pixels);
-    size_t da = esp_cache_get_line_size_by_addr(request->destination.pixels);
+    size_t bpp = request->src.layout.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
+    size_t sa = esp_cache_get_line_size_by_addr(request->src.pixels);
+    size_t da = esp_cache_get_line_size_by_addr(request->dst.pixels);
     if (sa < 64) {
         sa = 64;
     }
     if (da < 64) {
         da = 64;
     }
-    if (request->source.pixels == request->destination.pixels) {
+    if (request->src.pixels == request->dst.pixels) {
         return unsupported(reason, ESP_DISPLAY_PRESENT_EXEC_IN_PLACE);
     }
-    if ((uintptr_t)request->source.pixels % sa || (uintptr_t)request->destination.pixels % da) {
+    if ((uintptr_t)request->src.pixels % sa || (uintptr_t)request->dst.pixels % da) {
         return unsupported(reason, ESP_DISPLAY_PRESENT_EXEC_ALIGNMENT);
     }
-    if (!request->destination.capacity_bytes || request->destination.capacity_bytes % da || request->destination.capacity_bytes > UINT32_MAX) {
+    if (!request->dst.capacity_bytes || request->dst.capacity_bytes % da || request->dst.capacity_bytes > UINT32_MAX) {
         return unsupported(reason, ESP_DISPLAY_PRESENT_EXEC_CAPACITY);
     }
-    if (request->source.layout.stride_bytes > UINT32_MAX || request->destination.layout.stride_bytes > UINT32_MAX ||
-            request->source.layout.height > request->source.capacity_bytes / request->source.layout.stride_bytes ||
-            request->destination.layout.height > request->destination.capacity_bytes / request->destination.layout.stride_bytes ||
-            request->source.layout.stride_bytes / bpp > 0x3fff || request->source.layout.height > 0x3fff ||
-            request->destination.layout.stride_bytes / bpp > 0x3fff || request->destination.layout.height > 0x3fff) {
+    if (request->src.layout.stride_bytes > UINT32_MAX || request->dst.layout.stride_bytes > UINT32_MAX ||
+            request->src.layout.height > request->src.capacity_bytes / request->src.layout.stride_bytes ||
+            request->dst.layout.height > request->dst.capacity_bytes / request->dst.layout.stride_bytes ||
+            request->src.layout.stride_bytes / bpp > 0x3fff || request->src.layout.height > 0x3fff ||
+            request->dst.layout.stride_bytes / bpp > 0x3fff || request->dst.layout.height > 0x3fff) {
         return unsupported(reason, ESP_DISPLAY_PRESENT_EXEC_LAYOUT);
     }
     if (!destination_band(request, da, band, band_bytes)) {

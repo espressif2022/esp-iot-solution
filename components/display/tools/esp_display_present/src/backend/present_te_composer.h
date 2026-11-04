@@ -28,8 +28,8 @@ esp_err_t present_te_composer_create(const present_te_composer_config_t *, prese
  * frames and publishes only on successful transfer. Tokens reject stale reuse. */
 esp_err_t present_te_composer_begin(present_te_composer_t *, present_te_frame_t *);
 esp_err_t present_te_composer_write(present_te_composer_t *, present_te_frame_t,
-                                    const esp_display_present_source_t *, const esp_display_present_rect_t *source_area,
-                                    uint32_t destination_x, uint32_t destination_y);
+                                    const esp_display_present_source_t *, const esp_display_present_rect_t *src_area,
+                                    uint32_t dst_x, uint32_t dst_y);
 /* Tracks successful writes. An incomplete first frame stays BUILDING;
  * asynchronous repair returns TIMEOUT and service retries until READY. */
 esp_err_t present_te_composer_seal(present_te_composer_t *, present_te_frame_t);

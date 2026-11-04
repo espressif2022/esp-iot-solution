@@ -18,8 +18,8 @@ static esp_err_t cpu_caps(void *context, esp_display_present_executor_caps_t *ou
         .byte_swap = true,
         .in_place = true,
         .base_alignment = 1,
-        .destination_capacity_alignment = 1,
-        .stride_alignment_bytes = 1
+        .dst_cap_align = 1,
+        .stride_align = 1
     };
     return ESP_OK;
 }

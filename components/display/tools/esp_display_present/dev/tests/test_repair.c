@@ -192,37 +192,21 @@ static void fb(bool cancel)
     unblock(&g);
     wait_done(&g, n);
     OK(o->acquire(b, f, NULL, 0, &l));
-    memset(l.surface.pixels, 0xee, 32);
+    /* The prefill already holds the baseline. Only the submitted pixel changes;
+     * unsubmitted prefilled pixels are not copied a second time. */
     ((uint16_t*)l.surface.pixels)[0] = 0x2222;
     esp_display_present_region_submit_t sub = {.logical_area = {0, 0, 1, 1}, .stride_bytes = 8};
     OK(o->submit_region_ex(b, f, l.id, &sub));
-    arm(&g);
-    n = count(&g);
+    unsigned copies = count(&g);
     OK(o->end(b, f, &r));
-    wait_enter(&g);
     OK(present_fb_service(b));
-    assert(panel.submissions == 1);
-    if (cancel) {
-        assert(o->stop(b, 0) == ESP_ERR_TIMEOUT);
-    }
-    unblock(&g);
-    wait_done(&g, n);
-    if (cancel) {
-        OK(o->stop(b, UINT32_MAX));
-    } else {
-        while (!panel.cookie) {
-            n = count(&g);
-            OK(present_fb_service(b));
-            if (!panel.cookie) {
-                wait_done(&g, n);
-            }
-        }
-        scan_confirm(&panel);
-        OK(present_fb_service(b));
-        assert(((uint16_t*)panel.current.pixels)[0] == 0x2222);
-        for (unsigned i = 1; i < 16; i++) {
-            assert(((uint16_t*)panel.current.pixels)[i] == 0x1111);
-        }
+    assert(count(&g) == copies);
+    assert(panel.cookie);
+    scan_confirm(&panel);
+    OK(present_fb_service(b));
+    assert(((uint16_t*)panel.current.pixels)[0] == 0x2222);
+    for (unsigned i = 1; i < 16; i++) {
+        assert(((uint16_t*)panel.current.pixels)[i] == 0x1111);
     }
     OK(o->query(b, r, &status));
     assert(status.terminal);
@@ -263,7 +247,7 @@ static void fb_source_completion(unsigned mode)
     OK(ops->end(backend, frame, &receipt));
     esp_display_present_frame_status_t status;
     OK(ops->query(backend, receipt, &status));
-    assert(status.sealed && !status.source_released && !status.terminal && !status.present_confirmed);
+    assert(status.sealed && !status.src_released && !status.terminal && !status.present_confirmed);
     assert(ops->wait(backend, receipt, ESP_DISPLAY_PRESENT_COMPLETION_SOURCE_RELEASED, 0, &status) == ESP_ERR_TIMEOUT);
     assert(ops->wait(backend, receipt, ESP_DISPLAY_PRESENT_COMPLETION_PRESENT_CONFIRMED, 0, &status) == ESP_ERR_TIMEOUT);
     assert(ops->release_receipt(backend, receipt) == ESP_ERR_INVALID_STATE);
@@ -271,7 +255,7 @@ static void fb_source_completion(unsigned mode)
     if (mode == 2) {
         assert(ops->stop(backend, 0) == ESP_ERR_TIMEOUT);
         OK(ops->query(backend, receipt, &status));
-        assert(!status.source_released && !status.terminal);
+        assert(!status.src_released && !status.terminal);
     }
     unblock(&gate);
     wait_done(&gate, completed);
@@ -282,7 +266,7 @@ static void fb_source_completion(unsigned mode)
         if (mode == 0) {
             assert(panel.submissions == 1);
             OK(ops->query(backend, receipt, &status));
-            assert(!status.source_released && !status.terminal);
+            assert(!status.src_released && !status.terminal);
             assert(ops->wait(backend, receipt, ESP_DISPLAY_PRESENT_COMPLETION_SOURCE_RELEASED, 0, &status) == ESP_ERR_TIMEOUT);
             scan_confirm(&panel);
         } else {
@@ -290,7 +274,7 @@ static void fb_source_completion(unsigned mode)
         }
     }
     OK(ops->wait(backend, receipt, ESP_DISPLAY_PRESENT_COMPLETION_SOURCE_RELEASED, 0, &status));
-    assert(status.terminal && status.source_released);
+    assert(status.terminal && status.src_released);
     assert(status.present_confirmed == (mode == 0));
     assert(status.result == (mode == 0 ? ESP_OK : mode == 1 ? ESP_FAIL : ESP_ERR_INVALID_STATE));
     if (mode != 0) {
@@ -335,7 +319,7 @@ static void presenter_source_completion(void)
     OK(esp_display_present_engine_commit_with_receipt(presenter, NULL, &receipt));
     esp_display_present_frame_status_t status;
     OK(esp_display_present_engine_query_frame(presenter, receipt, &status));
-    assert(!status.source_released && !status.terminal && !status.present_confirmed);
+    assert(!status.src_released && !status.terminal && !status.present_confirmed);
     assert(esp_display_present_engine_wait_frame(presenter, receipt, ESP_DISPLAY_PRESENT_COMPLETION_SOURCE_RELEASED, 0, &status) == ESP_ERR_TIMEOUT);
     assert(esp_display_present_engine_release_receipt(presenter, receipt) == ESP_ERR_INVALID_STATE);
     unblock(&gate);
@@ -343,11 +327,11 @@ static void presenter_source_completion(void)
     OK(esp_display_present_engine_service(presenter));
     assert(panel.cookie);
     OK(esp_display_present_engine_query_frame(presenter, receipt, &status));
-    assert(!status.source_released && !status.terminal);
+    assert(!status.src_released && !status.terminal);
     scan_confirm(&panel);
     OK(esp_display_present_engine_service(presenter));
     OK(esp_display_present_engine_wait_frame(presenter, receipt, ESP_DISPLAY_PRESENT_COMPLETION_SOURCE_RELEASED, 0, &status));
-    assert(status.source_released && status.terminal && status.present_confirmed);
+    assert(status.src_released && status.terminal && status.present_confirmed);
     OK(esp_display_present_engine_release_receipt(presenter, receipt));
     OK(esp_display_present_engine_stop(presenter, UINT32_MAX));
     OK(esp_display_present_engine_destroy(presenter));
@@ -387,17 +371,32 @@ int main(void)
         scan_confirm(&panel);
         OK(o->wait(b, r, ESP_DISPLAY_PRESENT_COMPLETION_PRESENT_CONFIRMED, 0, &status));
         OK(o->release_receipt(b, r));
-        arm(&g);
-        unsigned n = count(&g);
-        OK(o->begin(b, &q, &f));
-        wait_enter(&g);
-        unblock(&g);
-        wait_done(&g, n);
+        /* A full second publication makes the historical damage the whole frame.
+         * The next frame seeds one corner, so repair still copies everything else
+         * and stop must wait for that copy. */
+        esp_display_present_frame_request_t redraw = {.full_redraw = true};
+        OK(o->begin(b, &redraw, &f));
         OK(o->acquire(b, f, NULL, 0, &l));
+        for (unsigned i = 0; i < 16; i++) {
+            ((uint16_t *)l.surface.pixels)[i] = 0x1111;
+        }
+        ((uint16_t *)l.surface.pixels)[15] = 0x3333;
+        OK(o->submit_region(b, f, l.id));
+        OK(o->end(b, f, &r));
+        OK(present_fb_service(b));
+        scan_confirm(&panel);
+        OK(o->wait(b, r, ESP_DISPLAY_PRESENT_COMPLETION_PRESENT_CONFIRMED, 0, &status));
+        OK(o->release_receipt(b, r));
+        esp_display_present_rect_t corner = {0, 0, 1, 1};
+        esp_display_present_frame_request_t selective = {.damage = &corner, .damage_count = 1};
+        OK(o->begin(b, &selective, &f));
+        while (o->acquire(b, f, NULL, 0, &l) == ESP_ERR_TIMEOUT) {
+            OK(present_fb_service(b));
+        }
         esp_display_present_region_submit_t sub = {.logical_area = {0, 0, 1, 1}, .stride_bytes = 8};
         OK(o->submit_region_ex(b, f, l.id, &sub));
         arm(&g);
-        n = count(&g);
+        unsigned n = count(&g);
         OK(o->end(b, f, &r));
         wait_enter(&g);
         assert(o->stop(b, 0) == ESP_ERR_TIMEOUT);

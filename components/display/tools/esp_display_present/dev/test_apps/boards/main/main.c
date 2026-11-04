@@ -153,7 +153,7 @@ static void run_case(unsigned cycle, unsigned test)
     esp_display_present_lcd_scanout_t *adapter;
     esp_display_present_lcd_scanout_config_t scan = {.panel = panel, .kind = SCANOUT_KIND,
                                                      .width = WIDTH, .height = HEIGHT, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = cases[test].buffers,
-                                                     .rgb_bounce_buffer_mode = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, .delete_panel_on_stop = true
+                                                     .bounce = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, .delete_panel = true
                                                     };
     check(esp_display_present_lcd_scanout_create(&scan, &adapter), "scanout create");
     void *buffers[3];
@@ -164,8 +164,8 @@ static void run_case(unsigned cycle, unsigned test)
     esp_display_present_engine_config_t cfg = {.backend_kind = ESP_DISPLAY_PRESENT_ENGINE_FB, .mode = cases[test].mode,
                                                .timeout_ms = 2000, .backend = {.width = WIDTH, .height = HEIGHT, .tile_rows = TILE_ROWS,
                                                                                .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = count, .max_frames = 3,
-                                                                               .external_buffers = buffers, .external_buffer_bytes = WIDTH * HEIGHT * 2,
-                                                                               .initial_scanout_buffer = buffers[0], .panel = {&tap, tap_attach, tap_submit, tap_quiesce}
+                                                                               .ext_bufs = buffers, .ext_bytes = WIDTH * HEIGHT * 2,
+                                                                               .scan_buf = buffers[0], .panel = {&tap, tap_attach, tap_submit, tap_quiesce}
                                                                               }
                                               };
     esp_display_present_engine_t *presenter;
@@ -306,7 +306,7 @@ static void run_combo_case(unsigned cycle, unsigned test, bool async_copy, unsig
     esp_display_present_lcd_scanout_t *adapter;
     esp_display_present_lcd_scanout_config_t scan = {.panel = panel, .kind = SCANOUT_KIND,
                                                      .width = WIDTH, .height = HEIGHT, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = cases[test].buffers,
-                                                     .rgb_bounce_buffer_mode = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, .delete_panel_on_stop = true
+                                                     .bounce = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, .delete_panel = true
                                                     };
     check(esp_display_present_lcd_scanout_create(&scan, &adapter), "scanout create");
     void *buffers[3];
@@ -335,8 +335,8 @@ static void run_combo_case(unsigned cycle, unsigned test, bool async_copy, unsig
                                                .backend = {.width = WIDTH, .height = HEIGHT, .tile_rows = 16,
                                                            .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = count, .max_frames = 3,
                                                            .async_copy = async_copy,
-                                                           .external_buffers = buffers, .external_buffer_bytes = WIDTH * HEIGHT * 2,
-                                                           .initial_scanout_buffer = buffers[0], .panel = {&tap, tap_attach, tap_submit, tap_quiesce}
+                                                           .ext_bufs = buffers, .ext_bytes = WIDTH * HEIGHT * 2,
+                                                           .scan_buf = buffers[0], .panel = {&tap, tap_attach, tap_submit, tap_quiesce}
                                                           }
                                               };
     esp_display_present_plan_config_t planned = {.presenter = cfg,
@@ -422,7 +422,7 @@ static void run_fb_handoff_profile(unsigned cycle, unsigned test)
     esp_display_present_lcd_scanout_t *adapter;
     esp_display_present_lcd_scanout_config_t scan = {.panel = panel, .kind = SCANOUT_KIND,
                                                      .width = WIDTH, .height = HEIGHT, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = cases[test].buffers,
-                                                     .rgb_bounce_buffer_mode = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, .delete_panel_on_stop = true
+                                                     .bounce = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, .delete_panel = true
                                                     };
     check(esp_display_present_lcd_scanout_create(&scan, &adapter), "handoff scanout create");
     void *buffers[3] = {0};
@@ -440,8 +440,8 @@ static void run_fb_handoff_profile(unsigned cycle, unsigned test)
                                                            .panel_order = ESP_DISPLAY_PRESENT_ORDER_NATIVE,
                                                            .buffer_count = count, .max_frames = 3,
                                                            .async_copy = true,
-                                                           .external_buffers = buffers, .external_buffer_bytes = WIDTH * HEIGHT * 2,
-                                                           .initial_scanout_buffer = buffers[0], .panel = {&tap, tap_attach, tap_submit, tap_quiesce}
+                                                           .ext_bufs = buffers, .ext_bytes = WIDTH * HEIGHT * 2,
+                                                           .scan_buf = buffers[0], .panel = {&tap, tap_attach, tap_submit, tap_quiesce}
                                                           }
                                               };
     esp_display_present_plan_config_t planned = {.presenter = cfg,
@@ -741,8 +741,8 @@ static void run_v1_vs_v2_benchmark(unsigned cycle)
         esp_display_present_lcd_scanout_t *adapter;
         esp_display_present_lcd_scanout_config_t scan = {.panel = panel_v2, .kind = SCANOUT_KIND,
                                                          .width = WIDTH, .height = HEIGHT, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = bench_cases[i].buffers,
-                                                         .rgb_bounce_buffer_mode = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE,
-                                                         .delete_panel_on_stop = true
+                                                         .bounce = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE,
+                                                         .delete_panel = true
                                                         };
         check(esp_display_present_lcd_scanout_create(&scan, &adapter), "bench v2 scanout create");
         void *buffers[3] = {0};
@@ -773,8 +773,8 @@ static void run_v1_vs_v2_benchmark(unsigned cycle)
                 .rotation = bench_cases[i].rotated ? ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90 : ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0,
                 .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = count, .max_frames = 3,
                 .async_copy = use_async,
-                .external_buffers = buffers, .external_buffer_bytes = WIDTH * HEIGHT * 2,
-                .initial_scanout_buffer = buffers[0], .panel = iface,
+                .ext_bufs = buffers, .ext_bytes = WIDTH * HEIGHT * 2,
+                .scan_buf = buffers[0], .panel = iface,
             },
         };
         esp_display_present_plan_config_t planned = {

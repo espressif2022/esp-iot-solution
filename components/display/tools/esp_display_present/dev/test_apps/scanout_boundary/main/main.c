@@ -75,8 +75,8 @@ static void run_v2(unsigned count, bool full, unsigned rotation)
     esp_display_present_lcd_scanout_config_t scan = {
         .panel = panel, .kind = SCANOUT_KIND, .width = WIDTH, .height = HEIGHT,
         .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = count,
-        .rgb_bounce_buffer_mode = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE,
-        .delete_panel_on_stop = true,
+        .bounce = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE,
+        .delete_panel = true,
     };
     ESP_ERROR_CHECK(esp_display_present_lcd_scanout_create(&scan, &adapter));
     void *buffers[3];
@@ -94,12 +94,12 @@ static void run_v2(unsigned count, bool full, unsigned rotation)
         : (count == 2 ? ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL : ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_PARTIAL),
         .timeout_ms = 3000, .background_service = true,
         .backend = {
-            .width = width, .height = height, .tile_rows = 16, .tile_buffer_count = 2,
+            .width = width, .height = height, .tile_rows = 16, .tile_bufs = 2,
             .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = count, .max_frames = 4,
             .rotation = (esp_display_present_engine_rotation_t)rotation, .async_copy = true,
             .tile_in_psram = true, .logical_in_psram = true,
-            .external_buffers = buffers, .external_buffer_bytes = WIDTH * HEIGHT * 2,
-            .initial_scanout_buffer = buffers[0],
+            .ext_bufs = buffers, .ext_bytes = WIDTH * HEIGHT * 2,
+            .scan_buf = buffers[0],
         },
     };
     ESP_ERROR_CHECK(esp_display_present_lcd_scanout_get_interface(adapter, &config.backend.panel));

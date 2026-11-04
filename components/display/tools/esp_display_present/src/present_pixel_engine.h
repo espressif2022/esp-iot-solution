@@ -65,11 +65,11 @@ typedef struct {
 } esp_display_present_surface_t;
 
 typedef struct {
-    esp_display_present_source_t source;
-    esp_display_present_surface_t destination;
-    esp_display_present_rect_t source_area;
-    uint32_t destination_x, destination_y;
-    esp_display_present_engine_rotation_t rotation; /* Clockwise around source_area, then translate. */
+    esp_display_present_source_t src;
+    esp_display_present_surface_t dst;
+    esp_display_present_rect_t src_area;
+    uint32_t dst_x, dst_y;
+    esp_display_present_engine_rotation_t rotation; /* Clockwise around src_area, then translate. */
 } esp_display_present_copy_request_t;
 
 typedef enum {
@@ -182,10 +182,10 @@ esp_err_t esp_display_present_pixel_create(const esp_display_present_pixel_confi
  *
  * Overlap contract:
  * - Different buffers must not overlap in address range.
- * - In-place conversion (source.pixels == destination.pixels) is permitted ONLY
- * when rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0, source_area origin == (destination_x,
- * destination_y), and source.layout (width, height, stride, format) matches
- * destination.layout.
+ * - In-place conversion (src.pixels == dst.pixels) is permitted ONLY
+ * when rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0, src_area origin == (dst_x,
+ * dst_y), and src.layout (width, height, stride, format) matches
+ * dst.layout.
  *
  * Non-OK means NOT ACCEPTED: no queued work, no active hardware, ticket=0.
  * Completion may precede return in either mode; still produces a ticket.

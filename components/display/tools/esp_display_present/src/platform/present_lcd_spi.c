@@ -401,16 +401,16 @@ esp_err_t esp_display_present_lcd_spi_get_output_caps(esp_display_present_lcd_sp
     *out = (esp_display_present_output_caps_t) {
         .x_alignment = 1,
         .y_alignment = 1,
-        .width_alignment = 1,
-        .height_alignment = 1,
+        .w_align = 1,
+        .h_align = 1,
         .base_alignment = PRESENT_SPI_BASE_ALIGNMENT,
-        .stride_alignment = 1,
+        .stride_align = 1,
         .tight_stride = true,
-        .full_frame_only = false,
+        .full_only = false,
         .internal_dma = true,
-        .external_memory = spi->config.psram_dma_direct || spi->staging != NULL,
+        .ext_mem = spi->config.psram_dma_direct || spi->staging != NULL,
         .max_inflight = spi->config.max_inflight,
-        .external_length_alignment = direct_external_dma ? PRESENT_SPI_EXTERNAL_LENGTH_ALIGNMENT : 1,
+        .ext_len_align = direct_external_dma ? PRESENT_SPI_EXTERNAL_LENGTH_ALIGNMENT : 1,
     };
     return ESP_OK;
 }

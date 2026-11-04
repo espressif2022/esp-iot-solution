@@ -101,11 +101,11 @@ int main(void)
     assert(present_frame_core_seal(&other, of, &receipt) == ESP_OK);
     esp_display_present_frame_status_t st;
     assert(present_frame_core_query(&other, &lock, receipt, true, &st) == ESP_OK);
-    assert(st.sealed && !st.source_released && !st.terminal && !st.present_confirmed);
+    assert(st.sealed && !st.src_released && !st.terminal && !st.present_confirmed);
     assert(present_frame_core_release_receipt(&other, &lock, receipt) == ESP_ERR_INVALID_STATE);
     present_frame_core_terminal(&other, of);
     assert(present_frame_core_query(&other, &lock, receipt, true, &st) == ESP_OK);
-    assert(st.terminal && st.source_released && st.present_confirmed);
+    assert(st.terminal && st.src_released && st.present_confirmed);
     assert(present_frame_core_release_receipt(&other, &lock, receipt) == ESP_OK);
     other.life = PRESENT_CORE_CLOSING;
     assert(present_frame_core_quiescent(&other) == ESP_OK);

@@ -172,17 +172,17 @@ static void verify_cache_bands(esp_display_present_executor_t *executor, bool is
                                            ESP_DISPLAY_PRESENT_ORDER_NATIVE
                                           };
     esp_display_present_copy_request_t request = {
-        .source = {src, 3072, layout}, .destination = {dst, 3072, layout},
-        .source_area = {1, 1, 3, 2}, .destination_x = 1,
+        .src = {src, 3072, layout}, .dst = {dst, 3072, layout},
+        .src_area = {1, 1, 3, 2}, .dst_x = 1,
     };
     for (unsigned rotation = 0; rotation < (is_dma ? 1U : 4U); rotation++) {
         request.rotation = rotation;
         for (unsigned last = 0; last < 2; last++) {
             bool quarter = rotation & 1U;
-            request.destination_y = last ? (quarter ? 29 : 30) : 3;
+            request.dst_y = last ? (quarter ? 29 : 30) : 3;
             memset(dst, 0xa5, 3072);
             memset(expected, 0xa5, 3072);
-            paint(src, 96, expected, 96, 1, 1, 3, 2, 1, request.destination_y, rotation, 2, false);
+            paint(src, 96, expected, 96, 1, 1, 3, 2, 1, request.dst_y, rotation, 2, false);
             expected_sync = dst + (last ? (quarter ? 2752 : 2880) : 256);
             expected_sync_bytes = last ? (quarter ? 320 : 192) : (quarter ? 320 : 256);
             unsigned before_flushes = flushes, before_invalidates = invalidates;
@@ -196,8 +196,8 @@ static void verify_cache_bands(esp_display_present_executor_t *executor, bool is
                                             ESP_DISPLAY_PRESENT_ORDER_NATIVE
                                            };
     request = (esp_display_present_copy_request_t) {
-        .source = {src, 32, compact}, .destination = {dst, 64, compact},
-        .source_area = {0, 0, 4, 4},
+        .src = {src, 32, compact}, .dst = {dst, 64, compact},
+        .src_area = {0, 0, 4, 4},
     };
     expected_sync = dst;
     expected_sync_bytes = 64;
@@ -217,7 +217,7 @@ static void verify_cache_bands(esp_display_present_executor_t *executor, bool is
     assert(esp_display_present_executor_probe(executor, &request, &reason) == ESP_ERR_NOT_SUPPORTED);
     assert(reason == ESP_DISPLAY_PRESENT_EXEC_CAPACITY);
     assert(submissions == before_submissions && syncs == before_syncs);
-    request.destination.capacity_bytes = 128;
+    request.dst.capacity_bytes = 128;
     expected_sync = dst;
     expected_sync_bytes = 128;
     assert(esp_display_present_executor_execute(executor, &request) == ESP_OK);
@@ -241,8 +241,8 @@ static void verify_dma_retry_and_drain(esp_display_present_executor_t *executor)
                                            ESP_DISPLAY_PRESENT_ORDER_NATIVE
                                           };
     esp_display_present_copy_request_t request = {
-        .source = {src, 32, layout}, .destination = {dst, 64, layout},
-        .source_area = {0, 0, 4, 4},
+        .src = {src, 32, layout}, .dst = {dst, 64, layout},
+        .src_area = {0, 0, 4, 4},
     };
     memset(dst, 0xa5, 64);
     unsigned before = submissions;
@@ -301,11 +301,11 @@ static void verify(esp_display_present_executor_t *e, esp_display_present_execut
     for (unsigned bpp = 2; bpp <= 3; bpp++) {
         for (unsigned rot = 0; rot < 4; rot++) {
             esp_display_present_layout_t layout = {5, 5, 6 * bpp, bpp == 2 ? ESP_DISPLAY_PRESENT_FORMAT_RGB565 : ESP_DISPLAY_PRESENT_FORMAT_RGB888, ESP_DISPLAY_PRESENT_ORDER_NATIVE};
-            esp_display_present_copy_request_t r = {.source = {src, 192, layout}, .destination = {dst, 192, layout},
-                                                    .source_area = {1, 1, 3, 2}, .destination_x = 1, .destination_y = 1, .rotation = rot
+            esp_display_present_copy_request_t r = {.src = {src, 192, layout}, .dst = {dst, 192, layout},
+                                                    .src_area = {1, 1, 3, 2}, .dst_x = 1, .dst_y = 1, .rotation = rot
                                                    };
             if (bpp == 2 && !is_dma) {
-                r.destination.layout.byte_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED;
+                r.dst.layout.byte_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED;
             }
             memset(dst, 0xa5, 192);
             memset(expected, 0xa5, 192);
@@ -332,7 +332,7 @@ static void verify(esp_display_present_executor_t *e, esp_display_present_execut
             assert(selected.used_fallback == (is_dma && rot != 0));
             paint(src, layout.stride_bytes, expected, layout.stride_bytes, 1, 1, 3, 2, 1, 1, rot, bpp, bpp == 2 && !is_dma);
             assert(!memcmp(dst, expected, 192));
-            r.source_area.width = 100;
+            r.src_area.width = 100;
             assert(esp_display_present_executor_run(&dispatch, &r, &selected) == ESP_ERR_INVALID_ARG);
             assert(!selected.executor && selected.primary_reason == ESP_DISPLAY_PRESENT_EXEC_INVALID_REQUEST);
         }
@@ -340,7 +340,7 @@ static void verify(esp_display_present_executor_t *e, esp_display_present_execut
 #if PRESENT_HOST_PPA || PRESENT_HOST_DMA2D
     if (e != cpu) {
         esp_display_present_layout_t l = {4, 4, 8, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE};
-        esp_display_present_copy_request_t r = {.source = {src, 32, l}, .destination = {dst, 64, l}, .source_area = {0, 0, 4, 4}};
+        esp_display_present_copy_request_t r = {.src = {src, 32, l}, .dst = {dst, 64, l}, .src_area = {0, 0, 4, 4}};
         esp_display_present_executor_dispatch_t d = {e, cpu};
         esp_display_present_executor_selection_t selected;
         unsigned before = submissions, before_sync = syncs;
@@ -403,7 +403,7 @@ static void injection(esp_display_present_executor_t *cpu)
     esp_display_present_executor_t e = {&ops, &state};
     uint16_t src = 0x1234, dst = 0;
     esp_display_present_layout_t l = {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE};
-    esp_display_present_copy_request_t r = {.source = {&src, 2, l}, .destination = {&dst, 2, l}, .source_area = {0, 0, 1, 1}};
+    esp_display_present_copy_request_t r = {.src = {&src, 2, l}, .dst = {&dst, 2, l}, .src_area = {0, 0, 1, 1}};
     esp_display_present_executor_dispatch_t d = {&e, cpu};
     esp_display_present_executor_selection_t selected;
     state.probe_error = ESP_ERR_INVALID_STATE;

@@ -32,12 +32,12 @@ typedef struct {
     bool byte_swap;
     bool in_place;
     size_t base_alignment; /* Minimum; actual addresses may require more. */
-    size_t destination_capacity_alignment;
-    size_t stride_alignment_bytes; /* 1: no fixed byte constraint beyond pixel size. */
+    size_t dst_cap_align;
+    size_t stride_align; /* 1: no fixed byte constraint beyond pixel size. */
     uint32_t max_stride_pixels; /* 0: only checked size_t/capacity limits. */
     uint32_t max_height;
-    bool address_dependent_constraints; /* probe remains mandatory. */
-    bool requires_full_stride_capacity;
+    bool addr_constraints; /* probe remains mandatory. */
+    bool full_stride_cap;
 } esp_display_present_executor_caps_t;
 
 typedef struct {

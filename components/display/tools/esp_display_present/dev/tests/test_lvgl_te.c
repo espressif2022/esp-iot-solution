@@ -18,7 +18,7 @@ static esp_display_present_engine_t *create(sync_panel_t *s, esp_display_present
     esp_display_present_engine_config_t config = {.backend = {
             .width = s->panel.width, .height = s->panel.height, .tile_rows = 2,
             .buffer_count = 2, .max_frames = 2, .format = s->panel.bpp == 2 ? ESP_DISPLAY_PRESENT_FORMAT_RGB565 : ESP_DISPLAY_PRESENT_FORMAT_RGB888,
-            .panel = sync_panel_interface(s), .te_window_us = 1000000, .te_transfer_budget_us = 1000
+            .panel = sync_panel_interface(s), .te_window_us = 1000000, .te_budget_us = 1000
         },
         .backend_kind = kind, .timeout_ms = timeout
     };
@@ -258,7 +258,7 @@ static void background_sender(bool async, esp_display_present_engine_backend_t k
             .width = 4, .height = 4, .tile_rows = 2, .buffer_count = 2, .max_frames = 2,
             .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = sync_panel_interface(&panel),
             .async_copy = async, .on_progress = copy_notification, .progress_user = &n,
-            .te_window_us = 1000000, .te_transfer_budget_us = 1000
+            .te_window_us = 1000000, .te_budget_us = 1000
         },
         .backend_kind = kind, .timeout_ms = 1000, .background_service = true
     };

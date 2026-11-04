@@ -36,16 +36,16 @@ void present_board_test_executors(void)
             for (unsigned bpp = 2; bpp <= 3; bpp++) {
                 for (unsigned rot = 0; rot < 4; rot++) {
                     esp_display_present_layout_t layout = {24, 24, 96, bpp == 2 ? ESP_DISPLAY_PRESENT_FORMAT_RGB565 : ESP_DISPLAY_PRESENT_FORMAT_RGB888, ESP_DISPLAY_PRESENT_ORDER_NATIVE};
-                    esp_display_present_copy_request_t r = {.source = {src, 3072, layout}, .destination = {dst, 3072, layout},
-                                                            .source_area = {1, 2, 7, 5}, .destination_x = 3, .destination_y = 4, .rotation = rot
+                    esp_display_present_copy_request_t r = {.src = {src, 3072, layout}, .dst = {dst, 3072, layout},
+                                                            .src_area = {1, 2, 7, 5}, .dst_x = 3, .dst_y = 4, .rotation = rot
                                                            };
                     if (kind && bpp == 2) {
-                        r.destination.layout.byte_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED;
+                        r.dst.layout.byte_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED;
                     }
                     memset(dst, 0xa5, 3072);
                     memset(reference, 0xa5, 3072);
                     esp_display_present_copy_request_t expected = r;
-                    expected.destination.pixels = reference;
+                    expected.dst.pixels = reference;
                     ESP_ERROR_CHECK(esp_display_present_executor_execute(cpu, &expected));
                     esp_display_present_executor_selection_t selected;
                     ESP_ERROR_CHECK(esp_display_present_executor_select(&dispatch, &r, &selected));

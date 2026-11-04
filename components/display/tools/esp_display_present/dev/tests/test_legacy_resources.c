@@ -173,7 +173,7 @@ static void io_path(void)
     assert(present_resources_destroy(resources, 0) == ESP_ERR_TIMEOUT);
     (void)panel.io(&panel, NULL, panel.user);
     OK(esp_display_present_engine_query_frame(presenter, receipt, &status));
-    assert(status.source_released && status.terminal);
+    assert(status.src_released && status.terminal);
     OK(esp_display_present_engine_release_receipt(presenter, receipt));
     OK(present_resources_destroy(resources, 1000));
     free_panel(&panel);
@@ -273,7 +273,7 @@ static void plans(void)
     }
     input.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_NONE;
     OK(present_resources_plan(&input, false, &plan));
-    assert(plan.resources.image_count == 1 && plan.presenter.backend.allow_active_scanout_writes);
+    assert(plan.resources.image_count == 1 && plan.presenter.backend.active_writes);
     input.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL;
     input.width = 4;
     OK(present_resources_plan(&input, false, &plan));
@@ -299,13 +299,13 @@ static void automatic_te_memory_budget(void)
     OK(present_resources_plan(&input, false, &plan));
     /* Normally filled by the created SPI adapter before resolve. */
     plan.output = (esp_display_present_output_caps_t) {
-        .internal_dma = true, .external_memory = true, .tight_stride = true
+        .internal_dma = true, .ext_mem = true, .tight_stride = true
     };
     OK(esp_display_present_plan_resolve(&plan, &before));
     te_memory_test_extra = 123;
     OK(present_resources_plan(&input, false, &plan));
     plan.output = (esp_display_present_output_caps_t) {
-        .internal_dma = true, .external_memory = true, .tight_stride = true
+        .internal_dma = true, .ext_mem = true, .tight_stride = true
     };
     OK(esp_display_present_plan_resolve(&plan, &after));
     assert(after.reserved_bytes == before.reserved_bytes + 123);

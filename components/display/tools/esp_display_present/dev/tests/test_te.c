@@ -99,7 +99,7 @@ static present_backend_t *create_pool(fixture_t *fixture, size_t count)
         .compose_count = count, .width = 4, .height = 4, .tile_rows = 2, .buffer_count = 2, .max_frames = 2,
         .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .draw_order = ESP_DISPLAY_PRESENT_ORDER_NATIVE, .panel_order = ESP_DISPLAY_PRESENT_ORDER_NATIVE,
         .panel = {fixture, test_panel_attach, submit, stop},
-        .te_window_us = 1000000, .te_transfer_budget_us = 1000,
+        .te_window_us = 1000000, .te_budget_us = 1000,
     };
     present_backend_t *backend;
     OK(ops->create(&config, &backend));
@@ -366,10 +366,10 @@ static esp_err_t gated_copy(void *arg, const esp_display_present_copy_request_t 
     if (g->fail) {
         return ESP_FAIL;
     }
-    for (uint32_t y = 0; y < r->source_area.height; ++y) {
-        memcpy((uint8_t *)r->destination.pixels + (r->destination_y + y) * r->destination.layout.stride_bytes + r->destination_x * 2,
-               (const uint8_t *)r->source.pixels + (r->source_area.y + y) * r->source.layout.stride_bytes + r->source_area.x * 2,
-               r->source_area.width * 2);
+    for (uint32_t y = 0; y < r->src_area.height; ++y) {
+        memcpy((uint8_t *)r->dst.pixels + (r->dst_y + y) * r->dst.layout.stride_bytes + r->dst_x * 2,
+               (const uint8_t *)r->src.pixels + (r->src_area.y + y) * r->src.layout.stride_bytes + r->src_area.x * 2,
+               r->src_area.width * 2);
     }
     return ESP_OK;
 }
@@ -391,7 +391,7 @@ static void asynchronous_copy(unsigned mode)
     test_panel_t panel = {.width = 2, .height = 2, .bpp = 2};
     esp_display_present_backend_config_t cfg = {.width = 2, .height = 2, .tile_rows = 2, .buffer_count = 1, .max_frames = 2,
                                                 .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = test_panel_interface(&panel), .te_window_us = 1000000,
-                                                .te_transfer_budget_us = 1, .async_copy = true, .copy_execute = gated_copy, .copy_user = &g,
+                                                .te_budget_us = 1, .async_copy = true, .copy_execute = gated_copy, .copy_user = &g,
                                                 .on_progress = copied, .progress_user = &g
                                                };
     present_backend_t *b;
@@ -549,7 +549,7 @@ static void compose_matrix_and_cancel(size_t compose_count, size_t tile_count)
     esp_display_present_backend_config_t cfg = {.compose_count = compose_count, .width = 4, .height = 4, .tile_rows = 2,
                                                 .buffer_count = tile_count, .max_frames = 3, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
                                                 .panel = test_panel_interface(&panel), .te_window_us = 1000000,
-                                                .te_transfer_budget_us = 1, .async_copy = true, .copy_execute = gated_copy,
+                                                .te_budget_us = 1, .async_copy = true, .copy_execute = gated_copy,
                                                 .copy_user = &g, .on_progress = copied, .progress_user = &g
                                                };
     present_backend_t *b;
@@ -687,7 +687,7 @@ static void cancel_then_stop(void)
     esp_display_present_backend_config_t cfg = {.compose_count = 1, .width = 4, .height = 4, .tile_rows = 2,
                                                 .buffer_count = 1, .max_frames = 3, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
                                                 .panel = test_panel_interface(&panel), .te_window_us = 1000000,
-                                                .te_transfer_budget_us = 1, .async_copy = true, .copy_execute = gated_copy,
+                                                .te_budget_us = 1, .async_copy = true, .copy_execute = gated_copy,
                                                 .copy_user = &gate, .on_progress = copied, .progress_user = &gate
                                                };
     present_backend_t *backend;
@@ -792,7 +792,7 @@ static void backend_phase_stop_retry(void)
     esp_display_present_backend_config_t config = {
         .width = 4, .height = 4, .tile_rows = 2, .buffer_count = 2, .max_frames = 2,
         .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = {&fixture, test_panel_attach, submit, stop},
-        .te_transfer_budget_us = 100000,
+        .te_budget_us = 100000,
         .te_timing = {.period_us = 500000, .scan_us = 400000, .guard_us = 1000},
         .on_progress = blocked_phase_progress, .progress_user = &progress
     };
@@ -876,7 +876,7 @@ static void reject_mixed_policies(void)
     esp_display_present_backend_config_t config = {
         .width = 4, .height = 4, .tile_rows = 2, .buffer_count = 2, .max_frames = 2,
         .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = {&fixture, test_panel_attach, submit, stop},
-        .te_gate = {.admit = unused_gate}, .te_transfer_budget_us = 100000,
+        .te_gate = {.admit = unused_gate}, .te_budget_us = 100000,
         .te_timing = {.period_us = 500000, .scan_us = 400000, .guard_us = 1000}
     };
     present_backend_t *backend = NULL;
@@ -894,7 +894,7 @@ static void native_reject_during_edge_change(void)
     esp_display_present_backend_config_t config = {
         .width = 4, .height = 4, .tile_rows = 2, .buffer_count = 2, .max_frames = 2,
         .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = {&fixture, test_panel_attach, submit, stop},
-        .te_transfer_budget_us = 100000,
+        .te_budget_us = 100000,
         .te_timing = {
             .period_us = 500000, .scan_us = 400000, .edge_to_scan_us = 150000,
             .guard_us = 10000, .jitter_us = 10000
@@ -928,7 +928,7 @@ static void native_phase_wakeup(void)
     esp_display_present_backend_config_t config = {
         .width = 4, .height = 4, .tile_rows = 2, .buffer_count = 2, .max_frames = 2,
         .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = {&fixture, test_panel_attach, submit, stop},
-        .te_transfer_budget_us = 100000,
+        .te_budget_us = 100000,
         .te_timing = {.period_us = 500000, .scan_us = 400000, .guard_us = 1000},
         .on_progress = phase_progress, .progress_user = &progress
     };

@@ -90,7 +90,7 @@ typedef struct {
      * May lag individual tile reuse; does not grant permission to write a
      * retained scanout/baseline allocation. Acquire a new lease before writes.
      * Terminal failure may release sources without confirming presentation. */
-    bool source_released;
+    bool src_released;
     bool present_confirmed;
     bool terminal; /* No further progress for this frame receipt. */
     esp_err_t result;
@@ -204,27 +204,27 @@ struct esp_display_present_backend_config {
     esp_display_present_byte_order_t draw_order;
     esp_display_present_byte_order_t panel_order;
     esp_display_present_engine_rotation_t rotation;    /* Logical-to-physical clockwise rotation. */
-    bool in_place_convert;      /* True: swap byte order in-place on tight stride and revert on rejection. */
-    void *const *external_buffers; /* Optional caller/driver-owned FB array (TE/FB). */
-    void *initial_scanout_buffer; /* Optional member of external_buffers already scanning; not writable until retired. */
-    size_t external_buffer_bytes;  /* Capacity of each external buffer. */
+    bool in_place;      /* True: swap byte order in-place on tight stride and revert on rejection. */
+    void *const *ext_bufs; /* Optional caller/driver-owned FB array (TE/FB). */
+    void *scan_buf; /* Optional member of ext_bufs already scanning; not writable until retired. */
+    size_t ext_bytes;  /* Capacity of each external buffer. */
     esp_display_present_panel_adapter_t panel;  /* Borrowed until successful stop. */
     /** TE only: measured safe window from edge and worst-case whole-frame
      * transfer budget (including dispatch overhead). Both nonzero, budget < window.
      * GRAM ignores these fields. No hardware timing is inferred automatically. */
     uint32_t te_window_us;
-    uint32_t te_transfer_budget_us;
+    uint32_t te_budget_us;
     /** FB: 1..3 framebuffers in buffer_count, one scratch tile for PARTITION.
      * FULL/DIRECT leases expose the whole candidate; submit coordinates index
      * that full surface (not scratch origin). Zero defaults to PARTITION. */
     esp_display_present_render_contract_t render_contract;
     /** Single-FB is permitted only with explicit acceptance of active scanout
      * writes/tearing. Cancel cannot roll back pixels already visible. */
-    bool allow_active_scanout_writes;
+    bool active_writes;
     /** GRAM/TE and FB PARTITION queued tile copies. Defaults retain synchronous CPU operation.
      * Executor must obey pixel_execute's return-means-access-ended contract.
      * FB FULL/DIRECT reject async_copy; those contracts draw directly.
-     * GRAM async_copy requires separate conversion storage (no in_place_convert). */
+     * GRAM async_copy requires separate conversion storage (no in_place). */
     bool async_copy;
     esp_display_present_pixel_execute_fn copy_execute;
     void *copy_user;
@@ -233,13 +233,13 @@ struct esp_display_present_backend_config {
     esp_display_present_progress_fn on_progress;
     void *progress_user;
     bool tile_in_psram, image_in_psram, logical_in_psram;
-    bool fixed_logical_rotation; /* Runtime rotation preserves producer dimensions; physical view may transpose. */
-    bool internal_tx_staging; /* GRAM async copies from external tiles to internal DMA conversion slots. */
+    bool fixed_rotation; /* Runtime rotation preserves producer dimensions; physical view may transpose. */
+    bool tx_staging; /* GRAM async copies from external tiles to internal DMA conversion slots. */
     size_t transfer_capacity; /* GRAM: 0 uses tile count. */
     bool deferred_submit; /* Engine-owned GRAM sender; READY slots retain pixels. */
     esp_display_present_te_gate_t te_gate; /* Explicit injection; default retains native timing model. */
     esp_display_present_te_timing_t te_timing; /* period_us=0 retains the explicit fixed edge window. */
-    size_t tile_buffer_count; /* FB PARTIAL: independent draw pool; 0 legacy one. */
+    size_t tile_bufs; /* FB PARTIAL: independent draw pool; 0 legacy one. */
     size_t compose_count; /* TE: 0 legacy serialized dual-image, explicit 1/2 enables pool scheduling. */
 };
 

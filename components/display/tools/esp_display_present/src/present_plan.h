@@ -40,7 +40,7 @@ typedef struct {
     /* Borrowed dispatcher and executors must outlive the created presenter.
      * Resolve queries caps only; actual address probe remains mandatory. */
     const esp_display_present_executor_dispatch_t *executor;
-    size_t additional_budget_bytes; /* Driver, renderer and allocator overhead reservation. */
+    size_t extra_bytes; /* Driver, renderer and allocator overhead reservation. */
     size_t total_budget_bytes; /* 0 unlimited; framework requests + caller reservation. */
     size_t pixel_budget_bytes; /* 0 unlimited; includes borrowed pixel buffers. */
 } esp_display_present_plan_config_t;
@@ -73,10 +73,10 @@ typedef struct {
     size_t metadata_bytes, stack_bytes, reserved_bytes, required_bytes;
     /* required_bytes includes pixel + coverage + framework metadata + requested
      * task stacks + caller reservation. Add driver/renderer/allocator overhead
-     * through additional_budget_bytes. Host pthread stack size is OS-defined. */
+     * through extra_bytes. Host pthread stack size is OS-defined. */
     const esp_display_present_executor_t *preferred_executor;
     esp_display_present_executor_reason_t executor_reason;
-    bool address_probe_required;
+    bool probe_addrs;
     uint32_t pending_runtime;
 } esp_display_present_resolved_plan_t;
 

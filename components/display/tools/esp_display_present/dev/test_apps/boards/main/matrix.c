@@ -201,7 +201,7 @@ static void run_case(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_handle_t io,
 #endif
             esp_err_t changed = esp_display_presenter_set_rotation(presenter, next);
             if (gram_mode && rot == 0 && changed == ESP_ERR_NOT_SUPPORTED) {
-                ESP_LOGW(TAG, "ROTATION_LIMIT profile=%s from=%u to=%u reason=in_place_convert", p->name, rot, next);
+                ESP_LOGW(TAG, "ROTATION_LIMIT profile=%s from=%u to=%u reason=in_place", p->name, rot, next);
             } else {
                 require(changed, "runtime rotation");
                 current_rot = next;

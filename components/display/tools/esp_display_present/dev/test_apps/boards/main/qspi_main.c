@@ -136,7 +136,7 @@ static uint64_t run(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_handle_t io,
                                                .backend = {.image_in_psram = te && !roi, .compose_count = te ? 2 : 0, .width = w, .height = h, .tile_rows = tile, .buffer_count = 2, .max_frames = 3,
                                                            .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED,
                                                            .panel = {&meter, metered_attach, metered_submit, metered_stop},
-                                                           .te_window_us = window, .te_transfer_budget_us = budget
+                                                           .te_window_us = window, .te_budget_us = budget
                                                           }
                                               };
     esp_display_present_engine_t *p;
@@ -181,7 +181,7 @@ static uint64_t run(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_handle_t io,
             esp_display_present_frame_status_t state;
             check(esp_display_present_engine_wait_frame(p, batch[i], ESP_DISPLAY_PRESENT_COMPLETION_SOURCE_RELEASED, 2000, &state), "wait");
             check(state.result, "result");
-            check(state.terminal && state.source_released ? ESP_OK : ESP_FAIL, "terminal");
+            check(state.terminal && state.src_released ? ESP_OK : ESP_FAIL, "terminal");
             check(esp_display_present_engine_release_receipt(p, batch[i]), "release");
         }
         batch_count = 0;
@@ -219,7 +219,7 @@ static void run_rotation_async(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_ha
                                                            .width = w, .height = h, .tile_rows = tile, .buffer_count = 2, .max_frames = 3,
                                                            .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED, .async_copy = true,
                                                            .panel = {&meter, metered_attach, metered_submit, metered_stop},
-                                                           .te_window_us = window, .te_transfer_budget_us = budget
+                                                           .te_window_us = window, .te_budget_us = budget
                                                           }
                                               };
     esp_display_present_engine_t *p;
@@ -311,7 +311,7 @@ static void run_dynamic_phase_te(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_
                                                            .width = w, .height = h, .tile_rows = tile, .buffer_count = 2, .max_frames = 3,
                                                            .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED, .async_copy = true,
                                                            .panel = {&meter, metered_attach, metered_submit, metered_stop},
-                                                           .te_timing = timing, .te_transfer_budget_us = budget_us
+                                                           .te_timing = timing, .te_budget_us = budget_us
                                                           }
                                               };
     esp_display_present_engine_t *p;
@@ -349,7 +349,7 @@ static void run_dynamic_phase_te(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_
         esp_display_present_frame_status_t state;
         check(esp_display_present_engine_wait_frame(p, receipt, ESP_DISPLAY_PRESENT_COMPLETION_SOURCE_RELEASED, 2000, &state), "wait");
         check(state.result, "dynamic TE frame result");
-        check(state.terminal && state.source_released ? ESP_OK : ESP_FAIL, "dynamic TE terminal");
+        check(state.terminal && state.src_released ? ESP_OK : ESP_FAIL, "dynamic TE terminal");
         check(esp_display_present_engine_release_receipt(p, receipt), "release");
     }
     portENTER_CRITICAL(&mux);
@@ -400,7 +400,7 @@ static void run_te_matrix_and_cancel_profile(esp_lcd_panel_handle_t panel, esp_l
                                                                    .max_frames = 3, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
                                                                    .panel_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED, .async_copy = true,
                                                                    .panel = {&meter, metered_attach, metered_submit, metered_stop},
-                                                                   .te_timing = timing, .te_transfer_budget_us = budget_us
+                                                                   .te_timing = timing, .te_budget_us = budget_us
                                                                   }
                                                       };
             esp_display_present_engine_t *p;
@@ -679,9 +679,9 @@ static void run_v1_vs_v2_qspi_bench(esp_lcd_panel_handle_t panel, esp_lcd_panel_
                 .image_in_psram = qcases[i].te, .compose_count = qcases[i].compose_buffers,
                 .width = w, .height = h, .tile_rows = tile, .buffer_count = 2, .max_frames = 3,
                 .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED,
-                .async_copy = qcases[i].te, .in_place_convert = !qcases[i].te,
+                .async_copy = qcases[i].te, .in_place = !qcases[i].te,
                 .panel = {&meter, metered_attach, metered_submit, metered_stop},
-                .te_timing = timing, .te_transfer_budget_us = budget_us,
+                .te_timing = timing, .te_budget_us = budget_us,
             },
         };
         esp_display_present_engine_t *v2 = NULL;

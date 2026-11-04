@@ -115,10 +115,90 @@ static void rectangle_reference(void)
     }
     present_image_deinit(&image);
 }
+static unsigned rect_pixels(esp_display_present_rect_t area)
+{
+    return area.width * area.height;
+}
+/* Seeded baseline pixels are not application coverage and are not repaired again.
+ * A seed that only overlaps part of the historical damage still leaves the rest. */
+static void seeded_baseline(void)
+{
+    enum { W = 8, H = 4 };
+    present_image_builder_t image;
+    assert(present_image_init(&image, W, H) == ESP_OK);
+    assert(present_image_begin(&image, 0, SIZE_MAX) == ESP_OK);
+    assert(present_image_cover(&image, (esp_display_present_rect_t) {
+        0, 0, W, H
+    }) == ESP_OK);
+    assert(present_image_commit(&image) == ESP_OK);
+
+    assert(present_image_begin(&image, 1, 0) == ESP_OK);
+    assert(present_image_seed(&image, (esp_display_present_rect_t) {
+        0, 0, W, H
+    }) == ESP_OK);
+    assert(present_image_cover(&image, (esp_display_present_rect_t) {
+        1, 1, 1, 1
+    }) == ESP_OK);
+    assert(!present_image_full(&image));
+    assert(image.writes.count == 1 && !image.writes.full);
+    present_image_prepare_repair(&image, true);
+    esp_display_present_rect_t area;
+    assert(!present_image_next_repair(&image, &area));
+    assert(image.repaired_pixels == 0);
+    assert(present_image_commit(&image) == ESP_OK);
+    assert(image.history[image.latest % PRESENT_IMAGE_HISTORY].damage.count == 1);
+
+    /* Replace that one-pixel publication with a wide historical write, then
+     * seed only the opposite corner. Repair keeps the historical pixels. */
+    assert(present_image_begin(&image, 0, 1) == ESP_OK);
+    assert(present_image_cover(&image, (esp_display_present_rect_t) {
+        2, 0, 6, 4
+    }) == ESP_OK);
+    assert(present_image_commit(&image) == ESP_OK);
+    assert(present_image_begin(&image, 1, 0) == ESP_OK);
+    assert(present_image_seed(&image, (esp_display_present_rect_t) {
+        0, 0, 2, 2
+    }) == ESP_OK);
+    assert(present_image_cover(&image, (esp_display_present_rect_t) {
+        0, 0, 1, 1
+    }) == ESP_OK);
+    present_image_prepare_repair(&image, false);
+    unsigned repaired = 0;
+    while (present_image_next_repair(&image, &area)) {
+        assert(area.x >= 2);
+        repaired += rect_pixels(area);
+        assert(present_image_mark_repaired(&image, &area) == ESP_OK);
+    }
+    assert(repaired == 24);
+    assert(!present_image_full(&image));
+    assert(present_image_commit(&image) == ESP_OK);
+
+    /* The seed bbox overlaps the historical damage. The overlap is not copied
+     * again; the historical pixels outside the bbox still are. */
+    assert(present_image_begin(&image, 0, 1) == ESP_OK);
+    assert(present_image_cover(&image, (esp_display_present_rect_t) {
+        6, 0, 2, 2
+    }) == ESP_OK);
+    assert(present_image_commit(&image) == ESP_OK);
+    assert(present_image_begin(&image, 1, 0) == ESP_OK);
+    assert(present_image_seed(&image, (esp_display_present_rect_t) {
+        5, 0, 2, 2
+    }) == ESP_OK);
+    present_image_prepare_repair(&image, false);
+    repaired = 0;
+    while (present_image_next_repair(&image, &area)) {
+        assert(!(area.x < 7 && area.x + area.width > 5 && area.y < 2));
+        repaired += rect_pixels(area);
+        assert(present_image_mark_repaired(&image, &area) == ESP_OK);
+    }
+    assert(repaired == 2);
+    present_image_deinit(&image);
+}
 int main(void)
 {
     lazy_coverage();
     rectangle_reference();
+    seeded_baseline();
     enum { W = 17, H = 9, N = W * H };
     present_image_builder_t b;
     assert(present_image_init(&b, W, H) == ESP_OK);

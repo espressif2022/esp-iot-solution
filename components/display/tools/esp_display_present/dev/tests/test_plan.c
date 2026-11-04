@@ -37,10 +37,10 @@ static esp_display_present_plan_config_t config(esp_display_present_engine_backe
 {
     return (esp_display_present_plan_config_t) {
         .presenter = {.backend_kind = kind, .backend = {.width = 480, .height = 480, .tile_rows = 16, .buffer_count = 2, .max_frames = 4,
-                                                        .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = {NULL, attach, submit, quiet}, .te_window_us = 1000, .te_transfer_budget_us = 100
+                                                        .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = {NULL, attach, submit, quiet}, .te_window_us = 1000, .te_budget_us = 100
                                                        }
                      },
-        .output = {.internal_dma = true, .external_memory = true, .tight_stride = true}
+        .output = {.internal_dma = true, .ext_mem = true, .tight_stride = true}
     };
 }
 static void modes(void)
@@ -57,7 +57,7 @@ static void modes(void)
     for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
         esp_display_present_plan_config_t c = config(ESP_DISPLAY_PRESENT_ENGINE_FB);
         c.presenter.mode = cases[i].mode;
-        c.presenter.backend.allow_active_scanout_writes = true;
+        c.presenter.backend.active_writes = true;
         esp_display_present_resolved_plan_t p;
         assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK);
         assert(p.images.count == cases[i].images && p.normalized.backend.render_contract == cases[i].contract);
@@ -125,7 +125,7 @@ static void topology_and_budget(void)
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_ERR_INVALID_SIZE);
     c = config(ESP_DISPLAY_PRESENT_ENGINE_TE);
     c.resources.image_memory = ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL;
-    c.output.external_memory = false;
+    c.output.ext_mem = false;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_ERR_NOT_SUPPORTED);
 }
 /* Independent per-pixel mapping checks rectangle coverage in all rotations. */
@@ -154,9 +154,9 @@ static void alignment(void)
         c.presenter.backend.tile_rows = 4;
         c.presenter.backend.rotation = rot;
         c.output.x_alignment = 2;
-        c.output.width_alignment = 4;
+        c.output.w_align = 4;
         c.output.y_alignment = 2;
-        c.output.height_alignment = 2;
+        c.output.h_align = 2;
         esp_display_present_resolved_plan_t p;
         assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK);
         esp_display_present_rect_t dirty = {3, 1, 3, 3}, r, a;
@@ -176,12 +176,12 @@ static void alignment(void)
     esp_display_present_plan_config_t c = config(ESP_DISPLAY_PRESENT_ENGINE_GRAM);
     esp_display_present_resolved_plan_t p;
     c.presenter.backend.width = 7;
-    c.output.width_alignment = 4;
+    c.output.w_align = 4;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_ERR_NOT_SUPPORTED);
     c = config(ESP_DISPLAY_PRESENT_ENGINE_GRAM);
     c.presenter.backend.format = ESP_DISPLAY_PRESENT_FORMAT_RGB888;
     c.presenter.backend.width = 5;
-    c.output.stride_alignment = 64;
+    c.output.stride_align = 64;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_ERR_NOT_SUPPORTED); /* tight row cannot be padded */
     c.output.tight_stride = false;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_ERR_NOT_SUPPORTED); /* non-tight padded pool layout rejected */
@@ -189,7 +189,7 @@ static void alignment(void)
 static void creation(void)
 {
     esp_display_present_plan_config_t partial = config(ESP_DISPLAY_PRESENT_ENGINE_FB);
-    partial.output.full_frame_only = true;
+    partial.output.full_only = true;
     esp_display_present_resolved_plan_t plan;
     assert(esp_display_present_plan_resolve(&partial, &plan) == ESP_OK);
     esp_display_present_rect_t dirty = {3, 4, 5, 6}, render, physical;
@@ -223,7 +223,7 @@ static void reverse_band_alignment(void)
         esp_display_present_plan_config_t c = config(ESP_DISPLAY_PRESENT_ENGINE_GRAM);
         c.presenter.backend.rotation = rotation;
         c.output.x_alignment = c.output.y_alignment = 4;
-        c.output.width_alignment = c.output.height_alignment = 2;
+        c.output.w_align = c.output.h_align = 2;
         esp_display_present_resolved_plan_t p;
         assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK);
         esp_display_present_rect_t dirty = {3, 3, 6, 18}, render, physical;
@@ -238,18 +238,18 @@ static void external_dma_alignment(void)
 {
     esp_display_present_plan_config_t c = config(ESP_DISPLAY_PRESENT_ENGINE_GRAM);
     c.resources.tile_memory = ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL;
-    c.output.external_memory = true;
-    c.output.external_length_alignment = 64;
+    c.output.ext_mem = true;
+    c.output.ext_len_align = 64;
     esp_display_present_resolved_plan_t p;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK);
-    assert(p.output.width_alignment == 32);
+    assert(p.output.w_align == 32);
     esp_display_present_rect_t dirty = {1, 1, 1, 1}, render, physical;
     assert(esp_display_present_plan_render_area(&p, &dirty, &render, &physical) == ESP_OK);
     assert((size_t)physical.width * physical.height * 2 % 64 == 0);
     c = config(ESP_DISPLAY_PRESENT_ENGINE_TE);
     c.resources.image_memory = ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL;
-    c.output.external_memory = true;
-    c.output.external_length_alignment = 64;
+    c.output.ext_mem = true;
+    c.output.ext_len_align = 64;
     c.presenter.backend.width = 31;
     c.presenter.backend.height = 31;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_ERR_NOT_SUPPORTED);
@@ -268,7 +268,7 @@ static void timing_model(void)
     c.presenter.backend.te_timing = (esp_display_present_te_timing_t) {
         .period_us = 100, .scan_us = 101
     };
-    c.presenter.backend.te_transfer_budget_us = 50;
+    c.presenter.backend.te_budget_us = 50;
     esp_display_present_resolved_plan_t p;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_ERR_NOT_SUPPORTED);
     c.presenter.backend.te_timing.scan_us = 80;
@@ -302,7 +302,7 @@ static void timing_timer_budget(void)
 static void total_budget(void)
 {
     esp_display_present_plan_config_t c = config(ESP_DISPLAY_PRESENT_ENGINE_FB);
-    c.additional_budget_bytes = 12345;
+    c.extra_bytes = 12345;
     esp_display_present_resolved_plan_t p;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK);
     assert(p.metadata_bytes && p.required_bytes == p.pixel_bytes + p.coverage_bytes + p.metadata_bytes + p.stack_bytes + 12345);
@@ -313,7 +313,7 @@ static esp_err_t fake_caps(void *ctx, esp_display_present_executor_caps_t *c)
 {
     (void)ctx;
     *c = (esp_display_present_executor_caps_t) {
-        .format_mask = 3, .rotation_mask = 1, .base_alignment = 64, .stride_alignment_bytes = 64
+        .format_mask = 3, .rotation_mask = 1, .base_alignment = 64, .stride_align = 64
     };
     return ESP_OK;
 }
@@ -348,7 +348,7 @@ static void executor(void)
     c.presenter.backend.async_copy = true;
     c.presenter.backend.rotation = ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90;
     esp_display_present_resolved_plan_t p;
-    assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.preferred_executor == cpu && p.address_probe_required);
+    assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.preferred_executor == cpu && p.probe_addrs);
     d.fallback = NULL;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_ERR_NOT_SUPPORTED);
     assert(esp_display_present_executor_destroy(cpu) == ESP_OK);
