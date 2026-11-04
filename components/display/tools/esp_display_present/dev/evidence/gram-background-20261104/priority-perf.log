@@ -1,0 +1,121 @@
+I (235) boot: Loaded app from partition at offset 0x10000
+I (239) oct_psram: vendor id    : 0x1a (UNKNOWN)
+I (239) oct_psram: Latency      : 0x01 (Fixed)
+I (239) oct_psram: DriveStr.    : 0x00 (25 Ohm)
+I (239) oct_psram: dev id       : 0x00 (generation 1)
+I (240) oct_psram: density      : 0x05 (128 Mbit)
+I (240) oct_psram: good-die     : 0x06 (Pass)
+I (240) oct_psram: SRF          : 0x02 (Slow Refresh)
+I (241) oct_psram: BurstType    : 0x00 ( Wrap)
+I (241) oct_psram: BurstLen     : 0x03 (2048 Byte)
+I (241) oct_psram: BitMode      : 0x00 (X8 Mode)
+I (242) oct_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (242) oct_psram: DriveStrength: 0x00 (1/1)
+I (242) MSPI Timing: Enter psram timing tuning
+I (394) esp_psram: Found 16MB PSRAM device
+I (394) esp_psram: Speed: 200MHz
+I (395) cpu_start: Multicore app
+I (709) esp_psram: SPI SRAM memory test OK
+I (717) cpu_start: Pro cpu start user code
+I (717) cpu_start: cpu freq: 320000000 Hz
+I (718) app_init: Application information:
+I (718) app_init: Project name:     gram_background_probe
+I (718) app_init: App version:      1
+I (718) app_init: Compile time:     Nov  4 2026 10:36:13
+I (718) app_init: ELF file SHA256:  5dceac7f7...
+I (719) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8
+I (719) efuse_init: Min chip rev:     v0.0
+I (719) efuse_init: Max chip rev:     v0.99 
+I (719) efuse_init: Chip rev:         v0.0
+I (720) heap_init: Initializing. RAM available for dynamic allocation:
+I (720) heap_init: At 2F015E70 len 00065140 (404 KiB): RAM
+I (720) heap_init: At 2F07AFB0 len 000041C0 (16 KiB): RAM
+I (720) heap_init: At 2E000000 len 00007FE8 (31 KiB): RTCRAM
+I (721) esp_psram: Adding pool of 16384K of PSRAM memory to heap allocator
+I (721) spi_flash: detected chip: gd
+I (722) spi_flash: flash io: dio
+I (722) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (723) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (723) main_task: Started on CPU0
+I (724) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (724) main_task: Calling app_main()
+I (724) main_task: Returned from app_main()
+I (3724) qspi: BSP revision=0100 clk=44 rst=42 TE=43 CS=50 QSPI=40MHz
+I (3825) co5300: version: 2.2.0
+I (3825) co5300_spi: LCD panel create success, version: 2.2.0
+W (4585) co5300_spi: The 3Ah command has been used and will be overwritten by external initialization sequence
+I (5185) phase_perf: WORKER_PRIORITY priority=6
+I (5187) phase_perf: MEMORY impl=priority profile=GRAM_T1_0 internal_bytes=24672
+I (5187) phase_perf: CASE_BEGIN impl=priority board=S31_QSPI profile=GRAM_T1_0
+I (8249) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T1_0 rep=0 frames=60 total_us=2700004 begin_us=3068 caps_us=250 acquire_us=2358294 rows_us=48549 render_us=62372 submit_us=215444 commit_us=3231 drain_us=1287 max_frame_us=45003 max_submit_us=134 max_acquire_us=1343
+I (10950) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T1_0 rep=1 frames=60 total_us=2699936 begin_us=3168 caps_us=226 acquire_us=2358872 rows_us=48664 render_us=62431 submit_us=214721 commit_us=3098 drain_us=1312 max_frame_us=45004 max_submit_us=146 max_acquire_us=1350
+I (13651) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T1_0 rep=2 frames=60 total_us=2699970 begin_us=3153 caps_us=229 acquire_us=2360193 rows_us=48696 render_us=62409 submit_us=213459 commit_us=3100 drain_us=1307 max_frame_us=45008 max_submit_us=145 max_acquire_us=1339
+W (13652) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (13652) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (13653) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (13653) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (13655) phase_perf: MEMORY impl=priority profile=GRAM_T2_0 internal_bytes=40408
+I (13656) phase_perf: CASE_BEGIN impl=priority board=S31_QSPI profile=GRAM_T2_0
+I (15698) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T2_0 rep=0 frames=60 total_us=1800979 begin_us=2775 caps_us=229 acquire_us=1502520 rows_us=17414 render_us=62519 submit_us=202786 commit_us=3252 drain_us=2425 max_frame_us=30001 max_submit_us=137 max_acquire_us=986
+I (17500) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T2_0 rep=1 frames=60 total_us=1800925 begin_us=2779 caps_us=227 acquire_us=1502519 rows_us=17424 render_us=62549 submit_us=202730 commit_us=3257 drain_us=2429 max_frame_us=30019 max_submit_us=143 max_acquire_us=858
+I (19302) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T2_0 rep=2 frames=60 total_us=1800860 begin_us=2784 caps_us=224 acquire_us=1502479 rows_us=17486 render_us=62497 submit_us=202643 commit_us=3267 drain_us=2426 max_frame_us=30019 max_submit_us=144 max_acquire_us=843
+W (19303) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (19303) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (19304) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (19304) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (19307) phase_perf: MEMORY impl=priority profile=GRAM_T2_90 internal_bytes=76648
+I (19307) phase_perf: CASE_BEGIN impl=priority board=S31_QSPI profile=GRAM_T2_90
+I (21351) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T2_90 rep=0 frames=60 total_us=1800982 begin_us=2803 caps_us=1024 acquire_us=1644257 rows_us=18561 render_us=69275 submit_us=51907 commit_us=3000 drain_us=2093 max_frame_us=30241 max_submit_us=232 max_acquire_us=1264
+I (23153) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T2_90 rep=1 frames=60 total_us=1800911 begin_us=2983 caps_us=960 acquire_us=1639153 rows_us=19164 render_us=71764 submit_us=53522 commit_us=3180 drain_us=1749 max_frame_us=30283 max_submit_us=249 max_acquire_us=1335
+I (24955) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T2_90 rep=2 frames=60 total_us=1800926 begin_us=2910 caps_us=960 acquire_us=1651313 rows_us=17773 render_us=67763 submit_us=47712 commit_us=2841 drain_us=1748 max_frame_us=30248 max_submit_us=243 max_acquire_us=1340
+W (24956) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (24956) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=5640 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (24957) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=5640 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (24957) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=5640 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (24960) phase_perf: MEMORY impl=priority profile=GRAM_T2_PSRAM internal_bytes=45716
+I (24960) phase_perf: CASE_BEGIN impl=priority board=S31_QSPI profile=GRAM_T2_PSRAM
+I (26997) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T2_PSRAM rep=0 frames=60 total_us=1798979 begin_us=4150 caps_us=287 acquire_us=1619261 rows_us=34394 render_us=64501 submit_us=63166 commit_us=2865 drain_us=2429 max_frame_us=30031 max_submit_us=226 max_acquire_us=1092
+I (28789) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T2_PSRAM rep=1 frames=60 total_us=1790903 begin_us=4219 caps_us=278 acquire_us=1580004 rows_us=34150 render_us=77022 submit_us=80286 commit_us=2902 drain_us=2433 max_frame_us=30106 max_submit_us=231 max_acquire_us=1099
+I (30576) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T2_PSRAM rep=2 frames=60 total_us=1785812 begin_us=4167 caps_us=290 acquire_us=1576906 rows_us=33241 render_us=76744 submit_us=79661 commit_us=2844 drain_us=2465 max_frame_us=30050 max_submit_us=229 max_acquire_us=1091
+W (30577) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (30577) present_v2: executor=dma2d cpu_attempts=5640 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (30578) present_v2: executor=dma2d cpu_attempts=5640 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (30578) present_v2: executor=dma2d cpu_attempts=5640 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (30579) phase_perf: WORKER_PRIORITY priority=7
+I (30580) phase_perf: MEMORY impl=priority profile=GRAM_T1_0 internal_bytes=24672
+I (30581) phase_perf: CASE_BEGIN impl=priority board=S31_QSPI profile=GRAM_T1_0
+I (33642) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T1_0 rep=0 frames=60 total_us=2699976 begin_us=2820 caps_us=236 acquire_us=2327494 rows_us=49094 render_us=62545 submit_us=245185 commit_us=3827 drain_us=1228 max_frame_us=45006 max_submit_us=147 max_acquire_us=1307
+I (36344) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T1_0 rep=1 frames=60 total_us=2700809 begin_us=2151 caps_us=234 acquire_us=2329531 rows_us=48947 render_us=62531 submit_us=244812 commit_us=3296 drain_us=1725 max_frame_us=44998 max_submit_us=161 max_acquire_us=1445
+I (39045) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T1_0 rep=2 frames=60 total_us=2699988 begin_us=2809 caps_us=237 acquire_us=2327713 rows_us=49091 render_us=62527 submit_us=245061 commit_us=3808 drain_us=1260 max_frame_us=45009 max_submit_us=165 max_acquire_us=1308
+W (39046) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (39046) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (39047) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (39047) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (39049) phase_perf: MEMORY impl=priority profile=GRAM_T2_0 internal_bytes=40408
+I (39050) phase_perf: CASE_BEGIN impl=priority board=S31_QSPI profile=GRAM_T2_0
+I (40863) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T2_0 rep=0 frames=60 total_us=1598001 begin_us=2289 caps_us=263 acquire_us=1254366 rows_us=26680 render_us=62699 submit_us=239466 commit_us=3077 drain_us=1796 max_frame_us=26756 max_submit_us=160 max_acquire_us=903
+I (42462) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T2_0 rep=1 frames=60 total_us=1597933 begin_us=2268 caps_us=249 acquire_us=1254628 rows_us=26603 render_us=62635 submit_us=239517 commit_us=3032 drain_us=1571 max_frame_us=26771 max_submit_us=159 max_acquire_us=848
+I (44062) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T2_0 rep=2 frames=60 total_us=1598949 begin_us=2303 caps_us=260 acquire_us=1254904 rows_us=26496 render_us=62680 submit_us=239623 commit_us=3072 drain_us=2278 max_frame_us=26698 max_submit_us=162 max_acquire_us=869
+W (44063) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (44063) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (44064) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (44064) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (44067) phase_perf: MEMORY impl=priority profile=GRAM_T2_90 internal_bytes=76492
+I (44067) phase_perf: CASE_BEGIN impl=priority board=S31_QSPI profile=GRAM_T2_90
+I (46008) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T2_90 rep=0 frames=60 total_us=1708995 begin_us=4599 caps_us=429 acquire_us=1425607 rows_us=40139 render_us=65995 submit_us=144085 commit_us=7278 drain_us=1878 max_frame_us=28928 max_submit_us=352 max_acquire_us=1889
+I (47723) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T2_90 rep=1 frames=60 total_us=1713852 begin_us=4876 caps_us=578 acquire_us=1427133 rows_us=40756 render_us=68301 submit_us=142665 commit_us=7307 drain_us=1976 max_frame_us=29055 max_submit_us=339 max_acquire_us=1796
+I (49434) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T2_90 rep=2 frames=60 total_us=1709763 begin_us=4059 caps_us=651 acquire_us=1425646 rows_us=39961 render_us=68461 submit_us=141510 commit_us=7402 drain_us=1844 max_frame_us=29025 max_submit_us=288 max_acquire_us=1741
+W (49435) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (49435) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=5640 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (49436) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=5640 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (49436) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=5640 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (49439) phase_perf: MEMORY impl=priority profile=GRAM_T2_PSRAM internal_bytes=45708
+I (49439) phase_perf: CASE_BEGIN impl=priority board=S31_QSPI profile=GRAM_T2_PSRAM
+I (51296) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T2_PSRAM rep=0 frames=60 total_us=1636003 begin_us=2696 caps_us=231 acquire_us=1444333 rows_us=45970 render_us=62883 submit_us=64902 commit_us=5166 drain_us=2368 max_frame_us=27526 max_submit_us=99 max_acquire_us=1127
+I (52935) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T2_PSRAM rep=1 frames=60 total_us=1637916 begin_us=2854 caps_us=231 acquire_us=1441509 rows_us=45987 render_us=62872 submit_us=70088 commit_us=4964 drain_us=1958 max_frame_us=27649 max_submit_us=93 max_acquire_us=1238
+I (54574) phase_perf: SAMPLE impl=priority board=S31_QSPI profile=GRAM_T2_PSRAM rep=2 frames=60 total_us=1637910 begin_us=2729 caps_us=232 acquire_us=1441526 rows_us=46028 render_us=62930 submit_us=69910 commit_us=5003 drain_us=2154 max_frame_us=27535 max_submit_us=93 max_acquire_us=1253
+W (54575) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (54575) present_v2: executor=dma2d cpu_attempts=5640 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (54576) present_v2: executor=dma2d cpu_attempts=5640 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (54576) present_v2: executor=dma2d cpu_attempts=5640 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (54577) phase_perf: PERF_DONE impl=priority board=S31_QSPI cases=8 repeats=3 frames=60

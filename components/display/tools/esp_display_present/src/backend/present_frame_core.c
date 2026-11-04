@@ -13,7 +13,8 @@ esp_err_t present_frame_core_init(present_frame_core_t *core, size_t count)
         return ESP_ERR_INVALID_ARG;
     }
     *core = (present_frame_core_t) {
-        .count = count, .active = SIZE_MAX
+        .count = count,
+        .active = SIZE_MAX
     };
     core->frames = present_alloc(count * sizeof(*core->frames));
     return core->frames ? ESP_OK : ESP_ERR_NO_MEM;

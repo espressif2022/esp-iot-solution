@@ -9,7 +9,13 @@
 #include "present_image_repair.h"
 #include <string.h>
 
-typedef enum { IDLE, BUILDING, REPAIR, READY, INFLIGHT } compose_state_t;
+typedef enum {
+    IDLE,
+    BUILDING,
+    REPAIR,
+    READY,
+    INFLIGHT,
+} compose_state_t;
 typedef struct {
     compose_state_t state;
     present_te_frame_t frame;
@@ -51,8 +57,11 @@ static esp_err_t copy(present_te_composer_t *composer, compose_job_t *job, const
                       const esp_display_present_rect_t *area, uint32_t x, uint32_t y)
 {
     esp_display_present_copy_request_t request = {
-        .source = *source, .destination = composer->buffers[job->candidate],
-        .source_area = *area, .destination_x = x, .destination_y = y,
+        .source = *source,
+        .destination = composer->buffers[job->candidate],
+        .source_area = *area,
+        .destination_x = x,
+        .destination_y = y,
         .rotation = ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0,
     };
     esp_display_present_copy_ticket_t ticket;
@@ -103,7 +112,8 @@ esp_err_t present_te_composer_create(const present_te_composer_config_t *cfg, pr
     esp_err_t image_error = present_image_init(&composer->image, cfg->width, cfg->height);
     for (size_t i = 0; i < composer->image_count; i++) {
         composer->buffers[i] = (esp_display_present_surface_t) {
-            .pixels = present_alloc_pixels_in(pixels * bpp, cfg->image_in_psram), .capacity_bytes = pixels * bpp,
+            .pixels = present_alloc_pixels_in(pixels * bpp, cfg->image_in_psram),
+            .capacity_bytes = pixels * bpp,
             .layout = {cfg->width, cfg->height, cfg->width * bpp, cfg->format, cfg->panel_order},
         };
     }
@@ -158,7 +168,9 @@ esp_err_t present_te_composer_begin(present_te_composer_t *composer, present_te_
     }
     size_t candidate = (size_t)(job - composer->jobs);
     *job = (compose_job_t) {
-        .state = BUILDING, .frame = {token}, .candidate = candidate
+        .state = BUILDING,
+        .frame = {token},
+        .candidate = candidate
     };
     esp_err_t error = present_image_begin(&composer->image, candidate, composer->baseline < 0 ? SIZE_MAX : (size_t)composer->baseline);
     if (error != ESP_OK) {
@@ -192,9 +204,14 @@ esp_err_t present_te_composer_queue_write(present_te_composer_t *composer, prese
     if (slot == PRESENT_MAX_COPY_JOBS) {
         return ESP_ERR_NO_MEM;
     }
-    esp_display_present_copy_request_t r = {.source = *source, .destination = composer->buffers[job->candidate],
-                                            .source_area = *area, .destination_x = x, .destination_y = y, .rotation = composer->rotation
-                                           };
+    esp_display_present_copy_request_t r = {
+        .source = *source,
+        .destination = composer->buffers[job->candidate],
+        .source_area = *area,
+        .destination_x = x,
+        .destination_y = y,
+        .rotation = composer->rotation,
+    };
     esp_err_t error = esp_display_present_pixel_submit(composer->pixel, &r, ticket);
     if (error != ESP_OK) {
         return error;

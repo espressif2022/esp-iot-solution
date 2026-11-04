@@ -32,11 +32,17 @@ static esp_err_t dma2d_caps(void *context, esp_display_present_executor_caps_t *
 {
     (void)context;
     *out = (esp_display_present_executor_caps_t) {
-        .name = "dma2d", .format_mask = 3,
-        .rotation_mask = 1, .byte_swap = false,
-        .base_alignment = 64, .destination_capacity_alignment = 64, .stride_alignment_bytes = 1,
-        .max_stride_pixels = 0x3fff, .max_height = 0x3fff,
-        .address_dependent_constraints = true, .requires_full_stride_capacity = true
+        .name = "dma2d",
+        .format_mask = 3,
+        .rotation_mask = 1,
+        .byte_swap = false,
+        .base_alignment = 64,
+        .destination_capacity_alignment = 64,
+        .stride_alignment_bytes = 1,
+        .max_stride_pixels = 0x3fff,
+        .max_height = 0x3fff,
+        .address_dependent_constraints = true,
+        .requires_full_stride_capacity = true
     };
     return ESP_OK;
 }

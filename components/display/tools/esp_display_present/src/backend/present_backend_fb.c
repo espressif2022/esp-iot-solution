@@ -11,7 +11,10 @@
 #include "present_image_repair.h"
 #include <string.h>
 
-enum { FB_LIMIT = 3, RECORD_LIMIT = PRESENT_MAX_FRAMES };
+enum {
+    FB_LIMIT = 3,
+    RECORD_LIMIT = PRESENT_MAX_FRAMES,
+};
 
 /*
  * Explicit single-backend FB pipeline stages (advanced by present_fb_service):
@@ -224,8 +227,11 @@ static esp_display_present_copy_request_t baseline_copy(present_backend_t *backe
     }
     return (esp_display_present_copy_request_t) {
         .source = {source.pixels, source.capacity_bytes, source.layout},
-        .destination = backend->slots[target].surface, .source_area = source_area,
-        .destination_x = area.x, .destination_y = area.y, .rotation = rotation
+        .destination = backend->slots[target].surface,
+        .source_area = source_area,
+        .destination_x = area.x,
+        .destination_y = area.y,
+        .rotation = rotation
     };
 }
 
@@ -338,14 +344,22 @@ static void fail_active_build(present_backend_t *backend, esp_err_t error)
  */
 /* Internal progress is independent of ESP operation errors: a hardware TIMEOUT
  * must never be interpreted as successful asynchronous acceptance. */
-typedef enum { FB_ADVANCE_IDLE, FB_ADVANCE_PENDING, FB_ADVANCE_COMPLETE, FB_ADVANCE_FAILED } fb_advance_state_t;
+typedef enum {
+    FB_ADVANCE_IDLE,
+    FB_ADVANCE_PENDING,
+    FB_ADVANCE_COMPLETE,
+    FB_ADVANCE_FAILED,
+} fb_advance_state_t;
 typedef struct {
     fb_advance_state_t state;
     esp_err_t error;
 } fb_advance_result_t;
 /* ATTEMPT can reject end() and leave the producer frame open. Once accepted,
  * failures must terminate its receipt and retain a sticky fault. */
-typedef enum { FB_SEAL_ATTEMPT, FB_SEAL_ACCEPTED } fb_seal_context_t;
+typedef enum {
+    FB_SEAL_ATTEMPT,
+    FB_SEAL_ACCEPTED,
+} fb_seal_context_t;
 
 static fb_advance_result_t advance_build_pipeline(present_backend_t *backend, fb_seal_context_t context)
 {
@@ -787,10 +801,14 @@ static esp_err_t fb_create(const esp_display_present_backend_config_t *config, p
             return ESP_ERR_INVALID_ARG;
         }
     }
-    esp_display_present_pixel_config_t pc = {.max_jobs = backend->tile_count ? backend->tile_count : 1, .asynchronous = config->async_copy,
-                                             .execute = config->copy_execute, .execute_user = config->copy_user,
-                                             .on_event = config->async_copy ? copy_done : NULL, .user = backend
-                                            };
+    esp_display_present_pixel_config_t pc = {
+        .max_jobs = backend->tile_count ? backend->tile_count : 1,
+        .asynchronous = config->async_copy,
+        .execute = config->copy_execute,
+        .execute_user = config->copy_user,
+        .on_event = config->async_copy ? copy_done : NULL,
+        .user = backend,
+    };
     esp_err_t error = esp_display_present_pixel_create(&pc, &backend->pixel);
     if (error == ESP_OK) {
         error = config->panel.attach(config->panel.context, dispatch, backend);
@@ -810,10 +828,13 @@ static esp_err_t fb_get_caps(present_backend_t *backend, esp_display_present_bac
     }
     *out = (esp_display_present_backend_caps_t) {
         .contract = backend->config.render_contract,
-        .draw_layout = backend->slots[0].surface.layout, .drawbuf_capacity_bytes = backend->tile_bytes,
-        .buffer_alignment = PRESENT_BUFFER_ALIGNMENT, .max_damage_areas = PRESENT_MAX_DAMAGE_AREAS,
+        .draw_layout = backend->slots[0].surface.layout,
+        .drawbuf_capacity_bytes = backend->tile_bytes,
+        .buffer_alignment = PRESENT_BUFFER_ALIGNMENT,
+        .max_damage_areas = PRESENT_MAX_DAMAGE_AREAS,
         .max_tile_rows = backend->config.render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION ? backend->config.tile_rows : backend->config.height,
-        .retains_content = true, .supports_present_confirmation = true,
+        .retains_content = true,
+        .supports_present_confirmation = true,
         .writes_active_scanout = backend->config.buffer_count == 1
     };
     out->draw_layout.width = backend->config.width;
@@ -1020,7 +1041,9 @@ static esp_err_t fb_acquire(present_backend_t *backend, esp_display_present_fram
     }
     esp_display_present_lease_t *lease = tile ? &tile->lease : &backend->lease;
     *lease = (esp_display_present_lease_t) {
-        .id = {token}, .surface = surface, .logical_area = actual
+        .id = {token},
+        .surface = surface,
+        .logical_area = actual
     };
     *out = *lease;
     return ESP_OK;
@@ -1057,8 +1080,11 @@ static esp_err_t fb_submit_region_ex(present_backend_t *backend, esp_display_pre
         }
         esp_display_present_copy_request_t copy = {
             .source = {tile->pixels, backend->tile_bytes, {area.width, area.height, stride, backend->config.format, backend->config.draw_order}},
-            .source_area = {0, 0, area.width, area.height}, .destination = backend->slots[backend->active].surface,
-            .destination_x = physical.x, .destination_y = physical.y, .rotation = backend->config.rotation
+            .source_area = {0, 0, area.width, area.height},
+            .destination = backend->slots[backend->active].surface,
+            .destination_x = physical.x,
+            .destination_y = physical.y,
+            .rotation = backend->config.rotation
         };
         esp_display_present_copy_ticket_t ticket;
         esp_err_t error = esp_display_present_pixel_submit(backend->pixel, &copy, &ticket);

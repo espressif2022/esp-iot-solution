@@ -74,8 +74,11 @@ static inline esp_display_present_frame_status_t present_record_status(const pre
                                                                        bool sealed, bool released, bool terminal, bool presented)
 {
     return (esp_display_present_frame_status_t) {
-        .sealed = sealed, .source_released = released, .terminal = terminal,
-        .present_confirmed = presented, .result = record->result
+        .sealed = sealed,
+        .source_released = released,
+        .terminal = terminal,
+        .present_confirmed = presented,
+        .result = record->result
     };
 }
 

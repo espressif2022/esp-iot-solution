@@ -1,0 +1,7 @@
+{
+  "flash": true,
+  "monitor": true,
+  "restore": true,
+  "verify": true,
+  "verify_retry": true
+}

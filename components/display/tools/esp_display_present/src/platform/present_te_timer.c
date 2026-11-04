@@ -157,7 +157,12 @@ esp_err_t present_te_timer_create(present_te_timer_callback_t callback, void *us
         return ESP_ERR_NO_MEM;
     }
     timer->callback = callback; timer->user = user;
-    const esp_timer_create_args_t args = {.callback = timer_callback, .arg = timer, .dispatch_method = ESP_TIMER_TASK, .name = "present_te"};
+    const esp_timer_create_args_t args = {
+        .callback = timer_callback,
+        .arg = timer,
+        .dispatch_method = ESP_TIMER_TASK,
+        .name = "present_te",
+    };
     esp_err_t error = esp_timer_create(&args, &timer->handle);
     if (error != ESP_OK) {
         free(timer);

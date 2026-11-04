@@ -10,7 +10,10 @@
 extern "C" {
 #endif
 typedef struct esp_display_present_lcd_scanout esp_display_present_lcd_scanout_t;
-typedef enum { ESP_DISPLAY_PRESENT_LCD_DSI, ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE } esp_display_present_lcd_scanout_kind_t;
+typedef enum {
+    ESP_DISPLAY_PRESENT_LCD_DSI,
+    ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE,
+} esp_display_present_lcd_scanout_kind_t;
 typedef bool (*esp_display_present_scanout_vsync_fn)(void *user, uint64_t timestamp_us, bool from_isr);
 typedef esp_err_t (*esp_display_present_stop_scanout_fn)(void *user, uint32_t timeout_ms);
 

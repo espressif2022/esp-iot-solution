@@ -1,0 +1,7 @@
+{
+  "flash": true,
+  "monitor": true,
+  "restore": true,
+  "restore_bytes": 1048576,
+  "verify": true
+}

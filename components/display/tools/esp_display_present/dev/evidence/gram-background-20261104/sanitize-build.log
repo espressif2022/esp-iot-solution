@@ -1,0 +1,49 @@
+Consolidate compiler generated dependencies of target present_engine
+[  3%] Built target test_executor_dma2d
+[  3%] Built target test_executor_both
+[  4%] Built target test_executor_ppa
+[  7%] Built target test_executor_cpu
+[  8%] Built target present_engine
+[  8%] Built target test_frame_core
+[  8%] Built target test_te_timing
+[  9%] Built target test_image
+[  9%] Built target test_plan
+[  9%] Built target test_coverage
+[  9%] Built target test_records
+[  9%] Built target test_repair
+[ 10%] Built target test_rotation
+[ 10%] Built target test_pixel
+[ 10%] Built target test_scanout
+[ 10%] Built target test_gram
+[ 10%] Built target test_lcd_spi
+[ 10%] Built target test_presenter
+[ 10%] Built target test_te_composer
+Consolidate compiler generated dependencies of target test_scheduler
+[ 11%] Building C object CMakeFiles/test_scheduler.dir/tests/test_scheduler.c.o
+[ 12%] Built target test_presenter_te
+[ 12%] Built target test_te
+[ 12%] Built target header_smoke
+[ 13%] Built target test_event
+[ 13%] Built target test_fb
+[ 13%] Built target test_boundary_trace
+Consolidate compiler generated dependencies of target present_legacy_resources
+[ 13%] Building C object CMakeFiles/present_legacy_resources.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/present_resources.c.o
+[ 13%] Built target test_legacy_te_gate
+[ 14%] Built target test_transfer_timeout
+[ 14%] Built target test_legacy_te_gate_old
+[ 95%] Built target lvgl
+[ 95%] Linking C executable test_scheduler
+[ 96%] Built target present_lvgl_binding
+[ 97%] Built target test_lvgl_te
+[ 98%] Built target test_lvgl_zero
+[ 98%] Built target test_lvgl
+[ 98%] Built target test_lvgl_fb
+[ 98%] Linking C static library libpresent_legacy_resources.a
+[ 98%] Built target test_scheduler
+[ 98%] Built target present_legacy_resources
+[ 99%] Linking C executable test_legacy_resources
+[ 99%] Built target present_legacy
+[ 99%] Built target present_legacy_lvgl
+[ 99%] Linking CXX executable test_legacy_facade
+[100%] Built target test_legacy_resources
+[100%] Built target test_legacy_facade

@@ -8,9 +8,16 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <assert.h>
-/* Caller serialized. References are independent of frame receipts and content
- * versions. A confirmed FB receipt may still retain S indefinitely. */
-typedef enum { PRESENT_REF_BASELINE, PRESENT_REF_COPY, PRESENT_REF_TRANSFER, PRESENT_REF_SCANOUT, PRESENT_REF_COUNT } present_ref_kind_t;
+/* Caller serialized. These references track why pixels cannot be written;
+ * they are independent of frame receipts and content versions. In particular,
+ * confirming an FB frame does not release its current scanout reference. */
+typedef enum {
+    PRESENT_REF_BASELINE,
+    PRESENT_REF_COPY,
+    PRESENT_REF_TRANSFER,
+    PRESENT_REF_SCANOUT,
+    PRESENT_REF_COUNT,
+} present_ref_kind_t;
 typedef struct {
     size_t readers[PRESENT_REF_COUNT];
     bool writer;

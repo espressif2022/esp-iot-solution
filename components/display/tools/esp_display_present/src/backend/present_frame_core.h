@@ -12,7 +12,11 @@
  * progressing records. Pending counts accepted/reserved accesses, not images.
  * Output policies still supply presentation evidence; terminal is not present.
  */
-typedef enum { PRESENT_CORE_RUNNING, PRESENT_CORE_CLOSING, PRESENT_CORE_QUIESCENT } present_core_life_t;
+typedef enum {
+    PRESENT_CORE_RUNNING,
+    PRESENT_CORE_CLOSING,
+    PRESENT_CORE_QUIESCENT,
+} present_core_life_t;
 typedef struct {
     present_record_t common;
     size_t pending, leased;

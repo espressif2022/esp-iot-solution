@@ -12,9 +12,14 @@ static esp_err_t cpu_caps(void *context, esp_display_present_executor_caps_t *ou
 {
     (void)context;
     *out = (esp_display_present_executor_caps_t) {
-        .name = "cpu", .format_mask = 3, .rotation_mask = 15,
-        .byte_swap = true, .in_place = true, .base_alignment = 1,
-        .destination_capacity_alignment = 1, .stride_alignment_bytes = 1
+        .name = "cpu",
+        .format_mask = 3,
+        .rotation_mask = 15,
+        .byte_swap = true,
+        .in_place = true,
+        .base_alignment = 1,
+        .destination_capacity_alignment = 1,
+        .stride_alignment_bytes = 1
     };
     return ESP_OK;
 }

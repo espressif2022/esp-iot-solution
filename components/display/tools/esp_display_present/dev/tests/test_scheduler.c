@@ -23,6 +23,7 @@ typedef struct {
     bool release;
     bool reject;
     bool immediate;
+    bool uncertain;
     bool fb;
 } panel_t;
 static void complete_locked(panel_t *p)
@@ -59,6 +60,7 @@ static esp_display_present_tx_result_t submit(void *context, const esp_display_p
         pthread_cond_wait(&p->condition, &p->lock);
     }
     bool reject = p->reject;
+    bool uncertain = p->uncertain;
     if (!reject) {
         p->cookie = cookie;
         if (p->immediate) {
@@ -67,7 +69,8 @@ static esp_display_present_tx_result_t submit(void *context, const esp_display_p
     }
     pthread_mutex_unlock(&p->lock);
     return (esp_display_present_tx_result_t) {
-        reject ? ESP_DISPLAY_PRESENT_TX_REJECTED : ESP_DISPLAY_PRESENT_TX_ACCEPTED, reject ? ESP_FAIL : ESP_OK
+        reject ? ESP_DISPLAY_PRESENT_TX_REJECTED : uncertain ? ESP_DISPLAY_PRESENT_TX_UNCERTAIN : ESP_DISPLAY_PRESENT_TX_ACCEPTED,
+               reject || uncertain ? ESP_FAIL : ESP_OK
     };
 }
 
@@ -241,6 +244,147 @@ static void rejection(void)
     destroy(p, &panel);
 }
 
+static esp_display_present_engine_t *create_gram(panel_t *panel, uint32_t transfer_timeout)
+{
+    esp_display_present_engine_config_t config = {
+        .backend_kind = ESP_DISPLAY_PRESENT_ENGINE_GRAM,
+        .backend = {
+            .width = 4, .height = 4, .tile_rows = 2, .buffer_count = 2,
+            .max_frames = 4, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+            .transfer_capacity = 1, .deferred_submit = true, .panel = {panel, attach, submit, quiesce}
+        },
+        .timeout_ms = 20, .transfer_timeout_ms = transfer_timeout, .background_service = true
+    };
+    esp_display_present_engine_t *p = NULL;
+    OK(esp_display_present_engine_create(&config, &p));
+    return p;
+}
+
+static esp_display_present_lease_t gram_tile(esp_display_present_engine_t *p, unsigned y)
+{
+    esp_display_present_lease_t lease;
+    OK(esp_display_present_engine_acquire_buffer(p, &lease));
+    memset(lease.surface.pixels, 0xab, 16);
+    esp_display_present_engine_area_t area = {0, y, 3, y + 1};
+    OK(esp_display_present_engine_submit_buffer(p, &lease, &area, 8));
+    return lease;
+}
+
+static void gram_driver_block_and_stop(void)
+{
+    panel_t panel;
+    init_panel(&panel);
+    panel.blocked = true;
+    esp_display_present_engine_t *p = create_gram(&panel, 0);
+    esp_display_present_frame_request_t request = {0};
+    OK(esp_display_present_engine_begin_next_frame(p, &request));
+    esp_display_present_lease_t first = gram_tile(p, 0);
+    wait_submit(&panel, 1);
+    uint64_t start = present_now_ms();
+    esp_display_present_lease_t second = gram_tile(p, 2);
+    assert(present_now_ms() - start < 500);
+    assert(first.surface.pixels != second.surface.pixels);
+    OK(esp_display_present_engine_commit_frame(p, NULL));
+    pthread_mutex_lock(&panel.lock);
+    assert(panel.surface.pixels == first.surface.pixels); /* No conversion copy. */
+    pthread_mutex_unlock(&panel.lock);
+    assert(esp_display_present_engine_stop(p, 5) == ESP_ERR_TIMEOUT);
+    assert(esp_display_present_engine_destroy(p) == ESP_ERR_INVALID_STATE);
+    pthread_mutex_lock(&panel.lock);
+    assert(panel.quiesces == 0 && panel.submissions == 1);
+    panel.release = true;
+    panel.immediate = true;
+    pthread_cond_broadcast(&panel.condition);
+    pthread_mutex_unlock(&panel.lock);
+    OK(esp_display_present_engine_stop(p, 1000));
+    assert(panel.submissions == 1); /* Closing does not submit queued tile #2. */
+    destroy(p, &panel);
+}
+
+static void gram_zero_copy_backpressure(void)
+{
+    panel_t panel;
+    init_panel(&panel);
+    esp_display_present_engine_t *p = create_gram(&panel, 0);
+    esp_display_present_frame_request_t request = {0};
+    OK(esp_display_present_engine_begin_next_frame(p, &request));
+    esp_display_present_lease_t first = gram_tile(p, 0);
+    wait_submit(&panel, 1);
+    (void)gram_tile(p, 2);
+    esp_display_present_lease_t unavailable;
+    assert(esp_display_present_engine_acquire_buffer(p, &unavailable) == ESP_ERR_TIMEOUT);
+    OK(esp_display_present_engine_commit_frame(p, NULL));
+    pthread_mutex_lock(&panel.lock);
+    assert(panel.surface.pixels == first.surface.pixels && panel.submissions == 1);
+    pthread_mutex_unlock(&panel.lock);
+    complete(&panel);
+    wait_submit(&panel, 2);
+    complete(&panel);
+    OK(esp_display_present_engine_drain(p, 1000));
+    pthread_mutex_lock(&panel.lock);
+    panel.immediate = true;
+    pthread_mutex_unlock(&panel.lock);
+    frame(p); /* Both callbacks may occur before submit returns. */
+    OK(esp_display_present_engine_drain(p, 1000));
+    destroy(p, &panel);
+}
+
+static void gram_uncertain_keeps_pixels(void)
+{
+    panel_t panel;
+    init_panel(&panel);
+    panel.uncertain = true;
+    esp_display_present_engine_t *p = create_gram(&panel, 0);
+    esp_display_present_frame_request_t request = {0};
+    OK(esp_display_present_engine_begin_next_frame(p, &request));
+    esp_display_present_lease_t source = gram_tile(p, 0);
+    wait_submit(&panel, 1);
+    esp_display_present_engine_status_t status;
+    uint64_t start = present_now_ms();
+    do {
+        OK(esp_display_present_engine_get_status(p, &status));
+        assert(present_now_ms() - start < 1000);
+        present_pause();
+    } while (status.first_error == ESP_OK);
+    assert(status.first_error == ESP_FAIL);
+    assert(esp_display_present_engine_stop(p, 5) == ESP_ERR_TIMEOUT);
+    assert(esp_display_present_engine_destroy(p) == ESP_ERR_INVALID_STATE);
+    pthread_mutex_lock(&panel.lock);
+    assert(panel.surface.pixels == source.surface.pixels);
+    assert(*(const uint16_t *)panel.surface.pixels == 0xabab);
+    pthread_mutex_unlock(&panel.lock);
+    complete(&panel); /* Real completion, rather than submit error, ends reads. */
+    destroy(p, &panel);
+}
+
+static void gram_timeout_during_driver_call(void)
+{
+    panel_t panel;
+    init_panel(&panel);
+    panel.blocked = true;
+    esp_display_present_engine_t *p = create_gram(&panel, 5);
+    esp_display_present_frame_request_t request = {0};
+    OK(esp_display_present_engine_begin_next_frame(p, &request));
+    esp_display_present_lease_t source = gram_tile(p, 0);
+    wait_submit(&panel, 1);
+    esp_display_present_engine_status_t status;
+    uint64_t start = present_now_ms();
+    do {
+        OK(esp_display_present_engine_get_status(p, &status));
+        assert(present_now_ms() - start < 1000);
+        present_pause();
+    } while (status.first_error == ESP_OK);
+    assert(status.first_error == ESP_ERR_TIMEOUT);
+    assert(esp_display_present_engine_stop(p, 5) == ESP_ERR_TIMEOUT);
+    pthread_mutex_lock(&panel.lock);
+    assert(panel.quiesces == 0 && panel.surface.pixels == source.surface.pixels);
+    assert(*(const uint16_t *)panel.surface.pixels == 0xabab);
+    panel.release = panel.immediate = true;
+    pthread_cond_broadcast(&panel.condition);
+    pthread_mutex_unlock(&panel.lock);
+    destroy(p, &panel);
+}
+
 static void wait_te_stop(void)
 {
     panel_t panel;
@@ -270,6 +414,10 @@ int main(void)
     autonomous(true);
     bounded_join();
     rejection();
+    gram_driver_block_and_stop();
+    gram_zero_copy_backpressure();
+    gram_uncertain_keeps_pixels();
+    gram_timeout_during_driver_call();
     wait_te_stop();
     failure_cleanup();
     puts("Scheduler: autonomous TE/FB, queued FB, early callback, bounded join and parked exit passed");

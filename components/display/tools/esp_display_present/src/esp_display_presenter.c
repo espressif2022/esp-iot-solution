@@ -292,8 +292,11 @@ esp_err_t esp_display_presenter_get_caps(const esp_display_presenter_t *input, e
         .supports_coverage_areas = legacy_framebuffer(presenter) && caps->contract != ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL,
         .surface_retains_content = legacy_framebuffer(presenter) && presenter->config.target.fb.mode == ESP_DISPLAY_PRESENT_MODE_NONE,
         .previous_surface_readable = previous_readable(presenter),
-        .width = caps->draw_layout.width, .height = caps->draw_layout.height, .stride_bytes = caps->draw_layout.stride_bytes,
-        .pixel_format = presenter->config.pixel_format, .drawbuf_bytes = caps->contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION ? caps->drawbuf_capacity_bytes : 0,
+        .width = caps->draw_layout.width,
+        .height = caps->draw_layout.height,
+        .stride_bytes = caps->draw_layout.stride_bytes,
+        .pixel_format = presenter->config.pixel_format,
+        .drawbuf_bytes = caps->contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION ? caps->drawbuf_capacity_bytes : 0,
         .max_damage_areas = presenter->config.max_damage_areas ? presenter->config.max_damage_areas : caps->max_damage_areas
     };
     present_mutex_give(presenter->gate);
@@ -521,7 +524,11 @@ esp_err_t esp_display_presenter_begin_next_frame(esp_display_presenter_t *presen
     if (error == ESP_OK) {
         error = present_resources_prepare(presenter->resources, remaining_budget(presenter, start));
     }
-    esp_display_present_frame_request_t req = {.damage = areas, .damage_count = n, .full_redraw = all};
+    esp_display_present_frame_request_t req = {
+        .damage = areas,
+        .damage_count = n,
+        .full_redraw = all,
+    };
     if (error == ESP_OK) {
         error = present_presenter_begin_budget(core(presenter), &req, remaining_budget(presenter, start));
     }
@@ -594,8 +601,10 @@ esp_err_t esp_display_presenter_acquire_buffer(esp_display_presenter_t *presente
             .surface = {presenter->lease.surface.pixels, presenter->lease.surface.layout.stride_bytes,
                         presenter->lease.surface.layout.width, presenter->lease.surface.layout.height, presenter->config.pixel_format
                        },
-            .capacity_bytes = presenter->lease.surface.capacity_bytes, .lease_id = presenter->lease_id,
-            .resolve_rows = resolve_rows, .resolve_rows_ctx = presenter
+            .capacity_bytes = presenter->lease.surface.capacity_bytes,
+            .lease_id = presenter->lease_id,
+            .resolve_rows = resolve_rows,
+            .resolve_rows_ctx = presenter
         };
     }
     present_mutex_give(presenter->gate);

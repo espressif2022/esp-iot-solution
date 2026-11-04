@@ -132,7 +132,10 @@ static bool layout(uint32_t w, uint32_t h, size_t bpp, size_t stride_align,
 static bool pool(esp_display_present_plan_pool_t *pool_config, size_t n, esp_display_present_layout_t l, size_t a, esp_display_present_plan_memory_t memory, bool borrowed)
 {
     *pool_config = (esp_display_present_plan_pool_t) {
-        .count = n, .layout = l, .memory = memory, .borrowed = borrowed
+        .count = n,
+        .layout = l,
+        .memory = memory,
+        .borrowed = borrowed
     };
     if (!n) {
         return true;
@@ -192,8 +195,11 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
     if (backend_config->in_place_convert && (kind != ESP_DISPLAY_PRESENT_ENGINE_GRAM || backend_config->async_copy || backend_config->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0)) {
         return ESP_ERR_INVALID_ARG;
     }
-    if ((backend_config->copy_execute && !backend_config->async_copy) ||
-            (plan->normalized.background_service && kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM && !backend_config->async_copy)) {
+    if (backend_config->copy_execute && !backend_config->async_copy) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    if ((backend_config->deferred_submit && (kind != ESP_DISPLAY_PRESENT_ENGINE_GRAM || !plan->normalized.background_service)) ||
+            (plan->normalized.background_service && kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM && !backend_config->async_copy && !backend_config->deferred_submit)) {
         return ESP_ERR_INVALID_ARG;
     }
     if (kind != ESP_DISPLAY_PRESENT_ENGINE_FB && (backend_config->external_buffers || backend_config->external_buffer_bytes || backend_config->initial_scanout_buffer)) {
@@ -288,7 +294,11 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
         plan->output.width_alignment = wa;
         plan->output.height_alignment = ha;
     }
-    esp_display_present_executor_caps_t caps = {.base_alignment = 1, .destination_capacity_alignment = 1, .stride_alignment_bytes = 1};
+    esp_display_present_executor_caps_t caps = {
+        .base_alignment = 1,
+        .destination_capacity_alignment = 1,
+        .stride_alignment_bytes = 1,
+    };
     plan->executor_reason = ESP_DISPLAY_PRESENT_EXEC_SUPPORTED;
     if (config->executor) {
         if (!backend_config->async_copy || backend_config->copy_execute) {

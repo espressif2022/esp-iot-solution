@@ -29,6 +29,8 @@ struct esp_display_present_engine {
     present_os_event_t *changed;
     present_os_event_t *work;
     present_worker_t *worker;
+    present_task_t sender_task;
+    bool sender_ready, background_gram;
     present_lock_t control;
     uint64_t transfer_timeout_us; /* Immutable before callback registration. */
     transfer_watch_t *transfers; /* Allocated only when the deadline policy is enabled. */
@@ -89,9 +91,12 @@ static bool PRESENT_ISR_ATTR finish_transfer(esp_display_present_engine_t *prese
     if (!expired) {
         return false;
     }
-    const esp_display_present_backend_event_t failure = {.kind = ESP_DISPLAY_PRESENT_EVENT_FAULT,
-                                                         .transaction_cookie = event->transaction_cookie, .timestamp_us = now, .result = ESP_ERR_TIMEOUT
-                                                        };
+    const esp_display_present_backend_event_t failure = {
+        .kind = ESP_DISPLAY_PRESENT_EVENT_FAULT,
+        .transaction_cookie = event->transaction_cookie,
+        .timestamp_us = now,
+        .result = ESP_ERR_TIMEOUT,
+    };
     return presenter->backend_event(presenter->backend_event_user, &failure, isr);
 }
 
@@ -114,9 +119,12 @@ static void expire_transfers(esp_display_present_engine_t *presenter)
     }
     present_lock_exit(&presenter->control, false);
     for (size_t i = 0; i < count; ++i) {
-        const esp_display_present_backend_event_t event = {.kind = ESP_DISPLAY_PRESENT_EVENT_FAULT,
-                                                           .transaction_cookie = expired[i], .timestamp_us = now, .result = ESP_ERR_TIMEOUT
-                                                          };
+        const esp_display_present_backend_event_t event = {
+            .kind = ESP_DISPLAY_PRESENT_EVENT_FAULT,
+            .transaction_cookie = expired[i],
+            .timestamp_us = now,
+            .result = ESP_ERR_TIMEOUT,
+        };
         (void)presenter->backend_event(presenter->backend_event_user, &event, false);
     }
     if (count) {
@@ -179,17 +187,48 @@ static esp_err_t panel_attach(void *context, esp_display_present_panel_event_fn 
     return presenter->panel.attach(presenter->panel.context, panel_event, presenter);
 }
 
+/* GRAM SUBMITTING slots stay pinned while the sender lends the task gate.
+ * Backend task state is resolved only after reacquiring it. Stop joins sender
+ * before quiesce/destruction, so the adapter and callback context remain live. */
+static esp_display_present_tx_result_t execute_panel_submit(esp_display_present_engine_t *presenter,
+                                                            const esp_display_present_surface_t *surface,
+                                                            const esp_display_present_rect_t *area, uint64_t cookie)
+{
+    if (presenter->background_gram) {
+        present_mutex_give(presenter->gate);
+    }
+    esp_display_present_tx_result_t result = presenter->panel.submit(presenter->panel.context, surface, area, cookie);
+    if (presenter->background_gram) {
+        (void)present_mutex_take(presenter->gate, UINT32_MAX);
+    }
+    return result;
+}
+
 static esp_display_present_tx_result_t panel_submit(void *context, const esp_display_present_surface_t *surface,
                                                     const esp_display_present_rect_t *area, uint64_t cookie)
 {
     esp_display_present_engine_t *presenter = context;
+    /* Foreground query/acquire may service READY slots. Only the sender can
+     * enter the driver; this also serializes submissions while its gate is lent. */
+    if (presenter->background_gram && presenter->state != ESP_DISPLAY_PRESENT_ENGINE_RUNNING) {
+        return (esp_display_present_tx_result_t) {
+            ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_STATE
+        };
+    }
+    if (presenter->background_gram && (!presenter->sender_ready ||
+                                       !present_same_task(presenter->sender_task, present_current_task()))) {
+        (void)present_event_signal(presenter->work, false);
+        return (esp_display_present_tx_result_t) {
+            ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_NO_MEM
+        };
+    }
     if (area->x % presenter->output.x_alignment || area->y % presenter->output.y_alignment ||
             area->width % presenter->output.width_alignment || area->height % presenter->output.height_alignment)
         return (esp_display_present_tx_result_t) {
         ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_ARG
     };
     if (!presenter->transfer_timeout_us) {
-        return presenter->panel.submit(presenter->panel.context, surface, area, cookie);
+        return execute_panel_submit(presenter, surface, area, cookie);
     }
     expire_transfers(presenter);
     esp_display_present_backend_fault_t fault;
@@ -205,7 +244,8 @@ static esp_display_present_tx_result_t panel_submit(void *context, const esp_dis
         if (!presenter->transfers[i].cookie) {
             index = i;
             presenter->transfers[i] = (transfer_watch_t) {
-                .cookie = cookie, .started_us = present_now_us()
+                .cookie = cookie,
+                .started_us = present_now_us()
             };
             break;
         }
@@ -216,7 +256,7 @@ static esp_display_present_tx_result_t panel_submit(void *context, const esp_dis
             ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_NO_MEM
         };
     }
-    esp_display_present_tx_result_t result = presenter->panel.submit(presenter->panel.context, surface, area, cookie);
+    esp_display_present_tx_result_t result = execute_panel_submit(presenter, surface, area, cookie);
     if (result.acceptance == ESP_DISPLAY_PRESENT_TX_REJECTED) {
         present_lock_enter(&presenter->control, false);
         /* An early completion may already have consumed this timing record. */
@@ -273,6 +313,12 @@ static esp_err_t pump_backend(esp_display_present_engine_t *presenter)
 static void sender(void *context)
 {
     esp_display_present_engine_t *presenter = context;
+    if (presenter->background_gram) {
+        (void)present_mutex_take(presenter->gate, UINT32_MAX);
+        presenter->sender_task = present_current_task();
+        presenter->sender_ready = true;
+        present_mutex_give(presenter->gate);
+    }
     for (;;) {
         (void)present_event_wait(presenter->work, transfer_wait_ms(presenter));
         if (exiting(presenter)) {
@@ -456,9 +502,6 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
     if (config->backend.width > INT_MAX || config->backend.height > INT_MAX) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (config->background_service && config->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM && !config->backend.async_copy) {
-        return ESP_ERR_NOT_SUPPORTED;
-    }
     if (!config->backend.panel.attach || !config->backend.panel.submit || !config->backend.panel.quiesce) {
         return ESP_ERR_INVALID_ARG;
     }
@@ -479,6 +522,7 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
         return ESP_ERR_NO_MEM;
     }
     presenter->kind = config->backend_kind;
+    presenter->background_gram = config->background_service && config->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM && config->backend.deferred_submit;
     presenter->output = config->output_caps;
     if (!presenter->output.x_alignment) {
         presenter->output.x_alignment = 1;
@@ -521,6 +565,7 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
         }
     }
     esp_display_present_backend_config_t backend = config->backend;
+    backend.deferred_submit = presenter->background_gram;
     backend.panel = (esp_display_present_panel_adapter_t) {
         presenter, panel_attach, panel_submit, panel_quiesce
     };
@@ -567,7 +612,10 @@ void esp_display_present_engine_notify_te(esp_display_present_engine_t *presente
     if (!presenter || presenter->kind != ESP_DISPLAY_PRESENT_ENGINE_TE) {
         return;
     }
-    const esp_display_present_backend_event_t event = {.kind = ESP_DISPLAY_PRESENT_EVENT_TE_EDGE, .timestamp_us = timestamp_us};
+    const esp_display_present_backend_event_t event = {
+        .kind = ESP_DISPLAY_PRESENT_EVENT_TE_EDGE,
+        .timestamp_us = timestamp_us,
+    };
     present_te_backend.on_event(presenter->backend, &event);
     (void)notify(presenter, false);
 }
@@ -577,7 +625,10 @@ bool PRESENT_ISR_ATTR esp_display_present_engine_notify_te_isr(esp_display_prese
     if (!presenter || presenter->kind != ESP_DISPLAY_PRESENT_ENGINE_TE) {
         return false;
     }
-    const esp_display_present_backend_event_t event = {.kind = ESP_DISPLAY_PRESENT_EVENT_TE_EDGE, .timestamp_us = timestamp_us};
+    const esp_display_present_backend_event_t event = {
+        .kind = ESP_DISPLAY_PRESENT_EVENT_TE_EDGE,
+        .timestamp_us = timestamp_us,
+    };
     bool yield = presenter->event_isr(presenter->backend, &event);
     yield |= notify(presenter, true);
     return yield;
@@ -837,9 +888,14 @@ static esp_err_t get_status_impl(esp_display_present_engine_t *presenter, esp_di
     }
     ret = reap_ready(presenter);
     *out = (esp_display_present_engine_status_t) {
-        .state = presenter->state, .frame_active = presenter->frame.value != 0,
-        .cancel_pending = presenter->canceling, .pending_frames = presenter->count,
-        .committed_frames = presenter->committed, .completed_frames = presenter->completed, .first_error = presenter->first_error, .last_service_error = presenter->last_service_error
+        .state = presenter->state,
+        .frame_active = presenter->frame.value != 0,
+        .cancel_pending = presenter->canceling,
+        .pending_frames = presenter->count,
+        .committed_frames = presenter->committed,
+        .completed_frames = presenter->completed,
+        .first_error = presenter->first_error,
+        .last_service_error = presenter->last_service_error
     };
     return ret;
 }
@@ -1145,7 +1201,8 @@ esp_err_t esp_display_present_engine_commit_with_receipt(esp_display_present_eng
         error = commit_frame_impl(presenter, coverage);
         if (error == ESP_OK) {
             *observer = (observer_t) {
-                .token = token, .backend = presenter->receipts[(presenter->head + presenter->count - 1) % presenter->limit],
+                .token = token,
+                .backend = presenter->receipts[(presenter->head + presenter->count - 1) % presenter->limit],
                 .status = {.sealed = true}
             };
             receipt->value = token;
@@ -1302,7 +1359,10 @@ esp_err_t esp_display_present_engine_resolve_render_area(esp_display_present_eng
         return error;
     }
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
-    esp_display_present_resolved_plan_t plan = {.logical_layout = presenter->caps.draw_layout, .output = presenter->output};
+    esp_display_present_resolved_plan_t plan = {
+        .logical_layout = presenter->caps.draw_layout,
+        .output = presenter->output,
+    };
     plan.normalized.backend.rotation = presenter->rotation;
     plan.normalized.backend.render_contract = presenter->caps.contract;
     plan.images.count = presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM ? 0 : 1;

@@ -14,7 +14,11 @@ typedef struct esp_display_present_engine esp_display_present_engine_t;
 typedef struct {
     int32_t x1, y1, x2, y2;
 } esp_display_present_engine_area_t; /* Inclusive, v1-style. */
-typedef enum { ESP_DISPLAY_PRESENT_ENGINE_GRAM = 0, ESP_DISPLAY_PRESENT_ENGINE_TE = 1, ESP_DISPLAY_PRESENT_ENGINE_FB = 2 } esp_display_present_engine_backend_t;
+typedef enum {
+    ESP_DISPLAY_PRESENT_ENGINE_GRAM = 0,
+    ESP_DISPLAY_PRESENT_ENGINE_TE = 1,
+    ESP_DISPLAY_PRESENT_ENGINE_FB = 2,
+} esp_display_present_engine_backend_t;
 typedef enum {
     ESP_DISPLAY_PRESENT_MODE_DEFAULT = 0, /* Use backend_kind/config verbatim; source compatibility. */
     ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE,
@@ -52,7 +56,11 @@ typedef struct {
     uint32_t transfer_timeout_ms;
 } esp_display_present_engine_config_t;
 
-typedef enum { ESP_DISPLAY_PRESENT_ENGINE_RUNNING, ESP_DISPLAY_PRESENT_ENGINE_CLOSING, ESP_DISPLAY_PRESENT_ENGINE_STOPPED } esp_display_present_engine_state_t;
+typedef enum {
+    ESP_DISPLAY_PRESENT_ENGINE_RUNNING,
+    ESP_DISPLAY_PRESENT_ENGINE_CLOSING,
+    ESP_DISPLAY_PRESENT_ENGINE_STOPPED,
+} esp_display_present_engine_state_t;
 typedef struct {
     esp_display_present_engine_state_t state;
     bool frame_active;

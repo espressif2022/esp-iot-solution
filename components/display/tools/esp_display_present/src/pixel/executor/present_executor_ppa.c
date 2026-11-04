@@ -24,11 +24,17 @@ static esp_err_t ppa_caps(void *context, esp_display_present_executor_caps_t *ou
 {
     (void)context;
     *out = (esp_display_present_executor_caps_t) {
-        .name = "ppa", .format_mask = 3,
-        .rotation_mask = 15, .byte_swap = true,
-        .base_alignment = 64, .destination_capacity_alignment = 64, .stride_alignment_bytes = 1,
-        .max_stride_pixels = 0x3fff, .max_height = 0x3fff,
-        .address_dependent_constraints = true, .requires_full_stride_capacity = true
+        .name = "ppa",
+        .format_mask = 3,
+        .rotation_mask = 15,
+        .byte_swap = true,
+        .base_alignment = 64,
+        .destination_capacity_alignment = 64,
+        .stride_alignment_bytes = 1,
+        .max_stride_pixels = 0x3fff,
+        .max_height = 0x3fff,
+        .address_dependent_constraints = true,
+        .requires_full_stride_capacity = true
     };
     return ESP_OK;
 }
@@ -130,7 +136,10 @@ esp_err_t esp_display_present_executor_ppa_create(esp_display_present_executor_t
         return ESP_ERR_NO_MEM;
     }
     esp_err_t error;
-    ppa_client_config_t cfg = {.oper_type = PPA_OPERATION_SRM, .max_pending_trans_num = 1};
+    ppa_client_config_t cfg = {
+        .oper_type = PPA_OPERATION_SRM,
+        .max_pending_trans_num = 1,
+    };
     error = ppa_register_client(&cfg, &plugin->ppa);
     if (error != ESP_OK) {
         present_mutex_destroy(plugin->gate);

@@ -9,7 +9,10 @@
 /* Output-independent image construction bookkeeping. Owner task serialized.
  * Coverage is exact; history may conservatively widen, never invent coverage.
  * No hardware, frame receipts, TE phases or scanout state in this module. */
-enum { PRESENT_IMAGE_SLOTS = 3, PRESENT_IMAGE_HISTORY = 8 };
+enum {
+    PRESENT_IMAGE_SLOTS = 3,
+    PRESENT_IMAGE_HISTORY = 8,
+};
 typedef struct {
     esp_display_present_rect_t areas[PRESENT_MAX_DAMAGE_AREAS];
     size_t count;

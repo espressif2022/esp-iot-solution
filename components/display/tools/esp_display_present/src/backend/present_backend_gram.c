@@ -10,7 +10,16 @@
 #include "present_transaction.h"
 #include "present_allocation.h"
 
-typedef enum { SLOT_FREE, SLOT_LEASED, SLOT_COPYING, SLOT_READY, SLOT_SUBMITTING, SLOT_INFLIGHT } slot_state_t;
+/* A slot owns both its draw tile and optional converted tile. Successful copy
+ * does not release the draw tile independently; the pair is recycled together. */
+typedef enum {
+    SLOT_FREE,       /* Available to acquire. */
+    SLOT_LEASED,     /* Producer may write the draw tile. */
+    SLOT_COPYING,    /* Pixel engine is preparing the transfer tile. */
+    SLOT_READY,      /* Pixels are prepared; waiting for submission capacity. */
+    SLOT_SUBMITTING, /* Adapter call in progress; completion may arrive early. */
+    SLOT_INFLIGHT,   /* Transfer accepted or uncertain; await real completion. */
+} slot_state_t;
 typedef present_core_frame_t frame_record_t;
 
 typedef struct {
@@ -297,10 +306,14 @@ static esp_err_t gram_create(const esp_display_present_backend_config_t *config,
             return ESP_ERR_NO_MEM;
         }
     }
-    esp_display_present_pixel_config_t pixel_config = {.max_jobs = config->buffer_count, .asynchronous = config->async_copy,
-                                                       .execute = config->copy_execute, .execute_user = config->copy_user,
-                                                       .on_event = config->async_copy ? copy_done : NULL, .user = backend
-                                                      };
+    esp_display_present_pixel_config_t pixel_config = {
+        .max_jobs = config->buffer_count,
+        .asynchronous = config->async_copy,
+        .execute = config->copy_execute,
+        .execute_user = config->copy_user,
+        .on_event = config->async_copy ? copy_done : NULL,
+        .user = backend,
+    };
     esp_err_t ret = esp_display_present_pixel_create(&pixel_config, &backend->pixel);
     if (ret != ESP_OK) {
         free_backend(backend);
@@ -328,7 +341,8 @@ static esp_err_t gram_get_caps(present_backend_t *backend, esp_display_present_b
                        },
         .drawbuf_capacity_bytes = backend->tile_bytes,
         .buffer_alignment = PRESENT_BUFFER_ALIGNMENT,
-        .max_tile_rows = backend->config.tile_rows, .max_damage_areas = PRESENT_MAX_DAMAGE_AREAS,
+        .max_tile_rows = backend->config.tile_rows,
+        .max_damage_areas = PRESENT_MAX_DAMAGE_AREAS,
     };
     return ESP_OK;
 }
@@ -394,7 +408,8 @@ static esp_err_t gram_acquire(present_backend_t *backend, esp_display_present_fr
             }
             size_t bytes = backend->config.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
             slot->lease = (esp_display_present_lease_t) {
-                .id = { token }, .logical_area = actual,
+                .id = { token },
+                .logical_area = actual,
                 .surface = { slot->pixels, backend->tile_bytes,
                     { actual.width, actual.height, actual.width * bytes, backend->config.format, backend->config.draw_order }
                 }
@@ -558,7 +573,9 @@ static esp_err_t gram_submit_region_ex(present_backend_t *backend, esp_display_p
                 slot->pixels, backend->tile_bytes,
                 {submit_area.width, submit_area.height, src_stride, backend->config.format, backend->config.draw_order}
             },
-            .destination = target, .source_area = {0, 0, submit_area.width, submit_area.height}, .rotation = backend->config.rotation
+            .destination = target,
+            .source_area = {0, 0, submit_area.width, submit_area.height},
+            .rotation = backend->config.rotation
         };
         esp_display_present_copy_ticket_t ticket;
         esp_err_t error = esp_display_present_pixel_submit(backend->pixel, &request, &ticket);
@@ -603,7 +620,7 @@ static esp_err_t gram_submit_region_ex(present_backend_t *backend, esp_display_p
         }
         return ESP_ERR_INVALID_STATE;
     }
-    if (channel_full(backend)) {
+    if (!backend->config.deferred_submit && channel_full(backend)) {
         present_lock_exit(&backend->lock, false);
         if (swapped_in_place) {
             revert_in_place_swap(slot->pixels, submit_area.height * row_bytes);
@@ -612,10 +629,20 @@ static esp_err_t gram_submit_region_ex(present_backend_t *backend, esp_display_p
     }
     present_allocation_written(&slot->storage);
     present_allocation_hold(&slot->storage, PRESENT_REF_TRANSFER);
-    slot->state = SLOT_SUBMITTING;
+    slot->state = backend->config.deferred_submit ? SLOT_READY : SLOT_SUBMITTING;
     slot->cookie = cookie;
+    slot->tx = tx;
+    slot->area = physical_area;
     present_transaction_prepare(&slot->transaction);
     ++record->pending;
+    if (backend->config.deferred_submit) {
+        --record->leased;
+        present_lock_exit(&backend->lock, false);
+        if (backend->config.on_progress) {
+            (void)backend->config.on_progress(backend->config.progress_user, false);
+        }
+        return ESP_OK;
+    }
     present_lock_exit(&backend->lock, false);
 
     esp_display_present_tx_result_t result = backend->config.panel.submit(backend->config.panel.context, &tx, &physical_area, cookie);

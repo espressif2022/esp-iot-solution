@@ -1,0 +1,441 @@
+diff --git a/components/display/tools/esp_display_present/Kconfig b/components/display/tools/esp_display_present/Kconfig
+index 4965a30f3..f2792e2b4 100644
+--- a/components/display/tools/esp_display_present/Kconfig
++++ b/components/display/tools/esp_display_present/Kconfig
+@@ -1,4 +1,24 @@
+ menu "Display presenter"
++config ESP_DISPLAY_PRESENT_GRAM_BACKGROUND
++    bool "Experimental zero-copy GRAM background submission"
++    default n
++    help
++        Use the existing engine sender for synchronous internal DMA tile paths.
++        Rotated and PSRAM tiles retain their existing async-copy scheduling.
++        Adds the sender task when the synchronous GRAM path would not have one.
++        Source tiles remain borrowed until real transfer completion.
++
++config ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY
++    int "GRAM sender task priority"
++    depends on ESP_DISPLAY_PRESENT_GRAM_BACKGROUND
++    range 1 24
++    default 7
++    help
++        Priority of the existing engine sender for experimental GRAM submission.
++        Choose relative to the producer: a lower-priority sender can introduce
++        command refill gaps while rendering continues. The board comparison
++        uses producer priority 6 and sender priority 7.
++
+ config ESP_DISPLAY_PRESENT_FB_IRAM
+     bool "Place framebuffer task hot paths in IRAM"
+     depends on IDF_TARGET_ESP32S3
+diff --git a/components/display/tools/esp_display_present/dev/tests/test_scheduler.c b/components/display/tools/esp_display_present/dev/tests/test_scheduler.c
+index f30106f97..6a0b71fa0 100644
+--- a/components/display/tools/esp_display_present/dev/tests/test_scheduler.c
++++ b/components/display/tools/esp_display_present/dev/tests/test_scheduler.c
+@@ -23,6 +23,7 @@ typedef struct {
+     bool release;
+     bool reject;
+     bool immediate;
++    bool uncertain;
+     bool fb;
+ } panel_t;
+ static void complete_locked(panel_t *p)
+@@ -59,6 +60,7 @@ static esp_display_present_tx_result_t submit(void *context, const esp_display_p
+         pthread_cond_wait(&p->condition, &p->lock);
+     }
+     bool reject = p->reject;
++    bool uncertain = p->uncertain;
+     if (!reject) {
+         p->cookie = cookie;
+         if (p->immediate) {
+@@ -67,7 +69,8 @@ static esp_display_present_tx_result_t submit(void *context, const esp_display_p
+     }
+     pthread_mutex_unlock(&p->lock);
+     return (esp_display_present_tx_result_t) {
+-        reject ? ESP_DISPLAY_PRESENT_TX_REJECTED : ESP_DISPLAY_PRESENT_TX_ACCEPTED, reject ? ESP_FAIL : ESP_OK
++        reject ? ESP_DISPLAY_PRESENT_TX_REJECTED : uncertain ? ESP_DISPLAY_PRESENT_TX_UNCERTAIN : ESP_DISPLAY_PRESENT_TX_ACCEPTED,
++               reject || uncertain ? ESP_FAIL : ESP_OK
+     };
+ }
+ 
+@@ -241,6 +244,147 @@ static void rejection(void)
+     destroy(p, &panel);
+ }
+ 
++static esp_display_present_engine_t *create_gram(panel_t *panel, uint32_t transfer_timeout)
++{
++    esp_display_present_engine_config_t config = {
++        .backend_kind = ESP_DISPLAY_PRESENT_ENGINE_GRAM,
++        .backend = {
++            .width = 4, .height = 4, .tile_rows = 2, .buffer_count = 2,
++            .max_frames = 4, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
++            .transfer_capacity = 1, .deferred_submit = true, .panel = {panel, attach, submit, quiesce}
++        },
++        .timeout_ms = 20, .transfer_timeout_ms = transfer_timeout, .background_service = true
++    };
++    esp_display_present_engine_t *p = NULL;
++    OK(esp_display_present_engine_create(&config, &p));
++    return p;
++}
++
++static esp_display_present_lease_t gram_tile(esp_display_present_engine_t *p, unsigned y)
++{
++    esp_display_present_lease_t lease;
++    OK(esp_display_present_engine_acquire_buffer(p, &lease));
++    memset(lease.surface.pixels, 0xab, 16);
++    esp_display_present_engine_area_t area = {0, y, 3, y + 1};
++    OK(esp_display_present_engine_submit_buffer(p, &lease, &area, 8));
++    return lease;
++}
++
++static void gram_driver_block_and_stop(void)
++{
++    panel_t panel;
++    init_panel(&panel);
++    panel.blocked = true;
++    esp_display_present_engine_t *p = create_gram(&panel, 0);
++    esp_display_present_frame_request_t request = {0};
++    OK(esp_display_present_engine_begin_next_frame(p, &request));
++    esp_display_present_lease_t first = gram_tile(p, 0);
++    wait_submit(&panel, 1);
++    uint64_t start = present_now_ms();
++    esp_display_present_lease_t second = gram_tile(p, 2);
++    assert(present_now_ms() - start < 500);
++    assert(first.surface.pixels != second.surface.pixels);
++    OK(esp_display_present_engine_commit_frame(p, NULL));
++    pthread_mutex_lock(&panel.lock);
++    assert(panel.surface.pixels == first.surface.pixels); /* No conversion copy. */
++    pthread_mutex_unlock(&panel.lock);
++    assert(esp_display_present_engine_stop(p, 5) == ESP_ERR_TIMEOUT);
++    assert(esp_display_present_engine_destroy(p) == ESP_ERR_INVALID_STATE);
++    pthread_mutex_lock(&panel.lock);
++    assert(panel.quiesces == 0 && panel.submissions == 1);
++    panel.release = true;
++    panel.immediate = true;
++    pthread_cond_broadcast(&panel.condition);
++    pthread_mutex_unlock(&panel.lock);
++    OK(esp_display_present_engine_stop(p, 1000));
++    assert(panel.submissions == 1); /* Closing does not submit queued tile #2. */
++    destroy(p, &panel);
++}
++
++static void gram_zero_copy_backpressure(void)
++{
++    panel_t panel;
++    init_panel(&panel);
++    esp_display_present_engine_t *p = create_gram(&panel, 0);
++    esp_display_present_frame_request_t request = {0};
++    OK(esp_display_present_engine_begin_next_frame(p, &request));
++    esp_display_present_lease_t first = gram_tile(p, 0);
++    wait_submit(&panel, 1);
++    (void)gram_tile(p, 2);
++    esp_display_present_lease_t unavailable;
++    assert(esp_display_present_engine_acquire_buffer(p, &unavailable) == ESP_ERR_TIMEOUT);
++    OK(esp_display_present_engine_commit_frame(p, NULL));
++    pthread_mutex_lock(&panel.lock);
++    assert(panel.surface.pixels == first.surface.pixels && panel.submissions == 1);
++    pthread_mutex_unlock(&panel.lock);
++    complete(&panel);
++    wait_submit(&panel, 2);
++    complete(&panel);
++    OK(esp_display_present_engine_drain(p, 1000));
++    pthread_mutex_lock(&panel.lock);
++    panel.immediate = true;
++    pthread_mutex_unlock(&panel.lock);
++    frame(p); /* Both callbacks may occur before submit returns. */
++    OK(esp_display_present_engine_drain(p, 1000));
++    destroy(p, &panel);
++}
++
++static void gram_uncertain_keeps_pixels(void)
++{
++    panel_t panel;
++    init_panel(&panel);
++    panel.uncertain = true;
++    esp_display_present_engine_t *p = create_gram(&panel, 0);
++    esp_display_present_frame_request_t request = {0};
++    OK(esp_display_present_engine_begin_next_frame(p, &request));
++    esp_display_present_lease_t source = gram_tile(p, 0);
++    wait_submit(&panel, 1);
++    esp_display_present_engine_status_t status;
++    uint64_t start = present_now_ms();
++    do {
++        OK(esp_display_present_engine_get_status(p, &status));
++        assert(present_now_ms() - start < 1000);
++        present_pause();
++    } while (status.first_error == ESP_OK);
++    assert(status.first_error == ESP_FAIL);
++    assert(esp_display_present_engine_stop(p, 5) == ESP_ERR_TIMEOUT);
++    assert(esp_display_present_engine_destroy(p) == ESP_ERR_INVALID_STATE);
++    pthread_mutex_lock(&panel.lock);
++    assert(panel.surface.pixels == source.surface.pixels);
++    assert(*(const uint16_t *)panel.surface.pixels == 0xabab);
++    pthread_mutex_unlock(&panel.lock);
++    complete(&panel); /* Real completion, rather than submit error, ends reads. */
++    destroy(p, &panel);
++}
++
++static void gram_timeout_during_driver_call(void)
++{
++    panel_t panel;
++    init_panel(&panel);
++    panel.blocked = true;
++    esp_display_present_engine_t *p = create_gram(&panel, 5);
++    esp_display_present_frame_request_t request = {0};
++    OK(esp_display_present_engine_begin_next_frame(p, &request));
++    esp_display_present_lease_t source = gram_tile(p, 0);
++    wait_submit(&panel, 1);
++    esp_display_present_engine_status_t status;
++    uint64_t start = present_now_ms();
++    do {
++        OK(esp_display_present_engine_get_status(p, &status));
++        assert(present_now_ms() - start < 1000);
++        present_pause();
++    } while (status.first_error == ESP_OK);
++    assert(status.first_error == ESP_ERR_TIMEOUT);
++    assert(esp_display_present_engine_stop(p, 5) == ESP_ERR_TIMEOUT);
++    pthread_mutex_lock(&panel.lock);
++    assert(panel.quiesces == 0 && panel.surface.pixels == source.surface.pixels);
++    assert(*(const uint16_t *)panel.surface.pixels == 0xabab);
++    panel.release = panel.immediate = true;
++    pthread_cond_broadcast(&panel.condition);
++    pthread_mutex_unlock(&panel.lock);
++    destroy(p, &panel);
++}
++
+ static void wait_te_stop(void)
+ {
+     panel_t panel;
+@@ -270,6 +414,10 @@ int main(void)
+     autonomous(true);
+     bounded_join();
+     rejection();
++    gram_driver_block_and_stop();
++    gram_zero_copy_backpressure();
++    gram_uncertain_keeps_pixels();
++    gram_timeout_during_driver_call();
+     wait_te_stop();
+     failure_cleanup();
+     puts("Scheduler: autonomous TE/FB, queued FB, early callback, bounded join and parked exit passed");
+diff --git a/components/display/tools/esp_display_present/src/backend/present_backend_gram.c b/components/display/tools/esp_display_present/src/backend/present_backend_gram.c
+index b9075450a..34d39156f 100644
+--- a/components/display/tools/esp_display_present/src/backend/present_backend_gram.c
++++ b/components/display/tools/esp_display_present/src/backend/present_backend_gram.c
+@@ -603,7 +603,7 @@ static esp_err_t gram_submit_region_ex(present_backend_t *backend, esp_display_p
+         }
+         return ESP_ERR_INVALID_STATE;
+     }
+-    if (channel_full(backend)) {
++    if (!backend->config.deferred_submit && channel_full(backend)) {
+         present_lock_exit(&backend->lock, false);
+         if (swapped_in_place) {
+             revert_in_place_swap(slot->pixels, submit_area.height * row_bytes);
+@@ -612,10 +612,20 @@ static esp_err_t gram_submit_region_ex(present_backend_t *backend, esp_display_p
+     }
+     present_allocation_written(&slot->storage);
+     present_allocation_hold(&slot->storage, PRESENT_REF_TRANSFER);
+-    slot->state = SLOT_SUBMITTING;
++    slot->state = backend->config.deferred_submit ? SLOT_READY : SLOT_SUBMITTING;
+     slot->cookie = cookie;
++    slot->tx = tx;
++    slot->area = physical_area;
+     present_transaction_prepare(&slot->transaction);
+     ++record->pending;
++    if (backend->config.deferred_submit) {
++        --record->leased;
++        present_lock_exit(&backend->lock, false);
++        if (backend->config.on_progress) {
++            (void)backend->config.on_progress(backend->config.progress_user, false);
++        }
++        return ESP_OK;
++    }
+     present_lock_exit(&backend->lock, false);
+ 
+     esp_display_present_tx_result_t result = backend->config.panel.submit(backend->config.panel.context, &tx, &physical_area, cookie);
+diff --git a/components/display/tools/esp_display_present/src/present_backend.h b/components/display/tools/esp_display_present/src/present_backend.h
+index f7df65408..b25c9c46d 100644
+--- a/components/display/tools/esp_display_present/src/present_backend.h
++++ b/components/display/tools/esp_display_present/src/present_backend.h
+@@ -236,6 +236,7 @@ struct esp_display_present_backend_config {
+     bool fixed_logical_rotation; /* Runtime rotation preserves producer dimensions; physical view may transpose. */
+     bool internal_tx_staging; /* GRAM async copies from external tiles to internal DMA conversion slots. */
+     size_t transfer_capacity; /* GRAM: 0 uses tile count. */
++    bool deferred_submit; /* Engine-owned GRAM sender; READY slots retain pixels. */
+     esp_display_present_te_gate_t te_gate; /* Explicit injection; default retains native timing model. */
+     esp_display_present_te_timing_t te_timing; /* period_us=0 retains the explicit fixed edge window. */
+     size_t tile_buffer_count; /* FB PARTIAL: independent draw pool; 0 legacy one. */
+diff --git a/components/display/tools/esp_display_present/src/present_engine.c b/components/display/tools/esp_display_present/src/present_engine.c
+index 6451dda6b..cc50a4204 100644
+--- a/components/display/tools/esp_display_present/src/present_engine.c
++++ b/components/display/tools/esp_display_present/src/present_engine.c
+@@ -29,6 +29,8 @@ struct esp_display_present_engine {
+     present_os_event_t *changed;
+     present_os_event_t *work;
+     present_worker_t *worker;
++    present_task_t sender_task;
++    bool sender_ready, background_gram;
+     present_lock_t control;
+     uint64_t transfer_timeout_us; /* Immutable before callback registration. */
+     transfer_watch_t *transfers; /* Allocated only when the deadline policy is enabled. */
+@@ -179,17 +181,48 @@ static esp_err_t panel_attach(void *context, esp_display_present_panel_event_fn
+     return presenter->panel.attach(presenter->panel.context, panel_event, presenter);
+ }
+ 
++/* GRAM SUBMITTING slots stay pinned while the sender lends the task gate.
++ * Backend task state is resolved only after reacquiring it. Stop joins sender
++ * before quiesce/destruction, so the adapter and callback context remain live. */
++static esp_display_present_tx_result_t execute_panel_submit(esp_display_present_engine_t *presenter,
++                                                            const esp_display_present_surface_t *surface,
++                                                            const esp_display_present_rect_t *area, uint64_t cookie)
++{
++    if (presenter->background_gram) {
++        present_mutex_give(presenter->gate);
++    }
++    esp_display_present_tx_result_t result = presenter->panel.submit(presenter->panel.context, surface, area, cookie);
++    if (presenter->background_gram) {
++        (void)present_mutex_take(presenter->gate, UINT32_MAX);
++    }
++    return result;
++}
++
+ static esp_display_present_tx_result_t panel_submit(void *context, const esp_display_present_surface_t *surface,
+                                                     const esp_display_present_rect_t *area, uint64_t cookie)
+ {
+     esp_display_present_engine_t *presenter = context;
++    /* Foreground query/acquire may service READY slots. Only the sender can
++     * enter the driver; this also serializes submissions while its gate is lent. */
++    if (presenter->background_gram && presenter->state != ESP_DISPLAY_PRESENT_ENGINE_RUNNING) {
++        return (esp_display_present_tx_result_t) {
++            ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_STATE
++        };
++    }
++    if (presenter->background_gram && (!presenter->sender_ready ||
++                                       !present_same_task(presenter->sender_task, present_current_task()))) {
++        (void)present_event_signal(presenter->work, false);
++        return (esp_display_present_tx_result_t) {
++            ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_NO_MEM
++        };
++    }
+     if (area->x % presenter->output.x_alignment || area->y % presenter->output.y_alignment ||
+             area->width % presenter->output.width_alignment || area->height % presenter->output.height_alignment)
+         return (esp_display_present_tx_result_t) {
+         ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_ARG
+     };
+     if (!presenter->transfer_timeout_us) {
+-        return presenter->panel.submit(presenter->panel.context, surface, area, cookie);
++        return execute_panel_submit(presenter, surface, area, cookie);
+     }
+     expire_transfers(presenter);
+     esp_display_present_backend_fault_t fault;
+@@ -216,7 +249,7 @@ static esp_display_present_tx_result_t panel_submit(void *context, const esp_dis
+             ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_NO_MEM
+         };
+     }
+-    esp_display_present_tx_result_t result = presenter->panel.submit(presenter->panel.context, surface, area, cookie);
++    esp_display_present_tx_result_t result = execute_panel_submit(presenter, surface, area, cookie);
+     if (result.acceptance == ESP_DISPLAY_PRESENT_TX_REJECTED) {
+         present_lock_enter(&presenter->control, false);
+         /* An early completion may already have consumed this timing record. */
+@@ -273,6 +306,12 @@ static esp_err_t pump_backend(esp_display_present_engine_t *presenter)
+ static void sender(void *context)
+ {
+     esp_display_present_engine_t *presenter = context;
++    if (presenter->background_gram) {
++        (void)present_mutex_take(presenter->gate, UINT32_MAX);
++        presenter->sender_task = present_current_task();
++        presenter->sender_ready = true;
++        present_mutex_give(presenter->gate);
++    }
+     for (;;) {
+         (void)present_event_wait(presenter->work, transfer_wait_ms(presenter));
+         if (exiting(presenter)) {
+@@ -456,9 +495,6 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
+     if (config->backend.width > INT_MAX || config->backend.height > INT_MAX) {
+         return ESP_ERR_INVALID_ARG;
+     }
+-    if (config->background_service && config->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM && !config->backend.async_copy) {
+-        return ESP_ERR_NOT_SUPPORTED;
+-    }
+     if (!config->backend.panel.attach || !config->backend.panel.submit || !config->backend.panel.quiesce) {
+         return ESP_ERR_INVALID_ARG;
+     }
+@@ -479,6 +515,7 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
+         return ESP_ERR_NO_MEM;
+     }
+     presenter->kind = config->backend_kind;
++    presenter->background_gram = config->background_service && config->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM && config->backend.deferred_submit;
+     presenter->output = config->output_caps;
+     if (!presenter->output.x_alignment) {
+         presenter->output.x_alignment = 1;
+@@ -521,6 +558,7 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
+         }
+     }
+     esp_display_present_backend_config_t backend = config->backend;
++    backend.deferred_submit = presenter->background_gram;
+     backend.panel = (esp_display_present_panel_adapter_t) {
+         presenter, panel_attach, panel_submit, panel_quiesce
+     };
+diff --git a/components/display/tools/esp_display_present/src/present_plan.c b/components/display/tools/esp_display_present/src/present_plan.c
+index 4f81a2dcc..d31d93882 100644
+--- a/components/display/tools/esp_display_present/src/present_plan.c
++++ b/components/display/tools/esp_display_present/src/present_plan.c
+@@ -192,8 +192,11 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
+     if (backend_config->in_place_convert && (kind != ESP_DISPLAY_PRESENT_ENGINE_GRAM || backend_config->async_copy || backend_config->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0)) {
+         return ESP_ERR_INVALID_ARG;
+     }
+-    if ((backend_config->copy_execute && !backend_config->async_copy) ||
+-            (plan->normalized.background_service && kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM && !backend_config->async_copy)) {
++    if (backend_config->copy_execute && !backend_config->async_copy) {
++        return ESP_ERR_INVALID_ARG;
++    }
++    if ((backend_config->deferred_submit && (kind != ESP_DISPLAY_PRESENT_ENGINE_GRAM || !plan->normalized.background_service)) ||
++            (plan->normalized.background_service && kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM && !backend_config->async_copy && !backend_config->deferred_submit)) {
+         return ESP_ERR_INVALID_ARG;
+     }
+     if (kind != ESP_DISPLAY_PRESENT_ENGINE_FB && (backend_config->external_buffers || backend_config->external_buffer_bytes || backend_config->initial_scanout_buffer)) {
+diff --git a/components/display/tools/esp_display_present/src/present_resources.c b/components/display/tools/esp_display_present/src/present_resources.c
+index d9e0f53fd..276389493 100644
+--- a/components/display/tools/esp_display_present/src/present_resources.c
++++ b/components/display/tools/esp_display_present/src/present_resources.c
+@@ -202,6 +202,17 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
+         reserved += image_bytes * images;
+     }
+     bool async = framebuffer || te || hw->rotation != 0 || input->target.drawbuf.in_psram;
++    bool deferred = false;
++#ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND
++    deferred = !async && CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND;
++#endif
++    bool background = async || deferred;
++    unsigned sender_priority = 0;
++#ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY
++    if (deferred) {
++        sender_priority = CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY;
++    }
++#endif
+     size_t slot_bytes = tile_bytes;
+     if (!framebuffer && !te && async) {
+         if (tile_memory == ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA) {
+@@ -217,20 +228,22 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
+         }
+     }
+     size_t tiles = partial ? (input->target.drawbuf.buffers ? input->target.drawbuf.buffers :
+-                              default_tiles(framebuffer || te || async, tile_memory, slot_bytes, reserved)) : 0;
++                              default_tiles(background, tile_memory, slot_bytes, reserved)) : 0;
+     *out = (esp_display_present_plan_config_t) {
+         .presenter = {
+             .backend_kind = framebuffer ? ESP_DISPLAY_PRESENT_ENGINE_FB : te ? ESP_DISPLAY_PRESENT_ENGINE_TE : ESP_DISPLAY_PRESENT_ENGINE_GRAM,
+             .mode = framebuffer && mode == ESP_DISPLAY_PRESENT_MODE_NONE ? ESP_DISPLAY_PRESENT_MODE_DEFAULT : modes[mode],
+             .transfer_timeout_ms = input->transfer_timeout_ms ? input->transfer_timeout_ms : 1000,
+             .timeout_ms = input->pipeline_acquire_timeout_ms ? input->pipeline_acquire_timeout_ms : 1000,
+-            .background_service = async,
++            .background_service = background,
++            .worker_priority = sender_priority,
+             .backend = {
+                 .width = input->width, .height = input->height, .tile_rows = rows,
+                 .render_contract = framebuffer && mode == ESP_DISPLAY_PRESENT_MODE_NONE ? ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT : ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION,
+                 .buffer_count = framebuffer ? images : tiles, .max_frames = 8,
+                 .format = input->pixel_format == ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 ? ESP_DISPLAY_PRESENT_FORMAT_RGB565 : ESP_DISPLAY_PRESENT_FORMAT_RGB888,
+                 .rotation = (esp_display_present_engine_rotation_t)(hw->rotation / 90), .async_copy = async,
++                .deferred_submit = deferred,
+                 .fixed_logical_rotation = true,
+                 .allow_active_scanout_writes = framebuffer && mode == ESP_DISPLAY_PRESENT_MODE_NONE,
+                 .internal_tx_staging = !framebuffer && !te && input->target.drawbuf.in_psram,

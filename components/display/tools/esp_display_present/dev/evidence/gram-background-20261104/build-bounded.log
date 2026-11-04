@@ -1,0 +1,17 @@
+ninja: Entering directory `/tmp/gram-background-20261104/build-candidate'
+[1/9] Performing build step for 'bootloader'
+[1/1] cd /tmp/gram-background-20261104/build-candidate/bootloader && python /home/xuxin/esp_work/esp-idf-qspi/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x2000 /tmp/gram-background-20261104/build-candidate/bootloader/bootloader.bin
+Bootloader binary size 0x5210 bytes. 0xdf0 bytes (15%) free.
+[2/7] Building C object esp-idf/esp_display_present/CMakeFiles/__idf_esp_display_present.dir/src/present_resources.c.obj
+[3/7] Linking C static library esp-idf/esp_display_present/libesp_display_present.a
+[4/7] Generating esp-idf/esp_system/ld/sections.ld
+Skipping linker script generation, section names unchanged
+[5/7] Linking CXX executable gram_background_probe.elf
+[6/7] Generating binary image from built executable
+esptool v5.4.0
+Creating ESP32-S31 image...
+Merged 3 ELF sections.
+Successfully created ESP32-S31 image.
+Generated /tmp/gram-background-20261104/build-candidate/gram_background_probe.bin
+[7/7] cd /tmp/gram-background-20261104/build-candidate && python /home/xuxin/esp_work/esp-idf-qspi/components/partition_table/check_sizes.py --offset 0x8000 partition --type app /tmp/gram-background-20261104/build-candidate/partition_table/partition-table.bin /tmp/gram-background-20261104/build-candidate/gram_background_probe.bin
+gram_background_probe.bin binary size 0x57100 bytes. Smallest app partition is 0x300000 bytes. 0x2a8f00 bytes (89%) free.

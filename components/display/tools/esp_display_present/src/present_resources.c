@@ -201,7 +201,21 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
         }
         reserved += image_bytes * images;
     }
+    /* Pixel copying and backend progress are separate decisions. The GRAM
+     * experiment adds a sender to the synchronous pixel path without adding
+     * a copy worker or changing the existing async-copy paths. */
     bool async = framebuffer || te || hw->rotation != 0 || input->target.drawbuf.in_psram;
+    bool deferred = false;
+#ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND
+    deferred = !async && CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND;
+#endif
+    bool background = async || deferred;
+    unsigned sender_priority = 0;
+#ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY
+    if (deferred) {
+        sender_priority = CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY;
+    }
+#endif
     size_t slot_bytes = tile_bytes;
     if (!framebuffer && !te && async) {
         if (tile_memory == ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA) {
@@ -217,20 +231,26 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
         }
     }
     size_t tiles = partial ? (input->target.drawbuf.buffers ? input->target.drawbuf.buffers :
-                              default_tiles(framebuffer || te || async, tile_memory, slot_bytes, reserved)) : 0;
+                              default_tiles(background, tile_memory, slot_bytes, reserved)) : 0;
     *out = (esp_display_present_plan_config_t) {
         .presenter = {
             .backend_kind = framebuffer ? ESP_DISPLAY_PRESENT_ENGINE_FB : te ? ESP_DISPLAY_PRESENT_ENGINE_TE : ESP_DISPLAY_PRESENT_ENGINE_GRAM,
             .mode = framebuffer && mode == ESP_DISPLAY_PRESENT_MODE_NONE ? ESP_DISPLAY_PRESENT_MODE_DEFAULT : modes[mode],
             .transfer_timeout_ms = input->transfer_timeout_ms ? input->transfer_timeout_ms : 1000,
             .timeout_ms = input->pipeline_acquire_timeout_ms ? input->pipeline_acquire_timeout_ms : 1000,
-            .background_service = async,
+            .background_service = background,
+            .worker_priority = sender_priority,
             .backend = {
-                .width = input->width, .height = input->height, .tile_rows = rows,
+                .width = input->width,
+                .height = input->height,
+                .tile_rows = rows,
                 .render_contract = framebuffer && mode == ESP_DISPLAY_PRESENT_MODE_NONE ? ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT : ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION,
-                .buffer_count = framebuffer ? images : tiles, .max_frames = 8,
+                .buffer_count = framebuffer ? images : tiles,
+                .max_frames = 8,
                 .format = input->pixel_format == ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 ? ESP_DISPLAY_PRESENT_FORMAT_RGB565 : ESP_DISPLAY_PRESENT_FORMAT_RGB888,
-                .rotation = (esp_display_present_engine_rotation_t)(hw->rotation / 90), .async_copy = async,
+                .rotation = (esp_display_present_engine_rotation_t)(hw->rotation / 90),
+                .async_copy = async,
+                .deferred_submit = deferred,
                 .fixed_logical_rotation = true,
                 .allow_active_scanout_writes = framebuffer && mode == ESP_DISPLAY_PRESENT_MODE_NONE,
                 .internal_tx_staging = !framebuffer && !te && input->target.drawbuf.in_psram,
@@ -247,7 +267,8 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
         },
         .additional_budget_bytes = sizeof(present_resources_t) + (te ? te_staging_bytes(input->width, input->height, hw->rotation / 90, bytes_per_pixel) + 64 + present_event_memory() + esp_display_present_te_sync_memory() : 0),
         .resources = {
-            .tile_count = tiles, .image_count = images,
+            .tile_count = tiles,
+            .image_count = images,
             .tile_memory = tile_memory,
             .image_memory = image_memory,
             .logical_memory = preferred_external_memory((size_t)input->width * input->height * bytes_per_pixel, 1),
@@ -368,11 +389,15 @@ esp_err_t present_resources_create(const esp_display_presenter_config_t *input, 
         esp_display_present_lcd_scanout_config_t scan = {
             .panel = input->target.hw.panel,
             .kind = input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB ? ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE : ESP_DISPLAY_PRESENT_LCD_DSI,
-            .width = quarter ? input->height : input->width, .height = quarter ? input->width : input->height,
-            .format = config.presenter.backend.format, .buffer_count = config.resources.image_count,
+            .width = quarter ? input->height : input->width,
+            .height = quarter ? input->width : input->height,
+            .format = config.presenter.backend.format,
+            .buffer_count = config.resources.image_count,
             .byte_order = config.presenter.backend.panel_order,
-            .rgb_bounce_buffer_mode = bounce, .retain_driver_scanout = true,
-            .on_vsync = on_vsync, .vsync_user = vsync_user,
+            .rgb_bounce_buffer_mode = bounce,
+            .retain_driver_scanout = true,
+            .on_vsync = on_vsync,
+            .vsync_user = vsync_user,
         };
         error = esp_display_present_lcd_scanout_create(&scan, &resources->scanout);
         if (error == ESP_OK) {
@@ -420,12 +445,16 @@ esp_err_t present_resources_create(const esp_display_presenter_config_t *input, 
                 return ESP_ERR_NOT_SUPPORTED;
             }
         }
-        esp_display_present_lcd_spi_config_t spi = {.panel = input->target.hw.panel, .io = input->target.hw.io,
-                                                    .psram_dma_direct = direct_psram,
-                                                    .staging_bytes = staging, .staging_timeout_ms = input->transfer_timeout_ms,
-                                                    .format = config.presenter.backend.format, .byte_order = config.presenter.backend.panel_order,
-                                                    .max_inflight = config.resources.tile_count
-                                                   };
+        esp_display_present_lcd_spi_config_t spi = {
+            .panel = input->target.hw.panel,
+            .io = input->target.hw.io,
+            .psram_dma_direct = direct_psram,
+            .staging_bytes = staging,
+            .staging_timeout_ms = input->transfer_timeout_ms,
+            .format = config.presenter.backend.format,
+            .byte_order = config.presenter.backend.panel_order,
+            .max_inflight = config.resources.tile_count,
+        };
         error = esp_display_present_lcd_spi_create(&spi, &resources->spi);
         if (error == ESP_OK) {
             error = esp_display_present_lcd_spi_get_interface(resources->spi, &config.presenter.backend.panel);

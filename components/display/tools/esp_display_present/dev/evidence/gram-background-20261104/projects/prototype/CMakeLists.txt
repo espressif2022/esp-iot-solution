@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.16)
+set(ENV{IDF_COMPONENT_MANAGER} "0")
+set(EXTRA_COMPONENT_DIRS "/tmp/gram-background-20261104/candidate/esp_display_present" "/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/dev/test_apps/boards/deps" "/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_lv_present" )
+set(COMPONENTS main)
+include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+project(gram_background_probe)

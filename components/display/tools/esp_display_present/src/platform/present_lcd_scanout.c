@@ -57,7 +57,10 @@ static bool PRESENT_ISR_ATTR frame_boundary(esp_display_present_lcd_scanout_t *s
     if (!callback) {
         return false;
     }
-    esp_display_present_backend_event_t event = {.kind = ESP_DISPLAY_PRESENT_EVENT_SCANOUT_CONFIRMED, .transaction_cookie = cookie};
+    esp_display_present_backend_event_t event = {
+        .kind = ESP_DISPLAY_PRESENT_EVENT_SCANOUT_CONFIRMED,
+        .transaction_cookie = cookie,
+    };
     bool need_yield = callback(user, &event, true);
     present_lock_enter(&scanout->lock, true);
     --scanout->active_callbacks;
@@ -135,13 +138,19 @@ static esp_err_t scanout_attach(void *context, esp_display_present_panel_event_f
     esp_err_t error = ESP_ERR_NOT_SUPPORTED;
 #if PRESENT_DSI_SUPPORTED
     if (scanout->config.kind == ESP_DISPLAY_PRESENT_LCD_DSI) {
-        esp_lcd_dpi_panel_event_callbacks_t callbacks = {.on_frame_buf_complete = dsi_done, .on_vsync = scanout->config.on_vsync ? dsi_vsync : NULL};
+        esp_lcd_dpi_panel_event_callbacks_t callbacks = {
+            .on_frame_buf_complete = dsi_done,
+            .on_vsync = scanout->config.on_vsync ? dsi_vsync : NULL,
+        };
         error = esp_lcd_dpi_panel_register_event_callbacks(scanout->config.panel, &callbacks, scanout);
     }
 #endif
 #if PRESENT_RGB_SUPPORTED
     if (scanout->config.kind == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE) {
-        esp_lcd_rgb_panel_event_callbacks_t callbacks = {.on_frame_buf_complete = scanout->single_vsync ? NULL : rgb_done, .on_vsync = (scanout->config.on_vsync || scanout->single_vsync) ? rgb_vsync : NULL};
+        esp_lcd_rgb_panel_event_callbacks_t callbacks = {
+            .on_frame_buf_complete = scanout->single_vsync ? NULL : rgb_done,
+            .on_vsync = (scanout->config.on_vsync || scanout->single_vsync) ? rgb_vsync : NULL,
+        };
         error = esp_lcd_rgb_panel_register_event_callbacks(scanout->config.panel, &callbacks, scanout);
     }
 #endif
@@ -491,9 +500,17 @@ esp_err_t esp_display_present_lcd_scanout_get_output_caps(esp_display_present_lc
         return ESP_ERR_INVALID_ARG;
     }
     *out = (esp_display_present_output_caps_t) {
-        .x_alignment = 1, .y_alignment = 1, .width_alignment = 1, .height_alignment = 1,
-        .base_alignment = 64, .stride_alignment = 1, .tight_stride = true,
-        .full_frame_only = true, .external_buffers_required = true, .internal_dma = true, .external_memory = true,
+        .x_alignment = 1,
+        .y_alignment = 1,
+        .width_alignment = 1,
+        .height_alignment = 1,
+        .base_alignment = 64,
+        .stride_alignment = 1,
+        .tight_stride = true,
+        .full_frame_only = true,
+        .external_buffers_required = true,
+        .internal_dma = true,
+        .external_memory = true,
         .max_inflight = 1
     };
     return ESP_OK;

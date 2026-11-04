@@ -12,9 +12,23 @@
 #include "platform/present_te_timer.h"
 #include "platform/present_te_timing.h"
 
-enum { TE_MAX_BUFFERS = PRESENT_MAX_TILE_BUFFERS, TE_MAX_FRAMES = PRESENT_MAX_FRAMES, TE_MAX_DAMAGE = PRESENT_MAX_DAMAGE_AREAS };
+enum {
+    TE_MAX_BUFFERS = PRESENT_MAX_TILE_BUFFERS,
+    TE_MAX_FRAMES = PRESENT_MAX_FRAMES,
+    TE_MAX_DAMAGE = PRESENT_MAX_DAMAGE_AREAS,
+};
 
-typedef enum { TE_IDLE, TE_BUILDING, TE_COPY_DRAIN, TE_CANCELING, TE_READY, TE_SUBMITTING, TE_INFLIGHT } te_phase_t;
+/* Frame job phases; tile copy completion and full-frame transfer completion
+ * release different buffers. The timer only wakes service to recheck TE. */
+typedef enum {
+    TE_IDLE,       /* Job record is available. */
+    TE_BUILDING,   /* Producer submits tiles to the composer. */
+    TE_COPY_DRAIN, /* Sealed frame waits for copies/repair to finish. */
+    TE_CANCELING,  /* Drain outstanding copies before discarding the frame. */
+    TE_READY,      /* Composed frame awaits TE admission and transfer capacity. */
+    TE_SUBMITTING, /* Adapter call in progress; completion may arrive early. */
+    TE_INFLIGHT,   /* Await completion before releasing the compose image. */
+} te_phase_t;
 typedef present_core_frame_t te_record_t;
 typedef struct {
     void *pixels;
@@ -483,14 +497,20 @@ static esp_err_t te_create_common(const esp_display_present_backend_config_t *co
     backend->core.active = SIZE_MAX;
     bool quarter = config->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90 || config->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270;
     const present_te_composer_config_t compose_config = {
-        .image_count = config->compose_count, .image_in_psram = config->image_in_psram,
-        .width = quarter ? config->height : config->width, .height = quarter ? config->width : config->height,
+        .image_count = config->compose_count,
+        .image_in_psram = config->image_in_psram,
+        .width = quarter ? config->height : config->width,
+        .height = quarter ? config->width : config->height,
         .rotation = config->rotation,
-        .format = config->format, .panel_order = config->panel_order,
+        .format = config->format,
+        .panel_order = config->panel_order,
         .pixel = {
-            .max_jobs = config->buffer_count, .asynchronous = config->async_copy,
-            .execute = config->copy_execute, .execute_user = config->copy_user,
-            .on_event = config->async_copy ? copy_done : NULL, .user = backend
+            .max_jobs = config->buffer_count,
+            .asynchronous = config->async_copy,
+            .execute = config->copy_execute,
+            .execute_user = config->copy_user,
+            .on_event = config->async_copy ? copy_done : NULL,
+            .user = backend
         },
     };
     esp_err_t error = present_te_composer_create(&compose_config, &backend->composer);
@@ -551,8 +571,10 @@ static esp_err_t te_get_caps(present_backend_t *backend, esp_display_present_bac
         .draw_layout = {backend->config.width, backend->config.height,
                         backend->config.width * bpp, backend->config.format, backend->config.draw_order
                        },
-        .drawbuf_capacity_bytes = backend->tile_bytes, .buffer_alignment = PRESENT_BUFFER_ALIGNMENT,
-        .max_tile_rows = backend->config.tile_rows, .max_damage_areas = TE_MAX_DAMAGE,
+        .drawbuf_capacity_bytes = backend->tile_bytes,
+        .buffer_alignment = PRESENT_BUFFER_ALIGNMENT,
+        .max_tile_rows = backend->config.tile_rows,
+        .max_damage_areas = TE_MAX_DAMAGE,
         .retains_content = true,
     };
     return ESP_OK;
@@ -671,7 +693,8 @@ static esp_err_t te_acquire(present_backend_t *backend, esp_display_present_fram
         size_t bpp = backend->config.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
         tile->frame = backend->core.active;
         tile->lease = (esp_display_present_lease_t) {
-            .id = {token}, .logical_area = actual,
+            .id = {token},
+            .logical_area = actual,
             .surface = {tile->pixels, backend->tile_bytes,
                 {
                     actual.width, actual.height, actual.width * bpp,

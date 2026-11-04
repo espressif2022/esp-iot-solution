@@ -1,0 +1,78 @@
+Internal ctest changing into directory: /tmp/present-sanitize-lvgl
+Test project /tmp/present-sanitize-lvgl
+      Start  1: te_timing
+ 1/36 Test  #1: te_timing ........................   Passed    0.01 sec
+      Start  2: image
+ 2/36 Test  #2: image ............................   Passed    0.02 sec
+      Start  3: frame_core
+ 3/36 Test  #3: frame_core .......................   Passed    0.00 sec
+      Start  4: plan
+ 4/36 Test  #4: plan .............................   Passed    0.00 sec
+      Start  5: records
+ 5/36 Test  #5: records ..........................   Passed    0.00 sec
+      Start  6: coverage
+ 6/36 Test  #6: coverage .........................   Passed    0.11 sec
+      Start  7: repair
+ 7/36 Test  #7: repair ...........................   Passed    0.00 sec
+      Start  8: scanout
+ 8/36 Test  #8: scanout ..........................   Passed    0.00 sec
+      Start  9: rotation
+ 9/36 Test  #9: rotation .........................   Passed    0.01 sec
+      Start 10: pixel
+10/36 Test #10: pixel ............................   Passed    0.01 sec
+      Start 11: gram
+11/36 Test #11: gram .............................   Passed    0.01 sec
+      Start 12: lcd_spi
+12/36 Test #12: lcd_spi ..........................   Passed    0.01 sec
+      Start 13: presenter
+13/36 Test #13: presenter ........................   Passed    0.00 sec
+      Start 14: te_composer
+14/36 Test #14: te_composer ......................   Passed    0.01 sec
+      Start 15: te
+15/36 Test #15: te ...............................   Passed    0.64 sec
+      Start 16: presenter_te
+16/36 Test #16: presenter_te .....................   Passed    0.01 sec
+      Start 17: fb
+17/36 Test #17: fb ...............................   Passed    0.05 sec
+      Start 18: event
+18/36 Test #18: event ............................   Passed    0.01 sec
+      Start 19: scheduler
+19/36 Test #19: scheduler ........................   Passed    0.05 sec
+      Start 20: headers_cpp
+20/36 Test #20: headers_cpp ......................   Passed    0.00 sec
+      Start 21: boundary_trace
+21/36 Test #21: boundary_trace ...................   Passed    0.00 sec
+      Start 22: scanout_retirement_contract
+22/36 Test #22: scanout_retirement_contract ......   Passed    0.06 sec
+      Start 23: boundary_analyze
+23/36 Test #23: boundary_analyze .................   Passed    0.07 sec
+      Start 24: lvgl_zero
+24/36 Test #24: lvgl_zero ........................   Passed    0.01 sec
+      Start 25: lvgl
+25/36 Test #25: lvgl .............................   Passed    0.01 sec
+      Start 26: lvgl_te
+26/36 Test #26: lvgl_te ..........................   Passed    0.02 sec
+      Start 27: lvgl_fb
+27/36 Test #27: lvgl_fb ..........................   Passed    0.01 sec
+      Start 28: executor_cpu
+28/36 Test #28: executor_cpu .....................   Passed    0.00 sec
+      Start 29: executor_ppa
+29/36 Test #29: executor_ppa .....................   Passed    0.00 sec
+      Start 30: executor_dma2d
+30/36 Test #30: executor_dma2d ...................   Passed    0.00 sec
+      Start 31: executor_both
+31/36 Test #31: executor_both ....................   Passed    0.00 sec
+      Start 32: legacy_resources
+32/36 Test #32: legacy_resources .................   Passed    0.01 sec
+      Start 33: legacy_facade
+33/36 Test #33: legacy_facade ....................   Passed    0.29 sec
+      Start 34: transfer_timeout
+34/36 Test #34: transfer_timeout .................   Passed    0.02 sec
+      Start 35: legacy_te_gate
+35/36 Test #35: legacy_te_gate ...................   Passed    0.00 sec
+      Start 36: legacy_te_gate_old
+36/36 Test #36: legacy_te_gate_old ...............   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 36
+
+Total Test time (real) =   1.51 sec

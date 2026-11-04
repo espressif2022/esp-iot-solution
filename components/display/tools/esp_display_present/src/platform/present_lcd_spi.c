@@ -15,6 +15,11 @@
 #define PRESENT_SPI_EXTERNAL_DMA SOC_PSRAM_DMA_CAPABLE
 #endif
 
+enum {
+    PRESENT_SPI_BASE_ALIGNMENT = 64,
+    PRESENT_SPI_EXTERNAL_LENGTH_ALIGNMENT = 64,
+};
+
 struct esp_display_present_lcd_spi {
     present_lock_t lock;
     esp_display_present_lcd_spi_config_t config;
@@ -59,7 +64,9 @@ static bool PRESENT_ISR_ATTR finish_color(esp_display_present_lcd_spi_t *spi, bo
     present_lock_exit(&spi->lock, isr);
 
     const esp_display_present_backend_event_t event = {
-        .kind = ESP_DISPLAY_PRESENT_EVENT_TRANSFER_DONE, .transaction_cookie = cookie, .result = result,
+        .kind = ESP_DISPLAY_PRESENT_EVENT_TRANSFER_DONE,
+        .transaction_cookie = cookie,
+        .result = result,
     };
     bool need_yield = callback(context, &event, isr);
 
@@ -126,7 +133,7 @@ static esp_err_t validate_tx(esp_display_present_lcd_spi_t *spi, const esp_displ
         return ESP_ERR_INVALID_SIZE;
     }
     *bytes = row * area->height;
-    if (*bytes > surface->capacity_bytes || (uintptr_t)surface->pixels % 64 ||
+    if (*bytes > surface->capacity_bytes || (uintptr_t)surface->pixels % PRESENT_SPI_BASE_ALIGNMENT ||
             (uintptr_t)surface->pixels > UINTPTR_MAX - *bytes) {
         return ESP_ERR_INVALID_SIZE;
     }
@@ -138,7 +145,7 @@ static esp_err_t validate_tx(esp_display_present_lcd_spi_t *spi, const esp_displ
     bool valid = esp_ptr_internal(surface->pixels) && esp_ptr_internal(last) &&
                  esp_ptr_dma_capable(surface->pixels) && esp_ptr_dma_capable(last);
 #if PRESENT_SPI_EXTERNAL_DMA
-    if (!valid && spi->config.psram_dma_direct && *bytes % 64 == 0) {
+    if (!valid && spi->config.psram_dma_direct && *bytes % PRESENT_SPI_EXTERNAL_LENGTH_ALIGNMENT == 0) {
         valid = esp_ptr_dma_ext_capable(surface->pixels) && esp_ptr_dma_ext_capable(last);
     }
 #endif
@@ -390,11 +397,20 @@ esp_err_t esp_display_present_lcd_spi_get_output_caps(esp_display_present_lcd_sp
     if (!spi || !out) {
         return ESP_ERR_INVALID_ARG;
     }
+    bool direct_external_dma = spi->config.psram_dma_direct && spi->staging == NULL;
     *out = (esp_display_present_output_caps_t) {
-        .x_alignment = 1, .y_alignment = 1, .width_alignment = 1, .height_alignment = 1,
-        .base_alignment = 64, .stride_alignment = 1, .tight_stride = true,
-        .full_frame_only = false, .internal_dma = true, .external_memory = spi->config.psram_dma_direct || spi->staging != NULL,
-        .max_inflight = spi->config.max_inflight, .external_length_alignment = spi->config.psram_dma_direct && !spi->staging ? 64 : 1
+        .x_alignment = 1,
+        .y_alignment = 1,
+        .width_alignment = 1,
+        .height_alignment = 1,
+        .base_alignment = PRESENT_SPI_BASE_ALIGNMENT,
+        .stride_alignment = 1,
+        .tight_stride = true,
+        .full_frame_only = false,
+        .internal_dma = true,
+        .external_memory = spi->config.psram_dma_direct || spi->staging != NULL,
+        .max_inflight = spi->config.max_inflight,
+        .external_length_alignment = direct_external_dma ? PRESENT_SPI_EXTERNAL_LENGTH_ALIGNMENT : 1,
     };
     return ESP_OK;
 }

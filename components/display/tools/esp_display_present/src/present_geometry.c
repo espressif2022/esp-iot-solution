@@ -51,7 +51,10 @@ esp_err_t esp_display_present_geometry_align_area(
         y2 = logical_size.height - 1;
     }
     *out_area = (esp_display_present_area_t) {
-        .x1 = x1, .y1 = y1, .x2 = x2, .y2 = y2,
+        .x1 = x1,
+        .y1 = y1,
+        .x2 = x2,
+        .y2 = y2,
     };
     return ESP_OK;
 }
@@ -146,7 +149,8 @@ esp_err_t esp_display_present_geometry_map_physical_point_to_logical(
         return ESP_ERR_INVALID_ARG;
     }
     *out_logical_point = (esp_display_present_point_t) {
-        .x = (int32_t)x, .y = (int32_t)y,
+        .x = (int32_t)x,
+        .y = (int32_t)y,
     };
     return ESP_OK;
 }

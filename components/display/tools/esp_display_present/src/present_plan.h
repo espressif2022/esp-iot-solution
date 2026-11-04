@@ -11,8 +11,14 @@ extern "C" {
 #endif
 
 /* Select default pool/mode policy, not a ceiling on supported capabilities. */
-typedef enum { ESP_DISPLAY_PRESENT_PLAN_CURRENT_DEFAULTS, ESP_DISPLAY_PRESENT_PLAN_LEGACY_DEFAULTS } esp_display_present_plan_defaults_t;
-typedef enum { ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA, ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL } esp_display_present_plan_memory_t;
+typedef enum {
+    ESP_DISPLAY_PRESENT_PLAN_CURRENT_DEFAULTS,
+    ESP_DISPLAY_PRESENT_PLAN_LEGACY_DEFAULTS,
+} esp_display_present_plan_defaults_t;
+typedef enum {
+    ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA,
+    ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL,
+} esp_display_present_plan_memory_t;
 typedef enum {
     ESP_DISPLAY_PRESENT_TOPOLOGY_REGION,
     ESP_DISPLAY_PRESENT_TOPOLOGY_TILE_TO_PHYSICAL,

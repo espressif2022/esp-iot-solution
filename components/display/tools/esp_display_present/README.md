@@ -8,6 +8,8 @@ For local component discovery add `esp_display_present` and, for LVGL, `esp_lv_p
 
 ESP32-S3 enables `CONFIG_ESP_DISPLAY_PRESENT_FB_IRAM` by default to place framebuffer engine and pixel-copy hot paths in internal RAM. With RGB bounce buffers and a 16 KiB instruction cache, the measured double-FB PARTIAL and DIRECT throughput returns to approximately 60 submissions/s, at about 19 KiB of additional IRAM in that build. Memory-constrained applications can disable it and reassess framebuffer throughput. This placement does not change buffer retirement or make task APIs ISR-safe or cache-disabled-safe. See [test conditions and limits](dev/FB_IRAM_RESULTS_20261103.md).
 
+`CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND` optionally moves synchronous internal-tile GRAM submissions to the existing engine sender, releasing the engine gate during driver calls without forcing a pixel copy. It is disabled by default; rotated and PSRAM tile paths keep their existing scheduling. `CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY` sets the experimental sender priority, defaulting to 7. See [conditions, RAM cost, and measured results](dev/GRAM_BACKGROUND_RESULTS_20261104.md).
+
 See [TE timing and scheduling](docs/TE_TIMING.md) for automatic measurement, the shared window model, and compatibility boundaries.
 
 See [current board benchmarks and host validation](dev/VALIDATION.md) for the tested commit, configurations, scene results, and limits.

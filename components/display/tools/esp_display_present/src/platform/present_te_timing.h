@@ -21,7 +21,12 @@ extern "C" {
 typedef struct {
     uint64_t period_us, scan_us, edge_to_scan_us, guard_us, jitter_us;
 } esp_display_present_te_timing_t;
-typedef enum { ESP_DISPLAY_PRESENT_TE_ALLOW, ESP_DISPLAY_PRESENT_TE_WAIT, ESP_DISPLAY_PRESENT_TE_UNPROVEN, ESP_DISPLAY_PRESENT_TE_UNSUPPORTED } esp_display_present_te_admission_t;
+typedef enum {
+    ESP_DISPLAY_PRESENT_TE_ALLOW,
+    ESP_DISPLAY_PRESENT_TE_WAIT,
+    ESP_DISPLAY_PRESENT_TE_UNPROVEN,
+    ESP_DISPLAY_PRESENT_TE_UNSUPPORTED,
+} esp_display_present_te_admission_t;
 typedef struct {
     esp_display_present_te_admission_t admission;
     uint64_t earliest_phase_us, latest_phase_us;
