@@ -671,7 +671,7 @@ static esp_err_t fb_create(const esp_display_present_backend_config_t *config, p
     if (!config || !config->panel.attach || !config->panel.submit || !config->panel.quiesce) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (config->tile_bufs > PRESENT_MAX_TILE_BUFFERS || !config->width || !config->height || !config->buffer_count || config->buffer_count > FB_LIMIT ||
+    if (config->tile_count > PRESENT_MAX_TILE_BUFFERS || !config->width || !config->height || !config->buffer_count || config->buffer_count > FB_LIMIT ||
             !config->max_frames || config->max_frames > RECORD_LIMIT) {
         return ESP_ERR_INVALID_ARG;
     }
@@ -735,7 +735,7 @@ static esp_err_t fb_create(const esp_display_present_backend_config_t *config, p
                                                physical_partial && quarter ? config->width : config->height);
     backend->image.allow_scanout_writes = config->active_writes;
     if (config->render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION) {
-        backend->tile_count = config->tile_bufs ? config->tile_bufs : 1;
+        backend->tile_count = config->tile_count ? config->tile_count : 1;
         backend->tiles = present_alloc(backend->tile_count * sizeof(*backend->tiles));
         if (!backend->tiles) {
             free_backend(backend);
@@ -1437,7 +1437,7 @@ const present_backend_ops_t present_fb_backend = {
 
 size_t present_fb_memory(const esp_display_present_backend_config_t *config)
 {
-    size_t tiles = config->render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION ? (config->tile_bufs ? config->tile_bufs : 1) : 0;
+    size_t tiles = config->render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION ? (config->tile_count ? config->tile_count : 1) : 0;
     return sizeof(present_backend_t) + tiles * sizeof(fb_tile_t) + config->max_frames * sizeof(present_core_frame_t) +
            present_pixel_memory(tiles ? tiles : 1, config->async_copy);
 }

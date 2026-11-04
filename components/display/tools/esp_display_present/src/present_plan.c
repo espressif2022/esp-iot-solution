@@ -432,7 +432,7 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
         return ESP_ERR_NO_MEM;
     }
     if (kind == ESP_DISPLAY_PRESENT_ENGINE_FB) {
-        backend_config->tile_bufs = tiles;
+        backend_config->tile_count = tiles;
         if (backend_config->ext_bufs && images != backend_config->buffer_count) {
             return ESP_ERR_INVALID_ARG;
         }

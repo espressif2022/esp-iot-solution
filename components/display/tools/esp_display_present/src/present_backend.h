@@ -197,7 +197,7 @@ typedef struct {
 
 struct esp_display_present_backend_config {
     uint32_t width, height;     /* Logical dimensions seen by the producer. */
-    uint32_t tile_rows;         /* GRAM/TE partition height in rows. */
+    uint32_t tile_rows;         /* Presenter input tile height in PARTITION modes. */
     size_t buffer_count;        /* 1..16 draw/frame buffers. */
     size_t max_frames;          /* 1..32 bounded frame/receipt records. */
     esp_display_present_engine_pixel_format_t format;
@@ -214,16 +214,16 @@ struct esp_display_present_backend_config {
      * GRAM ignores these fields. No hardware timing is inferred automatically. */
     uint32_t te_window_us;
     uint32_t te_budget_us;
-    /** FB: 1..3 framebuffers in buffer_count, one scratch tile for PARTITION.
+    /** FB: 1..3 framebuffers in buffer_count; PARTITION uses the input tile pool.
      * FULL/DIRECT leases expose the whole candidate; submit coordinates index
      * that full surface (not scratch origin). Zero defaults to PARTITION. */
     esp_display_present_render_contract_t render_contract;
     /** Single-FB is permitted only with explicit acceptance of active scanout
      * writes/tearing. Cancel cannot roll back pixels already visible. */
     bool active_writes;
-    /** GRAM/TE and FB PARTITION queued tile copies. Defaults retain synchronous CPU operation.
+    /** Enables the pixel worker for copy, repair and conversion jobs.
+     * Defaults retain synchronous CPU operation.
      * Executor must obey pixel_execute's return-means-access-ended contract.
-     * FB FULL/DIRECT reject async_copy; those contracts draw directly.
      * GRAM async_copy requires separate conversion storage (no in_place). */
     bool async_copy;
     esp_display_present_pixel_execute_fn copy_execute;
@@ -239,7 +239,7 @@ struct esp_display_present_backend_config {
     bool deferred_submit; /* Engine-owned GRAM sender; READY slots retain pixels. */
     esp_display_present_te_gate_t te_gate; /* Explicit injection; default retains native timing model. */
     esp_display_present_te_timing_t te_timing; /* period_us=0 retains the explicit fixed edge window. */
-    size_t tile_bufs; /* FB PARTIAL: independent draw pool; 0 legacy one. */
+    size_t tile_count; /* FB PARTIAL input tiles; 0 retains the legacy default of one. */
     size_t compose_count; /* TE: 0 legacy serialized dual-image, explicit 1/2 enables pool scheduling. */
 };
 

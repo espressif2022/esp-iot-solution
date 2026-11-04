@@ -94,7 +94,7 @@ static void run_v2(unsigned count, bool full, unsigned rotation)
         : (count == 2 ? ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL : ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_PARTIAL),
         .timeout_ms = 3000, .background_service = true,
         .backend = {
-            .width = width, .height = height, .tile_rows = 16, .tile_bufs = 2,
+            .width = width, .height = height, .tile_rows = 16, .tile_count = 2,
             .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = count, .max_frames = 4,
             .rotation = (esp_display_present_engine_rotation_t)rotation, .async_copy = true,
             .tile_in_psram = true, .logical_in_psram = true,

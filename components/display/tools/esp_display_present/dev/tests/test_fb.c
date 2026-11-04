@@ -492,7 +492,7 @@ static void independent_tiles(void)
     scan_panel_t panel = {0};
     esp_display_present_backend_config_t cfg = config(&panel, 2, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION);
     cfg.tile_rows = 2;
-    cfg.tile_bufs = 2;
+    cfg.tile_count = 2;
     present_backend_t *b;
     OK(ops->create(&cfg, &b));
     esp_display_present_frame_t f = begin(b);
@@ -528,7 +528,7 @@ static void async_pipeline_handoff(size_t buffers, esp_display_present_render_co
     assert(ext[0] && ext[1] && ext[2]);
     esp_display_present_backend_config_t cfg = config(&p, buffers, contract);
     cfg.tile_rows = 2;
-    cfg.tile_bufs = contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION ? 2 : 0;
+    cfg.tile_count = contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION ? 2 : 0;
     cfg.rotation = contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL ? ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90 : ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0;
     cfg.async_copy = true;
     cfg.on_progress = copied;

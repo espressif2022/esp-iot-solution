@@ -96,18 +96,21 @@ typedef struct {
     uint8_t frame_buffer_count; /**< Number of valid framebuffer addresses. */
 } esp_display_present_fb_config_t;
 
-/** Shared producer drawbuf policy for every partition rendering mode. */
+/**
+ * Producer input-buffer policy. In PARTITION modes each draw buffer is one
+ * presenter tile; lines, buffers and in_psram configure that tile pool.
+ * A frontend may borrow the tiles or use its own separate draw buffer.
+ * TE compose images and panel framebuffers are separate from the tile pool.
+ */
 typedef struct {
-    uint16_t lines; /**< Preferred height of each partition draw buffer. */
+    uint16_t lines; /**< Preferred height of each input tile. */
     /**
-     * Number of partition draw buffers (1 or 2). 0 selects two for GRAM
-     * without TE, and for FB repair and TE only on multi-core targets whose
-     * internal DMA heap keeps 128 KiB free after both; two buffers overlap
-     * tile copies with rendering at the cost of one more buffer and a 4 KiB
-     * worker stack.
+     * Number of input tiles (1 or 2). 0 selects an automatic count based on
+     * the mode, target and available internal DMA memory. Creation may retry
+     * with one tile when an automatically selected pair cannot be allocated.
      */
     uint8_t buffers;
-    bool in_psram; /**< Allocate draw buffers in PSRAM when possible. */
+    bool in_psram; /**< Prefer PSRAM for input tiles when available. */
     /**
      * TE_SYNC full-screen compose buffers. 0/1 keeps the synchronous,
      * single-buffer path; 2 enables a rotating compose pool so composition

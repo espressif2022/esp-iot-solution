@@ -25,7 +25,8 @@ typedef enum {
     ESP_DISPLAY_PRESENT_TOPOLOGY_DIRECT_SURFACE,
     ESP_DISPLAY_PRESENT_TOPOLOGY_LOGICAL_TO_PHYSICAL,
 } esp_display_present_plan_topology_t;
-/* Independent pool quantities; zero selects defaults. Explicit overrides must
+/* tiles are presenter input buffers, not frontend buffers or TE compose images.
+ * Independent pool quantities; zero selects defaults. Explicit overrides must
  * agree with named mode image counts. Memory kind is explicit; no implicit staging allocation. */
 typedef struct {
     size_t tile_count, image_count, logical_count, tx_capacity;

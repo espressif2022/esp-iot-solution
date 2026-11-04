@@ -374,6 +374,8 @@ static esp_err_t create_binding(esp_display_present_engine_t *presenter, uint32_
     binding->bpp = bpp;
     binding->zero_copy = zero_copy;
     binding->pooled_partial = zero_copy && caps.contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION;
+    /* In pooled PARTIAL, borrowed points at a presenter tile during drawing;
+     * draw is separate fallback storage. In the copy path draw is the source. */
     binding->draw = lv_draw_buf_create(caps.draw_layout.width, rows, cf, stride);
     if (!binding->draw) {
         lv_free(binding);

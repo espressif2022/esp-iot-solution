@@ -464,6 +464,7 @@ static esp_err_t create_planned_engine(present_resources_t *resources, const esp
     if (config->presenter.backend_kind != ESP_DISPLAY_PRESENT_ENGINE_FB) {
         config->presenter.backend.buffer_count = 1;
     }
+    /* Public drawbuf policy describes this same presenter input tile pool. */
     if (input->target.drawbuf.in_psram) {
         size_t bpp = input->pixel_format == ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 ? 2 : 3;
         size_t bytes = (size_t)input->width * config->presenter.backend.tile_rows * bpp;
