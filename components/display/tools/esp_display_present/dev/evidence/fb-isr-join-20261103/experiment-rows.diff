@@ -1,0 +1,21 @@
+--- baseline/present_pixel_engine.c
++++ experiment-rows/present_pixel_engine.c
+@@ -139,14 +139,10 @@
+                            (size_t)request->destination_y * dst_stride + (size_t)request->destination_x * bytes;
+         if (!swap) {
+             size_t row_bytes = (size_t)a.width * bytes;
+-            if (row_bytes == src_stride && src_stride == dst_stride) {
+-                memcpy(dst_row, src_row, row_bytes * a.height);
+-            } else {
+-                for (uint32_t y = 0; y < a.height; ++y) {
+-                    memcpy(dst_row, src_row, row_bytes);
+-                    src_row += src_stride;
+-                    dst_row += dst_stride;
+-                }
++            for (uint32_t y = 0; y < a.height; ++y) {
++                memcpy(dst_row, src_row, row_bytes);
++                src_row += src_stride;
++                dst_row += dst_stride;
+             }
+             return;
+         }

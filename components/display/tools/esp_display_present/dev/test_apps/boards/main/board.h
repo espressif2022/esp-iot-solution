@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #pragma once
-#include "present_lcd_scanout.h"
+#include <stddef.h>
+#include "esp_lcd_panel_ops.h"
 esp_err_t board_panel_create(esp_lcd_panel_handle_t *panel, size_t buffer_count);
 /* Called only after the presenter has stopped and deleted the panel. */
 esp_err_t board_resources_destroy(void);

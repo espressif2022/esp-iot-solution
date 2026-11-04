@@ -6,6 +6,7 @@ set(PRESENT_ENGINE_SOURCES src/present_os.c src/platform/present_te_timing.c src
 idf_component_register(SRCS src/esp_display_presenter.c src/present_resources.c src/platform/present_te_sync.c src/present_geometry.c ${PRESENT_ENGINE_SOURCES}
     INCLUDE_DIRS include
     PRIV_INCLUDE_DIRS src
+    LDFRAGMENTS linker.lf
     REQUIRES esp_common esp_lcd
     PRIV_REQUIRES freertos esp_timer heap esp_mm esp_hw_support esp_driver_ppa esp_driver_dma esp_system esp_driver_gpio)
 target_compile_features(${COMPONENT_LIB} PRIVATE c_std_11)

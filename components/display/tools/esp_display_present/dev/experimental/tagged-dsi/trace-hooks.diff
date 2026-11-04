@@ -1,0 +1,95 @@
+--- a/esp_lcd/dsi/esp_lcd_panel_dpi.c
++++ b/esp_lcd/dsi/esp_lcd_panel_dpi.c
+@@ -1,3 +1,4 @@
++#include "boundary_trace.h"
+ /*
+  * SPDX-FileCopyrightText: 2023-2026 Espressif Systems (Shanghai) CO LTD
+  *
+@@ -117,12 +118,15 @@
+ {
+     bool yield_needed = false;
+     esp_lcd_dpi_panel_t *dpi_panel = (esp_lcd_dpi_panel_t *)user_data;
++    boundary_emit(BT_READ_END, (uintptr_t)dpi_panel->fbs[dpi_panel->dma_fb_index], 0);
+     portENTER_CRITICAL_ISR(&dpi_panel->present_lock);
+     uint8_t old_fb_index = dpi_panel->dma_fb_index;
+     uint8_t fb_index = dpi_panel->cur_fb_index;
+     uint64_t generation = dpi_panel->present_generation;
+     dpi_panel->present_generation = 0;
+     dpi_panel->dma_fb_index = fb_index;
++    boundary_emit(BT_SELECT, (uintptr_t)dpi_panel->fbs[fb_index], 0);
++    boundary_emit(BT_READ_BEGIN, (uintptr_t)dpi_panel->fbs[fb_index], 0);
+     dw_gdma_link_list_handle_t link_list = dpi_panel->link_lists[fb_index];
+ 
+     // restart the DMA transfer, keep refreshing the LCD
+@@ -135,6 +139,7 @@
+     dw_gdma_channel_enable_ctrl(chan, true);
+     portEXIT_CRITICAL_ISR(&dpi_panel->present_lock);
+ 
++    boundary_emit(BT_FRAME_DONE, (uintptr_t)dpi_panel->fbs[fb_index], (uint32_t)generation);
+     esp_lcd_dpi_panel_event_data_t present_event = {
+         .present_generation = generation,
+         .retired_frame_buffer = dpi_panel->fbs[old_fb_index],
+@@ -511,6 +516,9 @@
+     }
+ 
+     // by default, we use the fb0 as the first working frame buffer
++    boundary_emit(BT_CHAIN, (uintptr_t)dpi_panel->fbs[0], 1);
++    boundary_emit(BT_SELECT, (uintptr_t)dpi_panel->fbs[0], 0);
++    boundary_emit(BT_READ_BEGIN, (uintptr_t)dpi_panel->fbs[0], 0);
+     dpi_panel->cur_fb_index = 0;
+     dpi_panel->dma_fb_index = 0;
+     link_list = dpi_panel->link_lists[0];
+--- a/esp_display_present/src/platform/present_lcd_scanout.c
++++ b/esp_display_present/src/platform/present_lcd_scanout.c
+@@ -1,3 +1,4 @@
++#include "boundary_trace.h"
+ /*
+  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
+  * SPDX-License-Identifier: Apache-2.0
+@@ -112,6 +113,7 @@
+     void *callback_user = scanout->callback_user;
+     uint64_t cookie = scanout->cookie;
+     if (callback) {
++        boundary_emit(BT_CONFIRM, (uintptr_t)data->selected_frame_buffer, (uint32_t)cookie);
+         scanout->confirmed_buffer = data->selected_frame_buffer;
+         scanout->cookie = 0;
+         scanout->armed = false;
+@@ -235,6 +237,7 @@
+     present_lock_exit(&scanout->lock, false);
+ #if defined(ESP_LCD_DPI_PANEL_HAS_TAGGED_RETIREMENT)
+     if (tagged_dsi) {
++        boundary_emit(BT_SUBMIT, (uintptr_t)surface->pixels, (uint32_t)cookie);
+         error = esp_lcd_dpi_panel_select_frame_buffer_tagged(scanout->config.panel, surface->pixels, cookie);
+         if (error != ESP_OK) {
+             present_lock_enter(&scanout->lock, false);
+--- a/esp_display_present/src/backend/present_backend_fb.c
++++ b/esp_display_present/src/backend/present_backend_fb.c
+@@ -1,3 +1,4 @@
++#include "boundary_trace.h"
+ /*
+  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
+  * SPDX-License-Identifier: Apache-2.0
+@@ -519,6 +520,7 @@
+             };
+         }
+         present_lock_enter(&backend->lock, false);
++        boundary_emit(BT_WRITE_END, (uintptr_t)(backend->scan_storage ? slot->scan.pixels : slot->surface.pixels), 0);
+         error = present_image_commit(&backend->image);
+         if (error != ESP_OK) {
+             present_lock_exit(&backend->lock, false);
+@@ -554,6 +556,7 @@
+         size_t next = backend->pending;
+         if (backend->scanning != SIZE_MAX && backend->scanning != next) {
+             present_allocation_drop(&backend->image.allocations[backend->scanning], PRESENT_REF_SCANOUT);
++            boundary_emit(BT_RELEASE, (uintptr_t)(backend->scan_storage ? backend->slots[backend->scanning].scan.pixels : backend->slots[backend->scanning].surface.pixels), 0);
+             backend->slots[backend->scanning].state = FB_SLOT_FREE;
+         }
+         present_allocation_drop(&backend->image.allocations[next], PRESENT_REF_TRANSFER);
+@@ -910,6 +913,7 @@
+     if (error != ESP_OK) {
+         return error;
+     }
++    boundary_emit(BT_WRITE_BEGIN, (uintptr_t)(backend->scan_storage ? backend->slots[slot].scan.pixels : backend->slots[slot].surface.pixels), 0);
+     if (prefill && !backend->config.async_copy) {
+         esp_display_present_copy_request_t copy = baseline_copy(backend, slot, prefill_area);
+         error = esp_display_present_pixel_execute_cpu(&copy);

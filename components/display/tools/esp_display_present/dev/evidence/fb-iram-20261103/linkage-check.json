@@ -1,0 +1,113 @@
+{
+  "s3-finaliram": {
+    "copy_execute": {
+      "address": "4037ed78",
+      "bytes": 120,
+      "in_internal_ram": true
+    },
+    "cpu_execute": {
+      "address": "4037e2b4",
+      "bytes": 35,
+      "in_internal_ram": true
+    },
+    "esp_display_present_engine_acquire_buffer": {
+      "address": "4037d5ec",
+      "bytes": 388,
+      "in_internal_ram": true
+    },
+    "esp_display_present_executor_run": {
+      "address": "4037e158",
+      "bytes": 114,
+      "in_internal_ram": true
+    },
+    "esp_display_present_pixel_submit": {
+      "address": "4037e5c0",
+      "bytes": 411,
+      "in_internal_ram": true
+    },
+    "fb_acquire": {
+      "address": "4037b7f4",
+      "bytes": 548,
+      "in_internal_ram": true
+    },
+    "present_fb_backend": {
+      "address": "3fc9b578",
+      "bytes": 84,
+      "in_internal_ram": true
+    }
+  },
+  "s3-offiram": {
+    "copy_execute": {
+      "address": "4200a7e8",
+      "bytes": 128,
+      "in_internal_ram": false
+    },
+    "cpu_execute": {
+      "address": "42011158",
+      "bytes": 27,
+      "in_internal_ram": false
+    },
+    "esp_display_present_engine_acquire_buffer": {
+      "address": "4200e8e8",
+      "bytes": 360,
+      "in_internal_ram": false
+    },
+    "esp_display_present_executor_run": {
+      "address": "4201102c",
+      "bytes": 114,
+      "in_internal_ram": false
+    },
+    "esp_display_present_pixel_submit": {
+      "address": "4200f5a8",
+      "bytes": 419,
+      "in_internal_ram": false
+    },
+    "fb_acquire": {
+      "address": "42014bb4",
+      "bytes": 544,
+      "in_internal_ram": false
+    },
+    "present_fb_backend": {
+      "address": "3c03b450",
+      "bytes": 84,
+      "in_internal_ram": false
+    }
+  },
+  "s3-stock-on": {
+    "copy_execute": {
+      "address": "4037da58",
+      "bytes": 120,
+      "in_internal_ram": true
+    },
+    "cpu_execute": {
+      "address": "4037cf94",
+      "bytes": 35,
+      "in_internal_ram": true
+    },
+    "esp_display_present_engine_acquire_buffer": {
+      "address": "4037c2cc",
+      "bytes": 388,
+      "in_internal_ram": true
+    },
+    "esp_display_present_executor_run": {
+      "address": "4037ce38",
+      "bytes": 114,
+      "in_internal_ram": true
+    },
+    "esp_display_present_pixel_submit": {
+      "address": "4037d2a0",
+      "bytes": 411,
+      "in_internal_ram": true
+    },
+    "fb_acquire": {
+      "address": "4037a4d4",
+      "bytes": 548,
+      "in_internal_ram": true
+    },
+    "present_fb_backend": {
+      "address": "3fc99488",
+      "bytes": 84,
+      "in_internal_ram": true
+    }
+  }
+}

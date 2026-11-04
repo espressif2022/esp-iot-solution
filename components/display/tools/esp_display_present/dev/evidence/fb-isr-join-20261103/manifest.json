@@ -1,0 +1,27 @@
+{
+  "scope": "ISR join + publication gate; no tagged-retirement IDF patch",
+  "idf_base": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+  "source_sha256": {
+    "src/platform/present_lcd_scanout.c": "2980bd52168037c01519bc8b350e7ce167814bc44095a8a1e410785e6101f820",
+    "src/present_os.c": "8f38c63298bebf3dd09e04fd165f323502044cefd4006fac56bd7e27ece8f6ed",
+    "src/backend/present_backend_fb.c": "afe82356a70dffedfd83471a31af821806137615e9079983bbac32831815dad1",
+    "src/pixel/present_pixel_engine.c": "aff35b01cdff47acc6803f6b2d2ad05aeea7288a4ca9728ab9c659efd9a3c21e",
+    "src/present_resources.c": "dc6b52e7ba6a9c2b30935a3670ac45a5edbbc305705b56245bcf3079710ece00"
+  },
+  "binary_sha256": {
+    "p4-perf": "edbed15075af1bb34be2ca3ea200aa5c24eed46ef985cff29b39dc3ba064002f",
+    "p4-trace": "ec5e564f345775e27bcf12ff7d8c97bd2917b90e4fe3d04d66e2ffe301a1fdbd",
+    "s3-perf": "88df91c1c201839cae86f405b6bb679710c7f3b3b9b888b33d8ae2297bafdc98",
+    "s3-trace": "3af4a0081cb27e14d7266c516f8dabc8dfee7e1233b92d99f9403640415aba31",
+    "s3-sync": "b122136701d5e4a19520c4ab4fe89cdd3b129976903c9712a6e6acd007380e41",
+    "s3-rows": "67379ad4383fde25034ca1d17222db08f67752767d1b72434fa592f9e8857a28",
+    "s3-signals": "dc3029fb4e0d11e086e0c1bc7ce464acfcc8ac1a9421e4490875da31149a1b9b",
+    "s3-probe": "0547f9dd8c13ac6f169c6905208b525a5ab5d0c82c79fb76e040fe5c94f84836"
+  },
+  "limitations": [
+    "No optical timing measurement",
+    "S3 PARTIAL diagnostic includes one EOF-insufficient restart",
+    "No complete stress/reset race coverage",
+    "ASan leak detection disabled"
+  ]
+}

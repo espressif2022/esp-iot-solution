@@ -1,0 +1,76 @@
+Internal ctest changing into directory: /tmp/present-head-8c69118a/host
+Test project /tmp/present-head-8c69118a/host
+      Start  1: te_timing
+ 1/35 Test  #1: te_timing ........................   Passed    0.01 sec
+      Start  2: image
+ 2/35 Test  #2: image ............................   Passed    0.01 sec
+      Start  3: frame_core
+ 3/35 Test  #3: frame_core .......................   Passed    0.00 sec
+      Start  4: plan
+ 4/35 Test  #4: plan .............................   Passed    0.00 sec
+      Start  5: records
+ 5/35 Test  #5: records ..........................   Passed    0.00 sec
+      Start  6: coverage
+ 6/35 Test  #6: coverage .........................   Passed    0.04 sec
+      Start  7: repair
+ 7/35 Test  #7: repair ...........................   Passed    0.00 sec
+      Start  8: scanout
+ 8/35 Test  #8: scanout ..........................   Passed    0.00 sec
+      Start  9: rotation
+ 9/35 Test  #9: rotation .........................   Passed    0.01 sec
+      Start 10: pixel
+10/35 Test #10: pixel ............................   Passed    0.00 sec
+      Start 11: gram
+11/35 Test #11: gram .............................   Passed    0.01 sec
+      Start 12: lcd_spi
+12/35 Test #12: lcd_spi ..........................   Passed    0.00 sec
+      Start 13: presenter
+13/35 Test #13: presenter ........................   Passed    0.00 sec
+      Start 14: te_composer
+14/35 Test #14: te_composer ......................   Passed    0.00 sec
+      Start 15: te
+15/35 Test #15: te ...............................   Passed    0.64 sec
+      Start 16: presenter_te
+16/35 Test #16: presenter_te .....................   Passed    0.01 sec
+      Start 17: fb
+17/35 Test #17: fb ...............................   Passed    0.03 sec
+      Start 18: event
+18/35 Test #18: event ............................   Passed    0.01 sec
+      Start 19: scheduler
+19/35 Test #19: scheduler ........................   Passed    0.01 sec
+      Start 20: headers_cpp
+20/35 Test #20: headers_cpp ......................   Passed    0.00 sec
+      Start 21: boundary_trace
+21/35 Test #21: boundary_trace ...................   Passed    0.00 sec
+      Start 22: boundary_analyze
+22/35 Test #22: boundary_analyze .................   Passed    0.10 sec
+      Start 23: lvgl_zero
+23/35 Test #23: lvgl_zero ........................   Passed    0.00 sec
+      Start 24: lvgl
+24/35 Test #24: lvgl .............................   Passed    0.00 sec
+      Start 25: lvgl_te
+25/35 Test #25: lvgl_te ..........................   Passed    0.01 sec
+      Start 26: lvgl_fb
+26/35 Test #26: lvgl_fb ..........................   Passed    0.01 sec
+      Start 27: executor_cpu
+27/35 Test #27: executor_cpu .....................   Passed    0.00 sec
+      Start 28: executor_ppa
+28/35 Test #28: executor_ppa .....................   Passed    0.00 sec
+      Start 29: executor_dma2d
+29/35 Test #29: executor_dma2d ...................   Passed    0.00 sec
+      Start 30: executor_both
+30/35 Test #30: executor_both ....................   Passed    0.00 sec
+      Start 31: legacy_resources
+31/35 Test #31: legacy_resources .................   Passed    0.01 sec
+      Start 32: legacy_facade
+32/35 Test #32: legacy_facade ....................   Passed    0.28 sec
+      Start 33: transfer_timeout
+33/35 Test #33: transfer_timeout .................   Passed    0.01 sec
+      Start 34: legacy_te_gate
+34/35 Test #34: legacy_te_gate ...................   Passed    0.00 sec
+      Start 35: legacy_te_gate_old
+35/35 Test #35: legacy_te_gate_old ...............   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 35
+
+Total Test time (real) =   1.24 sec

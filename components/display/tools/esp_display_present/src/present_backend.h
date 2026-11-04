@@ -44,6 +44,9 @@ typedef struct {
 typedef struct {
     const esp_display_present_rect_t *damage;
     size_t damage_count;
+    /* Producer redraws every pixel without relying on the old contents of
+     * the acquired surface. Actual coverage is still checked before publish
+     * if prior pixels were not seeded. */
     bool full_redraw;
 } esp_display_present_frame_request_t;
 

@@ -3,10 +3,137 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include "present_pixel_engine.h"
+#include "present_os.h"
 #include <assert.h>
 #include <pthread.h>
+#include <stdatomic.h>
 #include <stdio.h>
 #include <string.h>
+
+static _Atomic unsigned priority_set_calls;
+static _Atomic unsigned priority_set_value;
+static _Thread_local unsigned simulated_priority;
+static pthread_mutex_t priority_gate_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t priority_gate_changed = PTHREAD_COND_INITIALIZER;
+static bool priority_gate_blocked, priority_gate_entered;
+void __real_present_task_set_priority(unsigned priority);
+unsigned __wrap_present_task_priority(void)
+{
+    return simulated_priority;
+}
+void __wrap_present_task_set_priority(unsigned priority)
+{
+    atomic_store(&priority_set_value, priority);
+    atomic_fetch_add(&priority_set_calls, 1);
+    pthread_mutex_lock(&priority_gate_lock);
+    if (priority_gate_blocked) {
+        priority_gate_entered = true;
+        pthread_cond_signal(&priority_gate_changed);
+        while (priority_gate_blocked) {
+            pthread_cond_wait(&priority_gate_changed, &priority_gate_lock);
+        }
+    }
+    pthread_mutex_unlock(&priority_gate_lock);
+    __real_present_task_set_priority(priority);
+}
+
+typedef struct {
+    esp_display_present_pixel_engine_t *engine;
+    esp_display_present_copy_request_t request;
+    esp_display_present_copy_ticket_t ticket;
+} priority_submit_t;
+
+static void *priority_submit(void *user)
+{
+    priority_submit_t *submit = user;
+    simulated_priority = 6;
+    assert(esp_display_present_pixel_submit(submit->engine, &submit->request, &submit->ticket) == ESP_OK);
+    return NULL;
+}
+
+/* The first accepted asynchronous submitter, not create() or an invalid
+ * request, determines the worker's scheduling priority. Later producers must
+ * not silently change it during a handoff. */
+static void async_worker_priority(void)
+{
+    uint8_t src[2] = {1, 2}, dst[2] = {0};
+    esp_display_present_pixel_config_t cfg = {.max_jobs = 1, .asynchronous = true};
+    priority_submit_t submit = {.request = {
+            .source = {src, sizeof(src), {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+            .destination = {dst, sizeof(dst), {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+            .source_area = {0, 0, 1, 1},
+        }
+    };
+    atomic_store(&priority_set_calls, 0);
+    assert(esp_display_present_pixel_create(&cfg, &submit.engine) == ESP_OK);
+    esp_display_present_copy_request_t invalid = submit.request;
+    invalid.source.pixels = NULL;
+    assert(esp_display_present_pixel_submit(submit.engine, &invalid, &submit.ticket) == ESP_ERR_INVALID_ARG);
+    assert(atomic_load(&priority_set_calls) == 0);
+
+    pthread_t producer;
+    assert(pthread_create(&producer, NULL, priority_submit, &submit) == 0);
+    assert(pthread_join(producer, NULL) == 0);
+    esp_display_present_copy_status_t status;
+    assert(esp_display_present_pixel_wait(submit.engine, submit.ticket, UINT32_MAX, &status) == ESP_OK);
+    assert(atomic_load(&priority_set_calls) == 1);
+    assert(atomic_load(&priority_set_value) == 6);
+    assert(status.result == ESP_OK && memcmp(src, dst, sizeof(src)) == 0);
+    assert(esp_display_present_pixel_release(submit.engine, submit.ticket) == ESP_OK);
+    assert(esp_display_present_pixel_submit(submit.engine, &submit.request, &submit.ticket) == ESP_OK);
+    assert(esp_display_present_pixel_wait(submit.engine, submit.ticket, UINT32_MAX, &status) == ESP_OK);
+    assert(esp_display_present_pixel_release(submit.engine, submit.ticket) == ESP_OK);
+    assert(atomic_load(&priority_set_calls) == 1);
+    assert(esp_display_present_pixel_stop(submit.engine, UINT32_MAX) == ESP_OK);
+    assert(esp_display_present_pixel_destroy(submit.engine) == ESP_OK);
+
+    cfg.asynchronous = false;
+    assert(esp_display_present_pixel_create(&cfg, &submit.engine) == ESP_OK);
+    assert(esp_display_present_pixel_submit(submit.engine, &submit.request, &submit.ticket) == ESP_OK);
+    assert(esp_display_present_pixel_release(submit.engine, submit.ticket) == ESP_OK);
+    assert(esp_display_present_pixel_stop(submit.engine, UINT32_MAX) == ESP_OK);
+    assert(esp_display_present_pixel_destroy(submit.engine) == ESP_OK);
+    assert(atomic_load(&priority_set_calls) == 1);
+}
+
+/* stop must keep the worker and buffers alive while its first scheduling
+ * adjustment is in progress, and must be retryable after the worker finishes. */
+static void stop_during_priority_setup(void)
+{
+    uint8_t src[2] = {0x12, 0x34}, dst[2] = {0};
+    esp_display_present_pixel_config_t cfg = {.max_jobs = 1, .asynchronous = true};
+    esp_display_present_copy_request_t request = {
+        .source = {src, sizeof(src), {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+        .destination = {dst, sizeof(dst), {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+        .source_area = {0, 0, 1, 1},
+    };
+    esp_display_present_pixel_engine_t *engine;
+    assert(esp_display_present_pixel_create(&cfg, &engine) == ESP_OK);
+    pthread_mutex_lock(&priority_gate_lock);
+    priority_gate_entered = false;
+    priority_gate_blocked = true;
+    pthread_mutex_unlock(&priority_gate_lock);
+    simulated_priority = 4;
+    esp_display_present_copy_ticket_t ticket;
+    assert(esp_display_present_pixel_submit(engine, &request, &ticket) == ESP_OK);
+    pthread_mutex_lock(&priority_gate_lock);
+    while (!priority_gate_entered) {
+        pthread_cond_wait(&priority_gate_changed, &priority_gate_lock);
+    }
+    pthread_mutex_unlock(&priority_gate_lock);
+    assert(esp_display_present_pixel_stop(engine, 0) == ESP_ERR_TIMEOUT);
+    assert(esp_display_present_pixel_destroy(engine) == ESP_ERR_INVALID_STATE);
+    pthread_mutex_lock(&priority_gate_lock);
+    priority_gate_blocked = false;
+    pthread_cond_signal(&priority_gate_changed);
+    pthread_mutex_unlock(&priority_gate_lock);
+    assert(esp_display_present_pixel_stop(engine, UINT32_MAX) == ESP_OK);
+    esp_display_present_copy_status_t status;
+    assert(esp_display_present_pixel_wait(engine, ticket, 0, &status) == ESP_OK);
+    assert(status.result == ESP_OK && memcmp(src, dst, sizeof(src)) == 0);
+    assert(esp_display_present_pixel_release(engine, ticket) == ESP_OK);
+    assert(esp_display_present_pixel_destroy(engine) == ESP_OK);
+}
 
 static esp_display_present_pixel_engine_t *make_engine(size_t jobs)
 {
@@ -345,6 +472,8 @@ static void queued_lifetime(void)
 
 int main(void)
 {
+    async_worker_priority();
+    stop_during_priority_setup();
     pixels_and_padding(false);
     pixels_and_padding(true);
     queued_lifetime();

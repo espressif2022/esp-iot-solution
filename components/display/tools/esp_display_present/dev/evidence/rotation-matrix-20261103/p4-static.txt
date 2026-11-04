@@ -1,0 +1,172 @@
+I (236) esp_psram: Found 32MB PSRAM device
+I (237) esp_psram: Speed: 200MHz
+I (239) cpu_start: Multicore app
+I (1088) esp_psram: SPI SRAM memory test OK
+I (1097) cpu_start: Pro cpu start user code
+I (1097) cpu_start: cpu freq: 400000000 Hz
+I (1097) app_init: Application information:
+I (1097) app_init: Project name:     pv2_compat_probe
+I (1097) app_init: App version:      1
+I (1097) app_init: Compile time:     Nov  3 2026 16:33:45
+I (1098) app_init: ELF file SHA256:  c87653503...
+I (1098) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (1098) efuse_init: Min chip rev:     v3.1
+I (1098) efuse_init: Max chip rev:     v3.99
+I (1099) efuse_init: Chip rev:         v3.2
+I (1099) heap_init: Initializing. RAM available for dynamic allocation:
+I (1099) heap_init: At 4FF37560 len 00083A60 (526 KiB): RETENT_RAM
+I (1099) heap_init: At 4FFBAFC0 len 00004BF0 (18 KiB): RAM
+I (1100) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (1100) heap_init: At 30100288 len 00001D78 (7 KiB): SPM
+I (1100) esp_psram: Adding pool of 32768K of PSRAM memory to heap allocator
+I (1101) spi_flash: detected chip: gd
+I (1101) spi_flash: flash io: dio
+I (1102) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (1102) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (1103) sleep_clock: System sleep clock ICG setting initialization
+I (1104) main_task: Started on CPU0
+I (1104) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (1105) main_task: Calling app_main()
+I (1105) main_task: Returned from app_main()
+I (4106) ek79007: version: 2.0.2
+I (4298) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=NONE_1FB rotation=0 logical=1024x600 physical=1024x600
+I (5179) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (5180) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (5180) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (5181) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=NONE_1FB rotation=0 frames=4 avg_frame_us=83679 pixels=ALL last_full=1 last_bands=0 completed=4
+I (5182) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=NONE_1FB rotation=90 logical=600x1024 physical=1024x600
+I (7324) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (7325) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (7325) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (7326) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=NONE_1FB rotation=90 frames=4 avg_frame_us=93015 pixels=ALL last_full=1 last_bands=0 completed=4
+I (7327) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=NONE_1FB rotation=180 logical=1024x600 physical=1024x600
+I (8219) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (8220) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (8220) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (8221) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=NONE_1FB rotation=180 frames=4 avg_frame_us=94048 pixels=ALL last_full=1 last_bands=0 completed=4
+I (8222) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=NONE_1FB rotation=270 logical=600x1024 physical=1024x600
+I (10370) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (10371) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (10371) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (10372) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=NONE_1FB rotation=270 frames=4 avg_frame_us=95048 pixels=ALL last_full=1 last_bands=0 completed=4
+I (10373) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_FULL rotation=0 logical=1024x600 physical=1024x600
+I (11241) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (11242) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (11242) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (11243) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=DOUBLE_FULL rotation=0 frames=4 avg_frame_us=79784 pixels=ALL last_full=1 last_bands=0 completed=4
+I (11244) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_FULL rotation=90 logical=600x1024 physical=1024x600
+I (13386) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (13387) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (13387) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (13388) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=DOUBLE_FULL rotation=90 frames=4 avg_frame_us=89785 pixels=ALL last_full=1 last_bands=0 completed=4
+I (13389) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_FULL rotation=180 logical=1024x600 physical=1024x600
+I (14281) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (14282) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (14282) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (14283) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=DOUBLE_FULL rotation=180 frames=4 avg_frame_us=93481 pixels=ALL last_full=1 last_bands=0 completed=4
+I (14284) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_FULL rotation=270 logical=600x1024 physical=1024x600
+I (16432) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (16433) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (16433) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (16434) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=DOUBLE_FULL rotation=270 frames=4 avg_frame_us=92256 pixels=ALL last_full=1 last_bands=0 completed=4
+I (16435) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=TRIPLE_FULL rotation=0 logical=1024x600 physical=1024x600
+I (17303) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (17304) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (17304) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (17305) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=TRIPLE_FULL rotation=0 frames=4 avg_frame_us=80048 pixels=ALL last_full=1 last_bands=0 completed=4
+I (17306) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=TRIPLE_FULL rotation=90 logical=600x1024 physical=1024x600
+I (19448) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (19449) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (19449) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (19450) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=TRIPLE_FULL rotation=90 frames=4 avg_frame_us=89761 pixels=ALL last_full=1 last_bands=0 completed=4
+I (19451) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=TRIPLE_FULL rotation=180 logical=1024x600 physical=1024x600
+I (20343) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (20344) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (20344) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (20345) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=TRIPLE_FULL rotation=180 frames=4 avg_frame_us=93510 pixels=ALL last_full=1 last_bands=0 completed=4
+I (20346) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=TRIPLE_FULL rotation=270 logical=600x1024 physical=1024x600
+I (22494) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (22495) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (22495) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (22496) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=TRIPLE_FULL rotation=270 frames=4 avg_frame_us=92518 pixels=ALL last_full=1 last_bands=0 completed=4
+I (22497) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_DIRECT rotation=0 logical=1024x600 physical=1024x600
+I (23415) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=3 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (23416) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=3 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (23416) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=3 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (23417) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=DOUBLE_DIRECT rotation=0 frames=4 avg_frame_us=92279 pixels=ALL last_full=1 last_bands=0 completed=4
+I (23418) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_DIRECT rotation=90 logical=600x1024 physical=1024x600
+I (25609) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=7 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (25610) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=7 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (25610) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=7 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (25611) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=DOUBLE_DIRECT rotation=90 frames=4 avg_frame_us=101979 pixels=ALL last_full=1 last_bands=0 completed=4
+I (25612) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_DIRECT rotation=180 logical=1024x600 physical=1024x600
+I (26554) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=7 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (26555) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=7 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (26555) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=7 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (26556) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=DOUBLE_DIRECT rotation=180 frames=4 avg_frame_us=106002 pixels=ALL last_full=1 last_bands=0 completed=4
+I (26557) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_DIRECT rotation=270 logical=600x1024 physical=1024x600
+I (28755) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=7 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (28756) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=7 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (28756) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=7 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (28757) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=DOUBLE_DIRECT rotation=270 frames=4 avg_frame_us=104756 pixels=ALL last_full=1 last_bands=0 completed=4
+I (28758) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_PARTIAL rotation=0 logical=1024x600 physical=1024x600
+I (29576) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=152 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (29577) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=152 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (29577) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=152 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (29578) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=DOUBLE_PARTIAL rotation=0 frames=4 avg_frame_us=67491 pixels=ALL last_full=1 last_bands=0 completed=4
+I (29579) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_PARTIAL rotation=90 logical=600x1024 physical=1024x600
+I (31654) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=256 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (31655) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=256 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (31655) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=256 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (31656) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=DOUBLE_PARTIAL rotation=90 frames=4 avg_frame_us=72938 pixels=ALL last_full=1 last_bands=0 completed=4
+I (31657) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_PARTIAL rotation=180 logical=1024x600 physical=1024x600
+I (32483) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=152 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (32484) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=152 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (32484) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=152 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (32485) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=DOUBLE_PARTIAL rotation=180 frames=4 avg_frame_us=77219 pixels=ALL last_full=1 last_bands=0 completed=4
+I (32486) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_PARTIAL rotation=270 logical=600x1024 physical=1024x600
+I (34568) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=256 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (34569) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=256 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (34569) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=256 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (34570) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=DOUBLE_PARTIAL rotation=270 frames=4 avg_frame_us=75472 pixels=ALL last_full=1 last_bands=0 completed=4
+I (34571) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=TRIPLE_PARTIAL rotation=0 logical=1024x600 physical=1024x600
+I (35389) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=152 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (35390) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=152 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (35390) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=152 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (35391) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=TRIPLE_PARTIAL rotation=0 frames=4 avg_frame_us=67251 pixels=ALL last_full=1 last_bands=0 completed=4
+I (35392) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=TRIPLE_PARTIAL rotation=90 logical=600x1024 physical=1024x600
+I (37468) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=256 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (37469) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=256 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (37469) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=256 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (37470) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=TRIPLE_PARTIAL rotation=90 frames=4 avg_frame_us=73250 pixels=ALL last_full=1 last_bands=0 completed=4
+I (37471) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=TRIPLE_PARTIAL rotation=180 logical=1024x600 physical=1024x600
+I (38296) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=152 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (38297) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=152 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (38297) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=152 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (38298) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=TRIPLE_PARTIAL rotation=180 frames=4 avg_frame_us=76746 pixels=ALL last_full=1 last_bands=0 completed=4
+I (38299) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=TRIPLE_PARTIAL rotation=270 logical=600x1024 physical=1024x600
+I (40383) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=256 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (40384) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=256 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (40384) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=256 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (40385) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=TRIPLE_PARTIAL rotation=270 frames=4 avg_frame_us=75760 pixels=ALL last_full=1 last_bands=0 completed=4
+I (40386) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=AUTO rotation=0 logical=1024x600 physical=1024x600
+I (41219) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=152 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (41220) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=152 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (41220) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=152 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (41221) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=AUTO rotation=0 frames=4 avg_frame_us=71229 pixels=ALL last_full=1 last_bands=0 completed=4
+I (41222) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=AUTO rotation=90 logical=600x1024 physical=1024x600
+I (43298) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=256 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (43299) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=256 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (43299) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=256 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (43300) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=AUTO rotation=90 frames=4 avg_frame_us=73281 pixels=ALL last_full=1 last_bands=0 completed=4
+I (43301) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=AUTO rotation=180 logical=1024x600 physical=1024x600
+I (44126) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=152 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (44127) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=152 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (44127) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=152 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (44128) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=AUTO rotation=180 frames=4 avg_frame_us=76757 pixels=ALL last_full=1 last_bands=0 completed=4
+I (44129) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=AUTO rotation=270 logical=600x1024 physical=1024x600
+I (46212) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=256 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (46213) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=256 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (46213) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=256 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (46214) mode_matrix: CASE_PASS board=P4-v3 MIPI EK79007 profile=AUTO rotation=270 frames=4 avg_frame_us=76262 pixels=ALL last_full=1 last_bands=0 completed=4
+I (46215) mode_matrix: MATRIX_PASS board=P4-v3 MIPI EK79007 cases=28 rotations=4 frames_per_case=4

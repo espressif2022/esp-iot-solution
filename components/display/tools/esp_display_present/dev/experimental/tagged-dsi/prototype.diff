@@ -1,0 +1,234 @@
+--- a/esp_lcd/dsi/esp_lcd_panel_dpi.c
++++ b/esp_lcd/dsi/esp_lcd_panel_dpi.c
+@@ -15,6 +15,8 @@
+ #include "esp_private/dw_gdma.h"
+ #include "esp_private/dma2d.h"
+ #include "hal/color_hal.h"
++#include "freertos/FreeRTOS.h"
++#include "freertos/portmacro.h"
+ 
+ typedef struct esp_lcd_dpi_panel_t esp_lcd_dpi_panel_t;
+ 
+@@ -29,6 +31,9 @@
+     esp_lcd_dsi_bus_handle_t bus; // DSI bus handle
+     uint8_t virtual_channel;      // Virtual channel ID, index from 0
+     uint8_t cur_fb_index;         // Current frame buffer index
++    uint8_t dma_fb_index;
++    portMUX_TYPE present_lock;
++    uint64_t present_generation;
+     uint8_t num_fbs;              // Number of frame buffers
+     uint8_t *fbs[DPI_PANEL_MAX_FB_NUM]; // Frame buffers
+     uint32_t h_pixels;            // Horizontal pixels
+@@ -57,6 +62,33 @@
+     void *user_ctx; // User context for the callback
+ };
+ 
++esp_err_t esp_lcd_dpi_panel_select_frame_buffer_tagged(esp_lcd_panel_handle_t panel, const void *frame_buffer, uint64_t generation)
++{
++    if (!panel || !frame_buffer || !generation) {
++        return ESP_ERR_INVALID_ARG;
++    }
++    esp_lcd_dpi_panel_t *dpi = __containerof(panel, esp_lcd_dpi_panel_t, base);
++    uint8_t index = dpi->num_fbs;
++    for (uint8_t i = 0; i < dpi->num_fbs; ++i) {
++        if (dpi->fbs[i] == frame_buffer) {
++            index = i;
++            break;
++        }
++    }
++    if (index == dpi->num_fbs) {
++        return ESP_ERR_INVALID_ARG;
++    }
++    portENTER_CRITICAL(&dpi->present_lock);
++    if (dpi->present_generation) {
++        portEXIT_CRITICAL(&dpi->present_lock);
++        return ESP_ERR_INVALID_STATE;
++    }
++    dpi->cur_fb_index = index;
++    dpi->present_generation = generation;
++    portEXIT_CRITICAL(&dpi->present_lock);
++    return ESP_OK;
++}
++
+ static bool dpi_panel_draw_bitmap_hook_end(esp_lcd_panel_t *panel)
+ {
+     esp_lcd_dpi_panel_t *dpi_panel = __containerof(panel, esp_lcd_dpi_panel_t, base);
+@@ -85,7 +117,12 @@
+ {
+     bool yield_needed = false;
+     esp_lcd_dpi_panel_t *dpi_panel = (esp_lcd_dpi_panel_t *)user_data;
++    portENTER_CRITICAL_ISR(&dpi_panel->present_lock);
++    uint8_t old_fb_index = dpi_panel->dma_fb_index;
+     uint8_t fb_index = dpi_panel->cur_fb_index;
++    uint64_t generation = dpi_panel->present_generation;
++    dpi_panel->present_generation = 0;
++    dpi_panel->dma_fb_index = fb_index;
+     dw_gdma_link_list_handle_t link_list = dpi_panel->link_lists[fb_index];
+ 
+     // restart the DMA transfer, keep refreshing the LCD
+@@ -96,9 +133,16 @@
+     dw_gdma_lli_set_block_markers(dw_gdma_link_list_get_item(link_list, 0), markers);
+     dw_gdma_channel_use_link_list(chan, link_list);
+     dw_gdma_channel_enable_ctrl(chan, true);
++    portEXIT_CRITICAL_ISR(&dpi_panel->present_lock);
++
++    esp_lcd_dpi_panel_event_data_t present_event = {
++        .present_generation = generation,
++        .retired_frame_buffer = dpi_panel->fbs[old_fb_index],
++        .selected_frame_buffer = dpi_panel->fbs[fb_index],
++    };
+ 
+     if (dpi_panel->on_frame_buf_complete) {
+-        if (dpi_panel->on_frame_buf_complete(&dpi_panel->base, NULL, dpi_panel->user_ctx)) {
++        if (dpi_panel->on_frame_buf_complete(&dpi_panel->base, generation ? &present_event : NULL, dpi_panel->user_ctx)) {
+             yield_needed = true;
+         }
+     }
+@@ -217,6 +261,7 @@
+ 
+     dpi_panel = heap_caps_calloc(1, sizeof(esp_lcd_dpi_panel_t), DSI_MEM_ALLOC_CAPS);
+     ESP_GOTO_ON_FALSE(dpi_panel, ESP_ERR_NO_MEM, err, TAG, "no memory for DPI panel");
++    dpi_panel->present_lock = (portMUX_TYPE)portMUX_INITIALIZER_UNLOCKED;
+     dpi_panel->clk_src = SOC_MOD_CLK_INVALID;
+     dpi_panel->virtual_channel = panel_config->virtual_channel;
+     dpi_panel->in_color_format = in_color_format;
+@@ -467,6 +512,7 @@
+ 
+     // by default, we use the fb0 as the first working frame buffer
+     dpi_panel->cur_fb_index = 0;
++    dpi_panel->dma_fb_index = 0;
+     link_list = dpi_panel->link_lists[0];
+     dw_gdma_channel_use_link_list(dma_chan, link_list);
+     // enable the DMA channel
+@@ -656,7 +702,13 @@
+         // the buffer to be flushed is still within the frame buffer, so even an unaligned address is OK
+         esp_cache_msync(cache_sync_start, cache_sync_size, ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_UNALIGNED);
+ 
++        portENTER_CRITICAL(&dpi_panel->present_lock);
++        if (dpi_panel->present_generation) {
++            portEXIT_CRITICAL(&dpi_panel->present_lock);
++            return ESP_ERR_INVALID_STATE;
++        }
+         dpi_panel->cur_fb_index = draw_buf_fb_index;
++        portEXIT_CRITICAL(&dpi_panel->present_lock);
+         // invoke the trans done callback
+         if (dpi_panel->on_color_trans_done) {
+             dpi_panel->on_color_trans_done(&dpi_panel->base, NULL, dpi_panel->user_ctx);
+--- a/esp_lcd/dsi/include/esp_lcd_mipi_dsi.h
++++ b/esp_lcd/dsi/include/esp_lcd_mipi_dsi.h
+@@ -157,7 +157,14 @@
+  * @brief Type of LCD DPI panel event data
+  */
+ typedef struct {
++    uint64_t present_generation;
++    const void *retired_frame_buffer;
++    const void *selected_frame_buffer;
+ } esp_lcd_dpi_panel_event_data_t;
++
++#define ESP_LCD_DPI_PANEL_HAS_TAGGED_RETIREMENT 1
++/* Prototype: exclusive presenter ownership; frame buffer is already synced. */
++esp_err_t esp_lcd_dpi_panel_select_frame_buffer_tagged(esp_lcd_panel_handle_t panel, const void *frame_buffer, uint64_t generation);
+ 
+ /**
+  * @brief A general function callback prototype for DPI panel driver
+--- a/esp_display_present/src/platform/present_lcd_scanout.c
++++ b/esp_display_present/src/platform/present_lcd_scanout.c
+@@ -27,6 +27,8 @@
+     esp_display_present_panel_event_fn callback;
+     void *callback_user;
+     uint64_t cookie;
++    const void *expected_buffer;
++    const void *confirmed_buffer;
+     unsigned boundaries;
+     size_t active_callbacks;
+     bool attached, armed, closing, source_stopped, stopped, callbacks_removed;
+@@ -95,8 +97,40 @@
+ static bool PRESENT_ISR_ATTR dsi_done(esp_lcd_panel_handle_t panel, esp_lcd_dpi_panel_event_data_t *data, void *user)
+ {
+     (void)panel;
++#if defined(ESP_LCD_DPI_PANEL_HAS_TAGGED_RETIREMENT)
++    esp_display_present_lcd_scanout_t *scanout = user;
++    if (!scanout || !data || !data->present_generation) {
++        return false;
++    }
++    present_lock_enter(&scanout->lock, true);
++    bool match = scanout->attached && scanout->armed &&
++                 (!scanout->closing || scanout->config.retain_driver_scanout) &&
++                 scanout->cookie == data->present_generation &&
++                 scanout->expected_buffer == data->selected_frame_buffer && data->retired_frame_buffer &&
++                 (!scanout->confirmed_buffer || scanout->confirmed_buffer == data->retired_frame_buffer);
++    esp_display_present_panel_event_fn callback = match ? scanout->callback : NULL;
++    void *callback_user = scanout->callback_user;
++    uint64_t cookie = scanout->cookie;
++    if (callback) {
++        scanout->confirmed_buffer = data->selected_frame_buffer;
++        scanout->cookie = 0;
++        scanout->armed = false;
++        ++scanout->active_callbacks;
++    }
++    present_lock_exit(&scanout->lock, true);
++    if (!callback) {
++        return false;
++    }
++    esp_display_present_backend_event_t event = {.kind = ESP_DISPLAY_PRESENT_EVENT_SCANOUT_CONFIRMED, .transaction_cookie = cookie};
++    bool yield = callback(callback_user, &event, true);
++    present_lock_enter(&scanout->lock, true);
++    --scanout->active_callbacks;
++    present_lock_exit(&scanout->lock, true);
++    return yield;
++#else
+     (void)data;
+     return frame_boundary(user);
++#endif
+ }
+ #endif
+ #if PRESENT_RGB_SUPPORTED
+@@ -191,7 +225,27 @@
+     present_lock_enter(&scanout->lock, false);
+     scanout->cookie = cookie;
+     scanout->armed = false;
+-    present_lock_exit(&scanout->lock, false);
++#if defined(ESP_LCD_DPI_PANEL_HAS_TAGGED_RETIREMENT)
++    bool tagged_dsi = scanout->config.kind == ESP_DISPLAY_PRESENT_LCD_DSI;
++    if (tagged_dsi) {
++        scanout->expected_buffer = surface->pixels;
++        scanout->armed = true;
++    }
++#endif
++    present_lock_exit(&scanout->lock, false);
++#if defined(ESP_LCD_DPI_PANEL_HAS_TAGGED_RETIREMENT)
++    if (tagged_dsi) {
++        error = esp_lcd_dpi_panel_select_frame_buffer_tagged(scanout->config.panel, surface->pixels, cookie);
++        if (error != ESP_OK) {
++            present_lock_enter(&scanout->lock, false);
++            scanout->cookie = 0;
++            scanout->armed = false;
++            present_lock_exit(&scanout->lock, false);
++            return (esp_display_present_tx_result_t) {ESP_DISPLAY_PRESENT_TX_REJECTED, error};
++        }
++        return (esp_display_present_tx_result_t) {ESP_DISPLAY_PRESENT_TX_ACCEPTED, ESP_OK};
++    }
++#endif
+     error = esp_lcd_panel_draw_bitmap(scanout->config.panel, 0, 0, area->width, area->height, surface->pixels);
+     present_lock_enter(&scanout->lock, false);
+     scanout->boundaries = 0;
+--- a/esp_display_present/dev/tests/support/esp_lcd_mipi_dsi.h
++++ b/esp_display_present/dev/tests/support/esp_lcd_mipi_dsi.h
+@@ -8,7 +8,9 @@
+ #include <stdint.h>
+ 
+ typedef struct {
+-    unsigned unused;
++    uint64_t present_generation;
++    const void *retired_frame_buffer;
++    const void *selected_frame_buffer;
+ } esp_lcd_dpi_panel_event_data_t;
+ typedef bool (*dpi_cb_t)(esp_lcd_panel_handle_t, esp_lcd_dpi_panel_event_data_t *, void *);
+ typedef struct {
+@@ -16,3 +18,6 @@
+ } esp_lcd_dpi_panel_event_callbacks_t;
+ esp_err_t esp_lcd_dpi_panel_register_event_callbacks(esp_lcd_panel_handle_t, const esp_lcd_dpi_panel_event_callbacks_t *, void *);
+ esp_err_t esp_lcd_dpi_panel_get_frame_buffer(esp_lcd_panel_handle_t, uint32_t, void **, ...);
++
++#define ESP_LCD_DPI_PANEL_HAS_TAGGED_RETIREMENT 1
++esp_err_t esp_lcd_dpi_panel_select_frame_buffer_tagged(esp_lcd_panel_handle_t, const void *, uint64_t);

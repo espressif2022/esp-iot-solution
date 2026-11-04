@@ -1,0 +1,228 @@
+diff --git a/components/display/tools/esp_display_present/dev/test_apps/scanout_boundary/prepare.py b/components/display/tools/esp_display_present/dev/test_apps/scanout_boundary/prepare.py
+index d6669c2e6..2a0cc2798 100644
+--- a/components/display/tools/esp_display_present/dev/test_apps/scanout_boundary/prepare.py
++++ b/components/display/tools/esp_display_present/dev/test_apps/scanout_boundary/prepare.py
+@@ -123,9 +123,9 @@ def prepare(template, idf, output):
+     patch(adapter, '    error = esp_lcd_panel_draw_bitmap(scanout->config.panel, 0, 0, area->width, area->height, surface->pixels);',
+           '    boundary_emit(BT_SUBMIT, (uintptr_t)surface->pixels, (uint32_t)cookie);\n'
+           '    error = esp_lcd_panel_draw_bitmap(scanout->config.panel, 0, 0, area->width, area->height, surface->pixels);')
+-    patch(adapter, '    unsigned needed = scanout->config.single_boundary_retire ? 1u : 2u;',
++    patch(adapter, '    unsigned needed = scanout->required_boundaries;',
+           '    boundary_emit(BT_CALLBACK, 0, scanout->armed);\n'
+-          '    unsigned needed = scanout->config.single_boundary_retire ? 1u : 2u;')
++          '    unsigned needed = scanout->required_boundaries;')
+     patch(adapter, '    scanout->armed = error == ESP_OK;',
+           '    scanout->armed = error == ESP_OK;\n'
+           '    boundary_emit(BT_ARM, (uintptr_t)surface->pixels, (uint32_t)cookie);')
+diff --git a/components/display/tools/esp_display_present/dev/tests/test_legacy_resources.c b/components/display/tools/esp_display_present/dev/tests/test_legacy_resources.c
+index ef7b42c83..d1e7852b6 100644
+--- a/components/display/tools/esp_display_present/dev/tests/test_legacy_resources.c
++++ b/components/display/tools/esp_display_present/dev/tests/test_legacy_resources.c
+@@ -63,8 +63,12 @@ static void initialize(present_resources_t *resources, struct fake_lcd *panel)
+     assert(present_resources_prepare(resources, 0) == ESP_ERR_TIMEOUT);
+     assert(panel->calls == before + 1 && panel->source == panel->buffers[0]);
+     boundary(panel);
+-    assert(present_resources_prepare(resources, 0) == ESP_ERR_TIMEOUT);
+-    boundary(panel);
++    present_resource_status_t state;
++    OK(present_resources_status(resources, &state));
++    if (state.plan.images.count == 1) {
++        assert(present_resources_prepare(resources, 0) == ESP_ERR_TIMEOUT);
++        boundary(panel);
++    }
+     OK(present_resources_prepare(resources, 0));
+     assert(panel->calls == before + 1); /* Retry never submits a second bootstrap. */
+ }
+diff --git a/components/display/tools/esp_display_present/dev/tests/test_scanout.c b/components/display/tools/esp_display_present/dev/tests/test_scanout.c
+index 90c0d5dc0..03c57c69b 100644
+--- a/components/display/tools/esp_display_present/dev/tests/test_scanout.c
++++ b/components/display/tools/esp_display_present/dev/tests/test_scanout.c
+@@ -21,9 +21,20 @@ static rgb_cb_t late_rgb;
+ static void *late_user;
+ static esp_lcd_panel_handle_t late_panel;
+ static bool late_joined;
++static esp_err_t barrier_result = ESP_OK;
++static struct fake_lcd *submit_barrier_panel;
++static void boundary(struct fake_lcd *p);
+ esp_err_t __real_present_isr_barrier(uint32_t timeout);
+ esp_err_t __wrap_present_isr_barrier(uint32_t timeout)
+ {
++    if (submit_barrier_panel) {
++        struct fake_lcd *panel = submit_barrier_panel;
++        submit_barrier_panel = NULL;
++        boundary(panel); /* ISR that sampled the old FB before submission. */
++    }
++    if (barrier_result != ESP_OK) {
++        return barrier_result;
++    }
+     if (late_dsi) {
+         (void)late_dsi(late_panel, NULL, late_user);
+         late_dsi = NULL;
+@@ -144,6 +155,7 @@ esp_err_t esp_lcd_panel_draw_bitmap(esp_lcd_panel_handle_t p, int x, int y, int
+     if (p->early) {
+         boundary(p);
+         boundary(p);
++        submit_barrier_panel = p;
+     }
+     return p->fail ? ESP_FAIL : ESP_OK;
+ }
+@@ -160,8 +172,9 @@ esp_err_t esp_lcd_panel_del(esp_lcd_panel_handle_t p)
+     return ESP_OK;
+ }
+ 
+-static void exercise(esp_display_present_lcd_scanout_kind_t kind, bool fail)
++static void exercise(esp_display_present_lcd_scanout_kind_t kind, bool fail, bool fallback)
+ {
++    barrier_result = fallback ? ESP_ERR_NOT_SUPPORTED : ESP_OK;
+     struct fake_lcd panel = {.early = true, .fail = fail};
+     for (size_t i = 0; i < 2; ++i) {
+         panel.buffers[i] = aligned_alloc(64, 64);
+@@ -204,7 +217,7 @@ static void exercise(esp_display_present_lcd_scanout_kind_t kind, bool fail)
+     assert(!status.terminal);
+     boundary(&panel);
+     OK(ops->query(b, receipt, &status));
+-    assert(!status.terminal);
++    assert(status.terminal == (!fail && !fallback));
+     boundary(&panel);
+     OK(ops->query(b, receipt, &status));
+     assert(status.terminal == !fail);
+@@ -228,6 +241,8 @@ static void exercise(esp_display_present_lcd_scanout_kind_t kind, bool fail)
+     for (size_t i = 0; i < 2; ++i) {
+         free(panel.buffers[i]);
+     }
++    submit_barrier_panel = NULL;
++    barrier_result = ESP_OK;
+ }
+ typedef struct {
+     pthread_mutex_t lock;
+@@ -280,7 +295,6 @@ static void test_callback_drain_retry(void)
+     esp_display_present_rect_t area = {0, 0, 3, 2};
+     esp_display_present_tx_result_t tx = interface.submit(interface.context, &surface, &area, 42);
+     assert(tx.acceptance == ESP_DISPLAY_PRESENT_TX_ACCEPTED && tx.result == ESP_OK);
+-    boundary(&panel);
+     pthread_t th;
+     assert(pthread_create(&th, NULL, boundary_thread, &panel) == 0);
+     pthread_mutex_lock(&gate.lock);
+@@ -348,8 +362,7 @@ static void test_retained_scanout(void)
+         assert(interface.quiesce(interface.context, 0) == ESP_ERR_TIMEOUT);
+         assert(esp_display_present_lcd_scanout_destroy(adapter) == ESP_ERR_INVALID_STATE);
+         boundary(&panel);
+-        assert(!gate.entered);
+-        boundary(&panel); /* Completion still drains while retained adapter closes. */
++        /* Completion still drains while retained adapter closes. */
+         assert(gate.entered);
+         panel.detach_fail = true;
+         assert(interface.quiesce(interface.context, 0) == ESP_FAIL);
+@@ -423,6 +436,18 @@ static void queried_rgb(void)
+ }
+ int main(void)
+ {
++    /* Neither adapter can retire a multi-FB scanout from one untagged event. */
++    struct fake_lcd one_boundary_panel = {0};
++    for (int kind = ESP_DISPLAY_PRESENT_LCD_DSI; kind <= ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE; ++kind) {
++        esp_display_present_lcd_scanout_config_t config = {
++            .panel = &one_boundary_panel, .kind = kind, .width = 3, .height = 2,
++            .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = 2,
++            .delete_panel_on_stop = true, .single_boundary_retire = true,
++        };
++        esp_display_present_lcd_scanout_t *adapter = (void *)1;
++        assert(esp_display_present_lcd_scanout_create(&config, &adapter) == ESP_ERR_NOT_SUPPORTED);
++        assert(!adapter && !one_boundary_panel.deleted);
++    }
+     /* Direct RGB is deliberately outside the audited bounce adapter contract. */
+     struct fake_lcd unsupported_panel = {.no_bounce = true};
+     esp_display_present_lcd_scanout_config_t unsupported = {
+@@ -434,10 +459,12 @@ int main(void)
+     assert(esp_display_present_lcd_scanout_create(&unsupported, &unsupported_adapter) == ESP_ERR_NOT_SUPPORTED);
+     assert(!unsupported_adapter && !unsupported_panel.deleted);
+     queried_rgb();
+-    exercise(ESP_DISPLAY_PRESENT_LCD_DSI, false);
+-    exercise(ESP_DISPLAY_PRESENT_LCD_DSI, true);
+-    exercise(ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, false);
+-    exercise(ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, true);
++    exercise(ESP_DISPLAY_PRESENT_LCD_DSI, false, false);
++    exercise(ESP_DISPLAY_PRESENT_LCD_DSI, true, false);
++    exercise(ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, false, false);
++    exercise(ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, true, false);
++    exercise(ESP_DISPLAY_PRESENT_LCD_DSI, false, true);
++    exercise(ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, false, true);
+     test_callback_drain_retry();
+     test_retained_scanout();
+     puts("scanout: real adapter against driver stubs, boundary fence, initial scanout and stop retry passed");
+diff --git a/components/display/tools/esp_display_present/src/platform/present_lcd_scanout.c b/components/display/tools/esp_display_present/src/platform/present_lcd_scanout.c
+index fdf384231..503114bb4 100644
+--- a/components/display/tools/esp_display_present/src/platform/present_lcd_scanout.c
++++ b/components/display/tools/esp_display_present/src/platform/present_lcd_scanout.c
+@@ -28,6 +28,7 @@ struct esp_display_present_lcd_scanout {
+     void *callback_user;
+     uint64_t cookie;
+     unsigned boundaries;
++    unsigned required_boundaries;
+     size_t active_callbacks;
+     bool attached, armed, closing, source_stopped, stopped, callbacks_removed;
+     bool initial_started, initial_ready, single_vsync;
+@@ -43,7 +44,7 @@ static bool PRESENT_ISR_ATTR frame_boundary(esp_display_present_lcd_scanout_t *s
+     esp_display_present_panel_event_fn callback = NULL;
+     void *user = NULL;
+     uint64_t cookie = 0;
+-    unsigned needed = scanout->config.single_boundary_retire ? 1u : 2u;
++    unsigned needed = scanout->required_boundaries;
+     if (scanout->attached && scanout->armed && (!scanout->closing || scanout->config.retain_driver_scanout) && ++scanout->boundaries == needed) {
+         cookie = scanout->cookie;
+         scanout->cookie = 0;
+@@ -193,8 +194,18 @@ static esp_display_present_tx_result_t scanout_submit(void *context, const esp_d
+     scanout->armed = false;
+     present_lock_exit(&scanout->lock, false);
+     error = esp_lcd_panel_draw_bitmap(scanout->config.panel, 0, 0, area->width, area->height, surface->pixels);
++    /* Publish the retirement gate only after a successful driver submission.
++     * A callback already executing can have sampled the previous FB before
++     * draw_bitmap changed it. Join those ISRs instead of reserving an entire
++     * extra frame for them. Callbacks during submit/join see armed == false.
++     * With no cross-core join available, retain the two-event fallback. */
++    esp_err_t joined = ESP_ERR_NOT_SUPPORTED;
++    if (error == ESP_OK && scanout->config.buffer_count > 1) {
++        joined = present_isr_barrier(1000);
++    }
+     present_lock_enter(&scanout->lock, false);
+     scanout->boundaries = 0;
++    scanout->required_boundaries = (joined == ESP_OK || scanout->config.single_boundary_retire) ? 1u : 2u;
+     scanout->armed = error == ESP_OK;
+     if (error != ESP_OK) {
+         scanout->closing = true;
+@@ -311,6 +322,11 @@ esp_err_t esp_display_present_lcd_scanout_create(const esp_display_present_lcd_s
+     if (config->retain_driver_scanout && (config->delete_panel_on_stop || config->stop_scanout)) {
+         return ESP_ERR_INVALID_ARG;
+     }
++    /* A plain frame-complete callback does not identify the FB or submission
++     * selected by the driver. One callback cannot prove an old FB retired. */
++    if (config->single_boundary_retire && config->buffer_count > 1) {
++        return ESP_ERR_NOT_SUPPORTED;
++    }
+     bool single_vsync = false;
+ #if PRESENT_RGB_SUPPORTED && defined(ESP_LCD_RGB_PANEL_HAS_FRAME_BUFFER_INFO)
+     if (config->kind == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE) {
+diff --git a/components/display/tools/esp_display_present/src/present_lcd_scanout.h b/components/display/tools/esp_display_present/src/present_lcd_scanout.h
+index 2b421493f..1810ba592 100644
+--- a/components/display/tools/esp_display_present/src/present_lcd_scanout.h
++++ b/components/display/tools/esp_display_present/src/present_lcd_scanout.h
+@@ -25,7 +25,7 @@ typedef struct {
+      * callback, no driver rotation/mirror, and continuous refresh. Non-bounce
+      * EOF is not a reliable retirement event on every IDF/SoC. */
+     bool rgb_bounce_buffer_mode;
+-    bool single_boundary_retire; /* When true, confirm after 1 post-submit frame_buf_complete event (matches V1 default). */
++    bool single_boundary_retire; /* Single-FB exposure only; unsupported for multiple FBs. */
+     bool delete_panel_on_stop; /* Alternative safe stop: transfers panel ownership on attach. */
+     /** Unless delete_panel_on_stop or retain_driver_scanout: required board-owned safe stop: successful return guarantees scanning
+      * stopped AND all registered callbacks exited; framebuffer allocations
+@@ -50,8 +50,9 @@ typedef struct {
+  * @brief Exclusive initialized panel; no previous submissions or callback owner.
+  * Driver FB0 is initially scanning. Bind get_buffers output as backend external
+  * buffers and set initial_scanout_buffer=FB0. Bus ownership stays with the caller; panel ownership follows
+- * delete_panel_on_stop. Driver must use periodic frame_buf_complete events; two events after submit returns fence one
+- * already-running ISR that sampled the old framebuffer. Source is a whole exact driver FB, tight/native layout; no copy
++ * delete_panel_on_stop. Driver must use periodic frame_buf_complete events. A task-context ISR join after submit
++ * drains an already-running ISR that sampled the old FB; the next event then confirms the switch. If the join is
++ * unavailable or fails, two events remain the fallback. Source is a whole exact driver FB, tight/native layout; no copy
+  * fallback. COLOR_DONE/raw VSYNC never confirms a frame. Hardware timing still requires board validation; compatibility
+  * is with the audited local IDF 6.2 APIs. The private compatibility factory
+  * explicitly fences FB0 before any producer lease when reusing a borrowed panel.

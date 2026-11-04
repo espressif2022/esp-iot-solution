@@ -1,0 +1,87 @@
+diff --git a/components/esp_lcd/include/esp_lcd_io_spi.h b/components/esp_lcd/include/esp_lcd_io_spi.h
+index 7f498331bad..13fec2fb800 100644
+--- a/components/esp_lcd/include/esp_lcd_io_spi.h
++++ b/components/esp_lcd/include/esp_lcd_io_spi.h
+@@ -18,0 +19,9 @@ typedef int esp_lcd_spi_bus_handle_t;  /*!< Type of LCD SPI bus handle */
++/** Immutable SPI IO facts. Serialize with IO deletion. This query performs
++ * no transfer and does not install callbacks or change driver configuration. */
++#define ESP_LCD_SPI_IO_HAS_MEMORY_INFO 1
++typedef struct {
++    bool psram_dma_direct; /*!< Configured SPI_TRANS_DMA_USE_PSRAM path. */
++} esp_lcd_panel_io_spi_memory_info_t;
++esp_err_t esp_lcd_panel_io_spi_get_memory_info(esp_lcd_panel_io_handle_t io,
++                                              esp_lcd_panel_io_spi_memory_info_t *info);
++
+diff --git a/components/esp_lcd/rgb/esp_lcd_panel_rgb.c b/components/esp_lcd/rgb/esp_lcd_panel_rgb.c
+index dc0d7ca7b84..a4b689b7010 100644
+--- a/components/esp_lcd/rgb/esp_lcd_panel_rgb.c
++++ b/components/esp_lcd/rgb/esp_lcd_panel_rgb.c
+@@ -569,0 +570,27 @@ static void esp_lcd_rgb_panel_get_frame_buffer_v(esp_rgb_panel_t *rgb_panel, uin
++esp_err_t esp_lcd_rgb_panel_get_frame_buffer_info(esp_lcd_panel_handle_t panel,
++                                                 esp_lcd_rgb_panel_frame_buffer_info_t *info)
++{
++    ESP_RETURN_ON_FALSE(panel && info, ESP_ERR_INVALID_ARG, TAG, "invalid argument");
++    esp_rgb_panel_t *rgb_panel = __containerof(panel, esp_rgb_panel_t, base);
++#if RGB_LCD_USE_GDMA_LINK_SWITCH_EVENT
++    const bool link_retirement = true;
++#else
++    const bool link_retirement = false;
++#endif
++    portENTER_CRITICAL(&rgb_panel->spinlock);
++    *info = (esp_lcd_rgb_panel_frame_buffer_info_t) {
++        .width = rgb_panel->timings.h_res,
++        .height = rgb_panel->timings.v_res,
++        .frame_buffer_count = rgb_panel->num_fbs,
++        .frame_buffer_bytes = rgb_panel->fb_size,
++        .bounce_buffer_bytes = rgb_panel->bb_size,
++        .bits_per_pixel = rgb_panel->fb_bits_per_pixel,
++        .continuous_refresh = rgb_panel->flags.stream_mode,
++        .custom_bounce_callback = rgb_panel->on_bounce_empty != NULL,
++        .transformed = rgb_panel->rotate_mask != 0 || rgb_panel->x_gap != 0 || rgb_panel->y_gap != 0,
++        .frame_buffer_retirement = rgb_panel->bb_size != 0 || link_retirement,
++    };
++    portEXIT_CRITICAL(&rgb_panel->spinlock);
++    return ESP_OK;
++}
++
+diff --git a/components/esp_lcd/rgb/include/esp_lcd_panel_rgb.h b/components/esp_lcd/rgb/include/esp_lcd_panel_rgb.h
+index 3b517f804fa..2e7755303af 100644
+--- a/components/esp_lcd/rgb/include/esp_lcd_panel_rgb.h
++++ b/components/esp_lcd/rgb/include/esp_lcd_panel_rgb.h
+@@ -247,0 +248,17 @@ esp_err_t esp_lcd_rgb_panel_get_frame_buffer(esp_lcd_panel_handle_t panel, uint3
++/** Read-only facts for a panel created by esp_lcd_new_rgb_panel (including
++ * vendor wrappers retaining that RGB base). Caller serializes panel mutation
++ * and deletion; this function neither installs callbacks nor changes DMA.
++ * frame_buffer_bytes is the valid image span, not permission to access padding.
++ * frame_buffer_retirement describes the driver's event semantics; a raw VSYNC
++ * is not a buffer retirement guarantee. */
++#define ESP_LCD_RGB_PANEL_HAS_FRAME_BUFFER_INFO 1
++typedef struct {
++    uint32_t width, height;
++    size_t frame_buffer_count, frame_buffer_bytes, bounce_buffer_bytes;
++    unsigned bits_per_pixel;
++    bool continuous_refresh, custom_bounce_callback, transformed;
++    bool frame_buffer_retirement;
++} esp_lcd_rgb_panel_frame_buffer_info_t;
++esp_err_t esp_lcd_rgb_panel_get_frame_buffer_info(esp_lcd_panel_handle_t panel,
++                                                 esp_lcd_rgb_panel_frame_buffer_info_t *info);
++
+diff --git a/components/esp_lcd/spi/esp_lcd_panel_io_spi.c b/components/esp_lcd/spi/esp_lcd_panel_io_spi.c
+index 09064bc6aa1..b2b1a2796cf 100644
+--- a/components/esp_lcd/spi/esp_lcd_panel_io_spi.c
++++ b/components/esp_lcd/spi/esp_lcd_panel_io_spi.c
+@@ -70,0 +71,14 @@ typedef struct {
++
++esp_err_t esp_lcd_panel_io_spi_get_memory_info(esp_lcd_panel_io_handle_t io,
++                                              esp_lcd_panel_io_spi_memory_info_t *info)
++{
++    ESP_RETURN_ON_FALSE(io && info, ESP_ERR_INVALID_ARG, TAG, "invalid argument");
++    if (io->tx_color != panel_io_spi_tx_color) {
++        return ESP_ERR_NOT_SUPPORTED;
++    }
++    const esp_lcd_panel_io_spi_t *spi_panel_io = __containerof(io, esp_lcd_panel_io_spi_t, base);
++    *info = (esp_lcd_panel_io_spi_memory_info_t) {
++        .psram_dma_direct = spi_panel_io->flags.psram_dma_direct,
++    };
++    return ESP_OK;
++}

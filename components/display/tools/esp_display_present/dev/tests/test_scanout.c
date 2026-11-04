@@ -21,9 +21,20 @@ static rgb_cb_t late_rgb;
 static void *late_user;
 static esp_lcd_panel_handle_t late_panel;
 static bool late_joined;
+static esp_err_t barrier_result = ESP_OK;
+static struct fake_lcd *submit_barrier_panel;
+static void boundary(struct fake_lcd *p);
 esp_err_t __real_present_isr_barrier(uint32_t timeout);
 esp_err_t __wrap_present_isr_barrier(uint32_t timeout)
 {
+    if (submit_barrier_panel) {
+        struct fake_lcd *panel = submit_barrier_panel;
+        submit_barrier_panel = NULL;
+        boundary(panel); /* ISR that sampled the old FB before submission. */
+    }
+    if (barrier_result != ESP_OK) {
+        return barrier_result;
+    }
     if (late_dsi) {
         (void)late_dsi(late_panel, NULL, late_user);
         late_dsi = NULL;
@@ -144,6 +155,7 @@ esp_err_t esp_lcd_panel_draw_bitmap(esp_lcd_panel_handle_t p, int x, int y, int 
     if (p->early) {
         boundary(p);
         boundary(p);
+        submit_barrier_panel = p;
     }
     return p->fail ? ESP_FAIL : ESP_OK;
 }
@@ -160,8 +172,9 @@ esp_err_t esp_lcd_panel_del(esp_lcd_panel_handle_t p)
     return ESP_OK;
 }
 
-static void exercise(esp_display_present_lcd_scanout_kind_t kind, bool fail)
+static void exercise(esp_display_present_lcd_scanout_kind_t kind, bool fail, bool fallback)
 {
+    barrier_result = fallback ? ESP_ERR_NOT_SUPPORTED : ESP_OK;
     struct fake_lcd panel = {.early = true, .fail = fail};
     for (size_t i = 0; i < 2; ++i) {
         panel.buffers[i] = aligned_alloc(64, 64);
@@ -204,7 +217,7 @@ static void exercise(esp_display_present_lcd_scanout_kind_t kind, bool fail)
     assert(!status.terminal);
     boundary(&panel);
     OK(ops->query(b, receipt, &status));
-    assert(!status.terminal);
+    assert(status.terminal == (!fail && !fallback));
     boundary(&panel);
     OK(ops->query(b, receipt, &status));
     assert(status.terminal == !fail);
@@ -228,6 +241,8 @@ static void exercise(esp_display_present_lcd_scanout_kind_t kind, bool fail)
     for (size_t i = 0; i < 2; ++i) {
         free(panel.buffers[i]);
     }
+    submit_barrier_panel = NULL;
+    barrier_result = ESP_OK;
 }
 typedef struct {
     pthread_mutex_t lock;
@@ -280,7 +295,6 @@ static void test_callback_drain_retry(void)
     esp_display_present_rect_t area = {0, 0, 3, 2};
     esp_display_present_tx_result_t tx = interface.submit(interface.context, &surface, &area, 42);
     assert(tx.acceptance == ESP_DISPLAY_PRESENT_TX_ACCEPTED && tx.result == ESP_OK);
-    boundary(&panel);
     pthread_t th;
     assert(pthread_create(&th, NULL, boundary_thread, &panel) == 0);
     pthread_mutex_lock(&gate.lock);
@@ -348,8 +362,7 @@ static void test_retained_scanout(void)
         assert(interface.quiesce(interface.context, 0) == ESP_ERR_TIMEOUT);
         assert(esp_display_present_lcd_scanout_destroy(adapter) == ESP_ERR_INVALID_STATE);
         boundary(&panel);
-        assert(!gate.entered);
-        boundary(&panel); /* Completion still drains while retained adapter closes. */
+        /* Completion still drains while retained adapter closes. */
         assert(gate.entered);
         panel.detach_fail = true;
         assert(interface.quiesce(interface.context, 0) == ESP_FAIL);
@@ -423,6 +436,18 @@ static void queried_rgb(void)
 }
 int main(void)
 {
+    /* Neither adapter can retire a multi-FB scanout from one untagged event. */
+    struct fake_lcd one_boundary_panel = {0};
+    for (int kind = ESP_DISPLAY_PRESENT_LCD_DSI; kind <= ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE; ++kind) {
+        esp_display_present_lcd_scanout_config_t config = {
+            .panel = &one_boundary_panel, .kind = kind, .width = 3, .height = 2,
+            .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = 2,
+            .delete_panel_on_stop = true, .single_boundary_retire = true,
+        };
+        esp_display_present_lcd_scanout_t *adapter = (void *)1;
+        assert(esp_display_present_lcd_scanout_create(&config, &adapter) == ESP_ERR_NOT_SUPPORTED);
+        assert(!adapter && !one_boundary_panel.deleted);
+    }
     /* Direct RGB is deliberately outside the audited bounce adapter contract. */
     struct fake_lcd unsupported_panel = {.no_bounce = true};
     esp_display_present_lcd_scanout_config_t unsupported = {
@@ -434,10 +459,12 @@ int main(void)
     assert(esp_display_present_lcd_scanout_create(&unsupported, &unsupported_adapter) == ESP_ERR_NOT_SUPPORTED);
     assert(!unsupported_adapter && !unsupported_panel.deleted);
     queried_rgb();
-    exercise(ESP_DISPLAY_PRESENT_LCD_DSI, false);
-    exercise(ESP_DISPLAY_PRESENT_LCD_DSI, true);
-    exercise(ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, false);
-    exercise(ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, true);
+    exercise(ESP_DISPLAY_PRESENT_LCD_DSI, false, false);
+    exercise(ESP_DISPLAY_PRESENT_LCD_DSI, true, false);
+    exercise(ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, false, false);
+    exercise(ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, true, false);
+    exercise(ESP_DISPLAY_PRESENT_LCD_DSI, false, true);
+    exercise(ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, false, true);
     test_callback_drain_retry();
     test_retained_scanout();
     puts("scanout: real adapter against driver stubs, boundary fence, initial scanout and stop retry passed");

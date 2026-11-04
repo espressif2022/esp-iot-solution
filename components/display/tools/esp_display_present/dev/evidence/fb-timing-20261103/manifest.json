@@ -1,0 +1,55 @@
+{
+  "v1_revision": "41b0c9b9b6f72735cfa8878c159b1c25795b48e6",
+  "v2_base_revision": "8c69118a6182a83a22450710b06bc5a4563030b9",
+  "v2_worktree": "v2-worktree-source.diff; includes previously present workspace changes and both optimization fixes",
+  "idf_revision": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+  "idf_overlay": "idf-readonly-capability.diff replayed in isolated IDF copy for all runs; diagnostic-hooks.diff adds trace hooks only in isolated copies",
+  "diagnostic_manifest_note": "This manifest hashes the final instrumented files; the prepare.py intermediate manifest predates sampling changes and V1 hooks.",
+  "boards": {
+    "p4": {
+      "chip": "ESP32-P4",
+      "mac": "e8:f6:0a:e7:a7:8d",
+      "resolution": "1024x600",
+      "interface": "MIPI"
+    },
+    "s3": {
+      "chip": "ESP32-S3",
+      "mac": "90:e5:b1:d0:a9:d8",
+      "resolution": "480x480",
+      "interface": "RGB bounce"
+    }
+  },
+  "timing_run": "8 warmup + 60 frames, 3 repetitions, end drain; 0 degrees RGB565, two 16-row tiles, 2/3 active profile FBs; 3 driver FBs provisioned",
+  "trace_run": "4 warmup + 30 frames, one repetition, 2 active FBs, 4096-record ring, RGB bounce EOF sampled one in eight",
+  "source_sha256": {
+    "v1/private_include/present_fb_internal.h": "01bcce8901462a38154b81d3cc524ffd0680dd9866effbc70822bd0994c6e13e",
+    "v1/src/producer/present_fb_fence.c": "19fb51cb73826f6d66b2790e15c03f0def0cc786a930f5a5f1c81e92ad11c872",
+    "v1/src/producer/stage/present_fb_pipeline.c": "ef2c37a4cd5e2e26c16e4e06928e70fb0a2edae2659b8cc44e5eb871d1ebfe7d",
+    "v1/src/runtime/present_frame_tracker.c": "a69366738418021adfdef27634a77cfa0940c4a38bddc668917e12b81dd09358",
+    "v1/src/target/present_target.c": "ba512ef57108136d51c62d3dc87aeca9dd8a235a8cc56c54989ae1c0cfe83be5",
+    "v1-traced/private_include/present_fb_internal.h": "d8f6fc9021f4c68c76c1855a19e96fd264ffc835c9efe20c518bde87af32436a",
+    "v1-traced/src/producer/present_fb_fence.c": "85108a451d0bcdf22309a62854920256ace40b6aef3bc875aea24a5ce4347c30",
+    "v1-traced/src/producer/stage/present_fb_pipeline.c": "c7ac60a0762b4c8127e84a8c626314ad52def53d68299ccac485b53f2c2ef9db",
+    "v1-traced/src/runtime/present_frame_tracker.c": "d9b13bc01afa6f57938c4f60b1ebb47961c8052e8c94e4a69571eb662e79de6c",
+    "v1-traced/src/target/present_target.c": "d85066e86c39663297b8fd250246322ab47150cf1d0b35950a04c5fe8fe45f1b",
+    "v2/src/backend/present_backend_fb.c": "afe82356a70dffedfd83471a31af821806137615e9079983bbac32831815dad1",
+    "v2/src/platform/present_lcd_scanout.c": "19e3e1563a533fe3f4750bb1d6fc5eba0154d7a736abccecffaca66817d8873e",
+    "v2-traced/src/backend/present_backend_fb.c": "4b8eeec4971e1a1ff566566f2c83f7f1204a6d3ac5217264d5a734425b3d2c1d",
+    "v2-traced/src/platform/present_lcd_scanout.c": "01f662791d3e42850799e6cb19cf9365e08fec381e6570474de0608f7f1c0db2",
+    "idf-query/dsi/esp_lcd_panel_dpi.c": "c1adcd80109e50438c4c2e3d3f85d65ee63ad1577b0d3b8172f4d795a2f78146",
+    "idf-query/rgb/esp_lcd_panel_rgb.c": "eaf9ba8d6c5425021e231e820be71eb700f27b664a3bd8c65f86d2cf6950ad10",
+    "idf-traced/dsi/esp_lcd_panel_dpi.c": "a4dd4fbded312402e8df95fbaa5d3005e609911f99e320c6d453a04b8d02912f",
+    "idf-traced/rgb/esp_lcd_panel_rgb.c": "2e602fab72a56e2d202b1556617d781887556b715ee65e3b318cb1ad315b577c"
+  },
+  "firmware_sha256_files": [
+    "perf-firmware-sha256.json",
+    "trace-firmware-sha256.json"
+  ],
+  "exact_firmware_location": "/tmp/present-fb-final-20261103/firmware (temporary; not included in repository)",
+  "cautions": [
+    "Instrumented runs perturb ISR scheduling. Restart or lost records invalidate complete safety verdict.",
+    "SELECT matching based on pointer after a software marker is correlation, not a generation-coupled presentation proof.",
+    "WRITE_BEGIN indicates producer permission, not byte-level write.",
+    "P4 DMA read begin/end are driver ISR markers; S3 end follows last bounce copy, not a physical bus probe."
+  ]
+}

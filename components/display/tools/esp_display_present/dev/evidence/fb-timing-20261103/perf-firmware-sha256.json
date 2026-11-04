@@ -1,0 +1,18 @@
+{
+  "p4-v1/flash_args": "2b9d9eebdad8b80d107742cf4ab9a062a2d31c9067eb5500090d3c6b1a596a80",
+  "p4-v1/bootloader/bootloader.bin": "3526ae49c6d32ea50b8ab573a33e304b3703fd5a65a2faf8a4d2ca0b72d253c6",
+  "p4-v1/partition_table/partition-table.bin": "73c0b5c3e5fcba3a151cc70c453c93dd5f4798899e7f2f8cca76da1f32ffc501",
+  "p4-v1/pv2_compat_probe.bin": "952560362837cea03323225d0cdd6d9b8d3d03baccef5ea2c36b6332a65aecd3",
+  "s3-v1/flash_args": "2b83f4d028ea8c213e8890bd2f38b71143810c03e4189dd2b1fd16241214c037",
+  "s3-v1/bootloader/bootloader.bin": "0f15477e193f977f4813fe4321989c40c656825ef2d1e62e03ce166a0800d5a9",
+  "s3-v1/partition_table/partition-table.bin": "73c0b5c3e5fcba3a151cc70c453c93dd5f4798899e7f2f8cca76da1f32ffc501",
+  "s3-v1/pv2_compat_probe.bin": "58fc9dfba704d4b5379a2e0be7897089ee57f82b7caeca1bbe16857b9057b666",
+  "p4-final/flash_args": "2b9d9eebdad8b80d107742cf4ab9a062a2d31c9067eb5500090d3c6b1a596a80",
+  "p4-final/bootloader/bootloader.bin": "3649e63a29c1860251d7782e4ffd94974504de448c3b86c08f535f5232b88bad",
+  "p4-final/partition_table/partition-table.bin": "73c0b5c3e5fcba3a151cc70c453c93dd5f4798899e7f2f8cca76da1f32ffc501",
+  "p4-final/pv2_compat_probe.bin": "76d3b54a11a4dd45eae88fe8c3dad3df173a7f0721780a75037de8bfa4e0c05b",
+  "s3-final/flash_args": "2b83f4d028ea8c213e8890bd2f38b71143810c03e4189dd2b1fd16241214c037",
+  "s3-final/bootloader/bootloader.bin": "3713e4e1576c057a4a82ad57677b09e938df0c9460f44600363acd8f4ec2e515",
+  "s3-final/partition_table/partition-table.bin": "73c0b5c3e5fcba3a151cc70c453c93dd5f4798899e7f2f8cca76da1f32ffc501",
+  "s3-final/pv2_compat_probe.bin": "4f9f9dbddd1d3c76a0aa24b17eb27f3e9e0e3acada49db50fba828e5f08a694a"
+}

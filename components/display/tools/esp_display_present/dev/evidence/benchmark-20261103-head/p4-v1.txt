@@ -1,0 +1,142 @@
+ESP-ROM:esp32p4-eco7-20260109
+Build:Jan  9 2026
+rst:0x17 (CHIP_USB_UART_RESET),boot:0xc (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x4fc04834
+Core1 Saved PC:0x4fc06020
+SPI mode:DIO, clock div:1
+load:0x4ffb60d0,len:0x14b8
+load:0x4ffab2c0,len:0xc98
+load:0x4ffadfc0,len:0x3630
+entry 0x4ffab2ca
+I (10) boot: ESP-IDF v6.2-dev-2221-g7b9cc1ac79f8-dir 2nd stage bootloader
+I (10) boot: compile time Nov  3 2026 16:39:21
+I (12) boot: chip revision: v3.2
+I (12) boot.esp32p4: SPI Speed      : 80MHz
+I (12) boot.esp32p4: SPI Mode       : DIO
+I (12) boot.esp32p4: SPI Flash Size : 16MB
+I (13) boot: Partition Table:
+I (13) boot: ## Label            Usage          Type ST Offset   Length
+I (14) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (14) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (15) boot:  2 factory          factory app      00 00 00010000 00300000
+I (16) esp_image: segment 0: paddr=00010020 vaddr=40090020 size=63ffch (409596) map
+I (72) esp_image: segment 1: paddr=00074024 vaddr=30100000 size=00224h (   548) load
+I (74) esp_image: segment 2: paddr=00074250 vaddr=30100230 size=00058h (    88) load
+I (75) esp_image: segment 3: paddr=000742b0 vaddr=4ff20000 size=0bd68h ( 48488) load
+I (84) esp_image: segment 4: paddr=00080020 vaddr=40000020 size=85de4h (548324) map
+I (158) esp_image: segment 5: paddr=00105e0c vaddr=4ff2bd68 size=04960h ( 18784) load
+I (163) esp_image: segment 6: paddr=0010a774 vaddr=4ff30700 size=03974h ( 14708) load
+I (169) boot: Loaded app from partition at offset 0x10000
+I (172) hex_psram: vendor id    : 0x0d (AP)
+I (173) hex_psram: Latency      : 0x01 (Fixed)
+I (173) hex_psram: DriveStr.    : 0x00 (25 Ohm)
+I (173) hex_psram: dev id       : 0x03 (generation 4)
+I (174) hex_psram: density      : 0x07 (256 Mbit)
+I (174) hex_psram: good-die     : 0x06 (Pass)
+I (174) hex_psram: SRF          : 0x02 (Slow Refresh)
+I (175) hex_psram: BurstType    : 0x00 ( Wrap)
+I (175) hex_psram: BurstLen     : 0x03 (2048 Byte)
+I (175) hex_psram: BitMode      : 0x01 (X16 Mode)
+I (176) hex_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (176) hex_psram: DriveStrength: 0x00 (1/1)
+I (176) MSPI Timing: Enter psram timing tuning
+I (331) esp_psram: Found 32MB PSRAM device
+I (331) esp_psram: Speed: 200MHz
+I (334) cpu_start: Multicore app
+I (1182) esp_psram: SPI SRAM memory test OK
+I (1191) cpu_start: Pro cpu start user code
+I (1191) cpu_start: cpu freq: 400000000 Hz
+I (1191) app_init: Application information:
+I (1191) app_init: Project name:     pv2_compat_probe
+I (1192) app_init: App version:      1
+I (1192) app_init: Compile time:     Nov  3 2026 16:39:48
+I (1192) app_init: ELF file SHA256:  836138eec...
+I (1192) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (1192) efuse_init: Min chip rev:     v3.1
+I (1193) efuse_init: Max chip rev:     v3.99
+I (1193) efuse_init: Chip rev:         v3.2
+I (1193) heap_init: Initializing. RAM available for dynamic allocation:
+I (1193) heap_init: At 4FF35E40 len 00085180 (532 KiB): RETENT_RAM
+I (1194) heap_init: At 4FFBAFC0 len 00004BF0 (18 KiB): RAM
+I (1194) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (1194) heap_init: At 30100288 len 00001D78 (7 KiB): SPM
+I (1195) esp_psram: Adding pool of 32768K of PSRAM memory to heap allocator
+I (1195) spi_flash: detected chip: gd
+I (1196) spi_flash: flash io: dio
+I (1196) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (1196) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (1198) sleep_clock: System sleep clock ICG setting initialization
+I (1199) main_task: Started on CPU0
+I (1199) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (1200) main_task: Calling app_main()
+I (1200) compat_probe: START impl=v1
+I (1200) main_task: Returned from app_main()
+I (1201) ek79007: version: 2.0.2
+I (1392) present_target: target: mode=NONE panel=MIPI_DSI gram=0 rotation=0 te=0 fb=1 drawbuf=0x0
+I (1392) present_target: pipeline: commit=switch slot=600x1
+I (1393) present_fb: surface: mode=NONE contract=fb_persistent storage=fb areas=1 retain=1 previous=0 repair=0 buffers=1 size=1024x600 physical=1024x600 rotate=0 ppa=0 async_copy=0
+I (1394) presenter: presenter: contract=DIRECT endpoint=fb mode=fb_switch areas=1 retain=1 previous=0 drawbuf=0
+I (1394) compat_probe: CASE impl=v1 mode=0 compose=0 rotation=0
+I (1471) compat_probe: CANCEL_RESUME_PASS impl=v1 mode=0
+I (2175) compat_probe: PASS impl=v1 mode=0 compose=0 rotation=0 frames=12 elapsed_us=764626 submitted=13 completed=13 heap=573327
+I (2177) present_target: target: mode=DOUBLE_PARTIAL panel=MIPI_DSI gram=0 rotation=0 te=0 fb=2 drawbuf=16x2
+I (2177) present_target: pipeline: commit=switch slot=16x2
+I (2177) present_fb: surface: mode=DOUBLE_PARTIAL contract=fb_repair storage=fb areas=1 retain=0 previous=0 repair=1 buffers=2 size=1024x600 physical=1024x600 rotate=0 ppa=0 async_copy=1
+I (2178) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=32768
+I (2178) compat_probe: CASE impl=v1 mode=6 compose=0 rotation=0
+I (2179) display_present:hw: Initializing hardware resources
+I (2180) display_present:hw: Hardware resources initialized successfully
+I (2236) compat_probe: CANCEL_RESUME_PASS impl=v1 mode=6
+I (2964) compat_probe: PASS impl=v1 mode=6 compose=0 rotation=0 frames=12 elapsed_us=784005 submitted=13 completed=13 heap=483899
+I (2965) present_target: target: mode=DOUBLE_FULL panel=MIPI_DSI gram=0 rotation=0 te=0 fb=2 drawbuf=0x0
+I (2965) present_target: pipeline: commit=switch slot=600x2
+I (2966) present_fb: surface: mode=DOUBLE_FULL contract=fb_switch storage=fb areas=0 retain=0 previous=0 repair=0 buffers=2 size=1024x600 physical=1024x600 rotate=0 ppa=0 async_copy=0
+I (2966) presenter: presenter: contract=FULL endpoint=fb mode=fb_switch areas=0 retain=0 previous=0 drawbuf=0
+I (2967) compat_probe: CASE impl=v1 mode=1 compose=0 rotation=0
+I (3047) compat_probe: CANCEL_RESUME_PASS impl=v1 mode=1
+I (3776) compat_probe: PASS impl=v1 mode=1 compose=0 rotation=0 frames=12 elapsed_us=793015 submitted=13 completed=13 heap=569935
+I (3777) present_target: target: mode=DOUBLE_DIRECT panel=MIPI_DSI gram=0 rotation=0 te=0 fb=2 drawbuf=0x0
+I (3778) present_target: pipeline: commit=switch slot=600x2
+I (3778) present_fb: surface: mode=DOUBLE_DIRECT contract=fb_direct storage=fb areas=1 retain=0 previous=1 repair=0 buffers=2 size=1024x600 physical=1024x600 rotate=0 ppa=0 async_copy=0
+I (3779) presenter: presenter: contract=DIRECT endpoint=fb mode=fb_switch areas=1 retain=0 previous=1 drawbuf=0
+I (3779) compat_probe: CASE impl=v1 mode=3 compose=0 rotation=0
+I (3859) compat_probe: CANCEL_RESUME_PASS impl=v1 mode=3
+I (4588) compat_probe: PASS impl=v1 mode=3 compose=0 rotation=0 frames=12 elapsed_us=792065 submitted=13 completed=13 heap=553843
+I (4589) present_target: target: mode=TRIPLE_PARTIAL panel=MIPI_DSI gram=0 rotation=0 te=0 fb=3 drawbuf=16x2
+I (4589) present_target: pipeline: commit=switch slot=16x2
+I (4590) present_fb: surface: mode=TRIPLE_PARTIAL contract=fb_repair storage=fb areas=1 retain=0 previous=0 repair=1 buffers=3 size=1024x600 physical=1024x600 rotate=0 ppa=0 async_copy=1
+I (4591) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=32768
+I (4591) compat_probe: CASE impl=v1 mode=4 compose=0 rotation=0
+I (4643) compat_probe: CANCEL_RESUME_PASS impl=v1 mode=4
+I (5246) compat_probe: PASS impl=v1 mode=4 compose=0 rotation=0 frames=12 elapsed_us=653478 submitted=13 completed=12 heap=481823
+I (5246) present_target: target: mode=TRIPLE_FULL panel=MIPI_DSI gram=0 rotation=0 te=0 fb=3 drawbuf=0x0
+I (5246) present_target: pipeline: commit=switch slot=600x3
+I (5247) present_fb: surface: mode=TRIPLE_FULL contract=fb_switch storage=fb areas=0 retain=0 previous=0 repair=0 buffers=3 size=1024x600 physical=1024x600 rotate=0 ppa=0 async_copy=0
+I (5247) presenter: presenter: contract=FULL endpoint=fb mode=fb_switch areas=0 retain=0 previous=0 drawbuf=0
+I (5248) compat_probe: CASE impl=v1 mode=2 compose=0 rotation=0
+I (5325) compat_probe: CANCEL_RESUME_PASS impl=v1 mode=2
+I (6034) compat_probe: PASS impl=v1 mode=2 compose=0 rotation=0 frames=12 elapsed_us=769688 submitted=13 completed=12 heap=569911
+I (6035) present_target: target: mode=TRIPLE_PARTIAL panel=MIPI_DSI gram=0 rotation=0 te=0 fb=3 drawbuf=50x2
+I (6035) present_target: pipeline: commit=switch slot=50x2
+I (6036) present_fb: surface: mode=TRIPLE_PARTIAL contract=fb_repair storage=fb areas=1 retain=0 previous=0 repair=1 buffers=3 size=1024x600 physical=1024x600 rotate=0 ppa=0 async_copy=1
+I (6037) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=102400
+I (6040) esp_lv_present: LVGL display 1024x600 on presenter (PARTITION, RGB565, rows=50, presenter drawbuf)
+I (6042) compat_probe: BENCH_START impl=v1 width=1024 height=600
+I (75144) compat_probe: SCENE impl=v1 name="Empty screen" fps=26 cpu=13 render=4 flush=0
+I (75145) compat_probe: SCENE impl=v1 name="Moving wallpaper" fps=30 cpu=28 render=9 flush=0
+I (75145) compat_probe: SCENE impl=v1 name="Single rectangle" fps=30 cpu=7 render=0 flush=0
+I (75145) compat_probe: SCENE impl=v1 name="Multiple rectangles" fps=30 cpu=12 render=2 flush=1
+I (75146) compat_probe: SCENE impl=v1 name="Multiple RGB images" fps=30 cpu=19 render=3 flush=1
+I (75146) compat_probe: SCENE impl=v1 name="Multiple ARGB images" fps=30 cpu=39 render=10 flush=1
+I (75146) compat_probe: SCENE impl=v1 name="Rotated ARGB images" fps=30 cpu=56 render=16 flush=1
+I (75147) compat_probe: SCENE impl=v1 name="Multiple labels" fps=29 cpu=46 render=10 flush=1
+I (75147) compat_probe: SCENE impl=v1 name="Screen sized text" fps=16 cpu=95 render=57 flush=0
+I (75148) compat_probe: SCENE impl=v1 name="Multiple arcs" fps=29 cpu=57 render=14 flush=0
+I (75148) compat_probe: SCENE impl=v1 name="Containers" fps=30 cpu=28 render=4 flush=2
+I (75148) compat_probe: SCENE impl=v1 name="Containers with overlay" fps=30 cpu=77 render=26 flush=0
+I (75148) compat_probe: SCENE impl=v1 name="Containers with opa" fps=29 cpu=36 render=6 flush=1
+I (75149) compat_probe: SCENE impl=v1 name="Containers with opa_layer" fps=29 cpu=62 render=20 flush=2
+I (75149) compat_probe: SCENE impl=v1 name="Containers with scrolling" fps=30 cpu=83 render=26 flush=0
+I (75150) compat_probe: SCENE impl=v1 name="Widgets demo" fps=19 cpu=98 render=42 flush=0
+I (75150) compat_probe: BENCH_DONE impl=v1 scenes=16 fps=27 cpu=47 render=15 flush=0
+I (75184) compat_probe: ALL_PASS impl=v1

@@ -1,0 +1,30 @@
+--- baseline/src/pixel/present_pixel_engine.c
++++ experiment-syncrows/src/pixel/present_pixel_engine.c
+@@ -120,7 +120,7 @@
+     }
+ }
+ 
+-static void PRESENT_ISR_ATTR copy_cpu(const esp_display_present_copy_request_t *request)
++static void copy_cpu(const esp_display_present_copy_request_t *request)
+ {
+     size_t bytes = request->source.layout.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
+     bool swap = request->source.layout.byte_order != request->destination.layout.byte_order;
+@@ -139,14 +139,10 @@
+                            (size_t)request->destination_y * dst_stride + (size_t)request->destination_x * bytes;
+         if (!swap) {
+             size_t row_bytes = (size_t)a.width * bytes;
+-            if (row_bytes == src_stride && src_stride == dst_stride) {
+-                memcpy(dst_row, src_row, row_bytes * a.height);
+-            } else {
+-                for (uint32_t y = 0; y < a.height; ++y) {
+-                    memcpy(dst_row, src_row, row_bytes);
+-                    src_row += src_stride;
+-                    dst_row += dst_stride;
+-                }
++            for (uint32_t y = 0; y < a.height; ++y) {
++                memcpy(dst_row, src_row, row_bytes);
++                src_row += src_stride;
++                dst_row += dst_stride;
+             }
+             return;
+         }

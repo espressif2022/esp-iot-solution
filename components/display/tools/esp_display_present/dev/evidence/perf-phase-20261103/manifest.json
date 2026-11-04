@@ -1,0 +1,16 @@
+{
+  "v1_revision": "41b0c9b9b6f72735cfa8878c159b1c25795b48e6",
+  "current_base_revision": "8c69118a6182a83a22450710b06bc5a4563030b9",
+  "idf_revision": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+  "test_conditions": "8 warmup frames, 60 measured frames, 3 repeats, final drain only, 16-row two-tile producer; see report",
+  "firmware_sha256": {
+    "p4-probe.bin": "d4427150583440c1555b4bd023f2d1ce066613b24769cb00243ca042a7fcd01c",
+    "p4-reference.bin": "952560362837cea03323225d0cdd6d9b8d3d03baccef5ea2c36b6332a65aecd3",
+    "s3-probe.bin": "63bf1ef6389bec99884f76e11236023d80e3000ba006c70fdf40468831c00495",
+    "s3-reference.bin": "58fc9dfba704d4b5379a2e0be7897089ee57f82b7caeca1bbe16857b9057b666",
+    "s31-probe.bin": "8cd1c1da9f5539afadaffe817bf08c85678fbdc6a524b3d9eac4ec1b453184d6",
+    "s31-reference.bin": "3b48a1aa529e12f614efcde8bf81fa2fa26ce95a320b9ba988b0c65efc89e3c8",
+    "s31-final-handoff.bin": "2acf22fad764ea1e6fc7fdea3e4e0915a670847ae0aa9f07b96002c874b433b6"
+  },
+  "limitations": "The exact P4/S3 fix binaries were overwritten by subsequent offline builds and were not archived. Their test source included the optional event experiment, but the IDF overlay did not define the event macros, so the fallback remained the two-boundary path. Test logs are synthetic throughput, not LVGL benchmark or optical frame rate."
+}

@@ -1,0 +1,99 @@
+{
+  "s3-trace-perf.log": [
+    {
+      "name": "DOUBLE_PARTIAL",
+      "scope": "v2",
+      "capture_count": 1171,
+      "reported_count": 1171,
+      "dropped": 0,
+      "counts": {
+        "REGISTER": 3,
+        "BOUNCE_EOF_SAMPLED": 449,
+        "READ_END": 74,
+        "FRAME_DONE": 74,
+        "SELECT": 74,
+        "CALLBACK": 72,
+        "READ_BEGIN": 74,
+        "VSYNC": 74,
+        "APP_BEGIN": 34,
+        "SUBMIT": 35,
+        "ARM": 35,
+        "CONFIRM": 35,
+        "WRITE_BEGIN": 34,
+        "APP_COMMIT": 34,
+        "WRITE_END": 34,
+        "RELEASE": 34,
+        "RESTART": 1,
+        "STOP": 1
+      },
+      "submit_to_first_matching_select_us": {
+        "min": 11828,
+        "mean": 13561.9,
+        "max": 14696,
+        "n": 35
+      },
+      "last_read_end_to_release_us": {
+        "min": 36,
+        "mean": 40.2,
+        "max": 45,
+        "n": 34
+      },
+      "callbacks_until_confirm": {
+        "min": 1,
+        "mean": 1,
+        "max": 1,
+        "n": 35
+      },
+      "problems": [],
+      "uncertainty": [
+        "driver restart seq=919 reason=0x4"
+      ]
+    },
+    {
+      "name": "DOUBLE_DIRECT",
+      "scope": "v2",
+      "capture_count": 793,
+      "reported_count": 793,
+      "dropped": 0,
+      "counts": {
+        "REGISTER": 3,
+        "BOUNCE_EOF_SAMPLED": 258,
+        "READ_END": 43,
+        "FRAME_DONE": 43,
+        "SELECT": 43,
+        "CALLBACK": 41,
+        "READ_BEGIN": 43,
+        "VSYNC": 43,
+        "APP_BEGIN": 34,
+        "SUBMIT": 35,
+        "ARM": 35,
+        "CONFIRM": 35,
+        "WRITE_BEGIN": 34,
+        "WRITE_END": 34,
+        "APP_COMMIT": 34,
+        "RELEASE": 34,
+        "STOP": 1
+      },
+      "submit_to_first_matching_select_us": {
+        "min": 158,
+        "mean": 1546.3,
+        "max": 15844,
+        "n": 35
+      },
+      "last_read_end_to_release_us": {
+        "min": 25,
+        "mean": 536.2,
+        "max": 16619,
+        "n": 34
+      },
+      "callbacks_until_confirm": {
+        "min": 1,
+        "mean": 1,
+        "max": 1,
+        "n": 35
+      },
+      "problems": [],
+      "uncertainty": []
+    }
+  ]
+}

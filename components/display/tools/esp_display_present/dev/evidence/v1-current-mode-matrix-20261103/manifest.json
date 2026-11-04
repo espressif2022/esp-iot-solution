@@ -1,0 +1,116 @@
+{
+  "date": "2026-11-03",
+  "baseline_v1_commit": "41b0c9b9b6f72735cfa8878c159b1c25795b48e6",
+  "current_commit": "8c69118a6182a83a22450710b06bc5a4563030b9",
+  "current_production_src_git_diff_sha256": "cad4ff898f3e9229ec9b08507972ce5d82d3960f47a7dab510bdf1cf3685750b",
+  "idf_commit": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+  "idf_dirty": true,
+  "sdkconfig_note": "Each pair differs only by current-component CONFIG_PV2_LEGACY_CALLBACK_JOIN and CONFIG_PV2_LEGACY_RGB_BOUNCE_CONFIRMED entries.",
+  "test_source_sha256": "e61cda8e3a51a0bf5b7cb1dd60bbf9c4b06282e9ce4d1fbfd0376f926d656c11",
+  "frames_per_case": 12,
+  "boards": {
+    "p4": {
+      "display": "P4 MIPI 1024×600",
+      "mac": "e8:f6:0a:e7:a7:8d",
+      "implementations": {
+        "v1": {
+          "app_sha256": "1d30564c0267bdfb613ad1905e99cbb8250ee0ba1e3efcdac381ffad9f84e864",
+          "sdkconfig_sha256": "2377fe0eafbb14c8eab3a6d0fc4743a1d82987be6a14a7c5ba171ab71982cc5c",
+          "pass": 25,
+          "unsupported": 3,
+          "bad": 0
+        },
+        "v2": {
+          "app_sha256": "01588fa40dc4cea2369f12f671f590f0df98f5816374b1964455b38e973bfaf5",
+          "sdkconfig_sha256": "9e53bcf690ebb151c9132e1ac03d878d7f0f86c21ad1fbab3adf22a145f0d003",
+          "pass": 28,
+          "unsupported": 0,
+          "bad": 0
+        }
+      },
+      "backup_and_restore_digest_verified": true
+    },
+    "s3": {
+      "display": "S3 RGB bounce 480×480",
+      "mac": "90:e5:b1:d0:a9:d8",
+      "implementations": {
+        "v1": {
+          "app_sha256": "0acdf406f28e93de64287dfc4fe534a60372da1af139353df7b894746904f8d4",
+          "sdkconfig_sha256": "34699d9515d1b5b4f792604baf27c88c1d3dd09694b6a3afc9fe436d51081aa6",
+          "pass": 25,
+          "unsupported": 3,
+          "bad": 0
+        },
+        "v2": {
+          "app_sha256": "f7142cff4bbf3b1084d83d862cf4544182191618ead04aa6bf6bf13eaab1653f",
+          "sdkconfig_sha256": "ba87e6089748aa7faecbb4e421059eade27ff3be14997bc9a816415c8fda4c2b",
+          "pass": 28,
+          "unsupported": 0,
+          "bad": 0
+        }
+      },
+      "backup_and_restore_digest_verified": true
+    },
+    "s31": {
+      "display": "S31 QSPI 480×480",
+      "mac": "30:ed:a0:f4:0b:34",
+      "implementations": {
+        "v1": {
+          "app_sha256": "80ac031131d5fad504bae9762067cf05f39c2473d96e124c7dc7a8d82cd3d76b",
+          "sdkconfig_sha256": "040a87d8e19e929703e9965e9b5f2ccf075a67ed83413938bde2c46a349c0eed",
+          "pass": 23,
+          "unsupported": 9,
+          "bad": 0
+        },
+        "v2": {
+          "app_sha256": "52d15724b87583fec511646ef2c2431ec839522ecc5680c465faaab62fb91914",
+          "sdkconfig_sha256": "e18f7a1ac591480471664600b6be252ec3a14fcbd8b354130b2bd19400a42ee0",
+          "pass": 32,
+          "unsupported": 0,
+          "bad": 0
+        }
+      },
+      "backup_and_restore_digest_verified": true,
+      "restore_first_verify": "USB I/O failed; independent verification retried successfully"
+    }
+  },
+  "idf_lcd_sources_sha256": {
+    "components/esp_lcd/include/esp_lcd_io_spi.h": "6bb82dd6dfe57776d1e1290409fe797e9cfc2a663577db25af989e6c95223b45",
+    "components/esp_lcd/rgb/esp_lcd_panel_rgb.c": "eaf9ba8d6c5425021e231e820be71eb700f27b664a3bd8c65f86d2cf6950ad10",
+    "components/esp_lcd/rgb/include/esp_lcd_panel_rgb.h": "7eecfdcba74144f89d902db7e6186bac259404f52031942f89ab7db1b2dc7783",
+    "components/esp_lcd/spi/esp_lcd_panel_io_spi.c": "dce75b576d5e134418c72d23c5626ea84e5609a76a4c08f8318bc7a72a3fb9f9"
+  },
+  "board_source_sha256": {
+    "board_p4.c": "c81a226cfb7d60726ef9e4ec498f990871174b0613a79f2b8b06102ffa06e5be",
+    "board_s3.c": "aae22a903343e6b24b9b9f0be61ef6e682b5219765edd82b82699038ac17ae4b",
+    "board_qspi.c": "0ce34f357f7777e7200139062971ce19c12d1780bd0ad780df01acd15412b09c",
+    "board.h": "2fb3ef6f8a1a1eeaf130be79c494d1904ac6c2ce51d95c0d3bad2da995d6cfac",
+    "board_qspi.h": "0970cf2631e214490c392e1e2a2e9a4a60146830bd529a66822558e4939959fe"
+  },
+  "initial_p4_run": "Excluded: original harness incorrectly required draw_bitmap for V1 single-FB active writes; corrected shared source and reran both versions.",
+  "evidence_sha256": {
+    "current-production-diff.patch.txt": "8007012658be86dcc879954f8ea6d4f30642d68cc2203a58601572e53aba9652",
+    "idf-lcd-diff.patch.txt": "d46d666713bea514c543246a662246a1a1da0a3d863868b1c1f6d4d556c67b66",
+    "mode-comparison.csv": "2a3d22090341cb8e0c661d61426ec957d02589f9bb83c1aa9cdf221082c8f0ef",
+    "p4-backup-verify.txt": "0d76f1e51cbf402242019e70586f88bc9ccabc6258a1b041e2870b1c7de1967e",
+    "p4-restore-verify.txt": "0d76f1e51cbf402242019e70586f88bc9ccabc6258a1b041e2870b1c7de1967e",
+    "p4-v1-initial-harness-invalid-not-counted.txt": "8821640b3bb59a680a3d02bccfd54f7b6d3fe2800a2409dad5b58370f0955194",
+    "p4-v1-run.txt": "f93df23dafb3878a6073b572a85a1c733a5d24be075295422018f61f024492cf",
+    "p4-v1-sdkconfig.txt": "2377fe0eafbb14c8eab3a6d0fc4743a1d82987be6a14a7c5ba171ab71982cc5c",
+    "p4-v2-run.txt": "c531e86c75337d77da80244cc2b27c5d6af6b87fffbaddc669328c5c271bca19",
+    "p4-v2-sdkconfig.txt": "9e53bcf690ebb151c9132e1ac03d878d7f0f86c21ad1fbab3adf22a145f0d003",
+    "s3-backup-verify.txt": "790cef66c57d9847590d450883f2ea42f5a844a49a90d2c26c1215e383e91bf8",
+    "s3-restore-verify.txt": "790cef66c57d9847590d450883f2ea42f5a844a49a90d2c26c1215e383e91bf8",
+    "s3-v1-run.txt": "57281dd95444829a82a3222b8ade426abf613cbe60cb5ee0f40d687c180b32da",
+    "s3-v1-sdkconfig.txt": "34699d9515d1b5b4f792604baf27c88c1d3dd09694b6a3afc9fe436d51081aa6",
+    "s3-v2-run.txt": "a7f811b50875b2ea3fd5763f621d4b7ba3ed44641b692b5faa60bb39d9653c77",
+    "s3-v2-sdkconfig.txt": "ba87e6089748aa7faecbb4e421059eade27ff3be14997bc9a816415c8fda4c2b",
+    "s31-backup-verify.txt": "a90239893765dbdfe719407f58dc769090067d5515983faf7f2a10fcee6ce141",
+    "s31-restore-verify-first-failed.txt": "451368649117d16a7f8cfa7222c8710a294f3cc2261e265acb88ccf10393ae48",
+    "s31-restore-verify.txt": "fe0b5af7cdcd140b34030ce9ed318556f668ec35a03b4c64ffd9f31b3d742841",
+    "s31-v1-run.txt": "b0cdd1a640ace639741f85aab4459bdeceb49924b1bbc2cece001385cef7d553",
+    "s31-v1-sdkconfig.txt": "040a87d8e19e929703e9965e9b5f2ccf075a67ed83413938bde2c46a349c0eed",
+    "s31-v2-run.txt": "4de3959bd70b8997526902aefb9f00ff4afc44422b1faeb4d5c20a035b474bbe",
+    "s31-v2-sdkconfig.txt": "e18f7a1ac591480471664600b6be252ec3a14fcbd8b354130b2bd19400a42ee0"
+  }
+}

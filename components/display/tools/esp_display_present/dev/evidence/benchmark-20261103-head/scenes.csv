@@ -1,0 +1,49 @@
+board,scene,v1_fps,v1_lvgl_cpu_percent,v1_render_ms,v1_flush_ms,v2_fps,v2_lvgl_cpu_percent,v2_render_ms,v2_flush_ms
+p4,Empty screen,26,13,4,0,26,23,1,5
+p4,Moving wallpaper,30,28,9,0,30,33,9,0
+p4,Single rectangle,30,7,0,0,30,15,0,4
+p4,Multiple rectangles,30,12,2,1,30,55,1,16
+p4,Multiple RGB images,30,19,3,1,30,87,3,23
+p4,Multiple ARGB images,30,39,10,1,30,87,11,14
+p4,Rotated ARGB images,30,56,16,1,30,88,17,8
+p4,Multiple labels,29,46,10,1,29,48,11,2
+p4,Screen sized text,16,95,57,0,16,99,59,0
+p4,Multiple arcs,29,57,14,0,29,58,14,0
+p4,Containers,30,28,4,2,30,23,5,0
+p4,Containers with overlay,30,77,26,0,30,88,27,0
+p4,Containers with opa,29,36,6,1,30,36,7,0
+p4,Containers with opa_layer,29,62,20,2,28,64,21,1
+p4,Containers with scrolling,30,83,26,0,30,89,27,0
+p4,Widgets demo,19,98,42,0,18,98,43,0
+s3,Empty screen,21,87,32,5,17,86,35,8
+s3,Moving wallpaper,14,99,60,4,13,99,62,7
+s3,Single rectangle,30,30,2,2,30,50,2,11
+s3,Multiple rectangles,29,87,23,4,23,96,25,8
+s3,Multiple RGB images,28,88,22,4,26,97,23,5
+s3,Multiple ARGB images,26,96,28,4,22,98,29,5
+s3,Rotated ARGB images,29,76,18,3,29,74,19,0
+s3,Multiple labels,19,86,43,7,17,89,41,12
+s3,Screen sized text,6,99,129,5,6,99,130,8
+s3,Multiple arcs,30,62,12,3,29,69,12,4
+s3,Containers,24,82,31,5,24,84,29,2
+s3,Containers with overlay,11,96,69,10,10,98,71,9
+s3,Containers with opa,21,92,37,6,20,92,38,3
+s3,Containers with opa_layer,8,99,97,5,8,97,94,4
+s3,Containers with scrolling,8,99,102,5,8,99,99,8
+s3,Widgets demo,5,99,136,6,4,99,138,6
+s31,Empty screen,26,75,9,17,26,75,11,16
+s31,Moving wallpaper,30,90,19,10,30,98,21,9
+s31,Single rectangle,30,19,1,2,30,19,1,1
+s31,Multiple rectangles,30,49,7,7,30,47,8,6
+s31,Multiple RGB images,30,33,4,4,30,40,6,3
+s31,Multiple ARGB images,30,40,7,3,30,46,10,1
+s31,Rotated ARGB images,30,36,8,3,30,35,6,1
+s31,Multiple labels,30,72,17,5,29,91,21,8
+s31,Screen sized text,14,97,58,7,13,98,60,9
+s31,Multiple arcs,30,30,5,1,29,45,5,3
+s31,Containers,29,40,13,2,30,43,12,2
+s31,Containers with overlay,20,91,35,8,19,91,36,9
+s31,Containers with opa,29,49,14,2,29,48,16,2
+s31,Containers with opa_layer,24,79,31,3,24,77,31,3
+s31,Containers with scrolling,18,97,40,9,17,97,42,10
+s31,Widgets demo,9,98,67,7,9,99,67,8

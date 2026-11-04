@@ -7,6 +7,7 @@
 #include "board.h"
 #include "esp_display_present.h"
 #include "present_presenter.h"
+#include "present_lcd_scanout.h"
 #include "present_plan.h"
 #include "present_executor.h"
 #include "esp_log.h"
@@ -230,8 +231,15 @@ static void verify_rotated(const esp_display_present_surface_t *surface, uint32_
 {
     for (unsigned ly = 0; ly < lh; ++ly) {
         for (unsigned lx = 0; lx < lw; ++lx) {
-            esp_display_present_rect_t pixel = {lx, ly, 1, 1}, phys;
-            check(esp_display_present_rotate_rect(lw, lh, rot, &pixel, &phys), "rotate_rect");
+            /* Independent mapping: do not use the implementation geometry
+             * helper as the reference for the pixels being verified. */
+            esp_display_present_rect_t phys = {0};
+            switch (rot) {
+            case ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90: phys.x = lh - 1 - ly; phys.y = lx; break;
+            case ESP_DISPLAY_PRESENT_ENGINE_ROTATE_180: phys.x = lw - 1 - lx; phys.y = lh - 1 - ly; break;
+            case ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270: phys.x = ly; phys.y = lw - 1 - lx; break;
+            default: phys.x = lx; phys.y = ly; break;
+            }
             const uint16_t *row = (const uint16_t *)((const uint8_t *)surface->pixels +
                                                      phys.y * surface->layout.stride_bytes);
             esp_display_present_rect_t box = {7 + frame * 13 % (lw - 60), 65 + frame * 7 % (lh - 150), 37, 59};
@@ -305,6 +313,8 @@ static void run_combo_case(unsigned cycle, unsigned test, bool async_copy, unsig
     size_t count;
     check(esp_display_present_lcd_scanout_get_buffers(adapter, buffers, 3, &count), "get buffers");
     tap_t tap = {0};
+    tap.known_count = count;
+    memcpy(tap.known, buffers, count * sizeof(*buffers));
     check(esp_display_present_lcd_scanout_get_interface(adapter, &tap.real), "interface");
     esp_display_present_executor_t *cpu = NULL, *hw = NULL;
     esp_display_present_executor_dispatch_t dispatch = {0};
@@ -381,7 +391,9 @@ static void run_combo_case(unsigned cycle, unsigned test, bool async_copy, unsig
             check(esp_display_present_engine_service(presenter), "combo service");
             total_frames++;
         }
+        ESP_LOGI(TAG, "ROT_PASS mode=%s exec=%s rotation=%u pixels=ALL", cases[test].name, exec_name, (unsigned)rot * 90);
     }
+    ESP_LOGI(TAG, "POOL_USED mode=%s mask=0x%x count=%u", cases[test].name, tap.used_mask, (unsigned)count);
     ESP_LOGI(TAG, "COMBO_PASS cycle=%u mode=%s exec=%s frames=%u rots=5 pixels=ALL avg_wait_us=%" PRIu64 " max_wait_us=%" PRIu64 " min_int=%u min_psram=%u",
              cycle, cases[test].name, exec_name, total_frames, total_wait / total_frames, max_wait,
              (unsigned)heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL),
@@ -730,7 +742,7 @@ static void run_v1_vs_v2_benchmark(unsigned cycle)
         esp_display_present_lcd_scanout_config_t scan = {.panel = panel_v2, .kind = SCANOUT_KIND,
                                                          .width = WIDTH, .height = HEIGHT, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = bench_cases[i].buffers,
                                                          .rgb_bounce_buffer_mode = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE,
-                                                         .single_boundary_retire = true, .delete_panel_on_stop = true
+                                                         .delete_panel_on_stop = true
                                                         };
         check(esp_display_present_lcd_scanout_create(&scan, &adapter), "bench v2 scanout create");
         void *buffers[3] = {0};
@@ -881,6 +893,18 @@ void present_board_test_executors(void);
 #endif
 void app_main(void)
 {
+#ifdef PRESENT_NATIVE_ROTATION_MATRIX
+    vTaskDelay(pdMS_TO_TICKS(3000));
+    ESP_LOGI(TAG, "NATIVE_MATRIX_START board=%s rotations=0,90,180,270,0 full_and_dirty=1", BOARD_NAME);
+    for (unsigned test = 0; test < CASE_COUNT; ++test) {
+        run_combo_case(0, test, true, 0);
+        run_fb_handoff_profile(0, test);
+    }
+    ESP_LOGI(TAG, "MATRIX_PASS board=%s native_modes=%u rotations=5 full_and_dirty=1", BOARD_NAME, (unsigned)CASE_COUNT);
+    for (;;) {
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+#else
 #ifdef PRESENT_BOARD_EXECUTOR_CHECK
     present_board_test_executors();
 #endif
@@ -903,4 +927,5 @@ void app_main(void)
         }
         ESP_LOGI(TAG, "SUITE_PASS cycle=%u modes=%u confirmed_frames=%u", cycle, (unsigned)CASE_COUNT, (unsigned)CASE_COUNT * FRAME_COUNT);
     }
+#endif
 }

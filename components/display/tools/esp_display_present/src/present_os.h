@@ -61,6 +61,9 @@ void present_mutex_destroy(present_mutex_t *mutex);
 typedef struct present_worker present_worker_t;
 typedef void (*present_worker_entry_fn)(void *user);
 present_worker_t *present_worker_create(present_worker_entry_fn entry, void *user, uint32_t stack_bytes, unsigned priority);
+/* Host leaves scheduling unchanged. On IDF these apply to the calling task. */
+unsigned present_task_priority(void);
+void present_task_set_priority(unsigned priority);
 /* Entry must be requested to exit by caller before join. Timeout preserves
  * object/thread. Success joins its final exit and allows destroy. */
 bool present_worker_join(present_worker_t *worker, uint32_t timeout_ms);

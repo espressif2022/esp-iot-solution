@@ -1,0 +1,90 @@
+{
+  "s3-stock-on": {
+    "iram0.text": {
+      "address": 1077363716,
+      "bytes": 79103
+    },
+    "dram0.data": {
+      "address": 1070168576,
+      "bytes": 14384
+    },
+    "dram0.bss": {
+      "address": 1070182960,
+      "bytes": 2560
+    },
+    "flash.text": {
+      "address": 1107296288,
+      "bytes": 147088
+    },
+    "flash.rodata": {
+      "address": 1006829856,
+      "bytes": 49548
+    }
+  },
+  "s3-stock-off": {
+    "iram0.text": {
+      "address": 1077363716,
+      "bytes": 59867
+    },
+    "dram0.data": {
+      "address": 1070149120,
+      "bytes": 14068
+    },
+    "dram0.bss": {
+      "address": 1070163192,
+      "bytes": 2552
+    },
+    "flash.text": {
+      "address": 1107296288,
+      "bytes": 165604
+    },
+    "flash.rodata": {
+      "address": 1006829856,
+      "bytes": 49692
+    }
+  },
+  "s3-finaliram": {
+    "iram0.text": {
+      "address": 1077363716,
+      "bytes": 87295
+    },
+    "dram0.data": {
+      "address": 1070176768,
+      "bytes": 14724
+    },
+    "dram0.bss": {
+      "address": 1070191496,
+      "bytes": 2568
+    },
+    "flash.text": {
+      "address": 1107296288,
+      "bytes": 148632
+    },
+    "flash.rodata": {
+      "address": 1006829856,
+      "bytes": 53676
+    }
+  },
+  "s3-offiram": {
+    "iram0.text": {
+      "address": 1077363716,
+      "bytes": 68059
+    },
+    "dram0.data": {
+      "address": 1070157312,
+      "bytes": 14408
+    },
+    "dram0.bss": {
+      "address": 1070171720,
+      "bytes": 2568
+    },
+    "flash.text": {
+      "address": 1107296288,
+      "bytes": 167144
+    },
+    "flash.rodata": {
+      "address": 1006829856,
+      "bytes": 53820
+    }
+  }
+}

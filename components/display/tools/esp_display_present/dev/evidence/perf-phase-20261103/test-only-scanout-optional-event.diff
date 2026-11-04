@@ -1,0 +1,94 @@
+--- original
++++ test-only
+@@ -27,12 +27,14 @@
+     esp_display_present_panel_event_fn callback;
+     void *callback_user;
+     uint64_t cookie;
++    const void *expected_buffer;
++    const void *confirmed_buffer;
+     unsigned boundaries;
+     size_t active_callbacks;
+     bool attached, armed, closing, source_stopped, stopped, callbacks_removed;
+     bool initial_started, initial_ready, single_vsync;
+ };
+-static bool PRESENT_ISR_ATTR frame_boundary(esp_display_present_lcd_scanout_t *scanout)
++static bool PRESENT_ISR_ATTR frame_boundary(esp_display_present_lcd_scanout_t *scanout, const void *selected)
+ {
+     /* IDF unregister updates callback and user_ctx separately. An ISR that
+      * loaded the old function may already observe the cleared context. */
+@@ -43,14 +45,23 @@
+     esp_display_present_panel_event_fn callback = NULL;
+     void *user = NULL;
+     uint64_t cookie = 0;
+-    unsigned needed = scanout->config.single_boundary_retire ? 1u : 2u;
+-    if (scanout->attached && scanout->armed && (!scanout->closing || scanout->config.retain_driver_scanout) && ++scanout->boundaries == needed) {
+-        cookie = scanout->cookie;
+-        scanout->cookie = 0;
+-        scanout->armed = false;
+-        callback = scanout->callback;
+-        user = scanout->callback_user;
+-        ++scanout->active_callbacks;
++    if (scanout->attached && scanout->armed && (!scanout->closing || scanout->config.retain_driver_scanout)) {
++        bool match = !selected || selected == scanout->expected_buffer;
++        /* For different buffers, the driver's selection is proof of the
++         * switch. A delayed callback reporting the old buffer cannot retire
++         * it. Missing identity and same-buffer writes keep the old fence. */
++        bool selected_switch = selected && match && scanout->config.buffer_count > 1 &&
++                               scanout->expected_buffer != scanout->confirmed_buffer;
++        unsigned needed = scanout->config.single_boundary_retire ? 1u : 2u;
++        if (match && (selected_switch || ++scanout->boundaries == needed)) {
++            cookie = scanout->cookie;
++            scanout->cookie = 0;
++            scanout->armed = false;
++            scanout->confirmed_buffer = scanout->expected_buffer;
++            callback = scanout->callback;
++            user = scanout->callback_user;
++            ++scanout->active_callbacks;
++        }
+     }
+     present_lock_exit(&scanout->lock, true);
+     if (!callback) {
+@@ -95,8 +106,12 @@
+ static bool PRESENT_ISR_ATTR dsi_done(esp_lcd_panel_handle_t panel, esp_lcd_dpi_panel_event_data_t *data, void *user)
+ {
+     (void)panel;
++#if defined(ESP_LCD_DPI_PANEL_HAS_SELECTED_FB_EVENT)
++    return frame_boundary(user, data ? data->selected_frame_buffer : NULL);
++#else
+     (void)data;
+-    return frame_boundary(user);
++    return frame_boundary(user, NULL);
++#endif
+ }
+ #endif
+ #if PRESENT_RGB_SUPPORTED
+@@ -109,15 +124,19 @@
+     /* A sole driver buffer never switches allocations. Explicit active-write
+      * mode confirms exposure at VSYNC, without claiming old-FB retirement. */
+     if (scanout && scanout->single_vsync) {
+-        yield |= frame_boundary(scanout);
++        yield |= frame_boundary(scanout, NULL);
+     }
+     return yield;
+ }
+ static bool PRESENT_ISR_ATTR rgb_done(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_event_data_t *data, void *user)
+ {
+     (void)panel;
++#if defined(ESP_LCD_RGB_PANEL_HAS_SELECTED_FB_EVENT)
++    return frame_boundary(user, data ? data->selected_frame_buffer : NULL);
++#else
+     (void)data;
+-    return frame_boundary(user);
++    return frame_boundary(user, NULL);
++#endif
+ }
+ #endif
+ static esp_err_t scanout_attach(void *context, esp_display_present_panel_event_fn callback, void *user)
+@@ -190,6 +209,7 @@
+     };
+     present_lock_enter(&scanout->lock, false);
+     scanout->cookie = cookie;
++    scanout->expected_buffer = surface->pixels;
+     scanout->armed = false;
+     present_lock_exit(&scanout->lock, false);
+     error = esp_lcd_panel_draw_bitmap(scanout->config.panel, 0, 0, area->width, area->height, surface->pixels);

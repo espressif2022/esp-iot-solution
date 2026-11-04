@@ -1,0 +1,27 @@
+--- baseline/present_pixel_engine.c
++++ experiment-signals/present_pixel_engine.c
+@@ -303,16 +303,22 @@
+     }
+     /* Publish while record ownership is stable, before callback can release it. */
+     present_os_event_t *changed = record->changed;
++    bool wake_waiter = record->waiting;
+     present_lock_exit(&engine->lock, false);
+-    (void)present_event_signal(changed, false);
++    if (wake_waiter) {
++        (void)present_event_signal(changed, false);
++    }
+     if (cb) {
+         (void)cb(engine->user, ticket, &status, false);
+     }
+     present_lock_enter(&engine->lock, false);
+     engine->notifying = false;
+     engine->executing = false;
++    bool stopping = engine->closing;
+     present_lock_exit(&engine->lock, false);
+-    (void)present_event_signal(engine->idle, false);
++    if (stopping) {
++        (void)present_event_signal(engine->idle, false);
++    }
+ }
+ 
+ static void copy_worker(void *context)

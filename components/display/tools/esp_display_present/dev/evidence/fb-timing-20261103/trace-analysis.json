@@ -1,0 +1,364 @@
+{
+  "p4-v1-trace-run.log": [
+    {
+      "name": "DOUBLE_PARTIAL",
+      "scope": "v1",
+      "capture_count": 427,
+      "reported_count": 427,
+      "dropped": 0,
+      "counts": {
+        "REGISTER": 3,
+        "READ_END": 37,
+        "SELECT": 37,
+        "READ_BEGIN": 37,
+        "FRAME_DONE": 37,
+        "VSYNC": 37,
+        "APP_BEGIN": 34,
+        "WRITE_BEGIN": 34,
+        "WRITE_END": 34,
+        "SUBMIT": 34,
+        "RELEASE": 34,
+        "CONFIRM": 34,
+        "APP_COMMIT": 34,
+        "STOP": 1
+      },
+      "submit_to_first_matching_select_us": {
+        "min": 6152,
+        "mean": 10946.9,
+        "max": 11106,
+        "n": 34
+      },
+      "last_read_end_to_release_us": {
+        "min": 7,
+        "mean": 7.1,
+        "max": 8,
+        "n": 33
+      },
+      "callbacks_until_confirm": null,
+      "problems": [
+        "write permission granted on selected FB 0x48000a40 seq=19",
+        "write permission granted while read active 0x48000a40 seq=19"
+      ],
+      "uncertainty": [
+        "no preceding read end for release 0x4812ca80 seq=26"
+      ]
+    },
+    {
+      "name": "DOUBLE_DIRECT",
+      "scope": "v1",
+      "capture_count": 597,
+      "reported_count": 597,
+      "dropped": 0,
+      "counts": {
+        "REGISTER": 3,
+        "READ_END": 71,
+        "SELECT": 71,
+        "READ_BEGIN": 71,
+        "FRAME_DONE": 71,
+        "VSYNC": 71,
+        "APP_BEGIN": 34,
+        "WRITE_BEGIN": 34,
+        "WRITE_END": 34,
+        "SUBMIT": 34,
+        "RELEASE": 34,
+        "CONFIRM": 34,
+        "APP_COMMIT": 34,
+        "STOP": 1
+      },
+      "submit_to_first_matching_select_us": {
+        "min": 3848,
+        "mean": 15388.6,
+        "max": 15827,
+        "n": 34
+      },
+      "last_read_end_to_release_us": {
+        "min": 7,
+        "mean": 7,
+        "max": 7,
+        "n": 34
+      },
+      "callbacks_until_confirm": null,
+      "problems": [],
+      "uncertainty": []
+    }
+  ],
+  "p4-v2-trace-run.log": [
+    {
+      "name": "DOUBLE_PARTIAL",
+      "scope": "v2",
+      "capture_count": 717,
+      "reported_count": 717,
+      "dropped": 0,
+      "counts": {
+        "REGISTER": 3,
+        "READ_END": 73,
+        "SELECT": 73,
+        "READ_BEGIN": 73,
+        "FRAME_DONE": 73,
+        "CALLBACK": 73,
+        "VSYNC": 73,
+        "APP_BEGIN": 34,
+        "SUBMIT": 35,
+        "ARM": 35,
+        "CONFIRM": 35,
+        "WRITE_BEGIN": 34,
+        "APP_COMMIT": 34,
+        "WRITE_END": 34,
+        "RELEASE": 34,
+        "STOP": 1
+      },
+      "submit_to_first_matching_select_us": {
+        "min": 7636,
+        "mean": 9730.0,
+        "max": 14102,
+        "n": 35
+      },
+      "last_read_end_to_release_us": {
+        "min": 16582,
+        "mean": 16583.1,
+        "max": 16590,
+        "n": 34
+      },
+      "callbacks_until_confirm": {
+        "min": 2,
+        "mean": 2,
+        "max": 2,
+        "n": 35
+      },
+      "problems": [],
+      "uncertainty": []
+    },
+    {
+      "name": "DOUBLE_DIRECT",
+      "scope": "v2",
+      "capture_count": 921,
+      "reported_count": 921,
+      "dropped": 0,
+      "counts": {
+        "REGISTER": 3,
+        "READ_END": 107,
+        "SELECT": 107,
+        "READ_BEGIN": 107,
+        "FRAME_DONE": 107,
+        "CALLBACK": 107,
+        "VSYNC": 107,
+        "APP_BEGIN": 34,
+        "SUBMIT": 35,
+        "ARM": 35,
+        "CONFIRM": 35,
+        "WRITE_BEGIN": 34,
+        "WRITE_END": 34,
+        "APP_COMMIT": 34,
+        "RELEASE": 34,
+        "STOP": 1
+      },
+      "submit_to_first_matching_select_us": {
+        "min": 10569,
+        "mean": 15087.5,
+        "max": 15409,
+        "n": 35
+      },
+      "last_read_end_to_release_us": {
+        "min": 16589,
+        "mean": 16592.3,
+        "max": 16598,
+        "n": 34
+      },
+      "callbacks_until_confirm": {
+        "min": 2,
+        "mean": 2,
+        "max": 2,
+        "n": 35
+      },
+      "problems": [],
+      "uncertainty": []
+    }
+  ],
+  "s3-v1-trace-run.log": [
+    {
+      "name": "DOUBLE_PARTIAL",
+      "scope": "v1",
+      "capture_count": 672,
+      "reported_count": 672,
+      "dropped": 0,
+      "counts": {
+        "REGISTER": 3,
+        "BOUNCE_EOF_SAMPLED": 235,
+        "READ_END": 39,
+        "FRAME_DONE": 39,
+        "SELECT": 39,
+        "READ_BEGIN": 39,
+        "VSYNC": 39,
+        "APP_BEGIN": 34,
+        "WRITE_BEGIN": 34,
+        "WRITE_END": 34,
+        "SUBMIT": 34,
+        "RELEASE": 34,
+        "CONFIRM": 34,
+        "APP_COMMIT": 34,
+        "STOP": 1
+      },
+      "submit_to_first_matching_select_us": {
+        "min": 562,
+        "mean": 2179.4,
+        "max": 16578,
+        "n": 34
+      },
+      "last_read_end_to_release_us": {
+        "min": 9,
+        "mean": 9.1,
+        "max": 12,
+        "n": 33
+      },
+      "callbacks_until_confirm": null,
+      "problems": [
+        "write permission granted on selected FB 0x3c040f80 seq=37",
+        "write permission granted while read active 0x3c040f80 seq=37"
+      ],
+      "uncertainty": [
+        "no preceding read end for release 0x3c0b17c0 seq=57"
+      ]
+    },
+    {
+      "name": "DOUBLE_DIRECT",
+      "scope": "v1",
+      "capture_count": 662,
+      "reported_count": 662,
+      "dropped": 0,
+      "counts": {
+        "REGISTER": 3,
+        "BOUNCE_EOF_SAMPLED": 228,
+        "READ_END": 38,
+        "FRAME_DONE": 38,
+        "SELECT": 38,
+        "READ_BEGIN": 38,
+        "VSYNC": 38,
+        "APP_BEGIN": 34,
+        "WRITE_BEGIN": 34,
+        "WRITE_END": 34,
+        "SUBMIT": 34,
+        "RELEASE": 34,
+        "CONFIRM": 34,
+        "APP_COMMIT": 34,
+        "RESTART": 2,
+        "STOP": 1
+      },
+      "submit_to_first_matching_select_us": {
+        "min": 453,
+        "mean": 1330.9,
+        "max": 7639,
+        "n": 34
+      },
+      "last_read_end_to_release_us": {
+        "min": 9,
+        "mean": 9.1,
+        "max": 12,
+        "n": 34
+      },
+      "callbacks_until_confirm": null,
+      "problems": [],
+      "uncertainty": [
+        "driver restart seq=117 reason=0x4",
+        "driver restart seq=406 reason=0x4"
+      ]
+    }
+  ],
+  "s3-v2-trace-run.log": [
+    {
+      "name": "DOUBLE_PARTIAL",
+      "scope": "v2",
+      "capture_count": 1592,
+      "reported_count": 1592,
+      "dropped": 0,
+      "counts": {
+        "REGISTER": 3,
+        "BOUNCE_EOF_SAMPLED": 659,
+        "READ_END": 109,
+        "FRAME_DONE": 109,
+        "SELECT": 109,
+        "CALLBACK": 107,
+        "READ_BEGIN": 109,
+        "VSYNC": 109,
+        "APP_BEGIN": 34,
+        "SUBMIT": 35,
+        "ARM": 35,
+        "CONFIRM": 35,
+        "WRITE_BEGIN": 34,
+        "APP_COMMIT": 34,
+        "WRITE_END": 34,
+        "RELEASE": 34,
+        "RESTART": 2,
+        "STOP": 1
+      },
+      "submit_to_first_matching_select_us": {
+        "min": 10620,
+        "mean": 12234.2,
+        "max": 14511,
+        "n": 35
+      },
+      "last_read_end_to_release_us": {
+        "min": 16293,
+        "mean": 16600.8,
+        "max": 16627,
+        "n": 34
+      },
+      "callbacks_until_confirm": {
+        "min": 2,
+        "mean": 2,
+        "max": 2,
+        "n": 35
+      },
+      "problems": [],
+      "uncertainty": [
+        "driver restart seq=624 reason=0x4",
+        "driver restart seq=1153 reason=0x4"
+      ]
+    },
+    {
+      "name": "DOUBLE_DIRECT",
+      "scope": "v2",
+      "capture_count": 1203,
+      "reported_count": 1203,
+      "dropped": 0,
+      "counts": {
+        "REGISTER": 3,
+        "BOUNCE_EOF_SAMPLED": 464,
+        "READ_END": 77,
+        "FRAME_DONE": 77,
+        "SELECT": 77,
+        "CALLBACK": 75,
+        "READ_BEGIN": 77,
+        "VSYNC": 77,
+        "APP_BEGIN": 34,
+        "SUBMIT": 35,
+        "ARM": 35,
+        "CONFIRM": 35,
+        "WRITE_BEGIN": 34,
+        "WRITE_END": 34,
+        "APP_COMMIT": 34,
+        "RELEASE": 34,
+        "STOP": 1
+      },
+      "submit_to_first_matching_select_us": {
+        "min": 408,
+        "mean": 1621.2,
+        "max": 16504,
+        "n": 35
+      },
+      "last_read_end_to_release_us": {
+        "min": 16613,
+        "mean": 16621.1,
+        "max": 16627,
+        "n": 34
+      },
+      "callbacks_until_confirm": {
+        "min": 2,
+        "mean": 2,
+        "max": 2,
+        "n": 35
+      },
+      "problems": [],
+      "uncertainty": []
+    }
+  ]
+}

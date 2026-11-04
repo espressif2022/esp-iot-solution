@@ -1,0 +1,91 @@
+I (226) esp_psram: Found 32MB PSRAM device
+I (226) esp_psram: Speed: 200MHz
+I (229) cpu_start: Multicore app
+I (1078) esp_psram: SPI SRAM memory test OK
+I (1086) cpu_start: Pro cpu start user code
+I (1086) cpu_start: cpu freq: 400000000 Hz
+I (1087) app_init: Application information:
+I (1087) app_init: Project name:     pv2_compat_probe
+I (1087) app_init: App version:      1
+I (1087) app_init: Compile time:     Nov  3 2026 16:33:45
+I (1087) app_init: ELF file SHA256:  8157059b3...
+I (1088) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (1088) efuse_init: Min chip rev:     v3.1
+I (1088) efuse_init: Max chip rev:     v3.99
+I (1088) efuse_init: Chip rev:         v3.2
+I (1089) heap_init: Initializing. RAM available for dynamic allocation:
+I (1089) heap_init: At 4FF33E10 len 000871B0 (540 KiB): RETENT_RAM
+I (1089) heap_init: At 4FFBAFC0 len 00004BF0 (18 KiB): RAM
+I (1089) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (1090) heap_init: At 30100288 len 00001D78 (7 KiB): SPM
+I (1090) esp_psram: Adding pool of 32768K of PSRAM memory to heap allocator
+I (1091) spi_flash: detected chip: gd
+I (1091) spi_flash: flash io: dio
+I (1091) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (1092) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (1093) sleep_clock: System sleep clock ICG setting initialization
+I (1094) main_task: Started on CPU0
+I (1094) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (1095) main_task: Calling app_main()
+I (4095) present_board: NATIVE_MATRIX_START board=P4-v3 MIPI EK79007 rotations=0,90,180,270,0 full_and_dirty=1
+I (4095) present_board: COMBO_BEGIN cycle=0 mode=DOUBLE_FULL exec=async-cpu
+I (4096) ek79007: version: 2.0.2
+I (4578) present_board: ROT_PASS mode=DOUBLE_FULL exec=async-cpu rotation=0 pixels=ALL
+I (5563) present_board: ROT_PASS mode=DOUBLE_FULL exec=async-cpu rotation=90 pixels=ALL
+I (5914) present_board: ROT_PASS mode=DOUBLE_FULL exec=async-cpu rotation=180 pixels=ALL
+I (6903) present_board: ROT_PASS mode=DOUBLE_FULL exec=async-cpu rotation=270 pixels=ALL
+I (7194) present_board: ROT_PASS mode=DOUBLE_FULL exec=async-cpu rotation=0 pixels=ALL
+I (7195) present_board: POOL_USED mode=DOUBLE_FULL mask=0x3 count=2
+I (7195) present_board: COMBO_PASS cycle=0 mode=DOUBLE_FULL exec=async-cpu frames=10 rots=5 pixels=ALL avg_wait_us=45040 max_wait_us=62973 min_int=536804 min_psram=29865324
+I (7197) present_board: COMBO_CLEAN cycle=0 mode=DOUBLE_FULL exec=async-cpu internal=587015 psram=33551868
+I (7198) ek79007: version: 2.0.2
+I (8568) present_board: FB_HANDOFF_PASS cycle=0 mode=DOUBLE_FULL buffers=2 used_mask=0x3 begin_wait_us=[avg=178, max=185] acq_wait_us=[avg=86, max=105] draw_sub_us=[avg=42477, max=42783] commit_us=[avg=29299, max=30598] vsync_wait_us=[avg=27145, max=28904] cancel_drain_us=76
+I (8570) present_board: COMBO_BEGIN cycle=0 mode=TRIPLE_FULL exec=async-cpu
+I (8572) ek79007: version: 2.0.2
+I (9067) present_board: ROT_PASS mode=TRIPLE_FULL exec=async-cpu rotation=0 pixels=ALL
+I (10052) present_board: ROT_PASS mode=TRIPLE_FULL exec=async-cpu rotation=90 pixels=ALL
+I (10403) present_board: ROT_PASS mode=TRIPLE_FULL exec=async-cpu rotation=180 pixels=ALL
+I (11392) present_board: ROT_PASS mode=TRIPLE_FULL exec=async-cpu rotation=270 pixels=ALL
+I (11683) present_board: ROT_PASS mode=TRIPLE_FULL exec=async-cpu rotation=0 pixels=ALL
+I (11684) present_board: POOL_USED mode=TRIPLE_FULL mask=0x3 count=3
+I (11684) present_board: COMBO_PASS cycle=0 mode=TRIPLE_FULL exec=async-cpu frames=10 rots=5 pixels=ALL avg_wait_us=45044 max_wait_us=62973 min_int=536704 min_psram=28636504
+I (11686) present_board: COMBO_CLEAN cycle=0 mode=TRIPLE_FULL exec=async-cpu internal=587015 psram=33551868
+I (11687) ek79007: version: 2.0.2
+I (12772) present_board: FB_HANDOFF_PASS cycle=0 mode=TRIPLE_FULL buffers=3 used_mask=0x7 begin_wait_us=[avg=181, max=191] acq_wait_us=[avg=89, max=94] draw_sub_us=[avg=42525, max=42806] commit_us=[avg=28832, max=30260] vsync_wait_us=[avg=2714, max=30919] cancel_drain_us=74
+I (12774) present_board: COMBO_BEGIN cycle=0 mode=DOUBLE_DIRECT exec=async-cpu
+I (12776) ek79007: version: 2.0.2
+I (13258) present_board: ROT_PASS mode=DOUBLE_DIRECT exec=async-cpu rotation=0 pixels=ALL
+I (14309) present_board: ROT_PASS mode=DOUBLE_DIRECT exec=async-cpu rotation=90 pixels=ALL
+I (14677) present_board: ROT_PASS mode=DOUBLE_DIRECT exec=async-cpu rotation=180 pixels=ALL
+I (15749) present_board: ROT_PASS mode=DOUBLE_DIRECT exec=async-cpu rotation=270 pixels=ALL
+I (16040) present_board: ROT_PASS mode=DOUBLE_DIRECT exec=async-cpu rotation=0 pixels=ALL
+I (16041) present_board: POOL_USED mode=DOUBLE_DIRECT mask=0x3 count=2
+I (16041) present_board: COMBO_PASS cycle=0 mode=DOUBLE_DIRECT exec=async-cpu frames=10 rots=5 pixels=ALL avg_wait_us=67627 max_wait_us=138537 min_int=536704 min_psram=28636504
+I (16042) present_board: COMBO_CLEAN cycle=0 mode=DOUBLE_DIRECT exec=async-cpu internal=587015 psram=33551868
+I (16044) ek79007: version: 2.0.2
+I (16702) present_board: FB_HANDOFF_PASS cycle=0 mode=DOUBLE_DIRECT buffers=2 used_mask=0x3 begin_wait_us=[avg=2337, max=25044] acq_wait_us=[avg=88, max=169] draw_sub_us=[avg=3833, max=42444] commit_us=[avg=510, max=3584] vsync_wait_us=[avg=33106, max=53496] cancel_drain_us=61
+I (16704) present_board: COMBO_BEGIN cycle=0 mode=DOUBLE_PARTIAL exec=async-cpu
+I (16706) ek79007: version: 2.0.2
+I (17171) present_board: ROT_PASS mode=DOUBLE_PARTIAL exec=async-cpu rotation=0 pixels=ALL
+I (18107) present_board: ROT_PASS mode=DOUBLE_PARTIAL exec=async-cpu rotation=90 pixels=ALL
+I (18375) present_board: ROT_PASS mode=DOUBLE_PARTIAL exec=async-cpu rotation=180 pixels=ALL
+I (19298) present_board: ROT_PASS mode=DOUBLE_PARTIAL exec=async-cpu rotation=270 pixels=ALL
+I (19589) present_board: ROT_PASS mode=DOUBLE_PARTIAL exec=async-cpu rotation=0 pixels=ALL
+I (19590) present_board: POOL_USED mode=DOUBLE_PARTIAL mask=0x3 count=2
+I (19590) present_board: COMBO_PASS cycle=0 mode=DOUBLE_PARTIAL exec=async-cpu frames=10 rots=5 pixels=ALL avg_wait_us=39877 max_wait_us=60067 min_int=471160 min_psram=28636504
+I (19591) present_board: COMBO_CLEAN cycle=0 mode=DOUBLE_PARTIAL exec=async-cpu internal=587015 psram=33551868
+I (19593) ek79007: version: 2.0.2
+I (20234) present_board: FB_HANDOFF_PASS cycle=0 mode=DOUBLE_PARTIAL buffers=2 used_mask=0x3 begin_wait_us=[avg=66, max=193] acq_wait_us=[avg=141, max=576] draw_sub_us=[avg=4678, max=48193] commit_us=[avg=444, max=3301] vsync_wait_us=[avg=33151, max=45360] cancel_drain_us=60
+I (20236) present_board: COMBO_BEGIN cycle=0 mode=TRIPLE_PARTIAL exec=async-cpu
+I (20238) ek79007: version: 2.0.2
+I (20716) present_board: ROT_PASS mode=TRIPLE_PARTIAL exec=async-cpu rotation=0 pixels=ALL
+I (21652) present_board: ROT_PASS mode=TRIPLE_PARTIAL exec=async-cpu rotation=90 pixels=ALL
+I (21920) present_board: ROT_PASS mode=TRIPLE_PARTIAL exec=async-cpu rotation=180 pixels=ALL
+I (22843) present_board: ROT_PASS mode=TRIPLE_PARTIAL exec=async-cpu rotation=270 pixels=ALL
+I (23134) present_board: ROT_PASS mode=TRIPLE_PARTIAL exec=async-cpu rotation=0 pixels=ALL
+I (23135) present_board: POOL_USED mode=TRIPLE_PARTIAL mask=0x3 count=3
+I (23135) present_board: COMBO_PASS cycle=0 mode=TRIPLE_PARTIAL exec=async-cpu frames=10 rots=5 pixels=ALL avg_wait_us=39855 max_wait_us=60001 min_int=471052 min_psram=28636504
+I (23136) present_board: COMBO_CLEAN cycle=0 mode=TRIPLE_PARTIAL exec=async-cpu internal=587015 psram=33551868
+I (23138) ek79007: version: 2.0.2
+I (23776) present_board: FB_HANDOFF_PASS cycle=0 mode=TRIPLE_PARTIAL buffers=3 used_mask=0x7 begin_wait_us=[avg=84, max=194] acq_wait_us=[avg=163, max=595] draw_sub_us=[avg=4695, max=48207] commit_us=[avg=729, max=3357] vsync_wait_us=[avg=31424, max=33020] cancel_drain_us=60
+I (23778) present_board: MATRIX_PASS board=P4-v3 MIPI EK79007 native_modes=5 rotations=5 full_and_dirty=1

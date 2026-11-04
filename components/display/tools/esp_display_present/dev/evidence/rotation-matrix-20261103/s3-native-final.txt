@@ -1,0 +1,149 @@
+������������������5) boot: compile time Nov  3 2026 16:33:08
+I (25) boot: chip revision: v0.2
+I (27) boot.esp32s3: Boot SPI Speed : 80MHz
+I (31) boot.esp32s3: SPI Mode       : DIO
+I (34) boot.esp32s3: SPI Flash Size : 16MB
+I (38) boot: Partition Table:
+I (41) boot: ## Label            Usage          Type ST Offset   Length
+I (47) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (54) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (60) boot:  2 factory          factory app      00 00 00010000 00300000
+I (67) esp_image: segment 0: paddr=00010020 vaddr=3c030020 size=0c530h ( 50480) map
+I (84) esp_image: segment 1: paddr=0001c558 vaddr=3fc92a00 size=03704h ( 14084) load
+I (87) esp_image: segment 2: paddr=0001fc64 vaddr=40374000 size=003b4h (   948) load
+I (89) esp_image: segment 3: paddr=00020020 vaddr=42000020 size=25f70h (155504) map
+I (125) esp_image: segment 4: paddr=00045f98 vaddr=403743b4 size=0e558h ( 58712) load
+I (139) esp_image: segment 5: paddr=000544f8 vaddr=50000000 size=00024h (    36) load
+I (146) boot: Loaded app from partition at offset 0x10000
+I (152) octal_psram: vendor id    : 0x0d (AP)
+I (153) octal_psram: dev id       : 0x03 (generation 4)
+I (153) octal_psram: density      : 0x05 (128 Mbit)
+I (155) octal_psram: good-die     : 0x01 (Pass)
+I (159) octal_psram: Latency      : 0x01 (Fixed)
+I (163) octal_psram: VCC          : 0x00 (1.8V)
+I (168) octal_psram: SRF          : 0x01 (Fast Refresh)
+I (173) octal_psram: BurstType    : 0x01 (Hybrid Wrap)
+I (177) octal_psram: BurstLen     : 0x01 (32 Byte)
+I (182) octal_psram: Readlatency  : 0x02 (10 cycles@Fixed)
+I (187) octal_psram: DriveStrength: 0x00 (1/1)
+I (191) MSPI Timing: Enter psram timing tuning
+I (196) esp_psram: Found 16MB PSRAM device
+I (199) esp_psram: Speed: 80MHz
+I (202) cpu_start: Multicore app
+I (769) esp_psram: SPI SRAM memory test OK
+I (777) cpu_start: GPIO 44 and 43 are used as console UART I/O pins
+I (778) cpu_start: Pro cpu start user code
+I (778) cpu_start: cpu freq: 240000000 Hz
+I (780) app_init: Application information:
+I (783) app_init: Project name:     pv2_compat_probe
+I (788) app_init: App version:      1
+I (791) app_init: Compile time:     Nov  3 2026 16:33:30
+I (796) app_init: ELF file SHA256:  7c42db1a9...
+I (801) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (807) efuse_init: Min chip rev:     v0.0
+I (811) efuse_init: Max chip rev:     v0.99
+I (815) efuse_init: Chip rev:         v0.2
+I (819) heap_init: Initializing. RAM available for dynamic allocation:
+I (825) heap_init: At 3FC96B00 len 00052C10 (331 KiB): RAM
+I (830) heap_init: At 3FCE9710 len 00005724 (21 KiB): RAM
+I (835) heap_init: At 600FE000 len 00001FE8 (7 KiB): RTCRAM
+I (841) esp_psram: Adding pool of 16384K of PSRAM memory to heap allocator
+I (847) spi_flash: detected chip: gd
+I (850) spi_flash: flash io: dio
+I (853) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (860) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (866) main_task: Started on CPU0
+I (869) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (877) main_task: Calling app_main()
+I (3880) present_board: NATIVE_MATRIX_START board=S3-R16 RGB GC9503 rotations=0,90,180,270,0 full_and_dirty=1
+I (3880) present_board: COMBO_BEGIN cycle=0 mode=DOUBLE_FULL exec=async-cpu
+I (3886) lcd_panel.io.3wire_spi: Panel IO create success, version: 1.0.1
+W (5674) lcd_panel.io.3wire_spi: Delete but keep CS line inactive
+W (5694) lcd.rgb: GPIO 3 is not usable, maybe is reserved by others
+I (5694) gc9503: LCD panel create success, version: 3.0.1
+I (6017) present_board: ROT_PASS mode=DOUBLE_FULL exec=async-cpu rotation=0 pixels=ALL
+I (6417) present_board: ROT_PASS mode=DOUBLE_FULL exec=async-cpu rotation=90 pixels=ALL
+I (6780) present_board: ROT_PASS mode=DOUBLE_FULL exec=async-cpu rotation=180 pixels=ALL
+I (7182) present_board: ROT_PASS mode=DOUBLE_FULL exec=async-cpu rotation=270 pixels=ALL
+I (7509) present_board: ROT_PASS mode=DOUBLE_FULL exec=async-cpu rotation=0 pixels=ALL
+I (7510) present_board: POOL_USED mode=DOUBLE_FULL mask=0x3 count=2
+I (7512) present_board: COMBO_PASS cycle=0 mode=DOUBLE_FULL exec=async-cpu frames=10 rots=5 pixels=ALL avg_wait_us=39787 max_wait_us=48508 min_int=275676 min_psram=15390860
+I (7528) present_board: COMBO_CLEAN cycle=0 mode=DOUBLE_FULL exec=async-cpu internal=345467 psram=16774784
+I (7538) lcd_panel.io.3wire_spi: Panel IO create success, version: 1.0.1
+W (9326) lcd_panel.io.3wire_spi: Delete but keep CS line inactive
+W (9346) lcd.rgb: GPIO 3 is not usable, maybe is reserved by others
+I (9346) gc9503: LCD panel create success, version: 3.0.1
+I (10358) present_board: FB_HANDOFF_PASS cycle=0 mode=DOUBLE_FULL buffers=2 used_mask=0x3 begin_wait_us=[avg=157, max=263] acq_wait_us=[avg=75, max=82] draw_sub_us=[avg=38764, max=39703] commit_us=[avg=25658, max=25801] vsync_wait_us=[avg=19359, max=31606] cancel_drain_us=87
+I (10372) present_board: COMBO_BEGIN cycle=0 mode=TRIPLE_FULL exec=async-cpu
+I (10379) lcd_panel.io.3wire_spi: Panel IO create success, version: 1.0.1
+W (12167) lcd_panel.io.3wire_spi: Delete but keep CS line inactive
+W (12197) lcd.rgb: GPIO 3 is not usable, maybe is reserved by others
+I (12197) gc9503: LCD panel create success, version: 3.0.1
+I (12520) present_board: ROT_PASS mode=TRIPLE_FULL exec=async-cpu rotation=0 pixels=ALL
+I (12919) present_board: ROT_PASS mode=TRIPLE_FULL exec=async-cpu rotation=90 pixels=ALL
+I (13283) present_board: ROT_PASS mode=TRIPLE_FULL exec=async-cpu rotation=180 pixels=ALL
+I (13684) present_board: ROT_PASS mode=TRIPLE_FULL exec=async-cpu rotation=270 pixels=ALL
+I (14012) present_board: ROT_PASS mode=TRIPLE_FULL exec=async-cpu rotation=0 pixels=ALL
+I (14012) present_board: POOL_USED mode=TRIPLE_FULL mask=0x3 count=3
+I (14015) present_board: COMBO_PASS cycle=0 mode=TRIPLE_FULL exec=async-cpu frames=10 rots=5 pixels=ALL avg_wait_us=39743 max_wait_us=48493 min_int=275676 min_psram=14930056
+I (14031) present_board: COMBO_CLEAN cycle=0 mode=TRIPLE_FULL exec=async-cpu internal=345467 psram=16774784
+I (14041) lcd_panel.io.3wire_spi: Panel IO create success, version: 1.0.1
+W (15829) lcd_panel.io.3wire_spi: Delete but keep CS line inactive
+W (15859) lcd.rgb: GPIO 3 is not usable, maybe is reserved by others
+I (15859) gc9503: LCD panel create success, version: 3.0.1
+I (16655) present_board: FB_HANDOFF_PASS cycle=0 mode=TRIPLE_FULL buffers=3 used_mask=0x7 begin_wait_us=[avg=141, max=271] acq_wait_us=[avg=51, max=78] draw_sub_us=[avg=38927, max=39766] commit_us=[avg=25474, max=25723] vsync_wait_us=[avg=1472, max=16770] cancel_drain_us=84
+I (16669) present_board: COMBO_BEGIN cycle=0 mode=DOUBLE_DIRECT exec=async-cpu
+I (16676) lcd_panel.io.3wire_spi: Panel IO create success, version: 1.0.1
+W (18464) lcd_panel.io.3wire_spi: Delete but keep CS line inactive
+W (18484) lcd.rgb: GPIO 3 is not usable, maybe is reserved by others
+I (18484) gc9503: LCD panel create success, version: 3.0.1
+I (18808) present_board: ROT_PASS mode=DOUBLE_DIRECT exec=async-cpu rotation=0 pixels=ALL
+I (19223) present_board: ROT_PASS mode=DOUBLE_DIRECT exec=async-cpu rotation=90 pixels=ALL
+I (19603) present_board: ROT_PASS mode=DOUBLE_DIRECT exec=async-cpu rotation=180 pixels=ALL
+I (20022) present_board: ROT_PASS mode=DOUBLE_DIRECT exec=async-cpu rotation=270 pixels=ALL
+I (20349) present_board: ROT_PASS mode=DOUBLE_DIRECT exec=async-cpu rotation=0 pixels=ALL
+I (20349) present_board: POOL_USED mode=DOUBLE_DIRECT mask=0x3 count=2
+I (20352) present_board: COMBO_PASS cycle=0 mode=DOUBLE_DIRECT exec=async-cpu frames=10 rots=5 pixels=ALL avg_wait_us=53294 max_wait_us=82118 min_int=275676 min_psram=14930056
+I (20369) present_board: COMBO_CLEAN cycle=0 mode=DOUBLE_DIRECT exec=async-cpu internal=345467 psram=16774784
+I (20379) lcd_panel.io.3wire_spi: Panel IO create success, version: 1.0.1
+W (22167) lcd_panel.io.3wire_spi: Delete but keep CS line inactive
+W (22187) lcd.rgb: GPIO 3 is not usable, maybe is reserved by others
+I (22187) gc9503: LCD panel create success, version: 3.0.1
+I (22652) present_board: FB_HANDOFF_PASS cycle=0 mode=DOUBLE_DIRECT buffers=2 used_mask=0x3 begin_wait_us=[avg=2047, max=16481] acq_wait_us=[avg=104, max=529] draw_sub_us=[avg=4023, max=39704] commit_us=[avg=683, max=2156] vsync_wait_us=[avg=31568, max=46631] cancel_drain_us=69
+I (22667) present_board: COMBO_BEGIN cycle=0 mode=DOUBLE_PARTIAL exec=async-cpu
+I (22674) lcd_panel.io.3wire_spi: Panel IO create success, version: 1.0.1
+W (24462) lcd_panel.io.3wire_spi: Delete but keep CS line inactive
+W (24482) lcd.rgb: GPIO 3 is not usable, maybe is reserved by others
+I (24482) gc9503: LCD panel create success, version: 3.0.1
+I (24806) present_board: ROT_PASS mode=DOUBLE_PARTIAL exec=async-cpu rotation=0 pixels=ALL
+I (25171) present_board: ROT_PASS mode=DOUBLE_PARTIAL exec=async-cpu rotation=90 pixels=ALL
+I (25502) present_board: ROT_PASS mode=DOUBLE_PARTIAL exec=async-cpu rotation=180 pixels=ALL
+I (25870) present_board: ROT_PASS mode=DOUBLE_PARTIAL exec=async-cpu rotation=270 pixels=ALL
+I (26198) present_board: ROT_PASS mode=DOUBLE_PARTIAL exec=async-cpu rotation=0 pixels=ALL
+I (26198) present_board: POOL_USED mode=DOUBLE_PARTIAL mask=0x3 count=2
+I (26201) present_board: COMBO_PASS cycle=0 mode=DOUBLE_PARTIAL exec=async-cpu frames=10 rots=5 pixels=ALL avg_wait_us=39748 max_wait_us=55045 min_int=244564 min_psram=14930056
+I (26218) present_board: COMBO_CLEAN cycle=0 mode=DOUBLE_PARTIAL exec=async-cpu internal=345467 psram=16774784
+I (26228) lcd_panel.io.3wire_spi: Panel IO create success, version: 1.0.1
+W (28016) lcd_panel.io.3wire_spi: Delete but keep CS line inactive
+W (28036) lcd.rgb: GPIO 3 is not usable, maybe is reserved by others
+I (28036) gc9503: LCD panel create success, version: 3.0.1
+I (28501) present_board: FB_HANDOFF_PASS cycle=0 mode=DOUBLE_PARTIAL buffers=2 used_mask=0x3 begin_wait_us=[avg=164, max=254] acq_wait_us=[avg=254, max=671] draw_sub_us=[avg=6243, max=53654] commit_us=[avg=618, max=3274] vsync_wait_us=[avg=31106, max=44073] cancel_drain_us=68
+I (28515) present_board: COMBO_BEGIN cycle=0 mode=TRIPLE_PARTIAL exec=async-cpu
+I (28523) lcd_panel.io.3wire_spi: Panel IO create success, version: 1.0.1
+W (30310) lcd_panel.io.3wire_spi: Delete but keep CS line inactive
+W (30340) lcd.rgb: GPIO 3 is not usable, maybe is reserved by others
+I (30340) gc9503: LCD panel create success, version: 3.0.1
+I (30663) present_board: ROT_PASS mode=TRIPLE_PARTIAL exec=async-cpu rotation=0 pixels=ALL
+I (31029) present_board: ROT_PASS mode=TRIPLE_PARTIAL exec=async-cpu rotation=90 pixels=ALL
+I (31359) present_board: ROT_PASS mode=TRIPLE_PARTIAL exec=async-cpu rotation=180 pixels=ALL
+I (31728) present_board: ROT_PASS mode=TRIPLE_PARTIAL exec=async-cpu rotation=270 pixels=ALL
+I (32055) present_board: ROT_PASS mode=TRIPLE_PARTIAL exec=async-cpu rotation=0 pixels=ALL
+I (32056) present_board: POOL_USED mode=TRIPLE_PARTIAL mask=0x3 count=3
+I (32059) present_board: COMBO_PASS cycle=0 mode=TRIPLE_PARTIAL exec=async-cpu frames=10 rots=5 pixels=ALL avg_wait_us=39723 max_wait_us=55033 min_int=244564 min_psram=14930056
+I (32075) present_board: COMBO_CLEAN cycle=0 mode=TRIPLE_PARTIAL exec=async-cpu internal=345467 psram=16774784
+I (32086) lcd_panel.io.3wire_spi: Panel IO create success, version: 1.0.1
+W (33873) lcd_panel.io.3wire_spi: Delete but keep CS line inactive
+W (33903) lcd.rgb: GPIO 3 is not usable, maybe is reserved by others
+I (33903) gc9503: LCD panel create success, version: 3.0.1
+I (34351) present_board: FB_HANDOFF_PASS cycle=0 mode=TRIPLE_PARTIAL buffers=3 used_mask=0x7 begin_wait_us=[avg=387, max=2539] acq_wait_us=[avg=247, max=782] draw_sub_us=[avg=6286, max=53561] commit_us=[avg=1005, max=3937] vsync_wait_us=[avg=29084, max=32955] cancel_drain_us=75
+I (34365) present_board: MATRIX_PASS board=S3-R16 RGB GC9503 native_modes=5 rotations=5 full_and_dirty=1

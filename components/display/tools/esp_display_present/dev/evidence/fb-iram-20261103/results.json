@@ -1,0 +1,1214 @@
+{
+  "stock": {
+    "DOUBLE_PARTIAL": {
+      "mean_fps": 60.133028590165566,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 993998,
+          "begin_us": 168973,
+          "caps_us": 474,
+          "acquire_us": 628228,
+          "rows_us": 21226,
+          "render_us": 113874,
+          "submit_us": 45814,
+          "commit_us": 4498,
+          "drain_us": 2632,
+          "max_frame_us": 17967,
+          "fps": 60.362294491538215
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 999689,
+          "begin_us": 194302,
+          "caps_us": 425,
+          "acquire_us": 583751,
+          "rows_us": 33237,
+          "render_us": 118203,
+          "submit_us": 48730,
+          "commit_us": 5429,
+          "drain_us": 3879,
+          "max_frame_us": 22468,
+          "fps": 60.018665805065375
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 999698,
+          "begin_us": 184299,
+          "caps_us": 469,
+          "acquire_us": 611899,
+          "rows_us": 21452,
+          "render_us": 117695,
+          "submit_us": 46152,
+          "commit_us": 5015,
+          "drain_us": 3804,
+          "max_frame_us": 21931,
+          "fps": 60.018125473893114
+        }
+      ]
+    },
+    "TRIPLE_PARTIAL": {
+      "mean_fps": 60.119253519862454,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 994988,
+          "begin_us": 158662,
+          "caps_us": 388,
+          "acquire_us": 623480,
+          "rows_us": 20645,
+          "render_us": 101549,
+          "submit_us": 56449,
+          "commit_us": 4576,
+          "drain_us": 20801,
+          "max_frame_us": 17934,
+          "fps": 60.302234800821715
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 999512,
+          "begin_us": 163206,
+          "caps_us": 422,
+          "acquire_us": 623227,
+          "rows_us": 20260,
+          "render_us": 109576,
+          "submit_us": 49940,
+          "commit_us": 4262,
+          "drain_us": 20687,
+          "max_frame_us": 17916,
+          "fps": 60.02929429561626
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 999563,
+          "begin_us": 163145,
+          "caps_us": 382,
+          "acquire_us": 624861,
+          "rows_us": 20838,
+          "render_us": 107361,
+          "submit_us": 49454,
+          "commit_us": 4386,
+          "drain_us": 20699,
+          "max_frame_us": 17980,
+          "fps": 60.026231463149394
+        }
+      ]
+    },
+    "DOUBLE_DIRECT": {
+      "mean_fps": 60.113239775171316,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 994024,
+          "begin_us": 62027,
+          "caps_us": 688,
+          "acquire_us": 2375,
+          "rows_us": 56,
+          "render_us": 885393,
+          "submit_us": 1297,
+          "commit_us": 39271,
+          "drain_us": 1326,
+          "max_frame_us": 17951,
+          "fps": 60.360715636644585
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 1000164,
+          "begin_us": 68135,
+          "caps_us": 688,
+          "acquire_us": 2109,
+          "rows_us": 62,
+          "render_us": 888518,
+          "submit_us": 1469,
+          "commit_us": 36989,
+          "drain_us": 870,
+          "max_frame_us": 21805,
+          "fps": 59.99016161349539
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 1000186,
+          "begin_us": 65305,
+          "caps_us": 696,
+          "acquire_us": 2368,
+          "rows_us": 64,
+          "render_us": 885672,
+          "submit_us": 1448,
+          "commit_us": 41769,
+          "drain_us": 1148,
+          "max_frame_us": 21910,
+          "fps": 59.98884207537398
+        }
+      ]
+    },
+    "TRIPLE_FULL": {
+      "mean_fps": 60.10887079398884,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 993989,
+          "begin_us": 86883,
+          "caps_us": 618,
+          "acquire_us": 1863,
+          "rows_us": 56,
+          "render_us": 874003,
+          "submit_us": 1872,
+          "commit_us": 9584,
+          "drain_us": 17987,
+          "max_frame_us": 17974,
+          "fps": 60.36284103747627
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 1000360,
+          "begin_us": 101201,
+          "caps_us": 567,
+          "acquire_us": 1987,
+          "rows_us": 63,
+          "render_us": 869014,
+          "submit_us": 1461,
+          "commit_us": 6971,
+          "drain_us": 17901,
+          "max_frame_us": 17975,
+          "fps": 59.978407773201646
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 1000244,
+          "begin_us": 107091,
+          "caps_us": 567,
+          "acquire_us": 2138,
+          "rows_us": 62,
+          "render_us": 860648,
+          "submit_us": 1525,
+          "commit_us": 8862,
+          "drain_us": 18051,
+          "max_frame_us": 17979,
+          "fps": 59.98536357128861
+        }
+      ]
+    }
+  },
+  "stockoff": {
+    "DOUBLE_PARTIAL": {
+      "mean_fps": 30.285324381756958,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 1988997,
+          "begin_us": 920977,
+          "caps_us": 1687,
+          "acquire_us": 770515,
+          "rows_us": 34327,
+          "render_us": 88392,
+          "submit_us": 110916,
+          "commit_us": 19220,
+          "drain_us": 16025,
+          "max_frame_us": 34304,
+          "fps": 30.165958018036225
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 1977265,
+          "begin_us": 910833,
+          "caps_us": 1656,
+          "acquire_us": 768770,
+          "rows_us": 33913,
+          "render_us": 87527,
+          "submit_us": 111473,
+          "commit_us": 21734,
+          "drain_us": 15495,
+          "max_frame_us": 34152,
+          "fps": 30.34494617565172
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 1977257,
+          "begin_us": 909629,
+          "caps_us": 1653,
+          "acquire_us": 763913,
+          "rows_us": 33403,
+          "render_us": 90967,
+          "submit_us": 113382,
+          "commit_us": 21640,
+          "drain_us": 15681,
+          "max_frame_us": 34227,
+          "fps": 30.345068951582924
+        }
+      ]
+    },
+    "TRIPLE_PARTIAL": {
+      "mean_fps": 50.84135566196968,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 1176980,
+          "begin_us": 109513,
+          "caps_us": 2373,
+          "acquire_us": 737185,
+          "rows_us": 33345,
+          "render_us": 96098,
+          "submit_us": 127760,
+          "commit_us": 30564,
+          "drain_us": 8435,
+          "max_frame_us": 21137,
+          "fps": 50.97792655780047
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 1181259,
+          "begin_us": 110788,
+          "caps_us": 2644,
+          "acquire_us": 727409,
+          "rows_us": 36926,
+          "render_us": 99526,
+          "submit_us": 131142,
+          "commit_us": 29521,
+          "drain_us": 13895,
+          "max_frame_us": 20874,
+          "fps": 50.793263797355195
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 1182199,
+          "begin_us": 102713,
+          "caps_us": 2491,
+          "acquire_us": 730289,
+          "rows_us": 36071,
+          "render_us": 98457,
+          "submit_us": 127576,
+          "commit_us": 36931,
+          "drain_us": 18290,
+          "max_frame_us": 20660,
+          "fps": 50.75287663075337
+        }
+      ]
+    },
+    "DOUBLE_DIRECT": {
+      "mean_fps": 58.283883707010745,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 1094026,
+          "begin_us": 144616,
+          "caps_us": 1397,
+          "acquire_us": 6487,
+          "rows_us": 390,
+          "render_us": 864407,
+          "submit_us": 5964,
+          "commit_us": 67411,
+          "drain_us": 467,
+          "max_frame_us": 32819,
+          "fps": 54.84330354123211
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 999689,
+          "begin_us": 29164,
+          "caps_us": 1639,
+          "acquire_us": 7230,
+          "rows_us": 354,
+          "render_us": 882554,
+          "submit_us": 6465,
+          "commit_us": 68728,
+          "drain_us": 144,
+          "max_frame_us": 21455,
+          "fps": 60.018665805065375
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 1000172,
+          "begin_us": 31070,
+          "caps_us": 1414,
+          "acquire_us": 7245,
+          "rows_us": 294,
+          "render_us": 881224,
+          "submit_us": 6480,
+          "commit_us": 68850,
+          "drain_us": 234,
+          "max_frame_us": 21840,
+          "fps": 59.98968177473475
+        }
+      ]
+    },
+    "TRIPLE_FULL": {
+      "mean_fps": 59.78398176120109,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 1010972,
+          "begin_us": 67379,
+          "caps_us": 1508,
+          "acquire_us": 5811,
+          "rows_us": 236,
+          "render_us": 887214,
+          "submit_us": 5580,
+          "commit_us": 21620,
+          "drain_us": 17598,
+          "max_frame_us": 17902,
+          "fps": 59.348824695441614
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 999909,
+          "begin_us": 54267,
+          "caps_us": 1561,
+          "acquire_us": 5631,
+          "rows_us": 236,
+          "render_us": 882418,
+          "submit_us": 5320,
+          "commit_us": 29671,
+          "drain_us": 17523,
+          "max_frame_us": 16785,
+          "fps": 60.005460496905215
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 1000039,
+          "begin_us": 51989,
+          "caps_us": 1570,
+          "acquire_us": 5921,
+          "rows_us": 304,
+          "render_us": 882362,
+          "submit_us": 5429,
+          "commit_us": 31631,
+          "drain_us": 17463,
+          "max_frame_us": 16795,
+          "fps": 59.99766009125644
+        }
+      ]
+    }
+  },
+  "finaliram": {
+    "DOUBLE_PARTIAL": {
+      "mean_fps": 60.11311352746615,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 994963,
+          "begin_us": 200451,
+          "caps_us": 489,
+          "acquire_us": 600012,
+          "rows_us": 24794,
+          "render_us": 101138,
+          "submit_us": 50548,
+          "commit_us": 4717,
+          "drain_us": 4043,
+          "max_frame_us": 17976,
+          "fps": 60.30374998869305
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 999685,
+          "begin_us": 206517,
+          "caps_us": 367,
+          "acquire_us": 593955,
+          "rows_us": 27177,
+          "render_us": 102892,
+          "submit_us": 50455,
+          "commit_us": 4660,
+          "drain_us": 3958,
+          "max_frame_us": 21290,
+          "fps": 60.01890595537594
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 999722,
+          "begin_us": 204937,
+          "caps_us": 368,
+          "acquire_us": 598619,
+          "rows_us": 26484,
+          "render_us": 100395,
+          "submit_us": 48411,
+          "commit_us": 4642,
+          "drain_us": 3882,
+          "max_frame_us": 22555,
+          "fps": 60.01668463832946
+        }
+      ]
+    },
+    "TRIPLE_PARTIAL": {
+      "mean_fps": 60.115067275893395,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 995003,
+          "begin_us": 161995,
+          "caps_us": 566,
+          "acquire_us": 634387,
+          "rows_us": 22295,
+          "render_us": 88510,
+          "submit_us": 52948,
+          "commit_us": 4756,
+          "drain_us": 20879,
+          "max_frame_us": 17971,
+          "fps": 60.301325724646055
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 999611,
+          "begin_us": 166774,
+          "caps_us": 540,
+          "acquire_us": 641563,
+          "rows_us": 21268,
+          "render_us": 87698,
+          "submit_us": 48418,
+          "commit_us": 4750,
+          "drain_us": 20804,
+          "max_frame_us": 17974,
+          "fps": 60.0233490827932
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 999658,
+          "begin_us": 160942,
+          "caps_us": 561,
+          "acquire_us": 649128,
+          "rows_us": 21182,
+          "render_us": 88924,
+          "submit_us": 47552,
+          "commit_us": 4117,
+          "drain_us": 19603,
+          "max_frame_us": 17887,
+          "fps": 60.02052702024092
+        }
+      ]
+    },
+    "DOUBLE_DIRECT": {
+      "mean_fps": 60.11230649861633,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 993999,
+          "begin_us": 68982,
+          "caps_us": 441,
+          "acquire_us": 1304,
+          "rows_us": 56,
+          "render_us": 881410,
+          "submit_us": 1296,
+          "commit_us": 38364,
+          "drain_us": 1575,
+          "max_frame_us": 18228,
+          "fps": 60.362233764822705
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 1000268,
+          "begin_us": 75469,
+          "caps_us": 607,
+          "acquire_us": 1295,
+          "rows_us": 59,
+          "render_us": 880218,
+          "submit_us": 1440,
+          "commit_us": 39144,
+          "drain_us": 1490,
+          "max_frame_us": 21953,
+          "fps": 59.98392430828538
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 1000154,
+          "begin_us": 73518,
+          "caps_us": 599,
+          "acquire_us": 1341,
+          "rows_us": 59,
+          "render_us": 882333,
+          "submit_us": 1566,
+          "commit_us": 38766,
+          "drain_us": 1394,
+          "max_frame_us": 21867,
+          "fps": 59.990761422740896
+        }
+      ]
+    },
+    "TRIPLE_FULL": {
+      "mean_fps": 60.11165993938643,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 994026,
+          "begin_us": 105091,
+          "caps_us": 465,
+          "acquire_us": 1833,
+          "rows_us": 57,
+          "render_us": 855730,
+          "submit_us": 1374,
+          "commit_us": 10449,
+          "drain_us": 18357,
+          "max_frame_us": 18081,
+          "fps": 60.3605941896892
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 1000177,
+          "begin_us": 111598,
+          "caps_us": 445,
+          "acquire_us": 1877,
+          "rows_us": 59,
+          "render_us": 856697,
+          "submit_us": 1352,
+          "commit_us": 9229,
+          "drain_us": 18284,
+          "max_frame_us": 18081,
+          "fps": 59.98938187940735
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 1000250,
+          "begin_us": 108775,
+          "caps_us": 442,
+          "acquire_us": 1816,
+          "rows_us": 89,
+          "render_us": 860071,
+          "submit_us": 1426,
+          "commit_us": 8813,
+          "drain_us": 18184,
+          "max_frame_us": 17956,
+          "fps": 59.985003749062734
+        }
+      ]
+    }
+  },
+  "pipelineiram": {
+    "DOUBLE_PARTIAL": {
+      "mean_fps": 60.11311352746615,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 994963,
+          "begin_us": 200430,
+          "caps_us": 487,
+          "acquire_us": 600020,
+          "rows_us": 24710,
+          "render_us": 101255,
+          "submit_us": 50740,
+          "commit_us": 4649,
+          "drain_us": 4043,
+          "max_frame_us": 17975,
+          "fps": 60.30374998869305
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 999685,
+          "begin_us": 206474,
+          "caps_us": 366,
+          "acquire_us": 593900,
+          "rows_us": 27716,
+          "render_us": 102898,
+          "submit_us": 49980,
+          "commit_us": 4663,
+          "drain_us": 3958,
+          "max_frame_us": 21293,
+          "fps": 60.01890595537594
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 999722,
+          "begin_us": 204949,
+          "caps_us": 368,
+          "acquire_us": 598277,
+          "rows_us": 26676,
+          "render_us": 100811,
+          "submit_us": 48550,
+          "commit_us": 4675,
+          "drain_us": 3882,
+          "max_frame_us": 22554,
+          "fps": 60.01668463832946
+        }
+      ]
+    },
+    "TRIPLE_PARTIAL": {
+      "mean_fps": 60.115067275893395,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 995003,
+          "begin_us": 159443,
+          "caps_us": 579,
+          "acquire_us": 637901,
+          "rows_us": 21786,
+          "render_us": 89732,
+          "submit_us": 51603,
+          "commit_us": 4770,
+          "drain_us": 20685,
+          "max_frame_us": 17971,
+          "fps": 60.301325724646055
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 999611,
+          "begin_us": 163632,
+          "caps_us": 531,
+          "acquire_us": 647711,
+          "rows_us": 20839,
+          "render_us": 86584,
+          "submit_us": 48140,
+          "commit_us": 4292,
+          "drain_us": 20231,
+          "max_frame_us": 17975,
+          "fps": 60.0233490827932
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 999658,
+          "begin_us": 160545,
+          "caps_us": 561,
+          "acquire_us": 648259,
+          "rows_us": 21015,
+          "render_us": 88380,
+          "submit_us": 49471,
+          "commit_us": 4127,
+          "drain_us": 19603,
+          "max_frame_us": 17887,
+          "fps": 60.02052702024092
+        }
+      ]
+    },
+    "DOUBLE_DIRECT": {
+      "mean_fps": 60.11230649861633,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 993999,
+          "begin_us": 68982,
+          "caps_us": 439,
+          "acquire_us": 1305,
+          "rows_us": 55,
+          "render_us": 881412,
+          "submit_us": 1296,
+          "commit_us": 38366,
+          "drain_us": 1575,
+          "max_frame_us": 18228,
+          "fps": 60.362233764822705
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 1000268,
+          "begin_us": 75468,
+          "caps_us": 607,
+          "acquire_us": 1296,
+          "rows_us": 59,
+          "render_us": 880217,
+          "submit_us": 1440,
+          "commit_us": 39144,
+          "drain_us": 1490,
+          "max_frame_us": 21950,
+          "fps": 59.98392430828538
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 1000154,
+          "begin_us": 73521,
+          "caps_us": 598,
+          "acquire_us": 1340,
+          "rows_us": 57,
+          "render_us": 882331,
+          "submit_us": 1566,
+          "commit_us": 38768,
+          "drain_us": 1394,
+          "max_frame_us": 21865,
+          "fps": 59.990761422740896
+        }
+      ]
+    },
+    "TRIPLE_FULL": {
+      "mean_fps": 60.110440445088074,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 994026,
+          "begin_us": 99267,
+          "caps_us": 460,
+          "acquire_us": 1788,
+          "rows_us": 90,
+          "render_us": 860017,
+          "submit_us": 1353,
+          "commit_us": 12053,
+          "drain_us": 18357,
+          "max_frame_us": 18081,
+          "fps": 60.3605941896892
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 1000239,
+          "begin_us": 108701,
+          "caps_us": 451,
+          "acquire_us": 1875,
+          "rows_us": 57,
+          "render_us": 860068,
+          "submit_us": 1452,
+          "commit_us": 8774,
+          "drain_us": 18268,
+          "max_frame_us": 17960,
+          "fps": 59.98566342644108
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 1000249,
+          "begin_us": 108781,
+          "caps_us": 439,
+          "acquire_us": 1820,
+          "rows_us": 88,
+          "render_us": 860039,
+          "submit_us": 1424,
+          "commit_us": 8835,
+          "drain_us": 18184,
+          "max_frame_us": 17958,
+          "fps": 59.98506371913393
+        }
+      ]
+    }
+  },
+  "hotiram": {
+    "DOUBLE_PARTIAL": {
+      "mean_fps": 58.51032566460977,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 1010977,
+          "begin_us": 167446,
+          "caps_us": 691,
+          "acquire_us": 676081,
+          "rows_us": 20837,
+          "render_us": 82711,
+          "submit_us": 44951,
+          "commit_us": 6475,
+          "drain_us": 3328,
+          "max_frame_us": 32683,
+          "fps": 59.34853117331057
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 1049580,
+          "begin_us": 203047,
+          "caps_us": 608,
+          "acquire_us": 677751,
+          "rows_us": 20345,
+          "render_us": 83579,
+          "submit_us": 47501,
+          "commit_us": 6131,
+          "drain_us": 2435,
+          "max_frame_us": 32811,
+          "fps": 57.16572343223004
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 1016661,
+          "begin_us": 165375,
+          "caps_us": 576,
+          "acquire_us": 685366,
+          "rows_us": 20232,
+          "render_us": 82406,
+          "submit_us": 44467,
+          "commit_us": 6542,
+          "drain_us": 3664,
+          "max_frame_us": 32847,
+          "fps": 59.01672238828872
+        }
+      ]
+    },
+    "TRIPLE_PARTIAL": {
+      "mean_fps": 60.137772960703614,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 993994,
+          "begin_us": 133690,
+          "caps_us": 822,
+          "acquire_us": 666914,
+          "rows_us": 20883,
+          "render_us": 90596,
+          "submit_us": 46951,
+          "commit_us": 6840,
+          "drain_us": 18612,
+          "max_frame_us": 17983,
+          "fps": 60.36253739962213
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 999581,
+          "begin_us": 145087,
+          "caps_us": 738,
+          "acquire_us": 660386,
+          "rows_us": 21745,
+          "render_us": 89943,
+          "submit_us": 47118,
+          "commit_us": 6171,
+          "drain_us": 19927,
+          "max_frame_us": 17820,
+          "fps": 60.02515053807545
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 999573,
+          "begin_us": 136052,
+          "caps_us": 716,
+          "acquire_us": 672980,
+          "rows_us": 21209,
+          "render_us": 87104,
+          "submit_us": 48505,
+          "commit_us": 6722,
+          "drain_us": 18037,
+          "max_frame_us": 17754,
+          "fps": 60.025630944413265
+        }
+      ]
+    },
+    "DOUBLE_DIRECT": {
+      "mean_fps": 60.11008137860803,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 994023,
+          "begin_us": 63000,
+          "caps_us": 925,
+          "acquire_us": 1891,
+          "rows_us": 55,
+          "render_us": 889161,
+          "submit_us": 1363,
+          "commit_us": 35648,
+          "drain_us": 943,
+          "max_frame_us": 17100,
+          "fps": 60.36077636030554
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 1000248,
+          "begin_us": 69140,
+          "caps_us": 894,
+          "acquire_us": 1719,
+          "rows_us": 52,
+          "render_us": 889361,
+          "submit_us": 1362,
+          "commit_us": 35889,
+          "drain_us": 827,
+          "max_frame_us": 22057,
+          "fps": 59.98512368932505
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 1000261,
+          "begin_us": 68811,
+          "caps_us": 916,
+          "acquire_us": 2014,
+          "rows_us": 60,
+          "render_us": 888771,
+          "submit_us": 1374,
+          "commit_us": 36591,
+          "drain_us": 755,
+          "max_frame_us": 22137,
+          "fps": 59.9843440861935
+        }
+      ]
+    },
+    "TRIPLE_FULL": {
+      "mean_fps": 60.10897315015242,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 993979,
+          "begin_us": 74323,
+          "caps_us": 756,
+          "acquire_us": 1796,
+          "rows_us": 58,
+          "render_us": 882397,
+          "submit_us": 1898,
+          "commit_us": 13607,
+          "drain_us": 17937,
+          "max_frame_us": 17838,
+          "fps": 60.363448322348866
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 1000298,
+          "begin_us": 80517,
+          "caps_us": 846,
+          "acquire_us": 1840,
+          "rows_us": 60,
+          "render_us": 883775,
+          "submit_us": 2034,
+          "commit_us": 12221,
+          "drain_us": 17867,
+          "max_frame_us": 17861,
+          "fps": 59.98212532665266
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 1000311,
+          "begin_us": 86801,
+          "caps_us": 790,
+          "acquire_us": 1856,
+          "rows_us": 58,
+          "render_us": 879262,
+          "submit_us": 1700,
+          "commit_us": 10922,
+          "drain_us": 17827,
+          "max_frame_us": 17976,
+          "fps": 59.981345801455745
+        }
+      ]
+    }
+  },
+  "iram": {
+    "DOUBLE_PARTIAL": {
+      "mean_fps": 60.12994861643357,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 993992,
+          "begin_us": 201840,
+          "caps_us": 301,
+          "acquire_us": 591622,
+          "rows_us": 25953,
+          "render_us": 101417,
+          "submit_us": 53809,
+          "commit_us": 4250,
+          "drain_us": 3973,
+          "max_frame_us": 17882,
+          "fps": 60.36265885439722
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 999690,
+          "begin_us": 206699,
+          "caps_us": 302,
+          "acquire_us": 590257,
+          "rows_us": 27525,
+          "render_us": 105328,
+          "submit_us": 53030,
+          "commit_us": 4256,
+          "drain_us": 3898,
+          "max_frame_us": 21475,
+          "fps": 60.01860576778802
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 999857,
+          "begin_us": 209087,
+          "caps_us": 301,
+          "acquire_us": 589930,
+          "rows_us": 25848,
+          "render_us": 101951,
+          "submit_us": 52727,
+          "commit_us": 4377,
+          "drain_us": 3825,
+          "max_frame_us": 21586,
+          "fps": 60.00858122711548
+        }
+      ]
+    },
+    "TRIPLE_PARTIAL": {
+      "mean_fps": 60.13358194214069,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 994029,
+          "begin_us": 160816,
+          "caps_us": 324,
+          "acquire_us": 648750,
+          "rows_us": 20239,
+          "render_us": 88731,
+          "submit_us": 45232,
+          "commit_us": 4140,
+          "drain_us": 18821,
+          "max_frame_us": 17812,
+          "fps": 60.36041202017245
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 999618,
+          "begin_us": 167128,
+          "caps_us": 324,
+          "acquire_us": 649304,
+          "rows_us": 20068,
+          "render_us": 89385,
+          "submit_us": 43904,
+          "commit_us": 3701,
+          "drain_us": 18716,
+          "max_frame_us": 17845,
+          "fps": 60.02292875878586
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 999710,
+          "begin_us": 159135,
+          "caps_us": 323,
+          "acquire_us": 659588,
+          "rows_us": 20189,
+          "render_us": 85987,
+          "submit_us": 44158,
+          "commit_us": 3857,
+          "drain_us": 18889,
+          "max_frame_us": 17840,
+          "fps": 60.01740504746376
+        }
+      ]
+    },
+    "DOUBLE_DIRECT": {
+      "mean_fps": 60.08842659366562,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 994998,
+          "begin_us": 73628,
+          "caps_us": 300,
+          "acquire_us": 1272,
+          "rows_us": 59,
+          "render_us": 882535,
+          "submit_us": 1065,
+          "commit_us": 33517,
+          "drain_us": 2048,
+          "max_frame_us": 16719,
+          "fps": 60.301628746992456
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 1000316,
+          "begin_us": 79127,
+          "caps_us": 300,
+          "acquire_us": 1271,
+          "rows_us": 58,
+          "render_us": 882462,
+          "submit_us": 1075,
+          "commit_us": 33479,
+          "drain_us": 1969,
+          "max_frame_us": 21760,
+          "fps": 59.981045989467326
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 1000290,
+          "begin_us": 79100,
+          "caps_us": 301,
+          "acquire_us": 1274,
+          "rows_us": 57,
+          "render_us": 882457,
+          "submit_us": 1065,
+          "commit_us": 33540,
+          "drain_us": 1893,
+          "max_frame_us": 21760,
+          "fps": 59.98260504453708
+        }
+      ]
+    },
+    "TRIPLE_FULL": {
+      "mean_fps": 60.10674949231379,
+      "samples": [
+        {
+          "rep": 0,
+          "frames": 60,
+          "total_us": 993999,
+          "begin_us": 105268,
+          "caps_us": 335,
+          "acquire_us": 1350,
+          "rows_us": 52,
+          "render_us": 857855,
+          "submit_us": 1312,
+          "commit_us": 8892,
+          "drain_us": 18347,
+          "max_frame_us": 17957,
+          "fps": 60.362233764822705
+        },
+        {
+          "rep": 1,
+          "frames": 60,
+          "total_us": 1000362,
+          "begin_us": 118105,
+          "caps_us": 339,
+          "acquire_us": 1312,
+          "rows_us": 54,
+          "render_us": 854073,
+          "submit_us": 1277,
+          "commit_us": 6299,
+          "drain_us": 18263,
+          "max_frame_us": 17956,
+          "fps": 59.978287859794754
+        },
+        {
+          "rep": 2,
+          "frames": 60,
+          "total_us": 1000338,
+          "begin_us": 113710,
+          "caps_us": 332,
+          "acquire_us": 1326,
+          "rows_us": 56,
+          "render_us": 857468,
+          "submit_us": 1280,
+          "commit_us": 7361,
+          "drain_us": 18187,
+          "max_frame_us": 17957,
+          "fps": 59.979726852323914
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,9 @@
+[mapping:present_diag]
+archive: libesp_display_present.a
+entries:
+    present_engine (noflash)
+    present_backend_fb (noflash)
+    present_pixel_engine (noflash)
+    present_resources:copy_execute (noflash)
+    present_executor (noflash)
+    present_executor_cpu (noflash)

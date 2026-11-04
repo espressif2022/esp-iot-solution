@@ -1,8 +1,27 @@
-# V2 board acceptance application
+# Display presenter board acceptance application
 
-This independent ESP-IDF application exercises **Presenter → FB → LCD scanout**
-using synchronous CPU rendering and driver-owned PSRAM framebuffers. It does not
-link V1, LVGL, Wi-Fi, audio, storage or touch services. It is not a power benchmark.
+This independent ESP-IDF application exercises the current presenter engine,
+its application facade and panel adapters using driver-owned framebuffers. It
+does not link a separate V1 implementation, LVGL, Wi-Fi, audio, storage or touch
+services. It is not a power benchmark. See [current benchmark and validation
+results](../../VALIDATION.md) for the separate LVGL application.
+
+## 2026-11-03 模式／旋转矩阵
+
+[完整结果、帧率及已发现问题](../../MODE_ROTATION_RESULTS_20261103.md)。三板运行前需按 MAC 识别、备份并校验整片 Flash，结束后恢复并独立验证；程序会重设面板并暂时覆盖原固件。P4 和 S3 测试期间会切换彩条，S31 的 TE 测试始终使用物理 480×480 整屏传输。
+
+从本目录执行（分别指定临时构建目录与各自的 sdkconfig）：
+
+```sh
+source /home/xuxin/esp_work/esp-idf-qspi/export.sh
+idf.py --preview -B /tmp/present-matrix-p4 -DIDF_TARGET=esp32p4 -DSDKCONFIG=/tmp/present-matrix-p4.sdkconfig -DPRESENT_MODE_ROTATION_MATRIX=ON build
+idf.py --preview -B /tmp/present-matrix-s3 -DIDF_TARGET=esp32s3 -DSDKCONFIG=/tmp/present-matrix-s3.sdkconfig -DPRESENT_MODE_ROTATION_MATRIX=ON build
+idf.py --preview -B /tmp/present-matrix-s31 -DIDF_TARGET=esp32s31 -DSDKCONFIG=/tmp/present-matrix-s31.sdkconfig -DPRESENT_MODE_ROTATION_MATRIX=ON build
+```
+
+`PRESENT_MODE_ROTATION_MATRIX` 检查公开入口、输出区域和整帧像素；S31 还检查 4 像素对齐的局部输入及 TE 整屏输出。每个实例先渲染、再尝试同轴运行时旋转。`PRESENT_NATIVE_ROTATION_MATRIX=ON` 用于 P4／S3 的 native 跨轴旋转、脏区和多帧在途缓冲检查，需与前一选项互斥。
+
+P4 已知运行时跨轴问题可用 `PRESENT_MODE_ROTATION_MATRIX=ON` 与 `PRESENT_P4_CROSS_AXIS_PROBE=ON` 单独重现：当前应记录 `OUT_OF_PANEL` 和失败，**这不是通过项**。该诊断会显示几帧图像，仅用于明确授权的测试板。需要覆盖 P4 全模式、四个起始方向及三个其他目标方向时，改用 `PRESENT_P4_TRANSITION_MATRIX=ON`（同样需 `PRESENT_MODE_ROTATION_MATRIX=ON`）：程序会分别记录 `TRANSITION_PASS` 与 `TRANSITION_UNSAFE`，并输出汇总。测试中的合成帧率与 LVGL benchmark 的统计口径不同。
 
 ## Confirmed hardware
 

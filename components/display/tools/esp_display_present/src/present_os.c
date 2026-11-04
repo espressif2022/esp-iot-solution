@@ -436,6 +436,24 @@ static void worker_entry(void *context)
 #endif
 }
 
+unsigned present_task_priority(void)
+{
+#ifdef PRESENT_HOST
+    return 0;
+#else
+    return uxTaskPriorityGet(NULL);
+#endif
+}
+
+void present_task_set_priority(unsigned priority)
+{
+#ifdef PRESENT_HOST
+    (void)priority;
+#else
+    vTaskPrioritySet(NULL, priority);
+#endif
+}
+
 present_worker_t *present_worker_create(present_worker_entry_fn entry, void *user, uint32_t stack_bytes, unsigned priority)
 {
     if (!entry) {

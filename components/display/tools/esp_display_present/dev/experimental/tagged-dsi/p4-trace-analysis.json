@@ -1,0 +1,78 @@
+{
+  "p4-trace.log": [
+    {
+      "name": "DOUBLE_PARTIAL",
+      "scope": "v2",
+      "capture_count": 396,
+      "reported_count": 396,
+      "dropped": 0,
+      "counts": {
+        "REGISTER": 3,
+        "READ_END": 38,
+        "SELECT": 38,
+        "READ_BEGIN": 38,
+        "FRAME_DONE": 38,
+        "APP_BEGIN": 34,
+        "SUBMIT": 35,
+        "CONFIRM": 35,
+        "WRITE_BEGIN": 34,
+        "APP_COMMIT": 34,
+        "WRITE_END": 34,
+        "RELEASE": 34,
+        "STOP": 1
+      },
+      "submit_to_first_matching_select_us": {
+        "min": 8092,
+        "mean": 9732.8,
+        "max": 14094,
+        "n": 35
+      },
+      "last_read_end_to_release_us": {
+        "min": 20,
+        "mean": 20.2,
+        "max": 24,
+        "n": 34
+      },
+      "callbacks_until_confirm": null,
+      "problems": [],
+      "uncertainty": []
+    },
+    {
+      "name": "DOUBLE_DIRECT",
+      "scope": "v2",
+      "capture_count": 532,
+      "reported_count": 532,
+      "dropped": 0,
+      "counts": {
+        "REGISTER": 3,
+        "READ_END": 72,
+        "SELECT": 72,
+        "READ_BEGIN": 72,
+        "FRAME_DONE": 72,
+        "APP_BEGIN": 34,
+        "SUBMIT": 35,
+        "CONFIRM": 35,
+        "WRITE_BEGIN": 34,
+        "WRITE_END": 34,
+        "APP_COMMIT": 34,
+        "RELEASE": 34,
+        "STOP": 1
+      },
+      "submit_to_first_matching_select_us": {
+        "min": 14646,
+        "mean": 15251.9,
+        "max": 15431,
+        "n": 35
+      },
+      "last_read_end_to_release_us": {
+        "min": 31,
+        "mean": 35.3,
+        "max": 51,
+        "n": 34
+      },
+      "callbacks_until_confirm": null,
+      "problems": [],
+      "uncertainty": []
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "s3-traceiram-perf.log": [
+    {
+      "name": "DOUBLE_PARTIAL",
+      "scope": "v2",
+      "capture_count": 906,
+      "reported_count": 906,
+      "dropped": 0,
+      "counts": {
+        "REGISTER": 3,
+        "BOUNCE_EOF_SAMPLED": 317,
+        "READ_END": 52,
+        "FRAME_DONE": 52,
+        "SELECT": 52,
+        "CALLBACK": 50,
+        "READ_BEGIN": 52,
+        "VSYNC": 52,
+        "APP_BEGIN": 34,
+        "SUBMIT": 35,
+        "ARM": 35,
+        "CONFIRM": 35,
+        "WRITE_BEGIN": 34,
+        "APP_COMMIT": 34,
+        "WRITE_END": 34,
+        "RELEASE": 34,
+        "STOP": 1
+      },
+      "submit_to_first_matching_select_us": {
+        "min": 99,
+        "mean": 5488.4,
+        "max": 16536,
+        "n": 35
+      },
+      "last_read_end_to_release_us": {
+        "min": 31,
+        "mean": 1005.4,
+        "max": 16606,
+        "n": 34
+      },
+      "callbacks_until_confirm": {
+        "min": 1,
+        "mean": 1,
+        "max": 1,
+        "n": 35
+      },
+      "problems": [],
+      "uncertainty": []
+    },
+    {
+      "name": "DOUBLE_DIRECT",
+      "scope": "v2",
+      "capture_count": 761,
+      "reported_count": 761,
+      "dropped": 0,
+      "counts": {
+        "REGISTER": 3,
+        "BOUNCE_EOF_SAMPLED": 244,
+        "READ_END": 40,
+        "FRAME_DONE": 40,
+        "SELECT": 40,
+        "CALLBACK": 38,
+        "READ_BEGIN": 40,
+        "VSYNC": 40,
+        "APP_BEGIN": 34,
+        "SUBMIT": 35,
+        "ARM": 35,
+        "CONFIRM": 35,
+        "WRITE_BEGIN": 34,
+        "WRITE_END": 34,
+        "APP_COMMIT": 34,
+        "RELEASE": 34,
+        "STOP": 1
+      },
+      "submit_to_first_matching_select_us": {
+        "min": 177,
+        "mean": 1467.2,
+        "max": 12446,
+        "n": 35
+      },
+      "last_read_end_to_release_us": {
+        "min": 29,
+        "mean": 32.3,
+        "max": 38,
+        "n": 34
+      },
+      "callbacks_until_confirm": {
+        "min": 1,
+        "mean": 1,
+        "max": 1,
+        "n": 35
+      },
+      "problems": [],
+      "uncertainty": []
+    }
+  ]
+}

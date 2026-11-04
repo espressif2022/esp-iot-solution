@@ -1,0 +1,49 @@
+I (226) esp_psram: Found 32MB PSRAM device
+I (226) esp_psram: Speed: 200MHz
+I (229) cpu_start: Multicore app
+I (1077) esp_psram: SPI SRAM memory test OK
+I (1086) cpu_start: Pro cpu start user code
+I (1086) cpu_start: cpu freq: 400000000 Hz
+I (1086) app_init: Application information:
+I (1086) app_init: Project name:     pv2_compat_probe
+I (1086) app_init: App version:      1
+I (1087) app_init: Compile time:     Nov  3 2026 16:33:45
+I (1087) app_init: ELF file SHA256:  b6c59657f...
+I (1087) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (1087) efuse_init: Min chip rev:     v3.1
+I (1088) efuse_init: Max chip rev:     v3.99
+I (1088) efuse_init: Chip rev:         v3.2
+I (1088) heap_init: Initializing. RAM available for dynamic allocation:
+I (1088) heap_init: At 4FF33E10 len 000871B0 (540 KiB): RETENT_RAM
+I (1089) heap_init: At 4FFBAFC0 len 00004BF0 (18 KiB): RAM
+I (1089) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (1089) heap_init: At 30100288 len 00001D78 (7 KiB): SPM
+I (1090) esp_psram: Adding pool of 32768K of PSRAM memory to heap allocator
+I (1090) spi_flash: detected chip: gd
+I (1091) spi_flash: flash io: dio
+I (1091) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (1091) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (1093) sleep_clock: System sleep clock ICG setting initialization
+I (1094) main_task: Started on CPU0
+I (1094) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (1095) main_task: Calling app_main()
+I (4095) present_board: NATIVE_MATRIX_START board=P4-v3 MIPI EK79007 rotations=0,90,180,270,0 full_and_dirty=1
+I (4095) present_board: COMBO_BEGIN cycle=0 mode=DOUBLE_FULL exec=async-cpu
+I (4096) ek79007: version: 2.0.2
+I (4577) present_board: ROT_PASS mode=DOUBLE_FULL exec=async-cpu rotation=0 pixels=ALL
+I (5565) present_board: ROT_PASS mode=DOUBLE_FULL exec=async-cpu rotation=90 pixels=ALL
+I (5931) present_board: ROT_PASS mode=DOUBLE_FULL exec=async-cpu rotation=180 pixels=ALL
+I (6921) present_board: ROT_PASS mode=DOUBLE_FULL exec=async-cpu rotation=270 pixels=ALL
+I (7227) present_board: ROT_PASS mode=DOUBLE_FULL exec=async-cpu rotation=0 pixels=ALL
+I (7228) present_board: POOL_USED mode=DOUBLE_FULL mask=0x3 count=2
+I (7228) present_board: COMBO_PASS cycle=0 mode=DOUBLE_FULL exec=async-cpu frames=10 rots=5 pixels=ALL avg_wait_us=48057 max_wait_us=64660 min_int=536804 min_psram=29865324
+I (7230) present_board: COMBO_CLEAN cycle=0 mode=DOUBLE_FULL exec=async-cpu internal=587015 psram=33551868
+I (7230) present_board: COMBO_BEGIN cycle=0 mode=TRIPLE_FULL exec=async-cpu
+I (7232) ek79007: version: 2.0.2
+I (7726) present_board: ROT_PASS mode=TRIPLE_FULL exec=async-cpu rotation=0 pixels=ALL
+I (8714) present_board: ROT_PASS mode=TRIPLE_FULL exec=async-cpu rotation=90 pixels=ALL
+I (9063) present_board: ROT_PASS mode=TRIPLE_FULL exec=async-cpu rotation=180 pixels=ALL
+I (10053) present_board: ROT_PASS mode=TRIPLE_FULL exec=async-cpu rotation=270 pixels=ALL
+I (10360) present_board: ROT_PASS mode=TRIPLE_FULL exec=async-cpu rotation=0 pixels=ALL
+I (10360) present_board: POOL_USED mode=TRIPLE_FULL mask=0x3 count=3
+E (10361) present_board: FAIL all driver buffers used: ESP_FAIL; resources retained, reset to retry

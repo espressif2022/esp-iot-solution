@@ -123,9 +123,9 @@ def prepare(template, idf, output):
     patch(adapter, '    error = esp_lcd_panel_draw_bitmap(scanout->config.panel, 0, 0, area->width, area->height, surface->pixels);',
           '    boundary_emit(BT_SUBMIT, (uintptr_t)surface->pixels, (uint32_t)cookie);\n'
           '    error = esp_lcd_panel_draw_bitmap(scanout->config.panel, 0, 0, area->width, area->height, surface->pixels);')
-    patch(adapter, '    unsigned needed = scanout->config.single_boundary_retire ? 1u : 2u;',
+    patch(adapter, '    unsigned needed = scanout->required_boundaries;',
           '    boundary_emit(BT_CALLBACK, 0, scanout->armed);\n'
-          '    unsigned needed = scanout->config.single_boundary_retire ? 1u : 2u;')
+          '    unsigned needed = scanout->required_boundaries;')
     patch(adapter, '    scanout->armed = error == ESP_OK;',
           '    scanout->armed = error == ESP_OK;\n'
           '    boundary_emit(BT_ARM, (uintptr_t)surface->pixels, (uint32_t)cookie);')

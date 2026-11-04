@@ -1,0 +1,238 @@
+���������������������������5
+I (25) boot: compile time Nov  3 2026 16:39:18
+I (25) boot: chip revision: v0.2
+I (27) boot.esp32s3: Boot SPI Speed : 80MHz
+I (31) boot.esp32s3: SPI Mode       : DIO
+I (34) boot.esp32s3: SPI Flash Size : 16MB
+I (38) boot: Partition Table:
+I (41) boot: ## Label            Usage          Type ST Offset   Length
+I (47) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (54) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (60) boot:  2 factory          factory app      00 00 00010000 00300000
+I (67) esp_image: segment 0: paddr=00010020 vaddr=3c030020 size=0d2a0h ( 53920) map
+I (84) esp_image: segment 1: paddr=0001d2c8 vaddr=3fc92d00 size=02d50h ( 11600) load
+I (87) esp_image: segment 2: paddr=00020020 vaddr=42000020 size=22a08h (141832) map
+I (115) esp_image: segment 3: paddr=00042a30 vaddr=3fc95a50 size=009a4h (  2468) load
+I (116) esp_image: segment 4: paddr=000433dc vaddr=40374000 size=0ec80h ( 60544) load
+I (133) esp_image: segment 5: paddr=00052064 vaddr=50000000 size=00024h (    36) load
+I (140) boot: Loaded app from partition at offset 0x10000
+I (146) octal_psram: vendor id    : 0x0d (AP)
+I (147) octal_psram: dev id       : 0x03 (generation 4)
+I (147) octal_psram: density      : 0x05 (128 Mbit)
+I (149) octal_psram: good-die     : 0x01 (Pass)
+I (153) octal_psram: Latency      : 0x01 (Fixed)
+I (157) octal_psram: VCC          : 0x00 (1.8V)
+I (162) octal_psram: SRF          : 0x01 (Fast Refresh)
+I (167) octal_psram: BurstType    : 0x01 (Hybrid Wrap)
+I (171) octal_psram: BurstLen     : 0x01 (32 Byte)
+I (176) octal_psram: Readlatency  : 0x02 (10 cycles@Fixed)
+I (181) octal_psram: DriveStrength: 0x00 (1/1)
+I (185) MSPI Timing: Enter psram timing tuning
+I (190) esp_psram: Found 16MB PSRAM device
+I (193) esp_psram: Speed: 80MHz
+I (196) cpu_start: Multicore app
+I (763) esp_psram: SPI SRAM memory test OK
+I (771) cpu_start: GPIO 44 and 43 are used as console UART I/O pins
+I (772) cpu_start: Pro cpu start user code
+I (772) cpu_start: cpu freq: 240000000 Hz
+I (774) app_init: Application information:
+I (777) app_init: Project name:     pv2_compat_probe
+I (782) app_init: App version:      1
+I (785) app_init: Compile time:     Nov  3 2026 16:39:39
+I (791) app_init: ELF file SHA256:  fb69b97c4...
+I (795) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (801) efuse_init: Min chip rev:     v0.0
+I (805) efuse_init: Max chip rev:     v0.99
+I (809) efuse_init: Chip rev:         v0.2
+I (813) heap_init: Initializing. RAM available for dynamic allocation:
+I (819) heap_init: At 3FC96E20 len 000528F0 (330 KiB): RAM
+I (824) heap_init: At 3FCE9710 len 00005724 (21 KiB): RAM
+I (829) heap_init: At 600FE000 len 00001FE8 (7 KiB): RTCRAM
+I (835) esp_psram: Adding pool of 16384K of PSRAM memory to heap allocator
+I (841) spi_flash: detected chip: gd
+I (844) spi_flash: flash io: dio
+I (847) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (854) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (860) main_task: Started on CPU0
+I (863) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (871) main_task: Calling app_main()
+I (874) main_task: Returned from app_main()
+I (3875) lcd_panel.io.3wire_spi: Panel IO create success, version: 1.0.1
+W (5670) lcd_panel.io.3wire_spi: Delete but keep CS line inactive
+W (5700) lcd.rgb: GPIO 3 is not usable, maybe is reserved by others
+I (5700) gc9503: LCD panel create success, version: 3.0.1
+I (5700) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=NONE_1FB rotation=0 logical=480x480 physical=480x480
+I (5710) present_target: target: mode=NONE panel=RGB gram=0 rotation=0 te=0 fb=1 drawbuf=0x0
+I (5718) present_target: pipeline: commit=switch slot=480x1
+I (5724) present_fb: surface: mode=NONE contract=fb_persistent storage=fb areas=1 retain=1 previous=0 repair=0 buffers=1 size=480x480 physical=480x480 rotate=0 ppa=0 async_copy=0
+I (5739) presenter: presenter: contract=DIRECT endpoint=fb mode=fb_switch areas=1 retain=1 previous=0 drawbuf=0
+I (7614) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=NONE_1FB rotation=0 frames=12 total_frame_us=389733 pixels=ALL last_full=0 last_bands=0 completed=12
+I (7619) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=NONE_1FB rotation=90 logical=480x480 physical=480x480
+I (7629) present_target: target: mode=NONE panel=RGB gram=0 rotation=90 te=0 fb=1 drawbuf=0x0
+I (7637) present_target: pipeline: commit=switch slot=480x1
+W (7657) present_transform: PPA unavailable; using software rotation
+I (7657) present_fb: surface: mode=NONE contract=fb_persistent storage=transform areas=1 retain=1 previous=0 repair=0 buffers=1 size=480x480 physical=480x480 rotate=90 ppa=0 async_copy=0
+I (7668) presenter: presenter: contract=DIRECT endpoint=fb mode=fb_switch areas=1 retain=1 previous=0 drawbuf=0
+I (10045) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=NONE_1FB rotation=90 frames=12 total_frame_us=685930 pixels=ALL last_full=0 last_bands=0 completed=12
+I (10050) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=NONE_1FB rotation=180 logical=480x480 physical=480x480
+I (10060) present_target: target: mode=NONE panel=RGB gram=0 rotation=180 te=0 fb=1 drawbuf=0x0
+I (10069) present_target: pipeline: commit=switch slot=480x1
+W (10089) present_transform: PPA unavailable; using software rotation
+I (10089) present_fb: surface: mode=NONE contract=fb_persistent storage=transform areas=1 retain=1 previous=0 repair=0 buffers=1 size=480x480 physical=480x480 rotate=180 ppa=0 async_copy=0
+I (10101) presenter: presenter: contract=DIRECT endpoint=fb mode=fb_switch areas=1 retain=1 previous=0 drawbuf=0
+I (12305) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=NONE_1FB rotation=180 frames=12 total_frame_us=689487 pixels=ALL last_full=0 last_bands=0 completed=12
+I (12310) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=NONE_1FB rotation=270 logical=480x480 physical=480x480
+I (12321) present_target: target: mode=NONE panel=RGB gram=0 rotation=270 te=0 fb=1 drawbuf=0x0
+I (12329) present_target: pipeline: commit=switch slot=480x1
+W (12349) present_transform: PPA unavailable; using software rotation
+I (12350) present_fb: surface: mode=NONE contract=fb_persistent storage=transform areas=1 retain=1 previous=0 repair=0 buffers=1 size=480x480 physical=480x480 rotate=270 ppa=0 async_copy=0
+I (12361) presenter: presenter: contract=DIRECT endpoint=fb mode=fb_switch areas=1 retain=1 previous=0 drawbuf=0
+I (14735) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=NONE_1FB rotation=270 frames=12 total_frame_us=680910 pixels=ALL last_full=0 last_bands=0 completed=12
+I (14740) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_FULL rotation=0 logical=480x480 physical=480x480
+I (14751) present_target: target: mode=DOUBLE_FULL panel=RGB gram=0 rotation=0 te=0 fb=2 drawbuf=0x0
+I (14759) present_target: pipeline: commit=switch slot=480x2
+I (14765) present_fb: surface: mode=DOUBLE_FULL contract=fb_switch storage=fb areas=0 retain=0 previous=0 repair=0 buffers=2 size=480x480 physical=480x480 rotate=0 ppa=0 async_copy=0
+I (14781) presenter: presenter: contract=FULL endpoint=fb mode=fb_switch areas=0 retain=0 previous=0 drawbuf=0
+I (16778) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=DOUBLE_FULL rotation=0 frames=12 total_frame_us=514335 pixels=ALL last_full=1 last_bands=0 completed=12
+I (16783) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_FULL rotation=90 logical=480x480 physical=480x480
+I (16794) present_target: target: mode=DOUBLE_FULL panel=RGB gram=0 rotation=90 te=0 fb=2 drawbuf=0x0
+I (16803) present_target: pipeline: commit=switch slot=480x2
+W (16823) present_transform: PPA unavailable; using software rotation
+I (16823) present_fb: surface: mode=DOUBLE_FULL contract=fb_switch storage=transform areas=0 retain=0 previous=0 repair=0 buffers=2 size=480x480 physical=480x480 rotate=90 ppa=0 async_copy=0
+I (16835) presenter: presenter: contract=FULL endpoint=fb mode=fb_switch areas=0 retain=0 previous=0 drawbuf=0
+I (19218) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=DOUBLE_FULL rotation=90 frames=12 total_frame_us=690472 pixels=ALL last_full=1 last_bands=0 completed=12
+I (19223) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_FULL rotation=180 logical=480x480 physical=480x480
+I (19234) present_target: target: mode=DOUBLE_FULL panel=RGB gram=0 rotation=180 te=0 fb=2 drawbuf=0x0
+I (19243) present_target: pipeline: commit=switch slot=480x2
+W (19263) present_transform: PPA unavailable; using software rotation
+I (19263) present_fb: surface: mode=DOUBLE_FULL contract=fb_switch storage=transform areas=0 retain=0 previous=0 repair=0 buffers=2 size=480x480 physical=480x480 rotate=180 ppa=0 async_copy=0
+I (19275) presenter: presenter: contract=FULL endpoint=fb mode=fb_switch areas=0 retain=0 previous=0 drawbuf=0
+I (21491) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=DOUBLE_FULL rotation=180 frames=12 total_frame_us=695009 pixels=ALL last_full=1 last_bands=0 completed=12
+I (21496) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_FULL rotation=270 logical=480x480 physical=480x480
+I (21507) present_target: target: mode=DOUBLE_FULL panel=RGB gram=0 rotation=270 te=0 fb=2 drawbuf=0x0
+I (21516) present_target: pipeline: commit=switch slot=480x2
+W (21536) present_transform: PPA unavailable; using software rotation
+I (21537) present_fb: surface: mode=DOUBLE_FULL contract=fb_switch storage=transform areas=0 retain=0 previous=0 repair=0 buffers=2 size=480x480 physical=480x480 rotate=270 ppa=0 async_copy=0
+I (21548) presenter: presenter: contract=FULL endpoint=fb mode=fb_switch areas=0 retain=0 previous=0 drawbuf=0
+I (23940) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=DOUBLE_FULL rotation=270 frames=12 total_frame_us=688056 pixels=ALL last_full=1 last_bands=0 completed=12
+I (23945) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=TRIPLE_FULL rotation=0 logical=480x480 physical=480x480
+I (23956) present_target: target: mode=TRIPLE_FULL panel=RGB gram=0 rotation=0 te=0 fb=3 drawbuf=0x0
+I (23965) present_target: pipeline: commit=switch slot=480x3
+I (23970) present_fb: surface: mode=TRIPLE_FULL contract=fb_switch storage=fb areas=0 retain=0 previous=0 repair=0 buffers=3 size=480x480 physical=480x480 rotate=0 ppa=0 async_copy=0
+I (23986) presenter: presenter: contract=FULL endpoint=fb mode=fb_switch areas=0 retain=0 previous=0 drawbuf=0
+I (25869) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=TRIPLE_FULL rotation=0 frames=12 total_frame_us=397246 pixels=ALL last_full=1 last_bands=0 completed=12
+I (25874) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=TRIPLE_FULL rotation=90 logical=480x480 physical=480x480
+I (25885) present_target: target: mode=TRIPLE_FULL panel=RGB gram=0 rotation=90 te=0 fb=3 drawbuf=0x0
+I (25894) present_target: pipeline: commit=switch slot=480x3
+W (25914) present_transform: PPA unavailable; using software rotation
+I (25914) present_fb: surface: mode=TRIPLE_FULL contract=fb_switch storage=transform areas=0 retain=0 previous=0 repair=0 buffers=3 size=480x480 physical=480x480 rotate=90 ppa=0 async_copy=0
+I (25926) presenter: presenter: contract=FULL endpoint=fb mode=fb_switch areas=0 retain=0 previous=0 drawbuf=0
+I (28309) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=TRIPLE_FULL rotation=90 frames=12 total_frame_us=689252 pixels=ALL last_full=1 last_bands=0 completed=12
+I (28314) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=TRIPLE_FULL rotation=180 logical=480x480 physical=480x480
+I (28325) present_target: target: mode=TRIPLE_FULL panel=RGB gram=0 rotation=180 te=0 fb=3 drawbuf=0x0
+I (28334) present_target: pipeline: commit=switch slot=480x3
+W (28354) present_transform: PPA unavailable; using software rotation
+I (28354) present_fb: surface: mode=TRIPLE_FULL contract=fb_switch storage=transform areas=0 retain=0 previous=0 repair=0 buffers=3 size=480x480 physical=480x480 rotate=180 ppa=0 async_copy=0
+I (28366) presenter: presenter: contract=FULL endpoint=fb mode=fb_switch areas=0 retain=0 previous=0 drawbuf=0
+I (30578) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=TRIPLE_FULL rotation=180 frames=12 total_frame_us=694496 pixels=ALL last_full=1 last_bands=0 completed=12
+I (30583) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=TRIPLE_FULL rotation=270 logical=480x480 physical=480x480
+I (30594) present_target: target: mode=TRIPLE_FULL panel=RGB gram=0 rotation=270 te=0 fb=3 drawbuf=0x0
+I (30603) present_target: pipeline: commit=switch slot=480x3
+W (30623) present_transform: PPA unavailable; using software rotation
+I (30624) present_fb: surface: mode=TRIPLE_FULL contract=fb_switch storage=transform areas=0 retain=0 previous=0 repair=0 buffers=3 size=480x480 physical=480x480 rotate=270 ppa=0 async_copy=0
+I (30635) presenter: presenter: contract=FULL endpoint=fb mode=fb_switch areas=0 retain=0 previous=0 drawbuf=0
+I (33024) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=TRIPLE_FULL rotation=270 frames=12 total_frame_us=686409 pixels=ALL last_full=1 last_bands=0 completed=12
+I (33029) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_DIRECT rotation=0 logical=480x480 physical=480x480
+I (33040) present_target: target: mode=DOUBLE_DIRECT panel=RGB gram=0 rotation=0 te=0 fb=2 drawbuf=0x0
+I (33049) present_target: pipeline: commit=switch slot=480x2
+I (33055) present_fb: surface: mode=DOUBLE_DIRECT contract=fb_direct storage=fb areas=1 retain=0 previous=1 repair=0 buffers=2 size=480x480 physical=480x480 rotate=0 ppa=0 async_copy=0
+I (33071) presenter: presenter: contract=DIRECT endpoint=fb mode=fb_switch areas=1 retain=0 previous=1 drawbuf=0
+I (35061) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=DOUBLE_DIRECT rotation=0 frames=12 total_frame_us=507226 pixels=ALL last_full=1 last_bands=0 completed=12
+I (35066) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_DIRECT rotation=90 logical=480x480 physical=480x480
+E (35077) present_target: esp_display_present_target_create(332): invalid target config
+W (35085) mode_compare: CASE_REJECT impl=v1 profile=DOUBLE_DIRECT rotation=90 error=ESP_ERR_NOT_SUPPORTED
+I (35094) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_DIRECT rotation=180 logical=480x480 physical=480x480
+E (35105) present_target: esp_display_present_target_create(332): invalid target config
+W (35113) mode_compare: CASE_REJECT impl=v1 profile=DOUBLE_DIRECT rotation=180 error=ESP_ERR_NOT_SUPPORTED
+I (35122) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_DIRECT rotation=270 logical=480x480 physical=480x480
+E (35133) present_target: esp_display_present_target_create(332): invalid target config
+W (35141) mode_compare: CASE_REJECT impl=v1 profile=DOUBLE_DIRECT rotation=270 error=ESP_ERR_NOT_SUPPORTED
+I (35151) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_PARTIAL rotation=0 logical=480x480 physical=480x480
+I (35162) present_target: target: mode=DOUBLE_PARTIAL panel=RGB gram=0 rotation=0 te=0 fb=2 drawbuf=16x2
+I (35171) present_target: pipeline: commit=switch slot=16x2
+I (35176) present_fb: surface: mode=DOUBLE_PARTIAL contract=fb_repair storage=fb areas=1 retain=0 previous=0 repair=1 buffers=2 size=480x480 physical=480x480 rotate=0 ppa=0 async_copy=1
+I (35192) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=15360
+I (37199) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=DOUBLE_PARTIAL rotation=0 frames=12 total_frame_us=522636 pixels=ALL last_full=1 last_bands=0 completed=12
+I (37204) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_PARTIAL rotation=90 logical=480x480 physical=480x480
+I (37215) present_target: target: mode=DOUBLE_PARTIAL panel=RGB gram=0 rotation=90 te=0 fb=2 drawbuf=16x2
+I (37224) present_target: pipeline: commit=switch slot=16x2
+W (37230) present_ppa: PPA unavailable; tile rotate uses software
+I (37236) present_fb: surface: mode=DOUBLE_PARTIAL contract=fb_repair storage=partition_rotate areas=1 retain=0 previous=0 repair=1 buffers=2 size=480x480 physical=480x480 rotate=90 ppa=0 async_copy=1
+I (37253) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=15360
+I (39453) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=DOUBLE_PARTIAL rotation=90 frames=12 total_frame_us=515340 pixels=ALL last_full=1 last_bands=0 completed=12
+I (39458) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_PARTIAL rotation=180 logical=480x480 physical=480x480
+I (39470) present_target: target: mode=DOUBLE_PARTIAL panel=RGB gram=0 rotation=180 te=0 fb=2 drawbuf=16x2
+I (39479) present_target: pipeline: commit=switch slot=16x2
+I (39484) present_fb: surface: mode=DOUBLE_PARTIAL contract=fb_repair storage=partition_rotate areas=1 retain=0 previous=0 repair=1 buffers=2 size=480x480 physical=480x480 rotate=180 ppa=0 async_copy=1
+I (39502) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=15360
+I (41494) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=DOUBLE_PARTIAL rotation=180 frames=12 total_frame_us=472250 pixels=ALL last_full=1 last_bands=0 completed=12
+I (41499) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_PARTIAL rotation=270 logical=480x480 physical=480x480
+I (41511) present_target: target: mode=DOUBLE_PARTIAL panel=RGB gram=0 rotation=270 te=0 fb=2 drawbuf=16x2
+I (41520) present_target: pipeline: commit=switch slot=16x2
+W (41526) present_ppa: PPA unavailable; tile rotate uses software
+I (41531) present_fb: surface: mode=DOUBLE_PARTIAL contract=fb_repair storage=partition_rotate areas=1 retain=0 previous=0 repair=1 buffers=2 size=480x480 physical=480x480 rotate=270 ppa=0 async_copy=1
+I (41549) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=15360
+I (43747) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=DOUBLE_PARTIAL rotation=270 frames=12 total_frame_us=498731 pixels=ALL last_full=1 last_bands=0 completed=12
+I (43752) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=TRIPLE_PARTIAL rotation=0 logical=480x480 physical=480x480
+I (43764) present_target: target: mode=TRIPLE_PARTIAL panel=RGB gram=0 rotation=0 te=0 fb=3 drawbuf=16x2
+I (43773) present_target: pipeline: commit=switch slot=16x2
+I (43778) present_fb: surface: mode=TRIPLE_PARTIAL contract=fb_repair storage=fb areas=1 retain=0 previous=0 repair=1 buffers=3 size=480x480 physical=480x480 rotate=0 ppa=0 async_copy=1
+I (43794) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=15360
+I (45670) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=TRIPLE_PARTIAL rotation=0 frames=12 total_frame_us=390020 pixels=ALL last_full=1 last_bands=0 completed=12
+I (45675) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=TRIPLE_PARTIAL rotation=90 logical=480x480 physical=480x480
+I (45686) present_target: target: mode=TRIPLE_PARTIAL panel=RGB gram=0 rotation=90 te=0 fb=3 drawbuf=16x2
+I (45696) present_target: pipeline: commit=switch slot=16x2
+W (45701) present_ppa: PPA unavailable; tile rotate uses software
+I (45707) present_fb: surface: mode=TRIPLE_PARTIAL contract=fb_repair storage=partition_rotate areas=1 retain=0 previous=0 repair=1 buffers=3 size=480x480 physical=480x480 rotate=90 ppa=0 async_copy=1
+I (45724) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=15360
+I (47796) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=TRIPLE_PARTIAL rotation=90 frames=12 total_frame_us=378264 pixels=ALL last_full=1 last_bands=0 completed=12
+I (47801) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=TRIPLE_PARTIAL rotation=180 logical=480x480 physical=480x480
+I (47813) present_target: target: mode=TRIPLE_PARTIAL panel=RGB gram=0 rotation=180 te=0 fb=3 drawbuf=16x2
+I (47822) present_target: pipeline: commit=switch slot=16x2
+I (47828) present_fb: surface: mode=TRIPLE_PARTIAL contract=fb_repair storage=partition_rotate areas=1 retain=0 previous=0 repair=1 buffers=3 size=480x480 physical=480x480 rotate=180 ppa=0 async_copy=1
+I (47845) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=15360
+I (49738) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=TRIPLE_PARTIAL rotation=180 frames=12 total_frame_us=378253 pixels=ALL last_full=1 last_bands=0 completed=12
+I (49743) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=TRIPLE_PARTIAL rotation=270 logical=480x480 physical=480x480
+I (49755) present_target: target: mode=TRIPLE_PARTIAL panel=RGB gram=0 rotation=270 te=0 fb=3 drawbuf=16x2
+I (49764) present_target: pipeline: commit=switch slot=16x2
+W (49770) present_ppa: PPA unavailable; tile rotate uses software
+I (49775) present_fb: surface: mode=TRIPLE_PARTIAL contract=fb_repair storage=partition_rotate areas=1 retain=0 previous=0 repair=1 buffers=3 size=480x480 physical=480x480 rotate=270 ppa=0 async_copy=1
+I (49793) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=15360
+I (51860) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=TRIPLE_PARTIAL rotation=270 frames=12 total_frame_us=377703 pixels=ALL last_full=1 last_bands=0 completed=12
+I (51865) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=AUTO rotation=0 logical=480x480 physical=480x480
+I (51876) present_target: target: mode=TRIPLE_PARTIAL panel=RGB gram=0 rotation=0 te=0 fb=3 drawbuf=16x2
+I (51885) present_target: pipeline: commit=switch slot=16x2
+I (51890) present_fb: surface: mode=TRIPLE_PARTIAL contract=fb_repair storage=fb areas=1 retain=0 previous=0 repair=1 buffers=3 size=480x480 physical=480x480 rotate=0 ppa=0 async_copy=1
+I (51906) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=15360
+I (53781) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=AUTO rotation=0 frames=12 total_frame_us=389810 pixels=ALL last_full=1 last_bands=0 completed=12
+I (53785) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=AUTO rotation=90 logical=480x480 physical=480x480
+I (53796) present_target: target: mode=TRIPLE_PARTIAL panel=RGB gram=0 rotation=90 te=0 fb=3 drawbuf=16x2
+I (53805) present_target: pipeline: commit=switch slot=16x2
+W (53810) present_ppa: PPA unavailable; tile rotate uses software
+I (53816) present_fb: surface: mode=TRIPLE_PARTIAL contract=fb_repair storage=partition_rotate areas=1 retain=0 previous=0 repair=1 buffers=3 size=480x480 physical=480x480 rotate=90 ppa=0 async_copy=1
+I (53834) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=15360
+I (55906) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=AUTO rotation=90 frames=12 total_frame_us=377956 pixels=ALL last_full=1 last_bands=0 completed=12
+I (55910) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=AUTO rotation=180 logical=480x480 physical=480x480
+I (55921) present_target: target: mode=TRIPLE_PARTIAL panel=RGB gram=0 rotation=180 te=0 fb=3 drawbuf=16x2
+I (55930) present_target: pipeline: commit=switch slot=16x2
+I (55936) present_fb: surface: mode=TRIPLE_PARTIAL contract=fb_repair storage=partition_rotate areas=1 retain=0 previous=0 repair=1 buffers=3 size=480x480 physical=480x480 rotate=180 ppa=0 async_copy=1
+I (55953) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=15360
+I (57851) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=AUTO rotation=180 frames=12 total_frame_us=378583 pixels=ALL last_full=1 last_bands=0 completed=12
+I (57856) mode_compare: CASE_BEGIN board=S3-R16 RGB GC9503 profile=AUTO rotation=270 logical=480x480 physical=480x480
+I (57866) present_target: target: mode=TRIPLE_PARTIAL panel=RGB gram=0 rotation=270 te=0 fb=3 drawbuf=16x2
+I (57875) present_target: pipeline: commit=switch slot=16x2
+W (57881) present_ppa: PPA unavailable; tile rotate uses software
+I (57886) present_fb: surface: mode=TRIPLE_PARTIAL contract=fb_repair storage=partition_rotate areas=1 retain=0 previous=0 repair=1 buffers=3 size=480x480 physical=480x480 rotate=270 ppa=0 async_copy=1
+I (57904) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=15360
+I (59982) mode_compare: CASE_PASS impl=v1 board=S3-R16 RGB GC9503 profile=AUTO rotation=270 frames=12 total_frame_us=377308 pixels=ALL last_full=1 last_bands=0 completed=12
+I (59987) mode_compare: COMPARE_DONE impl=v1 board=S3-R16 RGB GC9503 pass=25 rejected=3 bad=0 frames_per_case=12

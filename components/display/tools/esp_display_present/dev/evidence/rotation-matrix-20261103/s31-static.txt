@@ -1,0 +1,304 @@
+I (392) esp_psram: Found 16MB PSRAM device
+I (392) esp_psram: Speed: 200MHz
+I (393) cpu_start: Multicore app
+I (707) esp_psram: SPI SRAM memory test OK
+I (715) cpu_start: Pro cpu start user code
+I (716) cpu_start: cpu freq: 320000000 Hz
+I (716) app_init: Application information:
+I (716) app_init: Project name:     pv2_compat_probe
+I (716) app_init: App version:      1
+I (716) app_init: Compile time:     Nov  3 2026 16:33:44
+I (717) app_init: ELF file SHA256:  ed9c378ae...
+I (717) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (717) efuse_init: Min chip rev:     v0.0
+I (717) efuse_init: Max chip rev:     v0.99
+I (717) efuse_init: Chip rev:         v0.0
+I (718) heap_init: Initializing. RAM available for dynamic allocation:
+I (718) heap_init: At 2F015E80 len 00065130 (404 KiB): RAM
+I (718) heap_init: At 2F07AFB0 len 000041C0 (16 KiB): RAM
+I (719) heap_init: At 2E000000 len 00007FE8 (31 KiB): RTCRAM
+I (719) esp_psram: Adding pool of 16384K of PSRAM memory to heap allocator
+I (720) spi_flash: detected chip: gd
+I (720) spi_flash: flash io: dio
+I (720) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (721) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (722) main_task: Started on CPU0
+I (723) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (723) main_task: Calling app_main()
+I (723) main_task: Returned from app_main()
+I (3723) qspi: BSP revision=0100 clk=44 rst=42 TE=43 CS=50 QSPI=40MHz
+I (3823) co5300: version: 2.2.0
+I (3824) co5300_spi: LCD panel create success, version: 2.2.0
+W (4584) co5300_spi: The 3Ah command has been used and will be overwritten by external initialization sequence
+I (5184) mode_matrix: CASE_BEGIN board=S31_QSPI profile=GRAM_T1 rotation=0 logical=480x480 physical=480x480
+W (5818) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (5818) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (5819) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (5819) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (5820) mode_matrix: CASE_PASS board=S31_QSPI profile=GRAM_T1 rotation=0 frames=4 avg_frame_us=60820 pixels=ALL last_full=0 last_bands=30 completed=4
+I (5821) mode_matrix: CASE_BEGIN board=S31_QSPI profile=GRAM_T1 rotation=90 logical=480x480 physical=480x480
+W (6521) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (6521) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (6522) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (6522) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (6524) mode_matrix: CASE_PASS board=S31_QSPI profile=GRAM_T1 rotation=90 frames=4 avg_frame_us=76377 pixels=ALL last_full=0 last_bands=30 completed=4
+I (6524) mode_matrix: CASE_BEGIN board=S31_QSPI profile=GRAM_T1 rotation=180 logical=480x480 physical=480x480
+W (7263) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (7263) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (7264) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (7264) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (7266) mode_matrix: CASE_PASS board=S31_QSPI profile=GRAM_T1 rotation=180 frames=4 avg_frame_us=88098 pixels=ALL last_full=0 last_bands=30 completed=4
+I (7266) mode_matrix: CASE_BEGIN board=S31_QSPI profile=GRAM_T1 rotation=270 logical=480x480 physical=480x480
+W (7963) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (7963) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (7964) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (7964) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (7966) mode_matrix: CASE_PASS board=S31_QSPI profile=GRAM_T1 rotation=270 frames=4 avg_frame_us=76122 pixels=ALL last_full=0 last_bands=30 completed=4
+I (7966) mode_matrix: CASE_BEGIN board=S31_QSPI profile=GRAM_T2 rotation=0 logical=480x480 physical=480x480
+W (8499) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (8499) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (8500) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (8500) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (8501) mode_matrix: CASE_PASS board=S31_QSPI profile=GRAM_T2 rotation=0 frames=4 avg_frame_us=35462 pixels=ALL last_full=0 last_bands=30 completed=4
+I (8502) mode_matrix: CASE_BEGIN board=S31_QSPI profile=GRAM_T2 rotation=90 logical=480x480 physical=480x480
+W (9093) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (9093) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (9094) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (9094) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (9096) mode_matrix: CASE_PASS board=S31_QSPI profile=GRAM_T2 rotation=90 frames=4 avg_frame_us=49115 pixels=ALL last_full=0 last_bands=30 completed=4
+I (9096) mode_matrix: CASE_BEGIN board=S31_QSPI profile=GRAM_T2 rotation=180 logical=480x480 physical=480x480
+W (9674) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (9674) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (9675) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (9675) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (9677) mode_matrix: CASE_PASS board=S31_QSPI profile=GRAM_T2 rotation=180 frames=4 avg_frame_us=47845 pixels=ALL last_full=0 last_bands=30 completed=4
+I (9677) mode_matrix: CASE_BEGIN board=S31_QSPI profile=GRAM_T2 rotation=270 logical=480x480 physical=480x480
+W (10262) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (10262) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (10263) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (10263) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (10265) mode_matrix: CASE_PASS board=S31_QSPI profile=GRAM_T2 rotation=270 frames=4 avg_frame_us=48122 pixels=ALL last_full=0 last_bands=30 completed=4
+I (10265) mode_matrix: CASE_BEGIN board=S31_QSPI profile=TE_C1_T1 rotation=0 logical=480x480 physical=480x480
+I (10367) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+I (10368) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (10398) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16756/539/16217/23040 phase=[0,9933] blank_reuse=0 required=138%
+W (10975) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (10976) present_v2: executor=dma2d cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (10976) present_v2: executor=dma2d cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (10976) present_v2: executor=dma2d cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (10978) mode_matrix: CASE_PASS board=S31_QSPI profile=TE_C1_T1 rotation=0 frames=4 avg_frame_us=57030 pixels=ALL last_full=1 last_bands=0 completed=4
+I (10979) mode_matrix: CASE_BEGIN board=S31_QSPI profile=TE_C1_T1 rotation=90 logical=480x480 physical=480x480
+I (11081) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (11081) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (11082) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (11122) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16743/540/16203/23040 phase=[0,9906] blank_reuse=0 required=138%
+W (11719) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (11720) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (11720) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (11720) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (11722) mode_matrix: CASE_PASS board=S31_QSPI profile=TE_C1_T1 rotation=90 frames=4 avg_frame_us=64530 pixels=ALL last_full=1 last_bands=0 completed=4
+I (11723) mode_matrix: CASE_BEGIN board=S31_QSPI profile=TE_C1_T1 rotation=180 logical=480x480 physical=480x480
+I (11824) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (11824) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (11825) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (11865) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16751/539/16212/23040 phase=[0,9923] blank_reuse=0 required=138%
+W (12465) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (12465) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (12466) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (12466) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (12468) mode_matrix: CASE_PASS board=S31_QSPI profile=TE_C1_T1 rotation=180 frames=4 avg_frame_us=66276 pixels=ALL last_full=1 last_bands=0 completed=4
+I (12468) mode_matrix: CASE_BEGIN board=S31_QSPI profile=TE_C1_T1 rotation=270 logical=480x480 physical=480x480
+I (12570) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (12570) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (12571) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (12611) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16744/539/16205/23040 phase=[0,9909] blank_reuse=0 required=138%
+W (13211) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (13212) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (13212) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (13213) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (13214) mode_matrix: CASE_PASS board=S31_QSPI profile=TE_C1_T1 rotation=270 frames=4 avg_frame_us=65278 pixels=ALL last_full=1 last_bands=0 completed=4
+I (13215) mode_matrix: CASE_BEGIN board=S31_QSPI profile=TE_C1_T2 rotation=0 logical=480x480 physical=480x480
+I (13317) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (13317) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (13318) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (13351) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16757/540/16217/23040 phase=[0,9934] blank_reuse=0 required=138%
+W (13891) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (13891) present_v2: executor=dma2d cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (13892) present_v2: executor=dma2d cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (13892) present_v2: executor=dma2d cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (13894) mode_matrix: CASE_PASS board=S31_QSPI profile=TE_C1_T2 rotation=0 frames=4 avg_frame_us=48524 pixels=ALL last_full=1 last_bands=0 completed=4
+I (13894) mode_matrix: CASE_BEGIN board=S31_QSPI profile=TE_C1_T2 rotation=90 logical=480x480 physical=480x480
+I (13996) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (13996) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (13997) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (14030) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16766/539/16227/23040 phase=[0,9953] blank_reuse=0 required=138%
+W (14569) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (14570) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (14570) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (14570) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (14572) mode_matrix: CASE_PASS board=S31_QSPI profile=TE_C1_T2 rotation=90 frames=4 avg_frame_us=48275 pixels=ALL last_full=1 last_bands=0 completed=4
+I (14573) mode_matrix: CASE_BEGIN board=S31_QSPI profile=TE_C1_T2 rotation=180 logical=480x480 physical=480x480
+I (14674) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (14674) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (14675) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (14703) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16758/541/16217/23040 phase=[0,9935] blank_reuse=0 required=138%
+W (15256) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (15257) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (15257) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (15257) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (15259) mode_matrix: CASE_PASS board=S31_QSPI profile=TE_C1_T2 rotation=180 frames=4 avg_frame_us=51528 pixels=ALL last_full=1 last_bands=0 completed=4
+I (15260) mode_matrix: CASE_BEGIN board=S31_QSPI profile=TE_C1_T2 rotation=270 logical=480x480 physical=480x480
+I (15362) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (15362) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (15363) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (15382) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16771/540/16231/23040 phase=[0,9962] blank_reuse=0 required=138%
+W (15923) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (15923) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (15924) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (15924) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (15926) mode_matrix: CASE_PASS board=S31_QSPI profile=TE_C1_T2 rotation=270 frames=4 avg_frame_us=45282 pixels=ALL last_full=1 last_bands=0 completed=4
+I (15927) mode_matrix: CASE_BEGIN board=S31_QSPI profile=TE_C2_T1 rotation=0 logical=480x480 physical=480x480
+I (16028) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (16028) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (16029) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (16059) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16758/538/16220/23040 phase=[0,9938] blank_reuse=0 required=138%
+W (16626) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (16627) present_v2: executor=dma2d cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (16627) present_v2: executor=dma2d cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (16627) present_v2: executor=dma2d cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (16629) mode_matrix: CASE_PASS board=S31_QSPI profile=TE_C2_T1 rotation=0 frames=4 avg_frame_us=54529 pixels=ALL last_full=1 last_bands=0 completed=4
+I (16630) mode_matrix: CASE_BEGIN board=S31_QSPI profile=TE_C2_T1 rotation=90 logical=480x480 physical=480x480
+I (16732) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (16732) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (16733) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (16773) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16770/540/16230/23040 phase=[0,9960] blank_reuse=0 required=138%
+W (17368) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (17369) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (17369) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (17369) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (17371) mode_matrix: CASE_PASS board=S31_QSPI profile=TE_C2_T1 rotation=90 frames=4 avg_frame_us=64030 pixels=ALL last_full=1 last_bands=0 completed=4
+I (17372) mode_matrix: CASE_BEGIN board=S31_QSPI profile=TE_C2_T1 rotation=180 logical=480x480 physical=480x480
+I (17473) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (17473) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (17474) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (17515) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16769/540/16229/23040 phase=[0,9958] blank_reuse=0 required=138%
+W (18115) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (18116) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (18116) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (18116) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (18118) mode_matrix: CASE_PASS board=S31_QSPI profile=TE_C2_T1 rotation=180 frames=4 avg_frame_us=66528 pixels=ALL last_full=1 last_bands=0 completed=4
+I (18119) mode_matrix: CASE_BEGIN board=S31_QSPI profile=TE_C2_T1 rotation=270 logical=480x480 physical=480x480
+I (18221) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (18221) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (18222) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (18263) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16775/540/16235/23040 phase=[0,9970] blank_reuse=0 required=138%
+W (18862) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (18863) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (18863) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (18863) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (18865) mode_matrix: CASE_PASS board=S31_QSPI profile=TE_C2_T1 rotation=270 frames=4 avg_frame_us=65278 pixels=ALL last_full=1 last_bands=0 completed=4
+I (18866) mode_matrix: CASE_BEGIN board=S31_QSPI profile=TE_C2_T2 rotation=0 logical=480x480 physical=480x480
+I (18967) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (18967) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (18968) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (18986) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16774/542/16232/23040 phase=[0,9966] blank_reuse=0 required=138%
+W (19525) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (19525) present_v2: executor=dma2d cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (19526) present_v2: executor=dma2d cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (19526) present_v2: executor=dma2d cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (19528) mode_matrix: CASE_PASS board=S31_QSPI profile=TE_C2_T2 rotation=0 frames=4 avg_frame_us=44524 pixels=ALL last_full=1 last_bands=0 completed=4
+I (19528) mode_matrix: CASE_BEGIN board=S31_QSPI profile=TE_C2_T2 rotation=90 logical=480x480 physical=480x480
+I (19630) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (19630) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (19631) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (19657) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16764/542/16222/23040 phase=[0,9946] blank_reuse=0 required=138%
+W (20216) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (20217) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (20217) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (20217) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (20219) mode_matrix: CASE_PASS board=S31_QSPI profile=TE_C2_T2 rotation=90 frames=4 avg_frame_us=51529 pixels=ALL last_full=1 last_bands=0 completed=4
+I (20220) mode_matrix: CASE_BEGIN board=S31_QSPI profile=TE_C2_T2 rotation=180 logical=480x480 physical=480x480
+I (20321) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (20321) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (20322) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (20343) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16761/532/16229/23040 phase=[0,9950] blank_reuse=0 required=138%
+W (20872) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (20873) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (20873) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (20873) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (20875) mode_matrix: CASE_PASS board=S31_QSPI profile=TE_C2_T2 rotation=180 frames=4 avg_frame_us=43780 pixels=ALL last_full=1 last_bands=0 completed=4
+I (20876) mode_matrix: CASE_BEGIN board=S31_QSPI profile=TE_C2_T2 rotation=270 logical=480x480 physical=480x480
+I (20978) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (20978) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (20979) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (20998) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16782/543/16239/23040 phase=[0,9981] blank_reuse=0 required=138%
+W (21537) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (21538) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (21538) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (21538) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (21540) mode_matrix: CASE_PASS board=S31_QSPI profile=TE_C2_T2 rotation=270 frames=4 avg_frame_us=44778 pixels=ALL last_full=1 last_bands=0 completed=4
+I (21541) mode_matrix: CASE_BEGIN board=S31_QSPI profile=AUTO_GRAM rotation=0 logical=480x480 physical=480x480
+W (22076) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (22076) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (22077) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (22077) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (22078) mode_matrix: CASE_PASS board=S31_QSPI profile=AUTO_GRAM rotation=0 frames=4 avg_frame_us=36124 pixels=ALL last_full=0 last_bands=30 completed=4
+I (22079) mode_matrix: CASE_BEGIN board=S31_QSPI profile=AUTO_GRAM rotation=90 logical=480x480 physical=480x480
+W (22669) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (22669) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (22670) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (22670) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (22672) mode_matrix: CASE_PASS board=S31_QSPI profile=AUTO_GRAM rotation=90 frames=4 avg_frame_us=48837 pixels=ALL last_full=0 last_bands=30 completed=4
+I (22672) mode_matrix: CASE_BEGIN board=S31_QSPI profile=AUTO_GRAM rotation=180 logical=480x480 physical=480x480
+W (23249) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (23249) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (23250) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (23250) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (23252) mode_matrix: CASE_PASS board=S31_QSPI profile=AUTO_GRAM rotation=180 frames=4 avg_frame_us=47608 pixels=ALL last_full=0 last_bands=30 completed=4
+I (23252) mode_matrix: CASE_BEGIN board=S31_QSPI profile=AUTO_GRAM rotation=270 logical=480x480 physical=480x480
+W (23837) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (23837) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (23838) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (23838) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (23840) mode_matrix: CASE_PASS board=S31_QSPI profile=AUTO_GRAM rotation=270 frames=4 avg_frame_us=48137 pixels=ALL last_full=0 last_bands=30 completed=4
+I (23840) mode_matrix: CASE_BEGIN board=S31_QSPI profile=AUTO_TE rotation=0 logical=480x480 physical=480x480
+I (23942) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (23942) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (23943) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (23966) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16768/538/16230/23040 phase=[0,9958] blank_reuse=0 required=138%
+W (24497) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (24498) present_v2: executor=dma2d cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (24498) present_v2: executor=dma2d cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (24498) present_v2: executor=dma2d cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (24500) mode_matrix: CASE_PASS board=S31_QSPI profile=AUTO_TE rotation=0 frames=4 avg_frame_us=43779 pixels=ALL last_full=1 last_bands=0 completed=4
+I (24500) mode_matrix: CASE_BEGIN board=S31_QSPI profile=AUTO_TE rotation=90 logical=480x480 physical=480x480
+I (24602) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (24602) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (24603) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (24622) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16764/539/16225/23040 phase=[0,9949] blank_reuse=0 required=138%
+W (25163) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (25164) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (25164) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (25164) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (25166) mode_matrix: CASE_PASS board=S31_QSPI profile=AUTO_TE rotation=90 frames=4 avg_frame_us=45276 pixels=ALL last_full=1 last_bands=0 completed=4
+I (25167) mode_matrix: CASE_BEGIN board=S31_QSPI profile=AUTO_TE rotation=180 logical=480x480 physical=480x480
+I (25268) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (25268) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (25269) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (25290) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16770/535/16235/23040 phase=[0,9965] blank_reuse=0 required=138%
+W (25821) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (25822) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (25822) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (25822) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (25824) mode_matrix: CASE_PASS board=S31_QSPI profile=AUTO_TE rotation=180 frames=4 avg_frame_us=44271 pixels=ALL last_full=1 last_bands=0 completed=4
+I (25825) mode_matrix: CASE_BEGIN board=S31_QSPI profile=AUTO_TE rotation=270 logical=480x480 physical=480x480
+I (25927) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (25927) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (25928) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (25961) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16775/537/16238/23040 phase=[0,9973] blank_reuse=0 required=138%
+W (26500) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (26500) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (26501) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (26501) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=120 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (26503) mode_matrix: CASE_PASS board=S31_QSPI profile=AUTO_TE rotation=270 frames=4 avg_frame_us=48280 pixels=ALL last_full=1 last_bands=0 completed=4
+I (26503) mode_matrix: MATRIX_PASS board=S31_QSPI cases=32 rotations=4 frames_per_case=4

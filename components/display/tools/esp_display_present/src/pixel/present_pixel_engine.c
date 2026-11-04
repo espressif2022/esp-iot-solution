@@ -29,6 +29,9 @@ struct esp_display_present_pixel_engine {
     present_os_event_t *work;
     present_os_event_t *idle;
     present_worker_t *worker;
+    bool worker_priority_initialized;
+    bool worker_priority_applied;
+    unsigned worker_priority;
     bool stopped;
     bool executing; /* Serialize CPU writes, including overlapping destinations. */
     bool notifying;
@@ -335,10 +338,18 @@ static void copy_worker(void *context)
             continue;
         }
         bool canceled = next->canceled;
+        bool set_priority = !engine->worker_priority_applied;
+        unsigned priority = engine->worker_priority;
+        engine->worker_priority_applied = true;
         next->status.state = ESP_DISPLAY_PRESENT_COPY_RUNNING;
         engine->executing = true;
         esp_display_present_copy_request_t request = next->request;
         present_lock_exit(&engine->lock, false);
+        /* Apply from the live worker itself. A concurrent stop cannot leave a
+         * producer changing the priority of an already-deleted task handle. */
+        if (set_priority) {
+            present_task_set_priority(priority);
+        }
         esp_err_t result = ESP_ERR_INVALID_STATE;
         if (!canceled) {
             if (engine->execute) {
@@ -424,6 +435,7 @@ esp_err_t esp_display_present_pixel_submit(esp_display_present_pixel_engine_t *e
     if (result != ESP_OK) {
         return result;
     }
+    unsigned priority = engine->asynchronous ? present_task_priority() : 0;
     present_lock_enter(&engine->lock, false);
     if (engine->closing) {
         present_lock_exit(&engine->lock, false);
@@ -445,6 +457,11 @@ esp_err_t esp_display_present_pixel_submit(esp_display_present_pixel_engine_t *e
     if (!token) {
         present_lock_exit(&engine->lock, false);
         return ESP_ERR_NO_MEM;
+    }
+    bool inherit_priority = engine->asynchronous && !engine->worker_priority_initialized;
+    if (inherit_priority) {
+        engine->worker_priority = priority;
+        engine->worker_priority_initialized = true;
     }
     record->token = token;
     record->status = (esp_display_present_copy_status_t) {

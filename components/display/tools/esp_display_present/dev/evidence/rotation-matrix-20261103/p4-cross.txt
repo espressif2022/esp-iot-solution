@@ -1,0 +1,36 @@
+I (237) esp_psram: Found 32MB PSRAM device
+I (237) esp_psram: Speed: 200MHz
+I (240) cpu_start: Multicore app
+I (1088) esp_psram: SPI SRAM memory test OK
+I (1097) cpu_start: Pro cpu start user code
+I (1097) cpu_start: cpu freq: 400000000 Hz
+I (1097) app_init: Application information:
+I (1097) app_init: Project name:     pv2_compat_probe
+I (1097) app_init: App version:      1
+I (1098) app_init: Compile time:     Nov  3 2026 16:33:45
+I (1098) app_init: ELF file SHA256:  ae3cc65c3...
+I (1098) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (1098) efuse_init: Min chip rev:     v3.1
+I (1099) efuse_init: Max chip rev:     v3.99
+I (1099) efuse_init: Chip rev:         v3.2
+I (1099) heap_init: Initializing. RAM available for dynamic allocation:
+I (1099) heap_init: At 4FF37560 len 00083A60 (526 KiB): RETENT_RAM
+I (1100) heap_init: At 4FFBAFC0 len 00004BF0 (18 KiB): RAM
+I (1100) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (1100) heap_init: At 30100288 len 00001D78 (7 KiB): SPM
+I (1100) esp_psram: Adding pool of 32768K of PSRAM memory to heap allocator
+I (1101) spi_flash: detected chip: gd
+I (1101) spi_flash: flash io: dio
+I (1102) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (1102) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (1104) sleep_clock: System sleep clock ICG setting initialization
+I (1105) main_task: Started on CPU0
+I (1105) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (1106) main_task: Calling app_main()
+I (1106) main_task: Returned from app_main()
+I (4107) ek79007: version: 2.0.2
+I (4298) mode_matrix: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_PARTIAL_CROSS rotation=0 logical=1024x600 physical=1024x600
+I (4654) mode_matrix: ROTATION_CHANGED profile=DOUBLE_PARTIAL_CROSS from=0 to=90
+E (4682) mode_matrix: OUT_OF_PANEL x0=0 y0=0 x1=600 y1=1024 physical=1024x600
+E (4712) mode_matrix: GEOMETRY_FAIL full=0 bands=0 invalid=1 error=0
+E (4712) mode_matrix: FAIL step=physical transfer geometry error=ESP_FAIL

@@ -1,0 +1,130 @@
+��������������2�ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce2820,len:0x13dc
+load:0x403c8700,len:0xd4c
+load:0x403cb700,len:0x2dfc
+entry 0x403c88e8
+I (24) boot: ESP-IDF v6.2-dev-2221-g7b9cc1ac79f8-dir 2nd stage bootloader
+I (25) boot: compile time Nov  3 2026 16:33:08
+I (25) boot: chip revision: v0.2
+I (27) boot.esp32s3: Boot SPI Speed : 80MHz
+I (31) boot.esp32s3: SPI Mode       : DIO
+I (34) boot.esp32s3: SPI Flash Size : 16MB
+I (38) boot: Partition Table:
+I (41) boot: ## Label            Usage          Type ST Offset   Length
+I (47) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (54) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (60) boot:  2 factory          factory app      00 00 00010000 00300000
+I (67) esp_image: segment 0: paddr=00010020 vaddr=3c080020 size=63c74h (408692) map
+I (150) esp_image: segment 1: paddr=00073c9c vaddr=3fc95500 size=03dc8h ( 15816) load
+I (154) esp_image: segment 2: paddr=00077a6c vaddr=40374000 size=085ach ( 34220) load
+I (162) esp_image: segment 3: paddr=00080020 vaddr=42000020 size=7a4e8h (500968) map
+I (255) esp_image: segment 4: paddr=000fa510 vaddr=4037c5ac size=08f10h ( 36624) load
+I (264) esp_image: segment 5: paddr=00103428 vaddr=50000000 size=00024h (    36) load
+I (271) boot: Loaded app from partition at offset 0x10000
+I (277) octal_psram: vendor id    : 0x0d (AP)
+I (277) octal_psram: dev id       : 0x03 (generation 4)
+I (278) octal_psram: density      : 0x05 (128 Mbit)
+I (280) octal_psram: good-die     : 0x01 (Pass)
+I (284) octal_psram: Latency      : 0x01 (Fixed)
+I (288) octal_psram: VCC          : 0x00 (1.8V)
+I (293) octal_psram: SRF          : 0x01 (Fast Refresh)
+I (297) octal_psram: BurstType    : 0x01 (Hybrid Wrap)
+I (302) octal_psram: BurstLen     : 0x01 (32 Byte)
+I (307) octal_psram: Readlatency  : 0x02 (10 cycles@Fixed)
+I (312) octal_psram: DriveStrength: 0x00 (1/1)
+I (316) MSPI Timing: Enter psram timing tuning
+I (321) esp_psram: Found 16MB PSRAM device
+I (324) esp_psram: Speed: 80MHz
+I (327) cpu_start: Multicore app
+I (894) esp_psram: SPI SRAM memory test OK
+I (902) cpu_start: GPIO 44 and 43 are used as console UART I/O pins
+I (903) cpu_start: Pro cpu start user code
+I (903) cpu_start: cpu freq: 240000000 Hz
+I (904) app_init: Application information:
+I (908) app_init: Project name:     pv2_compat_probe
+I (913) app_init: App version:      1
+I (916) app_init: Compile time:     Nov  3 2026 16:33:30
+I (921) app_init: ELF file SHA256:  10a435ff7...
+I (926) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (932) efuse_init: Min chip rev:     v0.0
+I (936) efuse_init: Max chip rev:     v0.99
+I (940) efuse_init: Chip rev:         v0.2
+I (943) heap_init: Initializing. RAM available for dynamic allocation:
+I (950) heap_init: At 3FC99FC0 len 0004F750 (317 KiB): RAM
+I (955) heap_init: At 3FCE9710 len 00005724 (21 KiB): RAM
+I (960) heap_init: At 600FE000 len 00001FE8 (7 KiB): RTCRAM
+I (965) esp_psram: Adding pool of 16384K of PSRAM memory to heap allocator
+I (972) spi_flash: detected chip: gd
+I (975) spi_flash: flash io: dio
+I (978) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (984) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (991) main_task: Started on CPU0
+I (994) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (1002) main_task: Calling app_main()
+I (1005) compat_probe: START impl=v2
+I (1009) main_task: Returned from app_main()
+I (1010) lcd_panel.io.3wire_spi: Panel IO create success, version: 1.0.1
+W (2802) lcd_panel.io.3wire_spi: Delete but keep CS line inactive
+W (2832) lcd.rgb: GPIO 3 is not usable, maybe is reserved by others
+I (2832) gc9503: LCD panel create success, version: 3.0.1
+I (2834) compat_probe: CASE impl=v2 mode=0 compose=0 rotation=0
+I (2918) compat_probe: CANCEL_RESUME_PASS impl=v2 mode=0
+I (3678) compat_probe: PASS impl=v2 mode=0 compose=0 rotation=0 frames=12 elapsed_us=797891 submitted=12 completed=12 heap=288579
+I (3678) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (3690) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (3702) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (3716) compat_probe: CASE impl=v2 mode=6 compose=0 rotation=0
+I (3781) compat_probe: CANCEL_RESUME_PASS impl=v2 mode=6
+I (4540) compat_probe: PASS impl=v2 mode=6 compose=0 rotation=0 frames=12 elapsed_us=795324 submitted=12 completed=12 heap=257467
+I (4540) present_v2: executor=cpu cpu_attempts=361 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (4552) present_v2: executor=cpu cpu_attempts=361 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (4564) present_v2: executor=cpu cpu_attempts=361 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (4578) compat_probe: CASE impl=v2 mode=1 compose=0 rotation=0
+I (4660) compat_probe: CANCEL_RESUME_PASS impl=v2 mode=1
+I (5418) compat_probe: PASS impl=v2 mode=1 compose=0 rotation=0 frames=12 elapsed_us=796593 submitted=12 completed=12 heap=288579
+I (5418) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (5430) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (5442) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (5456) compat_probe: CASE impl=v2 mode=3 compose=0 rotation=0
+I (5539) compat_probe: CANCEL_RESUME_PASS impl=v2 mode=3
+I (6479) compat_probe: PASS impl=v2 mode=3 compose=0 rotation=0 frames=12 elapsed_us=979491 submitted=12 completed=12 heap=288579
+I (6479) present_v2: executor=cpu cpu_attempts=11 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (6491) present_v2: executor=cpu cpu_attempts=11 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (6503) present_v2: executor=cpu cpu_attempts=11 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (6517) compat_probe: CASE impl=v2 mode=4 compose=0 rotation=0
+I (6582) compat_probe: CANCEL_RESUME_PASS impl=v2 mode=4
+I (7059) compat_probe: PASS impl=v2 mode=4 compose=0 rotation=0 frames=12 elapsed_us=513205 submitted=12 completed=12 heap=257467
+I (7059) present_v2: executor=cpu cpu_attempts=361 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (7071) present_v2: executor=cpu cpu_attempts=361 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (7083) present_v2: executor=cpu cpu_attempts=361 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (7097) compat_probe: CASE impl=v2 mode=2 compose=0 rotation=0
+I (7179) compat_probe: CANCEL_RESUME_PASS impl=v2 mode=2
+I (7623) compat_probe: PASS impl=v2 mode=2 compose=0 rotation=0 frames=12 elapsed_us=482542 submitted=12 completed=12 heap=288579
+I (7623) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (7635) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (7647) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (7702) compat_probe: BENCH_START impl=v2 width=480 height=480
+I (77160) compat_probe: SCENE impl=v2 name="Empty screen" fps=17 cpu=86 render=35 flush=8
+I (77160) compat_probe: SCENE impl=v2 name="Moving wallpaper" fps=13 cpu=99 render=62 flush=7
+I (77165) compat_probe: SCENE impl=v2 name="Single rectangle" fps=30 cpu=50 render=2 flush=11
+I (77173) compat_probe: SCENE impl=v2 name="Multiple rectangles" fps=23 cpu=96 render=25 flush=8
+I (77181) compat_probe: SCENE impl=v2 name="Multiple RGB images" fps=26 cpu=97 render=23 flush=5
+I (77190) compat_probe: SCENE impl=v2 name="Multiple ARGB images" fps=22 cpu=98 render=29 flush=5
+I (77199) compat_probe: SCENE impl=v2 name="Rotated ARGB images" fps=29 cpu=74 render=19 flush=0
+I (77207) compat_probe: SCENE impl=v2 name="Multiple labels" fps=17 cpu=89 render=41 flush=12
+I (77215) compat_probe: SCENE impl=v2 name="Screen sized text" fps=6 cpu=99 render=130 flush=8
+I (77224) compat_probe: SCENE impl=v2 name="Multiple arcs" fps=29 cpu=69 render=12 flush=4
+I (77232) compat_probe: SCENE impl=v2 name="Containers" fps=24 cpu=84 render=29 flush=2
+I (77239) compat_probe: SCENE impl=v2 name="Containers with overlay" fps=10 cpu=98 render=71 flush=9
+I (77248) compat_probe: SCENE impl=v2 name="Containers with opa" fps=20 cpu=92 render=38 flush=3
+I (77257) compat_probe: SCENE impl=v2 name="Containers with opa_layer" fps=8 cpu=97 render=94 flush=4
+I (77266) compat_probe: SCENE impl=v2 name="Containers with scrolling" fps=8 cpu=99 render=99 flush=8
+I (77275) compat_probe: SCENE impl=v2 name="Widgets demo" fps=4 cpu=99 render=138 flush=6
+I (77283) compat_probe: BENCH_DONE impl=v2 scenes=16 fps=17 cpu=89 render=52 flush=6
+I (77371) present_v2: executor=cpu cpu_attempts=8693 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (77373) present_v2: executor=cpu cpu_attempts=8693 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (77385) compat_probe: ALL_PASS impl=v2

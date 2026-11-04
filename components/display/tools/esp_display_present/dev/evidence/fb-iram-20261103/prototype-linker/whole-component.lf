@@ -1,0 +1,4 @@
+[mapping:present_diag]
+archive: libesp_display_present.a
+entries:
+    * (noflash)

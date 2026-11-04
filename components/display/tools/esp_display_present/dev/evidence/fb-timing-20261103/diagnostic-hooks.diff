@@ -1,0 +1,337 @@
+--- v1/private_include/present_fb_internal.h
++++ v1-traced/private_include/present_fb_internal.h
+@@ -1,3 +1,4 @@
++#include "boundary_trace.h"
+ /*
+  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
+  *
+@@ -196,6 +197,7 @@
+     if (pixels == NULL) {
+         return ESP_ERR_INVALID_STATE;
+     }
++    boundary_emit(BT_WRITE_BEGIN, (uintptr_t)pixels, (uint32_t)frame_id);
+     ++frame->lease.token;
+     if (frame->lease.token == 0) {
+         ++frame->lease.token;
+--- v1/src/producer/present_fb_fence.c
++++ v1-traced/src/producer/present_fb_fence.c
+@@ -1,3 +1,4 @@
++#include "boundary_trace.h"
+ /*
+  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
+  *
+@@ -58,6 +59,7 @@
+     /* Ownership was retired above from the atomic submission record. Ticket
+      * completion is a parallel fence update and cannot decide whether the
+      * previous display buffer becomes writable. */
++    boundary_emit(BT_CONFIRM, (uintptr_t)surface->fb.disp_fb, (uint32_t)ticket);
+     bool completed = esp_display_present_tracker_complete_present_frame_isr(
+                          &surface->tracker, ticket);
+     if (completed) {
+--- v1/src/producer/stage/present_fb_pipeline.c
++++ v1-traced/src/producer/stage/present_fb_pipeline.c
+@@ -1,3 +1,4 @@
++#include "boundary_trace.h"
+ /*
+  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
+  *
+@@ -170,6 +171,7 @@
+         panel_pixels,
+         frame->physical_stride_bytes * frame->physical_height);
+ 
++    boundary_emit(BT_SUBMIT, (uintptr_t)panel_pixels, (uint32_t)frame_id);
+     void *old_display = frame->fb.disp_fb;
+     if (barrier == PRESENT_SWITCH_BARRIER_ORDERED) {
+         esp_display_present_tracker_pool_commit(
+@@ -297,6 +299,7 @@
+         return ESP_ERR_INVALID_STATE;
+     }
+ 
++    boundary_emit(BT_WRITE_END, (uintptr_t)panel_pixels, (uint32_t)lease->frame_id);
+     void *display_before = frame->fb.disp_fb;
+     esp_err_t ret = present_fb_switch_commit(
+                         frame, lease->frame_id, panel_pixels, barrier);
+--- v1/src/runtime/present_frame_tracker.c
++++ v1-traced/src/runtime/present_frame_tracker.c
+@@ -1,3 +1,4 @@
++#include "boundary_trace.h"
+ /*
+  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
+  *
+@@ -1143,6 +1144,7 @@
+     elem->ticket = 0;
+     elem->release_on_retire = false;
+     if (*out_release) {
++        boundary_emit(BT_RELEASE, (uintptr_t)elem->buffer, (uint32_t)*out_ticket);
+         STAILQ_INSERT_TAIL(&tracker->pool.free_queue, elem, entry);
+     }
+     return true;
+--- v1/src/target/present_target.c
++++ v1-traced/src/target/present_target.c
+@@ -243,7 +243,7 @@
+         esp_lcd_dpi_panel_event_callbacks_t callbacks = {
+             .on_color_trans_done = target_dpi_color_done,
+ #ifdef ESP_DISPLAY_PRESENT_HAS_DPI_VSYNC
+-            .on_vsync = target->scanout_clock_enabled ? target_dpi_vsync : NULL,
++            .on_vsync = target_dpi_vsync,
+ #endif
+ #if ESP_DISPLAY_PRESENT_DPI_FRAME_COMPLETE
+             .on_frame_buf_complete = target_dpi_frame_done,
+--- v2/src/backend/present_backend_fb.c
++++ v2-traced/src/backend/present_backend_fb.c
+@@ -1,3 +1,4 @@
++#include "boundary_trace.h"
+ /*
+  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
+  * SPDX-License-Identifier: Apache-2.0
+@@ -519,6 +520,7 @@
+             };
+         }
+         present_lock_enter(&backend->lock, false);
++        boundary_emit(BT_WRITE_END, (uintptr_t)(backend->scan_storage ? slot->scan.pixels : slot->surface.pixels), 0);
+         error = present_image_commit(&backend->image);
+         if (error != ESP_OK) {
+             present_lock_exit(&backend->lock, false);
+@@ -554,6 +556,7 @@
+         size_t next = backend->pending;
+         if (backend->scanning != SIZE_MAX && backend->scanning != next) {
+             present_allocation_drop(&backend->image.allocations[backend->scanning], PRESENT_REF_SCANOUT);
++            boundary_emit(BT_RELEASE, (uintptr_t)(backend->scan_storage ? backend->slots[backend->scanning].scan.pixels : backend->slots[backend->scanning].surface.pixels), 0);
+             backend->slots[backend->scanning].state = FB_SLOT_FREE;
+         }
+         present_allocation_drop(&backend->image.allocations[next], PRESENT_REF_TRANSFER);
+@@ -910,6 +913,7 @@
+     if (error != ESP_OK) {
+         return error;
+     }
++    boundary_emit(BT_WRITE_BEGIN, (uintptr_t)(backend->scan_storage ? backend->slots[slot].scan.pixels : backend->slots[slot].surface.pixels), 0);
+     if (prefill && !backend->config.async_copy) {
+         esp_display_present_copy_request_t copy = baseline_copy(backend, slot, prefill_area);
+         error = esp_display_present_pixel_execute_cpu(&copy);
+--- v2/src/platform/present_lcd_scanout.c
++++ v2-traced/src/platform/present_lcd_scanout.c
+@@ -1,3 +1,4 @@
++#include "boundary_trace.h"
+ /*
+  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
+  * SPDX-License-Identifier: Apache-2.0
+@@ -43,6 +44,7 @@
+     esp_display_present_panel_event_fn callback = NULL;
+     void *user = NULL;
+     uint64_t cookie = 0;
++    boundary_emit(BT_CALLBACK, 0, scanout->armed);
+     unsigned needed = scanout->config.single_boundary_retire ? 1u : 2u;
+     if (scanout->attached && scanout->armed && (!scanout->closing || scanout->config.retain_driver_scanout) && ++scanout->boundaries == needed) {
+         cookie = scanout->cookie;
+@@ -56,6 +58,7 @@
+     if (!callback) {
+         return false;
+     }
++    boundary_emit(BT_CONFIRM, 0, (uint32_t)cookie);
+     esp_display_present_backend_event_t event = {.kind = ESP_DISPLAY_PRESENT_EVENT_SCANOUT_CONFIRMED, .transaction_cookie = cookie};
+     bool need_yield = callback(user, &event, true);
+     present_lock_enter(&scanout->lock, true);
+@@ -134,7 +137,7 @@
+     esp_err_t error = ESP_ERR_NOT_SUPPORTED;
+ #if PRESENT_DSI_SUPPORTED
+     if (scanout->config.kind == ESP_DISPLAY_PRESENT_LCD_DSI) {
+-        esp_lcd_dpi_panel_event_callbacks_t callbacks = {.on_frame_buf_complete = dsi_done, .on_vsync = scanout->config.on_vsync ? dsi_vsync : NULL};
++        esp_lcd_dpi_panel_event_callbacks_t callbacks = {.on_frame_buf_complete = dsi_done, .on_vsync = dsi_vsync};
+         error = esp_lcd_dpi_panel_register_event_callbacks(scanout->config.panel, &callbacks, scanout);
+     }
+ #endif
+@@ -192,10 +195,12 @@
+     scanout->cookie = cookie;
+     scanout->armed = false;
+     present_lock_exit(&scanout->lock, false);
++    boundary_emit(BT_SUBMIT, (uintptr_t)surface->pixels, (uint32_t)cookie);
+     error = esp_lcd_panel_draw_bitmap(scanout->config.panel, 0, 0, area->width, area->height, surface->pixels);
+     present_lock_enter(&scanout->lock, false);
+     scanout->boundaries = 0;
+     scanout->armed = error == ESP_OK;
++    boundary_emit(BT_ARM, (uintptr_t)surface->pixels, (uint32_t)cookie);
+     if (error != ESP_OK) {
+         scanout->closing = true;
+     }
+--- idf/dsi/esp_lcd_panel_dpi.c
++++ idf-traced/dsi/esp_lcd_panel_dpi.c
+@@ -1,3 +1,4 @@
++#include "boundary_trace.h"
+ /*
+  * SPDX-FileCopyrightText: 2023-2026 Espressif Systems (Shanghai) CO LTD
+  *
+@@ -28,6 +29,7 @@
+     esp_lcd_panel_t base;         // Base class of generic lcd panel
+     esp_lcd_dsi_bus_handle_t bus; // DSI bus handle
+     uint8_t virtual_channel;      // Virtual channel ID, index from 0
++    uint8_t boundary_active_fb;
+     uint8_t cur_fb_index;         // Current frame buffer index
+     uint8_t num_fbs;              // Number of frame buffers
+     uint8_t *fbs[DPI_PANEL_MAX_FB_NUM]; // Frame buffers
+@@ -85,7 +87,11 @@
+ {
+     bool yield_needed = false;
+     esp_lcd_dpi_panel_t *dpi_panel = (esp_lcd_dpi_panel_t *)user_data;
++    boundary_emit(BT_READ_END, (uintptr_t)dpi_panel->fbs[dpi_panel->boundary_active_fb], 0);
+     uint8_t fb_index = dpi_panel->cur_fb_index;
++    dpi_panel->boundary_active_fb = fb_index;
++    boundary_emit(BT_SELECT, (uintptr_t)dpi_panel->fbs[fb_index], 0);
++    boundary_emit(BT_READ_BEGIN, (uintptr_t)dpi_panel->fbs[fb_index], 0);
+     dw_gdma_link_list_handle_t link_list = dpi_panel->link_lists[fb_index];
+ 
+     // restart the DMA transfer, keep refreshing the LCD
+@@ -97,6 +103,7 @@
+     dw_gdma_channel_use_link_list(chan, link_list);
+     dw_gdma_channel_enable_ctrl(chan, true);
+ 
++    boundary_emit(BT_FRAME_DONE, (uintptr_t)dpi_panel->fbs[fb_index], 0);
+     if (dpi_panel->on_frame_buf_complete) {
+         if (dpi_panel->on_frame_buf_complete(&dpi_panel->base, NULL, dpi_panel->user_ctx)) {
+             yield_needed = true;
+@@ -104,6 +111,7 @@
+     }
+ 
+ #if !MIPI_DSI_BRG_LL_EVENT_VSYNC
++    boundary_emit(BT_VSYNC, 0, 1);
+     // the DMA descriptor is large enough to carry a whole frame buffer, so this event can also be treated as a fake "vsync end"
+     if (dpi_panel->on_vsync) {
+         if (dpi_panel->on_vsync(&dpi_panel->base, NULL, dpi_panel->user_ctx)) {
+@@ -126,9 +134,11 @@
+         // when an underrun happens, the LCD display may already becomes blue
+         // it's too late to recover the display, so we just print an error message
+         // as a hint to the user that he should optimize the memory bandwidth (with AXI-ICM)
++        boundary_emit(BT_UNDERRUN, 0, 0);
+         ESP_DRAM_LOGE(TAG, "can't fetch data from external memory fast enough, underrun happens");
+     }
+     if (intr_status & MIPI_DSI_BRG_LL_EVENT_VSYNC) {
++        boundary_emit(BT_VSYNC, 0, 0);
+         if (dpi_panel->on_vsync) {
+             if (dpi_panel->on_vsync(&dpi_panel->base, NULL, dpi_panel->user_ctx)) {
+                 portYIELD_FROM_ISR();
+@@ -466,6 +476,9 @@
+     }
+ 
+     // by default, we use the fb0 as the first working frame buffer
++    boundary_emit(BT_CHAIN, (uintptr_t)dpi_panel->fbs[0], 1);
++    boundary_emit(BT_SELECT, (uintptr_t)dpi_panel->fbs[0], 0);
++    boundary_emit(BT_READ_BEGIN, (uintptr_t)dpi_panel->fbs[0], 0);
+     dpi_panel->cur_fb_index = 0;
+     link_list = dpi_panel->link_lists[0];
+     dw_gdma_channel_use_link_list(dma_chan, link_list);
+--- idf/rgb/esp_lcd_panel_rgb.c
++++ idf-traced/rgb/esp_lcd_panel_rgb.c
+@@ -1,3 +1,4 @@
++#include "boundary_trace.h"
+ /*
+  * SPDX-FileCopyrightText: 2021-2026 Espressif Systems (Shanghai) CO LTD
+  *
+@@ -759,6 +760,7 @@
+         for (int i = 0; i < rgb_panel->num_fbs; i++) {
+             // Note, because of DMA prefetch, there's possibility that the old frame buffer might be sent out again
+             // it's hard to know the time when the new frame buffer starts
++            boundary_emit(BT_CHAIN, (uintptr_t)rgb_panel->fbs[i], rgb_panel->cur_fb_index);
+             gdma_link_concat(rgb_panel->dma_fb_links[i], -1, rgb_panel->dma_fb_links[rgb_panel->cur_fb_index], 0);
+         }
+ #if RGB_LCD_USE_GDMA_LINK_SWITCH_EVENT
+@@ -1191,7 +1193,10 @@
+     } else {
+         // copy partial frame buffer to the bounce buffer
+         // Note: if the frame buffer is behind a cache, and the cache is disabled, crash would happen here when auto write back happens
++        if (panel->bounce_pos_px == 0) boundary_emit(BT_READ_BEGIN, (uintptr_t)panel->fbs[panel->bb_fb_index], 0);
+         memcpy(buffer, &panel->fbs[panel->bb_fb_index][panel->bounce_pos_px * bytes_per_pixel], panel->bb_size);
++        if (panel->bounce_pos_px + panel->bb_size / bytes_per_pixel >= panel->fb_size / bytes_per_pixel)
++            boundary_emit(BT_READ_END, (uintptr_t)panel->fbs[panel->bb_fb_index], panel->bounce_pos_px);
+     }
+     // do memory sync if the bounce buffer is behind the cache
+     if (panel->flags.bb_behind_cache) {
+@@ -1202,7 +1207,9 @@
+     // If the bounce pos is larger than the frame buffer size, wrap around so the next isr starts pre-loading the next frame.
+     if (panel->bounce_pos_px >= panel->fb_size / bytes_per_pixel) {
+         panel->bounce_pos_px = 0;
++        boundary_emit(BT_FRAME_DONE, (uintptr_t)panel->fbs[panel->bb_fb_index], 0);
+         panel->bb_fb_index = panel->cur_fb_index;
++        boundary_emit(BT_SELECT, (uintptr_t)panel->fbs[panel->bb_fb_index], 0);
+         esp_lcd_rgb_panel_frame_buf_complete_cb_t cb = panel->on_frame_buf_complete;
+         if (cb) {
+             if (cb(&panel->base, NULL, panel->user_ctx)) {
+@@ -1229,11 +1236,13 @@
+         // in bounce buffer mode, the DMA EOF means time to fill the finished bounce buffer
+         // Figure out which bounce buffer to write to
+         portENTER_CRITICAL_ISR(&rgb_panel->spinlock);
++        if ((rgb_panel->bb_eof_count & 7u) == 0) boundary_emit(BT_BOUNCE_EOF, 0, rgb_panel->bb_eof_count);
+         int bb = rgb_panel->bb_eof_count % RGB_LCD_PANEL_BOUNCE_BUF_NUM;
+         rgb_panel->bb_eof_count++;
+         portEXIT_CRITICAL_ISR(&rgb_panel->spinlock);
+         need_yield = lcd_rgb_panel_fill_bounce_buffer(rgb_panel, rgb_panel->bounce_buffer[bb]);
+     } else {
++        boundary_emit(BT_FRAME_DONE, (uintptr_t)rgb_panel->fbs[rgb_panel->cur_fb_index], 1);
+         // Once the preload has already done, the buffer complete callback is not reliable.
+         if (rgb_panel->on_frame_buf_complete) {
+             if (rgb_panel->on_frame_buf_complete(&rgb_panel->base, NULL, rgb_panel->user_ctx)) {
+@@ -1247,6 +1256,7 @@
+ #if RGB_LCD_USE_GDMA_LINK_SWITCH_EVENT
+ static IRAM_ATTR bool lcd_rgb_panel_link_switch_handler(gdma_channel_handle_t dma_chan, gdma_event_data_t *event_data, void *user_data)
+ {
++    boundary_emit(BT_LINK_SWITCH, 0, 0);
+     (void)dma_chan;
+     (void)event_data;
+     bool need_yield = false;
+@@ -1332,6 +1342,7 @@
+             }
+         };
+         ESP_RETURN_ON_ERROR(gdma_new_link_list(&link_cfg, &rgb_panel->dma_bb_link), TAG, "create bounce buffer DMA link failed");
++        boundary_emit(BT_CHAIN, 0, 0x80000000u | (rgb_panel->flags.stream_mode ? 0x40000000u : 0) | link_cfg.num_items);
+         // mount bounce buffers to the DMA link list
+         gdma_buffer_mount_config_t mount_cfgs[RGB_LCD_PANEL_BOUNCE_BUF_NUM] = {0};
+         for (int i = 0; i < RGB_LCD_PANEL_BOUNCE_BUF_NUM; i++) {
+@@ -1374,6 +1385,7 @@
+                 .check_owner = true,
+             },
+         };
++        boundary_emit(BT_CHAIN, 0, (rgb_panel->flags.stream_mode ? 0x40000000u : 0) | num_dma_nodes);
+         gdma_buffer_mount_config_t mount_cfg = {
+             .length = rgb_panel->fb_size,
+             .flags = {
+@@ -1430,15 +1442,19 @@
+ {
+     int bb_size_px = panel->bb_size / (panel->fb_bits_per_pixel / 8);
+     bool do_restart = false;
++    uint32_t boundary_restart_reason = 0;
+ #if CONFIG_LCD_RGB_RESTART_IN_VSYNC
++    boundary_restart_reason |= 1;
+     do_restart = true;
+ #else
+     portENTER_CRITICAL_ISR(&panel->spinlock);
+     if (panel->flags.need_restart) {
++        boundary_restart_reason |= 2;
+         panel->flags.need_restart = false;
+         do_restart = true;
+     }
+     if (panel->bb_eof_count < panel->expect_eof_count) {
++        boundary_restart_reason |= 4;
+         do_restart = true;
+     }
+     panel->bb_eof_count = 0;
+@@ -1448,6 +1464,7 @@
+     if (!do_restart) {
+         return;
+     }
++    boundary_emit(BT_RESTART, (uintptr_t)panel->fbs[panel->bb_size ? panel->bb_fb_index : panel->cur_fb_index], boundary_restart_reason);
+ 
+     if (panel->bb_size) {
+         // Catch de-synced frame buffer and reset if needed.
+@@ -1536,12 +1553,14 @@
+ 
+ #if LCD_LL_EVENT_UNDERRUN
+     if (intr_status & LCD_LL_EVENT_UNDERRUN) {
++        boundary_emit(BT_UNDERRUN, 0, 0);
+         ESP_EARLY_LOGE(TAG, "LCD underrun");
+     }
+ #endif
+ 
+     // VSYNC event happened
+     if (intr_status & LCD_LL_EVENT_VSYNC_END) {
++        boundary_emit(BT_VSYNC, 0, rgb_panel->bb_eof_count);
+         // call user registered callback
+         if (rgb_panel->on_vsync) {
+             if (rgb_panel->on_vsync(&rgb_panel->base, NULL, rgb_panel->user_ctx)) {

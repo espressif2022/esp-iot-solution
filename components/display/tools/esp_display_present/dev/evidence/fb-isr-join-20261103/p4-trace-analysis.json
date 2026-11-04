@@ -1,0 +1,94 @@
+{
+  "p4-trace-perf.log": [
+    {
+      "name": "DOUBLE_PARTIAL",
+      "scope": "v2",
+      "capture_count": 507,
+      "reported_count": 507,
+      "dropped": 0,
+      "counts": {
+        "REGISTER": 3,
+        "READ_END": 38,
+        "SELECT": 38,
+        "READ_BEGIN": 38,
+        "FRAME_DONE": 38,
+        "CALLBACK": 38,
+        "VSYNC": 38,
+        "APP_BEGIN": 34,
+        "SUBMIT": 35,
+        "ARM": 35,
+        "CONFIRM": 35,
+        "WRITE_BEGIN": 34,
+        "APP_COMMIT": 34,
+        "WRITE_END": 34,
+        "RELEASE": 34,
+        "STOP": 1
+      },
+      "submit_to_first_matching_select_us": {
+        "min": 8111,
+        "mean": 9741.5,
+        "max": 14100,
+        "n": 35
+      },
+      "last_read_end_to_release_us": {
+        "min": 20,
+        "mean": 20.8,
+        "max": 25,
+        "n": 34
+      },
+      "callbacks_until_confirm": {
+        "min": 1,
+        "mean": 1,
+        "max": 1,
+        "n": 35
+      },
+      "problems": [],
+      "uncertainty": []
+    },
+    {
+      "name": "DOUBLE_DIRECT",
+      "scope": "v2",
+      "capture_count": 711,
+      "reported_count": 711,
+      "dropped": 0,
+      "counts": {
+        "REGISTER": 3,
+        "READ_END": 72,
+        "SELECT": 72,
+        "READ_BEGIN": 72,
+        "FRAME_DONE": 72,
+        "CALLBACK": 72,
+        "VSYNC": 72,
+        "APP_BEGIN": 34,
+        "SUBMIT": 35,
+        "ARM": 35,
+        "CONFIRM": 35,
+        "WRITE_BEGIN": 34,
+        "WRITE_END": 34,
+        "APP_COMMIT": 34,
+        "RELEASE": 34,
+        "STOP": 1
+      },
+      "submit_to_first_matching_select_us": {
+        "min": 7070,
+        "mean": 14987.1,
+        "max": 15395,
+        "n": 35
+      },
+      "last_read_end_to_release_us": {
+        "min": 28,
+        "mean": 29.5,
+        "max": 43,
+        "n": 34
+      },
+      "callbacks_until_confirm": {
+        "min": 1,
+        "mean": 1,
+        "max": 1,
+        "n": 35
+      },
+      "problems": [],
+      "uncertainty": []
+    }
+  ]
+}

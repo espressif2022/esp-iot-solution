@@ -1,0 +1,190 @@
+diff --git a/components/display/tools/esp_display_present/src/backend/present_backend_fb.c b/components/display/tools/esp_display_present/src/backend/present_backend_fb.c
+index 9060d2ae7..36da0c8bd 100644
+--- a/components/display/tools/esp_display_present/src/backend/present_backend_fb.c
++++ b/components/display/tools/esp_display_present/src/backend/present_backend_fb.c
+@@ -88,6 +88,7 @@ typedef struct {
+     uint64_t sequence;
+     uint64_t cookie;
+     bool confirmed;
++    bool require_full_redraw;
+     present_transaction_t transaction;
+ } fb_slot_t;
+ 
+@@ -404,7 +405,8 @@ static fb_advance_result_t advance_build_pipeline(present_backend_t *backend, fb
+ 
+     /* Stage 3 -> 4: FB_SLOT_DRAIN_TILE -> FB_SLOT_REPAIR */
+     if (slot->state == FB_SLOT_DRAIN_TILE) {
+-        bool require_full = backend->baseline == SIZE_MAX || backend->config.render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL;
++        bool require_full = backend->baseline == SIZE_MAX || backend->config.render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL ||
++                            slot->require_full_redraw;
+         if (require_full && !present_image_full(&backend->image)) {
+             error = ESP_ERR_INVALID_STATE;
+             if (context == FB_SEAL_ACCEPTED) {
+@@ -874,7 +876,12 @@ static esp_err_t fb_begin(present_backend_t *backend, const esp_display_present_
+     }
+     /* Prepopulate a stable latest sealed frame. Sealed buffers are immutable;
+      * single-producer pump cannot retire/reuse it during this CPU copy. */
+-    bool prefill = backend->baseline != SIZE_MAX && backend->baseline != slot && backend->config.render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT;
++    bool direct = backend->config.render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT;
++    bool different_baseline = backend->baseline != SIZE_MAX && backend->baseline != slot;
++    /* A producer that requests a full raster need not read the previous image.
++     * The request is not coverage: seal checks actual submitted pixels below. */
++    bool require_full_redraw = direct && different_baseline && request->full_redraw;
++    bool prefill = direct && different_baseline && !request->full_redraw;
+     bool selective_direct = prefill && !request->full_redraw && request->damage_count > 0 &&
+                             !backend->scan_storage && backend->image.versions[slot] != 0;
+     esp_display_present_rect_t prefill_area = {0, 0, backend->config.width, backend->config.height};
+@@ -915,6 +922,7 @@ static esp_err_t fb_begin(present_backend_t *backend, const esp_display_present_
+     backend->active = slot;
+     backend->slots[slot].state = (prefill && backend->config.async_copy) ? FB_SLOT_PREFILL : FB_SLOT_DRAWING;
+     backend->slots[slot].record = record;
++    backend->slots[slot].require_full_redraw = require_full_redraw;
+     backend->core.frames[record] = (fb_record_t) {
+         .common = {.token = token}
+     };
+diff --git a/components/display/tools/esp_display_present/src/pixel/present_pixel_engine.c b/components/display/tools/esp_display_present/src/pixel/present_pixel_engine.c
+index 1f549b86f..04aca0f56 100644
+--- a/components/display/tools/esp_display_present/src/pixel/present_pixel_engine.c
++++ b/components/display/tools/esp_display_present/src/pixel/present_pixel_engine.c
+@@ -29,6 +29,9 @@ struct esp_display_present_pixel_engine {
+     present_os_event_t *work;
+     present_os_event_t *idle;
+     present_worker_t *worker;
++    bool worker_priority_initialized;
++    bool worker_priority_applied;
++    unsigned worker_priority;
+     bool stopped;
+     bool executing; /* Serialize CPU writes, including overlapping destinations. */
+     bool notifying;
+@@ -335,10 +338,18 @@ static void copy_worker(void *context)
+             continue;
+         }
+         bool canceled = next->canceled;
++        bool set_priority = !engine->worker_priority_applied;
++        unsigned priority = engine->worker_priority;
++        engine->worker_priority_applied = true;
+         next->status.state = ESP_DISPLAY_PRESENT_COPY_RUNNING;
+         engine->executing = true;
+         esp_display_present_copy_request_t request = next->request;
+         present_lock_exit(&engine->lock, false);
++        /* Apply from the live worker itself. A concurrent stop cannot leave a
++         * producer changing the priority of an already-deleted task handle. */
++        if (set_priority) {
++            present_task_set_priority(priority);
++        }
+         esp_err_t result = ESP_ERR_INVALID_STATE;
+         if (!canceled) {
+             if (engine->execute) {
+@@ -424,6 +435,7 @@ esp_err_t esp_display_present_pixel_submit(esp_display_present_pixel_engine_t *e
+     if (result != ESP_OK) {
+         return result;
+     }
++    unsigned priority = engine->asynchronous ? present_task_priority() : 0;
+     present_lock_enter(&engine->lock, false);
+     if (engine->closing) {
+         present_lock_exit(&engine->lock, false);
+@@ -446,6 +458,11 @@ esp_err_t esp_display_present_pixel_submit(esp_display_present_pixel_engine_t *e
+         present_lock_exit(&engine->lock, false);
+         return ESP_ERR_NO_MEM;
+     }
++    bool inherit_priority = engine->asynchronous && !engine->worker_priority_initialized;
++    if (inherit_priority) {
++        engine->worker_priority = priority;
++        engine->worker_priority_initialized = true;
++    }
+     record->token = token;
+     record->status = (esp_display_present_copy_status_t) {
+         .state = engine->asynchronous ? ESP_DISPLAY_PRESENT_COPY_QUEUED : ESP_DISPLAY_PRESENT_COPY_RUNNING
+diff --git a/components/display/tools/esp_display_present/src/platform/present_lcd_spi.c b/components/display/tools/esp_display_present/src/platform/present_lcd_spi.c
+index 26d9d7876..2900f9b14 100644
+--- a/components/display/tools/esp_display_present/src/platform/present_lcd_spi.c
++++ b/components/display/tools/esp_display_present/src/platform/present_lcd_spi.c
+@@ -259,9 +259,13 @@ static esp_display_present_tx_result_t spi_submit(void *context, const esp_displ
+     spi->submitting = true;
+     present_lock_exit(&spi->lock, false);
+ 
+-    ret = spi->staging ? stage_transfer(spi, surface, area) : esp_lcd_panel_draw_bitmap(spi->config.panel, (int)area->x, (int)area->y,
+-                                                                                        (int)(area->x + area->width), (int)(area->y + area->height),
+-                                                                                        surface->pixels);
++    if (spi->staging != NULL) {
++        ret = stage_transfer(spi, surface, area);
++    } else {
++        ret = esp_lcd_panel_draw_bitmap(spi->config.panel, (int)area->x, (int)area->y,
++                                        (int)(area->x + area->width), (int)(area->y + area->height),
++                                        surface->pixels);
++    }
+     present_lock_enter(&spi->lock, false);
+     spi->submitting = false;
+     if (ret != ESP_OK) {
+diff --git a/components/display/tools/esp_display_present/src/present_backend.h b/components/display/tools/esp_display_present/src/present_backend.h
+index 8c1586083..f7df65408 100644
+--- a/components/display/tools/esp_display_present/src/present_backend.h
++++ b/components/display/tools/esp_display_present/src/present_backend.h
+@@ -44,6 +44,9 @@ typedef struct {
+ typedef struct {
+     const esp_display_present_rect_t *damage;
+     size_t damage_count;
++    /* Producer redraws every pixel without relying on the old contents of
++     * the acquired surface. Actual coverage is still checked before publish
++     * if prior pixels were not seeded. */
+     bool full_redraw;
+ } esp_display_present_frame_request_t;
+ 
+diff --git a/components/display/tools/esp_display_present/src/present_os.c b/components/display/tools/esp_display_present/src/present_os.c
+index 10cf6ba7b..99ec8aa1c 100644
+--- a/components/display/tools/esp_display_present/src/present_os.c
++++ b/components/display/tools/esp_display_present/src/present_os.c
+@@ -436,6 +436,24 @@ static void worker_entry(void *context)
+ #endif
+ }
+ 
++unsigned present_task_priority(void)
++{
++#ifdef PRESENT_HOST
++    return 0;
++#else
++    return uxTaskPriorityGet(NULL);
++#endif
++}
++
++void present_task_set_priority(unsigned priority)
++{
++#ifdef PRESENT_HOST
++    (void)priority;
++#else
++    vTaskPrioritySet(NULL, priority);
++#endif
++}
++
+ present_worker_t *present_worker_create(present_worker_entry_fn entry, void *user, uint32_t stack_bytes, unsigned priority)
+ {
+     if (!entry) {
+diff --git a/components/display/tools/esp_display_present/src/present_os.h b/components/display/tools/esp_display_present/src/present_os.h
+index b2d1ed8ed..7963b063e 100644
+--- a/components/display/tools/esp_display_present/src/present_os.h
++++ b/components/display/tools/esp_display_present/src/present_os.h
+@@ -61,6 +61,9 @@ void present_mutex_destroy(present_mutex_t *mutex);
+ typedef struct present_worker present_worker_t;
+ typedef void (*present_worker_entry_fn)(void *user);
+ present_worker_t *present_worker_create(present_worker_entry_fn entry, void *user, uint32_t stack_bytes, unsigned priority);
++/* Host leaves scheduling unchanged. On IDF these apply to the calling task. */
++unsigned present_task_priority(void);
++void present_task_set_priority(unsigned priority);
+ /* Entry must be requested to exit by caller before join. Timeout preserves
+  * object/thread. Success joins its final exit and allows destroy. */
+ bool present_worker_join(present_worker_t *worker, uint32_t timeout_ms);
+diff --git a/components/display/tools/esp_display_present/src/present_pixel_engine.h b/components/display/tools/esp_display_present/src/present_pixel_engine.h
+index 53b5dbb40..947b569df 100644
+--- a/components/display/tools/esp_display_present/src/present_pixel_engine.h
++++ b/components/display/tools/esp_display_present/src/present_pixel_engine.h
+@@ -159,7 +159,9 @@ esp_err_t esp_display_present_pixel_execute_cpu(const esp_display_present_copy_r
+ 
+ /**
+  * @brief Default is synchronous CPU execution. asynchronous=true queues descriptors
+- * to one worker, serializing overlapping writes in submission order.
++ * to one worker, serializing overlapping writes in submission order. On IDF
++ * the worker adopts the first successful submitting task's priority; later
++ * submissions do not change it. Host execution does not set thread priority.
+  *
+  * Contention vs invalid state:
+  * - Engine stopped/closing returns ESP_ERR_INVALID_STATE.

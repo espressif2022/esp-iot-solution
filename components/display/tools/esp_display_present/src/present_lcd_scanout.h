@@ -25,7 +25,7 @@ typedef struct {
      * callback, no driver rotation/mirror, and continuous refresh. Non-bounce
      * EOF is not a reliable retirement event on every IDF/SoC. */
     bool rgb_bounce_buffer_mode;
-    bool single_boundary_retire; /* When true, confirm after 1 post-submit frame_buf_complete event (matches V1 default). */
+    bool single_boundary_retire; /* Single-FB exposure only; unsupported for multiple FBs. */
     bool delete_panel_on_stop; /* Alternative safe stop: transfers panel ownership on attach. */
     /** Unless delete_panel_on_stop or retain_driver_scanout: required board-owned safe stop: successful return guarantees scanning
      * stopped AND all registered callbacks exited; framebuffer allocations
@@ -50,8 +50,9 @@ typedef struct {
  * @brief Exclusive initialized panel; no previous submissions or callback owner.
  * Driver FB0 is initially scanning. Bind get_buffers output as backend external
  * buffers and set initial_scanout_buffer=FB0. Bus ownership stays with the caller; panel ownership follows
- * delete_panel_on_stop. Driver must use periodic frame_buf_complete events; two events after submit returns fence one
- * already-running ISR that sampled the old framebuffer. Source is a whole exact driver FB, tight/native layout; no copy
+ * delete_panel_on_stop. Driver must use periodic frame_buf_complete events. A task-context ISR join after submit
+ * drains an already-running ISR that sampled the old FB; the next event then confirms the switch. If the join is
+ * unavailable or fails, two events remain the fallback. Source is a whole exact driver FB, tight/native layout; no copy
  * fallback. COLOR_DONE/raw VSYNC never confirms a frame. Hardware timing still requires board validation; compatibility
  * is with the audited local IDF 6.2 APIs. The private compatibility factory
  * explicitly fences FB0 before any producer lease when reusing a borrowed panel.

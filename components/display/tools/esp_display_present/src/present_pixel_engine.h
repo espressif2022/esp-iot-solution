@@ -159,7 +159,9 @@ esp_err_t esp_display_present_pixel_execute_cpu(const esp_display_present_copy_r
 
 /**
  * @brief Default is synchronous CPU execution. asynchronous=true queues descriptors
- * to one worker, serializing overlapping writes in submission order.
+ * to one worker, serializing overlapping writes in submission order. On IDF
+ * the worker adopts the first successful submitting task's priority; later
+ * submissions do not change it. Host execution does not set thread priority.
  *
  * Contention vs invalid state:
  * - Engine stopped/closing returns ESP_ERR_INVALID_STATE.

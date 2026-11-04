@@ -28,6 +28,7 @@ struct esp_display_present_lcd_scanout {
     void *callback_user;
     uint64_t cookie;
     unsigned boundaries;
+    unsigned required_boundaries;
     size_t active_callbacks;
     bool attached, armed, closing, source_stopped, stopped, callbacks_removed;
     bool initial_started, initial_ready, single_vsync;
@@ -43,7 +44,7 @@ static bool PRESENT_ISR_ATTR frame_boundary(esp_display_present_lcd_scanout_t *s
     esp_display_present_panel_event_fn callback = NULL;
     void *user = NULL;
     uint64_t cookie = 0;
-    unsigned needed = scanout->config.single_boundary_retire ? 1u : 2u;
+    unsigned needed = scanout->required_boundaries;
     if (scanout->attached && scanout->armed && (!scanout->closing || scanout->config.retain_driver_scanout) && ++scanout->boundaries == needed) {
         cookie = scanout->cookie;
         scanout->cookie = 0;
@@ -193,8 +194,18 @@ static esp_display_present_tx_result_t scanout_submit(void *context, const esp_d
     scanout->armed = false;
     present_lock_exit(&scanout->lock, false);
     error = esp_lcd_panel_draw_bitmap(scanout->config.panel, 0, 0, area->width, area->height, surface->pixels);
+    /* Publish the retirement gate only after a successful driver submission.
+     * A callback already executing can have sampled the previous FB before
+     * draw_bitmap changed it. Join those ISRs instead of reserving an entire
+     * extra frame for them. Callbacks during submit/join see armed == false.
+     * With no cross-core join available, retain the two-event fallback. */
+    esp_err_t joined = ESP_ERR_NOT_SUPPORTED;
+    if (error == ESP_OK && scanout->config.buffer_count > 1) {
+        joined = present_isr_barrier(1000);
+    }
     present_lock_enter(&scanout->lock, false);
     scanout->boundaries = 0;
+    scanout->required_boundaries = (joined == ESP_OK || scanout->config.single_boundary_retire) ? 1u : 2u;
     scanout->armed = error == ESP_OK;
     if (error != ESP_OK) {
         scanout->closing = true;
@@ -310,6 +321,11 @@ esp_err_t esp_display_present_lcd_scanout_create(const esp_display_present_lcd_s
     }
     if (config->retain_driver_scanout && (config->delete_panel_on_stop || config->stop_scanout)) {
         return ESP_ERR_INVALID_ARG;
+    }
+    /* A plain frame-complete callback does not identify the FB or submission
+     * selected by the driver. One callback cannot prove an old FB retired. */
+    if (config->single_boundary_retire && config->buffer_count > 1) {
+        return ESP_ERR_NOT_SUPPORTED;
     }
     bool single_vsync = false;
 #if PRESENT_RGB_SUPPORTED && defined(ESP_LCD_RGB_PANEL_HAS_FRAME_BUFFER_INFO)

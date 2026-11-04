@@ -7,6 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#if PRESENT_HOST_DMA2D
+#include <pthread.h>
+#endif
 #if PRESENT_HOST_PPA
 #include "driver/ppa.h"
 #endif
@@ -16,6 +19,10 @@
 #if PRESENT_HOST_PPA || PRESENT_HOST_DMA2D
 #include "esp_cache.h"
 static unsigned submissions, syncs;
+static unsigned flushes, invalidates;
+static void *expected_sync;
+static size_t expected_sync_bytes;
+static size_t cache_line = 64;
 static size_t strict_alignment = 1;
 static esp_err_t driver_error, unregister_error;
 size_t dma2d_get_buffer_alignment_constraint(const void *p)
@@ -26,12 +33,20 @@ size_t dma2d_get_buffer_alignment_constraint(const void *p)
 size_t esp_cache_get_line_size_by_addr(const void *p)
 {
     (void)p;
-    return 64;
+    return cache_line;
 }
 esp_err_t esp_cache_msync(void *p, size_t n, int flags)
 {
-    (void)flags;
-    assert((uintptr_t)p % 64 == 0 && n % 64 == 0);
+    assert((uintptr_t)p % cache_line == 0 && n % cache_line == 0);
+    if (expected_sync) {
+        assert(p == expected_sync && n == expected_sync_bytes);
+    }
+    if (flags == ESP_CACHE_MSYNC_FLAG_DIR_C2M) {
+        flushes++;
+    } else {
+        assert(flags == ESP_CACHE_MSYNC_FLAG_DIR_M2C);
+        invalidates++;
+    }
     syncs++;
     return ESP_OK;
 }
@@ -90,6 +105,15 @@ esp_err_t ppa_do_scale_rotate_mirror(ppa_client_handle_t h, const ppa_srm_oper_c
 }
 #endif
 #if PRESENT_HOST_DMA2D
+static pthread_mutex_t dma_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t dma_changed = PTHREAD_COND_INITIALIZER;
+static bool dma_deferred, dma_entered;
+static unsigned dma_busy_count;
+static async_memcpy_dma2d_trans_desc_t dma_pending;
+static async_memcpy_dma2d_isr_cb_t dma_pending_cb;
+static async_memcpy_dma2d_handle_t dma_pending_handle;
+static void *dma_pending_user;
+
 esp_err_t esp_async_memcpy_install_dma2d(const async_memcpy_dma2d_config_t *c, async_memcpy_dma2d_handle_t *h)
 {
     assert(c->backlog == 1);
@@ -105,14 +129,163 @@ esp_err_t esp_async_memcpy_dma2d(async_memcpy_dma2d_handle_t h, const async_memc
                                  async_memcpy_dma2d_isr_cb_t cb, void *user)
 {
     submissions++;
+    if (dma_busy_count) {
+        dma_busy_count--;
+        return ESP_ERR_INVALID_STATE;
+    }
     if (driver_error) {
         return driver_error;
     }
+    pthread_mutex_lock(&dma_lock);
+    if (dma_deferred) {
+        dma_pending = *o;
+        dma_pending_cb = cb;
+        dma_pending_handle = h;
+        dma_pending_user = user;
+        dma_entered = true;
+        pthread_cond_signal(&dma_changed);
+        pthread_mutex_unlock(&dma_lock);
+        return ESP_OK;
+    }
+    pthread_mutex_unlock(&dma_lock);
     unsigned bpp = o->pixel_format == ESP_COLOR_FOURCC_RGB16 ? 2 : 3;
     paint(o->src_buffer, o->src_stride * bpp, o->dst_buffer, o->dst_stride * bpp,
           o->src_x, o->src_y, o->copy_width, o->copy_height, o->dst_x, o->dst_y, 0, bpp, false);
     cb(h, NULL, user);
     return ESP_OK;
+}
+#endif
+
+#if PRESENT_HOST_PPA || PRESENT_HOST_DMA2D
+/* Cache maintenance must cover exactly the destination rows, including the
+ * extra rotated row and the last cache line. The compact source must not be
+ * rejected merely because its valid capacity ends before a cache line. */
+static void verify_cache_bands(esp_display_present_executor_t *executor, bool is_dma)
+{
+    uint8_t *src = aligned_alloc(128, 3072), *dst = aligned_alloc(128, 3072);
+    uint8_t expected[3072];
+    assert(src && dst);
+    for (size_t i = 0; i < 3072; i++) {
+        src[i] = (uint8_t)i;
+    }
+    esp_display_present_layout_t layout = {32, 32, 96, ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+                                           ESP_DISPLAY_PRESENT_ORDER_NATIVE
+                                          };
+    esp_display_present_copy_request_t request = {
+        .source = {src, 3072, layout}, .destination = {dst, 3072, layout},
+        .source_area = {1, 1, 3, 2}, .destination_x = 1,
+    };
+    for (unsigned rotation = 0; rotation < (is_dma ? 1U : 4U); rotation++) {
+        request.rotation = rotation;
+        for (unsigned last = 0; last < 2; last++) {
+            bool quarter = rotation & 1U;
+            request.destination_y = last ? (quarter ? 29 : 30) : 3;
+            memset(dst, 0xa5, 3072);
+            memset(expected, 0xa5, 3072);
+            paint(src, 96, expected, 96, 1, 1, 3, 2, 1, request.destination_y, rotation, 2, false);
+            expected_sync = dst + (last ? (quarter ? 2752 : 2880) : 256);
+            expected_sync_bytes = last ? (quarter ? 320 : 192) : (quarter ? 320 : 256);
+            unsigned before_flushes = flushes, before_invalidates = invalidates;
+            assert(esp_display_present_executor_execute(executor, &request) == ESP_OK);
+            assert(flushes == before_flushes + 1 && invalidates == before_invalidates + 1);
+            assert(!memcmp(dst, expected, 3072));
+            expected_sync = NULL;
+        }
+    }
+    esp_display_present_layout_t compact = {4, 4, 8, ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+                                            ESP_DISPLAY_PRESENT_ORDER_NATIVE
+                                           };
+    request = (esp_display_present_copy_request_t) {
+        .source = {src, 32, compact}, .destination = {dst, 64, compact},
+        .source_area = {0, 0, 4, 4},
+    };
+    expected_sync = dst;
+    expected_sync_bytes = 64;
+    unsigned before_submissions = submissions, before_flushes = flushes, before_invalidates = invalidates;
+    assert(esp_display_present_executor_execute(executor, &request) == ESP_OK);
+    assert(submissions == before_submissions + 1);
+    assert(flushes == before_flushes + 1 && invalidates == before_invalidates + 1);
+    assert(!memcmp(src, dst, 32));
+    expected_sync = NULL;
+
+    /* A larger runtime cache line requires a correspondingly padded
+     * destination; rejection must have no hardware or cache side effects. */
+    cache_line = 128;
+    esp_display_present_executor_reason_t reason;
+    before_submissions = submissions;
+    unsigned before_syncs = syncs;
+    assert(esp_display_present_executor_probe(executor, &request, &reason) == ESP_ERR_NOT_SUPPORTED);
+    assert(reason == ESP_DISPLAY_PRESENT_EXEC_CAPACITY);
+    assert(submissions == before_submissions && syncs == before_syncs);
+    request.destination.capacity_bytes = 128;
+    expected_sync = dst;
+    expected_sync_bytes = 128;
+    assert(esp_display_present_executor_execute(executor, &request) == ESP_OK);
+    assert(submissions == before_submissions + 1 && !memcmp(src, dst, 32));
+    expected_sync = NULL;
+    cache_line = 64;
+    free(src);
+    free(dst);
+}
+#endif
+
+#if PRESENT_HOST_DMA2D
+static void verify_dma_retry_and_drain(esp_display_present_executor_t *executor)
+{
+    uint8_t *src = aligned_alloc(64, 64), *dst = aligned_alloc(64, 64);
+    assert(src && dst);
+    for (unsigned i = 0; i < 64; i++) {
+        src[i] = (uint8_t)i;
+    }
+    esp_display_present_layout_t layout = {4, 4, 8, ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+                                           ESP_DISPLAY_PRESENT_ORDER_NATIVE
+                                          };
+    esp_display_present_copy_request_t request = {
+        .source = {src, 32, layout}, .destination = {dst, 64, layout},
+        .source_area = {0, 0, 4, 4},
+    };
+    memset(dst, 0xa5, 64);
+    unsigned before = submissions;
+    dma_busy_count = 1;
+    assert(esp_display_present_executor_execute(executor, &request) == ESP_OK);
+    assert(dma_busy_count == 0 && submissions == before + 2);
+    assert(!memcmp(src, dst, 32));
+
+    esp_display_present_pixel_engine_t *engine;
+    esp_display_present_pixel_config_t config = {
+        .max_jobs = 1, .asynchronous = true,
+        .execute = esp_display_present_executor_execute, .execute_user = executor,
+    };
+    assert(esp_display_present_pixel_create(&config, &engine) == ESP_OK);
+    memset(dst, 0xa5, 64);
+    pthread_mutex_lock(&dma_lock);
+    dma_deferred = true;
+    dma_entered = false;
+    pthread_mutex_unlock(&dma_lock);
+    esp_display_present_copy_ticket_t ticket;
+    assert(esp_display_present_pixel_submit(engine, &request, &ticket) == ESP_OK);
+    pthread_mutex_lock(&dma_lock);
+    while (!dma_entered) {
+        pthread_cond_wait(&dma_changed, &dma_lock);
+    }
+    async_memcpy_dma2d_trans_desc_t pending = dma_pending;
+    async_memcpy_dma2d_isr_cb_t callback = dma_pending_cb;
+    async_memcpy_dma2d_handle_t handle = dma_pending_handle;
+    void *user = dma_pending_user;
+    dma_deferred = false;
+    pthread_mutex_unlock(&dma_lock);
+    assert(esp_display_present_pixel_stop(engine, 0) == ESP_ERR_TIMEOUT);
+    assert(dst[0] == 0xa5);
+    paint(pending.src_buffer, pending.src_stride * 2, pending.dst_buffer, pending.dst_stride * 2,
+          pending.src_x, pending.src_y, pending.copy_width, pending.copy_height,
+          pending.dst_x, pending.dst_y, 0, 2, false);
+    callback(handle, NULL, user);
+    assert(esp_display_present_pixel_stop(engine, UINT32_MAX) == ESP_OK);
+    assert(!memcmp(src, dst, 32));
+    assert(esp_display_present_pixel_release(engine, ticket) == ESP_OK);
+    assert(esp_display_present_pixel_destroy(engine) == ESP_OK);
+    free(src);
+    free(dst);
 }
 #endif
 static void verify(esp_display_present_executor_t *e, esp_display_present_executor_t *cpu, bool is_dma)
@@ -253,6 +426,7 @@ int main(void)
 #if PRESENT_HOST_PPA
     assert(esp_display_present_executor_ppa_create(&e) == ESP_OK);
     verify(e, cpu, false);
+    verify_cache_bands(e, false);
     assert(esp_display_present_executor_destroy(e) == ESP_OK);
 #else
     assert(esp_display_present_executor_ppa_create(&e) == ESP_ERR_NOT_SUPPORTED && !e);
@@ -261,6 +435,8 @@ int main(void)
 #if PRESENT_HOST_DMA2D
     assert(esp_display_present_executor_dma2d_create(&e) == ESP_OK);
     verify(e, cpu, true);
+    verify_cache_bands(e, true);
+    verify_dma_retry_and_drain(e);
     assert(esp_display_present_executor_destroy(e) == ESP_OK);
 #else
     assert(esp_display_present_executor_dma2d_create(&e) == ESP_ERR_NOT_SUPPORTED && !e);

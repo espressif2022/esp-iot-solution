@@ -1,0 +1,249 @@
+Internal ctest changing into directory: /tmp/present-head-8c69118a/sanitize
+Test project /tmp/present-head-8c69118a/sanitize
+      Start  1: te_timing
+ 1/35 Test  #1: te_timing ........................***Failed    0.01 sec
+==250==LeakSanitizer has encountered a fatal error.
+==250==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==250==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start  2: image
+ 2/35 Test  #2: image ............................***Failed    0.02 sec
+==252==LeakSanitizer has encountered a fatal error.
+==252==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==252==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start  3: frame_core
+ 3/35 Test  #3: frame_core .......................***Failed    0.00 sec
+==254==LeakSanitizer has encountered a fatal error.
+==254==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==254==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start  4: plan
+ 4/35 Test  #4: plan .............................***Failed    0.01 sec
+==256==LeakSanitizer has encountered a fatal error.
+==256==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==256==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start  5: records
+ 5/35 Test  #5: records ..........................***Failed    0.01 sec
+==258==LeakSanitizer has encountered a fatal error.
+==258==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==258==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start  6: coverage
+ 6/35 Test  #6: coverage .........................***Failed    0.11 sec
+==260==LeakSanitizer has encountered a fatal error.
+==260==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==260==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start  7: repair
+ 7/35 Test  #7: repair ...........................***Failed    0.01 sec
+==262==LeakSanitizer has encountered a fatal error.
+==262==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==262==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start  8: scanout
+ 8/35 Test  #8: scanout ..........................***Failed    0.01 sec
+==273==LeakSanitizer has encountered a fatal error.
+==273==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==273==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start  9: rotation
+ 9/35 Test  #9: rotation .........................***Failed    0.02 sec
+==276==LeakSanitizer has encountered a fatal error.
+==276==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==276==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 10: pixel
+10/35 Test #10: pixel ............................***Failed    0.01 sec
+==320==LeakSanitizer has encountered a fatal error.
+==320==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==320==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 11: gram
+11/35 Test #11: gram .............................***Failed    0.01 sec
+==327==LeakSanitizer has encountered a fatal error.
+==327==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==327==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 12: lcd_spi
+12/35 Test #12: lcd_spi ..........................***Failed    0.01 sec
+==338==LeakSanitizer has encountered a fatal error.
+==338==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==338==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 13: presenter
+13/35 Test #13: presenter ........................***Failed    0.01 sec
+==344==LeakSanitizer has encountered a fatal error.
+==344==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==344==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 14: te_composer
+14/35 Test #14: te_composer ......................***Failed    0.01 sec
+==349==LeakSanitizer has encountered a fatal error.
+==349==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==349==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 15: te
+15/35 Test #15: te ...............................***Failed    0.65 sec
+==351==LeakSanitizer has encountered a fatal error.
+==351==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==351==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 16: presenter_te
+16/35 Test #16: presenter_te .....................***Failed    0.01 sec
+==395==LeakSanitizer has encountered a fatal error.
+==395==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==395==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 17: fb
+17/35 Test #17: fb ...............................***Failed    0.04 sec
+==403==LeakSanitizer has encountered a fatal error.
+==403==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==403==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 18: event
+18/35 Test #18: event ............................***Failed    0.01 sec
+==418==LeakSanitizer has encountered a fatal error.
+==418==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==418==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 19: scheduler
+19/35 Test #19: scheduler ........................***Failed    0.01 sec
+==421==LeakSanitizer has encountered a fatal error.
+==421==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==421==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 20: headers_cpp
+20/35 Test #20: headers_cpp ......................***Failed    0.00 sec
+==429==LeakSanitizer has encountered a fatal error.
+==429==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==429==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 21: boundary_trace
+21/35 Test #21: boundary_trace ...................***Failed    0.01 sec
+==431==LeakSanitizer has encountered a fatal error.
+==431==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==431==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 22: boundary_analyze
+22/35 Test #22: boundary_analyze .................   Passed    0.07 sec
+      Start 23: lvgl_zero
+23/35 Test #23: lvgl_zero ........................***Failed    0.01 sec
+==443==LeakSanitizer has encountered a fatal error.
+==443==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==443==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 24: lvgl
+24/35 Test #24: lvgl .............................***Failed    0.01 sec
+==445==LeakSanitizer has encountered a fatal error.
+==445==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==445==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 25: lvgl_te
+25/35 Test #25: lvgl_te ..........................***Failed    0.03 sec
+==447==LeakSanitizer has encountered a fatal error.
+==447==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==447==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 26: lvgl_fb
+26/35 Test #26: lvgl_fb ..........................***Failed    0.03 sec
+==474==LeakSanitizer has encountered a fatal error.
+==474==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==474==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 27: executor_cpu
+27/35 Test #27: executor_cpu .....................***Failed    0.00 sec
+==483==LeakSanitizer has encountered a fatal error.
+==483==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==483==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 28: executor_ppa
+28/35 Test #28: executor_ppa .....................***Failed    0.00 sec
+==485==LeakSanitizer has encountered a fatal error.
+==485==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==485==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 29: executor_dma2d
+29/35 Test #29: executor_dma2d ...................***Failed    0.01 sec
+==487==LeakSanitizer has encountered a fatal error.
+==487==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==487==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 30: executor_both
+30/35 Test #30: executor_both ....................***Failed    0.01 sec
+==490==LeakSanitizer has encountered a fatal error.
+==490==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==490==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 31: legacy_resources
+31/35 Test #31: legacy_resources .................***Failed    0.01 sec
+==493==LeakSanitizer has encountered a fatal error.
+==493==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==493==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 32: legacy_facade
+32/35 Test #32: legacy_facade ....................***Failed    0.33 sec
+==557==LeakSanitizer has encountered a fatal error.
+==557==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==557==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 33: transfer_timeout
+33/35 Test #33: transfer_timeout .................***Failed    0.02 sec
+==658==LeakSanitizer has encountered a fatal error.
+==658==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==658==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 34: legacy_te_gate
+34/35 Test #34: legacy_te_gate ...................***Failed    0.00 sec
+==662==LeakSanitizer has encountered a fatal error.
+==662==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==662==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+      Start 35: legacy_te_gate_old
+35/35 Test #35: legacy_te_gate_old ...............***Failed    0.00 sec
+==664==LeakSanitizer has encountered a fatal error.
+==664==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==664==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+
+3% tests passed, 34 tests failed out of 35
+
+Total Test time (real) =   1.52 sec
+
+The following tests FAILED:
+	  1 - te_timing (Failed)
+	  2 - image (Failed)
+	  3 - frame_core (Failed)
+	  4 - plan (Failed)
+	  5 - records (Failed)
+	  6 - coverage (Failed)
+	  7 - repair (Failed)
+	  8 - scanout (Failed)
+	  9 - rotation (Failed)
+	 10 - pixel (Failed)
+	 11 - gram (Failed)
+	 12 - lcd_spi (Failed)
+	 13 - presenter (Failed)
+	 14 - te_composer (Failed)
+	 15 - te (Failed)
+	 16 - presenter_te (Failed)
+	 17 - fb (Failed)
+	 18 - event (Failed)
+	 19 - scheduler (Failed)
+	 20 - headers_cpp (Failed)
+	 21 - boundary_trace (Failed)
+	 23 - lvgl_zero (Failed)
+	 24 - lvgl (Failed)
+	 25 - lvgl_te (Failed)
+	 26 - lvgl_fb (Failed)
+	 27 - executor_cpu (Failed)
+	 28 - executor_ppa (Failed)
+	 29 - executor_dma2d (Failed)
+	 30 - executor_both (Failed)
+	 31 - legacy_resources (Failed)
+	 32 - legacy_facade (Failed)
+	 33 - transfer_timeout (Failed)
+	 34 - legacy_te_gate (Failed)
+	 35 - legacy_te_gate_old (Failed)
+Errors while running CTest

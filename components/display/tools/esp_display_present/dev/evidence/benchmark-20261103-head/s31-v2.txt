@@ -1,0 +1,123 @@
+I (231) esp_image: segment 1: paddr=000747a0 vaddr=2f000000 sizeESP-ROM:esp32s31-20251218
+Build:Dec 18 2025
+rst:0x17 (CHIP_USB_UART_RESET),boot:0x58 (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x2f80c4c8
+Core1 Saved PC:0x2f0098de
+SPI mode:DIO, clock div:1
+load:0x2f0740c0,len:0x1600
+load:0x2f06a2b0,len:0xbc4
+load:0x2f06cfb0,len:0x2ff0
+entry 0x2f06a2ba
+I (52) boot: ESP-IDF v6.2-dev-2221-g7b9cc1ac79f8-dir 2nd stage bootloader
+I (52) boot: compile time Nov  3 2026 16:33:12
+I (54) boot: chip revision: v0.0
+I (54) boot.esp32s31: SPI Speed      : 80MHz
+I (54) boot.esp32s31: SPI Mode       : DIO
+I (55) boot.esp32s31: SPI Flash Size : 16MB
+I (55) boot: Partition Table:
+I (55) boot: ## Label            Usage          Type ST Offset   Length
+I (56) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (56) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (57) boot:  2 factory          factory app      00 00 00010000 00300000
+I (59) esp_image: segment 0: paddr=00010020 vaddr=40090020 size=64778h (411512) map
+I (128) esp_image: segment 1: paddr=000747a0 vaddr=2f000000 size=0b878h ( 47224) load
+I (139) esp_image: segment 2: paddr=00080020 vaddr=40000020 size=8eb4ch (584524) map
+I (235) esp_image: segment 3: paddr=0010eb74 vaddr=2f00b878 size=059e8h ( 23016) load
+I (241) esp_image: segment 4: paddr=00114564 vaddr=2f011280 size=039a8h ( 14760) load
+I (250) boot: Loaded app from partition at offset 0x10000
+I (253) oct_psram: vendor id    : 0x1a (UNKNOWN)
+I (253) oct_psram: Latency      : 0x01 (Fixed)
+I (254) oct_psram: DriveStr.    : 0x00 (25 Ohm)
+I (254) oct_psram: dev id       : 0x00 (generation 1)
+I (254) oct_psram: density      : 0x05 (128 Mbit)
+I (255) oct_psram: good-die     : 0x06 (Pass)
+I (255) oct_psram: SRF          : 0x02 (Slow Refresh)
+I (255) oct_psram: BurstType    : 0x00 ( Wrap)
+I (256) oct_psram: BurstLen     : 0x03 (2048 Byte)
+I (256) oct_psram: BitMode      : 0x00 (X8 Mode)
+I (256) oct_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (257) oct_psram: DriveStrength: 0x00 (1/1)
+I (257) MSPI Timing: Enter psram timing tuning
+I (409) esp_psram: Found 16MB PSRAM device
+I (409) esp_psram: Speed: 200MHz
+I (410) cpu_start: Multicore app
+I (723) esp_psram: SPI SRAM memory test OK
+I (732) cpu_start: Pro cpu start user code
+I (732) cpu_start: cpu freq: 320000000 Hz
+I (732) app_init: Application information:
+I (732) app_init: Project name:     pv2_compat_probe
+I (733) app_init: App version:      1
+I (733) app_init: Compile time:     Nov  3 2026 16:33:44
+I (733) app_init: ELF file SHA256:  d38e95b73...
+I (733) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (734) efuse_init: Min chip rev:     v0.0
+I (734) efuse_init: Max chip rev:     v0.99
+I (734) efuse_init: Chip rev:         v0.0
+I (734) heap_init: Initializing. RAM available for dynamic allocation:
+I (734) heap_init: At 2F016850 len 00064760 (401 KiB): RAM
+I (735) heap_init: At 2F07AFB0 len 000041C0 (16 KiB): RAM
+I (735) heap_init: At 2E000000 len 00007FE8 (31 KiB): RTCRAM
+I (735) esp_psram: Adding pool of 16384K of PSRAM memory to heap allocator
+I (736) spi_flash: detected chip: gd
+I (736) spi_flash: flash io: dio
+I (737) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (737) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (738) main_task: Started on CPU0
+I (739) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (739) main_task: Calling app_main()
+I (739) compat_probe: START impl=v2
+I (739) qspi: BSP revision=0100 clk=44 rst=42 TE=43 CS=50 QSPI=40MHz
+I (740) main_task: Returned from app_main()
+I (840) co5300: version: 2.2.0
+I (841) co5300_spi: LCD panel create success, version: 2.2.0
+W (1601) co5300_spi: The 3Ah command has been used and will be overwritten by external initialization sequence
+I (2201) compat_probe: CASE impl=v2 mode=0 compose=0 rotation=0
+I (2236) compat_probe: CANCEL_RESUME_PASS impl=v2 mode=0
+I (2618) compat_probe: PASS impl=v2 mode=0 compose=0 rotation=0 frames=12 elapsed_us=414751 submitted=12 completed=12 heap=391951
+W (2618) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (2619) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (2619) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (2620) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (2622) compat_probe: CASE impl=v2 mode=5 compose=1 rotation=0
+I (2623) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+I (2623) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (2651) compat_probe: CANCEL_RESUME_PASS impl=v2 mode=5
+I (2651) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16743/538/16205/23040 phase=[0,9908] blank_reuse=0 required=138%
+I (3243) compat_probe: PASS impl=v2 mode=5 compose=1 rotation=0 frames=12 elapsed_us=617888 submitted=12 completed=12 heap=373787
+W (3243) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (3244) present_v2: executor=dma2d cpu_attempts=361 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (3244) present_v2: executor=dma2d cpu_attempts=361 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (3245) present_v2: executor=dma2d cpu_attempts=361 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (3248) compat_probe: CASE impl=v2 mode=5 compose=2 rotation=90
+I (3248) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (3249) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (3249) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (3291) compat_probe: CANCEL_RESUME_PASS impl=v2 mode=5
+I (3291) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16751/534/16217/23040 phase=[0,9928] blank_reuse=0 required=138%
+I (3906) compat_probe: PASS impl=v2 mode=5 compose=2 rotation=90 frames=12 elapsed_us=655536 submitted=12 completed=12 heap=373771
+W (3906) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (3907) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=361 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (3908) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=361 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (3908) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=361 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (3920) compat_probe: BENCH_START impl=v2 width=480 height=480
+I (73173) compat_probe: SCENE impl=v2 name="Empty screen" fps=26 cpu=75 render=11 flush=16
+I (73173) compat_probe: SCENE impl=v2 name="Moving wallpaper" fps=30 cpu=98 render=21 flush=9
+I (73174) compat_probe: SCENE impl=v2 name="Single rectangle" fps=30 cpu=19 render=1 flush=1
+I (73174) compat_probe: SCENE impl=v2 name="Multiple rectangles" fps=30 cpu=47 render=8 flush=6
+I (73174) compat_probe: SCENE impl=v2 name="Multiple RGB images" fps=30 cpu=40 render=6 flush=3
+I (73175) compat_probe: SCENE impl=v2 name="Multiple ARGB images" fps=30 cpu=46 render=10 flush=1
+I (73175) compat_probe: SCENE impl=v2 name="Rotated ARGB images" fps=30 cpu=35 render=6 flush=1
+I (73176) compat_probe: SCENE impl=v2 name="Multiple labels" fps=29 cpu=91 render=21 flush=8
+I (73176) compat_probe: SCENE impl=v2 name="Screen sized text" fps=13 cpu=98 render=60 flush=9
+I (73176) compat_probe: SCENE impl=v2 name="Multiple arcs" fps=29 cpu=45 render=5 flush=3
+I (73177) compat_probe: SCENE impl=v2 name="Containers" fps=30 cpu=43 render=12 flush=2
+I (73177) compat_probe: SCENE impl=v2 name="Containers with overlay" fps=19 cpu=91 render=36 flush=9
+I (73177) compat_probe: SCENE impl=v2 name="Containers with opa" fps=29 cpu=48 render=16 flush=2
+I (73178) compat_probe: SCENE impl=v2 name="Containers with opa_layer" fps=24 cpu=77 render=31 flush=3
+I (73178) compat_probe: SCENE impl=v2 name="Containers with scrolling" fps=17 cpu=97 render=42 flush=10
+I (73178) compat_probe: SCENE impl=v2 name="Widgets demo" fps=9 cpu=99 render=67 flush=8
+I (73179) compat_probe: BENCH_DONE impl=v2 scenes=16 fps=25 cpu=65 render=22 flush=5
+W (73212) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (73212) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (73213) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (73213) compat_probe: ALL_PASS impl=v2

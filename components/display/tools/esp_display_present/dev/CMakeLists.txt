@@ -28,6 +28,7 @@ foreach(name te_timing image frame_core plan records coverage repair scanout rot
     set_tests_properties(${name} PROPERTIES TIMEOUT 15)
 endforeach()
 target_link_options(test_image PRIVATE -Wl,--wrap=present_alloc)
+target_link_options(test_pixel PRIVATE -Wl,--wrap=present_task_priority -Wl,--wrap=present_task_set_priority)
 target_link_options(test_te PRIVATE -Wl,--wrap=present_te_composer_pin)
 target_link_options(test_presenter_te PRIVATE -Wl,--wrap=present_te_timer_create)
 target_link_options(test_scanout PRIVATE -Wl,--wrap=present_isr_barrier)
@@ -45,6 +46,8 @@ target_compile_options(test_boundary_trace PRIVATE -Wall -Wextra -Werror -UNDEBU
 target_link_libraries(test_boundary_trace PRIVATE present_engine)
 add_test(NAME boundary_trace COMMAND test_boundary_trace)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
+add_test(NAME scanout_retirement_contract COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_scanout_retirement_contract.py)
 add_test(NAME boundary_analyze COMMAND ${Python3_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/test_apps/scanout_boundary/test_analyze.py)
 

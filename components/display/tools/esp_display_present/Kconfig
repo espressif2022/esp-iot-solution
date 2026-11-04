@@ -1,4 +1,21 @@
 menu "Display presenter"
+config ESP_DISPLAY_PRESENT_FB_IRAM
+    bool "Place framebuffer task hot paths in IRAM"
+    depends on IDF_TARGET_ESP32S3
+    default y
+    help
+        Keep framebuffer engine and pixel-copy task code in internal RAM.
+        On ESP32-S3 RGB bounce displays, this reduces external Flash access
+        during PSRAM framebuffer preparation. With a 16 KiB instruction cache,
+        the default Flash placement can miss the next scanout boundary even
+        after single-boundary retirement is enabled.
+
+        This costs approximately 19 KiB of additional IRAM in the measured
+        build; the exact size depends on compiler and application reachability.
+        Disable to prioritize internal memory over framebuffer throughput.
+        This option does not make task APIs safe to call from an ISR or while
+        the external-memory cache is disabled.
+
 config PV2_LEGACY_CALLBACK_JOIN
     bool
     default y

@@ -1,0 +1,109 @@
+{
+  "current_commit": "8c69118a6182a83a22450710b06bc5a4563030b9",
+  "reference_commit": "41b0c9b9b6f72735cfa8878c159b1c25795b48e6",
+  "idf_commit": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+  "idf_worktree_dirty": true,
+  "lvgl_version": "9.5.0",
+  "runs_per_configuration": 1,
+  "notes": [
+    "The board firmware used the current commit plus local board-header fixes; the later uncommitted SPI source edit was included only in the final host rerun.",
+    "Saved console text strips NUL/control noise; raw console hashes refer to temporary capture files.",
+    "SDK configs differ only in current-component PV2_LEGACY configuration entries.",
+    "Source/target config and firmware hashes do not imply optical tear-free behavior."
+  ],
+  "boards": {
+    "p4": {
+      "label": "P4 MIPI 1024×600",
+      "mac": "e8:f6:0a:e7:a7:8d",
+      "v1": {
+        "firmware_sha256": "8c135fef68648dbd4d608d0ea6b2bc5e3d5c47c4f060e9599fd172eae5e29968",
+        "sdkconfig_sha256": "2377fe0eafbb14c8eab3a6d0fc4743a1d82987be6a14a7c5ba171ab71982cc5c",
+        "raw_capture_sha256": "ab133c1c5c3a01c8cda70e18de59b15bb5d5e9ccfb44deb6063efc91c24e7537",
+        "saved_text_sha256": "20dc6de62c1f1c7299e0d0547524e658a45df61380406278885a961a6c5cc8e0",
+        "valid_scenes": 16,
+        "fps": 27,
+        "lvgl_cpu_percent": 47,
+        "render_ms": 15,
+        "flush_ms": 0
+      },
+      "v2": {
+        "firmware_sha256": "9041ff7f403ec1d3878b8856b3ae7ed3b72000358a1a57af971d05b76f60f882",
+        "sdkconfig_sha256": "9e53bcf690ebb151c9132e1ac03d878d7f0f86c21ad1fbab3adf22a145f0d003",
+        "raw_capture_sha256": "f2bd390e2a23061900563c2aba5544449ae0b3fd4d072897703ff2438947e1eb",
+        "saved_text_sha256": "a71ad06f8db54303a4374938496fcff58f69d5db2c75ed58a7ae1e66e59a0413",
+        "valid_scenes": 16,
+        "fps": 27,
+        "lvgl_cpu_percent": 61,
+        "render_ms": 16,
+        "flush_ms": 4
+      },
+      "restore_verified": true,
+      "restore_verification_sha256": "b93f31912b9ffe616e0a2b46f860b227a88a6a68be01ceff423aadf4fb1cb67b"
+    },
+    "s3": {
+      "label": "S3 RGB 480×480",
+      "mac": "90:e5:b1:d0:a9:d8",
+      "v1": {
+        "firmware_sha256": "9bf2c79bf64b4ba8cea93606e1ca8078b9e67bac58dcc280dd2f770f68ab19d1",
+        "sdkconfig_sha256": "34699d9515d1b5b4f792604baf27c88c1d3dd09694b6a3afc9fe436d51081aa6",
+        "raw_capture_sha256": "65687fff20d63fbcc38be165432c19019dabd24227e3b72f58122df3ea67087e",
+        "saved_text_sha256": "4a3de8935f9625612e3ff5c3830d51aabb2bdb0545fa52b29cadbdcba3afcf67",
+        "valid_scenes": 16,
+        "fps": 19,
+        "lvgl_cpu_percent": 86,
+        "render_ms": 52,
+        "flush_ms": 4
+      },
+      "v2": {
+        "firmware_sha256": "851510f4b938e5453eecefc53995282c3d6900e3702751448ca0ba8db1ebad34",
+        "sdkconfig_sha256": "ba87e6089748aa7faecbb4e421059eade27ff3be14997bc9a816415c8fda4c2b",
+        "raw_capture_sha256": "03d61dde93a5fa404e57ab322b2e8410d49f998afb6cde526edddff4db910cd1",
+        "saved_text_sha256": "fee6611cffc575665281aeb6a156abbff6e43d446f64f90591a6e81568b921b1",
+        "valid_scenes": 16,
+        "fps": 17,
+        "lvgl_cpu_percent": 89,
+        "render_ms": 52,
+        "flush_ms": 6
+      },
+      "restore_verified": true,
+      "restore_verification_sha256": "671b4e67c89c9c913e9c850965010ccb1ad5edae0c3f0dd23a5e4e98e596ef5e"
+    },
+    "s31": {
+      "label": "S31 QSPI 480×480",
+      "mac": "30:ed:a0:f4:0b:34",
+      "v1": {
+        "firmware_sha256": "e3b0f8ba7abaa06e2ea1fa84752574eff0ff9a79e99132baa709f96756b84bd3",
+        "sdkconfig_sha256": "040a87d8e19e929703e9965e9b5f2ccf075a67ed83413938bde2c46a349c0eed",
+        "raw_capture_sha256": "552d118c9774521bcee007527ee697c01f53a8d78954dc5890d82ff006c0facb",
+        "saved_text_sha256": "f5ae280c7dbc91f14720ff694a5a64bca063167c3613c6037ba9e9819a0a2da4",
+        "valid_scenes": 16,
+        "fps": 25,
+        "lvgl_cpu_percent": 62,
+        "render_ms": 20,
+        "flush_ms": 5
+      },
+      "v2": {
+        "firmware_sha256": "3477926052a1f8cb3f3686a67bb539c35932d92fee2e2664684cbb898a7ed636",
+        "sdkconfig_sha256": "e18f7a1ac591480471664600b6be252ec3a14fcbd8b354130b2bd19400a42ee0",
+        "raw_capture_sha256": "c8867bd445ab02b3daeb7d8690b44899f18ce3010c80422a64872d2e7af3403e",
+        "saved_text_sha256": "f01fc7e3068bd29fbab4fd23eb4ecc7c9f8f45686ae6e09bb7a4506ef37b8eb5",
+        "valid_scenes": 16,
+        "fps": 25,
+        "lvgl_cpu_percent": 65,
+        "render_ms": 22,
+        "flush_ms": 5
+      },
+      "restore_verified": true,
+      "restore_verification_sha256": "a70915f31ec66f48c41327eca255cc93f81d0152358fa803e450fb93870f6dfc"
+    }
+  },
+  "benchmark_main_sha256": "db8fcdba71b43127897d88a42e9131562ff35c59f073470d58a34262256769c4",
+  "board_spi_source_sha256": "b4738cb537eafecadc2ac2bd93f2b77c782f43147ed965f473f42e729dc973e8",
+  "final_host_spi_source_sha256": "96495bc87560cccb50c75de6ae665aed48bc4849f112ba4d65a5e443b82fea2e",
+  "idf_display_sha256": {
+    "esp_lcd/include/esp_lcd_io_spi.h": "6bb82dd6dfe57776d1e1290409fe797e9cfc2a663577db25af989e6c95223b45",
+    "esp_lcd/rgb/esp_lcd_panel_rgb.c": "eaf9ba8d6c5425021e231e820be71eb700f27b664a3bd8c65f86d2cf6950ad10",
+    "esp_lcd/rgb/include/esp_lcd_panel_rgb.h": "7eecfdcba74144f89d902db7e6186bac259404f52031942f89ab7db1b2dc7783",
+    "esp_lcd/spi/esp_lcd_panel_io_spi.c": "dce75b576d5e134418c72d23c5626ea84e5609a76a4c08f8318bc7a72a3fb9f9"
+  }
+}

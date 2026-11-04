@@ -1,0 +1,127 @@
+{
+  "scope": "S3 FB code/constant placement only; runtime ownership source unchanged",
+  "idf_head": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+  "idf_esp_lcd_diff_empty": true,
+  "compiler": "xtensa-esp-elf esp-16.1.0_20260609",
+  "source_sha256": {
+    "src/present_plan.c": "2ee4ea4e9932aae132d957420f5d681eb7d5a8f856fb95ed9f7ac7421b73d3cf",
+    "src/present_geometry.h": "248f0353b5e2da4265ec7399f6a1f6be6e773b543570d05729e8d3bf23cd0db1",
+    "src/present_limits.h": "55ac48df4ff22f1d1da74504834b6a84df5df3b3f15b98148102dd2afa4f6415",
+    "src/present_os.h": "d118f81761ffed2688588e9487f4004daf9f2112403233ab56562e0d5ff6787c",
+    "src/present_os.c": "8f38c63298bebf3dd09e04fd165f323502044cefd4006fac56bd7e27ece8f6ed",
+    "src/present_memory.h": "912130b25ea0ca8a84a8bc702c9236b5510d6ce7b438e32e83352e0d3f86fdbf",
+    "src/esp_display_presenter.c": "dc0ad2f0698223936142c1a6d6477d825de98dde6a64a4433e73fd6c0545ef4d",
+    "src/present_allocation.h": "4cdd51cb671455ac9973852fa97185ecb1ece8986b7404482f66485ee7345c3c",
+    "src/present_presenter.h": "070c8bcc7ef42ac4005e8462550fddfb230e8a3cb97ac17d6501cd5f9bbf8387",
+    "src/present_engine.c": "7b6b7e38f624f33ed580ca9c16d080e1a11fc092ba67d16e079dc15cca4b9639",
+    "src/present_pixel_engine.h": "4d42874fb4dbaa733434090a75927cc9690e82757959647206045c9ba0818acf",
+    "src/present_output_caps.h": "5ac074315d16c59eaaf3f2a4e3928f437c01d1dac5d84207c26846610bf16e0e",
+    "src/present_lcd_scanout.h": "1e332b0f5cb19e62dfe2531ce98fdc331492b3e4edfb86ee45cfb0e3f22edec0",
+    "src/present_resources.h": "61da61b14b3a5c7f0d936efe5846e95a97c338e140e20ec092a94c7e020846dc",
+    "src/present_resources.c": "dc6b52e7ba6a9c2b30935a3670ac45a5edbbc305705b56245bcf3079710ece00",
+    "src/present_geometry.c": "66f3606ef2fc185ab2baec5d680070a27df8ff3fcd96cead6d281c9fbbf98225",
+    "src/present_records.h": "5e125749cefdfd4fd887e58edba73b4a8f5dc862cf1f4640d3f951ad801e3f04",
+    "src/present_executor.h": "aae0a2af0b3352e0e8d3b6f327aff2b5803abe03ff26bce08c0a018632387379",
+    "src/present_backend.h": "09b272d12a0917382ed8ebb5bfb82160afdd6d6181126b7be53dfdc2f28355ed",
+    "src/present_plan.h": "489118e705a4e3c68026962a33733131bbcef9f5bcb38891667300dbb25dd581",
+    "src/present_lcd_spi.h": "8318a08fdd20175c514db4b44fa72a477198336d1dc5de3ca658e8a0a51bf23e",
+    "src/platform/present_te_timing.c": "43e415ce39179d716350a5ee73e7c54046886e6ea017a1eaf313e090a4275c5c",
+    "src/platform/present_lcd_spi.c": "96495bc87560cccb50c75de6ae665aed48bc4849f112ba4d65a5e443b82fea2e",
+    "src/platform/present_te_timing.h": "79c67f8f46c6e6d3a1c3ebf284b8234dd8832428d52554ec1e0cf4945612e799",
+    "src/platform/present_te_timer.h": "4f39a3e189997fe00b9af721e312025194ca55145117873128def2218d307f38",
+    "src/platform/present_te_timer.c": "48e38776f73d1cfda6b3fe6ac7db890069c0c03962ffbdc1fa843061a60dd619",
+    "src/platform/present_te_sync.c": "e96bae34443ae931e8908557046cdd702a70e3197de700c89dd1b0d12460c3cc",
+    "src/platform/present_te_sync.h": "a7b5318a79754f8a4dd51aebe20639b09c61848e53c15d1bc69df2aa657898db",
+    "src/platform/present_lcd_scanout.c": "2980bd52168037c01519bc8b350e7ce167814bc44095a8a1e410785e6101f820",
+    "src/pixel/present_pixel_engine.c": "aff35b01cdff47acc6803f6b2d2ad05aeea7288a4ca9728ab9c659efd9a3c21e",
+    "src/pixel/executor/present_executor_dma2d.c": "3a0bb05f5b4be0206b9d9e82215fb18f87238a2aa15551735ecd51417cffa635",
+    "src/pixel/executor/present_executor.c": "d67fd8eb931bcd63f1719de0b6fdb57c3a2666ed9889705332439e1c1d05582c",
+    "src/pixel/executor/present_executor_ppa.c": "9758afee0e495543fadae37fcccbd554571a17873daec5ae5181e0d6a0fc8651",
+    "src/pixel/executor/present_executor_hw.h": "802290e15067413f5f4e7bce85f2b1e33abcf7277dc9b392880735cc0dd1ce9c",
+    "src/pixel/executor/present_executor_cpu.c": "3309b893753655ac13103c96f8003a0b229bd13fb2364c8d79cacac69d877e1d",
+    "src/backend/present_te_composer.h": "d6f863ce20e463b844f3517776aa923dd715dab0b21b9d8e76ad8ca420e4dd62",
+    "src/backend/present_image_repair.h": "ca10d6eb6443d607df3bb2aa35cdf07e1a12c369ff2580a7c2905364dba55cf7",
+    "src/backend/present_te_composer.c": "37754d9a0df8cac89b742a11d2a01df39d40549e652e2a219f98316bb34be51a",
+    "src/backend/present_frame_core.h": "1cb0bbb9b4d2e1d1bb503f1c454ceaa4542d8090b9ed9879c578fa25681c5916",
+    "src/backend/present_backend_gram.c": "2f11c73d35661bc3fd22f63e34b562cfd58337367285a92acd72f4f5180ec79f",
+    "src/backend/present_backend_fb.c": "afe82356a70dffedfd83471a31af821806137615e9079983bbac32831815dad1",
+    "src/backend/present_image_repair.c": "043a82507047450ce9ff351826a0ddf57e920290ea53fb79a8a9fe6c5b460600",
+    "src/backend/present_coverage.h": "b3e8ce6162ad8f5389223783a6d9ababb13259629ebfa2772dc6ec2d267c3d3a",
+    "src/backend/present_backend_te.c": "ff18ec3001869064592144ea0288c81c9d743b91e59aaa344188f19044c95025",
+    "src/backend/present_transaction.h": "be60be422239ee6f46f02130163b3e3b33df5c4959ee95103c0b54a39aa6ca29",
+    "src/backend/present_frame_core.c": "95d097b724e60c26c1176158fbc6126695c9d9c2ee70e732d9eaca1bbb2bee19",
+    "include/esp_display_present_types.h": "82185a1987a691eca711daaee0ddb613719fc8f9c9f3efdea0d286fa32401369",
+    "include/esp_display_present.h": "ca03d4250379ac8c96181fcf1bb87155b8367af8397f6d766950eafd34076e09",
+    "include/esp_display_present_config.h": "e6d9733bc054fb841a5897cabaa24a1e273681bd989f183ebc8e8b6e3328b4e8",
+    "CMakeLists.txt": "c6e4ab8157836dfce964c8422ac2ccb78e416ca71d7516f52aa06d3d5b5e0f75",
+    "Kconfig": "cc798ca6dcde1dd6abc880c82c08be5cd82f1e4c637d5ca821eedcb8e57fd84e",
+    "linker.lf": "da15cb58eb7fe22f846ddf6f8af03407431a8d3c385072278af212d916d609e2"
+  },
+  "prior_isr_join_runtime_sources_identical": true,
+  "conditions": {
+    "width": 480,
+    "height": 480,
+    "format": "RGB565",
+    "rotation": 0,
+    "tile_rows": 16,
+    "tile_buffers": 2,
+    "instruction_cache_bytes": 16384,
+    "producer_priority": 6,
+    "tick_hz": 1000,
+    "warmup_frames": 8,
+    "measured_frames": 60,
+    "repeats": 3
+  },
+  "stock_driver_mode": "Original IDF esp_lcd, BSP-confirmed bounce setting; no readonly query overlay",
+  "trace_mode": "Separate instrumented driver/component; not a throughput measurement",
+  "limits": [
+    "Synthetic submission throughput, not optical FPS or LVGL benchmark",
+    "Trace checks are finite coverage, not exhaustive stress/reset proof",
+    "P4 build checked; no new P4/S31 board throughput measurement"
+  ],
+  "lvgl_version": "9.5.0",
+  "device_restoration": {
+    "stock": {
+      "flash": 0,
+      "monitor": 0,
+      "restore_prefix": 0,
+      "verify": 0
+    },
+    "stockoff": {
+      "flash": 0,
+      "monitor": 0,
+      "restore_prefix": 0,
+      "verify": 0
+    },
+    "traceiram": {
+      "flash": 0,
+      "monitor": 0,
+      "restore_prefix": 0,
+      "verify": 0
+    },
+    "finaliram": {
+      "flash": 0,
+      "monitor": 0,
+      "restore_prefix": 0,
+      "verify": 0
+    },
+    "pipelineiram": {
+      "flash": 0,
+      "monitor": 0,
+      "restore_prefix": 0,
+      "verify": 0
+    },
+    "hotiram": {
+      "flash": 0,
+      "monitor": 0,
+      "restore_prefix": 0,
+      "verify": 0
+    },
+    "iram": {
+      "flash": 0,
+      "monitor": 0,
+      "restore_prefix": 0,
+      "verify": 0
+    }
+  }
+}

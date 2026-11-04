@@ -1,0 +1,322 @@
+I (388) esp_psram: Found 16MB PSRAM device
+I (388) esp_psram: Speed: 200MHz
+I (389) cpu_start: Multicore app
+I (702) esp_psram: SPI SRAM memory test OK
+I (711) cpu_start: Pro cpu start user code
+I (711) cpu_start: cpu freq: 320000000 Hz
+I (711) app_init: Application information:
+I (711) app_init: Project name:     pv2_compat_probe
+I (712) app_init: App version:      1
+I (712) app_init: Compile time:     Nov  3 2026 16:39:47
+I (712) app_init: ELF file SHA256:  f2cb2600a...
+I (712) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (713) efuse_init: Min chip rev:     v0.0
+I (713) efuse_init: Max chip rev:     v0.99
+I (713) efuse_init: Chip rev:         v0.0
+I (713) heap_init: Initializing. RAM available for dynamic allocation:
+I (713) heap_init: At 2F015CA0 len 00065310 (404 KiB): RAM
+I (714) heap_init: At 2F07AFB0 len 000041C0 (16 KiB): RAM
+I (714) heap_init: At 2E000000 len 00007FE8 (31 KiB): RTCRAM
+I (714) esp_psram: Adding pool of 16384K of PSRAM memory to heap allocator
+I (715) spi_flash: detected chip: gd
+I (715) spi_flash: flash io: dio
+I (716) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (716) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (717) main_task: Started on CPU0
+I (718) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (718) main_task: Calling app_main()
+I (719) main_task: Returned from app_main()
+I (3719) qspi: BSP revision=0100 clk=44 rst=42 TE=43 CS=50 QSPI=40MHz
+I (3820) co5300: version: 2.2.0
+I (3820) co5300_spi: LCD panel create success, version: 2.2.0
+W (4580) co5300_spi: The 3Ah command has been used and will be overwritten by external initialization sequence
+I (5180) mode_compare: CASE_BEGIN board=S31_QSPI profile=GRAM_T1 rotation=0 logical=480x480 physical=480x480
+I (5180) present_target: target: mode=NONE panel=IO/GRAM gram=1 rotation=0 te=0 fb=0 drawbuf=16x1
+I (5180) present_target: pipeline: commit=wait_inflight slot=16x1
+I (5181) present_gram: ready: 1 x 16-line GRAM drawbufs
+I (5181) presenter: presenter: contract=PARTITION endpoint=gram mode=gram_dma areas=0 retain=0 previous=0 drawbuf=15360
+W (7008) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (7009) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=GRAM_T1 rotation=0 frames=12 total_frame_us=721980 pixels=ALL last_full=0 last_bands=30 completed=12
+I (7009) mode_compare: CASE_BEGIN board=S31_QSPI profile=GRAM_T1 rotation=90 logical=480x480 physical=480x480
+E (7010) present_target: esp_display_present_target_create(332): invalid target config
+W (7010) mode_compare: CASE_REJECT impl=v1 profile=GRAM_T1 rotation=90 error=ESP_ERR_NOT_SUPPORTED
+I (7011) mode_compare: CASE_BEGIN board=S31_QSPI profile=GRAM_T1 rotation=180 logical=480x480 physical=480x480
+E (7011) present_target: esp_display_present_target_create(332): invalid target config
+W (7011) mode_compare: CASE_REJECT impl=v1 profile=GRAM_T1 rotation=180 error=ESP_ERR_NOT_SUPPORTED
+I (7012) mode_compare: CASE_BEGIN board=S31_QSPI profile=GRAM_T1 rotation=270 logical=480x480 physical=480x480
+E (7012) present_target: esp_display_present_target_create(332): invalid target config
+W (7012) mode_compare: CASE_REJECT impl=v1 profile=GRAM_T1 rotation=270 error=ESP_ERR_NOT_SUPPORTED
+I (7013) mode_compare: CASE_BEGIN board=S31_QSPI profile=GRAM_T2 rotation=0 logical=480x480 physical=480x480
+I (7013) present_target: target: mode=NONE panel=IO/GRAM gram=1 rotation=0 te=0 fb=0 drawbuf=16x2
+I (7014) present_target: pipeline: commit=wait_inflight slot=16x2
+I (7014) present_gram: ready: 2 x 16-line GRAM drawbufs
+I (7014) presenter: presenter: contract=PARTITION endpoint=gram mode=gram_dma areas=0 retain=0 previous=0 drawbuf=15360
+W (8475) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (8476) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=GRAM_T2 rotation=0 frames=12 total_frame_us=354816 pixels=ALL last_full=0 last_bands=30 completed=12
+I (8476) mode_compare: CASE_BEGIN board=S31_QSPI profile=GRAM_T2 rotation=90 logical=480x480 physical=480x480
+E (8477) present_target: esp_display_present_target_create(332): invalid target config
+W (8477) mode_compare: CASE_REJECT impl=v1 profile=GRAM_T2 rotation=90 error=ESP_ERR_NOT_SUPPORTED
+I (8477) mode_compare: CASE_BEGIN board=S31_QSPI profile=GRAM_T2 rotation=180 logical=480x480 physical=480x480
+E (8478) present_target: esp_display_present_target_create(332): invalid target config
+W (8478) mode_compare: CASE_REJECT impl=v1 profile=GRAM_T2 rotation=180 error=ESP_ERR_NOT_SUPPORTED
+I (8478) mode_compare: CASE_BEGIN board=S31_QSPI profile=GRAM_T2 rotation=270 logical=480x480 physical=480x480
+E (8478) present_target: esp_display_present_target_create(332): invalid target config
+W (8479) mode_compare: CASE_REJECT impl=v1 profile=GRAM_T2 rotation=270 error=ESP_ERR_NOT_SUPPORTED
+I (8479) mode_compare: CASE_BEGIN board=S31_QSPI profile=TE_C1_T1 rotation=0 logical=480x480 physical=480x480
+I (8480) present_target: target: mode=TE_SYNC panel=IO/GRAM gram=1 rotation=0 te=1 fb=0 drawbuf=16x1
+I (8480) present_target: pipeline: commit=te_push slot=16x1
+I (8485) present_te: TE blanking start auto-detected: gpio=43 idle=1 edge=falling
+I (8486) present_te: TE sync ready: gpio=43 blanking=fall..rise sync=fall irq=both
+I (8486) present_te: te_compose: logical=480x480 physical=480x480 rotate=0 ppa=0 buffers=1 pipeline=0 async_copy=0
+I (8487) presenter: presenter: contract=PARTITION endpoint=te_compose mode=te_compose areas=0 retain=0 previous=0 drawbuf=15360
+I (8587) display_present:hw: Initializing hardware resources
+I (8588) display_present:hw: Hardware resources initialized successfully
+W (8610) present_te: TE schedule=overrun/end edge=rise Tf/Tb/Ta/Ttx=16731/16193/538/23040 required=138%; no safe full-frame window
+W (10372) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (10372) present_te: TE sync destroyed: gpio=43
+I (10373) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=TE_C1_T1 rotation=0 frames=12 total_frame_us=713234 pixels=ALL last_full=1 last_bands=0 completed=12
+I (10374) mode_compare: CASE_BEGIN board=S31_QSPI profile=TE_C1_T1 rotation=90 logical=480x480 physical=480x480
+I (10374) present_target: target: mode=TE_SYNC panel=IO/GRAM gram=1 rotation=90 te=1 fb=0 drawbuf=16x1
+I (10375) present_target: pipeline: commit=te_push slot=16x1
+I (10379) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (10380) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (10380) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (10381) present_te: te_compose: logical=480x480 physical=480x480 rotate=90 ppa=1 buffers=1 pipeline=0 async_copy=0
+I (10381) presenter: presenter: contract=PARTITION endpoint=te_compose mode=te_compose areas=0 retain=0 previous=0 drawbuf=15360
+I (10508) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16739/539/16200/23040 phase=[0,9899] blank_reuse=0 required=138%
+W (12186) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (12186) present_te: TE sync destroyed: gpio=43
+I (12187) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=TE_C1_T1 rotation=90 frames=12 total_frame_us=627169 pixels=ALL last_full=1 last_bands=0 completed=12
+I (12188) mode_compare: CASE_BEGIN board=S31_QSPI profile=TE_C1_T1 rotation=180 logical=480x480 physical=480x480
+I (12188) present_target: target: mode=TE_SYNC panel=IO/GRAM gram=1 rotation=180 te=1 fb=0 drawbuf=16x1
+I (12189) present_target: pipeline: commit=te_push slot=16x1
+I (12193) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (12194) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (12194) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (12195) present_te: te_compose: logical=480x480 physical=480x480 rotate=180 ppa=0 buffers=1 pipeline=0 async_copy=0
+I (12195) presenter: presenter: contract=PARTITION endpoint=te_compose mode=te_compose areas=0 retain=0 previous=0 drawbuf=15360
+I (12317) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16744/539/16205/23040 phase=[0,9909] blank_reuse=0 required=138%
+W (13944) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (13944) present_te: TE sync destroyed: gpio=43
+I (13945) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=TE_C1_T1 rotation=180 frames=12 total_frame_us=580229 pixels=ALL last_full=1 last_bands=0 completed=12
+I (13946) mode_compare: CASE_BEGIN board=S31_QSPI profile=TE_C1_T1 rotation=270 logical=480x480 physical=480x480
+I (13946) present_target: target: mode=TE_SYNC panel=IO/GRAM gram=1 rotation=270 te=1 fb=0 drawbuf=16x1
+I (13946) present_target: pipeline: commit=te_push slot=16x1
+I (13951) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (13951) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (13952) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (13952) present_te: te_compose: logical=480x480 physical=480x480 rotate=270 ppa=1 buffers=1 pipeline=0 async_copy=0
+I (13952) presenter: presenter: contract=PARTITION endpoint=te_compose mode=te_compose areas=0 retain=0 previous=0 drawbuf=15360
+I (14080) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16753/546/16207/23040 phase=[0,9920] blank_reuse=0 required=138%
+W (15751) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (15751) present_te: TE sync destroyed: gpio=43
+I (15752) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=TE_C1_T1 rotation=270 frames=12 total_frame_us=633268 pixels=ALL last_full=1 last_bands=0 completed=12
+I (15753) mode_compare: CASE_BEGIN board=S31_QSPI profile=TE_C1_T2 rotation=0 logical=480x480 physical=480x480
+I (15753) present_target: target: mode=TE_SYNC panel=IO/GRAM gram=1 rotation=0 te=1 fb=0 drawbuf=16x2
+I (15754) present_target: pipeline: commit=te_push slot=16x2
+I (15758) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (15759) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (15759) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (15759) present_te: te_compose: logical=480x480 physical=480x480 rotate=0 ppa=0 buffers=1 pipeline=0 async_copy=1
+I (15760) presenter: presenter: contract=PARTITION endpoint=te_compose mode=te_compose areas=0 retain=0 previous=0 drawbuf=15360
+I (15875) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16736/539/16197/23040 phase=[0,9893] blank_reuse=0 required=138%
+W (17456) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (17456) present_te: TE sync destroyed: gpio=43
+I (17457) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=TE_C1_T2 rotation=0 frames=12 total_frame_us=522282 pixels=ALL last_full=1 last_bands=0 completed=12
+I (17458) mode_compare: CASE_BEGIN board=S31_QSPI profile=TE_C1_T2 rotation=90 logical=480x480 physical=480x480
+I (17458) present_target: target: mode=TE_SYNC panel=IO/GRAM gram=1 rotation=90 te=1 fb=0 drawbuf=16x2
+I (17458) present_target: pipeline: commit=te_push slot=16x2
+I (17463) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (17464) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (17464) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (17464) present_te: te_compose: logical=480x480 physical=480x480 rotate=90 ppa=1 buffers=1 pipeline=0 async_copy=1
+I (17465) presenter: presenter: contract=PARTITION endpoint=te_compose mode=te_compose areas=0 retain=0 previous=0 drawbuf=15360
+I (17580) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16763/540/16223/23040 phase=[0,9946] blank_reuse=0 required=138%
+W (19163) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (19163) present_te: TE sync destroyed: gpio=43
+I (19164) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=TE_C1_T2 rotation=90 frames=12 total_frame_us=521221 pixels=ALL last_full=1 last_bands=0 completed=12
+I (19165) mode_compare: CASE_BEGIN board=S31_QSPI profile=TE_C1_T2 rotation=180 logical=480x480 physical=480x480
+I (19165) present_target: target: mode=TE_SYNC panel=IO/GRAM gram=1 rotation=180 te=1 fb=0 drawbuf=16x2
+I (19166) present_target: pipeline: commit=te_push slot=16x2
+I (19170) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (19171) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (19171) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (19171) present_te: te_compose: logical=480x480 physical=480x480 rotate=180 ppa=0 buffers=1 pipeline=0 async_copy=1
+I (19172) presenter: presenter: contract=PARTITION endpoint=te_compose mode=te_compose areas=0 retain=0 previous=0 drawbuf=15360
+I (19287) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16742/539/16203/23040 phase=[0,9905] blank_reuse=0 required=138%
+W (20871) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (20871) present_te: TE sync destroyed: gpio=43
+I (20872) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=TE_C1_T2 rotation=180 frames=12 total_frame_us=530232 pixels=ALL last_full=1 last_bands=0 completed=12
+I (20873) mode_compare: CASE_BEGIN board=S31_QSPI profile=TE_C1_T2 rotation=270 logical=480x480 physical=480x480
+I (20873) present_target: target: mode=TE_SYNC panel=IO/GRAM gram=1 rotation=270 te=1 fb=0 drawbuf=16x2
+I (20873) present_target: pipeline: commit=te_push slot=16x2
+I (20878) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (20878) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (20879) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (20879) present_te: te_compose: logical=480x480 physical=480x480 rotate=270 ppa=1 buffers=1 pipeline=0 async_copy=1
+I (20879) presenter: presenter: contract=PARTITION endpoint=te_compose mode=te_compose areas=0 retain=0 previous=0 drawbuf=15360
+I (20995) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16747/539/16208/23040 phase=[0,9915] blank_reuse=0 required=138%
+W (22579) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (22579) present_te: TE sync destroyed: gpio=43
+I (22580) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=TE_C1_T2 rotation=270 frames=12 total_frame_us=534260 pixels=ALL last_full=1 last_bands=0 completed=12
+I (22581) mode_compare: CASE_BEGIN board=S31_QSPI profile=TE_C2_T1 rotation=0 logical=480x480 physical=480x480
+I (22581) present_target: target: mode=TE_SYNC panel=IO/GRAM gram=1 rotation=0 te=1 fb=0 drawbuf=16x1
+I (22581) present_target: pipeline: commit=te_push slot=16x1
+I (22591) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (22591) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (22591) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (22592) present_te: te_compose: logical=480x480 physical=480x480 rotate=0 ppa=0 buffers=2 pipeline=1 async_copy=0
+I (22592) presenter: presenter: contract=PARTITION endpoint=te_compose mode=te_compose areas=0 retain=0 previous=0 drawbuf=15360
+I (22715) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16748/538/16210/23040 phase=[0,9918] blank_reuse=0 required=138%
+W (24327) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (24327) present_te: TE sync destroyed: gpio=43
+I (24328) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=TE_C2_T1 rotation=0 frames=12 total_frame_us=560980 pixels=ALL last_full=1 last_bands=0 completed=12
+I (24329) mode_compare: CASE_BEGIN board=S31_QSPI profile=TE_C2_T1 rotation=90 logical=480x480 physical=480x480
+I (24329) present_target: target: mode=TE_SYNC panel=IO/GRAM gram=1 rotation=90 te=1 fb=0 drawbuf=16x1
+I (24329) present_target: pipeline: commit=te_push slot=16x1
+I (24339) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (24339) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (24340) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (24340) present_te: te_compose: logical=480x480 physical=480x480 rotate=90 ppa=1 buffers=2 pipeline=1 async_copy=0
+I (24340) presenter: presenter: contract=PARTITION endpoint=te_compose mode=te_compose areas=0 retain=0 previous=0 drawbuf=15360
+I (24468) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16752/539/16213/23040 phase=[0,9925] blank_reuse=0 required=138%
+W (26147) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (26147) present_te: TE sync destroyed: gpio=43
+I (26148) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=TE_C2_T1 rotation=90 frames=12 total_frame_us=629979 pixels=ALL last_full=1 last_bands=0 completed=12
+I (26149) mode_compare: CASE_BEGIN board=S31_QSPI profile=TE_C2_T1 rotation=180 logical=480x480 physical=480x480
+I (26149) present_target: target: mode=TE_SYNC panel=IO/GRAM gram=1 rotation=180 te=1 fb=0 drawbuf=16x1
+I (26150) present_target: pipeline: commit=te_push slot=16x1
+I (26159) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (26159) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (26160) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (26160) present_te: te_compose: logical=480x480 physical=480x480 rotate=180 ppa=0 buffers=2 pipeline=1 async_copy=0
+I (26161) presenter: presenter: contract=PARTITION endpoint=te_compose mode=te_compose areas=0 retain=0 previous=0 drawbuf=15360
+I (26284) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16727/538/16189/23040 phase=[0,9876] blank_reuse=0 required=138%
+W (27907) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (27907) present_te: TE sync destroyed: gpio=43
+I (27908) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=TE_C2_T1 rotation=180 frames=12 total_frame_us=577980 pixels=ALL last_full=1 last_bands=0 completed=12
+I (27909) mode_compare: CASE_BEGIN board=S31_QSPI profile=TE_C2_T1 rotation=270 logical=480x480 physical=480x480
+I (27909) present_target: target: mode=TE_SYNC panel=IO/GRAM gram=1 rotation=270 te=1 fb=0 drawbuf=16x1
+I (27909) present_target: pipeline: commit=te_push slot=16x1
+I (27919) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (27919) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (27919) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (27920) present_te: te_compose: logical=480x480 physical=480x480 rotate=270 ppa=1 buffers=2 pipeline=1 async_copy=0
+I (27920) presenter: presenter: contract=PARTITION endpoint=te_compose mode=te_compose areas=0 retain=0 previous=0 drawbuf=15360
+I (28048) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16730/539/16191/23040 phase=[0,9881] blank_reuse=0 required=138%
+W (29728) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (29728) present_te: TE sync destroyed: gpio=43
+I (29729) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=TE_C2_T1 rotation=270 frames=12 total_frame_us=641972 pixels=ALL last_full=1 last_bands=0 completed=12
+I (29730) mode_compare: CASE_BEGIN board=S31_QSPI profile=TE_C2_T2 rotation=0 logical=480x480 physical=480x480
+I (29730) present_target: target: mode=TE_SYNC panel=IO/GRAM gram=1 rotation=0 te=1 fb=0 drawbuf=16x2
+I (29731) present_target: pipeline: commit=te_push slot=16x2
+I (29740) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (29740) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (29741) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (29741) present_te: te_compose: logical=480x480 physical=480x480 rotate=0 ppa=0 buffers=2 pipeline=1 async_copy=1
+I (29741) presenter: presenter: contract=PARTITION endpoint=te_compose mode=te_compose areas=0 retain=0 previous=0 drawbuf=15360
+I (29857) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16740/539/16201/23040 phase=[0,9901] blank_reuse=0 required=138%
+W (31437) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (31437) present_te: TE sync destroyed: gpio=43
+I (31438) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=TE_C2_T2 rotation=0 frames=12 total_frame_us=521996 pixels=ALL last_full=1 last_bands=0 completed=12
+I (31439) mode_compare: CASE_BEGIN board=S31_QSPI profile=TE_C2_T2 rotation=90 logical=480x480 physical=480x480
+I (31439) present_target: target: mode=TE_SYNC panel=IO/GRAM gram=1 rotation=90 te=1 fb=0 drawbuf=16x2
+I (31439) present_target: pipeline: commit=te_push slot=16x2
+I (31449) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (31449) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (31449) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (31450) present_te: te_compose: logical=480x480 physical=480x480 rotate=90 ppa=1 buffers=2 pipeline=1 async_copy=1
+I (31450) presenter: presenter: contract=PARTITION endpoint=te_compose mode=te_compose areas=0 retain=0 previous=0 drawbuf=15360
+I (31566) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16741/540/16201/23040 phase=[0,9902] blank_reuse=0 required=138%
+W (33146) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (33146) present_te: TE sync destroyed: gpio=43
+I (33147) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=TE_C2_T2 rotation=90 frames=12 total_frame_us=518977 pixels=ALL last_full=1 last_bands=0 completed=12
+I (33148) mode_compare: CASE_BEGIN board=S31_QSPI profile=TE_C2_T2 rotation=180 logical=480x480 physical=480x480
+I (33148) present_target: target: mode=TE_SYNC panel=IO/GRAM gram=1 rotation=180 te=1 fb=0 drawbuf=16x2
+I (33149) present_target: pipeline: commit=te_push slot=16x2
+I (33158) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (33158) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (33159) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (33159) present_te: te_compose: logical=480x480 physical=480x480 rotate=180 ppa=0 buffers=2 pipeline=1 async_copy=1
+I (33159) presenter: presenter: contract=PARTITION endpoint=te_compose mode=te_compose areas=0 retain=0 previous=0 drawbuf=15360
+I (33275) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16746/539/16207/23040 phase=[0,9913] blank_reuse=0 required=138%
+W (34855) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (34855) present_te: TE sync destroyed: gpio=43
+I (34856) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=TE_C2_T2 rotation=180 frames=12 total_frame_us=526983 pixels=ALL last_full=1 last_bands=0 completed=12
+I (34857) mode_compare: CASE_BEGIN board=S31_QSPI profile=TE_C2_T2 rotation=270 logical=480x480 physical=480x480
+I (34857) present_target: target: mode=TE_SYNC panel=IO/GRAM gram=1 rotation=270 te=1 fb=0 drawbuf=16x2
+I (34857) present_target: pipeline: commit=te_push slot=16x2
+I (34867) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (34867) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (34867) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (34868) present_te: te_compose: logical=480x480 physical=480x480 rotate=270 ppa=1 buffers=2 pipeline=1 async_copy=1
+I (34868) presenter: presenter: contract=PARTITION endpoint=te_compose mode=te_compose areas=0 retain=0 previous=0 drawbuf=15360
+I (34984) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16739/539/16200/23040 phase=[0,9899] blank_reuse=0 required=138%
+W (36562) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (36562) present_te: TE sync destroyed: gpio=43
+I (36563) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=TE_C2_T2 rotation=270 frames=12 total_frame_us=527980 pixels=ALL last_full=1 last_bands=0 completed=12
+I (36564) mode_compare: CASE_BEGIN board=S31_QSPI profile=AUTO_GRAM rotation=0 logical=480x480 physical=480x480
+I (36564) present_target: target: mode=NONE panel=IO/GRAM gram=1 rotation=0 te=0 fb=0 drawbuf=16x2
+I (36565) present_target: pipeline: commit=wait_inflight slot=16x2
+I (36565) present_gram: ready: 2 x 16-line GRAM drawbufs
+I (36565) presenter: presenter: contract=PARTITION endpoint=gram mode=gram_dma areas=0 retain=0 previous=0 drawbuf=15360
+W (38026) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (38027) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=AUTO_GRAM rotation=0 frames=12 total_frame_us=355314 pixels=ALL last_full=0 last_bands=30 completed=12
+I (38027) mode_compare: CASE_BEGIN board=S31_QSPI profile=AUTO_GRAM rotation=90 logical=480x480 physical=480x480
+E (38028) present_target: esp_display_present_target_create(332): invalid target config
+W (38028) mode_compare: CASE_REJECT impl=v1 profile=AUTO_GRAM rotation=90 error=ESP_ERR_NOT_SUPPORTED
+I (38028) mode_compare: CASE_BEGIN board=S31_QSPI profile=AUTO_GRAM rotation=180 logical=480x480 physical=480x480
+E (38029) present_target: esp_display_present_target_create(332): invalid target config
+W (38029) mode_compare: CASE_REJECT impl=v1 profile=AUTO_GRAM rotation=180 error=ESP_ERR_NOT_SUPPORTED
+I (38029) mode_compare: CASE_BEGIN board=S31_QSPI profile=AUTO_GRAM rotation=270 logical=480x480 physical=480x480
+E (38030) present_target: esp_display_present_target_create(332): invalid target config
+W (38030) mode_compare: CASE_REJECT impl=v1 profile=AUTO_GRAM rotation=270 error=ESP_ERR_NOT_SUPPORTED
+I (38030) mode_compare: CASE_BEGIN board=S31_QSPI profile=AUTO_TE rotation=0 logical=480x480 physical=480x480
+I (38031) present_target: target: mode=TE_SYNC panel=IO/GRAM gram=1 rotation=0 te=1 fb=0 drawbuf=16x2
+I (38031) present_target: pipeline: commit=te_push slot=16x2
+I (38040) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (38041) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (38041) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (38041) present_te: te_compose: logical=480x480 physical=480x480 rotate=0 ppa=0 buffers=2 pipeline=1 async_copy=1
+I (38042) presenter: presenter: contract=PARTITION endpoint=te_compose mode=te_compose areas=0 retain=0 previous=0 drawbuf=15360
+I (38157) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16770/540/16230/23040 phase=[0,9960] blank_reuse=0 required=138%
+W (39750) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (39750) present_te: TE sync destroyed: gpio=43
+I (39751) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=AUTO_TE rotation=0 frames=12 total_frame_us=534981 pixels=ALL last_full=1 last_bands=0 completed=12
+I (39752) mode_compare: CASE_BEGIN board=S31_QSPI profile=AUTO_TE rotation=90 logical=480x480 physical=480x480
+I (39752) present_target: target: mode=TE_SYNC panel=IO/GRAM gram=1 rotation=90 te=1 fb=0 drawbuf=16x2
+I (39752) present_target: pipeline: commit=te_push slot=16x2
+I (39762) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (39762) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (39762) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (39763) present_te: te_compose: logical=480x480 physical=480x480 rotate=90 ppa=1 buffers=2 pipeline=1 async_copy=1
+I (39763) presenter: presenter: contract=PARTITION endpoint=te_compose mode=te_compose areas=0 retain=0 previous=0 drawbuf=15360
+I (39879) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16748/539/16209/23040 phase=[0,9917] blank_reuse=0 required=138%
+W (41459) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (41459) present_te: TE sync destroyed: gpio=43
+I (41460) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=AUTO_TE rotation=90 frames=12 total_frame_us=518980 pixels=ALL last_full=1 last_bands=0 completed=12
+I (41461) mode_compare: CASE_BEGIN board=S31_QSPI profile=AUTO_TE rotation=180 logical=480x480 physical=480x480
+I (41461) present_target: target: mode=TE_SYNC panel=IO/GRAM gram=1 rotation=180 te=1 fb=0 drawbuf=16x2
+I (41462) present_target: pipeline: commit=te_push slot=16x2
+I (41471) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (41471) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (41472) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (41472) present_te: te_compose: logical=480x480 physical=480x480 rotate=180 ppa=0 buffers=2 pipeline=1 async_copy=1
+I (41472) presenter: presenter: contract=PARTITION endpoint=te_compose mode=te_compose areas=0 retain=0 previous=0 drawbuf=15360
+I (41588) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16746/539/16207/23040 phase=[0,9913] blank_reuse=0 required=138%
+W (43167) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (43167) present_te: TE sync destroyed: gpio=43
+I (43168) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=AUTO_TE rotation=180 frames=12 total_frame_us=525983 pixels=ALL last_full=1 last_bands=0 completed=12
+I (43169) mode_compare: CASE_BEGIN board=S31_QSPI profile=AUTO_TE rotation=270 logical=480x480 physical=480x480
+I (43169) present_target: target: mode=TE_SYNC panel=IO/GRAM gram=1 rotation=270 te=1 fb=0 drawbuf=16x2
+I (43169) present_target: pipeline: commit=te_push slot=16x2
+I (43179) present_te: TE blanking start auto-detected: gpio=43 idle=0 edge=rising
+E (43179) gpio: gpio_install_isr_service(568): GPIO isr service already installed
+I (43179) present_te: TE sync ready: gpio=43 blanking=rise..fall sync=rise irq=both
+I (43180) present_te: te_compose: logical=480x480 physical=480x480 rotate=270 ppa=1 buffers=2 pipeline=1 async_copy=1
+I (43180) presenter: presenter: contract=PARTITION endpoint=te_compose mode=te_compose areas=0 retain=0 previous=0 drawbuf=15360
+I (43296) present_te: TE schedule=slow/end edge=fall Tf/Tb/Ta/Ttx=16751/540/16211/23040 phase=[0,9922] blank_reuse=0 required=138%
+W (44874) lcd_panel.io.spi: Callback on_color_trans_done was already set and now it was overwritten!
+I (44874) present_te: TE sync destroyed: gpio=43
+I (44875) mode_compare: CASE_PASS impl=v1 board=S31_QSPI profile=AUTO_TE rotation=270 frames=12 total_frame_us=527978 pixels=ALL last_full=1 last_bands=0 completed=12
+I (44876) mode_compare: COMPARE_DONE impl=v1 board=S31_QSPI pass=23 rejected=9 bad=0 frames_per_case=12

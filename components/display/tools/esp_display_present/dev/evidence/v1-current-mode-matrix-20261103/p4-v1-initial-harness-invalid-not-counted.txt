@@ -1,0 +1,197 @@
+I (230) esp_psram: Found 32MB PSRAM device
+I (230) esp_psram: Speed: 200MHz
+I (233) cpu_start: Multicore app
+I (1081) esp_psram: SPI SRAM memory test OK
+I (1090) cpu_start: Pro cpu start user code
+I (1090) cpu_start: cpu freq: 400000000 Hz
+I (1090) app_init: Application information:
+I (1090) app_init: Project name:     pv2_compat_probe
+I (1091) app_init: App version:      1
+I (1091) app_init: Compile time:     Nov  3 2026 16:39:48
+I (1091) app_init: ELF file SHA256:  2d05daa85...
+I (1091) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (1092) efuse_init: Min chip rev:     v3.1
+I (1092) efuse_init: Max chip rev:     v3.99
+I (1092) efuse_init: Chip rev:         v3.2
+I (1092) heap_init: Initializing. RAM available for dynamic allocation:
+I (1093) heap_init: At 4FF34BB0 len 00086410 (537 KiB): RETENT_RAM
+I (1093) heap_init: At 4FFBAFC0 len 00004BF0 (18 KiB): RAM
+I (1093) heap_init: At 50108080 len 00007F80 (31 KiB): RTCRAM
+I (1093) heap_init: At 30100288 len 00001D78 (7 KiB): SPM
+I (1094) esp_psram: Adding pool of 32768K of PSRAM memory to heap allocator
+I (1095) spi_flash: detected chip: gd
+I (1095) spi_flash: flash io: dio
+I (1095) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (1096) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (1097) sleep_clock: System sleep clock ICG setting initialization
+I (1098) main_task: Started on CPU0
+I (1098) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (1099) main_task: Calling app_main()
+I (1099) main_task: Returned from app_main()
+I (4100) ek79007: version: 2.0.2
+I (4291) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=NONE_1FB rotation=0 logical=1024x600 physical=1024x600
+I (4291) present_target: target: mode=NONE panel=MIPI_DSI gram=0 rotation=0 te=0 fb=1 drawbuf=0x0
+I (4292) present_target: pipeline: commit=switch slot=600x1
+I (4292) present_fb: surface: mode=NONE contract=fb_persistent storage=fb areas=1 retain=1 previous=0 repair=0 buffers=1 size=1024x600 physical=1024x600 rotate=0 ppa=0 async_copy=0
+I (4293) presenter: presenter: contract=DIRECT endpoint=fb mode=fb_switch areas=1 retain=1 previous=0 drawbuf=0
+E (4341) mode_compare: CASE_GEOMETRY impl=v1 profile=NONE_1FB rotation=0 full=0 bands=0 invalid=0 error=0
+E (4342) mode_compare: CASE_BAD impl=v1 profile=NONE_1FB rotation=0 pixels_or_geometry=FAIL
+I (4342) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=NONE_1FB rotation=90 logical=600x1024 physical=1024x600
+I (4343) present_target: target: mode=NONE panel=MIPI_DSI gram=0 rotation=90 te=0 fb=1 drawbuf=0x0
+I (4343) present_target: pipeline: commit=switch slot=1024x1
+I (4360) present_fb: surface: mode=NONE contract=fb_persistent storage=transform areas=1 retain=1 previous=0 repair=0 buffers=1 size=600x1024 physical=1024x600 rotate=90 ppa=0 async_copy=0
+I (4361) presenter: presenter: contract=DIRECT endpoint=fb mode=fb_switch areas=1 retain=1 previous=0 drawbuf=0
+E (4447) mode_compare: CASE_GEOMETRY impl=v1 profile=NONE_1FB rotation=90 full=0 bands=0 invalid=0 error=0
+E (4449) mode_compare: CASE_BAD impl=v1 profile=NONE_1FB rotation=90 pixels_or_geometry=FAIL
+I (4449) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=NONE_1FB rotation=180 logical=1024x600 physical=1024x600
+I (4449) present_target: target: mode=NONE panel=MIPI_DSI gram=0 rotation=180 te=0 fb=1 drawbuf=0x0
+I (4450) present_target: pipeline: commit=switch slot=600x1
+I (4467) present_fb: surface: mode=NONE contract=fb_persistent storage=transform areas=1 retain=1 previous=0 repair=0 buffers=1 size=1024x600 physical=1024x600 rotate=180 ppa=0 async_copy=0
+I (4468) presenter: presenter: contract=DIRECT endpoint=fb mode=fb_switch areas=1 retain=1 previous=0 drawbuf=0
+E (4546) mode_compare: CASE_GEOMETRY impl=v1 profile=NONE_1FB rotation=180 full=0 bands=0 invalid=0 error=0
+E (4547) mode_compare: CASE_BAD impl=v1 profile=NONE_1FB rotation=180 pixels_or_geometry=FAIL
+I (4547) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=NONE_1FB rotation=270 logical=600x1024 physical=1024x600
+I (4548) present_target: target: mode=NONE panel=MIPI_DSI gram=0 rotation=270 te=0 fb=1 drawbuf=0x0
+I (4548) present_target: pipeline: commit=switch slot=1024x1
+I (4565) present_fb: surface: mode=NONE contract=fb_persistent storage=transform areas=1 retain=1 previous=0 repair=0 buffers=1 size=600x1024 physical=1024x600 rotate=270 ppa=0 async_copy=0
+I (4566) presenter: presenter: contract=DIRECT endpoint=fb mode=fb_switch areas=1 retain=1 previous=0 drawbuf=0
+E (4651) mode_compare: CASE_GEOMETRY impl=v1 profile=NONE_1FB rotation=270 full=0 bands=0 invalid=0 error=0
+E (4653) mode_compare: CASE_BAD impl=v1 profile=NONE_1FB rotation=270 pixels_or_geometry=FAIL
+I (4653) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_FULL rotation=0 logical=1024x600 physical=1024x600
+I (4654) present_target: target: mode=DOUBLE_FULL panel=MIPI_DSI gram=0 rotation=0 te=0 fb=2 drawbuf=0x0
+I (4654) present_target: pipeline: commit=switch slot=600x2
+I (4654) present_fb: surface: mode=DOUBLE_FULL contract=fb_switch storage=fb areas=0 retain=0 previous=0 repair=0 buffers=2 size=1024x600 physical=1024x600 rotate=0 ppa=0 async_copy=0
+I (4655) presenter: presenter: contract=FULL endpoint=fb mode=fb_switch areas=0 retain=0 previous=0 drawbuf=0
+I (6831) mode_compare: CASE_PASS impl=v1 board=P4-v3 MIPI EK79007 profile=DOUBLE_FULL rotation=0 frames=12 total_frame_us=707800 pixels=ALL last_full=1 last_bands=0 completed=12
+I (6832) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_FULL rotation=90 logical=600x1024 physical=1024x600
+I (6832) present_target: target: mode=DOUBLE_FULL panel=MIPI_DSI gram=0 rotation=90 te=0 fb=2 drawbuf=0x0
+I (6833) present_target: pipeline: commit=switch slot=1024x2
+I (6850) present_fb: surface: mode=DOUBLE_FULL contract=fb_switch storage=transform areas=0 retain=0 previous=0 repair=0 buffers=2 size=600x1024 physical=1024x600 rotate=90 ppa=0 async_copy=0
+I (6851) presenter: presenter: contract=FULL endpoint=fb mode=fb_switch areas=0 retain=0 previous=0 drawbuf=0
+I (12889) mode_compare: CASE_PASS impl=v1 board=P4-v3 MIPI EK79007 profile=DOUBLE_FULL rotation=90 frames=12 total_frame_us=1021192 pixels=ALL last_full=1 last_bands=0 completed=12
+I (12890) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_FULL rotation=180 logical=1024x600 physical=1024x600
+I (12891) present_target: target: mode=DOUBLE_FULL panel=MIPI_DSI gram=0 rotation=180 te=0 fb=2 drawbuf=0x0
+I (12891) present_target: pipeline: commit=switch slot=600x2
+I (12908) present_fb: surface: mode=DOUBLE_FULL contract=fb_switch storage=transform areas=0 retain=0 previous=0 repair=0 buffers=2 size=1024x600 physical=1024x600 rotate=180 ppa=0 async_copy=0
+I (12909) presenter: presenter: contract=FULL endpoint=fb mode=fb_switch areas=0 retain=0 previous=0 drawbuf=0
+I (15229) mode_compare: CASE_PASS impl=v1 board=P4-v3 MIPI EK79007 profile=DOUBLE_FULL rotation=180 frames=12 total_frame_us=913929 pixels=ALL last_full=1 last_bands=0 completed=12
+I (15230) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_FULL rotation=270 logical=600x1024 physical=1024x600
+I (15231) present_target: target: mode=DOUBLE_FULL panel=MIPI_DSI gram=0 rotation=270 te=0 fb=2 drawbuf=0x0
+I (15231) present_target: pipeline: commit=switch slot=1024x2
+I (15248) present_fb: surface: mode=DOUBLE_FULL contract=fb_switch storage=transform areas=0 retain=0 previous=0 repair=0 buffers=2 size=600x1024 physical=1024x600 rotate=270 ppa=0 async_copy=0
+I (15249) presenter: presenter: contract=FULL endpoint=fb mode=fb_switch areas=0 retain=0 previous=0 drawbuf=0
+I (21287) mode_compare: CASE_PASS impl=v1 board=P4-v3 MIPI EK79007 profile=DOUBLE_FULL rotation=270 frames=12 total_frame_us=1015517 pixels=ALL last_full=1 last_bands=0 completed=12
+I (21288) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=TRIPLE_FULL rotation=0 logical=1024x600 physical=1024x600
+I (21289) present_target: target: mode=TRIPLE_FULL panel=MIPI_DSI gram=0 rotation=0 te=0 fb=3 drawbuf=0x0
+I (21289) present_target: pipeline: commit=switch slot=600x3
+I (21290) present_fb: surface: mode=TRIPLE_FULL contract=fb_switch storage=fb areas=0 retain=0 previous=0 repair=0 buffers=3 size=1024x600 physical=1024x600 rotate=0 ppa=0 async_copy=0
+I (21290) presenter: presenter: contract=FULL endpoint=fb mode=fb_switch areas=0 retain=0 previous=0 drawbuf=0
+I (23328) mode_compare: CASE_PASS impl=v1 board=P4-v3 MIPI EK79007 profile=TRIPLE_FULL rotation=0 frames=12 total_frame_us=569527 pixels=ALL last_full=1 last_bands=0 completed=12
+I (23329) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=TRIPLE_FULL rotation=90 logical=600x1024 physical=1024x600
+I (23329) present_target: target: mode=TRIPLE_FULL panel=MIPI_DSI gram=0 rotation=90 te=0 fb=3 drawbuf=0x0
+I (23330) present_target: pipeline: commit=switch slot=1024x3
+I (23347) present_fb: surface: mode=TRIPLE_FULL contract=fb_switch storage=transform areas=0 retain=0 previous=0 repair=0 buffers=3 size=600x1024 physical=1024x600 rotate=90 ppa=0 async_copy=0
+I (23348) presenter: presenter: contract=FULL endpoint=fb mode=fb_switch areas=0 retain=0 previous=0 drawbuf=0
+I (29383) mode_compare: CASE_PASS impl=v1 board=P4-v3 MIPI EK79007 profile=TRIPLE_FULL rotation=90 frames=12 total_frame_us=1026554 pixels=ALL last_full=1 last_bands=0 completed=12
+I (29384) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=TRIPLE_FULL rotation=180 logical=1024x600 physical=1024x600
+I (29385) present_target: target: mode=TRIPLE_FULL panel=MIPI_DSI gram=0 rotation=180 te=0 fb=3 drawbuf=0x0
+I (29385) present_target: pipeline: commit=switch slot=600x3
+I (29402) present_fb: surface: mode=TRIPLE_FULL contract=fb_switch storage=transform areas=0 retain=0 previous=0 repair=0 buffers=3 size=1024x600 physical=1024x600 rotate=180 ppa=0 async_copy=0
+I (29403) presenter: presenter: contract=FULL endpoint=fb mode=fb_switch areas=0 retain=0 previous=0 drawbuf=0
+I (31730) mode_compare: CASE_PASS impl=v1 board=P4-v3 MIPI EK79007 profile=TRIPLE_FULL rotation=180 frames=12 total_frame_us=923022 pixels=ALL last_full=1 last_bands=0 completed=12
+I (31731) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=TRIPLE_FULL rotation=270 logical=600x1024 physical=1024x600
+I (31732) present_target: target: mode=TRIPLE_FULL panel=MIPI_DSI gram=0 rotation=270 te=0 fb=3 drawbuf=0x0
+I (31732) present_target: pipeline: commit=switch slot=1024x3
+I (31749) present_fb: surface: mode=TRIPLE_FULL contract=fb_switch storage=transform areas=0 retain=0 previous=0 repair=0 buffers=3 size=600x1024 physical=1024x600 rotate=270 ppa=0 async_copy=0
+I (31750) presenter: presenter: contract=FULL endpoint=fb mode=fb_switch areas=0 retain=0 previous=0 drawbuf=0
+I (37784) mode_compare: CASE_PASS impl=v1 board=P4-v3 MIPI EK79007 profile=TRIPLE_FULL rotation=270 frames=12 total_frame_us=1021311 pixels=ALL last_full=1 last_bands=0 completed=12
+I (37785) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_DIRECT rotation=0 logical=1024x600 physical=1024x600
+I (37786) present_target: target: mode=DOUBLE_DIRECT panel=MIPI_DSI gram=0 rotation=0 te=0 fb=2 drawbuf=0x0
+I (37786) present_target: pipeline: commit=switch slot=600x2
+I (37787) present_fb: surface: mode=DOUBLE_DIRECT contract=fb_direct storage=fb areas=1 retain=0 previous=1 repair=0 buffers=2 size=1024x600 physical=1024x600 rotate=0 ppa=0 async_copy=0
+I (37787) presenter: presenter: contract=DIRECT endpoint=fb mode=fb_switch areas=1 retain=0 previous=1 drawbuf=0
+I (39972) mode_compare: CASE_PASS impl=v1 board=P4-v3 MIPI EK79007 profile=DOUBLE_DIRECT rotation=0 frames=12 total_frame_us=715715 pixels=ALL last_full=1 last_bands=0 completed=12
+I (39973) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_DIRECT rotation=90 logical=600x1024 physical=1024x600
+E (39973) present_target: esp_display_present_target_create(332): invalid target config
+W (39974) mode_compare: CASE_REJECT impl=v1 profile=DOUBLE_DIRECT rotation=90 error=ESP_ERR_NOT_SUPPORTED
+I (39974) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_DIRECT rotation=180 logical=1024x600 physical=1024x600
+E (39975) present_target: esp_display_present_target_create(332): invalid target config
+W (39975) mode_compare: CASE_REJECT impl=v1 profile=DOUBLE_DIRECT rotation=180 error=ESP_ERR_NOT_SUPPORTED
+I (39975) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_DIRECT rotation=270 logical=600x1024 physical=1024x600
+E (39976) present_target: esp_display_present_target_create(332): invalid target config
+W (39976) mode_compare: CASE_REJECT impl=v1 profile=DOUBLE_DIRECT rotation=270 error=ESP_ERR_NOT_SUPPORTED
+I (39976) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_PARTIAL rotation=0 logical=1024x600 physical=1024x600
+I (39977) present_target: target: mode=DOUBLE_PARTIAL panel=MIPI_DSI gram=0 rotation=0 te=0 fb=2 drawbuf=16x2
+I (39977) present_target: pipeline: commit=switch slot=16x2
+I (39978) present_fb: surface: mode=DOUBLE_PARTIAL contract=fb_repair storage=fb areas=1 retain=0 previous=0 repair=1 buffers=2 size=1024x600 physical=1024x600 rotate=0 ppa=0 async_copy=1
+I (39979) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=32768
+I (39980) display_present:hw: Initializing hardware resources
+I (39981) display_present:hw: Hardware resources initialized successfully
+I (41977) mode_compare: CASE_PASS impl=v1 board=P4-v3 MIPI EK79007 profile=DOUBLE_PARTIAL rotation=0 frames=12 total_frame_us=528531 pixels=ALL last_full=1 last_bands=0 completed=12
+I (41978) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_PARTIAL rotation=90 logical=600x1024 physical=1024x600
+I (41979) present_target: target: mode=DOUBLE_PARTIAL panel=MIPI_DSI gram=0 rotation=90 te=0 fb=2 drawbuf=16x2
+I (41979) present_target: pipeline: commit=switch slot=16x2
+I (41980) present_fb: surface: mode=DOUBLE_PARTIAL contract=fb_repair storage=partition_rotate areas=1 retain=0 previous=0 repair=1 buffers=2 size=600x1024 physical=1024x600 rotate=90 ppa=1 async_copy=1
+I (41980) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=19200
+I (47540) mode_compare: CASE_PASS impl=v1 board=P4-v3 MIPI EK79007 profile=DOUBLE_PARTIAL rotation=90 frames=12 total_frame_us=543775 pixels=ALL last_full=1 last_bands=0 completed=12
+I (47541) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_PARTIAL rotation=180 logical=1024x600 physical=1024x600
+I (47542) present_target: target: mode=DOUBLE_PARTIAL panel=MIPI_DSI gram=0 rotation=180 te=0 fb=2 drawbuf=16x2
+I (47542) present_target: pipeline: commit=switch slot=16x2
+I (47543) present_fb: surface: mode=DOUBLE_PARTIAL contract=fb_repair storage=partition_rotate areas=1 retain=0 previous=0 repair=1 buffers=2 size=1024x600 physical=1024x600 rotate=180 ppa=0 async_copy=1
+I (47543) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=32768
+I (49524) mode_compare: CASE_PASS impl=v1 board=P4-v3 MIPI EK79007 profile=DOUBLE_PARTIAL rotation=180 frames=12 total_frame_us=575770 pixels=ALL last_full=1 last_bands=0 completed=12
+I (49525) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=DOUBLE_PARTIAL rotation=270 logical=600x1024 physical=1024x600
+I (49526) present_target: target: mode=DOUBLE_PARTIAL panel=MIPI_DSI gram=0 rotation=270 te=0 fb=2 drawbuf=16x2
+I (49526) present_target: pipeline: commit=switch slot=16x2
+I (49527) present_fb: surface: mode=DOUBLE_PARTIAL contract=fb_repair storage=partition_rotate areas=1 retain=0 previous=0 repair=1 buffers=2 size=600x1024 physical=1024x600 rotate=270 ppa=1 async_copy=1
+I (49527) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=19200
+I (55093) mode_compare: CASE_PASS impl=v1 board=P4-v3 MIPI EK79007 profile=DOUBLE_PARTIAL rotation=270 frames=12 total_frame_us=543879 pixels=ALL last_full=1 last_bands=0 completed=12
+I (55094) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=TRIPLE_PARTIAL rotation=0 logical=1024x600 physical=1024x600
+I (55095) present_target: target: mode=TRIPLE_PARTIAL panel=MIPI_DSI gram=0 rotation=0 te=0 fb=3 drawbuf=16x2
+I (55095) present_target: pipeline: commit=switch slot=16x2
+I (55096) present_fb: surface: mode=TRIPLE_PARTIAL contract=fb_repair storage=fb areas=1 retain=0 previous=0 repair=1 buffers=3 size=1024x600 physical=1024x600 rotate=0 ppa=0 async_copy=1
+I (55096) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=32768
+I (57013) mode_compare: CASE_PASS impl=v1 board=P4-v3 MIPI EK79007 profile=TRIPLE_PARTIAL rotation=0 frames=12 total_frame_us=447981 pixels=ALL last_full=1 last_bands=0 completed=12
+I (57014) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=TRIPLE_PARTIAL rotation=90 logical=600x1024 physical=1024x600
+I (57015) present_target: target: mode=TRIPLE_PARTIAL panel=MIPI_DSI gram=0 rotation=90 te=0 fb=3 drawbuf=16x2
+I (57015) present_target: pipeline: commit=switch slot=16x2
+I (57016) present_fb: surface: mode=TRIPLE_PARTIAL contract=fb_repair storage=partition_rotate areas=1 retain=0 previous=0 repair=1 buffers=3 size=600x1024 physical=1024x600 rotate=90 ppa=1 async_copy=1
+I (57017) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=19200
+I (62478) mode_compare: CASE_PASS impl=v1 board=P4-v3 MIPI EK79007 profile=TRIPLE_PARTIAL rotation=90 frames=12 total_frame_us=452014 pixels=ALL last_full=1 last_bands=0 completed=12
+I (62479) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=TRIPLE_PARTIAL rotation=180 logical=1024x600 physical=1024x600
+I (62480) present_target: target: mode=TRIPLE_PARTIAL panel=MIPI_DSI gram=0 rotation=180 te=0 fb=3 drawbuf=16x2
+I (62480) present_target: pipeline: commit=switch slot=16x2
+I (62481) present_fb: surface: mode=TRIPLE_PARTIAL contract=fb_repair storage=partition_rotate areas=1 retain=0 previous=0 repair=1 buffers=3 size=1024x600 physical=1024x600 rotate=180 ppa=0 async_copy=1
+I (62481) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=32768
+I (64351) mode_compare: CASE_PASS impl=v1 board=P4-v3 MIPI EK79007 profile=TRIPLE_PARTIAL rotation=180 frames=12 total_frame_us=464784 pixels=ALL last_full=1 last_bands=0 completed=12
+I (64352) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=TRIPLE_PARTIAL rotation=270 logical=600x1024 physical=1024x600
+I (64353) present_target: target: mode=TRIPLE_PARTIAL panel=MIPI_DSI gram=0 rotation=270 te=0 fb=3 drawbuf=16x2
+I (64353) present_target: pipeline: commit=switch slot=16x2
+I (64354) present_fb: surface: mode=TRIPLE_PARTIAL contract=fb_repair storage=partition_rotate areas=1 retain=0 previous=0 repair=1 buffers=3 size=600x1024 physical=1024x600 rotate=270 ppa=1 async_copy=1
+I (64354) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=19200
+I (69825) mode_compare: CASE_PASS impl=v1 board=P4-v3 MIPI EK79007 profile=TRIPLE_PARTIAL rotation=270 frames=12 total_frame_us=455222 pixels=ALL last_full=1 last_bands=0 completed=12
+I (69826) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=AUTO rotation=0 logical=1024x600 physical=1024x600
+I (69827) present_target: target: mode=TRIPLE_PARTIAL panel=MIPI_DSI gram=0 rotation=0 te=0 fb=3 drawbuf=16x2
+I (69827) present_target: pipeline: commit=switch slot=16x2
+I (69827) present_fb: surface: mode=TRIPLE_PARTIAL contract=fb_repair storage=fb areas=1 retain=0 previous=0 repair=1 buffers=3 size=1024x600 physical=1024x600 rotate=0 ppa=0 async_copy=1
+I (69828) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=32768
+I (71748) mode_compare: CASE_PASS impl=v1 board=P4-v3 MIPI EK79007 profile=AUTO rotation=0 frames=12 total_frame_us=449600 pixels=ALL last_full=1 last_bands=0 completed=12
+I (71749) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=AUTO rotation=90 logical=600x1024 physical=1024x600
+I (71750) present_target: target: mode=TRIPLE_PARTIAL panel=MIPI_DSI gram=0 rotation=90 te=0 fb=3 drawbuf=16x2
+I (71750) present_target: pipeline: commit=switch slot=16x2
+I (71751) present_fb: surface: mode=TRIPLE_PARTIAL contract=fb_repair storage=partition_rotate areas=1 retain=0 previous=0 repair=1 buffers=3 size=600x1024 physical=1024x600 rotate=90 ppa=1 async_copy=1
+I (71751) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=19200
+I (77216) mode_compare: CASE_PASS impl=v1 board=P4-v3 MIPI EK79007 profile=AUTO rotation=90 frames=12 total_frame_us=454992 pixels=ALL last_full=1 last_bands=0 completed=12
+I (77217) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=AUTO rotation=180 logical=1024x600 physical=1024x600
+I (77218) present_target: target: mode=TRIPLE_PARTIAL panel=MIPI_DSI gram=0 rotation=180 te=0 fb=3 drawbuf=16x2
+I (77218) present_target: pipeline: commit=switch slot=16x2
+I (77218) present_fb: surface: mode=TRIPLE_PARTIAL contract=fb_repair storage=partition_rotate areas=1 retain=0 previous=0 repair=1 buffers=3 size=1024x600 physical=1024x600 rotate=180 ppa=0 async_copy=1
+I (77219) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=32768
+I (79089) mode_compare: CASE_PASS impl=v1 board=P4-v3 MIPI EK79007 profile=AUTO rotation=180 frames=12 total_frame_us=463912 pixels=ALL last_full=1 last_bands=0 completed=12
+I (79090) mode_compare: CASE_BEGIN board=P4-v3 MIPI EK79007 profile=AUTO rotation=270 logical=600x1024 physical=1024x600
+I (79090) present_target: target: mode=TRIPLE_PARTIAL panel=MIPI_DSI gram=0 rotation=270 te=0 fb=3 drawbuf=16x2
+I (79091) present_target: pipeline: commit=switch slot=16x2
+I (79092) present_fb: surface: mode=TRIPLE_PARTIAL contract=fb_repair storage=partition_rotate areas=1 retain=0 previous=0 repair=1 buffers=3 size=600x1024 physical=1024x600 rotate=270 ppa=1 async_copy=1
+I (79092) presenter: presenter: contract=PARTITION endpoint=fb mode=fb_partition areas=1 retain=0 previous=0 drawbuf=19200
+I (84561) mode_compare: CASE_PASS impl=v1 board=P4-v3 MIPI EK79007 profile=AUTO rotation=270 frames=12 total_frame_us=454933 pixels=ALL last_full=1 last_bands=0 completed=12
+I (84562) mode_compare: COMPARE_DONE impl=v1 board=P4-v3 MIPI EK79007 pass=21 rejected=3 bad=4 frames_per_case=12

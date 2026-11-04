@@ -259,9 +259,13 @@ static esp_display_present_tx_result_t spi_submit(void *context, const esp_displ
     spi->submitting = true;
     present_lock_exit(&spi->lock, false);
 
-    ret = spi->staging ? stage_transfer(spi, surface, area) : esp_lcd_panel_draw_bitmap(spi->config.panel, (int)area->x, (int)area->y,
-                                                                                        (int)(area->x + area->width), (int)(area->y + area->height),
-                                                                                        surface->pixels);
+    if (spi->staging != NULL) {
+        ret = stage_transfer(spi, surface, area);
+    } else {
+        ret = esp_lcd_panel_draw_bitmap(spi->config.panel, (int)area->x, (int)area->y,
+                                        (int)(area->x + area->width), (int)(area->y + area->height),
+                                        surface->pixels);
+    }
     present_lock_enter(&spi->lock, false);
     spi->submitting = false;
     if (ret != ESP_OK) {

@@ -1,5 +1,7 @@
 # LVGL 官方 Benchmark：V1 / V2 同板对比
 
+本页为历史固件与配置的结果；当前提交的同条件三板对照见 [当前验证](../../VALIDATION.md)。
+
 日期：2026-11-02。每块板同一测试固件依次运行 V1、V2 的 LVGL 9.5.0 `lv_demo_benchmark`，各 16 个有效场景。每个结果为一次运行，未进行统计重复，FPS 为 LVGL 官方场景平均的整数值。
 
 | 板子 | 屏幕 / 模式 | V1 FPS | V2 FPS | V1 / V2 render ms | V1 / V2 flush ms | LVGL CPU V1 / V2 |

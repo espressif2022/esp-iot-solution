@@ -88,6 +88,7 @@ typedef struct {
     uint64_t sequence;
     uint64_t cookie;
     bool confirmed;
+    bool require_full_redraw;
     present_transaction_t transaction;
 } fb_slot_t;
 
@@ -404,7 +405,8 @@ static fb_advance_result_t advance_build_pipeline(present_backend_t *backend, fb
 
     /* Stage 3 -> 4: FB_SLOT_DRAIN_TILE -> FB_SLOT_REPAIR */
     if (slot->state == FB_SLOT_DRAIN_TILE) {
-        bool require_full = backend->baseline == SIZE_MAX || backend->config.render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL;
+        bool require_full = backend->baseline == SIZE_MAX || backend->config.render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL ||
+                            slot->require_full_redraw;
         if (require_full && !present_image_full(&backend->image)) {
             error = ESP_ERR_INVALID_STATE;
             if (context == FB_SEAL_ACCEPTED) {
@@ -874,7 +876,12 @@ static esp_err_t fb_begin(present_backend_t *backend, const esp_display_present_
     }
     /* Prepopulate a stable latest sealed frame. Sealed buffers are immutable;
      * single-producer pump cannot retire/reuse it during this CPU copy. */
-    bool prefill = backend->baseline != SIZE_MAX && backend->baseline != slot && backend->config.render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT;
+    bool direct = backend->config.render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT;
+    bool different_baseline = backend->baseline != SIZE_MAX && backend->baseline != slot;
+    /* A producer that requests a full raster need not read the previous image.
+     * The request is not coverage: seal checks actual submitted pixels below. */
+    bool require_full_redraw = direct && different_baseline && request->full_redraw;
+    bool prefill = direct && different_baseline && !request->full_redraw;
     bool selective_direct = prefill && !request->full_redraw && request->damage_count > 0 &&
                             !backend->scan_storage && backend->image.versions[slot] != 0;
     esp_display_present_rect_t prefill_area = {0, 0, backend->config.width, backend->config.height};
@@ -915,6 +922,7 @@ static esp_err_t fb_begin(present_backend_t *backend, const esp_display_present_
     backend->active = slot;
     backend->slots[slot].state = (prefill && backend->config.async_copy) ? FB_SLOT_PREFILL : FB_SLOT_DRAWING;
     backend->slots[slot].record = record;
+    backend->slots[slot].require_full_redraw = require_full_redraw;
     backend->core.frames[record] = (fb_record_t) {
         .common = {.token = token}
     };

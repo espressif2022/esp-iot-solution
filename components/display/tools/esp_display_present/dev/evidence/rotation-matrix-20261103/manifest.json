@@ -1,0 +1,69 @@
+{
+  "date": "2026-11-03",
+  "head": "8c69118a6182a83a22450710b06bc5a4563030b9",
+  "production_src_diff_sha256": "cad4ff898f3e9229ec9b08507972ce5d82d3960f47a7dab510bdf1cf3685750b",
+  "idf": "7b9cc1ac79f8 dirty",
+  "hardware": {
+    "p4": "e8:f6:0a:e7:a7:8d",
+    "s3": "90:e5:b1:d0:a9:d8",
+    "s31": "30:ed:a0:f4:0b:34"
+  },
+  "counts": {
+    "p4_static": 28,
+    "s3_static": 28,
+    "s31_static": 32,
+    "p4_native_modes": 5,
+    "s3_native_modes": 5,
+    "s31_dirty_cases": 32,
+    "p4_runtime_transition_cases": 84,
+    "p4_runtime_same_axis_pass": 28,
+    "p4_runtime_cross_axis_unsafe": 56
+  },
+  "limitations": [
+    "P4 public runtime cross-axis: all 56 cases across 7 configurations submit 600x1024 to a 1024x600 panel",
+    "S31 GRAM in-place 0->180 not supported",
+    "TE full frame optical tearing not measured",
+    "FPS: four full-frame serial quiesce samples, not LVGL benchmark"
+  ],
+  "firmware_sha_note": "Not all per-round application binaries were retained; exact source snapshots and raw logs are provided. Prior S31 static firmware SHA256: f521a4f14a7f54e69ef3dafb09a12c6eae8c618d2c8d8352a2461d9f282ac0c4.",
+  "files_sha256": {
+    "build-summary.txt": "ca48a786bcf951f6ab0fd4bc486959bcb45f5a9a55023fc20d14f889dd5b91c1",
+    "host.txt": "218f8ff377c6e94f18e3a96103126f59c34842560b4465915d5c446a106bb626",
+    "mode-rotation.csv": "e6d9a5c6feec338fd196318d6311f7881eef804c462ebf400e16ebf5b507dfc1",
+    "p4-cross.txt": "fc02c540c1e0a0d78ecc04d0ddce470bf3ad2d88700640a093046dae1123f175",
+    "p4-harness-first.txt": "c720160c2d194b5856fdd271315f92d4897b9c8a5e8b4e7ceadbefdb10b30822",
+    "p4-native-final.txt": "28bf27f83d2410eee03262f4968f6632217c72fd00688a8231aa6b6b6d100474",
+    "p4-native.txt": "62e309930716494ed79a41f9dd8e655f585e8aba3146e71249b9f0490125683b",
+    "p4-restore-verify.txt": "c1f96d2003099def3cfa1e2270c7350a47ad8d660ed1ec7b31618797602b1757",
+    "p4-static.txt": "04cea204d3964dd3c4a7091a14123a1bb8f4266aae9f3699c1cb3c265f843715",
+    "s3-native-final.txt": "de6774ebd5b2ff68f624b4876f9abeda47beb01de337c2ea4e0cf8659ed63481",
+    "s3-restore-verify.txt": "84a0d42d197895cf8f82e27408ff9aca459c24bbfb09e63df66bafcf8136d8bc",
+    "s3-static.txt": "d6d1d5a51786f2a1f8b25bd4103ea2738973dfb0f46ce8231ef834336e31eb0d",
+    "s31-dynamic.txt": "81c9e464a191560b63bf9692fc8d657e4a54849b51b18e50da26fdf539aac5b9",
+    "s31-restore-verify-retry.txt": "e5387d136b100c2e27bd64f5d4ee0df6d3536b4292550d9cf9c91d6cb8e7f76a",
+    "s31-restore-verify.txt": "6b2b5a94b19bf5c945e98b79f99a51cdec18d7f5867552c45a01a5a1c588042c",
+    "s31-static.txt": "dc81c50a99a3f342a456d8c8373fd1d49fcc494b40e4aa217b9429649c797654",
+    "sanitize-unsandboxed.txt": "f9d63860a46d9c6ea449dc2ad6a2e22931b0f7a5510fd6f6081b4ad2575442a2",
+    "sanitize.txt": "1d10e24ca23dce819ee7ee9e6165c5a4f0feeceb6348d7f809d9248fa276c58c",
+    "sources/cross_axis.c": "996aae16f821a90a31ff026bdaa1b93ec7fd9226e353246b12090d94a3284533",
+    "sources/matrix-initial.c": "1912c7ca8083b7af45bec3bdcee73382a381a56f64142de79ce61a8b5d91c2c2",
+    "sources/matrix-s31-static.c": "22778362f4b52b1569aa666d3c4ab2c48af9ce7126f030b84ba2bc6ae7b9e2cc",
+    "sources/matrix.c": "4686e0b7e4095f5a5e176ba18bb077cd5a146cc8ba8aefa572df5017f547729e",
+    "sources/native_matrix.c": "5518aa503949ab78d04b4f513a1a1233f8ebb8229b69fbec491d16efe4ea143a",
+    "p4-transitions.txt": "f24243017aadeaa3085eac89ee722d41700187133497e9f35138e88a3a07d817",
+    "p4-transitions.csv": "12f62fd106ef8b2423f678a40ba5e7e583f844c1caa11d0b529e3a70b778ff59",
+    "sources/p4-transitions.c": "c8a58127f5c55ae2028a52d791c985584602b21d28d68425f77fabd506660da8",
+    "p4-restore-verify-final.txt": "c1f96d2003099def3cfa1e2270c7350a47ad8d660ed1ec7b31618797602b1757"
+  },
+  "restoration": {
+    "p4": "full backup independently verified again after transition matrix",
+    "s3": "full backup independently verified",
+    "s31": "full backup independently verified after one USB I/O retry"
+  },
+  "idf_tracked_diff_sha256": "94f7752516f39944534889581aafb78491a127bbfe38c166807408c6df60eb41",
+  "test_sdkconfig_sha256": {
+    "p4": "9e53bcf690ebb151c9132e1ac03d878d7f0f86c21ad1fbab3adf22a145f0d003",
+    "s3": "ba87e6089748aa7faecbb4e421059eade27ff3be14997bc9a816415c8fda4c2b",
+    "s31": "e18f7a1ac591480471664600b6be252ec3a14fcbd8b354130b2bd19400a42ee0"
+  }
+}

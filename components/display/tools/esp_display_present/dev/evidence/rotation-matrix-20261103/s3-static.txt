@@ -1,0 +1,203 @@
+������������������������������Nov  3 2026 16:33:08
+I (25) boot: chip revision: v0.2
+I (27) boot.esp32s3: Boot SPI Speed : 80MHz
+I (31) boot.esp32s3: SPI Mode       : DIO
+I (34) boot.esp32s3: SPI Flash Size : 16MB
+I (38) boot: Partition Table:
+I (41) boot: ## Label            Usage          Type ST Offset   Length
+I (47) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (54) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (60) boot:  2 factory          factory app      00 00 00010000 00300000
+I (67) esp_image: segment 0: paddr=00010020 vaddr=3c030020 size=0d550h ( 54608) map
+I (84) esp_image: segment 1: paddr=0001d578 vaddr=3fc94e00 size=02aa0h ( 10912) load
+I (87) esp_image: segment 2: paddr=00020020 vaddr=42000020 size=28dcch (167372) map
+I (120) esp_image: segment 3: paddr=00048df4 vaddr=3fc978a0 size=00db8h (  3512) load
+I (121) esp_image: segment 4: paddr=00049bb4 vaddr=40374000 size=10de4h ( 69092) load
+I (140) esp_image: segment 5: paddr=0005a9a0 vaddr=50000000 size=00024h (    36) load
+I (147) boot: Loaded app from partition at offset 0x10000
+I (153) octal_psram: vendor id    : 0x0d (AP)
+I (153) octal_psram: dev id       : 0x03 (generation 4)
+I (153) octal_psram: density      : 0x05 (128 Mbit)
+I (156) octal_psram: good-die     : 0x01 (Pass)
+I (160) octal_psram: Latency      : 0x01 (Fixed)
+I (164) octal_psram: VCC          : 0x00 (1.8V)
+I (168) octal_psram: SRF          : 0x01 (Fast Refresh)
+I (173) octal_psram: BurstType    : 0x01 (Hybrid Wrap)
+I (178) octal_psram: BurstLen     : 0x01 (32 Byte)
+I (183) octal_psram: Readlatency  : 0x02 (10 cycles@Fixed)
+I (188) octal_psram: DriveStrength: 0x00 (1/1)
+I (192) MSPI Timing: Enter psram timing tuning
+I (197) esp_psram: Found 16MB PSRAM device
+I (200) esp_psram: Speed: 80MHz
+I (203) cpu_start: Multicore app
+I (770) esp_psram: SPI SRAM memory test OK
+I (778) cpu_start: GPIO 44 and 43 are used as console UART I/O pins
+I (779) cpu_start: Pro cpu start user code
+I (779) cpu_start: cpu freq: 240000000 Hz
+I (780) app_init: Application information:
+I (784) app_init: Project name:     pv2_compat_probe
+I (789) app_init: App version:      1
+I (792) app_init: Compile time:     Nov  3 2026 16:33:30
+I (797) app_init: ELF file SHA256:  a94c6e447...
+I (802) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8-dir
+I (808) efuse_init: Min chip rev:     v0.0
+I (811) efuse_init: Max chip rev:     v0.99
+I (815) efuse_init: Chip rev:         v0.2
+I (819) heap_init: Initializing. RAM available for dynamic allocation:
+I (825) heap_init: At 3FC99080 len 00050690 (321 KiB): RAM
+I (831) heap_init: At 3FCE9710 len 00005724 (21 KiB): RAM
+I (836) heap_init: At 600FE000 len 00001FE8 (7 KiB): RTCRAM
+I (841) esp_psram: Adding pool of 16384K of PSRAM memory to heap allocator
+I (848) spi_flash: detected chip: gd
+I (851) spi_flash: flash io: dio
+I (854) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (860) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (867) main_task: Started on CPU0
+I (870) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (878) main_task: Calling app_main()
+I (881) main_task: Returned from app_main()
+I (3882) lcd_panel.io.3wire_spi: Panel IO create success, version: 1.0.1
+W (5666) lcd_panel.io.3wire_spi: Delete but keep CS line inactive
+W (5696) lcd.rgb: GPIO 3 is not usable, maybe is reserved by others
+I (5696) gc9503: LCD panel create success, version: 3.0.1
+I (5696) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=NONE_1FB rotation=0 logical=480x480 physical=480x480
+I (6466) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (6467) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (6479) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (6491) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=NONE_1FB rotation=0 frames=4 avg_frame_us=66504 pixels=ALL last_full=1 last_bands=0 completed=4
+I (6505) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=NONE_1FB rotation=90 logical=480x480 physical=480x480
+I (7411) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (7412) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (7424) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (7436) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=NONE_1FB rotation=90 frames=4 avg_frame_us=83692 pixels=ALL last_full=1 last_bands=0 completed=4
+I (7450) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=NONE_1FB rotation=180 logical=480x480 physical=480x480
+I (8341) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (8342) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (8354) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (8367) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=NONE_1FB rotation=180 frames=4 avg_frame_us=93868 pixels=ALL last_full=1 last_bands=0 completed=4
+I (8380) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=NONE_1FB rotation=270 logical=480x480 physical=480x480
+I (9284) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (9285) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (9297) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (9310) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=NONE_1FB rotation=270 frames=4 avg_frame_us=82349 pixels=ALL last_full=1 last_bands=0 completed=4
+I (9323) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_FULL rotation=0 logical=480x480 physical=480x480
+I (10096) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (10097) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (10109) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (10122) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=DOUBLE_FULL rotation=0 frames=4 avg_frame_us=67036 pixels=ALL last_full=1 last_bands=0 completed=4
+I (10136) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_FULL rotation=90 logical=480x480 physical=480x480
+I (11041) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (11042) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (11054) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (11067) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=DOUBLE_FULL rotation=90 frames=4 avg_frame_us=83405 pixels=ALL last_full=1 last_bands=0 completed=4
+I (11081) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_FULL rotation=180 logical=480x480 physical=480x480
+I (11971) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (11972) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (11984) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (11997) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=DOUBLE_FULL rotation=180 frames=4 avg_frame_us=93594 pixels=ALL last_full=1 last_bands=0 completed=4
+I (12011) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_FULL rotation=270 logical=480x480 physical=480x480
+I (12914) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (12915) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (12927) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (12940) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=DOUBLE_FULL rotation=270 frames=4 avg_frame_us=82084 pixels=ALL last_full=1 last_bands=0 completed=4
+I (12954) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=TRIPLE_FULL rotation=0 logical=480x480 physical=480x480
+I (13726) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (13727) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (13739) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (13752) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=TRIPLE_FULL rotation=0 frames=4 avg_frame_us=66926 pixels=ALL last_full=1 last_bands=0 completed=4
+I (13766) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=TRIPLE_FULL rotation=90 logical=480x480 physical=480x480
+I (14671) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (14672) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (14684) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (14697) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=TRIPLE_FULL rotation=90 frames=4 avg_frame_us=83151 pixels=ALL last_full=1 last_bands=0 completed=4
+I (14711) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=TRIPLE_FULL rotation=180 logical=480x480 physical=480x480
+I (15601) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (15602) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (15614) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (15627) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=TRIPLE_FULL rotation=180 frames=4 avg_frame_us=93584 pixels=ALL last_full=1 last_bands=0 completed=4
+I (15641) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=TRIPLE_FULL rotation=270 logical=480x480 physical=480x480
+I (16544) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (16545) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (16557) present_v2: executor=cpu cpu_attempts=4 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (16570) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=TRIPLE_FULL rotation=270 frames=4 avg_frame_us=82089 pixels=ALL last_full=1 last_bands=0 completed=4
+I (16584) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_DIRECT rotation=0 logical=480x480 physical=480x480
+I (17405) present_v2: executor=cpu cpu_attempts=3 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (17406) present_v2: executor=cpu cpu_attempts=3 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (17418) present_v2: executor=cpu cpu_attempts=3 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (17431) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=DOUBLE_DIRECT rotation=0 frames=4 avg_frame_us=79085 pixels=ALL last_full=1 last_bands=0 completed=4
+I (17445) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_DIRECT rotation=90 logical=480x480 physical=480x480
+I (18450) present_v2: executor=cpu cpu_attempts=7 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (18451) present_v2: executor=cpu cpu_attempts=7 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (18463) present_v2: executor=cpu cpu_attempts=7 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (18476) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=DOUBLE_DIRECT rotation=90 frames=4 avg_frame_us=108057 pixels=ALL last_full=1 last_bands=0 completed=4
+I (18490) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_DIRECT rotation=180 logical=480x480 physical=480x480
+I (19429) present_v2: executor=cpu cpu_attempts=7 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (19430) present_v2: executor=cpu cpu_attempts=7 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (19442) present_v2: executor=cpu cpu_attempts=7 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (19455) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=DOUBLE_DIRECT rotation=180 frames=4 avg_frame_us=105728 pixels=ALL last_full=1 last_bands=0 completed=4
+I (19469) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_DIRECT rotation=270 logical=480x480 physical=480x480
+I (20472) present_v2: executor=cpu cpu_attempts=7 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (20473) present_v2: executor=cpu cpu_attempts=7 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (20485) present_v2: executor=cpu cpu_attempts=7 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (20498) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=DOUBLE_DIRECT rotation=270 frames=4 avg_frame_us=106937 pixels=ALL last_full=1 last_bands=0 completed=4
+I (20512) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_PARTIAL rotation=0 logical=480x480 physical=480x480
+I (21284) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (21285) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (21298) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (21310) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=DOUBLE_PARTIAL rotation=0 frames=4 avg_frame_us=66748 pixels=ALL last_full=1 last_bands=0 completed=4
+I (21324) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_PARTIAL rotation=90 logical=480x480 physical=480x480
+I (22162) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (22164) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (22176) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (22188) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=DOUBLE_PARTIAL rotation=90 frames=4 avg_frame_us=66389 pixels=ALL last_full=1 last_bands=0 completed=4
+I (22203) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_PARTIAL rotation=180 logical=480x480 physical=480x480
+I (22976) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (22977) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (22990) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (23002) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=DOUBLE_PARTIAL rotation=180 frames=4 avg_frame_us=64372 pixels=ALL last_full=1 last_bands=0 completed=4
+I (23017) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=DOUBLE_PARTIAL rotation=270 logical=480x480 physical=480x480
+I (23853) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (23854) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (23867) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (23879) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=DOUBLE_PARTIAL rotation=270 frames=4 avg_frame_us=65621 pixels=ALL last_full=1 last_bands=0 completed=4
+I (23894) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=TRIPLE_PARTIAL rotation=0 logical=480x480 physical=480x480
+I (24664) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (24665) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (24678) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (24690) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=TRIPLE_PARTIAL rotation=0 frames=4 avg_frame_us=66640 pixels=ALL last_full=1 last_bands=0 completed=4
+I (24704) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=TRIPLE_PARTIAL rotation=90 logical=480x480 physical=480x480
+I (25543) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (25544) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (25557) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (25569) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=TRIPLE_PARTIAL rotation=90 frames=4 avg_frame_us=66639 pixels=ALL last_full=1 last_bands=0 completed=4
+I (25583) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=TRIPLE_PARTIAL rotation=180 logical=480x480 physical=480x480
+I (26358) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (26360) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (26372) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (26384) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=TRIPLE_PARTIAL rotation=180 frames=4 avg_frame_us=64620 pixels=ALL last_full=1 last_bands=0 completed=4
+I (26399) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=TRIPLE_PARTIAL rotation=270 logical=480x480 physical=480x480
+I (27235) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (27236) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (27249) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (27261) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=TRIPLE_PARTIAL rotation=270 frames=4 avg_frame_us=65562 pixels=ALL last_full=1 last_bands=0 completed=4
+I (27276) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=AUTO rotation=0 logical=480x480 physical=480x480
+I (28045) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (28046) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (28059) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (28071) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=AUTO rotation=0 frames=4 avg_frame_us=66606 pixels=ALL last_full=1 last_bands=0 completed=4
+I (28085) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=AUTO rotation=90 logical=480x480 physical=480x480
+I (28925) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (28926) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (28939) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (28951) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=AUTO rotation=90 frames=4 avg_frame_us=67358 pixels=ALL last_full=1 last_bands=0 completed=4
+I (28965) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=AUTO rotation=180 logical=480x480 physical=480x480
+I (29739) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (29741) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (29753) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (29765) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=AUTO rotation=180 frames=4 avg_frame_us=65019 pixels=ALL last_full=1 last_bands=0 completed=4
+I (29779) mode_matrix: CASE_BEGIN board=S3-R16 RGB GC9503 profile=AUTO rotation=270 logical=480x480 physical=480x480
+I (30616) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (30617) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (30630) present_v2: executor=cpu cpu_attempts=120 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (30642) mode_matrix: CASE_PASS board=S3-R16 RGB GC9503 profile=AUTO rotation=270 frames=4 avg_frame_us=65990 pixels=ALL last_full=1 last_bands=0 completed=4
+I (30656) mode_matrix: MATRIX_PASS board=S3-R16 RGB GC9503 cases=28 rotations=4 frames_per_case=4

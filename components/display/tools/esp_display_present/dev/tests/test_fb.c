@@ -679,8 +679,95 @@ static void async_pipeline_handoff(size_t buffers, esp_display_present_render_co
     pthread_mutex_destroy(&g.mutex);
 }
 
+/* A promised full DIRECT redraw needs no previous-frame copy. Actual writes
+ * still have to cover every pixel before the frame can be submitted. */
+static void direct_full_redraw_skips_prefill(void)
+{
+    for (unsigned asynchronous = 0; asynchronous < 2; ++asynchronous) {
+        scan_panel_t panel = {0};
+        void *buffers[2] = {aligned_alloc(64, 64), aligned_alloc(64, 64)};
+        assert(buffers[0] && buffers[1]);
+        memset(buffers[0], 0xa5, 64);
+        memset(buffers[1], 0x7b, 64);
+        esp_display_present_backend_config_t cfg = config(&panel, 2, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT);
+        cfg.external_buffers = buffers;
+        cfg.external_buffer_bytes = 64;
+        cfg.async_copy = asynchronous;
+        present_backend_t *backend;
+        OK(ops->create(&cfg, &backend));
+
+        esp_display_present_receipt_t baseline = full(backend, 0x1111);
+        finish(backend, &panel, baseline);
+
+        esp_display_present_frame_request_t redraw = {.full_redraw = true};
+        esp_display_present_frame_t frame;
+        OK(ops->begin(backend, &redraw, &frame));
+        esp_display_present_lease_t lease;
+        /* This must not wait on an unnecessary baseline copy. */
+        OK(ops->acquire(backend, frame, NULL, 0, &lease));
+        assert(lease.surface.pixels == buffers[1]);
+        for (unsigned i = 0; i < 16; ++i) {
+            assert(((uint16_t *)lease.surface.pixels)[i] == 0x7b7b);
+        }
+        OK(ops->cancel_region(backend, frame, lease.id));
+        write_rect(backend, frame, (esp_display_present_rect_t) {
+            0, 0, 1, 1
+        }, 0x3333);
+        esp_display_present_receipt_t next = {0};
+        assert(ops->end(backend, frame, &next) == ESP_ERR_INVALID_STATE);
+        assert(!next.value && panel.submissions == 1);
+        /* Rejected seal keeps the frame alive, so the producer can finish it. */
+        write_rect(backend, frame, (esp_display_present_rect_t) {
+            0, 0, 4, 4
+        }, 0x2222);
+        OK(ops->end(backend, frame, &next));
+        OK(present_fb_service(backend));
+        finish(backend, &panel, next);
+        for (unsigned i = 0; i < 16; ++i) {
+            assert(((uint16_t *)panel.current.pixels)[i] == 0x2222);
+        }
+
+        /* A partial DIRECT request must still seed the new surface from the
+         * prior image before handing it to a read-modify-write renderer. */
+        esp_display_present_frame_request_t partial = {0};
+        OK(ops->begin(backend, &partial, &frame));
+        unsigned attempts = 0;
+        esp_err_t error;
+        while ((error = ops->acquire(backend, frame, NULL, 0, &lease)) == ESP_ERR_TIMEOUT) {
+            assert(++attempts < 10000);
+            OK(present_fb_service(backend));
+            present_pause();
+        }
+        OK(error);
+        assert(lease.surface.pixels == buffers[0]);
+        for (unsigned i = 0; i < 16; ++i) {
+            assert(((uint16_t *)lease.surface.pixels)[i] == 0x2222);
+        }
+        ((uint16_t *)lease.surface.pixels)[0] = 0x4444;
+        esp_display_present_region_submit_t update = {.logical_area = {0, 0, 1, 1}, .stride_bytes = 8};
+        OK(ops->submit_region_ex(backend, frame, lease.id, &update));
+        OK(ops->end(backend, frame, &next));
+        attempts = 0;
+        while (!panel.cookie) {
+            assert(++attempts < 10000);
+            OK(present_fb_service(backend));
+            present_pause();
+        }
+        finish(backend, &panel, next);
+        assert(((uint16_t *)panel.current.pixels)[0] == 0x4444);
+        for (unsigned i = 1; i < 16; ++i) {
+            assert(((uint16_t *)panel.current.pixels)[i] == 0x2222);
+        }
+        OK(ops->stop(backend, UINT32_MAX));
+        OK(ops->destroy(backend));
+        free(buffers[0]);
+        free(buffers[1]);
+    }
+}
+
 int main(void)
 {
+    direct_full_redraw_skips_prefill();
     independent_tiles();
     for (size_t buffers = 2; buffers <= 3; ++buffers) {
         async_pipeline_handoff(buffers, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION);
