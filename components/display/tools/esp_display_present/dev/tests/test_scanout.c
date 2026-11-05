@@ -53,7 +53,7 @@ struct fake_lcd {
     rgb_cb_t rgb, rgb_vsync;
     void *user;
     bool early, fail, stop_timeout, deleted, detach_fail;
-    size_t calls;
+    size_t calls, buffer_count;
     bool no_bounce, one_shot, transformed, custom_bounce, one_fb;
     const void *source;
 };
@@ -61,7 +61,7 @@ esp_err_t esp_lcd_rgb_panel_get_frame_buffer_info(esp_lcd_panel_handle_t panel, 
 {
     *info = (esp_lcd_rgb_panel_frame_buffer_info_t) {
         .width = 3, .height = 2,
-        .frame_buffer_count = panel->one_fb ? 1 : 2, .frame_buffer_bytes = 12, .bits_per_pixel = 16,
+        .frame_buffer_count = panel->one_fb ? 1 : (panel->buffer_count ? panel->buffer_count : 2), .frame_buffer_bytes = 12, .bits_per_pixel = 16,
         .bounce_buffer_bytes = panel->no_bounce ? 0 : 6, .continuous_refresh = !panel->one_shot,
         .frame_buffer_retirement = !panel->no_bounce, .transformed = panel->transformed,
         .custom_bounce_callback = panel->custom_bounce
@@ -172,16 +172,16 @@ esp_err_t esp_lcd_panel_del(esp_lcd_panel_handle_t p)
     return ESP_OK;
 }
 
-static void exercise(esp_display_present_lcd_scanout_kind_t kind, bool fail, bool fallback)
+static void exercise(esp_display_present_lcd_scanout_kind_t kind, bool fail, esp_err_t join_result, size_t buffer_count)
 {
-    barrier_result = fallback ? ESP_ERR_NOT_SUPPORTED : ESP_OK;
-    struct fake_lcd panel = {.early = true, .fail = fail};
-    for (size_t i = 0; i < 2; ++i) {
+    barrier_result = join_result;
+    struct fake_lcd panel = {.early = true, .fail = fail, .buffer_count = buffer_count};
+    for (size_t i = 0; i < buffer_count; ++i) {
         panel.buffers[i] = aligned_alloc(64, 64);
         assert(panel.buffers[i]);
     }
     esp_display_present_lcd_scanout_config_t cfg = {.panel = &panel, .kind = kind, .width = 3, .height = 2,
-                                                    .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = 2, .bounce = true, .delete_panel = true
+                                                    .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = buffer_count, .bounce = true, .delete_panel = true
                                                    };
     esp_display_present_lcd_scanout_t *a;
     OK(esp_display_present_lcd_scanout_create(&cfg, &a));
@@ -191,10 +191,10 @@ static void exercise(esp_display_present_lcd_scanout_kind_t kind, bool fail, boo
     void *buffers[3];
     size_t count;
     OK(esp_display_present_lcd_scanout_get_buffers(a, buffers, 3, &count));
-    assert(count == 2);
+    assert(count == buffer_count);
     esp_display_present_panel_adapter_t interface;
     OK(esp_display_present_lcd_scanout_get_interface(a, &interface));
-    esp_display_present_backend_config_t bc = {.width = 3, .height = 2, .tile_rows = 2, .buffer_count = 2, .max_frames = 2,
+    esp_display_present_backend_config_t bc = {.width = 3, .height = 2, .tile_rows = 2, .buffer_count = buffer_count, .max_frames = 2,
                                                .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .render_contract = ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL, .ext_bufs = buffers,
                                                .ext_bytes = 64, .scan_buf = buffers[0], .panel = interface
                                               };
@@ -215,15 +215,27 @@ static void exercise(esp_display_present_lcd_scanout_kind_t kind, bool fail, boo
     esp_display_present_frame_status_t status;
     OK(ops->query(b, receipt, &status));
     assert(!status.terminal);
+    if (!fail && buffer_count == 2) {
+        esp_display_present_frame_t blocked;
+        assert(ops->begin(b, &req, &blocked) == ESP_ERR_NO_MEM);
+    }
     boundary(&panel);
     OK(ops->query(b, receipt, &status));
-    assert(status.terminal == (!fail && !fallback));
+    assert(status.terminal == (!fail && join_result == ESP_OK));
+    /* Submit-time and join-time callbacks did not confirm this transaction.
+     * Without a successful join, one more completion is still required. */
     boundary(&panel);
     OK(ops->query(b, receipt, &status));
     assert(status.terminal == !fail);
     if (!fail) {
         assert(status.present_confirmed);
         OK(ops->release_receipt(b, receipt));
+        /* Confirmation retires FB0; it must now be the next writable lease,
+         * while the newly scanning FB1 stays borrowed by the driver. */
+        OK(ops->begin(b, &req, &f));
+        OK(ops->acquire(b, f, NULL, 0, &lease));
+        assert(lease.surface.pixels == buffers[0]);
+        OK(ops->cancel_frame(b, f, 0));
     }
     panel.stop_timeout = true;
     assert(ops->stop(b, 0) == ESP_ERR_TIMEOUT);
@@ -238,7 +250,7 @@ static void exercise(esp_display_present_lcd_scanout_kind_t kind, bool fail, boo
     OK(ops->destroy(b));
     OK(esp_display_present_lcd_scanout_destroy(a));
     assert(panel.deleted);
-    for (size_t i = 0; i < 2; ++i) {
+    for (size_t i = 0; i < buffer_count; ++i) {
         free(panel.buffers[i]);
     }
     submit_barrier_panel = NULL;
@@ -436,7 +448,7 @@ static void queried_rgb(void)
 }
 int main(void)
 {
-    /* Neither adapter can retire a multi-FB scanout from one untagged event. */
+    /* Callers cannot force single-event retirement without the ISR join. */
     struct fake_lcd one_boundary_panel = {0};
     for (int kind = ESP_DISPLAY_PRESENT_LCD_DSI; kind <= ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE; ++kind) {
         esp_display_present_lcd_scanout_config_t config = {
@@ -459,12 +471,15 @@ int main(void)
     assert(esp_display_present_lcd_scanout_create(&unsupported, &unsupported_adapter) == ESP_ERR_NOT_SUPPORTED);
     assert(!unsupported_adapter && !unsupported_panel.deleted);
     queried_rgb();
-    exercise(ESP_DISPLAY_PRESENT_LCD_DSI, false, false);
-    exercise(ESP_DISPLAY_PRESENT_LCD_DSI, true, false);
-    exercise(ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, false, false);
-    exercise(ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, true, false);
-    exercise(ESP_DISPLAY_PRESENT_LCD_DSI, false, true);
-    exercise(ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, false, true);
+    const esp_err_t join_results[] = {ESP_OK, ESP_ERR_NOT_SUPPORTED, ESP_ERR_TIMEOUT, ESP_FAIL};
+    for (int kind = ESP_DISPLAY_PRESENT_LCD_DSI; kind <= ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE; ++kind) {
+        for (size_t count = 2; count <= 3; ++count) {
+            for (size_t i = 0; i < sizeof(join_results) / sizeof(join_results[0]); ++i) {
+                exercise(kind, false, join_results[i], count);
+                exercise(kind, true, join_results[i], count);
+            }
+        }
+    }
     test_callback_drain_retry();
     test_retained_scanout();
     puts("scanout: real adapter against driver stubs, boundary fence, initial scanout and stop retry passed");

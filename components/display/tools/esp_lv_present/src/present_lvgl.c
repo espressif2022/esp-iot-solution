@@ -69,7 +69,12 @@ static esp_err_t copy_flush(esp_lv_present_native_t *binding, const lv_area_t *a
         return ESP_ERR_INVALID_SIZE;
     }
     if (!binding->refreshing) {
-        const esp_display_present_frame_request_t request = {0};
+        /* copy_flush reads LVGL's persistent canvas, never the destination's
+         * previous contents. Coverage comes from each actual flushed region. */
+        const esp_display_present_frame_request_t request = {
+            .resolved_pixels = binding->caps.contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT &&
+            !binding->caps.writes_active_scanout
+        };
         esp_err_t ret = esp_display_present_engine_begin_next_frame(binding->presenter, &request);
         if (ret != ESP_OK) {
             return ret;

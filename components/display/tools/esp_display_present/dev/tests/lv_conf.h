@@ -3,7 +3,8 @@
  * Host-only LVGL configuration, not a product firmware configuration. */
 #pragma once
 #define LV_CONF_H
-#define LV_COLOR_DEPTH 16
+/* LVGL 9.6 uses format; earlier 9.x defaults to the same 16-bit depth. */
+#define LV_COLOR_FORMAT_DEFAULT LV_COLOR_FORMAT_RGB565
 #define LV_USE_OS 0
 #define LV_USE_STDLIB_MALLOC 1
 #define LV_USE_STDLIB_STRING 1

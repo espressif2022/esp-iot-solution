@@ -1,0 +1,29 @@
+{
+  "repo_head": "98d2f5c490b859ce1f524475df17ae4542d1b0f8",
+  "idf_head": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+  "sha256": {
+    "components/display/tools/esp_display_present/src/platform/present_lcd_scanout.c": "88e9cbc427983d95e53e750eff20801b42e551aa2f562a7f1f9f23e30073701e",
+    "components/display/tools/esp_display_present/src/backend/present_backend_fb.c": "98cfb2f2afdeb2725cea880262b547dab528fd929252179b7e3293e37b75e25e",
+    "components/display/tools/esp_lv_present/src/esp_lv_present.c": "f9690f815213bc4c4bbb6714d4cd0a5a2f61090aca15058f4ecb66dcac0d5553",
+    "components/display/tools/esp_lv_present/src/present_lvgl.c": "3c707165ce243d123b0b8d274171e3eaf3d85e40fe4751333124c41c153d7708",
+    "examples/display/gui/lvgl_present_benchmark/main/main.c": "4859cb45113a263163692c3a47d3cfbf4feeed157fe625adc7c7476a646d09db",
+    "examples/display/gui/lvgl_present_benchmark/sdkconfig": "7d80b32b25519f40dbf3437992303277d298e97541d6fc507e9cec8e0abcb5be",
+    "examples/display/gui/lvgl_present_benchmark/build-s3/lvgl_present_benchmark.bin": "34e5b271df00f4987fe325a73a5b9c0125e3e7d1a20c83590dc00565916f50f6",
+    "examples/display/gui/lvgl_present_benchmark/build-s3/lvgl_present_benchmark.elf": "48aae502fb8fe74ed45c3b5ea2fe318a4895433c44480105be876bf45da4a88b"
+  },
+  "idf_lcd_tracked_sources_clean": true,
+  "backup_digest_verified": true,
+  "flash_write_hash_verified": true,
+  "scene_duration_policy": "Unmodified full LVGL benchmark, 16 scenes per completed case",
+  "render_config": {
+    "resolution": "480x480",
+    "format": "RGB565",
+    "refresh_ms": 15,
+    "draw_tile_rows": 50,
+    "draw_tile_count": 1,
+    "lvgl_draw_units": 2,
+    "bounce_rows": 10,
+    "fb_iram": true,
+    "physical_driver_framebuffers": 3
+  }
+}

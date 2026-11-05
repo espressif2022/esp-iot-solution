@@ -14,7 +14,7 @@
 #define OK(x) assert((x) == ESP_OK)
 #define W 7
 #define H 9
-static void check(scan_panel_t *panel, size_t bpp, bool changed)
+static void check(scan_panel_t *panel, size_t bpp, bool changed, unsigned rotation)
 {
     for (unsigned y = 0; y < H; y++) {
         for (unsigned x = 0; x < W; x++) {
@@ -25,7 +25,13 @@ static void check(scan_panel_t *panel, size_t bpp, bool changed)
             if (changed && x >= 4 && x < 6 && y >= 6 && y < 8) {
                 rgb = 0x0000ff;
             }
-            const uint8_t *pixel = (const uint8_t *)panel->current.pixels + (y * W + x) * bpp;
+            unsigned px = x, py = y, pw = rotation & 1 ? H : W;
+            switch (rotation) {
+            case 1: px = H - 1 - y; py = x; break;
+            case 2: px = W - 1 - x; py = H - 1 - y; break;
+            case 3: px = y; py = W - 1 - x; break;
+            }
+            const uint8_t *pixel = (const uint8_t *)panel->current.pixels + (py * pw + px) * bpp;
             if (bpp == 2) {
                 uint16_t actual, expected = (uint16_t)(((rgb >> 8) & 0xf800) | ((rgb >> 5) & 0x7e0) | ((rgb >> 3) & 31));
                 memcpy(&actual, pixel, 2);
@@ -148,12 +154,12 @@ static void *other_producer(void *arg)
     return NULL;
 }
 
-static void exercise(esp_display_present_present_mode_t mode, size_t bpp, bool async, bool pooled)
+static void exercise(esp_display_present_present_mode_t mode, size_t bpp, bool async, bool pooled, unsigned rotation)
 {
     notifications_t n = {.lock = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER};
     scan_panel_t panel = {0};
     esp_display_present_engine_config_t cfg = {.backend = {
-            .width = W, .height = H, .tile_rows = 2, .buffer_count = 3, .max_frames = 4,
+            .width = W, .height = H, .tile_rows = 2, .buffer_count = 3, .max_frames = 4, .rotation = rotation,
             .format = bpp == 2 ? ESP_DISPLAY_PRESENT_FORMAT_RGB565 : ESP_DISPLAY_PRESENT_FORMAT_RGB888, .active_writes = true,
             .panel = scan_interface(&panel), .async_copy = async, .on_progress = progress, .progress_user = &n
         },
@@ -198,7 +204,7 @@ static void exercise(esp_display_present_present_mode_t mode, size_t bpp, bool a
     assert(panel.cookie && !panel.current.pixels);
     scan_confirm(&panel);
     OK(esp_display_present_engine_drain(p, 0));
-    check(&panel, bpp, false);
+    check(&panel, bpp, false, rotation);
     void *original = panel.current.pixels;
     uint8_t snapshot[W * H * 3];
     memcpy(snapshot, original, W * H * bpp);
@@ -217,7 +223,7 @@ static void exercise(esp_display_present_present_mode_t mode, size_t bpp, bool a
     OK(esp_lv_present_native_destroy(binding)); /* Persistent LVGL DIRECT buffer no longer needed. */
     scan_confirm(&panel);
     OK(esp_display_present_engine_drain(p, 0));
-    check(&panel, bpp, true);
+    check(&panel, bpp, true, rotation);
     esp_display_present_engine_status_t status;
     OK(esp_display_present_engine_get_status(p, &status));
     assert(status.completed_frames == 2 && status.first_error == ESP_OK);
@@ -250,15 +256,21 @@ int main(void)
                                                        };
     lv_init();
     for (size_t i = 0; i < sizeof(modes) / sizeof(*modes); i++) {
-        exercise(modes[i], 2, false, false);
-        exercise(modes[i], 3, false, false);
+        exercise(modes[i], 2, false, false, 0);
+        exercise(modes[i], 3, false, false, 0);
     }
-    exercise(ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL, 2, true, false);
-    exercise(ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_PARTIAL, 3, true, false);
-    exercise(ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT, 2, true, false);
-    exercise(ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT, 3, true, false);
-    exercise(ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL, 2, false, true);
-    exercise(ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL, 2, true, true);
+    exercise(ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL, 2, true, false, 0);
+    exercise(ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_PARTIAL, 3, true, false, 0);
+    exercise(ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT, 2, true, false, 0);
+    exercise(ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT, 3, true, false, 0);
+    exercise(ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL, 2, false, true, 0);
+    exercise(ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL, 2, true, true, 0);
+    for (unsigned rotation = 1; rotation < 4; ++rotation) {
+        exercise(ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT, 2, false, false, rotation);
+        exercise(ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT, 3, false, false, rotation);
+        exercise(ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT, 2, true, false, rotation);
+        exercise(ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT, 3, true, false, rotation);
+    }
     lv_deinit();
     puts("LVGL FB modes: FULL/DIRECT/PARTIAL, RGB565/888, dirty offsets and scanout lifetime passed");
     return 0;

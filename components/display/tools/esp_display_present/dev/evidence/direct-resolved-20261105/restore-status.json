@@ -1,0 +1,9 @@
+{
+  "restored_prefix_bytes": 1052672,
+  "verified_flash_bytes": 16777216,
+  "device_digest_matched_original": true,
+  "original_flash_sha256": "a1fb70defbe454c7a5d8fc233929fd9d9d39751910336c7baa96b905b60730fc",
+  "mac": "90:e5:b1:d0:a9:d8",
+  "port": "/dev/ttyUSB0",
+  "firmware_left_on_board": "Original pre-test image restored"
+}

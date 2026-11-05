@@ -1,0 +1,490 @@
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce2820,len:0x13dc
+load:0x403c8700,len:0xd4c
+load:0x403cb700,len:0x2dfc
+entry 0x403c88e8
+I (24) boot: ESP-IDF v6.2-dev-2221-g7b9cc1ac79f8 2nd stage bootloader
+I (25) boot: compile time Nov  4 2026 20:47:26
+I (25) boot: chip revision: v0.2
+I (26) boot.esp32s3: Boot SPI Speed : 80MHz
+I (30) boot.esp32s3: SPI Mode       : DIO
+I (34) boot.esp32s3: SPI Flash Size : 4MB
+I (38) boot: Partition Table:
+I (40) boot: ## Label            Usage          Type ST Offset   Length
+I (47) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (53) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (60) boot:  2 factory          factory app      00 00 00010000 001c2000
+I (67) esp_image: segment 0: paddr=00010020 vaddr=3c080020 size=60e8ch (396940) map
+I (148) esp_image: segment 1: paddr=00070eb4 vaddr=3fc97500 size=04028h ( 16424) load
+I (151) esp_image: segment 2: paddr=00074ee4 vaddr=40378000 size=0b134h ( 45364) load
+I (162) esp_image: segment 3: paddr=00080020 vaddr=42000020 size=74d50h (478544) map
+I (251) esp_image: segment 4: paddr=000f4d78 vaddr=40383134 size=04338h ( 17208) load
+I (256) esp_image: segment 5: paddr=000f90b8 vaddr=50000000 size=00024h (    36) load
+I (262) boot: Loaded app from partition at offset 0x10000
+I (272) octal_psram: vendor id    : 0x0d (AP)
+I (272) octal_psram: dev id       : 0x03 (generation 4)
+I (272) octal_psram: density      : 0x05 (128 Mbit)
+I (274) octal_psram: good-die     : 0x01 (Pass)
+I (279) octal_psram: Latency      : 0x01 (Fixed)
+I (283) octal_psram: VCC          : 0x00 (1.8V)
+I (287) octal_psram: SRF          : 0x01 (Fast Refresh)
+I (292) octal_psram: BurstType    : 0x01 (Hybrid Wrap)
+I (297) octal_psram: BurstLen     : 0x01 (32 Byte)
+I (302) octal_psram: Readlatency  : 0x02 (10 cycles@Fixed)
+I (307) octal_psram: DriveStrength: 0x00 (1/1)
+I (311) MSPI Timing: Enter psram timing tuning
+I (316) esp_psram: Found 16MB PSRAM device
+I (319) esp_psram: Speed: 80MHz
+I (360) mmu_psram: Read only data copied and mapped to SPIRAM
+I (409) mmu_psram: Instructions copied and mapped to SPIRAM
+I (409) cpu_start: Multicore app
+I (417) cpu_start: GPIO 44 and 43 are used as console UART I/O pins
+I (418) cpu_start: Pro cpu start user code
+I (418) cpu_start: cpu freq: 240000000 Hz
+I (420) app_init: Application information:
+I (423) app_init: Project name:     lvgl_unified_demo
+I (428) app_init: App version:      98d2f5c49-dirty
+I (433) app_init: Compile time:     Nov  4 2026 20:47:45
+I (438) app_init: ELF file SHA256:  8df789dd0...
+I (442) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8
+I (448) efuse_init: Min chip rev:     v0.0
+I (452) efuse_init: Max chip rev:     v0.99 
+I (456) efuse_init: Chip rev:         v0.2
+I (459) heap_init: Initializing. RAM available for dynamic allocation:
+I (466) heap_init: At 3FC9C4B0 len 0004D260 (308 KiB): RAM
+I (471) heap_init: At 3FCE9710 len 00005724 (21 KiB): RAM
+I (476) heap_init: At 600FE000 len 00001FE8 (7 KiB): RTCRAM
+I (481) esp_psram: Adding pool of 15424K of PSRAM memory to heap allocator
+I (488) esp_psram: Adding pool of 60K of PSRAM memory gap generated due to end address alignment of drom to the heap allocator
+I (499) spi_flash: detected chip: gd
+I (502) spi_flash: flash io: dio
+W (505) spi_flash: Detected size(16384k) larger than the size in the binary image header(4096k). Using the size in the binary image header.
+I (518) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (524) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (531) main_task: Started on CPU0
+I (534) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (542) main_task: Calling app_main()
+I (545) hw_lcd_init: Initialize GC9503 480x480 RGB panel
+I (551) lcd_panel.io.3wire_spi: Panel IO create success, version: 1.0.1
+W (2339) lcd_panel.io.3wire_spi: Delete but keep CS line inactive
+W (2368) lcd.rgb: GPIO 3 is not usable, maybe is reserved by others
+I (2368) gc9503: LCD panel create success, version: 3.0.1
+I (2369) esp_lvgl:adapter: LVGL adapter initialized successfully
+I (2374) esp_lvgl:adapter: LVGL task started successfully
+
+####################################################################
+I (2385) lvgl_adapter: matrix round=1 start
+I (2389) lvgl_adapter: RUN mode=NONE te_buffers=0 rotation=0 size=480x480 timeout=120s
+I (71543) lvgl_adapter: SCENE mode=NONE te_buffers=0 rotation=0 name="Empty screen" fps=56 cpu=100% render=5ms flush=10ms
+I (71543) lvgl_adapter: SCENE mode=NONE te_buffers=0 rotation=0 name="Moving wallpaper" fps=40 cpu=100% render=13ms flush=9ms
+I (71554) lvgl_adapter: SCENE mode=NONE te_buffers=0 rotation=0 name="Single rectangle" fps=66 cpu=100% render=1ms flush=0ms
+I (71565) lvgl_adapter: SCENE mode=NONE te_buffers=0 rotation=0 name="Multiple rectangles" fps=65 cpu=100% render=4ms flush=6ms
+I (71576) lvgl_adapter: SCENE mode=NONE te_buffers=0 rotation=0 name="Multiple RGB images" fps=66 cpu=100% render=1ms flush=0ms
+I (71587) lvgl_adapter: SCENE mode=NONE te_buffers=0 rotation=0 name="Multiple ARGB images" fps=66 cpu=100% render=3ms flush=1ms
+I (71598) lvgl_adapter: SCENE mode=NONE te_buffers=0 rotation=0 name="Rotated ARGB images" fps=66 cpu=100% render=5ms flush=0ms
+I (71610) lvgl_adapter: SCENE mode=NONE te_buffers=0 rotation=0 name="Multiple labels" fps=65 cpu=100% render=10ms flush=0ms
+I (71621) lvgl_adapter: SCENE mode=NONE te_buffers=0 rotation=0 name="Screen sized text" fps=11 cpu=100% render=76ms flush=7ms
+I (71632) lvgl_adapter: SCENE mode=NONE te_buffers=0 rotation=0 name="Multiple arcs" fps=66 cpu=100% render=2ms flush=0ms
+I (71642) lvgl_adapter: SCENE mode=NONE te_buffers=0 rotation=0 name="Containers" fps=66 cpu=100% render=4ms flush=1ms
+I (71653) lvgl_adapter: SCENE mode=NONE te_buffers=0 rotation=0 name="Containers with overlay" fps=26 cpu=100% render=27ms flush=8ms
+I (71664) lvgl_adapter: SCENE mode=NONE te_buffers=0 rotation=0 name="Containers with opa" fps=66 cpu=100% render=6ms flush=1ms
+I (71676) lvgl_adapter: SCENE mode=NONE te_buffers=0 rotation=0 name="Containers with opa_layer" fps=59 cpu=100% render=14ms flush=1ms
+I (71687) lvgl_adapter: SCENE mode=NONE te_buffers=0 rotation=0 name="Containers with scrolling" fps=26 cpu=100% render=27ms flush=8ms
+I (71699) lvgl_adapter: SCENE mode=NONE te_buffers=0 rotation=0 name="Widgets demo" fps=15 cpu=100% render=53ms flush=6ms
+I (71771) esp_lvgl:disp: Display unregistered successfully
+I (71771) lvgl_adapter: PASS mode=NONE te_buffers=0 rotation=0 frames=0 transport_fps=0.0 lvgl_fps=51 cpu=100% render=15ms flush=3ms scenes=16
+I (71778) lvgl_adapter: RUN mode=NONE te_buffers=0 rotation=90 size=480x480 timeout=120s
+E (71785) esp_lvgl:disp: rotation not supported under TEAR_AVOID_MODE_NONE
+I (71792) lvgl_adapter: SKIP mode=NONE te_buffers=0 rotation=90: register failed
+I (71799) lvgl_adapter: RUN mode=NONE te_buffers=0 rotation=180 size=480x480 timeout=120s
+E (71807) esp_lvgl:disp: rotation not supported under TEAR_AVOID_MODE_NONE
+I (71814) lvgl_adapter: SKIP mode=NONE te_buffers=0 rotation=180: register failed
+I (71821) lvgl_adapter: RUN mode=NONE te_buffers=0 rotation=270 size=480x480 timeout=120s
+E (71829) esp_lvgl:disp: rotation not supported under TEAR_AVOID_MODE_NONE
+I (71835) lvgl_adapter: SKIP mode=NONE te_buffers=0 rotation=270: register failed
+I (71843) lvgl_adapter: RUN mode=DOUBLE_FULL te_buffers=0 rotation=0 size=480x480 timeout=120s
+I (141059) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=0 name="Empty screen" fps=26 cpu=100% render=16ms flush=15ms
+I (141059) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=0 name="Moving wallpaper" fps=20 cpu=100% render=39ms flush=7ms
+I (141071) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=0 name="Single rectangle" fps=30 cpu=100% render=17ms flush=14ms
+I (141083) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=0 name="Multiple rectangles" fps=30 cpu=100% render=24ms flush=7ms
+I (141095) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=0 name="Multiple RGB images" fps=30 cpu=100% render=22ms flush=10ms
+I (141107) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=0 name="Multiple ARGB images" fps=30 cpu=100% render=21ms flush=10ms
+I (141119) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=0 name="Rotated ARGB images" fps=30 cpu=100% render=23ms flush=7ms
+I (141131) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=0 name="Multiple labels" fps=30 cpu=100% render=18ms flush=13ms
+I (141143) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=0 name="Screen sized text" fps=20 cpu=100% render=34ms flush=13ms
+I (141155) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=0 name="Multiple arcs" fps=30 cpu=100% render=17ms flush=13ms
+I (141166) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=0 name="Containers" fps=34 cpu=100% render=24ms flush=6ms
+I (141177) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=0 name="Containers with overlay" fps=20 cpu=100% render=40ms flush=7ms
+I (141190) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=0 name="Containers with opa" fps=36 cpu=100% render=25ms flush=6ms
+I (141202) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=0 name="Containers with opa_layer" fps=18 cpu=100% render=47ms flush=6ms
+I (141214) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=0 name="Containers with scrolling" fps=29 cpu=100% render=30ms flush=2ms
+I (141227) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=0 name="Widgets demo" fps=16 cpu=100% render=48ms flush=8ms
+I (141287) esp_lvgl:disp: Display unregistered successfully
+I (141287) lvgl_adapter: PASS mode=DOUBLE_FULL te_buffers=0 rotation=0 frames=0 transport_fps=0.0 lvgl_fps=26 cpu=100% render=27ms flush=9ms scenes=16
+I (141294) lvgl_adapter: RUN mode=DOUBLE_FULL te_buffers=0 rotation=90 size=480x480 timeout=120s
+I (210723) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=90 name="Empty screen" fps=17 cpu=100% render=16ms flush=32ms
+I (210724) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=90 name="Moving wallpaper" fps=12 cpu=100% render=39ms flush=41ms
+I (210735) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=90 name="Single rectangle" fps=20 cpu=100% render=17ms flush=31ms
+I (210747) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=90 name="Multiple rectangles" fps=19 cpu=100% render=24ms flush=39ms
+I (210760) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=90 name="Multiple RGB images" fps=17 cpu=100% render=21ms flush=33ms
+I (210772) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=90 name="Multiple ARGB images" fps=15 cpu=100% render=21ms flush=38ms
+I (210784) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=90 name="Rotated ARGB images" fps=15 cpu=100% render=23ms flush=37ms
+I (210796) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=90 name="Multiple labels" fps=20 cpu=100% render=18ms flush=32ms
+I (210808) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=90 name="Screen sized text" fps=14 cpu=100% render=34ms flush=32ms
+I (210820) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=90 name="Multiple arcs" fps=19 cpu=100% render=18ms flush=31ms
+I (210832) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=90 name="Containers" fps=15 cpu=100% render=24ms flush=39ms
+I (210843) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=90 name="Containers with overlay" fps=12 cpu=100% render=40ms flush=39ms
+I (210855) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=90 name="Containers with opa" fps=15 cpu=100% render=25ms flush=39ms
+I (210867) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=90 name="Containers with opa_layer" fps=12 cpu=100% render=47ms flush=33ms
+I (210880) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=90 name="Containers with scrolling" fps=15 cpu=100% render=30ms flush=34ms
+I (210893) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=90 name="Widgets demo" fps=11 cpu=100% render=48ms flush=34ms
+I (210999) esp_lvgl:disp: Display unregistered successfully
+I (210999) lvgl_adapter: PASS mode=DOUBLE_FULL te_buffers=0 rotation=90 frames=0 transport_fps=0.0 lvgl_fps=15 cpu=100% render=27ms flush=35ms scenes=16
+I (211007) lvgl_adapter: RUN mode=DOUBLE_FULL te_buffers=0 rotation=180 size=480x480 timeout=120s
+I (280354) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=180 name="Empty screen" fps=17 cpu=100% render=16ms flush=32ms
+I (280355) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=180 name="Moving wallpaper" fps=13 cpu=100% render=40ms flush=31ms
+I (280367) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=180 name="Single rectangle" fps=20 cpu=100% render=17ms flush=31ms
+I (280379) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=180 name="Multiple rectangles" fps=20 cpu=100% render=23ms flush=29ms
+I (280391) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=180 name="Multiple RGB images" fps=19 cpu=100% render=21ms flush=27ms
+I (280404) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=180 name="Multiple ARGB images" fps=19 cpu=100% render=21ms flush=26ms
+I (280416) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=180 name="Rotated ARGB images" fps=17 cpu=100% render=24ms flush=32ms
+I (280428) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=180 name="Multiple labels" fps=20 cpu=100% render=18ms flush=30ms
+I (280440) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=180 name="Screen sized text" fps=14 cpu=100% render=34ms flush=30ms
+I (280452) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=180 name="Multiple arcs" fps=20 cpu=100% render=17ms flush=30ms
+I (280464) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=180 name="Containers" fps=16 cpu=100% render=24ms flush=32ms
+I (280475) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=180 name="Containers with overlay" fps=12 cpu=100% render=40ms flush=32ms
+I (280488) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=180 name="Containers with opa" fps=16 cpu=100% render=25ms flush=34ms
+I (280500) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=180 name="Containers with opa_layer" fps=12 cpu=100% render=47ms flush=33ms
+I (280513) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=180 name="Containers with scrolling" fps=15 cpu=100% render=30ms flush=34ms
+I (280526) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=180 name="Widgets demo" fps=11 cpu=100% render=48ms flush=32ms
+I (280631) esp_lvgl:disp: Display unregistered successfully
+I (280631) lvgl_adapter: PASS mode=DOUBLE_FULL te_buffers=0 rotation=180 frames=0 transport_fps=0.0 lvgl_fps=16 cpu=100% render=27ms flush=30ms scenes=16
+I (280639) lvgl_adapter: RUN mode=DOUBLE_FULL te_buffers=0 rotation=270 size=480x480 timeout=120s
+I (350086) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=270 name="Empty screen" fps=17 cpu=100% render=16ms flush=32ms
+I (350086) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=270 name="Moving wallpaper" fps=12 cpu=100% render=40ms flush=40ms
+I (350098) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=270 name="Single rectangle" fps=20 cpu=100% render=17ms flush=31ms
+I (350110) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=270 name="Multiple rectangles" fps=19 cpu=100% render=23ms flush=40ms
+I (350122) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=270 name="Multiple RGB images" fps=16 cpu=100% render=21ms flush=36ms
+I (350135) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=270 name="Multiple ARGB images" fps=15 cpu=100% render=21ms flush=37ms
+I (350147) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=270 name="Rotated ARGB images" fps=16 cpu=100% render=22ms flush=35ms
+I (350159) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=270 name="Multiple labels" fps=20 cpu=100% render=18ms flush=32ms
+I (350171) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=270 name="Screen sized text" fps=14 cpu=100% render=34ms flush=32ms
+I (350183) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=270 name="Multiple arcs" fps=19 cpu=100% render=18ms flush=31ms
+I (350195) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=270 name="Containers" fps=15 cpu=100% render=24ms flush=39ms
+I (350206) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=270 name="Containers with overlay" fps=12 cpu=100% render=40ms flush=40ms
+I (350219) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=270 name="Containers with opa" fps=15 cpu=100% render=25ms flush=39ms
+I (350231) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=270 name="Containers with opa_layer" fps=12 cpu=100% render=47ms flush=33ms
+I (350244) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=270 name="Containers with scrolling" fps=15 cpu=100% render=30ms flush=34ms
+I (350257) lvgl_adapter: SCENE mode=DOUBLE_FULL te_buffers=0 rotation=270 name="Widgets demo" fps=11 cpu=100% render=48ms flush=34ms
+I (350362) esp_lvgl:disp: Display unregistered successfully
+I (350362) lvgl_adapter: PASS mode=DOUBLE_FULL te_buffers=0 rotation=270 frames=0 transport_fps=0.0 lvgl_fps=15 cpu=100% render=27ms flush=35ms scenes=16
+I (350370) lvgl_adapter: RUN mode=TRIPLE_FULL te_buffers=0 rotation=0 size=480x480 timeout=120s
+I (419575) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=0 name="Empty screen" fps=50 cpu=100% render=15ms flush=0ms
+I (419575) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=0 name="Moving wallpaper" fps=23 cpu=100% render=40ms flush=0ms
+I (419587) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=0 name="Single rectangle" fps=52 cpu=100% render=17ms flush=0ms
+I (419599) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=0 name="Multiple rectangles" fps=39 cpu=100% render=23ms flush=0ms
+I (419611) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=0 name="Multiple RGB images" fps=42 cpu=100% render=21ms flush=0ms
+I (419623) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=0 name="Multiple ARGB images" fps=42 cpu=100% render=22ms flush=0ms
+I (419635) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=0 name="Rotated ARGB images" fps=42 cpu=100% render=22ms flush=0ms
+I (419647) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=0 name="Multiple labels" fps=48 cpu=100% render=18ms flush=0ms
+I (419658) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=0 name="Screen sized text" fps=27 cpu=100% render=34ms flush=0ms
+I (419670) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=0 name="Multiple arcs" fps=50 cpu=100% render=17ms flush=0ms
+I (419682) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=0 name="Containers" fps=44 cpu=100% render=24ms flush=0ms
+I (419693) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=0 name="Containers with overlay" fps=23 cpu=100% render=40ms flush=0ms
+I (419705) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=0 name="Containers with opa" fps=42 cpu=100% render=25ms flush=0ms
+I (419717) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=0 name="Containers with opa_layer" fps=21 cpu=100% render=47ms flush=0ms
+I (419730) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=0 name="Containers with scrolling" fps=31 cpu=100% render=29ms flush=0ms
+I (419742) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=0 name="Widgets demo" fps=18 cpu=100% render=48ms flush=0ms
+I (419794) esp_lvgl:disp: Display unregistered successfully
+I (419794) lvgl_adapter: PASS mode=TRIPLE_FULL te_buffers=0 rotation=0 frames=0 transport_fps=0.0 lvgl_fps=37 cpu=100% render=27ms flush=0ms scenes=16
+I (419801) lvgl_adapter: RUN mode=TRIPLE_FULL te_buffers=0 rotation=90 size=480x480 timeout=120s
+I (489117) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=90 name="Empty screen" fps=17 cpu=100% render=16ms flush=32ms
+I (489117) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=90 name="Moving wallpaper" fps=12 cpu=100% render=39ms flush=36ms
+I (489129) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=90 name="Single rectangle" fps=20 cpu=100% render=17ms flush=31ms
+I (489141) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=90 name="Multiple rectangles" fps=21 cpu=100% render=24ms flush=37ms
+I (489153) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=90 name="Multiple RGB images" fps=17 cpu=100% render=21ms flush=32ms
+I (489165) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=90 name="Multiple ARGB images" fps=17 cpu=100% render=21ms flush=33ms
+I (489177) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=90 name="Rotated ARGB images" fps=17 cpu=100% render=22ms flush=32ms
+I (489190) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=90 name="Multiple labels" fps=19 cpu=100% render=18ms flush=30ms
+I (489201) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=90 name="Screen sized text" fps=15 cpu=100% render=34ms flush=30ms
+I (489213) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=90 name="Multiple arcs" fps=19 cpu=100% render=18ms flush=30ms
+I (489225) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=90 name="Containers" fps=15 cpu=100% render=24ms flush=39ms
+I (489236) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=90 name="Containers with overlay" fps=12 cpu=100% render=39ms flush=39ms
+I (489249) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=90 name="Containers with opa" fps=15 cpu=100% render=25ms flush=38ms
+I (489261) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=90 name="Containers with opa_layer" fps=11 cpu=100% render=47ms flush=33ms
+I (489274) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=90 name="Containers with scrolling" fps=15 cpu=100% render=30ms flush=34ms
+I (489286) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=90 name="Widgets demo" fps=11 cpu=100% render=48ms flush=33ms
+I (489393) esp_lvgl:disp: Display unregistered successfully
+I (489393) lvgl_adapter: PASS mode=TRIPLE_FULL te_buffers=0 rotation=90 frames=0 transport_fps=0.0 lvgl_fps=15 cpu=100% render=27ms flush=33ms scenes=16
+I (489401) lvgl_adapter: RUN mode=TRIPLE_FULL te_buffers=0 rotation=180 size=480x480 timeout=120s
+I (558864) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=180 name="Empty screen" fps=17 cpu=100% render=16ms flush=32ms
+I (558865) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=180 name="Moving wallpaper" fps=13 cpu=100% render=39ms flush=32ms
+I (558877) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=180 name="Single rectangle" fps=20 cpu=100% render=17ms flush=31ms
+I (558889) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=180 name="Multiple rectangles" fps=20 cpu=100% render=23ms flush=28ms
+I (558901) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=180 name="Multiple RGB images" fps=19 cpu=100% render=21ms flush=27ms
+I (558913) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=180 name="Multiple ARGB images" fps=20 cpu=100% render=21ms flush=27ms
+I (558926) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=180 name="Rotated ARGB images" fps=17 cpu=100% render=23ms flush=30ms
+I (558938) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=180 name="Multiple labels" fps=20 cpu=100% render=18ms flush=30ms
+I (558950) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=180 name="Screen sized text" fps=14 cpu=100% render=34ms flush=30ms
+I (558962) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=180 name="Multiple arcs" fps=20 cpu=100% render=17ms flush=30ms
+I (558974) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=180 name="Containers" fps=16 cpu=100% render=25ms flush=31ms
+I (558985) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=180 name="Containers with overlay" fps=13 cpu=100% render=40ms flush=32ms
+I (558998) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=180 name="Containers with opa" fps=16 cpu=100% render=25ms flush=32ms
+I (559010) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=180 name="Containers with opa_layer" fps=11 cpu=100% render=47ms flush=33ms
+I (559023) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=180 name="Containers with scrolling" fps=15 cpu=100% render=30ms flush=34ms
+I (559035) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=180 name="Widgets demo" fps=11 cpu=100% render=48ms flush=32ms
+I (559140) esp_lvgl:disp: Display unregistered successfully
+I (559140) lvgl_adapter: PASS mode=TRIPLE_FULL te_buffers=0 rotation=180 frames=0 transport_fps=0.0 lvgl_fps=16 cpu=100% render=27ms flush=30ms scenes=16
+I (559148) lvgl_adapter: RUN mode=TRIPLE_FULL te_buffers=0 rotation=270 size=480x480 timeout=120s
+I (628545) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=270 name="Empty screen" fps=17 cpu=100% render=16ms flush=32ms
+I (628546) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=270 name="Moving wallpaper" fps=12 cpu=100% render=39ms flush=36ms
+I (628558) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=270 name="Single rectangle" fps=20 cpu=100% render=17ms flush=31ms
+I (628570) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=270 name="Multiple rectangles" fps=20 cpu=100% render=23ms flush=37ms
+I (628582) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=270 name="Multiple RGB images" fps=18 cpu=100% render=21ms flush=31ms
+I (628594) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=270 name="Multiple ARGB images" fps=18 cpu=100% render=21ms flush=30ms
+I (628606) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=270 name="Rotated ARGB images" fps=15 cpu=100% render=23ms flush=37ms
+I (628619) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=270 name="Multiple labels" fps=20 cpu=100% render=18ms flush=30ms
+I (628630) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=270 name="Screen sized text" fps=15 cpu=100% render=34ms flush=31ms
+I (628643) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=270 name="Multiple arcs" fps=20 cpu=100% render=17ms flush=30ms
+I (628654) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=270 name="Containers" fps=15 cpu=100% render=24ms flush=39ms
+I (628666) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=270 name="Containers with overlay" fps=12 cpu=100% render=40ms flush=40ms
+I (628678) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=270 name="Containers with opa" fps=15 cpu=100% render=25ms flush=39ms
+I (628691) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=270 name="Containers with opa_layer" fps=12 cpu=100% render=47ms flush=33ms
+I (628703) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=270 name="Containers with scrolling" fps=15 cpu=100% render=30ms flush=34ms
+I (628716) lvgl_adapter: SCENE mode=TRIPLE_FULL te_buffers=0 rotation=270 name="Widgets demo" fps=11 cpu=100% render=48ms flush=32ms
+I (628822) esp_lvgl:disp: Display unregistered successfully
+I (628822) lvgl_adapter: PASS mode=TRIPLE_FULL te_buffers=0 rotation=270 frames=0 transport_fps=0.0 lvgl_fps=15 cpu=100% render=27ms flush=33ms scenes=16
+I (628830) lvgl_adapter: RUN mode=DOUBLE_DIRECT te_buffers=0 rotation=0 size=480x480 timeout=120s
+I (698028) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=0 name="Empty screen" fps=26 cpu=100% render=16ms flush=14ms
+I (698029) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=0 name="Moving wallpaper" fps=20 cpu=100% render=39ms flush=8ms
+I (698040) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=0 name="Single rectangle" fps=59 cpu=100% render=1ms flush=14ms
+I (698052) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=0 name="Multiple rectangles" fps=57 cpu=100% render=10ms flush=6ms
+I (698065) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=0 name="Multiple RGB images" fps=58 cpu=100% render=6ms flush=6ms
+I (698077) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=0 name="Multiple ARGB images" fps=57 cpu=100% render=7ms flush=5ms
+I (698089) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=0 name="Rotated ARGB images" fps=58 cpu=100% render=9ms flush=6ms
+I (698101) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=0 name="Multiple labels" fps=57 cpu=100% render=11ms flush=4ms
+I (698113) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=0 name="Screen sized text" fps=20 cpu=100% render=34ms flush=12ms
+I (698125) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=0 name="Multiple arcs" fps=59 cpu=100% render=1ms flush=13ms
+I (698136) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=0 name="Containers" fps=59 cpu=100% render=7ms flush=7ms
+I (698148) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=0 name="Containers with overlay" fps=20 cpu=100% render=40ms flush=7ms
+I (698160) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=0 name="Containers with opa" fps=56 cpu=100% render=8ms flush=7ms
+I (698172) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=0 name="Containers with opa_layer" fps=32 cpu=100% render=23ms flush=8ms
+I (698185) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=0 name="Containers with scrolling" fps=28 cpu=100% render=30ms flush=2ms
+I (698198) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=0 name="Widgets demo" fps=19 cpu=100% render=38ms flush=9ms
+I (698273) esp_lvgl:disp: Display unregistered successfully
+I (698273) lvgl_adapter: PASS mode=DOUBLE_DIRECT te_buffers=0 rotation=0 frames=0 transport_fps=0.0 lvgl_fps=42 cpu=100% render=17ms flush=8ms scenes=16
+I (698281) lvgl_adapter: RUN mode=DOUBLE_DIRECT te_buffers=0 rotation=90 size=480x480 timeout=120s
+I (767803) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=90 name="Empty screen" fps=15 cpu=100% render=15ms flush=64ms
+I (767804) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=90 name="Moving wallpaper" fps=9 cpu=100% render=39ms flush=64ms
+I (767816) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=90 name="Single rectangle" fps=58 cpu=100% render=1ms flush=14ms
+I (767828) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=90 name="Multiple rectangles" fps=21 cpu=100% render=10ms flush=41ms
+I (767840) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=90 name="Multiple RGB images" fps=28 cpu=100% render=10ms flush=22ms
+I (767852) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=90 name="Multiple ARGB images" fps=28 cpu=100% render=12ms flush=21ms
+I (767865) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=90 name="Rotated ARGB images" fps=55 cpu=100% render=9ms flush=7ms
+I (767877) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=90 name="Multiple labels" fps=27 cpu=100% render=11ms flush=24ms
+I (767889) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=90 name="Screen sized text" fps=10 cpu=100% render=34ms flush=63ms
+I (767901) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=90 name="Multiple arcs" fps=60 cpu=100% render=1ms flush=14ms
+I (767913) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=90 name="Containers" fps=34 cpu=100% render=9ms flush=22ms
+I (767924) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=90 name="Containers with overlay" fps=12 cpu=100% render=30ms flush=46ms
+I (767937) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=90 name="Containers with opa" fps=36 cpu=100% render=10ms flush=21ms
+I (767949) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=90 name="Containers with opa_layer" fps=20 cpu=100% render=27ms flush=23ms
+I (767962) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=90 name="Containers with scrolling" fps=9 cpu=100% render=30ms flush=67ms
+I (767975) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=90 name="Widgets demo" fps=9 cpu=100% render=38ms flush=57ms
+I (768097) esp_lvgl:disp: Display unregistered successfully
+I (768097) lvgl_adapter: PASS mode=DOUBLE_DIRECT te_buffers=0 rotation=90 frames=0 transport_fps=0.0 lvgl_fps=26 cpu=100% render=17ms flush=35ms scenes=16
+I (768105) lvgl_adapter: RUN mode=DOUBLE_DIRECT te_buffers=0 rotation=180 size=480x480 timeout=120s
+I (837611) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=180 name="Empty screen" fps=17 cpu=100% render=15ms flush=51ms
+I (837612) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=180 name="Moving wallpaper" fps=10 cpu=100% render=40ms flush=57ms
+I (837624) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=180 name="Single rectangle" fps=58 cpu=100% render=1ms flush=15ms
+I (837636) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=180 name="Multiple rectangles" fps=20 cpu=100% render=10ms flush=38ms
+I (837649) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=180 name="Multiple RGB images" fps=29 cpu=100% render=10ms flush=21ms
+I (837661) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=180 name="Multiple ARGB images" fps=28 cpu=100% render=12ms flush=20ms
+I (837674) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=180 name="Rotated ARGB images" fps=51 cpu=100% render=10ms flush=8ms
+I (837686) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=180 name="Multiple labels" fps=28 cpu=100% render=11ms flush=21ms
+I (837698) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=180 name="Screen sized text" fps=10 cpu=100% render=34ms flush=60ms
+I (837710) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=180 name="Multiple arcs" fps=60 cpu=100% render=1ms flush=13ms
+I (837722) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=180 name="Containers" fps=53 cpu=100% render=7ms flush=12ms
+I (837734) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=180 name="Containers with overlay" fps=13 cpu=100% render=31ms flush=41ms
+I (837746) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=180 name="Containers with opa" fps=48 cpu=100% render=9ms flush=14ms
+I (837759) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=180 name="Containers with opa_layer" fps=25 cpu=100% render=26ms flush=17ms
+I (837772) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=180 name="Containers with scrolling" fps=11 cpu=100% render=30ms flush=51ms
+I (837785) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=180 name="Widgets demo" fps=11 cpu=100% render=38ms flush=46ms
+I (837906) esp_lvgl:disp: Display unregistered successfully
+I (837906) lvgl_adapter: PASS mode=DOUBLE_DIRECT te_buffers=0 rotation=180 frames=0 transport_fps=0.0 lvgl_fps=29 cpu=100% render=17ms flush=30ms scenes=16
+I (837914) lvgl_adapter: RUN mode=DOUBLE_DIRECT te_buffers=0 rotation=270 size=480x480 timeout=120s
+I (907328) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=270 name="Empty screen" fps=15 cpu=100% render=14ms flush=60ms
+I (907329) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=270 name="Moving wallpaper" fps=8 cpu=100% render=39ms flush=67ms
+I (907341) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=270 name="Single rectangle" fps=58 cpu=100% render=1ms flush=14ms
+I (907353) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=270 name="Multiple rectangles" fps=21 cpu=100% render=10ms flush=41ms
+I (907365) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=270 name="Multiple RGB images" fps=28 cpu=100% render=10ms flush=22ms
+I (907378) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=270 name="Multiple ARGB images" fps=28 cpu=100% render=12ms flush=20ms
+I (907390) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=270 name="Rotated ARGB images" fps=29 cpu=100% render=11ms flush=20ms
+I (907403) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=270 name="Multiple labels" fps=26 cpu=100% render=11ms flush=24ms
+I (907415) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=270 name="Screen sized text" fps=10 cpu=100% render=34ms flush=63ms
+I (907427) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=270 name="Multiple arcs" fps=58 cpu=100% render=1ms flush=13ms
+I (907439) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=270 name="Containers" fps=36 cpu=100% render=8ms flush=21ms
+I (907450) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=270 name="Containers with overlay" fps=12 cpu=100% render=31ms flush=46ms
+I (907463) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=270 name="Containers with opa" fps=34 cpu=100% render=9ms flush=22ms
+I (907475) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=270 name="Containers with opa_layer" fps=18 cpu=100% render=29ms flush=26ms
+I (907488) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=270 name="Containers with scrolling" fps=9 cpu=100% render=30ms flush=67ms
+I (907501) lvgl_adapter: SCENE mode=DOUBLE_DIRECT te_buffers=0 rotation=270 name="Widgets demo" fps=9 cpu=100% render=38ms flush=57ms
+I (907624) esp_lvgl:disp: Display unregistered successfully
+I (907624) lvgl_adapter: PASS mode=DOUBLE_DIRECT te_buffers=0 rotation=270 frames=0 transport_fps=0.0 lvgl_fps=24 cpu=100% render=18ms flush=36ms scenes=16
+I (907632) lvgl_adapter: RUN mode=DOUBLE_PARTIAL te_buffers=0 rotation=0 size=480x480 timeout=120s
+I (976935) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=0 name="Empty screen" fps=26 cpu=100% render=5ms flush=26ms
+I (976936) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=0 name="Moving wallpaper" fps=30 cpu=100% render=13ms flush=18ms
+I (976948) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=0 name="Single rectangle" fps=60 cpu=100% render=0ms flush=15ms
+I (976960) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=0 name="Multiple rectangles" fps=56 cpu=100% render=4ms flush=11ms
+I (976972) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=0 name="Multiple RGB images" fps=60 cpu=100% render=1ms flush=13ms
+I (976985) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=0 name="Multiple ARGB images" fps=58 cpu=100% render=3ms flush=11ms
+I (976997) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=0 name="Rotated ARGB images" fps=60 cpu=100% render=5ms flush=9ms
+I (977009) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=0 name="Multiple labels" fps=57 cpu=100% render=10ms flush=5ms
+I (977021) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=0 name="Screen sized text" fps=10 cpu=100% render=74ms flush=16ms
+I (977033) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=0 name="Multiple arcs" fps=59 cpu=100% render=1ms flush=14ms
+I (977045) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=0 name="Containers" fps=60 cpu=100% render=4ms flush=12ms
+I (977056) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=0 name="Containers with overlay" fps=20 cpu=100% render=26ms flush=21ms
+I (977069) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=0 name="Containers with opa" fps=57 cpu=100% render=6ms flush=12ms
+I (977081) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=0 name="Containers with opa_layer" fps=32 cpu=100% render=16ms flush=16ms
+I (977094) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=0 name="Containers with scrolling" fps=20 cpu=100% render=26ms flush=21ms
+I (977107) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=0 name="Widgets demo" fps=14 cpu=100% render=53ms flush=15ms
+I (977166) esp_lvgl:disp: Display unregistered successfully
+I (977166) lvgl_adapter: PASS mode=DOUBLE_PARTIAL te_buffers=0 rotation=0 frames=0 transport_fps=0.0 lvgl_fps=42 cpu=100% render=15ms flush=14ms scenes=16
+I (977174) lvgl_adapter: RUN mode=DOUBLE_PARTIAL te_buffers=0 rotation=90 size=480x480 timeout=120s
+I (1046484) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=90 name="Empty screen" fps=17 cpu=100% render=5ms flush=42ms
+I (1046485) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=90 name="Moving wallpaper" fps=20 cpu=100% render=13ms flush=34ms
+I (1046497) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=90 name="Single rectangle" fps=60 cpu=100% render=0ms flush=15ms
+I (1046510) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=90 name="Multiple rectangles" fps=29 cpu=100% render=5ms flush=26ms
+I (1046522) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=90 name="Multiple RGB images" fps=58 cpu=100% render=2ms flush=13ms
+I (1046534) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=90 name="Multiple ARGB images" fps=55 cpu=100% render=4ms flush=12ms
+I (1046547) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=90 name="Rotated ARGB images" fps=57 cpu=100% render=6ms flush=10ms
+I (1046559) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=90 name="Multiple labels" fps=52 cpu=100% render=6ms flush=10ms
+I (1046571) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=90 name="Screen sized text" fps=8 cpu=100% render=75ms flush=36ms
+I (1046584) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=90 name="Multiple arcs" fps=59 cpu=100% render=1ms flush=14ms
+I (1046595) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=90 name="Containers" fps=54 cpu=100% render=4ms flush=15ms
+I (1046607) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=90 name="Containers with overlay" fps=15 cpu=100% render=23ms flush=37ms
+I (1046620) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=90 name="Containers with opa" fps=51 cpu=100% render=6ms flush=15ms
+I (1046632) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=90 name="Containers with opa_layer" fps=29 cpu=100% render=16ms flush=19ms
+I (1046645) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=90 name="Containers with scrolling" fps=15 cpu=100% render=25ms flush=38ms
+I (1046658) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=90 name="Widgets demo" fps=11 cpu=100% render=52ms flush=32ms
+I (1046777) esp_lvgl:disp: Display unregistered successfully
+I (1046777) lvgl_adapter: PASS mode=DOUBLE_PARTIAL te_buffers=0 rotation=90 frames=0 transport_fps=0.0 lvgl_fps=36 cpu=100% render=15ms flush=23ms scenes=16
+I (1046785) lvgl_adapter: RUN mode=DOUBLE_PARTIAL te_buffers=0 rotation=180 size=480x480 timeout=120s
+I (1115934) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=180 name="Empty screen" fps=26 cpu=100% render=5ms flush=26ms
+I (1115934) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=180 name="Moving wallpaper" fps=30 cpu=100% render=13ms flush=17ms
+I (1115947) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=180 name="Single rectangle" fps=60 cpu=100% render=0ms flush=15ms
+I (1115959) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=180 name="Multiple rectangles" fps=57 cpu=100% render=4ms flush=11ms
+I (1115971) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=180 name="Multiple RGB images" fps=60 cpu=100% render=1ms flush=13ms
+I (1115984) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=180 name="Multiple ARGB images" fps=58 cpu=100% render=4ms flush=11ms
+I (1115997) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=180 name="Rotated ARGB images" fps=60 cpu=100% render=6ms flush=9ms
+I (1116009) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=180 name="Multiple labels" fps=57 cpu=100% render=10ms flush=5ms
+I (1116021) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=180 name="Screen sized text" fps=10 cpu=100% render=74ms flush=19ms
+I (1116034) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=180 name="Multiple arcs" fps=60 cpu=100% render=1ms flush=13ms
+I (1116046) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=180 name="Containers" fps=60 cpu=100% render=4ms flush=12ms
+I (1116057) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=180 name="Containers with overlay" fps=20 cpu=100% render=26ms flush=21ms
+I (1116070) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=180 name="Containers with opa" fps=57 cpu=100% render=6ms flush=11ms
+I (1116083) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=180 name="Containers with opa_layer" fps=35 cpu=100% render=14ms flush=15ms
+I (1116096) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=180 name="Containers with scrolling" fps=20 cpu=100% render=26ms flush=22ms
+I (1116109) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=180 name="Widgets demo" fps=13 cpu=100% render=53ms flush=17ms
+I (1116193) esp_lvgl:disp: Display unregistered successfully
+I (1116193) lvgl_adapter: PASS mode=DOUBLE_PARTIAL te_buffers=0 rotation=180 frames=0 transport_fps=0.0 lvgl_fps=42 cpu=100% render=15ms flush=14ms scenes=16
+I (1116201) lvgl_adapter: RUN mode=DOUBLE_PARTIAL te_buffers=0 rotation=270 size=480x480 timeout=120s
+I (1185482) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=270 name="Empty screen" fps=17 cpu=100% render=6ms flush=42ms
+I (1185483) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=270 name="Moving wallpaper" fps=20 cpu=100% render=13ms flush=34ms
+I (1185495) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=270 name="Single rectangle" fps=60 cpu=100% render=0ms flush=15ms
+I (1185508) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=270 name="Multiple rectangles" fps=29 cpu=100% render=4ms flush=27ms
+I (1185520) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=270 name="Multiple RGB images" fps=59 cpu=100% render=2ms flush=13ms
+I (1185533) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=270 name="Multiple ARGB images" fps=56 cpu=100% render=3ms flush=11ms
+I (1185545) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=270 name="Rotated ARGB images" fps=58 cpu=100% render=5ms flush=10ms
+I (1185558) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=270 name="Multiple labels" fps=52 cpu=100% render=6ms flush=10ms
+I (1185570) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=270 name="Screen sized text" fps=9 cpu=100% render=71ms flush=34ms
+I (1185582) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=270 name="Multiple arcs" fps=59 cpu=100% render=1ms flush=14ms
+I (1185594) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=270 name="Containers" fps=55 cpu=100% render=4ms flush=14ms
+I (1185606) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=270 name="Containers with overlay" fps=15 cpu=100% render=22ms flush=36ms
+I (1185619) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=270 name="Containers with opa" fps=53 cpu=100% render=6ms flush=14ms
+I (1185631) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=270 name="Containers with opa_layer" fps=29 cpu=100% render=16ms flush=19ms
+I (1185644) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=270 name="Containers with scrolling" fps=15 cpu=100% render=25ms flush=39ms
+I (1185657) lvgl_adapter: SCENE mode=DOUBLE_PARTIAL te_buffers=0 rotation=270 name="Widgets demo" fps=11 cpu=100% render=52ms flush=31ms
+I (1185791) esp_lvgl:disp: Display unregistered successfully
+I (1185791) lvgl_adapter: PASS mode=DOUBLE_PARTIAL te_buffers=0 rotation=270 frames=0 transport_fps=0.0 lvgl_fps=37 cpu=100% render=14ms flush=22ms scenes=16
+I (1185799) lvgl_adapter: RUN mode=TRIPLE_PARTIAL te_buffers=0 rotation=0 size=480x480 timeout=120s
+I (1255067) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=0 name="Empty screen" fps=43 cpu=100% render=5ms flush=13ms
+I (1255067) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=0 name="Moving wallpaper" fps=37 cpu=100% render=14ms flush=10ms
+I (1255079) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=0 name="Single rectangle" fps=60 cpu=100% render=0ms flush=15ms
+I (1255091) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=0 name="Multiple rectangles" fps=59 cpu=100% render=4ms flush=10ms
+I (1255104) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=0 name="Multiple RGB images" fps=60 cpu=100% render=2ms flush=12ms
+I (1255116) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=0 name="Multiple ARGB images" fps=59 cpu=100% render=3ms flush=11ms
+I (1255128) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=0 name="Rotated ARGB images" fps=64 cpu=100% render=6ms flush=3ms
+I (1255141) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=0 name="Multiple labels" fps=60 cpu=100% render=10ms flush=4ms
+I (1255153) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=0 name="Screen sized text" fps=11 cpu=100% render=75ms flush=9ms
+I (1255165) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=0 name="Multiple arcs" fps=60 cpu=100% render=1ms flush=14ms
+I (1255177) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=0 name="Containers" fps=64 cpu=100% render=5ms flush=6ms
+I (1255188) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=0 name="Containers with overlay" fps=25 cpu=100% render=26ms flush=9ms
+I (1255201) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=0 name="Containers with opa" fps=65 cpu=100% render=5ms flush=5ms
+I (1255213) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=0 name="Containers with opa_layer" fps=51 cpu=100% render=14ms flush=5ms
+I (1255226) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=0 name="Containers with scrolling" fps=25 cpu=100% render=26ms flush=9ms
+I (1255239) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=0 name="Widgets demo" fps=15 cpu=100% render=53ms flush=7ms
+I (1255307) esp_lvgl:disp: Display unregistered successfully
+I (1255307) lvgl_adapter: PASS mode=TRIPLE_PARTIAL te_buffers=0 rotation=0 frames=0 transport_fps=0.0 lvgl_fps=47 cpu=100% render=15ms flush=8ms scenes=16
+I (1255315) lvgl_adapter: RUN mode=TRIPLE_PARTIAL te_buffers=0 rotation=90 size=480x480 timeout=120s
+I (1324492) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=90 name="Empty screen" fps=24 cpu=100% render=6ms flush=27ms
+I (1324492) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=90 name="Moving wallpaper" fps=23 cpu=100% render=13ms flush=27ms
+I (1324505) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=90 name="Single rectangle" fps=60 cpu=100% render=0ms flush=14ms
+I (1324517) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=90 name="Multiple rectangles" fps=55 cpu=100% render=4ms flush=12ms
+I (1324529) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=90 name="Multiple RGB images" fps=61 cpu=100% render=1ms flush=12ms
+I (1324542) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=90 name="Multiple ARGB images" fps=61 cpu=100% render=4ms flush=9ms
+I (1324554) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=90 name="Rotated ARGB images" fps=63 cpu=100% render=5ms flush=5ms
+I (1324566) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=90 name="Multiple labels" fps=58 cpu=100% render=6ms flush=8ms
+I (1324578) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=90 name="Screen sized text" fps=9 cpu=100% render=72ms flush=27ms
+I (1324590) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=90 name="Multiple arcs" fps=59 cpu=100% render=1ms flush=13ms
+I (1324602) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=90 name="Containers" fps=63 cpu=100% render=4ms flush=9ms
+I (1324614) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=90 name="Containers with overlay" fps=18 cpu=100% render=23ms flush=26ms
+I (1324627) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=90 name="Containers with opa" fps=62 cpu=100% render=6ms flush=9ms
+I (1324639) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=90 name="Containers with opa_layer" fps=44 cpu=100% render=15ms flush=9ms
+I (1324652) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=90 name="Containers with scrolling" fps=18 cpu=100% render=25ms flush=27ms
+I (1324665) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=90 name="Widgets demo" fps=12 cpu=100% render=51ms flush=24ms
+I (1324770) esp_lvgl:disp: Display unregistered successfully
+I (1324770) lvgl_adapter: PASS mode=TRIPLE_PARTIAL te_buffers=0 rotation=90 frames=0 transport_fps=0.0 lvgl_fps=43 cpu=100% render=14ms flush=16ms scenes=16
+I (1324778) lvgl_adapter: RUN mode=TRIPLE_PARTIAL te_buffers=0 rotation=180 size=480x480 timeout=120s
+I (1393963) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=180 name="Empty screen" fps=40 cpu=100% render=6ms flush=13ms
+I (1393964) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=180 name="Moving wallpaper" fps=35 cpu=100% render=14ms flush=11ms
+I (1393976) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=180 name="Single rectangle" fps=60 cpu=100% render=0ms flush=15ms
+I (1393988) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=180 name="Multiple rectangles" fps=61 cpu=100% render=4ms flush=9ms
+I (1394001) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=180 name="Multiple RGB images" fps=61 cpu=100% render=1ms flush=12ms
+I (1394013) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=180 name="Multiple ARGB images" fps=60 cpu=100% render=4ms flush=10ms
+I (1394026) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=180 name="Rotated ARGB images" fps=62 cpu=100% render=6ms flush=5ms
+I (1394038) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=180 name="Multiple labels" fps=60 cpu=100% render=10ms flush=5ms
+I (1394051) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=180 name="Screen sized text" fps=11 cpu=100% render=75ms flush=12ms
+I (1394063) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=180 name="Multiple arcs" fps=60 cpu=100% render=1ms flush=13ms
+I (1394075) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=180 name="Containers" fps=64 cpu=100% render=5ms flush=6ms
+I (1394087) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=180 name="Containers with overlay" fps=24 cpu=100% render=26ms flush=12ms
+I (1394099) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=180 name="Containers with opa" fps=63 cpu=100% render=6ms flush=6ms
+I (1394112) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=180 name="Containers with opa_layer" fps=50 cpu=100% render=15ms flush=6ms
+I (1394125) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=180 name="Containers with scrolling" fps=24 cpu=100% render=26ms flush=11ms
+I (1394138) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=180 name="Widgets demo" fps=14 cpu=100% render=53ms flush=10ms
+I (1394212) esp_lvgl:disp: Display unregistered successfully
+I (1394212) lvgl_adapter: PASS mode=TRIPLE_PARTIAL te_buffers=0 rotation=180 frames=0 transport_fps=0.0 lvgl_fps=46 cpu=100% render=15ms flush=9ms scenes=16
+I (1394220) lvgl_adapter: RUN mode=TRIPLE_PARTIAL te_buffers=0 rotation=270 size=480x480 timeout=120s
+I (1463538) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=270 name="Empty screen" fps=22 cpu=100% render=5ms flush=31ms
+I (1463539) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=270 name="Moving wallpaper" fps=22 cpu=100% render=13ms flush=28ms
+I (1463551) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=270 name="Single rectangle" fps=60 cpu=100% render=0ms flush=15ms
+I (1463564) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=270 name="Multiple rectangles" fps=52 cpu=100% render=5ms flush=12ms
+I (1463576) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=270 name="Multiple RGB images" fps=61 cpu=100% render=1ms flush=11ms
+I (1463589) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=270 name="Multiple ARGB images" fps=61 cpu=100% render=4ms flush=8ms
+I (1463601) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=270 name="Rotated ARGB images" fps=64 cpu=100% render=7ms flush=3ms
+I (1463613) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=270 name="Multiple labels" fps=58 cpu=100% render=6ms flush=8ms
+I (1463626) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=270 name="Screen sized text" fps=9 cpu=100% render=73ms flush=28ms
+I (1463638) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=270 name="Multiple arcs" fps=59 cpu=100% render=1ms flush=13ms
+I (1463650) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=270 name="Containers" fps=62 cpu=100% render=4ms flush=9ms
+I (1463661) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=270 name="Containers with overlay" fps=18 cpu=100% render=24ms flush=27ms
+I (1463674) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=270 name="Containers with opa" fps=60 cpu=100% render=6ms flush=9ms
+I (1463687) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=270 name="Containers with opa_layer" fps=43 cpu=100% render=14ms flush=10ms
+I (1463700) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=270 name="Containers with scrolling" fps=17 cpu=100% render=25ms flush=28ms
+I (1463713) lvgl_adapter: SCENE mode=TRIPLE_PARTIAL te_buffers=0 rotation=270 name="Widgets demo" fps=11 cpu=100% render=52ms flush=25ms
+I (1463820) esp_lvgl:disp: Display unregistered successfully
+I (1463820) lvgl_adapter: PASS mode=TRIPLE_PARTIAL te_buffers=0 rotation=270 frames=0 transport_fps=0.0 lvgl_fps=42 cpu=100% render=15ms flush=16ms scenes=16
+I (1463828) lvgl_adapter: matrix round=1 complete
+I (1463832) lvgl_adapter: single-run matrix comp

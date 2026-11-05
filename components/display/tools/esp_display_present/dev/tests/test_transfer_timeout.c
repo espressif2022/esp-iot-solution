@@ -277,8 +277,8 @@ static void te_wait_is_not_transfer_time(void)
     destroy(presenter);
 }
 
-/* Independent, synchronized sender test: no polling API can trigger expiry
- * before the condition is signaled by the sender's backend FAULT notification. */
+/* Identity DMA is submitted on the caller. The background worker still has to
+ * deliver the timeout fault; the owner must not observe it by polling. */
 typedef struct {
     pthread_mutex_t lock;
     pthread_cond_t condition;
@@ -286,7 +286,7 @@ typedef struct {
     void *user;
     uint64_t cookie;
     esp_display_present_surface_t source;
-    present_task_t sender;
+    present_task_t owner;
     bool submitted, expired;
 } automatic_panel_t;
 static esp_err_t automatic_attach(void *user, esp_display_present_panel_event_fn callback, void *context)
@@ -294,6 +294,7 @@ static esp_err_t automatic_attach(void *user, esp_display_present_panel_event_fn
     automatic_panel_t *panel = user;
     panel->callback = callback;
     panel->user = context;
+    panel->owner = present_current_task();
     return ESP_OK;
 }
 static esp_display_present_tx_result_t automatic_submit(void *user, const esp_display_present_surface_t *source, const esp_display_present_rect_t *area, uint64_t cookie)
@@ -304,7 +305,6 @@ static esp_display_present_tx_result_t automatic_submit(void *user, const esp_di
     assert(!panel->cookie);
     panel->cookie = cookie;
     panel->source = *source;
-    panel->sender = present_current_task();
     panel->submitted = true;
     pthread_cond_broadcast(&panel->condition);
     pthread_mutex_unlock(&panel->lock);
@@ -317,7 +317,7 @@ static bool automatic_progress(void *user, bool isr)
     (void)isr;
     automatic_panel_t *panel = user;
     pthread_mutex_lock(&panel->lock);
-    if (panel->submitted && panel->cookie && present_same_task(panel->sender, present_current_task())) {
+    if (panel->submitted && panel->cookie && !present_same_task(panel->owner, present_current_task())) {
         panel->expired = true;
         pthread_cond_broadcast(&panel->condition);
     }

@@ -1,0 +1,14 @@
+{
+  "firmware_sha256": "edd91016794f9fcbec2f454fdb8bf84a2f79cfcb6e64a1590e03ab2b8e569f1e",
+  "restoration_prefix_bytes": 1052672,
+  "purpose": "Focused DOUBLE_DIRECT four-angle full LVGL benchmark; identical previous settings",
+  "project": "/tmp/present-direct-bench-project-20261105",
+  "lvgl": "9.6.0~1",
+  "source_sha256": {
+    "esp_display_present/src/backend/present_backend_fb.c": "efef8cd7157d9bb53cdfee3ddf7817dac3cfc46de7619418082c06af0a2481fa",
+    "esp_display_present/src/present_backend.h": "b396e18754e350ac263a5fae219c3e56b47f3037563e7d27de8bae6eeb359fde",
+    "esp_lv_present/src/present_lvgl.c": "aeab8fe910e7b812541f0c382084d3fe1d22eb1b2bb6f7d9f8cf9e1fb6120ce9"
+  },
+  "host_lvgl95_sanitizer": "37/37",
+  "host_lvgl96_sanitizer": "37/37"
+}

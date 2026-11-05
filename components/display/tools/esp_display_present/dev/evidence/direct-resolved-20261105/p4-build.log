@@ -1,0 +1,32 @@
+[1/25] Building C object esp-idf/esp_display_present/CMakeFiles/__idf_esp_display_present.dir/src/backend/present_frame_core.c.obj
+[2/25] Building C object esp-idf/esp_display_present/CMakeFiles/__idf_esp_display_present.dir/src/present_os.c.obj
+[3/25] Building C object esp-idf/esp_display_present/CMakeFiles/__idf_esp_display_present.dir/src/platform/present_te_sync.c.obj
+[4/25] Building C object esp-idf/esp_display_present/CMakeFiles/__idf_esp_display_present.dir/src/present_resources.c.obj
+[5/25] Performing build step for 'bootloader'
+[1/1] cd /tmp/present-te-check-esp32p4/bootloader && /home/xuxin/.espressif/python_env/idf6.2_py3.10_env/bin/python3 /home/xuxin/esp_work/esp-idf-qspi/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x2000 /tmp/present-te-check-esp32p4/bootloader/bootloader.bin
+Bootloader binary size 0x5750 bytes. 0x8b0 bytes (9%) free.
+[6/23] Building C object esp-idf/esp_display_present/CMakeFiles/__idf_esp_display_present.dir/src/present_plan.c.obj
+[7/23] Building C object esp-idf/esp_display_present/CMakeFiles/__idf_esp_display_present.dir/src/esp_display_presenter.c.obj
+[8/23] Building C object esp-idf/esp_display_present/CMakeFiles/__idf_esp_display_present.dir/src/backend/present_image_repair.c.obj
+[9/23] Building C object esp-idf/esp_display_present/CMakeFiles/__idf_esp_display_present.dir/src/pixel/present_pixel_engine.c.obj
+[10/23] Building C object esp-idf/esp_display_present/CMakeFiles/__idf_esp_display_present.dir/src/platform/present_lcd_scanout.c.obj
+[11/23] Building C object esp-idf/esp_display_present/CMakeFiles/__idf_esp_display_present.dir/src/backend/present_te_composer.c.obj
+[12/23] Building C object esp-idf/esp_display_present/CMakeFiles/__idf_esp_display_present.dir/src/backend/present_backend_gram.c.obj
+[13/23] Building C object esp-idf/esp_display_present/CMakeFiles/__idf_esp_display_present.dir/src/present_engine.c.obj
+[14/23] Building C object esp-idf/esp_display_present/CMakeFiles/__idf_esp_display_present.dir/src/platform/present_lcd_spi.c.obj
+[15/23] Building C object esp-idf/main/CMakeFiles/__idf_main.dir/main.c.obj
+[16/23] Building C object esp-idf/esp_display_present/CMakeFiles/__idf_esp_display_present.dir/src/backend/present_backend_te.c.obj
+[17/23] Building C object esp-idf/esp_display_present/CMakeFiles/__idf_esp_display_present.dir/src/backend/present_backend_fb.c.obj
+[18/23] Linking C static library esp-idf/esp_display_present/libesp_display_present.a
+[19/23] Linking C static library esp-idf/main/libmain.a
+[20/23] Generating esp-idf/esp_system/ld/sections.ld
+Skipping linker fragment parsing, fragment files unchanged
+[21/23] Linking CXX executable present_smoke.elf
+[22/23] Generating binary image from built executable
+esptool v5.4.0
+Creating ESP32-P4 image...
+Merged 3 ELF sections.
+Successfully created ESP32-P4 image.
+Generated /tmp/present-te-check-esp32p4/present_smoke.bin
+[23/23] cd /tmp/present-te-check-esp32p4 && /home/xuxin/.espressif/python_env/idf6.2_py3.10_env/bin/python3 /home/xuxin/esp_work/esp-idf-qspi/components/partition_table/check_sizes.py --offset 0x8000 partition --type app /tmp/present-te-check-esp32p4/partition_table/partition-table.bin /tmp/present-te-check-esp32p4/present_smoke.bin
+present_smoke.bin binary size 0x37d70 bytes. Smallest app partition is 0x100000 bytes. 0xc8290 bytes (78%) free.

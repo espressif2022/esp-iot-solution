@@ -1,0 +1,11 @@
+[
+  {
+    "reported_at": "2026-11-05T16:35:07.465558+08:00",
+    "observation": "User reported visible tearing just now in the red/green/blue scene.",
+    "latest_run_at_report": [
+      "I (141917) lvgl_bench: RUN mode=NONE te_buffers=0 rotation=180 size=480x480 timeout=120s"
+    ],
+    "completed_cases_at_report": 2,
+    "attribution": "Approximate current stage only; user did not identify exact mode/angle. NONE permits active scanout writes."
+  }
+]

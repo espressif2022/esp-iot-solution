@@ -1,0 +1,189 @@
+diff --git a/components/display/tools/esp_display_present/src/backend/present_backend_fb.c b/components/display/tools/esp_display_present/src/backend/present_backend_fb.c
+index eac506bfa..8e8864f31 100644
+--- a/components/display/tools/esp_display_present/src/backend/present_backend_fb.c
++++ b/components/display/tools/esp_display_present/src/backend/present_backend_fb.c
+@@ -128,6 +128,8 @@ struct present_backend {
+     bool scan_storage;
+     bool converted;
+     bool damage_declared;
++    bool resolved_direct;
++    bool image_physical;
+     uint64_t sequence;
+ 
+     bool submitted;
+@@ -218,6 +220,17 @@ static void cover(present_backend_t *backend, esp_display_present_rect_t area)
+  * DIRECT writers share one logical canvas; physical images never alias it. */
+ static esp_display_present_copy_request_t baseline_copy(present_backend_t *backend, size_t target, esp_display_present_rect_t area)
+ {
++    if (backend->resolved_direct) {
++        /* Resolved DIRECT regions and their repair history are physical. The
++         * logical scratch canvas need not be reconstructed from scanout. */
++        esp_display_present_surface_t source = backend->scan_storage ? backend->slots[backend->baseline].scan : backend->slots[backend->baseline].surface;
++        return (esp_display_present_copy_request_t) {
++            .src = {source.pixels, source.capacity_bytes, source.layout},
++            .dst = backend->scan_storage ? backend->slots[target].scan : backend->slots[target].surface,
++            .src_area = area, .dst_x = area.x, .dst_y = area.y,
++            .rotation = ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0
++        };
++    }
+     esp_display_present_surface_t source = backend->scan_storage ? backend->slots[backend->baseline].scan : backend->slots[backend->baseline].surface;
+     esp_display_present_rect_t src_area = area;
+     esp_display_present_engine_rotation_t rotation = ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0;
+@@ -486,7 +499,7 @@ static fb_advance_result_t advance_build_pipeline(present_backend_t *backend, fb
+ 
+     /* Stage 5 -> 6: FB_SLOT_CONVERT -> FB_SLOT_READY */
+     if (slot->state == FB_SLOT_CONVERT) {
+-        if (backend->scan_storage && !backend->converted) {
++        if (backend->scan_storage && !backend->resolved_direct && !backend->converted) {
+             esp_display_present_surface_t source = slot->surface;
+             esp_display_present_copy_request_t copy = {
+                 .src = {source.pixels, source.capacity_bytes, source.layout},
+@@ -734,6 +747,7 @@ static esp_err_t fb_create(const esp_display_present_backend_config_t *config, p
+                                                physical_partial && quarter ? config->height : config->width,
+                                                physical_partial && quarter ? config->width : config->height);
+     backend->image.allow_scanout_writes = config->active_writes;
++    backend->image_physical = physical_partial;
+     if (config->render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION) {
+         backend->tile_count = config->tile_count ? config->tile_count : 1;
+         backend->tiles = present_alloc(backend->tile_count * sizeof(*backend->tiles));
+@@ -902,7 +916,8 @@ static esp_err_t fb_begin(present_backend_t *backend, const esp_display_present_
+     /* A producer that requests a full raster need not read the previous image.
+      * The request is not coverage: seal checks actual submitted pixels below. */
+     bool require_full_redraw = direct && different_baseline && request->full_redraw;
+-    bool prefill = direct && different_baseline && !request->full_redraw;
++    bool resolved = direct && request->resolved_pixels;
++    bool prefill = direct && !resolved && different_baseline && !request->full_redraw;
+     bool selective_direct = prefill && !request->full_redraw && request->damage_count > 0 &&
+                             !backend->scan_storage && backend->image.versions[slot] != 0;
+     esp_display_present_rect_t prefill_area = {0, 0, backend->config.width, backend->config.height};
+@@ -927,6 +942,16 @@ static esp_err_t fb_begin(present_backend_t *backend, const esp_display_present_
+             x1, y1, x2 - x1, y2 - y1
+         };
+     }
++    /* Switching producer contracts invalidates history, not the immutable
++     * physical baseline or hardware borrows. Unknown history repairs in full. */
++    bool physical = resolved || backend->config.render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION;
++    if (backend->image_physical != physical) {
++        bool quarter = physical && (backend->config.rotation & 1);
++        present_image_reset(&backend->image, quarter ? backend->config.height : backend->config.width,
++                            quarter ? backend->config.width : backend->config.height);
++        backend->image_physical = physical;
++    }
++    backend->resolved_direct = resolved;
+     error = present_image_begin(&backend->image, slot, backend->baseline);
+     if (error != ESP_OK) {
+         return error;
+@@ -953,7 +978,7 @@ static esp_err_t fb_begin(present_backend_t *backend, const esp_display_present_
+     backend->submitted = false;
+     backend->repair_pos = 0;
+     backend->converted = false;
+-    backend->damage_declared = selective_direct;
++    backend->damage_declared = selective_direct || resolved;
+     if (prefill && backend->config.async_copy) {
+         esp_display_present_copy_request_t copy = baseline_copy(backend, slot, prefill_area);
+         error = esp_display_present_pixel_submit(backend->pixel, &copy, &backend->copy);
+@@ -1052,6 +1077,45 @@ static esp_err_t fb_acquire(present_backend_t *backend, esp_display_present_fram
+     return ESP_OK;
+ }
+ 
++/* Copy only resolved damage out of the logical staging canvas. The single
++ * ticket pins that canvas until completion; acquire must not reuse it sooner.
++ * Both output coverage and image history use the mapped physical coordinates. */
++static esp_err_t submit_resolved_region(present_backend_t *backend, esp_display_present_rect_t area)
++{
++    fb_slot_t *slot = &backend->slots[backend->active];
++    esp_display_present_rect_t physical;
++    esp_err_t error = esp_display_present_rotate_rect(backend->config.width, backend->config.height,
++                                                       backend->config.rotation, &area, &physical);
++    if (error != ESP_OK) {
++        return error;
++    }
++    esp_display_present_copy_request_t copy = {
++        .src = {slot->surface.pixels, slot->surface.capacity_bytes, slot->surface.layout},
++        .dst = slot->scan, .src_area = area,
++        .dst_x = physical.x, .dst_y = physical.y, .rotation = backend->config.rotation
++    };
++    esp_display_present_copy_ticket_t ticket;
++    error = esp_display_present_pixel_submit(backend->pixel, &copy, &ticket);
++    if (error != ESP_OK) {
++        return error;
++    }
++    if (backend->config.async_copy) {
++        backend->copy = ticket;
++        backend->copy_is_tile = true;
++        backend->copy_area = physical;
++        return ESP_OK;
++    }
++    esp_display_present_copy_status_t status;
++    error = esp_display_present_pixel_wait(backend->pixel, ticket, UINT32_MAX, &status);
++    (void)esp_display_present_pixel_release(backend->pixel, ticket);
++    if (error != ESP_OK || status.result != ESP_OK) {
++        return error != ESP_OK ? error : status.result;
++    }
++    cover(backend, physical);
++    backend->submitted = true;
++    return ESP_OK;
++}
++
+ static esp_err_t fb_submit_region_ex(present_backend_t *backend, esp_display_present_frame_t frame,
+                                      esp_display_present_lease_id_t lease, const esp_display_present_region_submit_t *submit)
+ {
+@@ -1115,6 +1179,14 @@ static esp_err_t fb_submit_region_ex(present_backend_t *backend, esp_display_pre
+                 (area.x || area.y || area.width != backend->config.width || area.height != backend->config.height)) {
+             return ESP_ERR_INVALID_ARG;
+         }
++        if (backend->resolved_direct && backend->scan_storage) {
++            esp_err_t error = submit_resolved_region(backend, area);
++            if (error != ESP_OK) {
++                return error;
++            }
++            draw->id.value = 0;
++            return ESP_OK;
++        }
+         cover(backend, area);
+     }
+     backend->submitted = true;
+@@ -1407,7 +1479,8 @@ static esp_err_t fb_set_rotation(present_backend_t *backend, esp_display_present
+     backend->config.rotation = rotation;
+     backend->config.tile_rows = rows > height ? height : rows;
+     backend->baseline = SIZE_MAX; /* Logical orientation changed: require full redraw. */
+-    present_image_reset(&backend->image, width, height);
++    present_image_reset(&backend->image, backend->image_physical ? physical_width : width,
++                        backend->image_physical ? physical_height : height);
+     return ESP_OK;
+ }
+ 
+diff --git a/components/display/tools/esp_display_present/src/present_backend.h b/components/display/tools/esp_display_present/src/present_backend.h
+index 74b2299b4..b8f179e9b 100644
+--- a/components/display/tools/esp_display_present/src/present_backend.h
++++ b/components/display/tools/esp_display_present/src/present_backend.h
+@@ -48,6 +48,11 @@ typedef struct {
+      * the acquired surface. Actual coverage is still checked before publish
+      * if prior pixels were not seeded. */
+     bool full_redraw;
++    /* DIRECT only: submitted regions contain resolved pixels from an
++     * independent producer canvas. The producer never reads old lease pixels.
++     * Skip readable prefill; repair missing image history after actual writes.
++     * This does not promise full coverage or relax framebuffer retirement. */
++    bool resolved_pixels;
+ } esp_display_present_frame_request_t;
+ 
+ typedef struct {
+diff --git a/components/display/tools/esp_lv_present/src/present_lvgl.c b/components/display/tools/esp_lv_present/src/present_lvgl.c
+index ce406482b..044a3a9f6 100644
+--- a/components/display/tools/esp_lv_present/src/present_lvgl.c
++++ b/components/display/tools/esp_lv_present/src/present_lvgl.c
+@@ -69,7 +69,12 @@ static esp_err_t copy_flush(esp_lv_present_native_t *binding, const lv_area_t *a
+         return ESP_ERR_INVALID_SIZE;
+     }
+     if (!binding->refreshing) {
+-        const esp_display_present_frame_request_t request = {0};
++        /* copy_flush reads LVGL's persistent canvas, never the destination's
++         * previous contents. Coverage comes from each actual flushed region. */
++        const esp_display_present_frame_request_t request = {
++            .resolved_pixels = binding->caps.contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT &&
++                               !binding->caps.writes_active_scanout
++        };
+         esp_err_t ret = esp_display_present_engine_begin_next_frame(binding->presenter, &request);
+         if (ret != ESP_OK) {
+             return ret;

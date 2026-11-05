@@ -1,0 +1,23 @@
+[1/16] Building C object esp-idf/hw_init/CMakeFiles/__idf_hw_init.dir/lcd/lcd_init_rgb.c.obj
+[2/16] Building C object esp-idf/esp_lcd_gc9503/CMakeFiles/__idf_esp_lcd_gc9503.dir/esp_lcd_gc9503.c.obj
+[3/16] Performing build step for 'bootloader'
+[1/1] cd /home/xuxin/xuxin/esp-iot-solution-sensor-MR/examples/display/gui/lvgl_present_benchmark/build-s3/bootloader && /home/xuxin/.espressif/python_env/idf6.2_py3.10_env/bin/python /home/xuxin/esp_work/esp-idf-qspi/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 /home/xuxin/xuxin/esp-iot-solution-sensor-MR/examples/display/gui/lvgl_present_benchmark/build-s3/bootloader/bootloader.bin
+Bootloader binary size 0x4f80 bytes. 0x3080 bytes (38%) free.
+[4/14] Building C object esp-idf/esp_display_present/CMakeFiles/__idf_esp_display_present.dir/src/platform/present_lcd_scanout.c.obj
+[5/14] Building C object esp-idf/esp_display_present/CMakeFiles/__idf_esp_display_present.dir/src/backend/present_backend_gram.c.obj
+[6/14] Building C object esp-idf/esp_lcd/CMakeFiles/__idf_esp_lcd.dir/rgb/esp_lcd_panel_rgb.c.obj
+[7/14] Linking C static library esp-idf/esp_lcd/libesp_lcd.a
+[8/14] Linking C static library esp-idf/esp_lcd_gc9503/libesp_lcd_gc9503.a
+[9/14] Linking C static library esp-idf/hw_init/libhw_init.a
+[10/14] Linking C static library esp-idf/esp_display_present/libesp_display_present.a
+[11/14] Generating esp-idf/esp_system/ld/sections.ld
+Skipping linker fragment parsing, fragment files unchanged
+[12/14] Linking CXX executable lvgl_present_benchmark.elf
+[13/14] Generating binary image from built executable
+esptool v5.4.0
+Creating ESP32-S3 image...
+Merged 3 ELF sections.
+Successfully created ESP32-S3 image.
+Generated /home/xuxin/xuxin/esp-iot-solution-sensor-MR/examples/display/gui/lvgl_present_benchmark/build-s3/lvgl_present_benchmark.bin
+[14/14] cd /home/xuxin/xuxin/esp-iot-solution-sensor-MR/examples/display/gui/lvgl_present_benchmark/build-s3 && /home/xuxin/.espressif/python_env/idf6.2_py3.10_env/bin/python /home/xuxin/esp_work/esp-idf-qspi/components/partition_table/check_sizes.py --offset 0x8000 partition --type app /home/xuxin/xuxin/esp-iot-solution-sensor-MR/examples/display/gui/lvgl_present_benchmark/build-s3/partition_table/partition-table.bin /home/xuxin/xuxin/esp-iot-solution-sensor-MR/examples/display/gui/lvgl_present_benchmark/build-s3/lvgl_present_benchmark.bin
+lvgl_present_benchmark.bin binary size 0xefcc0 bytes. Smallest app partition is 0x300000 bytes. 0x210340 bytes (69%) free.

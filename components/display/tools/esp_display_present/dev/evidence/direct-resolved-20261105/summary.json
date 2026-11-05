@@ -1,0 +1,67 @@
+{
+  "board": "ESP32-S3 R16 GC9503 RGB 480x480",
+  "mac": "90:e5:b1:d0:a9:d8",
+  "port": "/dev/ttyUSB0",
+  "date": "2026-11-05",
+  "pass": [
+    {
+      "mode": "DOUBLE_DIRECT",
+      "te_buffers": 0,
+      "rotation": 0,
+      "frames": 1956,
+      "transport_fps": 28.2,
+      "lvgl_fps": 39,
+      "cpu_percent": 100,
+      "render_ms": 17,
+      "flush_ms": 12,
+      "scenes": 16
+    },
+    {
+      "mode": "DOUBLE_DIRECT",
+      "te_buffers": 0,
+      "rotation": 90,
+      "frames": 1553,
+      "transport_fps": 22.3,
+      "lvgl_fps": 30,
+      "cpu_percent": 100,
+      "render_ms": 25,
+      "flush_ms": 17,
+      "scenes": 16
+    },
+    {
+      "mode": "DOUBLE_DIRECT",
+      "te_buffers": 0,
+      "rotation": 180,
+      "frames": 1566,
+      "transport_fps": 22.5,
+      "lvgl_fps": 32,
+      "cpu_percent": 100,
+      "render_ms": 25,
+      "flush_ms": 16,
+      "scenes": 16
+    },
+    {
+      "mode": "DOUBLE_DIRECT",
+      "te_buffers": 0,
+      "rotation": 270,
+      "frames": 1562,
+      "transport_fps": 22.5,
+      "lvgl_fps": 31,
+      "cpu_percent": 100,
+      "render_ms": 25,
+      "flush_ms": 16,
+      "scenes": 16
+    }
+  ],
+  "skip": [],
+  "run": [
+    "I (2380) lvgl_bench: RUN mode=DOUBLE_DIRECT te_buffers=0 rotation=0 size=480x480 timeout=120s",
+    "I (71861) lvgl_bench: RUN mode=DOUBLE_DIRECT te_buffers=0 rotation=90 size=480x480 timeout=120s",
+    "I (141459) lvgl_bench: RUN mode=DOUBLE_DIRECT te_buffers=0 rotation=180 size=480x480 timeout=120s",
+    "I (210991) lvgl_bench: RUN mode=DOUBLE_DIRECT te_buffers=0 rotation=270 size=480x480 timeout=120s"
+  ],
+  "errors": [],
+  "complete": true,
+  "optical_verification": "Not measured: serial benchmark does not establish absence of visible tearing.",
+  "elapsed_s": 281
+}

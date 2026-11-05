@@ -278,10 +278,16 @@ static void background_sender(bool async, esp_display_present_engine_backend_t k
     lv_display_t *display = esp_lv_present_native_get_display(binding);
     background(display, 0xffffff);
     lv_refr_now(display);
-    if (async) {
+    if (async && kind == ESP_DISPLAY_PRESENT_ENGINE_TE) {
+        /* TE must finish both tile copies before the synthetic edge. GRAM's
+         * identity path borrows its draw tiles directly even with async_copy;
+         * there are no copy completions to wait for on that path. */
+        struct timespec copy_deadline;
+        assert(clock_gettime(CLOCK_REALTIME, &copy_deadline) == 0);
+        copy_deadline.tv_sec += 2;
         pthread_mutex_lock(&n.lock);
         while (n.count < 2) {
-            pthread_cond_wait(&n.changed, &n.lock);
+            assert(pthread_cond_timedwait(&n.changed, &n.lock, &copy_deadline) == 0);
         }
         pthread_mutex_unlock(&n.lock);
         /* Finish COPY_DRAIN before injecting the next physical TE edge. */
@@ -300,8 +306,34 @@ static void background_sender(bool async, esp_display_present_engine_backend_t k
     }
     assert(panel.panel.count == expected);
     pthread_mutex_unlock(&panel.mutex);
-    /* No owner service call was needed. DMA still references composed pixels. */
+    /* Sender progresses without an owner pump (apart from the TE copy drain
+     * above). The LVGL fallback is independent of every queued DMA source. */
     lv_draw_buf_t *draw = lv_display_get_buf_active(display);
+    pthread_mutex_lock(&panel.mutex);
+    for (size_t i = 0; i < panel.panel.count; ++i) {
+        const esp_display_present_surface_t *source = &panel.panel.pending[i].surface;
+        uintptr_t source_begin = (uintptr_t)source->pixels;
+        uintptr_t draw_begin = (uintptr_t)draw->data;
+        assert(draw_begin + draw->data_size <= source_begin ||
+               source_begin + source->capacity_bytes <= draw_begin);
+    }
+    pthread_mutex_unlock(&panel.mutex);
+    if (kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM) {
+        /* Identity output must retain the original presenter tiles until DMA
+         * completes, rather than allocate converted copies just to notify us. */
+        void *pool[2];
+        size_t count, bytes;
+        OK(esp_display_present_engine_get_draw_buffers(p, pool, 2, &count, &bytes));
+        assert(count == 2);
+        pthread_mutex_lock(&panel.mutex);
+        assert(panel.panel.pending[0].surface.pixels != panel.panel.pending[1].surface.pixels);
+        for (size_t i = 0; i < panel.panel.count; ++i) {
+            const esp_display_present_surface_t *source = &panel.panel.pending[i].surface;
+            assert(source->pixels == pool[0] || source->pixels == pool[1]);
+            assert(source->capacity_bytes <= bytes);
+        }
+        pthread_mutex_unlock(&panel.mutex);
+    }
     memset(draw->data, 0, draw->data_size);
     for (size_t i = 0; i < expected; ++i) {
         sync_complete(&panel);

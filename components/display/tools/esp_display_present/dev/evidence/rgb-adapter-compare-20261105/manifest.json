@@ -1,0 +1,20 @@
+{
+  "implementation": "Unmodified esp_lvgl_adapter 0.7.4",
+  "repo_head": "98d2f5c490b859ce1f524475df17ae4542d1b0f8",
+  "adapter_tracked_sources_match_HEAD": true,
+  "lvgl_version": "9.6.0",
+  "sha256": {
+    "components/display/tools/esp_lvgl_adapter/src/display/bridge/v9/lvgl_bridge_v9.c": "9e7ff6fb4d37e013294150bcce398ed58d98ea29112b52bfeecada59bed53b8e",
+    "components/display/tools/esp_lvgl_adapter/idf_component.yml": "d5fac4a2b61abaeb86560bc6c24f4c7a1f8e59202e09fff77f95d25192f2e2bc",
+    "examples/display/gui/lvgl_common_demo/main/main.c": "c49d5bcb141f0aaf6fa31ee980541fa3071c5f5be2d650429d3321020e926ac1",
+    "examples/display/gui/lvgl_common_demo/sdkconfig": "085691699cf946a120e558c69bd9b66f2c922c0a2aa1ac2af2556fa487a978b3",
+    "examples/display/gui/lvgl_common_demo/build-s3/lvgl_unified_demo.bin": "e64df00b1964e2b1670ebd6ceff5a68acbd40fea2b63f9353ec4a4e5f34eb1dd",
+    "examples/display/gui/lvgl_common_demo/build-s3/lvgl_unified_demo.elf": "8df789dd05d5763afce457a02eefcb14c6ae87f752f90f90c5944374e8b60efd",
+    "examples/display/gui/lvgl_common_demo/managed_components/lvgl__lvgl/demos/benchmark/lv_demo_benchmark.c": "b76c85e35b4b17723c25b5aa4c64282f92563ef284ee4064fdcddc69fa5ad130"
+  },
+  "relevant_config_differences": {},
+  "baseline_transport_metric_available": false,
+  "comparison_present_summary": "/tmp/present-rgb-benchmark-20261105/summary.json",
+  "lvgl_src_tree_sha256": "de3113465e7fc22d921a90631cdca1f483d22fa54cdbab2a46c5b9ed791b0848",
+  "lvgl_source_trees_match": true
+}

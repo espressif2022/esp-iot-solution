@@ -203,11 +203,20 @@ static esp_display_present_tx_result_t scanout_submit(void *context, const esp_d
     scanout->armed = false;
     present_lock_exit(&scanout->lock, false);
     error = esp_lcd_panel_draw_bitmap(scanout->config.panel, 0, 0, area->width, area->height, surface->pixels);
-    /* Publish the retirement gate only after a successful driver submission.
-     * A callback already executing can have sampled the previous FB before
-     * draw_bitmap changed it. Join those ISRs instead of reserving an entire
-     * extra frame for them. Callbacks during submit/join see armed == false.
-     * With no cross-core join available, retain the two-event fallback. */
+    /* Keep the gate closed through submission and the ISR join. RGB bounce
+     * finishes copying the old FB before selecting cur_fb_index; DPI finishes
+     * the old DMA source before installing the selected FB's descriptor list.
+     * An ISR can have sampled the old selection before draw_bitmap returned,
+     * then enter our callback on another CPU afterwards. Join it before arming.
+     *
+     * After a successful join, the next frame-complete retires old FB reads.
+     * Previously copied bounce/FIFO pixels may still reach the panel, but do
+     * not borrow the old FB allocation. Waiting another frame for those pixels
+     * would unnecessarily serialize both double- and triple-buffer output.
+     * If joining is unavailable or fails, two serialized completions cover one
+     * old ISR in flight. This relies on the audited continuous-scan drivers and
+     * exclusive panel ownership; raw VSYNC/color-done are not retirement.
+     */
     esp_err_t joined = ESP_ERR_NOT_SUPPORTED;
     if (error == ESP_OK && scanout->config.buffer_count > 1) {
         joined = present_isr_barrier(1000);

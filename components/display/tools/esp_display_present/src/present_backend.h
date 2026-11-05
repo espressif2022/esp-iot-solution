@@ -48,6 +48,11 @@ typedef struct {
      * the acquired surface. Actual coverage is still checked before publish
      * if prior pixels were not seeded. */
     bool full_redraw;
+    /* DIRECT only: submitted regions contain resolved pixels from an
+     * independent producer canvas. The producer never reads old lease pixels.
+     * Skip readable prefill; repair missing image history after actual writes.
+     * This does not promise full coverage or relax framebuffer retirement. */
+    bool resolved_pixels;
 } esp_display_present_frame_request_t;
 
 typedef struct {

@@ -1,0 +1,17 @@
+{
+  "expected_case_count": 28,
+  "observed_case_count": 28,
+  "missing": [],
+  "unexpected": [],
+  "unique_cases": true,
+  "all_16_scenes": true,
+  "boot_banner_count": 1,
+  "error_lines": [],
+  "warning_lines": [
+    "lcd.rgb: GPIO 3 is not usable, maybe is reserved by others",
+    "lcd_panel.io.3wire_spi: Delete but keep CS line inactive",
+    "spi_flash: Detected size(16384k) larger than the size in the binary image header(4096k). Using the size in the binary image header."
+  ],
+  "matrix_completed": true,
+  "no_runtime_failure": true
+}

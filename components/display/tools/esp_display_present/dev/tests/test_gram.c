@@ -552,6 +552,7 @@ static void queued_gram(unsigned mode)
     panel_t panel = {.response = {ESP_DISPLAY_PRESENT_TX_ACCEPTED, ESP_OK}};
     esp_display_present_backend_config_t cfg = config(&panel, false);
     cfg.async_copy = true;
+    cfg.panel_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED;
     cfg.copy_execute = gated_copy;
     cfg.copy_user = &gate;
     cfg.on_progress = copied;
@@ -661,6 +662,7 @@ static void queued_fifo(void)
     esp_display_present_backend_config_t cfg = config(&panel, false);
     cfg.buffer_count = 2;
     cfg.async_copy = true;
+    cfg.panel_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED;
     cfg.on_progress = copied;
     cfg.progress_user = &gate;
     present_backend_t *g;
@@ -697,6 +699,101 @@ static void queued_fifo(void)
     pthread_cond_destroy(&gate.changed);
     pthread_mutex_destroy(&gate.mutex);
 }
+static esp_err_t fail_if_copy(void *arg, const esp_display_present_copy_request_t *request)
+{
+    (void)arg;
+    (void)request;
+    assert(0);
+    return ESP_FAIL;
+}
+
+static void direct_async_holds_draw(void)
+{
+    panel_t panel = {.response = {ESP_DISPLAY_PRESENT_TX_ACCEPTED, ESP_OK}};
+    esp_display_present_backend_config_t cfg = config(&panel, false);
+    cfg.async_copy = true;
+    cfg.copy_execute = fail_if_copy;
+    present_backend_t *g;
+    assert(ops->create(&cfg, &g) == ESP_OK);
+    esp_display_present_frame_t f = begin(g);
+    esp_display_present_lease_t lease;
+    assert(ops->acquire(g, f, NULL, 0, &lease) == ESP_OK);
+    void *pixels = lease.surface.pixels;
+    memset(pixels, 0x5a, lease.surface.capacity_bytes);
+    assert(ops->submit_region(g, f, lease.id) == ESP_OK);
+    assert(panel.submits == 1);
+    for (size_t i = 0; i < 16; ++i) {
+        assert(panel.last_pixels[i] == 0x5a);
+    }
+    esp_display_present_lease_t again;
+    assert(ops->acquire(g, f, NULL, 0, &again) == ESP_ERR_TIMEOUT);
+    complete(&panel);
+    assert(ops->acquire(g, f, NULL, 0, &again) == ESP_OK);
+    assert(again.surface.pixels == pixels);
+    assert(ops->cancel_region(g, f, again.id) == ESP_OK);
+    assert(ops->cancel_frame(g, f, 0) == ESP_OK);
+    assert(ops->stop(g, 1000) == ESP_OK);
+    assert(ops->destroy(g) == ESP_OK);
+}
+
+static void draw_reused_while_tx_inflight(void)
+{
+    copy_gate_t gate = {.mutex = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER};
+    panel_t panel = {.response = {ESP_DISPLAY_PRESENT_TX_ACCEPTED, ESP_OK}};
+    esp_display_present_backend_config_t cfg = config(&panel, false);
+    cfg.panel_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED;
+    cfg.async_copy = true;
+    cfg.copy_execute = gated_copy;
+    cfg.copy_user = &gate;
+    cfg.on_progress = copied;
+    cfg.progress_user = &gate;
+    present_backend_t *g;
+    assert(ops->create(&cfg, &g) == ESP_OK);
+    esp_display_present_frame_t f = begin(g);
+    esp_display_present_lease_t lease;
+    assert(ops->acquire(g, f, NULL, 0, &lease) == ESP_OK);
+    void *pixels = lease.surface.pixels;
+    memset(pixels, 0x11, lease.surface.capacity_bytes);
+    assert(ops->submit_region(g, f, lease.id) == ESP_OK);
+    pthread_mutex_lock(&gate.mutex);
+    while (!gate.entered) {
+        pthread_cond_wait(&gate.changed, &gate.mutex);
+    }
+    pthread_mutex_unlock(&gate.mutex);
+    esp_display_present_lease_t again;
+    assert(ops->acquire(g, f, NULL, 0, &again) == ESP_ERR_TIMEOUT);
+    pthread_mutex_lock(&gate.mutex);
+    gate.release = true;
+    pthread_cond_broadcast(&gate.changed);
+    while (!gate.completed) {
+        pthread_cond_wait(&gate.changed, &gate.mutex);
+    }
+    pthread_mutex_unlock(&gate.mutex);
+    assert(present_gram_service(g) == ESP_OK);
+    assert(panel.submits == 1);
+    for (size_t i = 0; i < 16; ++i) {
+        assert(panel.last_pixels[i] == 0x11);
+    }
+    assert(ops->acquire(g, f, NULL, 0, &again) == ESP_OK);
+    assert(again.surface.pixels == pixels);
+    memset(pixels, 0x22, lease.surface.capacity_bytes);
+    for (size_t i = 0; i < 16; ++i) {
+        assert(panel.last_pixels[i] == 0x11);
+    }
+    assert(ops->submit_region(g, f, again.id) == ESP_ERR_NO_MEM);
+    assert(ops->cancel_region(g, f, again.id) == ESP_OK);
+    esp_display_present_receipt_t receipt;
+    assert(ops->end(g, f, &receipt) == ESP_OK);
+    complete(&panel);
+    esp_display_present_frame_status_t status;
+    assert(ops->query(g, receipt, &status) == ESP_OK && status.terminal && status.result == ESP_OK);
+    assert(ops->release_receipt(g, receipt) == ESP_OK);
+    assert(ops->stop(g, 1000) == ESP_OK);
+    assert(ops->destroy(g) == ESP_OK);
+    pthread_cond_destroy(&gate.changed);
+    pthread_mutex_destroy(&gate.mutex);
+}
+
 int main(void)
 {
     for (unsigned mode = 0; mode < 6; ++mode) {
@@ -704,6 +801,8 @@ int main(void)
     }
     queued_packing();
     queued_fifo();
+    direct_async_holds_draw();
+    draw_reused_while_tx_inflight();
     immediate_and_retry();
     delayed_and_stale();
     faults_and_uncertain();

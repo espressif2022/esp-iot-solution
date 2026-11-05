@@ -1,0 +1,16 @@
+{
+  "matrix_completed": true,
+  "passed": 21,
+  "skipped": 3,
+  "missing": [],
+  "all_16_scenes": true,
+  "boot_banner_count": 1,
+  "expected_unsupported_rotation_errors": [
+    "E (71785) esp_lvgl:disp: rotation not supported under TEAR_AVOID_MODE_NONE",
+    "E (71807) esp_lvgl:disp: rotation not supported under TEAR_AVOID_MODE_NONE",
+    "E (71829) esp_lvgl:disp: rotation not supported under TEAR_AVOID_MODE_NONE"
+  ],
+  "other_error_lines": [],
+  "captured_runtime_failures": [],
+  "adapter_transport_metric_available": false
+}
