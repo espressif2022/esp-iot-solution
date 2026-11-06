@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #pragma once
-#include "backend/present_backend.h"
+#include "backend/present_backend_types.h"
 #include "backend/present_records.h"
 
 /* One authority for frame records. All access, including ISR completion, must

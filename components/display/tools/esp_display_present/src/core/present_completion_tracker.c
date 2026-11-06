@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
+#include "backend/present_backend.h"
 #include "core/present_completion_tracker.h"
 
 void present_completion_record_error(present_completion_tracker_t *tracker, esp_err_t error)

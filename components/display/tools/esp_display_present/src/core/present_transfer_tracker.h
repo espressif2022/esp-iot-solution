@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #pragma once
-#include "backend/present_backend.h"
+#include "backend/present_backend_types.h"
 #include "platform/present_limits.h"
 #include "platform/present_os.h"
 

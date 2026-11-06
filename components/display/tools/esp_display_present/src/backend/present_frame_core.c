@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "backend/present_backend.h"
+#include "backend/present_backend_types.h"
 #include "backend/present_frame_core.h"
 #include <assert.h>
 

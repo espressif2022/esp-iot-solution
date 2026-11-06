@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * Test panel reads source only on explicit completion, like delayed DMA. */
 #pragma once
-#include "backend/present_backend.h"
+#include "backend/present_backend_types.h"
 #include <assert.h>
 #include <string.h>
 

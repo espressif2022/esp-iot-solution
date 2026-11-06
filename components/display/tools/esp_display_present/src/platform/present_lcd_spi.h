@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "backend/present_backend.h"
+#include "backend/present_backend_types.h"
 #include "backend/present_output_caps.h"
 #include "esp_lcd_panel_io.h"
 #include "esp_lcd_panel_ops.h"

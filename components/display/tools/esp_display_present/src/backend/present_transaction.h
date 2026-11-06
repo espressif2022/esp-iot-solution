@@ -5,7 +5,7 @@
  */
 #pragma once
 #include "platform/present_os.h"
-#include "backend/present_backend.h"
+#include "backend/present_backend_types.h"
 /* Acceptance and completion are independent facts. Caller holds its short
  * lock; no callbacks, allocation or driver calls here. Rejection is retryable
  * only when no completion has proved access. Fault alone never proves drain. */

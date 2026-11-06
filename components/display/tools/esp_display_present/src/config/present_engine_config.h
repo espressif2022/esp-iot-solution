@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #pragma once
-#include "backend/present_backend.h"
+#include "backend/present_backend_config.h"
 #include "backend/present_output_caps.h"
 
 #ifdef __cplusplus

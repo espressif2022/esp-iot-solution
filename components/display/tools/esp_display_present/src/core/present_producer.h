@@ -4,7 +4,7 @@
  */
 #pragma once
 #include "core/present_engine_types.h"
-#include "backend/present_backend.h"
+#include "backend/present_backend_types.h"
 
 #ifdef __cplusplus
 extern "C" {

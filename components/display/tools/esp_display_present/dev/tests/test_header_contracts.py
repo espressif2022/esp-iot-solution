@@ -8,6 +8,12 @@ import subprocess
 import tempfile
 
 HEADERS = (
+    'backend/present_backend_types.h',
+    'backend/present_backend_config.h',
+    'backend/present_backend.h',
+    'platform/present_lcd_spi.h',
+    'platform/present_lcd_scanout.h',
+    'core/present_transfer_tracker.h',
     'core/present_engine_types.h',
     'config/present_engine_config.h',
     'core/present_engine.h',
@@ -21,14 +27,24 @@ HEADERS = (
     'backend/present_output_caps.h',
 )
 FORBIDDEN = {
+    'backend/present_backend_types.h': ('backend/present_backend.h', 'backend/present_backend_config.h', 'platform/present_te_timing.h'),
+    'backend/present_backend_config.h': ('backend/present_backend.h',),
+    'backend/present_backend.h': ('backend/present_backend_config.h',),
+    'config/present_engine_config.h': ('backend/present_backend.h',),
+    'core/present_engine.h': ('backend/present_backend.h',),
+    'core/present_control.h': ('backend/present_backend.h', 'backend/present_backend_config.h'),
+    'core/present_producer.h': ('backend/present_backend.h', 'backend/present_backend_config.h'),
+    'platform/present_lcd_spi.h': ('backend/present_backend.h', 'backend/present_backend_config.h'),
+    'platform/present_lcd_scanout.h': ('backend/present_backend.h', 'backend/present_backend_config.h'),
+    'core/present_transfer_tracker.h': ('backend/present_backend.h', 'backend/present_backend_config.h'),
     'resources/present_memory.h': (
         'core/present_engine.h', 'config/present_engine_config.h', 'backend/present_backend.h'),
     'core/present_engine_types.h': ('config/present_engine_config.h', 'backend/present_backend.h'),
     'core/present_session.h': ('config/present_engine_config.h', 'backend/present_backend.h'),
     'backend/present_output_caps.h': ('backend/present_backend.h',),
-    'config/present_mode.h': ('core/present_engine.h', 'esp_display_present.h'),
-    'config/present_plan.h': ('core/present_engine.h', 'esp_display_present.h'),
-    'core/present_completion_tracker.h': ('core/present_engine.h', 'config/present_engine_config.h'),
+    'config/present_mode.h': ('core/present_engine.h', 'esp_display_present.h', 'backend/present_backend.h'),
+    'config/present_plan.h': ('core/present_engine.h', 'esp_display_present.h', 'backend/present_backend.h'),
+    'core/present_completion_tracker.h': ('core/present_engine.h', 'config/present_engine_config.h', 'backend/present_backend_config.h'),
 }
 
 

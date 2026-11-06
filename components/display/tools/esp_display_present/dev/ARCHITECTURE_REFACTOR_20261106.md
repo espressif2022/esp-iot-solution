@@ -132,3 +132,10 @@ flowchart TD
 将原present_presenter.h拆为engine_config、engine_types、engine、producer、control、session六个头文件。memory预算仅前置声明配置结构，mode/plan只依赖所需配置和类型，completion_tracker与output_caps也去掉多余的engine/backend头依赖。生产C文件仅增加或调整include，43个原函数声明完整保留。
 
 Host新增独立C/C++头文件及依赖边界检查后45/45通过；Host/Xtensa/RISC-V各45项布局/枚举值对照一致。详见[接口职责](SOURCE_LAYOUT.md)及[第七批证据](evidence/header-contracts-20261106/README.md)。运行时owner检查、交接提交点、扫描和缓冲释放机制不变；backend配置与操作接口仍共用原backend头，未宣称所有层级已经解耦。
+
+
+## 第八批：Backend配置与操作表独立
+
+将原backend头分为协议类型、完整配置、操作表三部分。config与dispatch分别只依赖协议类型，不互相引入；只有构造/读取配置的实现显式引用完整配置，平台适配、帧状态、control/producer与transfer tracker不再依赖backend操作表。completion tracker保留其真实的ops依赖。
+
+原三组声明逐字保留；生产C文件仅include变化。Host45/45通过，头文件独立C/C++和依赖边界检查扩展到17个入口。Host/Xtensa/RISC-V上16种类型、各147项尺寸/对齐/字段偏移/枚举值对照一致。验证范围见[第八批证据](evidence/backend-contracts-20261106/README.md)，当前依赖图见[SOURCE_LAYOUT.md](SOURCE_LAYOUT.md)。

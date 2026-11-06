@@ -1,6 +1,6 @@
 # 私有源码目录
 
-本说明对应2026-11-06目录整理。目录表达职责归属；本批拆分了engine相关头文件，backend配置与协议类型仍有共享，不能把本图当作已经严格隔离的依赖层级。
+本说明对应2026-11-06目录整理。目录表达职责归属；engine和backend相关头文件已按职责拆分；backend协议仍使用pixel头中的布局/像素类型，不能把本图当作所有依赖已经严格隔离的层级。
 
 ```text
 src/
@@ -41,6 +41,29 @@ control中的查询/receipt操作沿用原gate序列化，stop/destroy要求生�
 
 resources/present_memory.h只前置声明backend/engine配置结构，保留内存预算声明，补齐C++的C linkage。为支持前置声明，原匿名engine配置结构增加tag，不改变字段或枚举。config/present_mode.h使用公共配置头及engine配置头；config/present_plan.h使用配置与句柄类型，只有其C实现为create_planned桥接显式包含运行时API。backend/present_output_caps.h改为独立标准类型头，completion_tracker不再依赖engine配置/API。
 
-dev/tests/test_header_contracts.py独立编译11个头文件的C/C++入口，并检查上述依赖边界；现有header_smoke覆盖memory接口的C++链接。backend配置仍按值嵌入engine配置，因此尚未解除对backend类型的依赖；后续若继续缩减，应先独立拆分backend类型与操作接口。
+dev/tests/test_header_contracts.py现独立编译17个头文件的C/C++入口，并检查上述依赖边界；现有header_smoke覆盖memory接口的C++链接。
 
-目录整理见[第一批证据](evidence/source-layout-20261106/README.md)，本轮声明拆分见[第二批证据](evidence/header-contracts-20261106/README.md)。
+## Backend类型、配置与操作表
+
+| 头文件 | 职责 | 明确不引入 |
+|---|---|---|
+| backend/present_backend_types.h | frame/lease/receipt、覆盖/状态、事件/故障、panel adapter回调与不透明backend/config声明 | 完整backend配置、backend操作表、TE timing |
+| backend/present_backend_config.h | 完整配置结构、TE gate策略与timing参数 | backend操作表 |
+| backend/present_backend.h | 后端操作表及GRAM/TE/FB三个实例声明 | 完整backend配置 |
+
+```mermaid
+flowchart TD
+    EC[Engine config] --> BC[Backend config]
+    BC --> BT[Backend protocol types]
+    BC --> TE[TE timing]
+    OPS[Backend dispatch] --> BT
+    CP[Control / Producer / LCD adapters] --> BT
+    TRACK[Completion tracker] --> OPS
+    BT --> PIXEL[Pixel layout / surface types]
+```
+
+backend操作表的create只接受配置指针，因此配置前置声明已足够；构造配置或读取字段的实现显式包含config头。控制、生产者桥接、LCD适配、transfer tracker、帧记录与事务只引用协议类型；completion tracker实际使用ops查询，因此继续显式引用操作表。
+
+engine配置仍按值包含完整backend配置，符合其创建参数职责，但不再把backend操作表带给配置/规划消费者。backend协议类型目前仍从pixel/present_pixel_engine.h取得布局、surface和copy相关类型；本轮没有拆pixel头，也没有改变已有处理流程。
+
+目录整理见[第一批证据](evidence/source-layout-20261106/README.md)，engine声明拆分见[第二批证据](evidence/header-contracts-20261106/README.md)，backend拆分见[第三批证据](evidence/backend-contracts-20261106/README.md)。
