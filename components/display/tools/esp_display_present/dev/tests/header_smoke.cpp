@@ -9,6 +9,8 @@
 #include "present_executor.h"
 #include "present_plan.h"
 #include "present_lcd_scanout.h"
+#include "present_transfer_tracker.h"
+#include "present_completion_tracker.h"
 int main()
 {
     esp_display_present_pixel_engine_t *engine = nullptr;

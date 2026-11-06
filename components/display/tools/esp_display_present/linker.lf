@@ -6,6 +6,8 @@ archive: libesp_display_present.a
 entries:
     if ESP_DISPLAY_PRESENT_FB_IRAM = y:
         present_engine (noflash)
+        present_transfer_tracker (noflash)
+        present_completion_tracker (noflash)
         present_backend_fb (noflash)
         present_pixel_engine (noflash)
         present_resources:copy_execute (noflash)

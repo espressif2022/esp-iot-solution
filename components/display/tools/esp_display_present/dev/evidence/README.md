@@ -24,3 +24,5 @@
 - [S3 RGB 同配置 adapter 对照与校验补齐](rgb-adapter-ab-20261106/README.md)：NONE 41/51、DIRECT 39/42 FPS，0°，见内部渲染路径差异说明。
 
 - [Backend ops 第一批架构重构](backend-ops-refactor-20261106/README.md)：推进与可选调度创建入口收口；Host及跨芯片编译验证，非上板记录。
+
+- [Engine完成跟踪与传输超时拆分](engine-tracking-refactor-20261106/README.md)：Host42/42、三芯片编译、S3 IRAM放置和Host内存规划对照，未上板。

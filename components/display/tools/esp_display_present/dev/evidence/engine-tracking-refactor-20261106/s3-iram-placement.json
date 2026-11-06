@@ -1,0 +1,80 @@
+[
+  {
+    "name": "present_transfer_init",
+    "section": ".iram0.text",
+    "address": "0x403823b8",
+    "bytes": 61
+  },
+  {
+    "name": "present_completion_find",
+    "section": ".iram0.text",
+    "address": "0x4037fd74",
+    "bytes": 57
+  },
+  {
+    "name": "present_transfer_quiesced",
+    "section": ".iram0.text",
+    "address": "0x40382480",
+    "bytes": 47
+  },
+  {
+    "name": "present_transfer_begin",
+    "section": ".iram0.text",
+    "address": "0x40382408",
+    "bytes": 72
+  },
+  {
+    "name": "present_transfer_wait_ms",
+    "section": ".iram0.text",
+    "address": "0x40382518",
+    "bytes": 212
+  },
+  {
+    "name": "present_transfer_memory",
+    "section": ".iram0.text",
+    "address": "0x403825ec",
+    "bytes": 11
+  },
+  {
+    "name": "present_completion_record_error",
+    "section": ".iram0.text",
+    "address": "0x4037fd64",
+    "bytes": 14
+  },
+  {
+    "name": "present_completion_query",
+    "section": ".iram0.text",
+    "address": "0x4037fdb0",
+    "bytes": 61
+  },
+  {
+    "name": "present_transfer_expired",
+    "section": ".iram0.text",
+    "address": "0x403824b0",
+    "bytes": 102
+  },
+  {
+    "name": "present_transfer_deinit",
+    "section": ".iram0.text",
+    "address": "0x403823f8",
+    "bytes": 14
+  },
+  {
+    "name": "present_completion_reap",
+    "section": ".iram0.text",
+    "address": "0x4037fcac",
+    "bytes": 182
+  },
+  {
+    "name": "present_transfer_rejected",
+    "section": ".iram0.text",
+    "address": "0x40382450",
+    "bytes": 48
+  },
+  {
+    "name": "present_transfer_finish",
+    "section": ".iram0.text",
+    "address": "0x4037b358",
+    "bytes": 160
+  }
+]

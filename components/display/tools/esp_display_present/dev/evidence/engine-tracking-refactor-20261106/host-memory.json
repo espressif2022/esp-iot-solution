@@ -1,0 +1,11 @@
+{
+  "scope": "Host present_presenter_memory estimate, bytes; not chip heap usage",
+  "before": {
+    "disabled": 1800,
+    "enabled": 2568
+  },
+  "after": {
+    "disabled": 1800,
+    "enabled": 2568
+  }
+}

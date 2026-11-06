@@ -1,0 +1,20 @@
+{
+  "base_commit": "9956efd6ba01deac559f23623447c6cc863b7b91",
+  "host": {
+    "passed": 42,
+    "total": 42,
+    "sanitize": true,
+    "lvgl": "9.6.0~1"
+  },
+  "idf_build_passed": [
+    "s3-rgb",
+    "p4-dsi",
+    "s31-qspi"
+  ],
+  "build_source_hashes_match": true,
+  "s3_tracking_functions_in_iram": true,
+  "host_memory_estimate_unchanged": true,
+  "public_headers_changed": false,
+  "hardware_run": false,
+  "idf_modified": false
+}

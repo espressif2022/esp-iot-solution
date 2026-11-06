@@ -40,3 +40,23 @@ Engine 内部职责尚未拆成多个源文件。公共层/engine 的状态归�
 3. 对公共层与 engine 的状态逐字段列出维护者、派生关系和锁，再决定哪些副本可移除。
 
 验证记录见 [第一批证据](evidence/backend-ops-refactor-20261106/README.md)。
+
+
+## 第二批：完成记录与超时时间戳模块
+
+已将相关数据聚合到两个私有tracker，并迁移其记录算法。Engine从约1416行降至1282行，保留生产者协议、worker调度、锁及事件派发。目标是明确职责，不以代码总行数降低作为验收。
+
+```mermaid
+flowchart TD
+    API[公共API / LVGL Binding] --> ENGINE[Engine：生产者协议与调度]
+    ENGINE --> COMPLETION[Completion tracker：receipt / observer / FIFO]
+    ENGINE --> TRANSFER[Transfer tracker：cookie / deadline / wait budget]
+    ENGINE --> OPS[Backend ops]
+    COMPLETION --> OPS
+    OPS --> BACKENDS[FB / GRAM / TE]
+    EVENT[驱动完成事件] --> ENGINE
+```
+
+Completion沿用gate；Transfer借用control；backend调用与通知继续留在control锁外。模块没有共享完整engine结构体，也不拥有硬件像素。
+
+验证：Host42/42、三芯片编译、S3 ELF的IRAM放置检查通过。详见[第二批证据](evidence/engine-tracking-refactor-20261106/README.md)。下一步是统一配置解析；公共层与engine状态归属收敛仍单独处理。

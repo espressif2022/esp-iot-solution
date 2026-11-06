@@ -8,20 +8,10 @@
 #include "present_plan.h"
 #include "present_os.h"
 #include "present_limits.h"
+#include "present_transfer_tracker.h"
+#include "present_completion_tracker.h"
 #include <limits.h>
 #include <stdatomic.h>
-
-typedef struct {
-    uint64_t token;
-    esp_display_present_receipt_t backend;
-    esp_display_present_frame_status_t status;
-} observer_t;
-
-/* Timing evidence only. Backend/adapter retain all pixel ownership. */
-typedef struct {
-    uint64_t cookie, started_us;
-    bool reported;
-} transfer_watch_t;
 
 struct esp_display_present_engine {
     present_backend_t *backend;
@@ -32,8 +22,7 @@ struct esp_display_present_engine {
     present_task_t sender_task;
     bool sender_ready, background_gram;
     present_lock_t control;
-    uint64_t transfer_timeout_us; /* Immutable before callback registration. */
-    transfer_watch_t *transfers; /* Allocated only when the deadline policy is enabled. */
+    present_transfer_tracker_t transfer;
     bool exit_requested;
     esp_display_present_panel_adapter_t panel;
     esp_display_present_progress_fn user_progress;
@@ -50,14 +39,10 @@ struct esp_display_present_engine {
     present_task_t owner;
     esp_display_present_frame_t frame;
     esp_display_present_lease_t held;
-    esp_display_present_receipt_t receipts[PRESENT_MAX_FRAMES];
-    observer_t observers[PRESENT_MAX_FRAMES];
-    size_t head, count, limit;
+    present_completion_tracker_t completion;
     uint32_t timeout;
     bool canceling;
     _Atomic esp_display_present_engine_state_t state;
-    uint64_t committed, completed;
-    esp_err_t first_error;
 };
 
 static bool PRESENT_ISR_ATTR notify(esp_display_present_engine_t *presenter, bool isr)
@@ -72,23 +57,8 @@ static bool PRESENT_ISR_ATTR notify(esp_display_present_engine_t *presenter, boo
  * DONE itself, so a successful receipt cannot escape ahead of the timeout. */
 static bool PRESENT_ISR_ATTR finish_transfer(esp_display_present_engine_t *presenter, const esp_display_present_backend_event_t *event, bool isr)
 {
-    if (!presenter->transfer_timeout_us ||
-            (event->kind != ESP_DISPLAY_PRESENT_EVENT_TRANSFER_DONE && event->kind != ESP_DISPLAY_PRESENT_EVENT_SCANOUT_CONFIRMED)) {
-        return false;
-    }
-    uint64_t now = present_now_us();
-    bool expired = false;
-    present_lock_enter(&presenter->control, isr);
-    for (size_t i = 0; i < PRESENT_MAX_FRAMES; ++i) {
-        transfer_watch_t *watch = &presenter->transfers[i];
-        if (watch->cookie && watch->cookie == event->transaction_cookie) {
-            expired = now - watch->started_us >= presenter->transfer_timeout_us;
-            watch->cookie = 0;
-            break;
-        }
-    }
-    present_lock_exit(&presenter->control, isr);
-    if (!expired) {
+    uint64_t now;
+    if (!present_transfer_finish(&presenter->transfer, &presenter->control, event, isr, &now)) {
         return false;
     }
     const esp_display_present_backend_event_t failure = {
@@ -103,21 +73,12 @@ static bool PRESENT_ISR_ATTR finish_transfer(esp_display_present_engine_t *prese
 /* Task-only, presenter gate held: submissions cannot start during the scan. */
 static void expire_transfers(esp_display_present_engine_t *presenter)
 {
-    if (!presenter->transfer_timeout_us) {
+    if (!presenter->transfer.timeout_us) {
         return;
     }
     uint64_t expired[PRESENT_MAX_FRAMES];
-    size_t count = 0;
     uint64_t now = present_now_us();
-    present_lock_enter(&presenter->control, false);
-    for (size_t i = 0; i < PRESENT_MAX_FRAMES; ++i) {
-        transfer_watch_t *watch = &presenter->transfers[i];
-        if (watch->cookie && !watch->reported && now - watch->started_us >= presenter->transfer_timeout_us) {
-            watch->reported = true;
-            expired[count++] = watch->cookie;
-        }
-    }
-    present_lock_exit(&presenter->control, false);
+    size_t count = present_transfer_expired(&presenter->transfer, &presenter->control, now, expired);
     for (size_t i = 0; i < count; ++i) {
         const esp_display_present_backend_event_t event = {
             .kind = ESP_DISPLAY_PRESENT_EVENT_FAULT,
@@ -134,30 +95,7 @@ static void expire_transfers(esp_display_present_engine_t *presenter)
 
 static uint32_t transfer_wait_ms(esp_display_present_engine_t *presenter)
 {
-    if (!presenter->transfer_timeout_us) {
-        return UINT32_MAX;
-    }
-    uint64_t remaining_us = UINT64_MAX, now = present_now_us();
-    present_lock_enter(&presenter->control, false);
-    for (size_t i = 0; i < PRESENT_MAX_FRAMES; ++i) {
-        transfer_watch_t *watch = &presenter->transfers[i];
-        if (!watch->cookie || watch->reported) {
-            continue;
-        }
-        /* Sender computes its next wait outside gate; a producer may have
-         * inserted a newer stamp after this clock snapshot. */
-        uint64_t elapsed = now >= watch->started_us ? now - watch->started_us : 0;
-        uint64_t left = elapsed >= presenter->transfer_timeout_us ? 0 : presenter->transfer_timeout_us - elapsed;
-        if (left < remaining_us) {
-            remaining_us = left;
-        }
-    }
-    present_lock_exit(&presenter->control, false);
-    if (remaining_us == UINT64_MAX) {
-        return UINT32_MAX;
-    }
-    uint64_t ms = (remaining_us + 999) / 1000;
-    return ms >= UINT32_MAX ? UINT32_MAX - 1 : (uint32_t)ms;
+    return present_transfer_wait_ms(&presenter->transfer, &presenter->control);
 }
 
 static bool copy_progress(void *user, bool isr)
@@ -227,7 +165,7 @@ static esp_display_present_tx_result_t panel_submit(void *context, const esp_dis
         return (esp_display_present_tx_result_t) {
         ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_ARG
     };
-    if (!presenter->transfer_timeout_us) {
+    if (!presenter->transfer.timeout_us) {
         return execute_panel_submit(presenter, surface, area, cookie);
     }
     expire_transfers(presenter);
@@ -238,19 +176,7 @@ static esp_display_present_tx_result_t panel_submit(void *context, const esp_dis
             ESP_DISPLAY_PRESENT_TX_REJECTED, error != ESP_OK ? error : fault.result
         };
     }
-    size_t index = PRESENT_MAX_FRAMES;
-    present_lock_enter(&presenter->control, false);
-    for (size_t i = 0; i < PRESENT_MAX_FRAMES; ++i) {
-        if (!presenter->transfers[i].cookie) {
-            index = i;
-            presenter->transfers[i] = (transfer_watch_t) {
-                .cookie = cookie,
-                .started_us = present_now_us()
-            };
-            break;
-        }
-    }
-    present_lock_exit(&presenter->control, false);
+    size_t index = present_transfer_begin(&presenter->transfer, &presenter->control, cookie);
     if (index == PRESENT_MAX_FRAMES) {
         return (esp_display_present_tx_result_t) {
             ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_NO_MEM
@@ -258,12 +184,7 @@ static esp_display_present_tx_result_t panel_submit(void *context, const esp_dis
     }
     esp_display_present_tx_result_t result = execute_panel_submit(presenter, surface, area, cookie);
     if (result.acceptance == ESP_DISPLAY_PRESENT_TX_REJECTED) {
-        present_lock_enter(&presenter->control, false);
-        /* An early completion may already have consumed this timing record. */
-        if (presenter->transfers[index].cookie == cookie) {
-            presenter->transfers[index].cookie = 0;
-        }
-        present_lock_exit(&presenter->control, false);
+        present_transfer_rejected(&presenter->transfer, &presenter->control, index, cookie);
     }
     expire_transfers(presenter);
     (void)present_event_signal(presenter->work, false);
@@ -277,12 +198,8 @@ static esp_err_t panel_quiesce(void *context, uint32_t timeout)
     expire_transfers(presenter);
     esp_err_t error = presenter->panel.quiesce(presenter->panel.context, timeout);
     expire_transfers(presenter);
-    if (error == ESP_OK && presenter->transfers) {
-        present_lock_enter(&presenter->control, false);
-        for (size_t i = 0; i < PRESENT_MAX_FRAMES; ++i) {
-            presenter->transfers[i].cookie = 0;
-        }
-        present_lock_exit(&presenter->control, false);
+    if (error == ESP_OK) {
+        present_transfer_quiesced(&presenter->transfer, &presenter->control);
     }
     return error;
 }
@@ -342,7 +259,7 @@ static void free_presenter(esp_display_present_engine_t *presenter)
     present_event_destroy(presenter->changed);
     present_mutex_destroy(presenter->gate);
     present_lock_destroy(&presenter->control);
-    present_free(presenter->transfers);
+    present_transfer_deinit(&presenter->transfer);
     present_free(presenter);
 }
 
@@ -363,51 +280,21 @@ static uint32_t remaining(uint64_t start, uint32_t timeout)
     return elapsed >= timeout ? 0 : timeout - (uint32_t)elapsed;
 }
 
-static void record_error(esp_display_present_engine_t *presenter, esp_err_t error)
-{
-    if (presenter->first_error == ESP_OK) {
-        presenter->first_error = error;
-    }
-}
-
 static esp_err_t refresh_fault(esp_display_present_engine_t *presenter)
 {
     expire_transfers(presenter);
     esp_display_present_backend_fault_t fault;
     esp_err_t ret = presenter->ops->get_fault(presenter->backend, &fault);
     if (ret == ESP_OK) {
-        record_error(presenter, fault.result);
+        present_completion_record_error(&presenter->completion, fault.result);
     }
     return ret;
 }
 
 static esp_err_t reap_ready(esp_display_present_engine_t *presenter)
 {
-    while (presenter->count) {
-        esp_display_present_frame_status_t status;
-        esp_err_t ret = presenter->ops->query(presenter->backend, presenter->receipts[presenter->head], &status);
-        if (ret != ESP_OK) {
-            return ret;
-        }
-        if (!status.terminal) {
-            break;
-        }
-        ret = presenter->ops->release_receipt(presenter->backend, presenter->receipts[presenter->head]);
-        if (ret != ESP_OK) {
-            return ret;
-        }
-        for (size_t i = 0; i < PRESENT_MAX_FRAMES; ++i) {
-            observer_t *observer = &presenter->observers[i];
-            if (observer->token && observer->backend.value == presenter->receipts[presenter->head].value) {
-                observer->status = status;
-            }
-        }
-        record_error(presenter, status.result);
-        presenter->head = (presenter->head + 1) % presenter->limit;
-        --presenter->count;
-        ++presenter->completed;
-    }
-    return refresh_fault(presenter);
+    esp_err_t ret = present_completion_reap(&presenter->completion, presenter->ops, presenter->backend);
+    return ret != ESP_OK ? ret : refresh_fault(presenter);
 }
 
 /* Called with gate held; only owner waits here. Worker has a separate event,
@@ -541,15 +428,11 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
     presenter->event_isr = presenter->ops->on_event_isr;
     presenter->owner = present_current_task();
     presenter->timeout = config->timeout_ms;
-    presenter->transfer_timeout_us = (uint64_t)config->transfer_timeout_ms * 1000;
-    if (presenter->transfer_timeout_us) {
-        presenter->transfers = present_alloc(PRESENT_MAX_FRAMES * sizeof(*presenter->transfers));
-        if (!presenter->transfers) {
-            free_presenter(presenter);
-            return ESP_ERR_NO_MEM;
-        }
+    if (present_transfer_init(&presenter->transfer, config->transfer_timeout_ms) != ESP_OK) {
+        free_presenter(presenter);
+        return ESP_ERR_NO_MEM;
     }
-    presenter->limit = config->backend.max_frames;
+    presenter->completion.limit = config->backend.max_frames;
     presenter->panel = config->backend.panel;
     presenter->user_progress = config->backend.on_progress;
     presenter->progress_user = config->backend.progress_user;
@@ -600,8 +483,8 @@ static esp_err_t service_impl(esp_display_present_engine_t *presenter)
     if (ret != ESP_OK) {
         return ret;
     }
-    if (presenter->first_error != ESP_OK) {
-        return presenter->first_error;
+    if (presenter->completion.first_error != ESP_OK) {
+        return presenter->completion.first_error;
     }
     return service;
 }
@@ -664,12 +547,12 @@ static esp_err_t begin_next_frame_impl(esp_display_present_engine_t *presenter, 
         if (ret != ESP_OK) {
             return ret;
         }
-        if (presenter->first_error != ESP_OK) {
-            return presenter->first_error;
+        if (presenter->completion.first_error != ESP_OK) {
+            return presenter->completion.first_error;
         }
-        if (presenter->count < presenter->limit) {
+        if (presenter->completion.count < presenter->completion.limit) {
             ret = presenter->ops->begin(presenter->backend, request, &presenter->frame);
-            if (ret != ESP_ERR_NO_MEM || !presenter->count) {
+            if (ret != ESP_ERR_NO_MEM || !presenter->completion.count) {
                 return ret;
             }
         }
@@ -703,8 +586,8 @@ static esp_err_t acquire_buffer_impl(esp_display_present_engine_t *presenter, es
     uint64_t start = present_now_ms();
     for (;;) {
         ret = refresh_fault(presenter);
-        if (ret != ESP_OK || presenter->first_error != ESP_OK) {
-            return ret != ESP_OK ? ret : presenter->first_error;
+        if (ret != ESP_OK || presenter->completion.first_error != ESP_OK) {
+            return ret != ESP_OK ? ret : presenter->completion.first_error;
         }
         ret = presenter->ops->acquire(presenter->backend, presenter->frame, NULL, 0, &presenter->held);
         if (ret != ESP_ERR_TIMEOUT) {
@@ -780,8 +663,8 @@ static esp_err_t submit_buffer_impl(esp_display_present_engine_t *presenter, con
     uint64_t start = present_now_ms();
     for (;;) {
         ret = refresh_fault(presenter);
-        if (ret != ESP_OK || presenter->first_error != ESP_OK) {
-            return ret != ESP_OK ? ret : presenter->first_error;
+        if (ret != ESP_OK || presenter->completion.first_error != ESP_OK) {
+            return ret != ESP_OK ? ret : presenter->completion.first_error;
         }
         ret = presenter->ops->submit_region_ex(presenter->backend, presenter->frame, presenter->held.id, &submit);
         if (ret != ESP_ERR_NO_MEM && ret != ESP_ERR_TIMEOUT) {
@@ -805,7 +688,7 @@ static esp_err_t commit_frame_impl(esp_display_present_engine_t *presenter, cons
     if (ret != ESP_OK) {
         return ret;
     }
-    if (presenter->state != ESP_DISPLAY_PRESENT_ENGINE_RUNNING || !presenter->frame.value || presenter->canceling || presenter->held.id.value || presenter->count == presenter->limit) {
+    if (presenter->state != ESP_DISPLAY_PRESENT_ENGINE_RUNNING || !presenter->frame.value || presenter->canceling || presenter->held.id.value || presenter->completion.count == presenter->completion.limit) {
         return ESP_ERR_INVALID_STATE;
     }
     esp_display_present_receipt_t receipt;
@@ -813,9 +696,9 @@ static esp_err_t commit_frame_impl(esp_display_present_engine_t *presenter, cons
     if (ret != ESP_OK) {
         return ret;
     }
-    presenter->receipts[(presenter->head + presenter->count) % presenter->limit] = receipt;
-    ++presenter->count;
-    ++presenter->committed;
+    presenter->completion.receipts[(presenter->completion.head + presenter->completion.count) % presenter->completion.limit] = receipt;
+    ++presenter->completion.count;
+    ++presenter->completion.committed;
     presenter->frame.value = 0;
     (void)present_event_signal(presenter->work, false);
     return ESP_OK;
@@ -861,9 +744,9 @@ static esp_err_t drain_impl(esp_display_present_engine_t *presenter, uint32_t ti
         return ESP_ERR_INVALID_STATE;
     }
     uint64_t start = present_now_ms();
-    while (presenter->count) {
+    while (presenter->completion.count) {
         esp_display_present_frame_status_t status;
-        ret = wait_receipt(presenter, presenter->receipts[presenter->head], remaining(start, timeout), &status);
+        ret = wait_receipt(presenter, presenter->completion.receipts[presenter->completion.head], remaining(start, timeout), &status);
         if (ret != ESP_OK) {
             return ret;
         }
@@ -873,7 +756,7 @@ static esp_err_t drain_impl(esp_display_present_engine_t *presenter, uint32_t ti
         }
     }
     ret = refresh_fault(presenter);
-    return ret != ESP_OK ? ret : presenter->first_error;
+    return ret != ESP_OK ? ret : presenter->completion.first_error;
 }
 
 static esp_err_t get_status_impl(esp_display_present_engine_t *presenter, esp_display_present_engine_status_t *out)
@@ -887,10 +770,10 @@ static esp_err_t get_status_impl(esp_display_present_engine_t *presenter, esp_di
         .state = presenter->state,
         .frame_active = presenter->frame.value != 0,
         .cancel_pending = presenter->canceling,
-        .pending_frames = presenter->count,
-        .committed_frames = presenter->committed,
-        .completed_frames = presenter->completed,
-        .first_error = presenter->first_error,
+        .pending_frames = presenter->completion.count,
+        .committed_frames = presenter->completion.committed,
+        .completed_frames = presenter->completion.completed,
+        .first_error = presenter->completion.first_error,
         .last_service_error = presenter->last_service_error
     };
     return ret;
@@ -920,11 +803,11 @@ static esp_err_t stop_impl(esp_display_present_engine_t *presenter, uint32_t tim
 static esp_err_t destroy_impl(esp_display_present_engine_t *presenter)
 {
     esp_err_t ret;
-    if (presenter->state != ESP_DISPLAY_PRESENT_ENGINE_STOPPED || presenter->count || presenter->frame.value) {
+    if (presenter->state != ESP_DISPLAY_PRESENT_ENGINE_STOPPED || presenter->completion.count || presenter->frame.value) {
         return ESP_ERR_INVALID_STATE;
     }
     for (size_t i = 0; i < PRESENT_MAX_FRAMES; ++i)
-        if (presenter->observers[i].token) {
+        if (presenter->completion.observers[i].token) {
             return ESP_ERR_INVALID_STATE;
         }
     ret = presenter->ops->destroy(presenter->backend);
@@ -1163,15 +1046,6 @@ esp_err_t esp_display_present_engine_destroy(esp_display_present_engine_t *prese
     return error == ESP_OK ? present_presenter_control_destroy(presenter) : error;
 }
 
-static observer_t *find_observer(esp_display_present_engine_t *presenter, esp_display_present_engine_receipt_t receipt)
-{
-    for (size_t i = 0; receipt.value && i < PRESENT_MAX_FRAMES; ++i)
-        if (presenter->observers[i].token == receipt.value) {
-            return &presenter->observers[i];
-        }
-    return NULL;
-}
-
 esp_err_t esp_display_present_engine_commit_with_receipt(esp_display_present_engine_t *presenter, const esp_display_present_frame_coverage_t *coverage,
                                                          esp_display_present_engine_receipt_t *receipt)
 {
@@ -1184,10 +1058,10 @@ esp_err_t esp_display_present_engine_commit_with_receipt(esp_display_present_eng
         return error;
     }
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
-    observer_t *observer = NULL;
+    present_completion_observer_t *observer = NULL;
     for (size_t i = 0; i < PRESENT_MAX_FRAMES; ++i)
-        if (!presenter->observers[i].token) {
-            observer = &presenter->observers[i];
+        if (!presenter->completion.observers[i].token) {
+            observer = &presenter->completion.observers[i];
             break;
         }
     uint64_t token = observer ? present_new_token() : 0;
@@ -1196,9 +1070,9 @@ esp_err_t esp_display_present_engine_commit_with_receipt(esp_display_present_eng
     } else {
         error = commit_frame_impl(presenter, coverage);
         if (error == ESP_OK) {
-            *observer = (observer_t) {
+            *observer = (present_completion_observer_t) {
                 .token = token,
-                .backend = presenter->receipts[(presenter->head + presenter->count - 1) % presenter->limit],
+                .backend = presenter->completion.receipts[(presenter->completion.head + presenter->completion.count - 1) % presenter->completion.limit],
                 .status = {.sealed = true}
             };
             receipt->value = token;
@@ -1208,20 +1082,10 @@ esp_err_t esp_display_present_engine_commit_with_receipt(esp_display_present_eng
     return error;
 }
 
-static esp_err_t query_observer(esp_display_present_engine_t *presenter, observer_t *observer, esp_display_present_frame_status_t *out)
+static esp_err_t query_observer(esp_display_present_engine_t *presenter, present_completion_observer_t *observer, esp_display_present_frame_status_t *out)
 {
     expire_transfers(presenter);
-    if (!observer) {
-        return ESP_ERR_INVALID_STATE;
-    }
-    if (!observer->status.terminal) {
-        esp_err_t error = presenter->ops->query(presenter->backend, observer->backend, &observer->status);
-        if (error != ESP_OK) {
-            return error;
-        }
-    }
-    *out = observer->status;
-    return ESP_OK;
+    return present_completion_query(observer, presenter->ops, presenter->backend, out);
 }
 
 esp_err_t present_presenter_control_query_frame(esp_display_present_engine_t *presenter, esp_display_present_engine_receipt_t receipt, esp_display_present_frame_status_t *out)
@@ -1234,7 +1098,7 @@ esp_err_t present_presenter_control_query_frame(esp_display_present_engine_t *pr
         return error;
     }
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
-    error = query_observer(presenter, find_observer(presenter, receipt), out);
+    error = query_observer(presenter, present_completion_find(&presenter->completion, receipt), out);
     present_mutex_give(presenter->gate);
     return error;
 }
@@ -1265,7 +1129,7 @@ esp_err_t esp_display_present_engine_wait_frame(esp_display_present_engine_t *pr
     if (!present_mutex_take(presenter->gate, timeout)) {
         return ESP_ERR_TIMEOUT;
     }
-    observer_t *observer = find_observer(presenter, receipt);
+    present_completion_observer_t *observer = present_completion_find(&presenter->completion, receipt);
     do {
         error = query_observer(presenter, observer, out);
         if (error != ESP_OK || out->terminal) {
@@ -1287,7 +1151,7 @@ static esp_err_t untrack(esp_display_present_engine_t *presenter, esp_display_pr
         return error;
     }
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
-    observer_t *observer = find_observer(presenter, receipt);
+    present_completion_observer_t *observer = present_completion_find(&presenter->completion, receipt);
     esp_display_present_frame_status_t status;
     if (!observer) {
         error = ESP_ERR_INVALID_STATE;
@@ -1375,7 +1239,7 @@ esp_err_t esp_display_present_engine_resolve_render_area(esp_display_present_eng
 
 size_t present_presenter_memory(const esp_display_present_engine_config_t *config)
 {
-    return sizeof(esp_display_present_engine_t) + (config->transfer_timeout_ms ? PRESENT_MAX_FRAMES * sizeof(transfer_watch_t) : 0) + present_mutex_memory() + 2 * present_event_memory() +
+    return sizeof(esp_display_present_engine_t) + present_transfer_memory(config->transfer_timeout_ms) + present_mutex_memory() + 2 * present_event_memory() +
            (config->background_service ? present_worker_memory() : 0);
 }
 
