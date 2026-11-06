@@ -1,0 +1,11 @@
+{
+  "baseline_commit": "ccc334c16",
+  "public_cases": 55296,
+  "engine_plan_cases": 6912,
+  "total_cases_including_rejections": 62208,
+  "serialized_lines": 117504,
+  "baseline_sha256": "cab33ad39bc6ade9976fe031a43fe6ce6796e5c1b33ecb9704ef24791e09fbfa",
+  "candidate_sha256": "cab33ad39bc6ade9976fe031a43fe6ce6796e5c1b33ecb9704ef24791e09fbfa",
+  "byte_equal": true,
+  "scope": "Host planning/query results; no hardware calls or pixel rendering"
+}

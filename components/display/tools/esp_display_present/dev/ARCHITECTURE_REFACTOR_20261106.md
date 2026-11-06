@@ -60,3 +60,25 @@ flowchart TD
 Completion沿用gate；Transfer借用control；backend调用与通知继续留在control锁外。模块没有共享完整engine结构体，也不拥有硬件像素。
 
 验证：Host42/42、三芯片编译、S3 ELF的IRAM放置检查通过。详见[第二批证据](evidence/engine-tracking-refactor-20261106/README.md)。下一步是统一配置解析；公共层与engine状态归属收敛仍单独处理。
+
+
+## 第三批：模式解析规则收口
+
+新增私有 `present_mode` 模块。公共查询/资源规划通过 target 入口解析；底层 plan/engine 通过显式 defaults 策略解析。具名FB模式的合同与帧缓冲数量共用一张表，旧模式解析函数及分散的AUTO默认选择迁入本模块。
+
+```mermaid
+flowchart TD
+    TARGET[公共 target 配置] --> MODE[Mode policy：具名模式共享表与入口策略]
+    CORE[底层 engine 配置] --> MODE
+    MODE --> QUERY[所需driver FB数量查询]
+    MODE --> RES[Resources：运行时内存选择、tile数量与硬件资源]
+    MODE --> PLAN[Plan：布局、容量、对齐与预算验证]
+    RES --> PLAN
+    PLAN --> ENGINE[Engine / Backend]
+```
+
+公共FB NONE仍是DIRECT持久画布，底层NONE仍是PARTITION。公共/legacy AUTO与current AUTO的不同默认来源明确保留；TE GPIO能力不会替代底层的真实timing条件。
+
+Resources保留运行时堆查询、tile默认数量及硬件能力获取；Plan保留布局与预算验证。独立创建入口仍做防御性重验，复用同一模式规则，不因本次收口信任外部可修改的plan。
+
+新增模式策略回归后Host43/43通过。改动前后的62,208组配置快照逐字节一致，三芯片完整编译通过。详见[第三批证据](evidence/mode-policy-refactor-20261106/README.md)。下一步检查公共层与engine的状态归属。

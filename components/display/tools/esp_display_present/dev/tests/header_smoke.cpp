@@ -8,6 +8,7 @@
 #include "present_presenter.h"
 #include "present_executor.h"
 #include "present_plan.h"
+#include "present_mode.h"
 #include "present_lcd_scanout.h"
 #include "present_transfer_tracker.h"
 #include "present_completion_tracker.h"

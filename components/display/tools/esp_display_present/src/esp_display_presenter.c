@@ -3,6 +3,7 @@
 #include "esp_display_present.h"
 #include "present_geometry.h"
 #include "present_resources.h"
+#include "present_mode.h"
 #include "present_presenter.h"
 #include "present_os.h"
 #include <limits.h>
@@ -173,44 +174,12 @@ esp_err_t esp_display_present_get_required_frame_buffer_count(const esp_display_
         return ESP_ERR_INVALID_ARG;
     }
     *out = 0;
-    if (!t || (t->hw.rotation != 0 && t->hw.rotation != 90 && t->hw.rotation != 180 && t->hw.rotation != 270) ||
-            t->fb.mode < ESP_DISPLAY_PRESENT_MODE_NONE || t->fb.mode > ESP_DISPLAY_PRESENT_MODE_AUTO) {
-        return ESP_ERR_INVALID_ARG;
+    present_mode_resolution_t mode;
+    esp_err_t error = present_mode_resolve_target(t, &mode);
+    if (error == ESP_OK) {
+        *out = mode.frame_buffers;
     }
-    if (t->hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_AUTO && !t->hw.io) {
-        return ESP_ERR_NOT_SUPPORTED;
-    }
-    if (t->hw.panel_type < ESP_DISPLAY_PRESENT_PANEL_AUTO || t->hw.panel_type > ESP_DISPLAY_PRESENT_PANEL_IO) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    bool fb = t->hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB || t->hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI;
-    if (!fb) {
-        bool te = t->hw.te_enabled && t->hw.te_sync.gpio_num >= 0;
-        if (t->fb.mode == ESP_DISPLAY_PRESENT_MODE_TE_SYNC && !te) {
-            return ESP_ERR_NOT_SUPPORTED;
-        }
-        if (t->hw.panel_type != ESP_DISPLAY_PRESENT_PANEL_IO && !(t->hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_AUTO && t->hw.io)) {
-            return ESP_ERR_NOT_SUPPORTED;
-        }
-        return t->fb.mode == ESP_DISPLAY_PRESENT_MODE_NONE || t->fb.mode == ESP_DISPLAY_PRESENT_MODE_TE_SYNC || t->fb.mode == ESP_DISPLAY_PRESENT_MODE_AUTO ? ESP_OK : ESP_ERR_NOT_SUPPORTED;
-    }
-    switch (t->fb.mode) {
-    case ESP_DISPLAY_PRESENT_MODE_NONE:
-        *out = 1;
-        return ESP_OK;
-    case ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL:
-    case ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT:
-    case ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL:
-        *out = 2;
-        return ESP_OK;
-    case ESP_DISPLAY_PRESENT_MODE_TRIPLE_FULL:
-    case ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL:
-    case ESP_DISPLAY_PRESENT_MODE_AUTO:
-        *out = 3;
-        return ESP_OK;
-    default:
-        return ESP_ERR_NOT_SUPPORTED;
-    }
+    return error;
 }
 
 esp_err_t esp_display_presenter_create(const esp_display_presenter_config_t *cfg, esp_display_presenter_t **out)

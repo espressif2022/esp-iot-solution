@@ -1,4 +1,4 @@
-set(PRESENT_SOURCES ../src/present_os.c ../src/platform/present_te_timing.c ../src/platform/present_te_timer.c ../src/backend/present_image_repair.c ../src/backend/present_frame_core.c ../src/present_plan.c ../src/present_engine.c ../src/present_transfer_tracker.c ../src/present_completion_tracker.c ../src/pixel/present_pixel_engine.c ../src/backend/present_backend_gram.c
+set(PRESENT_SOURCES ../src/present_os.c ../src/platform/present_te_timing.c ../src/platform/present_te_timer.c ../src/backend/present_image_repair.c ../src/backend/present_frame_core.c ../src/present_plan.c ../src/present_mode.c ../src/present_engine.c ../src/present_transfer_tracker.c ../src/present_completion_tracker.c ../src/pixel/present_pixel_engine.c ../src/backend/present_backend_gram.c
     ../src/pixel/executor/present_executor.c ../src/pixel/executor/present_executor_cpu.c ../src/pixel/executor/present_executor_ppa.c ../src/pixel/executor/present_executor_dma2d.c
     ../src/platform/present_lcd_spi.c ../src/platform/present_lcd_scanout.c ../src/backend/present_te_composer.c ../src/backend/present_backend_te.c ../src/backend/present_backend_fb.c)
 cmake_minimum_required(VERSION 3.16)
@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(PRESENT_SANITIZE "Enable address and undefined-behavior sanitizers" OFF)
 find_package(Threads REQUIRED)
 add_library(present_engine STATIC ${PRESENT_SOURCES})
-target_include_directories(present_engine PUBLIC ../src tests/support)
+target_include_directories(present_engine PUBLIC ../src ../include tests/support)
 target_compile_definitions(present_engine PRIVATE PRESENT_HOST=1)
 target_compile_options(present_engine PRIVATE -Wall -Wextra -Werror)
 target_link_libraries(present_engine PUBLIC Threads::Threads)
@@ -19,7 +19,7 @@ if(PRESENT_SANITIZE)
     target_link_options(present_engine PUBLIC -fsanitize=address,undefined -no-pie)
 endif()
 enable_testing()
-foreach(name transfer_tracker completion_tracker te_timing image frame_core plan records coverage repair scanout rotation pixel gram lcd_spi presenter te_composer te presenter_te fb direct_resolved event scheduler)
+foreach(name mode transfer_tracker completion_tracker te_timing image frame_core plan records coverage repair scanout rotation pixel gram lcd_spi presenter te_composer te presenter_te fb direct_resolved event scheduler)
     add_executable(test_${name} tests/test_${name}.c)
     target_link_libraries(test_${name} PRIVATE present_engine)
     target_compile_definitions(test_${name} PRIVATE PRESENT_HOST=1)

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include "present_resources.h"
+#include "present_mode.h"
 #include "present_os.h"
 #include "present_records.h"
 #include "present_memory.h"
@@ -146,25 +147,12 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
     }
 #endif
 
-    esp_display_present_mode_t mode = input->target.fb.mode;
-    if (mode < ESP_DISPLAY_PRESENT_MODE_NONE || mode > ESP_DISPLAY_PRESENT_MODE_AUTO) {
-        return ESP_ERR_INVALID_ARG;
+    present_mode_resolution_t mode;
+    esp_err_t mode_error = present_mode_resolve_target(&input->target, &mode);
+    if (mode_error != ESP_OK) {
+        return mode_error;
     }
-    bool te_enabled = hw->te_enabled && hw->te_sync.gpio_num >= 0;
-    if (mode == ESP_DISPLAY_PRESENT_MODE_AUTO) {
-        mode = framebuffer ? ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL : te_enabled ? ESP_DISPLAY_PRESENT_MODE_TE_SYNC : ESP_DISPLAY_PRESENT_MODE_NONE;
-    }
-    /* No invented TE timing or silent fallback to unsynchronized output. */
-    bool te = mode == ESP_DISPLAY_PRESENT_MODE_TE_SYNC;
-    if ((te && (framebuffer || !te_enabled)) ||
-            (!framebuffer && mode != ESP_DISPLAY_PRESENT_MODE_NONE && !te)) {
-        return ESP_ERR_NOT_SUPPORTED;
-    }
-    static const esp_display_present_present_mode_t modes[] = {
-        ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE, ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_FULL, ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_FULL,
-        ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT, ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_PARTIAL, ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC,
-        ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL, ESP_DISPLAY_PRESENT_ENGINE_MODE_AUTO,
-    };
+    bool te = mode.kind == ESP_DISPLAY_PRESENT_ENGINE_TE;
     size_t bytes_per_pixel = input->pixel_format == ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 ? 2 : 3;
     if ((size_t)input->width > SIZE_MAX / input->height / bytes_per_pixel) {
         return ESP_ERR_INVALID_SIZE;
@@ -184,8 +172,8 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
     if (rows > input->height) {
         return ESP_ERR_INVALID_ARG;
     }
-    bool partial = mode == ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL || mode == ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL || !framebuffer;
-    size_t images = framebuffer ? (mode == ESP_DISPLAY_PRESENT_MODE_NONE ? 1 : mode == ESP_DISPLAY_PRESENT_MODE_TRIPLE_FULL || mode == ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL ? 3 : 2) : te ? (input->target.drawbuf.te_compose_buffers ? input->target.drawbuf.te_compose_buffers : 1) : 0;
+    bool partial = mode.contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION;
+    size_t images = framebuffer ? mode.frame_buffers : te ? (input->target.drawbuf.te_compose_buffers ? input->target.drawbuf.te_compose_buffers : 1) : 0;
     if (input->target.fb.frame_buffer_count && framebuffer && input->target.fb.frame_buffer_count != images) {
         return ESP_ERR_INVALID_ARG;
     }
@@ -234,8 +222,8 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
                               default_tiles(background, tile_memory, slot_bytes, reserved)) : 0;
     *out = (esp_display_present_plan_config_t) {
         .presenter = {
-            .backend_kind = framebuffer ? ESP_DISPLAY_PRESENT_ENGINE_FB : te ? ESP_DISPLAY_PRESENT_ENGINE_TE : ESP_DISPLAY_PRESENT_ENGINE_GRAM,
-            .mode = framebuffer && mode == ESP_DISPLAY_PRESENT_MODE_NONE ? ESP_DISPLAY_PRESENT_MODE_DEFAULT : modes[mode],
+            .backend_kind = mode.kind,
+            .mode = mode.engine_mode,
             .transfer_timeout_ms = input->transfer_timeout_ms ? input->transfer_timeout_ms : 1000,
             .timeout_ms = input->pipeline_acquire_timeout_ms ? input->pipeline_acquire_timeout_ms : 1000,
             .background_service = background,
@@ -244,7 +232,7 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
                 .width = input->width,
                 .height = input->height,
                 .tile_rows = rows,
-                .render_contract = framebuffer && mode == ESP_DISPLAY_PRESENT_MODE_NONE ? ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT : ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION,
+                .render_contract = mode.engine_mode == ESP_DISPLAY_PRESENT_MODE_DEFAULT ? mode.contract : ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION,
                 .buffer_count = framebuffer ? images : tiles,
                 .max_frames = 8,
                 .format = input->pixel_format == ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 ? ESP_DISPLAY_PRESENT_FORMAT_RGB565 : ESP_DISPLAY_PRESENT_FORMAT_RGB888,
@@ -254,7 +242,7 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
                 /* The panel's physical axes stay fixed. Runtime quarter-turns
                  * transpose the producer layout in the backend. */
                 .fixed_rotation = false,
-                .active_writes = framebuffer && mode == ESP_DISPLAY_PRESENT_MODE_NONE,
+                .active_writes = mode.active_writes,
                 .tx_staging = !framebuffer && !te && input->target.drawbuf.in_psram,
                 .te_gate = te ? (esp_display_present_te_gate_t)
                 {

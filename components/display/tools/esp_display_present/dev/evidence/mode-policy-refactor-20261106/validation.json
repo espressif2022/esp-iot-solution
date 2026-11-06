@@ -1,0 +1,20 @@
+{
+  "base_commit": "ccc334c166c5bb6fc4fb4a77fb9d405c4dac75b3",
+  "host": {
+    "passed": 43,
+    "total": 43,
+    "sanitize": true,
+    "lvgl": "9.6.0~1"
+  },
+  "snapshot_cases": 62208,
+  "snapshot_byte_equal": true,
+  "idf_build_passed": [
+    "s3-rgb",
+    "p4-dsi",
+    "s31-qspi"
+  ],
+  "build_source_hashes_match": true,
+  "public_headers_changed": false,
+  "hardware_run": false,
+  "idf_modified": false
+}

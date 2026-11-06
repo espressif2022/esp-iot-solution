@@ -4,17 +4,13 @@
  */
 #pragma once
 #include "present_presenter.h"
+#include "present_mode.h"
 #include "present_executor.h"
 #include "present_output_caps.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Select default pool/mode policy, not a ceiling on supported capabilities. */
-typedef enum {
-    ESP_DISPLAY_PRESENT_PLAN_CURRENT_DEFAULTS,
-    ESP_DISPLAY_PRESENT_PLAN_LEGACY_DEFAULTS,
-} esp_display_present_plan_defaults_t;
 typedef enum {
     ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA,
     ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL,
@@ -84,7 +80,6 @@ typedef struct {
 /* Pure planning: no allocation/attach/driver calls; get_caps only. Invalid or
  * unsupported physical constraints return errors; valid future topologies are
  * described with pending_runtime bits and cannot be created by today's bridge. */
-esp_err_t present_config_resolve_legacy(const esp_display_present_engine_config_t *input, esp_display_present_engine_config_t *out);
 esp_err_t esp_display_present_plan_resolve(const esp_display_present_plan_config_t *config, esp_display_present_resolved_plan_t *plan);
 /* Dirty L -> aligned P -> required render L, before rasterization. No clipping
  * of an expanded physical edge that would violate alignment. No pixel reads. */

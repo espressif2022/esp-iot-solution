@@ -6,6 +6,7 @@
 #include "present_memory.h"
 #include "present_presenter.h"
 #include "present_plan.h"
+#include "present_mode.h"
 #include "present_os.h"
 #include "present_limits.h"
 #include "present_transfer_tracker.h"
@@ -380,7 +381,7 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
     }
     *out = NULL;
     esp_display_present_engine_config_t resolved;
-    esp_err_t resolution = present_config_resolve_legacy(config, &resolved);
+    esp_err_t resolution = present_mode_resolve_engine(config, ESP_DISPLAY_PRESENT_PLAN_CURRENT_DEFAULTS, false, &resolved);
     if (resolution != ESP_OK) {
         return resolution;
     }
