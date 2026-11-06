@@ -148,3 +148,8 @@ Host新增独立C/C++头文件及依赖边界检查后45/45通过；Host/Xtensa/
 opaque pixel engine采用sync、lifecycle、notification、executor、worker五组内嵌字段，worker内继续归组priority。共同锁域不变，count/records尾随存储保留。分组不代表新增对象所有权或任务，也不批量修改配置接口。
 
 Host增加独立无OS像素运算链接测试后46/46通过，头文件边界检查扩展至22个入口。新ops模块同步更新共享源码清单与IRAM映射。详见[第九批证据](evidence/pixel-structure-20261106/README.md)和[结构体分组规则](SOURCE_LAYOUT.md)。
+
+
+## 第九批后的硬件回归
+
+以第一批前的e9ef0a64a为基线，对d5b4d865a完成S3 RGB / P4 DSI同配置前后对照。112/112像素组合通过，覆盖七模式、四个启动角度与每组合运行时180°旋转；16组LVGL综合benchmark完成。S3四组平均FPS一致，P4三组一致、NONE 0°为27→26，单次结果不作显著性判断。用户反馈两屏正常；两板原16MiB固件均已恢复并独立整片校验。详见[硬件证据](evidence/refactor-hardware-ab-20261106/README.md)。本轮未覆盖TE/GRAM和长时间耐久测试。

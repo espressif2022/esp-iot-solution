@@ -1,0 +1,38 @@
+[
+  {
+    "variant": "baseline",
+    "board": "s3-rgb",
+    "suite": "pixels",
+    "firmware_unchanged": true
+  },
+  {
+    "variant": "current",
+    "board": "s3-rgb",
+    "suite": "pixels",
+    "firmware_unchanged": true
+  },
+  {
+    "variant": "baseline",
+    "board": "s3-rgb",
+    "suite": "benchmark",
+    "firmware_unchanged": true
+  },
+  {
+    "variant": "current",
+    "board": "s3-rgb",
+    "suite": "benchmark",
+    "firmware_unchanged": true
+  },
+  {
+    "variant": "baseline",
+    "board": "p4-dsi",
+    "suite": "pixels",
+    "firmware_unchanged": true
+  },
+  {
+    "variant": "baseline",
+    "board": "p4-dsi",
+    "suite": "benchmark",
+    "firmware_unchanged": true
+  }
+]

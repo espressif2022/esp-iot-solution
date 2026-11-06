@@ -1,0 +1,8 @@
+{
+  "baseline/p4-dsi/benchmark/present/manifest.json": "28211ed55dc13cd988ce93f14588c8e1e3f772534996760fb5f9e792576963c5",
+  "baseline/p4-dsi/pixels/present/manifest.json": "6932c092ffb165325b0a29f2f296902150906be3e21f0e4fb43e4ae5aa5f1a65",
+  "baseline/s3-rgb/benchmark/present/manifest.json": "faf104fead42472d7c7b604ba2208a2e0c01d569489efc971e8b0c55b6c2c5fb",
+  "baseline/s3-rgb/pixels/present/manifest.json": "983c29609e41023adc4536f8fac9fdd1f8df87bd0a9b205dabf289a958bc8d3a",
+  "current/s3-rgb/benchmark/present/manifest.json": "c309c3dd67c3f4b8c1375253537d4aefc4569af94a2897c720502d200f0ec691",
+  "current/s3-rgb/pixels/present/manifest.json": "1c11af78372642d974442c4d958f1e66cd1b2136836c7aafbfce10e5959ffe1a"
+}

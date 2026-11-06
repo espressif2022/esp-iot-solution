@@ -1,0 +1,55 @@
+{
+  "complete": true,
+  "rows": [
+    {
+      "status": "PASS",
+      "mode": "NONE",
+      "rotation": 0,
+      "frames": 1373,
+      "transport_fps": 19.8,
+      "lvgl_fps": 26,
+      "cpu": 100,
+      "render": 28,
+      "flush": 16,
+      "scenes": 16
+    },
+    {
+      "status": "PASS",
+      "mode": "NONE",
+      "rotation": 90,
+      "frames": 910,
+      "transport_fps": 13.1,
+      "lvgl_fps": 18,
+      "cpu": 100,
+      "render": 36,
+      "flush": 22,
+      "scenes": 16
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_DIRECT",
+      "rotation": 0,
+      "frames": 1347,
+      "transport_fps": 19.4,
+      "lvgl_fps": 26,
+      "cpu": 100,
+      "render": 28,
+      "flush": 17,
+      "scenes": 16
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_DIRECT",
+      "rotation": 90,
+      "frames": 1031,
+      "transport_fps": 14.8,
+      "lvgl_fps": 20,
+      "cpu": 100,
+      "render": 39,
+      "flush": 17,
+      "scenes": 16
+    }
+  ],
+  "errors": [],
+  "matrix_complete": true
+}

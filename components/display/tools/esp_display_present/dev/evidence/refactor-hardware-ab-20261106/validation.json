@@ -1,0 +1,25 @@
+{
+  "baseline_commit": "e9ef0a64aac0320e768dd07165b4c93df349bfe5",
+  "current_commit": "d5b4d865a49f8c90d66cc135fad3c822b33aeae0",
+  "pixel_cases_passed": 112,
+  "pixel_frames_submitted": 448,
+  "runtime_180_degree_switches_passed": 112,
+  "benchmark_suites_completed": 4,
+  "benchmark_cases_completed": 16,
+  "valid_scenes_per_case": 16,
+  "common_configuration_and_test_source_fingerprints_equal": true,
+  "production_snapshots_match_commits": true,
+  "tracked_idf_clean": true,
+  "original_full_flash_restored_and_verified": true,
+  "visual_feedback": {
+    "source": "user",
+    "text": "两块屏都正常",
+    "scope": "this round; NONE mode permits tearing"
+  },
+  "limitations": [
+    "single benchmark run per configuration",
+    "no TE or GRAM hardware rerun",
+    "no long endurance test",
+    "runtime pixel rotations switch 180 degrees, not across axes"
+  ]
+}

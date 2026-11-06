@@ -1,0 +1,21 @@
+{
+  "versions": {
+    "baseline": "e9ef0a64a",
+    "current": "d5b4d865a"
+  },
+  "benchmark_profiles": [
+    "NONE",
+    "DOUBLE_DIRECT"
+  ],
+  "benchmark_angles": [
+    0,
+    90
+  ],
+  "pixels": "7 modes x 4 rotations x 4 frames; each case creates and deletes presenter",
+  "boards": [
+    "s3-rgb",
+    "p4-dsi"
+  ],
+  "shared_harness_from": "d5b4d865a",
+  "helper_include_compatibility_only": true
+}

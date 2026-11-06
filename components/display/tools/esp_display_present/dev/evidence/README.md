@@ -40,3 +40,5 @@
 - [Backend类型、配置与操作表分离](backend-contracts-20261106/README.md)：三组声明原样保留、17个头文件独立C/C++检查、Host45/45、三类编译器16种类型布局对照及目标编译；未上板。
 
 - [Pixel拆分与运行上下文字段分组](pixel-structure-20261106/README.md)：类型/无状态运算/生命周期分离、Host46/46、22个头文件检查、状态转换与CPU算法归一化对照、上下文尺寸及跨芯片验证；未上板。
+
+- [架构重构后 RGB / DSI 硬件前后对照](refactor-hardware-ab-20261106/README.md)：112/112像素组合、16组LVGL benchmark；S3平均FPS一致，P4一组27→26其余一致；用户两屏目视正常，原固件整片恢复校验通过。

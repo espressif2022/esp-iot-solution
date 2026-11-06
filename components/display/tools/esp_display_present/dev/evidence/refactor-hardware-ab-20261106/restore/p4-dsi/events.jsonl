@@ -1,0 +1,15 @@
+{"time": 1793967149.6279962, "board": "p4-dsi", "stage": "FLASH_START", "variant": "baseline", "suite": "pixels"}
+{"time": 1793967153.420454, "board": "p4-dsi", "stage": "CAPTURE_START", "variant": "baseline", "suite": "pixels"}
+{"time": 1793967197.7675362, "board": "p4-dsi", "stage": "SUITE_PASS", "variant": "baseline", "suite": "pixels"}
+{"time": 1793967269.841019, "board": "p4-dsi", "stage": "FLASH_START", "variant": "current", "suite": "pixels"}
+{"time": 1793967273.6796572, "board": "p4-dsi", "stage": "CAPTURE_START", "variant": "current", "suite": "pixels"}
+{"time": 1793967317.954627, "board": "p4-dsi", "stage": "SUITE_PASS", "variant": "current", "suite": "pixels"}
+{"time": 1793967317.9552221, "board": "p4-dsi", "stage": "FLASH_START", "variant": "baseline", "suite": "benchmark"}
+{"time": 1793967327.993021, "board": "p4-dsi", "stage": "CAPTURE_START", "variant": "baseline", "suite": "benchmark"}
+{"time": 1793967608.329288, "board": "p4-dsi", "stage": "SUITE_PASS", "variant": "baseline", "suite": "benchmark"}
+{"time": 1793967608.3294413, "board": "p4-dsi", "stage": "FLASH_START", "variant": "current", "suite": "benchmark"}
+{"time": 1793967617.0473018, "board": "p4-dsi", "stage": "CAPTURE_START", "variant": "current", "suite": "benchmark"}
+{"time": 1793967897.3860173, "board": "p4-dsi", "stage": "SUITE_PASS", "variant": "current", "suite": "benchmark"}
+{"time": 1793967897.3874595, "board": "p4-dsi", "stage": "ALL_TESTS_PASS"}
+{"time": 1793967897.3875036, "board": "p4-dsi", "stage": "RESTORE_START"}
+{"time": 1793968012.0147624, "board": "p4-dsi", "stage": "RESTORE_VERIFIED"}

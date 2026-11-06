@@ -1,0 +1,9 @@
+board,mode,rotation,baseline_lvgl_fps,current_lvgl_fps,delta_fps,baseline_cpu,current_cpu,baseline_render_ms,current_render_ms,baseline_flush_ms,current_flush_ms,baseline_transport_fps,current_transport_fps
+s3-rgb,NONE,0,41,41,0,100,100,16,16,11,11,29.6,29.9
+s3-rgb,NONE,90,20,20,0,100,100,28,28,22,22,17.4,17.5
+s3-rgb,DOUBLE_DIRECT,0,39,39,0,100,100,17,17,12,12,28.3,28.3
+s3-rgb,DOUBLE_DIRECT,90,31,31,0,100,100,25,25,15,15,22.6,22.6
+p4-dsi,NONE,0,27,26,-1,100,100,27,28,16,16,20.0,19.8
+p4-dsi,NONE,90,18,18,0,100,100,36,36,22,22,13.1,13.1
+p4-dsi,DOUBLE_DIRECT,0,26,26,0,100,100,28,28,17,17,19.3,19.4
+p4-dsi,DOUBLE_DIRECT,90,20,20,0,100,100,39,39,18,17,14.7,14.8

@@ -1,0 +1,598 @@
+[
+  {
+    "board": "s3-rgb",
+    "variant": "baseline",
+    "cases_passed": 28,
+    "frames_per_case": 4,
+    "rows": [
+      {
+        "profile": "NONE_1FB",
+        "rotation": 0,
+        "avg_frame_us": 53665
+      },
+      {
+        "profile": "NONE_1FB",
+        "rotation": 90,
+        "avg_frame_us": 62817
+      },
+      {
+        "profile": "NONE_1FB",
+        "rotation": 180,
+        "avg_frame_us": 57755
+      },
+      {
+        "profile": "NONE_1FB",
+        "rotation": 270,
+        "avg_frame_us": 63496
+      },
+      {
+        "profile": "DOUBLE_FULL",
+        "rotation": 0,
+        "avg_frame_us": 54439
+      },
+      {
+        "profile": "DOUBLE_FULL",
+        "rotation": 90,
+        "avg_frame_us": 63178
+      },
+      {
+        "profile": "DOUBLE_FULL",
+        "rotation": 180,
+        "avg_frame_us": 53275
+      },
+      {
+        "profile": "DOUBLE_FULL",
+        "rotation": 270,
+        "avg_frame_us": 63007
+      },
+      {
+        "profile": "TRIPLE_FULL",
+        "rotation": 0,
+        "avg_frame_us": 58529
+      },
+      {
+        "profile": "TRIPLE_FULL",
+        "rotation": 90,
+        "avg_frame_us": 62296
+      },
+      {
+        "profile": "TRIPLE_FULL",
+        "rotation": 180,
+        "avg_frame_us": 53527
+      },
+      {
+        "profile": "TRIPLE_FULL",
+        "rotation": 270,
+        "avg_frame_us": 63258
+      },
+      {
+        "profile": "DOUBLE_DIRECT",
+        "rotation": 0,
+        "avg_frame_us": 54246
+      },
+      {
+        "profile": "DOUBLE_DIRECT",
+        "rotation": 90,
+        "avg_frame_us": 62966
+      },
+      {
+        "profile": "DOUBLE_DIRECT",
+        "rotation": 180,
+        "avg_frame_us": 53431
+      },
+      {
+        "profile": "DOUBLE_DIRECT",
+        "rotation": 270,
+        "avg_frame_us": 63170
+      },
+      {
+        "profile": "DOUBLE_PARTIAL",
+        "rotation": 0,
+        "avg_frame_us": 45935
+      },
+      {
+        "profile": "DOUBLE_PARTIAL",
+        "rotation": 90,
+        "avg_frame_us": 41793
+      },
+      {
+        "profile": "DOUBLE_PARTIAL",
+        "rotation": 180,
+        "avg_frame_us": 41016
+      },
+      {
+        "profile": "DOUBLE_PARTIAL",
+        "rotation": 270,
+        "avg_frame_us": 46473
+      },
+      {
+        "profile": "TRIPLE_PARTIAL",
+        "rotation": 0,
+        "avg_frame_us": 45775
+      },
+      {
+        "profile": "TRIPLE_PARTIAL",
+        "rotation": 90,
+        "avg_frame_us": 46051
+      },
+      {
+        "profile": "TRIPLE_PARTIAL",
+        "rotation": 180,
+        "avg_frame_us": 40753
+      },
+      {
+        "profile": "TRIPLE_PARTIAL",
+        "rotation": 270,
+        "avg_frame_us": 46475
+      },
+      {
+        "profile": "AUTO",
+        "rotation": 0,
+        "avg_frame_us": 45976
+      },
+      {
+        "profile": "AUTO",
+        "rotation": 90,
+        "avg_frame_us": 46509
+      },
+      {
+        "profile": "AUTO",
+        "rotation": 180,
+        "avg_frame_us": 45424
+      },
+      {
+        "profile": "AUTO",
+        "rotation": 270,
+        "avg_frame_us": 46905
+      }
+    ],
+    "runtime_180_degree_switches_passed": 28
+  },
+  {
+    "board": "s3-rgb",
+    "variant": "current",
+    "cases_passed": 28,
+    "frames_per_case": 4,
+    "rows": [
+      {
+        "profile": "NONE_1FB",
+        "rotation": 0,
+        "avg_frame_us": 53663
+      },
+      {
+        "profile": "NONE_1FB",
+        "rotation": 90,
+        "avg_frame_us": 63053
+      },
+      {
+        "profile": "NONE_1FB",
+        "rotation": 180,
+        "avg_frame_us": 57754
+      },
+      {
+        "profile": "NONE_1FB",
+        "rotation": 270,
+        "avg_frame_us": 63493
+      },
+      {
+        "profile": "DOUBLE_FULL",
+        "rotation": 0,
+        "avg_frame_us": 54442
+      },
+      {
+        "profile": "DOUBLE_FULL",
+        "rotation": 90,
+        "avg_frame_us": 62927
+      },
+      {
+        "profile": "DOUBLE_FULL",
+        "rotation": 180,
+        "avg_frame_us": 53277
+      },
+      {
+        "profile": "DOUBLE_FULL",
+        "rotation": 270,
+        "avg_frame_us": 63004
+      },
+      {
+        "profile": "TRIPLE_FULL",
+        "rotation": 0,
+        "avg_frame_us": 58525
+      },
+      {
+        "profile": "TRIPLE_FULL",
+        "rotation": 90,
+        "avg_frame_us": 62304
+      },
+      {
+        "profile": "TRIPLE_FULL",
+        "rotation": 180,
+        "avg_frame_us": 53527
+      },
+      {
+        "profile": "TRIPLE_FULL",
+        "rotation": 270,
+        "avg_frame_us": 63252
+      },
+      {
+        "profile": "DOUBLE_DIRECT",
+        "rotation": 0,
+        "avg_frame_us": 54251
+      },
+      {
+        "profile": "DOUBLE_DIRECT",
+        "rotation": 90,
+        "avg_frame_us": 62957
+      },
+      {
+        "profile": "DOUBLE_DIRECT",
+        "rotation": 180,
+        "avg_frame_us": 53188
+      },
+      {
+        "profile": "DOUBLE_DIRECT",
+        "rotation": 270,
+        "avg_frame_us": 63162
+      },
+      {
+        "profile": "DOUBLE_PARTIAL",
+        "rotation": 0,
+        "avg_frame_us": 45938
+      },
+      {
+        "profile": "DOUBLE_PARTIAL",
+        "rotation": 90,
+        "avg_frame_us": 45804
+      },
+      {
+        "profile": "DOUBLE_PARTIAL",
+        "rotation": 180,
+        "avg_frame_us": 44989
+      },
+      {
+        "profile": "DOUBLE_PARTIAL",
+        "rotation": 270,
+        "avg_frame_us": 46495
+      },
+      {
+        "profile": "TRIPLE_PARTIAL",
+        "rotation": 0,
+        "avg_frame_us": 45761
+      },
+      {
+        "profile": "TRIPLE_PARTIAL",
+        "rotation": 90,
+        "avg_frame_us": 46017
+      },
+      {
+        "profile": "TRIPLE_PARTIAL",
+        "rotation": 180,
+        "avg_frame_us": 45015
+      },
+      {
+        "profile": "TRIPLE_PARTIAL",
+        "rotation": 270,
+        "avg_frame_us": 46476
+      },
+      {
+        "profile": "AUTO",
+        "rotation": 0,
+        "avg_frame_us": 45971
+      },
+      {
+        "profile": "AUTO",
+        "rotation": 90,
+        "avg_frame_us": 46492
+      },
+      {
+        "profile": "AUTO",
+        "rotation": 180,
+        "avg_frame_us": 41177
+      },
+      {
+        "profile": "AUTO",
+        "rotation": 270,
+        "avg_frame_us": 46908
+      }
+    ],
+    "runtime_180_degree_switches_passed": 28
+  },
+  {
+    "board": "p4-dsi",
+    "variant": "baseline",
+    "cases_passed": 28,
+    "frames_per_case": 4,
+    "rows": [
+      {
+        "profile": "NONE_1FB",
+        "rotation": 0,
+        "avg_frame_us": 62509
+      },
+      {
+        "profile": "NONE_1FB",
+        "rotation": 90,
+        "avg_frame_us": 76374
+      },
+      {
+        "profile": "NONE_1FB",
+        "rotation": 180,
+        "avg_frame_us": 62957
+      },
+      {
+        "profile": "NONE_1FB",
+        "rotation": 270,
+        "avg_frame_us": 76620
+      },
+      {
+        "profile": "DOUBLE_FULL",
+        "rotation": 0,
+        "avg_frame_us": 62808
+      },
+      {
+        "profile": "DOUBLE_FULL",
+        "rotation": 90,
+        "avg_frame_us": 69838
+      },
+      {
+        "profile": "DOUBLE_FULL",
+        "rotation": 180,
+        "avg_frame_us": 65350
+      },
+      {
+        "profile": "DOUBLE_FULL",
+        "rotation": 270,
+        "avg_frame_us": 73326
+      },
+      {
+        "profile": "TRIPLE_FULL",
+        "rotation": 0,
+        "avg_frame_us": 63349
+      },
+      {
+        "profile": "TRIPLE_FULL",
+        "rotation": 90,
+        "avg_frame_us": 68584
+      },
+      {
+        "profile": "TRIPLE_FULL",
+        "rotation": 180,
+        "avg_frame_us": 64858
+      },
+      {
+        "profile": "TRIPLE_FULL",
+        "rotation": 270,
+        "avg_frame_us": 71355
+      },
+      {
+        "profile": "DOUBLE_DIRECT",
+        "rotation": 0,
+        "avg_frame_us": 62598
+      },
+      {
+        "profile": "DOUBLE_DIRECT",
+        "rotation": 90,
+        "avg_frame_us": 69081
+      },
+      {
+        "profile": "DOUBLE_DIRECT",
+        "rotation": 180,
+        "avg_frame_us": 65819
+      },
+      {
+        "profile": "DOUBLE_DIRECT",
+        "rotation": 270,
+        "avg_frame_us": 73308
+      },
+      {
+        "profile": "DOUBLE_PARTIAL",
+        "rotation": 0,
+        "avg_frame_us": 54293
+      },
+      {
+        "profile": "DOUBLE_PARTIAL",
+        "rotation": 90,
+        "avg_frame_us": 57570
+      },
+      {
+        "profile": "DOUBLE_PARTIAL",
+        "rotation": 180,
+        "avg_frame_us": 53076
+      },
+      {
+        "profile": "DOUBLE_PARTIAL",
+        "rotation": 270,
+        "avg_frame_us": 52079
+      },
+      {
+        "profile": "TRIPLE_PARTIAL",
+        "rotation": 0,
+        "avg_frame_us": 50818
+      },
+      {
+        "profile": "TRIPLE_PARTIAL",
+        "rotation": 90,
+        "avg_frame_us": 55557
+      },
+      {
+        "profile": "TRIPLE_PARTIAL",
+        "rotation": 180,
+        "avg_frame_us": 52321
+      },
+      {
+        "profile": "TRIPLE_PARTIAL",
+        "rotation": 270,
+        "avg_frame_us": 50063
+      },
+      {
+        "profile": "AUTO",
+        "rotation": 0,
+        "avg_frame_us": 51104
+      },
+      {
+        "profile": "AUTO",
+        "rotation": 90,
+        "avg_frame_us": 51614
+      },
+      {
+        "profile": "AUTO",
+        "rotation": 180,
+        "avg_frame_us": 53333
+      },
+      {
+        "profile": "AUTO",
+        "rotation": 270,
+        "avg_frame_us": 53611
+      }
+    ],
+    "runtime_180_degree_switches_passed": 28
+  },
+  {
+    "board": "p4-dsi",
+    "variant": "current",
+    "cases_passed": 28,
+    "frames_per_case": 4,
+    "rows": [
+      {
+        "profile": "NONE_1FB",
+        "rotation": 0,
+        "avg_frame_us": 62486
+      },
+      {
+        "profile": "NONE_1FB",
+        "rotation": 90,
+        "avg_frame_us": 75322
+      },
+      {
+        "profile": "NONE_1FB",
+        "rotation": 180,
+        "avg_frame_us": 60514
+      },
+      {
+        "profile": "NONE_1FB",
+        "rotation": 270,
+        "avg_frame_us": 76109
+      },
+      {
+        "profile": "DOUBLE_FULL",
+        "rotation": 0,
+        "avg_frame_us": 63343
+      },
+      {
+        "profile": "DOUBLE_FULL",
+        "rotation": 90,
+        "avg_frame_us": 73593
+      },
+      {
+        "profile": "DOUBLE_FULL",
+        "rotation": 180,
+        "avg_frame_us": 65346
+      },
+      {
+        "profile": "DOUBLE_FULL",
+        "rotation": 270,
+        "avg_frame_us": 73095
+      },
+      {
+        "profile": "TRIPLE_FULL",
+        "rotation": 0,
+        "avg_frame_us": 63095
+      },
+      {
+        "profile": "TRIPLE_FULL",
+        "rotation": 90,
+        "avg_frame_us": 68091
+      },
+      {
+        "profile": "TRIPLE_FULL",
+        "rotation": 180,
+        "avg_frame_us": 65317
+      },
+      {
+        "profile": "TRIPLE_FULL",
+        "rotation": 270,
+        "avg_frame_us": 72592
+      },
+      {
+        "profile": "DOUBLE_DIRECT",
+        "rotation": 0,
+        "avg_frame_us": 63317
+      },
+      {
+        "profile": "DOUBLE_DIRECT",
+        "rotation": 90,
+        "avg_frame_us": 68068
+      },
+      {
+        "profile": "DOUBLE_DIRECT",
+        "rotation": 180,
+        "avg_frame_us": 65307
+      },
+      {
+        "profile": "DOUBLE_DIRECT",
+        "rotation": 270,
+        "avg_frame_us": 72563
+      },
+      {
+        "profile": "DOUBLE_PARTIAL",
+        "rotation": 0,
+        "avg_frame_us": 50556
+      },
+      {
+        "profile": "DOUBLE_PARTIAL",
+        "rotation": 90,
+        "avg_frame_us": 56557
+      },
+      {
+        "profile": "DOUBLE_PARTIAL",
+        "rotation": 180,
+        "avg_frame_us": 52815
+      },
+      {
+        "profile": "DOUBLE_PARTIAL",
+        "rotation": 270,
+        "avg_frame_us": 52305
+      },
+      {
+        "profile": "TRIPLE_PARTIAL",
+        "rotation": 0,
+        "avg_frame_us": 54543
+      },
+      {
+        "profile": "TRIPLE_PARTIAL",
+        "rotation": 90,
+        "avg_frame_us": 57032
+      },
+      {
+        "profile": "TRIPLE_PARTIAL",
+        "rotation": 180,
+        "avg_frame_us": 53034
+      },
+      {
+        "profile": "TRIPLE_PARTIAL",
+        "rotation": 270,
+        "avg_frame_us": 51536
+      },
+      {
+        "profile": "AUTO",
+        "rotation": 0,
+        "avg_frame_us": 50350
+      },
+      {
+        "profile": "AUTO",
+        "rotation": 90,
+        "avg_frame_us": 51851
+      },
+      {
+        "profile": "AUTO",
+        "rotation": 180,
+        "avg_frame_us": 53351
+      },
+      {
+        "profile": "AUTO",
+        "rotation": 270,
+        "avg_frame_us": 55316
+      }
+    ],
+    "runtime_180_degree_switches_passed": 28
+  }
+]

@@ -1,0 +1,17 @@
+--- current/executor_check.c
++++ shared-harness/executor_check.c
+@@ -2,8 +2,14 @@
+  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
+  * SPDX-License-Identifier: Apache-2.0
+  */
++#if __has_include("pixel/present_pixel_types.h")
+ #include "pixel/present_pixel_engine.h"
++#include "pixel/present_pixel_ops.h"
+ #include "pixel/present_executor.h"
++#else
++#include "present_pixel_engine.h"
++#include "present_executor.h"
++#endif
+ #include "esp_heap_caps.h"
+ #include "esp_log.h"
+ #include <string.h>

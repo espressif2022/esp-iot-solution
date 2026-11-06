@@ -1,0 +1,26 @@
+[
+  {
+    "board": "s3-rgb",
+    "suite": "pixels",
+    "all_common_keys_equal": true,
+    "runtime_and_test_source_hashes_match": true
+  },
+  {
+    "board": "s3-rgb",
+    "suite": "benchmark",
+    "all_common_keys_equal": true,
+    "runtime_and_test_source_hashes_match": true
+  },
+  {
+    "board": "p4-dsi",
+    "suite": "pixels",
+    "all_common_keys_equal": true,
+    "runtime_and_test_source_hashes_match": true
+  },
+  {
+    "board": "p4-dsi",
+    "suite": "benchmark",
+    "all_common_keys_equal": true,
+    "runtime_and_test_source_hashes_match": true
+  }
+]
