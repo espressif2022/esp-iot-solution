@@ -22,3 +22,5 @@
 使用 `<场景>-YYYYMMDD` 目录；同日多次以清楚后缀区分，保留旧记录。提交报告、manifest、原始日志压缩件、结果表和验证状态；保存指向维护工程入口的相对链接。整片 Flash 备份、build、依赖缓存不进仓库。记录实际板子 MAC、IDF/组件/场景版本、模式角度、目视反馈和恢复校验。每轮完成后更新此索引。
 
 - [S3 RGB 同配置 adapter 对照与校验补齐](rgb-adapter-ab-20261106/README.md)：NONE 41/51、DIRECT 39/42 FPS，0°，见内部渲染路径差异说明。
+
+- [Backend ops 第一批架构重构](backend-ops-refactor-20261106/README.md)：推进与可选调度创建入口收口；Host及跨芯片编译验证，非上板记录。

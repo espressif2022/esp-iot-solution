@@ -28,7 +28,7 @@ static esp_display_present_lease_t acquire(present_backend_t *b, esp_display_pre
     esp_err_t error;
     while ((error = ops->acquire(b, f, NULL, 0, &lease)) == ESP_ERR_TIMEOUT) {
         assert(!present_expired(start, 1000));
-        OK(present_fb_service(b));
+        OK(present_fb_backend.service(b));
         present_pause();
     }
     OK(error);
@@ -120,13 +120,13 @@ static void exercise(unsigned rotation, bool asynchronous, size_t buffers, size_
         OK(ops->end(b, frame, &receipt));
         if (step == 6 && !asynchronous) {
             panel.reject = true;
-            assert(present_fb_service(b) == ESP_FAIL);
+            assert(present_fb_backend.service(b) == ESP_FAIL);
             assert(!panel.cookie);
             panel.reject = false; /* READY pixels remain available for retry. */
         }
         uint64_t start = present_now_ms();
         while (!panel.cookie) {
-            OK(present_fb_service(b));
+            OK(present_fb_backend.service(b));
             assert(!present_expired(start, 1000));
             present_pause();
         }
@@ -177,7 +177,7 @@ static void failed_transform(bool asynchronous)
         esp_display_present_backend_fault_t fault;
         uint64_t start = present_now_ms();
         do {
-            OK(present_fb_service(b));
+            OK(present_fb_backend.service(b));
             OK(ops->get_fault(b, &fault));
             assert(!present_expired(start, 1000));
             present_pause();

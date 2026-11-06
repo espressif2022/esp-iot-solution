@@ -211,7 +211,7 @@ static void exercise(esp_display_present_lcd_scanout_kind_t kind, bool fail, esp
     OK(ops->submit_region(b, f, lease.id));
     esp_display_present_receipt_t receipt;
     OK(ops->end(b, f, &receipt));
-    OK(present_fb_service(b));
+    OK(present_fb_backend.service(b));
     esp_display_present_frame_status_t status;
     OK(ops->query(b, receipt, &status));
     assert(!status.terminal);

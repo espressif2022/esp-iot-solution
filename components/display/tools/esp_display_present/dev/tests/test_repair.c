@@ -166,7 +166,7 @@ static void fb(bool cancel)
     memset(l.surface.pixels, 0x11, 32);
     OK(o->submit_region(b, f, l.id));
     OK(o->end(b, f, &r));
-    OK(present_fb_service(b));
+    OK(present_fb_backend.service(b));
     scan_confirm(&panel);
     OK(o->wait(b, r, ESP_DISPLAY_PRESENT_COMPLETION_PRESENT_CONFIRMED, 0, &status));
     OK(o->release_receipt(b, r));
@@ -199,11 +199,11 @@ static void fb(bool cancel)
     OK(o->submit_region_ex(b, f, l.id, &sub));
     unsigned copies = count(&g);
     OK(o->end(b, f, &r));
-    OK(present_fb_service(b));
+    OK(present_fb_backend.service(b));
     assert(count(&g) == copies);
     assert(panel.cookie);
     scan_confirm(&panel);
-    OK(present_fb_service(b));
+    OK(present_fb_backend.service(b));
     assert(((uint16_t*)panel.current.pixels)[0] == 0x2222);
     for (unsigned i = 1; i < 16; i++) {
         assert(((uint16_t*)panel.current.pixels)[i] == 0x1111);
@@ -262,7 +262,7 @@ static void fb_source_completion(unsigned mode)
     if (mode == 2) {
         OK(ops->stop(backend, UINT32_MAX));
     } else {
-        OK(present_fb_service(backend));
+        OK(present_fb_backend.service(backend));
         if (mode == 0) {
             assert(panel.submissions == 1);
             OK(ops->query(backend, receipt, &status));
@@ -367,7 +367,7 @@ int main(void)
         memset(l.surface.pixels, 0x11, 32);
         OK(o->submit_region(b, f, l.id));
         OK(o->end(b, f, &r));
-        OK(present_fb_service(b));
+        OK(present_fb_backend.service(b));
         scan_confirm(&panel);
         OK(o->wait(b, r, ESP_DISPLAY_PRESENT_COMPLETION_PRESENT_CONFIRMED, 0, &status));
         OK(o->release_receipt(b, r));
@@ -383,7 +383,7 @@ int main(void)
         ((uint16_t *)l.surface.pixels)[15] = 0x3333;
         OK(o->submit_region(b, f, l.id));
         OK(o->end(b, f, &r));
-        OK(present_fb_service(b));
+        OK(present_fb_backend.service(b));
         scan_confirm(&panel);
         OK(o->wait(b, r, ESP_DISPLAY_PRESENT_COMPLETION_PRESENT_CONFIRMED, 0, &status));
         OK(o->release_receipt(b, r));
@@ -391,7 +391,7 @@ int main(void)
         esp_display_present_frame_request_t selective = {.damage = &corner, .damage_count = 1};
         OK(o->begin(b, &selective, &f));
         while (o->acquire(b, f, NULL, 0, &l) == ESP_ERR_TIMEOUT) {
-            OK(present_fb_service(b));
+            OK(present_fb_backend.service(b));
         }
         esp_display_present_region_submit_t sub = {.logical_area = {0, 0, 1, 1}, .stride_bytes = 8};
         OK(o->submit_region_ex(b, f, l.id, &sub));

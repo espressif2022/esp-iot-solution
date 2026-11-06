@@ -185,7 +185,7 @@ static bool channel_full(const present_backend_t *backend)
     return used >= limit;
 }
 
-esp_err_t present_gram_service(present_backend_t *backend)
+static esp_err_t present_gram_service(present_backend_t *backend)
 {
     if (!backend) {
         return ESP_ERR_INVALID_ARG;
@@ -1165,6 +1165,7 @@ static esp_err_t gram_set_rotation(present_backend_t *backend, esp_display_prese
 
 const present_backend_ops_t present_gram_backend = {
     .name = "gram",
+    .service = present_gram_service,
     .create = gram_create,
     .get_caps = gram_get_caps,
     .begin = gram_begin,

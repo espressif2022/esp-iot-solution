@@ -306,8 +306,7 @@ static void request_exit(esp_display_present_engine_t *presenter)
 static esp_err_t pump_backend(esp_display_present_engine_t *presenter)
 {
     expire_transfers(presenter);
-    return presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_TE ? present_te_service(presenter->backend) :
-           presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_FB ? present_fb_service(presenter->backend) : present_gram_service(presenter->backend);
+    return presenter->ops->service(presenter->backend);
 }
 
 static void sender(void *context)
@@ -571,8 +570,8 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
     };
     backend.on_progress = copy_progress;
     backend.progress_user = presenter;
-    esp_err_t ret = presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_TE ?
-                    present_te_create_scheduled(&backend, &presenter->backend, config->background_service) :
+    esp_err_t ret = presenter->ops->create_scheduled ?
+                    presenter->ops->create_scheduled(&backend, &presenter->backend, config->background_service) :
                     presenter->ops->create(&backend, &presenter->backend);
     if (ret != ESP_OK) {
         request_exit(presenter);
@@ -616,7 +615,7 @@ void esp_display_present_engine_notify_te(esp_display_present_engine_t *presente
         .kind = ESP_DISPLAY_PRESENT_EVENT_TE_EDGE,
         .timestamp_us = timestamp_us,
     };
-    present_te_backend.on_event(presenter->backend, &event);
+    presenter->ops->on_event(presenter->backend, &event);
     (void)notify(presenter, false);
 }
 

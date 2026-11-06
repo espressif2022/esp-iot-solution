@@ -102,3 +102,5 @@ python3 dev/tools/run.py build --board s3-rgb --profiles NONE --angles 0 --profi
 统计 engine 的 begin/acquire/submit/commit 调用壁钟时间、executor_run CPU/硬件/回退次数与有效像素字节数、缓存维护范围、panel 提交时间；S31 TE 等待和DMA另有独立统计。各阶段存在嵌套、并行及互斥等待，不能将总耗时相加或把 executor_run 当成纯计算时间。缓存字节是请求维护范围，像素字节是成功请求的有效payload，都不是实测PSRAM总线流量。统计只存在于测试工程的链接包装器，正常构建不启用。统计版不参与普通 `compare`，用于定位后需用无统计基线确认性能。
 
 对比工具同时核对公共 defaults 和共享测试源码，sdkconfig 指纹包含指令/数据缓存、LCD 与显式禁用选项；组件私有 Kconfig 不作为双方共同配置。相同模式名不代表内部渲染路径相同：RGB NONE 在 adapter 为 PARTIAL，在 present 为 DIRECT 持久画布，应结合场景和耗时判断差异。分段统计的 executor 次数不包含 LVGL binding 内的 memcpy，次数为0不代表整条路径零拷贝。
+
+架构重构进度及当前结构见 [架构收敛记录](ARCHITECTURE_REFACTOR_20261106.md)。各批按接口、文件职责、配置解析和状态归属逐步推进。

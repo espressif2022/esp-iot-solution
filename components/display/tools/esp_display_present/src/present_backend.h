@@ -260,6 +260,13 @@ typedef struct present_backend present_backend_t;
 typedef struct {
     const char *name;
     esp_err_t (*create)(const esp_display_present_backend_config_t *config, present_backend_t **out_backend);
+    /** Optional creation with an autonomous wake source. The engine passes
+     * its background-service policy; NULL preserves the ordinary create path.
+     * Direct create retains each backend's existing default wake policy. */
+    esp_err_t (*create_scheduled)(const esp_display_present_backend_config_t *config, present_backend_t **out_backend, bool autonomous);
+    /** Task-context progress, under the engine gate when engine-owned.
+     * Advances existing work without manufacturing completion events. */
+    esp_err_t (*service)(present_backend_t *backend);
     esp_err_t (*get_caps)(present_backend_t *backend, esp_display_present_backend_caps_t *caps);
     esp_err_t (*begin)(present_backend_t *backend, const esp_display_present_frame_request_t *request, esp_display_present_frame_t *frame);
     esp_err_t (*acquire)(present_backend_t *backend, esp_display_present_frame_t frame, const esp_display_present_rect_t *area, uint32_t timeout_ms, esp_display_present_lease_t *lease);
@@ -284,11 +291,6 @@ typedef struct {
 extern const present_backend_ops_t present_gram_backend;
 extern const present_backend_ops_t present_te_backend;
 extern const present_backend_ops_t present_fb_backend;
-
-esp_err_t present_gram_service(present_backend_t *backend);
-esp_err_t present_te_create_scheduled(const esp_display_present_backend_config_t *, present_backend_t **, bool autonomous);
-esp_err_t present_te_service(present_backend_t *backend);
-esp_err_t present_fb_service(present_backend_t *backend);
 
 #ifdef __cplusplus
 }

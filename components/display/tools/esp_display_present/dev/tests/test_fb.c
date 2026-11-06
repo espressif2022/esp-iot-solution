@@ -58,7 +58,7 @@ static esp_display_present_receipt_t full(present_backend_t *b, uint16_t color)
     }, color);
     esp_display_present_receipt_t receipt;
     OK(ops->end(b, f, &receipt));
-    OK(present_fb_service(b));
+    OK(present_fb_backend.service(b));
     return receipt;
 }
 
@@ -111,7 +111,7 @@ static void grid(void)
             }
             esp_display_present_receipt_t second;
             OK(ops->end(b, f, &second));
-            OK(present_fb_service(b));
+            OK(present_fb_backend.service(b));
             finish(b, &panel, second);
             for (unsigned y = 0; y < 4; y++) {
                 for (unsigned x = 0; x < 4; x++) {
@@ -243,9 +243,9 @@ static void errors_and_external(void)
     }, 8);
     esp_display_present_receipt_t r;
     OK(ops->end(b, f, &r));
-    assert(present_fb_service(b) == ESP_FAIL);
+    assert(present_fb_backend.service(b) == ESP_FAIL);
     p.reject = false;
-    OK(present_fb_service(b));
+    OK(present_fb_backend.service(b));
     finish(b, &p, r);
     OK(ops->stop(b, 0));
     OK(ops->destroy(b));
@@ -442,7 +442,7 @@ static void asynchronous_partition(unsigned mode)
         esp_display_present_frame_t next;
         esp_display_present_frame_request_t req = {0};
         assert(ops->begin(b, &req, &next) == ESP_ERR_NO_MEM);
-        OK(present_fb_service(b));
+        OK(present_fb_backend.service(b));
         assert(panel.submissions == 0);
         if (mode == 2) {
             assert(ops->stop(b, 0) == ESP_ERR_TIMEOUT);
@@ -459,14 +459,14 @@ static void asynchronous_partition(unsigned mode)
     if (mode == 2) {
         OK(ops->stop(b, UINT32_MAX));
     } else {
-        OK(present_fb_service(b));
+        OK(present_fb_backend.service(b));
         if (mode == 1) {
             OK(ops->cancel_frame(b, f, 0));
         }
         if (mode == 0 || mode == 5) {
             assert(panel.cookie);
             scan_confirm(&panel);
-            OK(present_fb_service(b));
+            OK(present_fb_backend.service(b));
             for (size_t i = 0; i < 32; ++i) {
                 assert(panel.pixels[i] == 0x5a);
             }
@@ -509,9 +509,9 @@ static void independent_tiles(void)
     OK(ops->submit_region_ex(b, f, second.id, &z));
     esp_display_present_receipt_t receipt;
     OK(ops->end(b, f, &receipt));
-    OK(present_fb_service(b));
+    OK(present_fb_backend.service(b));
     scan_confirm(&panel);
-    OK(present_fb_service(b));
+    OK(present_fb_backend.service(b));
     for (unsigned i = 0; i < 16; i++) {
         assert(((uint16_t*)panel.current.pixels)[i] == (i < 8 ? 0x1111 : 0x2222));
     }
@@ -549,7 +549,7 @@ static void async_pipeline_handoff(size_t buffers, esp_display_present_render_co
                     esp_display_present_lease_t l;
                     esp_display_present_rect_t band = {0, y, 4, 2};
                     while (ops->acquire(b, f, &band, 0, &l) == ESP_ERR_TIMEOUT) {
-                        OK(present_fb_service(b));
+                        OK(present_fb_backend.service(b));
                         present_pause();
                     }
                     for (size_t i = 0; i < 8; ++i) {
@@ -563,7 +563,7 @@ static void async_pipeline_handoff(size_t buffers, esp_display_present_render_co
                 esp_display_present_lease_t l;
                 esp_display_present_rect_t spot = {step - 2, 0, 1, 1};
                 while (ops->acquire(b, f, &spot, 0, &l) == ESP_ERR_TIMEOUT) {
-                    OK(present_fb_service(b));
+                    OK(present_fb_backend.service(b));
                     present_pause();
                 }
                 ((uint16_t *)l.surface.pixels)[0] = color;
@@ -574,7 +574,7 @@ static void async_pipeline_handoff(size_t buffers, esp_display_present_render_co
         } else {
             esp_display_present_lease_t l;
             while (ops->acquire(b, f, NULL, 0, &l) == ESP_ERR_TIMEOUT) {
-                OK(present_fb_service(b));
+                OK(present_fb_backend.service(b));
                 present_pause();
             }
             if (step == 1 || contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL) {
@@ -595,7 +595,7 @@ static void async_pipeline_handoff(size_t buffers, esp_display_present_render_co
         size_t settled = SIZE_MAX;
         for (unsigned spins = 0;; ++spins) {
             assert(spins < 10000);
-            OK(present_fb_service(b));
+            OK(present_fb_backend.service(b));
             if (step <= 2 && p.cookie) {
                 break;
             }
@@ -616,7 +616,7 @@ static void async_pipeline_handoff(size_t buffers, esp_display_present_render_co
         if (step == 1) {
             assert(p.cookie);
             scan_confirm(&p);
-            OK(present_fb_service(b));
+            OK(present_fb_backend.service(b));
             esp_display_present_frame_status_t st;
             OK(ops->query(b, r1, &st));
             assert(st.terminal && st.present_confirmed);
@@ -638,11 +638,11 @@ static void async_pipeline_handoff(size_t buffers, esp_display_present_render_co
     scan_confirm(&p);
     if (buffers == 3) {
         while (!p.cookie) {
-            OK(present_fb_service(b));
+            OK(present_fb_backend.service(b));
             present_pause();
         }
     } else {
-        OK(present_fb_service(b));
+        OK(present_fb_backend.service(b));
     }
     assert(p.current.pixels == ext[1]);
     esp_display_present_frame_status_t st;
@@ -656,13 +656,13 @@ static void async_pipeline_handoff(size_t buffers, esp_display_present_render_co
         esp_display_present_frame_t f4 = begin(b);
         esp_display_present_lease_t l4;
         while (ops->acquire(b, f4, NULL, 0, &l4) == ESP_ERR_TIMEOUT) {
-            OK(present_fb_service(b));
+            OK(present_fb_backend.service(b));
         }
         OK(ops->cancel_region(b, f4, l4.id));
         OK(ops->cancel_frame(b, f4, 1000));
 
         scan_confirm(&p);
-        OK(present_fb_service(b));
+        OK(present_fb_backend.service(b));
         assert(p.current.pixels == ext[2]);
         OK(ops->query(b, r3, &st));
         assert(st.terminal && st.present_confirmed);
@@ -724,7 +724,7 @@ static void direct_full_redraw_skips_prefill(void)
             0, 0, 4, 4
         }, 0x2222);
         OK(ops->end(backend, frame, &next));
-        OK(present_fb_service(backend));
+        OK(present_fb_backend.service(backend));
         finish(backend, &panel, next);
         for (unsigned i = 0; i < 16; ++i) {
             assert(((uint16_t *)panel.current.pixels)[i] == 0x2222);
@@ -738,7 +738,7 @@ static void direct_full_redraw_skips_prefill(void)
         esp_err_t error;
         while ((error = ops->acquire(backend, frame, NULL, 0, &lease)) == ESP_ERR_TIMEOUT) {
             assert(++attempts < 10000);
-            OK(present_fb_service(backend));
+            OK(present_fb_backend.service(backend));
             present_pause();
         }
         OK(error);
@@ -753,7 +753,7 @@ static void direct_full_redraw_skips_prefill(void)
         attempts = 0;
         while (!panel.cookie) {
             assert(++attempts < 10000);
-            OK(present_fb_service(backend));
+            OK(present_fb_backend.service(backend));
             present_pause();
         }
         finish(backend, &panel, next);

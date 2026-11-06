@@ -570,7 +570,7 @@ static fb_advance_result_t advance_build_pipeline(present_backend_t *backend, fb
     };
 }
 
-esp_err_t present_fb_service(present_backend_t *backend)
+static esp_err_t present_fb_service(present_backend_t *backend)
 {
     if (!backend) {
         return ESP_ERR_INVALID_ARG;
@@ -1486,6 +1486,7 @@ static esp_err_t fb_set_rotation(present_backend_t *backend, esp_display_present
 
 const present_backend_ops_t present_fb_backend = {
     .name = "fb",
+    .service = present_fb_service,
     .create = fb_create,
     .get_caps = fb_get_caps,
     .begin = fb_begin,

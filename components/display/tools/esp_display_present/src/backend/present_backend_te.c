@@ -414,7 +414,7 @@ static esp_err_t service_frame(present_backend_t *backend, size_t index, size_t 
     return ESP_OK;
 }
 
-esp_err_t present_te_service(present_backend_t *backend)
+static esp_err_t present_te_service(present_backend_t *backend)
 {
     if (!backend) {
         return ESP_ERR_INVALID_ARG;
@@ -548,11 +548,6 @@ static esp_err_t te_create_common(const esp_display_present_backend_config_t *co
     }
     *out = backend;
     return ESP_OK;
-}
-
-esp_err_t present_te_create_scheduled(const esp_display_present_backend_config_t *config, present_backend_t **out, bool autonomous)
-{
-    return te_create_common(config, out, autonomous);
 }
 
 static esp_err_t te_create(const esp_display_present_backend_config_t *config, present_backend_t **out)
@@ -1032,7 +1027,9 @@ static esp_err_t te_set_rotation(present_backend_t *backend, esp_display_present
 
 const present_backend_ops_t present_te_backend = {
     .name = "te",
+    .service = present_te_service,
     .create = te_create,
+    .create_scheduled = te_create_common,
     .get_caps = te_get_caps,
     .begin = te_begin,
     .acquire = te_acquire,

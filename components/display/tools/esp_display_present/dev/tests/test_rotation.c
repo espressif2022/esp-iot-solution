@@ -96,7 +96,7 @@ static void wait_changed(notifications_t *n, unsigned seen)
 
 static void pump(unsigned kind, present_backend_t *b)
 {
-    OK(kind == 0 ? present_gram_service(b) : kind == 1 ? present_te_service(b) : present_fb_service(b));
+    OK(kind == 0 ? present_gram_backend.service(b) : kind == 1 ? present_te_backend.service(b) : present_fb_backend.service(b));
 }
 
 static void exercise(unsigned kind, esp_display_present_render_contract_t contract, bool async, size_t bpp, bool external, unsigned initial)

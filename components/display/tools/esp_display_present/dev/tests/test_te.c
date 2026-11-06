@@ -169,7 +169,7 @@ static void lifecycle(void)
     esp_display_present_receipt_t receipt = full(backend, true);
     edge(backend); /* ISR never directly sends. */
     assert(fixture.panel.submitted == 0);
-    OK(present_te_service(backend));
+    OK(present_te_backend.service(backend));
     assert(fixture.panel.count == 1);
     esp_display_present_frame_status_t status;
     assert(ops->wait(backend, receipt, ESP_DISPLAY_PRESENT_COMPLETION_SOURCE_RELEASED, 0, &status) == ESP_ERR_TIMEOUT);
@@ -186,19 +186,19 @@ static void lifecycle(void)
         1, 1, 2, 2
     }, 0xabcd);
     OK(ops->end(backend, frame, NULL));
-    OK(present_te_service(backend)); /* Prior edge cannot release new frame. */
+    OK(present_te_backend.service(backend)); /* Prior edge cannot release new frame. */
     assert(fixture.panel.count == 0);
     fixture.panel.reject = true;
     edge(backend);
-    assert(present_te_service(backend) == ESP_FAIL);
+    assert(present_te_backend.service(backend) == ESP_FAIL);
     fixture.panel.reject = false;
-    OK(present_te_service(backend));
+    OK(present_te_backend.service(backend));
     assert(fixture.panel.count == 0); /* rejection consumes edge */
     edge(backend);
-    OK(present_te_service(backend));
+    OK(present_te_backend.service(backend));
     assert(fixture.panel.count == 1);
     test_panel_complete(&fixture.panel);
-    OK(present_te_service(backend));
+    OK(present_te_backend.service(backend));
     for (unsigned y = 0; y < 4; y++) {
         for (unsigned x = 0; x < 4; x++) {
             uint16_t value;
@@ -211,7 +211,7 @@ static void lifecycle(void)
     for (unsigned i = 0; i < 20; i++) {
         (void)full(backend, false);
         edge(backend);
-        OK(present_te_service(backend));
+        OK(present_te_backend.service(backend));
     }
     destroy(backend);
 }
@@ -244,7 +244,7 @@ static void failures(void)
         present_backend_t *backend = create(&fixture);
         esp_display_present_receipt_t receipt = full(backend, true);
         edge(backend);
-        OK(present_te_service(backend));
+        OK(present_te_backend.service(backend));
         if (mode == 3) {
             esp_display_present_backend_event_t fault = {.kind = ESP_DISPLAY_PRESENT_EVENT_FAULT, .result = ESP_FAIL,
                                                          .transaction_cookie = fixture.panel.pending[0].cookie
@@ -291,7 +291,7 @@ static void ready_stop_and_receipts(void)
     for (unsigned i = 0; i < 2; i++) {
         receipts[i] = full(backend, true);
         edge(backend);
-        OK(present_te_service(backend));
+        OK(present_te_backend.service(backend));
     }
     esp_display_present_frame_t frame;
     esp_display_present_frame_request_t request = {0};
@@ -326,7 +326,7 @@ static void threaded_events(void)
         present_backend_t *backend = create(&fixture);
         esp_display_present_receipt_t receipt = full(backend, true);
         edge(backend);
-        OK(present_te_service(backend));
+        OK(present_te_backend.service(backend));
         assert(fixture.panel.count == 1);
         injection_t injection = {backend, fixture.panel.pending[0].cookie};
         /* Simulated DMA reads have ended before completion is sent. */
@@ -413,7 +413,7 @@ static void asynchronous_copy(unsigned mode)
     } else {
         OK(ops->end(b, f, &receipt));
         edge(b);
-        OK(present_te_service(b));
+        OK(present_te_backend.service(b));
         assert(panel.submitted == 0); /* Never sends a partially copied frame. */
         if (mode == 2) {
             assert(ops->stop(b, 0) == ESP_ERR_TIMEOUT);
@@ -430,14 +430,14 @@ static void asynchronous_copy(unsigned mode)
     if (mode == 2) {
         OK(ops->stop(b, UINT32_MAX));
     } else {
-        OK(present_te_service(b));
+        OK(present_te_backend.service(b));
         assert(panel.submitted == 0); /* Old edge predates COPY_DRAIN -> READY. */
         if (mode == 1) {
             OK(ops->cancel_frame(b, f, 0));
         }
         if (mode == 0) {
             edge(b);
-            OK(present_te_service(b));
+            OK(present_te_backend.service(b));
             assert(panel.count == 1);
             test_panel_complete(&panel);
             for (size_t i = 0; i < 8; ++i) {
@@ -478,16 +478,16 @@ static void ready_frames_keep_edge(void)
     }, 0x5678);
     esp_display_present_receipt_t second;
     OK(ops->end(backend, frame, &second));
-    OK(present_te_service(backend));
+    OK(present_te_backend.service(backend));
     assert(fixture.panel.submitted == 1);
     test_panel_complete(&fixture.panel);
-    OK(present_te_service(backend));
+    OK(present_te_backend.service(backend));
     assert(fixture.panel.submitted == 1);
     edge(backend);
-    OK(present_te_service(backend));
+    OK(present_te_backend.service(backend));
     assert(fixture.panel.submitted == 2);
     test_panel_complete(&fixture.panel);
-    OK(present_te_service(backend));
+    OK(present_te_backend.service(backend));
     OK(ops->release_receipt(backend, first));
     OK(ops->release_receipt(backend, second));
     destroy(backend);
@@ -499,14 +499,14 @@ static void compose_pool(size_t count)
     present_backend_t *b = create_pool(&fixture, count);
     esp_display_present_receipt_t first = full(b, true);
     edge(b);
-    OK(present_te_service(b));
+    OK(present_te_backend.service(b));
     assert(fixture.panel.count == 1);
     esp_display_present_frame_t f;
     esp_display_present_frame_request_t req = {0};
     if (count == 1) {
         assert(ops->begin(b, &req, &f) == ESP_ERR_NO_MEM);
         test_panel_complete(&fixture.panel);
-        OK(present_te_service(b));
+        OK(present_te_backend.service(b));
     }
     OK(ops->begin(b, &req, &f));
     write_area(b, f, (esp_display_present_rect_t) {
@@ -516,7 +516,7 @@ static void compose_pool(size_t count)
     OK(ops->end(b, f, &second));
     if (count == 2) {
         assert(ops->begin(b, &req, &f) == ESP_ERR_NO_MEM);
-        OK(present_te_service(b));
+        OK(present_te_backend.service(b));
         assert(fixture.panel.submitted == 1);
         test_panel_complete(&fixture.panel); /* reads the original source NOW */
     }
@@ -524,11 +524,11 @@ static void compose_pool(size_t count)
         assert(((uint16_t*)fixture.panel.pixels)[i] == 0x1234);
     }
     edge(b);
-    OK(present_te_service(b));
+    OK(present_te_backend.service(b));
     assert(fixture.panel.count == 1 && fixture.panel.submitted == 2);
     assert(ops->stop(b, 0) == ESP_ERR_TIMEOUT);
     test_panel_complete(&fixture.panel);
-    OK(present_te_service(b));
+    OK(present_te_backend.service(b));
     for (unsigned i = 0; i < 16; i++) {
         assert(((uint16_t*)fixture.panel.pixels)[i] == (i == 5 ? 0x5678 : 0x1234));
     }
@@ -566,7 +566,7 @@ static void compose_matrix_and_cancel(size_t compose_count, size_t tile_count)
                 break;
             }
             assert(e == ESP_ERR_TIMEOUT);
-            OK(present_te_service(b));
+            OK(present_te_backend.service(b));
             present_pause();
         }
         for (size_t i = 0; i < 8; ++i) {
@@ -579,7 +579,7 @@ static void compose_matrix_and_cancel(size_t compose_count, size_t tile_count)
     esp_display_present_frame_status_t st;
     for (;;) {
         edge(b);
-        OK(present_te_service(b));
+        OK(present_te_backend.service(b));
         if (panel.count == 1) {
             test_panel_complete(&panel);
         }
@@ -640,7 +640,7 @@ static void compose_matrix_and_cancel(size_t compose_count, size_t tile_count)
     ((uint16_t *)l0.surface.pixels)[0] = 0x2222;
     OK(ops->submit_region(b, f, l0.id));
     for (;;) {
-        OK(present_te_service(b));
+        OK(present_te_backend.service(b));
         pthread_mutex_lock(&g.mutex);
         size_t done = g.completed;
         pthread_mutex_unlock(&g.mutex);
@@ -657,7 +657,7 @@ static void compose_matrix_and_cancel(size_t compose_count, size_t tile_count)
         OK(ops->end(b, f, &r3));
         for (;;) {
             edge(b);
-            OK(present_te_service(b));
+            OK(present_te_backend.service(b));
             if (panel.count == 1) {
                 test_panel_complete(&panel);
             }
@@ -804,7 +804,7 @@ static void backend_phase_stop_retry(void)
     (void)ops->on_event_isr(backend, &event);
     event.timestamp_us = current;
     (void)ops->on_event_isr(backend, &event);
-    OK(present_te_service(backend));
+    OK(present_te_backend.service(backend));
     wait_phase(&progress);
     assert(ops->stop(backend, 0) == ESP_ERR_TIMEOUT);
     assert(ops->destroy(backend) == ESP_ERR_INVALID_STATE);
@@ -858,13 +858,13 @@ static void gate_checked_after_pin(void)
     custom_gate_open = true;
     custom_gate_calls = 0;
     close_gate_on_pin = true;
-    OK(present_te_service(backend));
+    OK(present_te_backend.service(backend));
     assert(!close_gate_on_pin && custom_gate_calls == 1 && fixture.panel.count == 0);
     custom_gate_open = true;
-    OK(present_te_service(backend));
+    OK(present_te_backend.service(backend));
     assert(custom_gate_calls == 2 && fixture.panel.count == 1);
     test_panel_complete(&fixture.panel);
-    OK(present_te_service(backend));
+    OK(present_te_backend.service(backend));
     OK(ops->release_receipt(backend, receipt));
     OK(ops->stop(backend, 1000));
     OK(ops->destroy(backend));
@@ -909,10 +909,10 @@ static void native_reject_during_edge_change(void)
     event.timestamp_us = current - 498000;
     (void)ops->on_event_isr(backend, &event);
     inject_edge_on_pin = backend;
-    assert(present_te_service(backend) == ESP_FAIL);
+    assert(present_te_backend.service(backend) == ESP_FAIL);
     assert(!inject_edge_on_pin && fixture.panel.count == 0);
     fixture.panel.reject = false;
-    OK(present_te_service(backend));
+    OK(present_te_backend.service(backend));
     assert(fixture.panel.count == 0); /* No new physical edge after rejection. */
     OK(ops->stop(backend, 1000));
     OK(ops->release_receipt(backend, receipt));
@@ -940,13 +940,13 @@ static void native_phase_wakeup(void)
     (void)ops->on_event_isr(backend, &event);
     event.timestamp_us = current;
     (void)ops->on_event_isr(backend, &event);
-    OK(present_te_service(backend));
+    OK(present_te_backend.service(backend));
     assert(fixture.panel.count == 0); /* Outside the safe phase. */
     wait_phase(&progress); /* No new edge: timer must wake us. */
-    OK(present_te_service(backend));
+    OK(present_te_backend.service(backend));
     assert(fixture.panel.count == 1);
     test_panel_complete(&fixture.panel);
-    OK(present_te_service(backend));
+    OK(present_te_backend.service(backend));
     OK(ops->release_receipt(backend, receipt));
     OK(ops->stop(backend, 1000));
     OK(ops->destroy(backend));

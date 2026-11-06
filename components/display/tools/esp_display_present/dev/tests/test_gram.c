@@ -570,7 +570,7 @@ static void queued_gram(unsigned mode)
     }
     pthread_mutex_unlock(&gate.mutex);
     assert(ops->acquire(g, f, NULL, 0, &lease) == ESP_ERR_TIMEOUT);
-    assert(present_gram_service(g) == ESP_OK && panel.submits == 0);
+    assert(present_gram_backend.service(g) == ESP_OK && panel.submits == 0);
     esp_display_present_receipt_t receipt = {0};
     if (mode == 3) {
         assert(ops->cancel_frame(g, f, 0) == ESP_ERR_TIMEOUT);
@@ -596,14 +596,14 @@ static void queued_gram(unsigned mode)
         panel.response = (esp_display_present_tx_result_t) {
         ESP_DISPLAY_PRESENT_TX_UNCERTAIN, ESP_FAIL
     };
-    assert(present_gram_service(g) == (mode == 1 ? ESP_FAIL : ESP_OK));
+    assert(present_gram_backend.service(g) == (mode == 1 ? ESP_FAIL : ESP_OK));
     if (mode == 1) {
         esp_display_present_backend_fault_t fault;
         assert(ops->get_fault(g, &fault) == ESP_OK && fault.result == ESP_OK);
         panel.response = (esp_display_present_tx_result_t) {
             ESP_DISPLAY_PRESENT_TX_ACCEPTED, ESP_OK
         };
-        assert(present_gram_service(g) == ESP_OK);
+        assert(present_gram_backend.service(g) == ESP_OK);
     }
     if (mode < 3) {
         assert(panel.count == 1);
@@ -684,12 +684,12 @@ static void queued_fifo(void)
         pthread_cond_wait(&gate.changed, &gate.mutex);
     }
     pthread_mutex_unlock(&gate.mutex);
-    assert(present_gram_service(g) == ESP_FAIL);
+    assert(present_gram_backend.service(g) == ESP_FAIL);
     assert(panel.submits == 1 && panel.last_pixels[0] == 0x20);
     panel.response = (esp_display_present_tx_result_t) {
         ESP_DISPLAY_PRESENT_TX_ACCEPTED, ESP_OK
     };
-    assert(present_gram_service(g) == ESP_OK);
+    assert(present_gram_backend.service(g) == ESP_OK);
     assert(panel.submits == 3 && panel.count == 2 && panel.last_pixels[0] == 0x21);
     complete(&panel);
     complete(&panel);
@@ -769,7 +769,7 @@ static void draw_reused_while_tx_inflight(void)
         pthread_cond_wait(&gate.changed, &gate.mutex);
     }
     pthread_mutex_unlock(&gate.mutex);
-    assert(present_gram_service(g) == ESP_OK);
+    assert(present_gram_backend.service(g) == ESP_OK);
     assert(panel.submits == 1);
     for (size_t i = 0; i < 16; ++i) {
         assert(panel.last_pixels[i] == 0x11);
