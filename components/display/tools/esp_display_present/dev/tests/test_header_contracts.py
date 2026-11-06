@@ -8,6 +8,11 @@ import subprocess
 import tempfile
 
 HEADERS = (
+    'pixel/present_pixel_types.h',
+    'pixel/present_pixel_ops.h',
+    'pixel/present_pixel_ops_internal.h',
+    'pixel/present_pixel_engine.h',
+    'pixel/present_executor.h',
     'backend/present_backend_types.h',
     'backend/present_backend_config.h',
     'backend/present_backend.h',
@@ -27,7 +32,11 @@ HEADERS = (
     'backend/present_output_caps.h',
 )
 FORBIDDEN = {
-    'backend/present_backend_types.h': ('backend/present_backend.h', 'backend/present_backend_config.h', 'platform/present_te_timing.h'),
+    'pixel/present_pixel_types.h': ('pixel/present_pixel_engine.h', 'pixel/present_pixel_ops.h', 'platform/present_os.h', 'resources/present_memory.h'),
+    'pixel/present_pixel_ops.h': ('pixel/present_pixel_engine.h', 'platform/present_os.h', 'resources/present_memory.h'),
+    'pixel/present_pixel_ops_internal.h': ('pixel/present_pixel_engine.h', 'platform/present_os.h'),
+    'pixel/present_executor.h': ('pixel/present_pixel_engine.h',),
+    'backend/present_backend_types.h': ('pixel/present_pixel_engine.h', 'pixel/present_pixel_ops.h', 'backend/present_backend.h', 'backend/present_backend_config.h', 'platform/present_te_timing.h'),
     'backend/present_backend_config.h': ('backend/present_backend.h',),
     'backend/present_backend.h': ('backend/present_backend_config.h',),
     'config/present_engine_config.h': ('backend/present_backend.h',),

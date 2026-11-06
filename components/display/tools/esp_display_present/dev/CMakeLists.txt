@@ -226,3 +226,15 @@ add_test(NAME header_contracts COMMAND ${Python3_EXECUTABLE}
     ${CMAKE_CURRENT_LIST_DIR}/tests/test_header_contracts.py
     --cc ${CMAKE_C_COMPILER} --cxx ${CMAKE_CXX_COMPILER})
 set_tests_properties(header_contracts PROPERTIES TIMEOUT 30)
+
+# Link the stateless pixel operations without the engine or OS implementation.
+add_executable(test_pixel_ops tests/test_pixel_ops.c ${PRESENT_PIXEL_OPS_SOURCES})
+target_include_directories(test_pixel_ops PRIVATE ../src tests/support)
+target_compile_definitions(test_pixel_ops PRIVATE PRESENT_HOST=1)
+target_compile_options(test_pixel_ops PRIVATE -Wall -Wextra -Werror -UNDEBUG)
+if(PRESENT_SANITIZE)
+    target_compile_options(test_pixel_ops PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer -fno-pie)
+    target_link_options(test_pixel_ops PRIVATE -fsanitize=address,undefined -no-pie)
+endif()
+add_test(NAME pixel_ops_standalone COMMAND test_pixel_ops)
+set_tests_properties(pixel_ops_standalone PROPERTIES TIMEOUT 5)

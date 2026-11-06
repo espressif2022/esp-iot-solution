@@ -1,6 +1,6 @@
 # 私有源码目录
 
-本说明对应2026-11-06目录整理。目录表达职责归属；engine和backend相关头文件已按职责拆分；backend协议仍使用pixel头中的布局/像素类型，不能把本图当作所有依赖已经严格隔离的层级。
+本说明对应2026-11-06目录整理。目录表达职责归属；engine、backend、pixel头文件已按职责拆分。协议共享基础像素类型；目录和结构体分组表达职责，不表示锁、资源所有权或生命周期已独立。
 
 ```text
 src/
@@ -10,7 +10,7 @@ src/
   config/                     模式策略、布局/内存规划、几何校验
   resources/                  硬件/内存资源组装、预算汇总与生命周期
   backend/                    FB/GRAM/TE协议、帧状态、覆盖与历史修复
-  pixel/                      像素任务与转换接口
+  pixel/                      基础像素类型、无状态运算、ticket/worker生命周期
     executor/                 CPU/PPA/DMA2D执行插件
   platform/                   OS、LCD驱动适配、TE定时与同步
 ```
@@ -41,7 +41,7 @@ control中的查询/receipt操作沿用原gate序列化，stop/destroy要求生�
 
 resources/present_memory.h只前置声明backend/engine配置结构，保留内存预算声明，补齐C++的C linkage。为支持前置声明，原匿名engine配置结构增加tag，不改变字段或枚举。config/present_mode.h使用公共配置头及engine配置头；config/present_plan.h使用配置与句柄类型，只有其C实现为create_planned桥接显式包含运行时API。backend/present_output_caps.h改为独立标准类型头，completion_tracker不再依赖engine配置/API。
 
-dev/tests/test_header_contracts.py现独立编译17个头文件的C/C++入口，并检查上述依赖边界；现有header_smoke覆盖memory接口的C++链接。
+dev/tests/test_header_contracts.py现独立编译22个头文件的C/C++入口，并检查上述依赖边界；现有header_smoke覆盖memory接口的C++链接。
 
 ## Backend类型、配置与操作表
 
@@ -59,11 +59,43 @@ flowchart TD
     OPS[Backend dispatch] --> BT
     CP[Control / Producer / LCD adapters] --> BT
     TRACK[Completion tracker] --> OPS
-    BT --> PIXEL[Pixel layout / surface types]
+    BT --> PIXEL[Pixel types：layout / surface / copy request]
 ```
 
 backend操作表的create只接受配置指针，因此配置前置声明已足够；构造配置或读取字段的实现显式包含config头。控制、生产者桥接、LCD适配、transfer tracker、帧记录与事务只引用协议类型；completion tracker实际使用ops查询，因此继续显式引用操作表。
 
-engine配置仍按值包含完整backend配置，符合其创建参数职责，但不再把backend操作表带给配置/规划消费者。backend协议类型目前仍从pixel/present_pixel_engine.h取得布局、surface和copy相关类型；本轮没有拆pixel头，也没有改变已有处理流程。
+engine配置仍按值包含完整backend配置，符合其创建参数职责，但不再把backend操作表带给配置/规划消费者。backend协议类型现从pixel/present_pixel_types.h取得布局、surface和copy执行回调类型，不再引入pixel engine生命周期接口。
 
 目录整理见[第一批证据](evidence/source-layout-20261106/README.md)，engine声明拆分见[第二批证据](evidence/header-contracts-20261106/README.md)，backend拆分见[第三批证据](evidence/backend-contracts-20261106/README.md)。
+
+
+## Pixel模块与结构体分组
+
+| 文件 | 职责 |
+|---|---|
+| pixel/present_pixel_types.h | 格式、字节序、旋转、rect/layout/surface、copy request、阻塞执行回调类型 |
+| pixel/present_pixel_ops.[ch] | 无状态几何、请求校验、CPU参考实现；实现不依赖OS或worker |
+| pixel/present_pixel_ops_internal.h | 仅供engine调用的已校验CPU路径，保留原先提交校验后的快路径 |
+| pixel/present_pixel_engine.[ch] | ticket状态、通知、排队、取消、worker与停止/销毁 |
+| pixel/present_executor.h及executor/ | 执行插件合同、分派与CPU/PPA/DMA2D实现；接口仅依赖基础类型 |
+
+无状态CPU实现原样迁出；engine提交仍在接受前校验，worker执行已保存且校验过的描述符。内部快路径不重复校验，不分配、不创建ticket或通知。独立pixel_ops_standalone测试只链接ops实现，覆盖旋转/字节序、拒绝不写入和原地处理。
+
+opaque pixel engine的字段按职责组织：
+
+```text
+pixel_engine
+  sync             lock / idle事件
+  lifecycle        closing / stopped / executing
+  notification     回调函数 / user / active / 当前回调任务
+  executor         execute / user绑定
+  worker           work事件 / task句柄 / asynchronous
+    priority       initialized / applied / value
+  count / records[]  ticket记录容量及尾随存储
+```
+
+所有可变组仍由同一个sync.lock保护，保留原有锁顺序、唤醒、回调重入和停止规则。worker.task与notification.task角色不同，不合并。分组为内嵌值结构，不新增分配或任务；记录尾随数组仍在根结构最后，避免为了层级额外引入指针和分配。
+
+后续结构体整理遵循：字段有共同职责、初始化/撤销边界或借用关系才归组；值对象不强制嵌套；锁域与状态转换必须写清。小的rect/layout和ticket记录保持聚焦，不能把所有标志统塞入一个无含义的state桶。公开配置及现有调用方按字段初始化的接口不批量改名，先整理opaque运行上下文，再单独评估配置接口演进。
+
+分组会改变私有对象布局，需要核对sizeof、记录偏移及预算统计，不能假定嵌套无成本。本次Host上下文136→144字节，ticket记录大小不变；目标实际尺寸、IRAM和验证边界见[pixel拆分证据](evidence/pixel-structure-20261106/README.md)。

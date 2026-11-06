@@ -1,0 +1,31 @@
+{
+  "runtime_normalized_equal": true,
+  "cpu_algorithm_normalized_equal": true,
+  "geometry_and_stateless_wrappers_normalized_equal": true,
+  "preserved_function_declarations": 12,
+  "leaf_fields_type_compatible": 17,
+  "field_paths": {
+    "lock": "sync.lock",
+    "idle": "sync.idle",
+    "closing": "lifecycle.closing",
+    "stopped": "lifecycle.stopped",
+    "executing": "lifecycle.executing",
+    "on_event": "notification.on_event",
+    "user": "notification.user",
+    "notifying": "notification.active",
+    "callback_task": "notification.task",
+    "execute": "executor.execute",
+    "execute_user": "executor.user",
+    "work": "worker.work",
+    "worker": "worker.task",
+    "asynchronous": "worker.asynchronous",
+    "worker_priority_initialized": "worker.priority.initialized",
+    "worker_priority_applied": "worker.priority.applied",
+    "worker_priority": "worker.priority.value"
+  },
+  "host_context_bytes": {
+    "before": 136,
+    "after": 144
+  },
+  "host_record_bytes": 152
+}

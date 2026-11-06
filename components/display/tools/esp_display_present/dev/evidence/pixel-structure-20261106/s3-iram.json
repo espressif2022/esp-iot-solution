@@ -1,0 +1,54 @@
+{
+  "symbols": [
+    {
+      "name": "esp_display_present_engine_acquire_buffer",
+      "section": ".iram0.text",
+      "address": "0x4038094c"
+    },
+    {
+      "name": "present_presenter_resolve_lease_rows",
+      "section": ".iram0.text",
+      "address": "0x40380ad0"
+    },
+    {
+      "name": "present_presenter_submit_lease",
+      "section": ".iram0.text",
+      "address": "0x40380b34"
+    },
+    {
+      "name": "present_transfer_finish",
+      "section": ".iram0.text",
+      "address": "0x4037b170"
+    },
+    {
+      "name": "present_completion_reap",
+      "section": ".iram0.text",
+      "address": "0x4037fac0"
+    },
+    {
+      "name": "present_fb_service",
+      "section": ".iram0.text",
+      "address": "0x4037e8a8"
+    },
+    {
+      "name": "present_pixel_copy_cpu_validated",
+      "section": ".iram0.text",
+      "address": "0x4037b210"
+    },
+    {
+      "name": "esp_display_present_pixel_validate_request",
+      "section": ".iram0.text",
+      "address": "0x40381ee8"
+    },
+    {
+      "name": "esp_display_present_pixel_execute_cpu",
+      "section": ".iram0.text",
+      "address": "0x40381ef4"
+    },
+    {
+      "name": "esp_display_present_rotate_rect",
+      "section": ".iram0.text",
+      "address": "0x403820bc"
+    }
+  ]
+}

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #pragma once
+#include "pixel/present_pixel_ops.h"
 #include "pixel/present_executor.h"
 #include "platform/present_os.h"
 #include "esp_cache.h"

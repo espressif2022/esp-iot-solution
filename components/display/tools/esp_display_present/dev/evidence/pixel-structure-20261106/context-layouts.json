@@ -1,0 +1,29 @@
+{
+  "s3-rgb": {
+    "context_before": 64,
+    "context_after": 64,
+    "records_offset_before": 64,
+    "records_offset_after": 64,
+    "record_before": 112,
+    "record_after": 112,
+    "compatible_leaf_fields": 17
+  },
+  "p4-dsi": {
+    "context_before": 64,
+    "context_after": 64,
+    "records_offset_before": 64,
+    "records_offset_after": 64,
+    "record_before": 112,
+    "record_after": 112,
+    "compatible_leaf_fields": 17
+  },
+  "s31-qspi": {
+    "context_before": 64,
+    "context_after": 64,
+    "records_offset_before": 64,
+    "records_offset_after": 64,
+    "record_before": 112,
+    "record_after": 112,
+    "compatible_leaf_fields": 17
+  }
+}

@@ -139,3 +139,12 @@ Host新增独立C/C++头文件及依赖边界检查后45/45通过；Host/Xtensa/
 将原backend头分为协议类型、完整配置、操作表三部分。config与dispatch分别只依赖协议类型，不互相引入；只有构造/读取配置的实现显式引用完整配置，平台适配、帧状态、control/producer与transfer tracker不再依赖backend操作表。completion tracker保留其真实的ops依赖。
 
 原三组声明逐字保留；生产C文件仅include变化。Host45/45通过，头文件独立C/C++和依赖边界检查扩展到17个入口。Host/Xtensa/RISC-V上16种类型、各147项尺寸/对齐/字段偏移/枚举值对照一致。验证范围见[第八批证据](evidence/backend-contracts-20261106/README.md)，当前依赖图见[SOURCE_LAYOUT.md](SOURCE_LAYOUT.md)。
+
+
+## 第九批：Pixel职责拆分与运行上下文字段分组
+
+基础像素类型、无状态运算与ticket/worker生命周期独立；backend类型与executor接口不再带出pixel engine API。原CPU算法、几何和状态转换经字段路径/函数名归一化后与基线一致，既有12个函数声明和外部描述符类型布局保留。
+
+opaque pixel engine采用sync、lifecycle、notification、executor、worker五组内嵌字段，worker内继续归组priority。共同锁域不变，count/records尾随存储保留。分组不代表新增对象所有权或任务，也不批量修改配置接口。
+
+Host增加独立无OS像素运算链接测试后46/46通过，头文件边界检查扩展至22个入口。新ops模块同步更新共享源码清单与IRAM映射。详见[第九批证据](evidence/pixel-structure-20261106/README.md)和[结构体分组规则](SOURCE_LAYOUT.md)。

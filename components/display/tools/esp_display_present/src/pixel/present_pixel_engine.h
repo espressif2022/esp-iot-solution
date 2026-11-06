@@ -3,12 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #pragma once
-
-/** Experimental API: synchronous CPU or queued executor with bounded tickets. */
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-#include "esp_err.h"
+#include "pixel/present_pixel_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -20,57 +15,6 @@ typedef struct esp_display_present_pixel_engine esp_display_present_pixel_engine
 typedef struct {
     uint64_t value;
 } esp_display_present_copy_ticket_t;
-
-typedef enum {
-    ESP_DISPLAY_PRESENT_FORMAT_RGB565,
-    ESP_DISPLAY_PRESENT_FORMAT_RGB888,
-} esp_display_present_engine_pixel_format_t;
-
-/** Byte order of a multi-byte pixel scalar, not RGB/BGR channel order.
- * RGB888 uses R,G,B byte sequence; only NATIVE is valid for RGB888. */
-typedef enum {
-    ESP_DISPLAY_PRESENT_ORDER_NATIVE,
-    ESP_DISPLAY_PRESENT_ORDER_SWAPPED,
-} esp_display_present_byte_order_t;
-
-typedef enum {
-    ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0,
-    ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90,
-    ESP_DISPLAY_PRESENT_ENGINE_ROTATE_180,
-    ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270,
-} esp_display_present_engine_rotation_t;
-
-/** x/y are inclusive origins, width/height are extents; no inclusive ends. */
-typedef struct {
-    uint32_t x, y, width, height;
-} esp_display_present_rect_t;
-
-typedef struct {
-    uint32_t width, height;
-    size_t stride_bytes;
-    esp_display_present_engine_pixel_format_t format;
-    esp_display_present_byte_order_t byte_order;
-} esp_display_present_layout_t;
-
-typedef struct {
-    const void *pixels;
-    size_t capacity_bytes;
-    esp_display_present_layout_t layout;
-} esp_display_present_source_t;
-
-typedef struct {
-    void *pixels;
-    size_t capacity_bytes;
-    esp_display_present_layout_t layout;
-} esp_display_present_surface_t;
-
-typedef struct {
-    esp_display_present_source_t src;
-    esp_display_present_surface_t dst;
-    esp_display_present_rect_t src_area;
-    uint32_t dst_x, dst_y;
-    esp_display_present_engine_rotation_t rotation; /* Clockwise around src_area, then translate. */
-} esp_display_present_copy_request_t;
 
 typedef enum {
     ESP_DISPLAY_PRESENT_COPY_QUEUED,
@@ -97,13 +41,6 @@ typedef struct {
  * Callback user context must stay valid until successful stop and caller join. */
 typedef bool (*esp_display_present_pixel_event_fn)(void *user, esp_display_present_copy_ticket_t ticket, const esp_display_present_copy_status_t *status, bool from_isr);
 
-/** Optional blocking executor, called only by the engine worker. On return
- * ALL reads/writes must have ended, even on failure. Hardware implementations
- * must drain/abort safely before returning; an uncertain DMA error cannot be
- * returned as terminal failure while hardware still owns memory. Borrowed
- * context stays valid until successful stop. NULL executes the CPU reference. */
-typedef esp_err_t (*esp_display_present_pixel_execute_fn)(void *user, const esp_display_present_copy_request_t *request);
-
 typedef struct {
     size_t max_jobs; /* Bounded completion records, 1..64. */
     esp_display_present_pixel_event_fn on_event; /* Optional completion/fault notification. */
@@ -112,50 +49,6 @@ typedef struct {
     esp_display_present_pixel_execute_fn execute; /* Requires asynchronous == true. */
     void *execute_user;
 } esp_display_present_pixel_config_t;
-
-/**
- * @brief Logical-to-physical clockwise geometry and its inverse for touch points.
- * width/height are logical dimensions; quarter turns swap physical dimensions.
- *
- * @param width Logical width in pixels.
- * @param height Logical height in pixels.
- * @param rotation Clockwise logical-to-physical orientation.
- * @param area Input rectangle; see the coordinate and ownership contract above.
- * @param out_area Output area.
- * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
- */
-esp_err_t esp_display_present_rotate_rect(uint32_t width, uint32_t height, esp_display_present_engine_rotation_t rotation, const esp_display_present_rect_t *area, esp_display_present_rect_t *out_area);
-
-/**
- * @brief Unrotate point.
- *
- * @param width Logical width in pixels.
- * @param height Logical height in pixels.
- * @param rotation Clockwise logical-to-physical orientation.
- * @param physical_x Physical panel X coordinate in pixels.
- * @param physical_y Physical panel Y coordinate in pixels.
- * @param logical_x Receives the logical X coordinate.
- * @param logical_y Receives the logical Y coordinate.
- * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
- */
-esp_err_t esp_display_present_unrotate_point(uint32_t width, uint32_t height, esp_display_present_engine_rotation_t rotation, uint32_t physical_x, uint32_t physical_y, uint32_t *logical_x, uint32_t *logical_y);
-
-/**
- * @brief Stateless validated CPU oracle/fallback for platform executors. Caller owns
- * both borrows until return; same validation and overlap rules as submit.
- *
- * @param request Request descriptor, subject to the ownership contract above.
- * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
- */
-esp_err_t esp_display_present_pixel_validate_request(const esp_display_present_copy_request_t *request);
-
-/**
- * @brief Pixel execute cpu.
- *
- * @param request Request descriptor, subject to the ownership contract above.
- * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
- */
-esp_err_t esp_display_present_pixel_execute_cpu(const esp_display_present_copy_request_t *request);
 
 /**
  * @brief Default is synchronous CPU execution. asynchronous=true queues descriptors

@@ -1,0 +1,20 @@
+{
+  "host": {
+    "before": 136,
+    "after": 144
+  },
+  "targets": {
+    "s3-rgb": {
+      "before": 64,
+      "after": 64
+    },
+    "p4-dsi": {
+      "before": 64,
+      "after": 64
+    },
+    "s31-qspi": {
+      "before": 64,
+      "after": 64
+    }
+  }
+}

@@ -4,8 +4,11 @@
 # including build directory does not affect resolution. No recursive globbing.
 set(PRESENT_OS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/platform/present_os.c)
+set(PRESENT_PIXEL_OPS_SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/pixel/present_pixel_ops.c)
 set(PRESENT_PIXEL_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/pixel/present_pixel_engine.c
+    ${PRESENT_PIXEL_OPS_SOURCES}
     ${CMAKE_CURRENT_LIST_DIR}/pixel/executor/present_executor.c
     ${CMAKE_CURRENT_LIST_DIR}/pixel/executor/present_executor_cpu.c
     ${CMAKE_CURRENT_LIST_DIR}/pixel/executor/present_executor_ppa.c

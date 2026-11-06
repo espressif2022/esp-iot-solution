@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #pragma once
-#include "pixel/present_pixel_engine.h"
+#include "pixel/present_pixel_types.h"
 
 #ifdef __cplusplus
 extern "C" {

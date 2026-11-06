@@ -1,0 +1,49 @@
+{
+  "base_commit": "585ecb0475f32174f6789aefb2061bdca0ba1cdf",
+  "host": {
+    "passed": 46,
+    "total": 46,
+    "sanitize": true,
+    "lvgl": "9.6.0~1"
+  },
+  "header_contracts": {
+    "headers": 22,
+    "languages": [
+      "C11",
+      "C++17"
+    ],
+    "negative_include_overlay_rejected": true,
+    "production_source_not_mutated_for_negative_check": true
+  },
+  "existing_pixel_declarations_preserved": 12,
+  "descriptor_types": 8,
+  "descriptor_abi_values_per_compiler": 59,
+  "abi_compilers": [
+    "Host",
+    "Xtensa",
+    "RISC-V"
+  ],
+  "runtime_and_cpu_algorithms_normalized_equal": true,
+  "context_leaf_field_types_checked_per_target": 17,
+  "target_context_bytes_unchanged": true,
+  "target_record_offsets_and_sizes_unchanged": true,
+  "standalone_ops_without_os_engine_link_passed": true,
+  "benchmark_builds_passed": [
+    "s3-rgb",
+    "p4-dsi",
+    "s31-qspi"
+  ],
+  "pixels_builds_passed": [
+    "s3-rgb"
+  ],
+  "source_hashes_match_manifests": true,
+  "selected_10_hot_symbols_in_iram": true,
+  "idf_modified": false,
+  "public_headers_changed": false,
+  "hardware_run": false,
+  "build_inputs_sha256": {
+    "src/sources.cmake": "3e82fbc8a1c0c3fd232a91d29dca4c751e99e57f2bdf0549a60a11f0ea8e2ea3",
+    "linker.lf": "ea21249e4f92cf184a14ddaffeaafe933eeffa4d3bcdd719c064474475b832c4",
+    "dev/CMakeLists.txt": "bbe997fdac36bbda805a7ea121ddbe30ad596c83a17f9dfa922be1d860375a72"
+  }
+}
