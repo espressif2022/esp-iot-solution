@@ -77,7 +77,7 @@ class RunnerTest(unittest.TestCase):
             args = SimpleNamespace(work_root=Path(tmp), board='s3-rgb')
             base = Path(tmp) / args.board / 'benchmark'
             cases = runner.cases_for('s3-rgb', [90], ['NONE'])
-            manifest = dict(board='s3-rgb', cases=cases, idf_commit='abc', lvgl_benchmark_sha256='def', comparable_sdkconfig_sha256='123')
+            manifest = dict(board='s3-rgb', cases=cases, idf_commit='abc', lvgl_benchmark_sha256='def', comparable_sdkconfig_sha256='123', defaults_sha256={}, test_sources_sha256={})
             for impl in ['present', 'adapter']:
                 root = base / impl
                 root.mkdir(parents=True)
@@ -86,12 +86,22 @@ class RunnerTest(unittest.TestCase):
                 (root / 'results.json').write_text(json.dumps(dict(complete=True, matrix_complete=True, errors=[], rows=[row])))
             runner.compare(args)
             self.assertIn(',20,-', (base / 'comparison.csv').read_text())
-            for key in ['board', 'idf_commit', 'lvgl_benchmark_sha256', 'comparable_sdkconfig_sha256']:
+            for key in ['board', 'idf_commit', 'lvgl_benchmark_sha256', 'comparable_sdkconfig_sha256', 'defaults_sha256', 'test_sources_sha256']:
                 different = dict(manifest)
                 different[key] = 'different'
                 (base / 'adapter/manifest.json').write_text(json.dumps(different))
                 with self.assertRaises(ValueError):
                     runner.compare(args)
+
+    def test_comparable_sdkconfig_includes_cache_and_disabled_options(self):
+        common = 'CONFIG_LV_COLOR_DEPTH=16\nCONFIG_SPIRAM=y\n'
+        baseline = runner.comparable_sdkconfig(common)
+        for setting in ('CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB=y',
+                        '# CONFIG_SPIRAM_XIP_FROM_PSRAM is not set',
+                        'CONFIG_LCD_RGB_ISR_IRAM_SAFE=y'):
+            self.assertNotEqual(baseline, runner.comparable_sdkconfig(common + setting + '\n'))
+        self.assertEqual(baseline, runner.comparable_sdkconfig(common + 'CONFIG_LOG_DEFAULT_LEVEL=3\n'))
+        self.assertEqual(baseline, runner.comparable_sdkconfig('CONFIG_SPIRAM=y\nCONFIG_LV_COLOR_DEPTH=16\n'))
 
     def test_partial_report_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:

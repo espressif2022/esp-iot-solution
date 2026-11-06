@@ -1,0 +1,14 @@
+{
+  "host_passed": 40,
+  "host_total": 40,
+  "runner_passed": 12,
+  "runner_total": 12,
+  "strict_configuration_comparison": true,
+  "running_present_firmware_verified": true,
+  "adapter_rebuild_firmware_unchanged": true,
+  "visual_confirmation_this_round": false,
+  "restored": {
+    "verified_full_flash": true,
+    "sha256": "a1fb70defbe454c7a5d8fc233929fd9d9d39751910336c7baa96b905b60730fc"
+  }
+}

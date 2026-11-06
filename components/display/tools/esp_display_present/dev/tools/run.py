@@ -86,6 +86,16 @@ def prepare(args):
     return deps
 
 
+def comparable_sdkconfig(sdk):
+    # Include cache topology and LCD/PSRAM clocks, not just LVGL and CPU.
+    # Disabled options must also affect the fingerprint.
+    prefixes = ('CONFIG_LV_', 'CONFIG_SPIRAM', 'CONFIG_ESP_DEFAULT_CPU_',
+                'CONFIG_COMPILER_OPTIMIZATION', 'CONFIG_FREERTOS_HZ',
+                'CONFIG_ESP32', 'CONFIG_CACHE_', 'CONFIG_LCD_')
+    return '\n'.join(sorted(line for line in sdk.splitlines()
+                            if line.removeprefix('# ').startswith(prefixes)))
+
+
 def build(args):
     if args.profile and (args.implementation != 'present' or args.suite != 'benchmark'):
         raise ValueError('--profile requires present benchmark')
@@ -167,8 +177,7 @@ def build(args):
             print('\n'.join((root / 'build.log').read_text(errors='replace').splitlines()[-35:]))
             raise
     sdk = (root / 'sdkconfig').read_text()
-    comparable = '\n'.join(l for l in sdk.splitlines() if l.startswith((
-        'CONFIG_LV_', 'CONFIG_SPIRAM', 'CONFIG_ESP_DEFAULT_CPU_', 'CONFIG_COMPILER_OPTIMIZATION', 'CONFIG_FREERTOS_HZ')))
+    comparable = comparable_sdkconfig(sdk)
     state = dict(profile=args.profile, board=args.board, suite=args.suite, implementation=args.implementation, cases=planned,
                  idf_commit=subprocess.check_output(['git', '-C', str(idf()), 'rev-parse', 'HEAD'], text=True).strip(),
                  lvgl_version='9.6.0' if lvgl else None,
@@ -246,7 +255,7 @@ def compare(args):
         manifests[impl] = json.loads((root / 'manifest.json').read_text())
         if not results[impl]['complete'] or results[impl]['errors'] or not results[impl]['matrix_complete']:
             raise ValueError('Cannot compare incomplete/failed suites')
-    for key in ('board', 'cases', 'idf_commit', 'lvgl_benchmark_sha256', 'comparable_sdkconfig_sha256'):
+    for key in ('board', 'cases', 'idf_commit', 'lvgl_benchmark_sha256', 'comparable_sdkconfig_sha256', 'defaults_sha256', 'test_sources_sha256'):
         if manifests['present'][key] != manifests['adapter'][key]:
             raise ValueError('Comparison configurations differ: ' + key)
     lookup = {impl: {(r['mode'], r['rotation']): r for r in result['rows']} for impl, result in results.items()}
