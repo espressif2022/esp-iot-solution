@@ -28,3 +28,5 @@
 - [Engine完成跟踪与传输超时拆分](engine-tracking-refactor-20261106/README.md)：Host42/42、三芯片编译、S3 IRAM放置和Host内存规划对照，未上板。
 
 - [模式解析规则收口](mode-policy-refactor-20261106/README.md)：Host43/43、62,208组配置前后快照一致、三芯片编译；未上板。
+
+- [租约描述收敛与状态归属审计](lease-state-refactor-20261106/README.md)：保留逻辑撤销/物理排空差异，Host44/44、旧facade替换对照及跨芯片编译，未上板。

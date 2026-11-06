@@ -1602,6 +1602,45 @@ static void delete_after_partial_resource_cleanup(void)
     free_panel(&panel);
 }
 
+static void public_lease_identity(void)
+{
+    struct fake_lcd panel;
+    init_panel(&panel);
+    esp_display_presenter_config_t input = config(&panel, false);
+    input.target.hw.panel_type = ESP_DISPLAY_PRESENT_PANEL_IO;
+    input.target.hw.io = &panel;
+    input.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_NONE;
+    input.target.drawbuf.buffers = 1;
+    immediate = true;
+    esp_display_presenter_t *presenter;
+    OK(esp_display_presenter_create(&input, &presenter));
+    start_frame(presenter, false, true);
+    esp_display_presenter_buffer_t buffer;
+    OK(esp_display_presenter_acquire_buffer(presenter, &buffer));
+    memset(buffer.surface.pixels, 0x4a, buffer.capacity_bytes);
+    esp_display_presenter_buffer_t forged = buffer;
+    forged.surface.pixels = (uint8_t *)buffer.surface.pixels + 2;
+    esp_display_present_area_t bad = {-1, 0, 7, 3}, area = {0, 0, 7, 3};
+    assert(esp_display_presenter_submit_buffer(presenter, &forged, &bad, 16) == ESP_ERR_INVALID_STATE);
+    assert(esp_display_presenter_submit_buffer(presenter, &buffer, &bad, 16) == ESP_ERR_INVALID_ARG);
+    assert(esp_display_presenter_submit_buffer(presenter, &buffer, &area, 0) == ESP_ERR_INVALID_ARG);
+    OK(esp_display_presenter_submit_buffer(presenter, &buffer, &area, 16));
+    esp_display_presenter_buffer_t next;
+    OK(esp_display_presenter_acquire_buffer(presenter, &next));
+    assert(next.surface.pixels == buffer.surface.pixels && next.lease_id != buffer.lease_id);
+    size_t rows = 99;
+    assert(buffer.resolve_rows(buffer.resolve_rows_ctx, buffer.lease_id, 16, 4, &rows) == ESP_ERR_INVALID_STATE && !rows);
+    assert(esp_display_presenter_submit_buffer(presenter, &buffer, &area, 16) == ESP_ERR_INVALID_STATE);
+    OK(next.resolve_rows(next.resolve_rows_ctx, next.lease_id, 16, 4, &rows));
+    esp_display_presenter_cancel_frame(presenter);
+    assert(next.resolve_rows(next.resolve_rows_ctx, next.lease_id, 16, 4, &rows) == ESP_ERR_INVALID_STATE);
+    esp_display_present_fault_reason_t reason;
+    OK(esp_display_presenter_get_fault_reason(presenter, &reason));
+    assert(reason == ESP_DISPLAY_PRESENT_FAULT_NONE);
+    delete_eventually(presenter);
+    free_panel(&panel);
+}
+
 int main(void)
 {
     create_allocation_rollback();
@@ -1609,6 +1648,7 @@ int main(void)
     stop_unsealed();
     large_damage_capacity();
     leases_and_stop();
+    public_lease_identity();
     rotation_and_fault();
     cancel_pending_copy();
     cancel_before_core_gate();

@@ -1,0 +1,18 @@
+{
+  "host": {
+    "before": 432,
+    "after": 384
+  },
+  "s3-rgb": {
+    "before": 328,
+    "after": 280
+  },
+  "p4-dsi": {
+    "before": 328,
+    "after": 280
+  },
+  "s31-qspi": {
+    "before": 328,
+    "after": 280
+  }
+}

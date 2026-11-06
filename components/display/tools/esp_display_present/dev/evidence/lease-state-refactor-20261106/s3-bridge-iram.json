@@ -1,0 +1,15 @@
+{
+  "suite": "s3-rgb pixels",
+  "symbols": [
+    {
+      "name": "present_presenter_submit_lease",
+      "section": ".iram0.text",
+      "address": "0x40380b38"
+    },
+    {
+      "name": "present_presenter_resolve_lease_rows",
+      "section": ".iram0.text",
+      "address": "0x40380ad4"
+    }
+  ]
+}

@@ -12,6 +12,14 @@
 #include "esp_log.h"
 #endif
 
+/* Public ID mapping only. The engine remains the authority for the held
+ * native lease's capacity, layout and ownership. */
+typedef struct {
+    esp_display_present_lease_id_t native_id;
+    void *pixels;
+    uint32_t public_id;
+} present_lease_identity_t;
+
 struct esp_display_presenter {
     present_resources_t *resources;
     present_mutex_t *gate;
@@ -21,9 +29,9 @@ struct esp_display_presenter {
     esp_display_present_backend_caps_t caps;
     esp_display_presenter_frame_status_t timeline;
     esp_display_presenter_state_t state;
-    esp_display_present_lease_t lease;
+    present_lease_identity_t lease;
     esp_display_present_render_alignment_t render_alignment;
-    uint32_t lease_id, next_lease;
+    uint32_t next_lease;
     bool active, full_next, lvgl_bound, cancel_pending;
     uint64_t vsyncs, confirm_after, tracked_id;
     esp_display_present_engine_receipt_t tracked;
@@ -531,7 +539,7 @@ static esp_err_t resolve_rows(void *user, uint32_t id, size_t stride, size_t req
     }
     uint32_t rows = 0;
     if (error == ESP_OK) {
-        error = id && id == presenter->lease_id ? esp_display_present_engine_resolve_rows(core(presenter), &presenter->lease, stride, requested, &rows) : ESP_ERR_INVALID_STATE;
+        error = id && id == presenter->lease.public_id ? present_presenter_resolve_lease_rows(core(presenter), presenter->lease.native_id, stride, requested, &rows) : ESP_ERR_INVALID_STATE;
     }
     if (error == ESP_OK) {
         uint16_t alignment = presenter->render_alignment.height_pixels;
@@ -558,20 +566,25 @@ esp_err_t esp_display_presenter_acquire_buffer(esp_display_presenter_t *presente
     }
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
     esp_err_t error = producer(presenter);
-    if (error == ESP_OK && (!presenter->active || presenter->lease_id || !presenter->next_lease || presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN)) {
+    if (error == ESP_OK && (!presenter->active || presenter->lease.public_id || !presenter->next_lease || presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN)) {
         error = ESP_ERR_INVALID_STATE;
     }
+    esp_display_present_lease_t lease = {0};
     if (error == ESP_OK) {
-        error = esp_display_present_engine_acquire_buffer(core(presenter), &presenter->lease);
+        error = esp_display_present_engine_acquire_buffer(core(presenter), &lease);
     }
     if (error == ESP_OK) {
-        presenter->lease_id = presenter->next_lease++;
+        presenter->lease = (present_lease_identity_t) {
+            .native_id = lease.id,
+            .pixels = lease.surface.pixels,
+            .public_id = presenter->next_lease++
+        };
         *out = (esp_display_presenter_buffer_t) {
-            .surface = {presenter->lease.surface.pixels, presenter->lease.surface.layout.stride_bytes,
-                        presenter->lease.surface.layout.width, presenter->lease.surface.layout.height, presenter->config.pixel_format
+            .surface = {lease.surface.pixels, lease.surface.layout.stride_bytes,
+                        lease.surface.layout.width, lease.surface.layout.height, presenter->config.pixel_format
                        },
-            .capacity_bytes = presenter->lease.surface.capacity_bytes,
-            .lease_id = presenter->lease_id,
+            .capacity_bytes = lease.surface.capacity_bytes,
+            .lease_id = presenter->lease.public_id,
             .resolve_rows = resolve_rows,
             .resolve_rows_ctx = presenter
         };
@@ -587,7 +600,7 @@ esp_err_t esp_display_presenter_submit_buffer(esp_display_presenter_t *presenter
     }
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
     esp_err_t error = producer(presenter);
-    if (error == ESP_OK && (!presenter->lease_id || buffer->lease_id != presenter->lease_id || buffer->surface.pixels != presenter->lease.surface.pixels || presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN)) {
+    if (error == ESP_OK && (!presenter->lease.public_id || buffer->lease_id != presenter->lease.public_id || buffer->surface.pixels != presenter->lease.pixels || presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN)) {
         error = ESP_ERR_INVALID_STATE;
     }
     if (error == ESP_OK && !esp_display_present_geometry_area_is_valid(area, presenter->caps.draw_layout.width, presenter->caps.draw_layout.height)) {
@@ -595,10 +608,9 @@ esp_err_t esp_display_presenter_submit_buffer(esp_display_presenter_t *presenter
     }
     esp_display_present_engine_area_t a = {area->x1, area->y1, area->x2, area->y2};
     if (error == ESP_OK) {
-        error = esp_display_present_engine_submit_buffer(core(presenter), &presenter->lease, &a, stride);
+        error = present_presenter_submit_lease(core(presenter), presenter->lease.native_id, buffer->surface.pixels, &a, stride);
     }
     if (error == ESP_OK) {
-        presenter->lease_id = 0;
         memset(&presenter->lease, 0, sizeof(presenter->lease));
     }
     present_mutex_give(presenter->gate);
@@ -615,7 +627,7 @@ esp_err_t esp_display_presenter_commit_frame_with_receipt(esp_display_presenter_
     }
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
     esp_err_t error = producer(presenter);
-    if (error == ESP_OK && (!presenter->active || presenter->lease_id || presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN)) {
+    if (error == ESP_OK && (!presenter->active || presenter->lease.public_id || presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN)) {
         error = ESP_ERR_INVALID_STATE;
     }
     if (error == ESP_OK && tracking && presenter->tracked.value) {
@@ -701,7 +713,6 @@ void esp_display_presenter_cancel_frame(esp_display_presenter_t *presenter)
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
     if (producer(presenter) == ESP_OK && (presenter->active || presenter->cancel_pending)) {
         presenter->active = false;
-        presenter->lease_id = 0;
         memset(&presenter->lease, 0, sizeof(presenter->lease));
         presenter->full_next = true;
         presenter->cancel_pending = true;
@@ -806,7 +817,7 @@ esp_err_t esp_display_presenter_stop(esp_display_presenter_t *presenter)
     }
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
     uint64_t start = present_now_ms();
-    esp_err_t error = presenter->lease_id || presenter->lvgl_bound ? ESP_ERR_INVALID_STATE : ESP_OK;
+    esp_err_t error = presenter->lease.public_id || presenter->lvgl_bound ? ESP_ERR_INVALID_STATE : ESP_OK;
     if (error == ESP_OK) {
         presenter->state = ESP_DISPLAY_PRESENTER_STATE_CLOSING;
         if (presenter->active) {

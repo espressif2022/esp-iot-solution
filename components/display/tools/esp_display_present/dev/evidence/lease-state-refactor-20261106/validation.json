@@ -1,0 +1,23 @@
+{
+  "base_commit": "0b46be813f2cc9ada74565838203e6924a61a504",
+  "host": {
+    "passed": 44,
+    "total": 44,
+    "sanitize": true,
+    "lvgl": "9.6.0~1"
+  },
+  "old_facade_replacement_suite_passed": true,
+  "idf_benchmark_build_passed": [
+    "s3-rgb",
+    "p4-dsi",
+    "s31-qspi"
+  ],
+  "idf_pixels_build_passed": [
+    "s3-rgb"
+  ],
+  "build_source_hashes_match": true,
+  "s3_pixels_bridge_functions_in_iram": true,
+  "public_headers_changed": false,
+  "hardware_run": false,
+  "idf_modified": false
+}

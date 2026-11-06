@@ -82,3 +82,18 @@ flowchart TD
 Resources保留运行时堆查询、tile默认数量及硬件能力获取；Plan保留布局与预算验证。独立创建入口仍做防御性重验，复用同一模式规则，不因本次收口信任外部可修改的plan。
 
 新增模式策略回归后Host43/43通过。改动前后的62,208组配置快照逐字节一致，三芯片完整编译通过。详见[第三批证据](evidence/mode-policy-refactor-20261106/README.md)。下一步检查公共层与engine的状态归属。
+
+
+## 第四批：状态归属审计与租约描述收敛
+
+完成[逐字段状态归属审计](STATE_OWNERSHIP_20261106.md)。多数相似字段分别承担公共撤销/观察语义与backend排空/资源所有权，不直接合并。本批将公共层完整lease描述缩为公开ID、原生ID、像素指针的身份映射，engine保管完整布局与容量。
+
+```mermaid
+flowchart LR
+    PRODUCER[生产者公开buffer] --> MAP[Facade：public ID / native ID / pixels]
+    MAP --> BRIDGE[原gate与owner检查]
+    BRIDGE --> HELD[Engine held：完整租约 / 布局 / 容量]
+    HELD --> BACKEND[Backend资源生命周期]
+```
+
+新增身份桥接回归，覆盖地址复用、原生token高位、错误指针、错误优先级、异任务调用与取消后失效。Host44/44通过；旧版facade对象替换对照也通过同一集成测试。详见[第四批证据](evidence/lease-state-refactor-20261106/README.md)。下一步检查生产者交接事务及失败回滚。

@@ -904,6 +904,39 @@ esp_err_t esp_display_present_engine_submit_buffer(esp_display_present_engine_t 
     return ret;
 }
 
+esp_err_t present_presenter_resolve_lease_rows(esp_display_present_engine_t *presenter, esp_display_present_lease_id_t id,
+                                               size_t stride, uint32_t requested, uint32_t *out)
+{
+    esp_err_t ret = check_owner(presenter);
+    if (ret != ESP_OK) {
+        return ret;
+    }
+    (void)present_mutex_take(presenter->gate, UINT32_MAX);
+    /* Construct a transient validation view from the authoritative held lease.
+     * The caller's token still passes valid_lease; no implicit reacquisition. */
+    const esp_display_present_lease_t lease = {.id = id, .surface = presenter->held.surface};
+    ret = resolve_rows_impl(presenter, &lease, stride, requested, out);
+    present_mutex_give(presenter->gate);
+    return ret;
+}
+
+esp_err_t present_presenter_submit_lease(esp_display_present_engine_t *presenter, esp_display_present_lease_id_t id, void *pixels,
+                                         const esp_display_present_engine_area_t *area, size_t stride)
+{
+    esp_err_t ret = check_owner(presenter);
+    if (ret != ESP_OK) {
+        return ret;
+    }
+    (void)present_mutex_take(presenter->gate, UINT32_MAX);
+    const esp_display_present_lease_t lease = {
+        .id = id,
+        .surface = {.pixels = pixels, .capacity_bytes = presenter->held.surface.capacity_bytes}
+    };
+    ret = submit_buffer_impl(presenter, &lease, area, stride);
+    present_mutex_give(presenter->gate);
+    return ret;
+}
+
 esp_err_t esp_display_present_engine_commit_frame(esp_display_present_engine_t *presenter, const esp_display_present_frame_coverage_t *coverage)
 {
     esp_err_t ret = check_owner(presenter);

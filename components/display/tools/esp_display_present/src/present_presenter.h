@@ -335,6 +335,13 @@ esp_err_t present_presenter_begin_budget(esp_display_present_engine_t *, const e
 esp_err_t present_presenter_control_cancel_tracking(esp_display_present_engine_t *, esp_display_present_engine_receipt_t);
 esp_err_t present_presenter_cancel_budget(esp_display_present_engine_t *, uint32_t);
 esp_err_t present_presenter_control_finish_cancel(esp_display_present_engine_t *, uint32_t);
+/* Facade identity bridge. Owner-only, same gate and argument validation as
+ * native resolve/submit. Tokens retain full width; the facade separately
+ * validates its public ID and pixel pointer. No lease/ownership is acquired. */
+esp_err_t present_presenter_resolve_lease_rows(esp_display_present_engine_t *, esp_display_present_lease_id_t,
+                                               size_t stride, uint32_t requested, uint32_t *out);
+esp_err_t present_presenter_submit_lease(esp_display_present_engine_t *, esp_display_present_lease_id_t, void *pixels,
+                                         const esp_display_present_engine_area_t *, size_t stride);
 
 #ifdef PRESENT_HOST
 void present_presenter_test_gate_lock(esp_display_present_engine_t *);
