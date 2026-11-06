@@ -1,0 +1,95 @@
+{
+  "host": "40/40",
+  "benchmark_builds": 8,
+  "additional_builds": 3,
+  "configurations_match": true,
+  "precommit_pass": true,
+  "board_runs_in_this_reorganization": false,
+  "builds": [
+    {
+      "board": "s3-rgb",
+      "suite": "benchmark",
+      "implementation": "present",
+      "build_pass": true,
+      "planned_cases": 28,
+      "board_run": false
+    },
+    {
+      "board": "s3-rgb",
+      "suite": "benchmark",
+      "implementation": "adapter",
+      "build_pass": true,
+      "planned_cases": 28,
+      "board_run": false
+    },
+    {
+      "board": "p4-dsi",
+      "suite": "benchmark",
+      "implementation": "present",
+      "build_pass": true,
+      "planned_cases": 28,
+      "board_run": false
+    },
+    {
+      "board": "p4-dsi",
+      "suite": "benchmark",
+      "implementation": "adapter",
+      "build_pass": true,
+      "planned_cases": 28,
+      "board_run": false
+    },
+    {
+      "board": "box3-spi",
+      "suite": "benchmark",
+      "implementation": "present",
+      "build_pass": true,
+      "planned_cases": 20,
+      "board_run": false
+    },
+    {
+      "board": "box3-spi",
+      "suite": "benchmark",
+      "implementation": "adapter",
+      "build_pass": true,
+      "planned_cases": 20,
+      "board_run": false
+    },
+    {
+      "board": "s31-qspi",
+      "suite": "benchmark",
+      "implementation": "present",
+      "build_pass": true,
+      "planned_cases": 16,
+      "board_run": false
+    },
+    {
+      "board": "s31-qspi",
+      "suite": "benchmark",
+      "implementation": "adapter",
+      "build_pass": true,
+      "planned_cases": 16,
+      "board_run": false
+    },
+    {
+      "board": "p4-dsi",
+      "suite": "pixels",
+      "implementation": "present",
+      "build_pass": true,
+      "board_run": false
+    },
+    {
+      "board": "s3-rgb",
+      "suite": "native",
+      "implementation": "present",
+      "build_pass": true,
+      "board_run": false
+    },
+    {
+      "board": "s31-qspi",
+      "suite": "te-lifecycle",
+      "implementation": "present",
+      "build_pass": true,
+      "board_run": false
+    }
+  ]
+}

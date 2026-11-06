@@ -1,0 +1,10 @@
+{
+  "suite_completed": true,
+  "no_test_errors": true,
+  "eight_cases": true,
+  "all_combinations": true,
+  "sixteen_valid_scenes_each": true,
+  "dma_count_matches_admission": true,
+  "histogram_count_matches": true,
+  "minimum_1000_frames_each": true
+}

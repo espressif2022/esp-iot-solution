@@ -14,4 +14,8 @@ RGB bounce / MIPI DSI 的多缓冲 scanout 在提交成功后先排空已经执�
 
 普通内部 tile 的 GRAM 可试用 `CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND`，默认关闭。它复用引擎 sender，将可能阻塞的驱动提交移出引擎 gate，不强制增加像素复制；旋转／PSRAM 路径继续采用原有调度。实验 sender 优先级由 `CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY` 设置，默认 7。适用条件、RAM 成本和实测收益见 [GRAM 后台提交首版](dev/GRAM_BACKGROUND_RESULTS_20261104.md)。
 
+2026-11-06 的 [架构检查与 Host 收敛](dev/ARCHITECTURE_AUDIT_20261106.md)修复了公开接口运行时跨轴旋转的尺寸权威冲突：panel 物理尺寸固定，由 backend 更新逻辑宽高，资源层不再修改 scanout 物理视图。旋转后需重新查询 caps。新增了创建失败回滚和固定物理屏幕的 RGB/DSI/GRAM 旋转验证；该修复尚未重新上板。
+
 当前提交的 [三板 LVGL 帧率、Host 测试项与证据](dev/VALIDATION.md) 单独列出测试条件和边界。[模式与旋转矩阵](dev/MODE_ROTATION_RESULTS_20261103.md)记录了 P4 公开接口运行时跨轴旋转的实板缺陷，以及 S31 GRAM 的运行时旋转限制。TE 的时序假设见 [TE 说明](docs/TE_TIMING.md)。
+
+测试工程、板级配置、LVGL benchmark 与 adapter 对比统一入口：[dev/README.md](dev/README.md)。

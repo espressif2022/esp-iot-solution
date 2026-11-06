@@ -80,6 +80,7 @@ typedef struct {
     bool swap_bytes; /**< Whether RGB565 bytes are swapped on transfer. */
     bool te_enabled; /**< Whether TE synchronization is enabled. */
     esp_display_present_te_sync_config_t te_sync; /**< TE synchronization settings. */
+    bool spi_psram_dma_direct; /**< Must match the SPI IO creation flag. Fallback when driver memory query is unavailable; a successful query takes precedence. */
 } esp_display_present_hw_config_t;
 
 /**

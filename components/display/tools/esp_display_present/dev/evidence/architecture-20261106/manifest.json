@@ -1,0 +1,34 @@
+{
+  "date": "2026-11-06",
+  "base_commit": "85ae616826780fbd7c24ba7a841eea2cf41992e9",
+  "host_suites": 37,
+  "host_passed": 37,
+  "asan": true,
+  "ubsan": true,
+  "leak_sanitizer": true,
+  "ASAN_OPTIONS": "detect_leaks=1",
+  "allocation_resource_failures": 140,
+  "creation_configurations": 6,
+  "fb_rotation_configurations": 56,
+  "fb_reference_frames": 168,
+  "gram_reference_frames": 32,
+  "targets_compiled": [
+    "esp32s3 + LVGL 9.6",
+    "esp32p4 smoke"
+  ],
+  "boards_flashed": false,
+  "source_sha256": {
+    "components/display/tools/esp_display_present/MIGRATION_STATUS.md": "fae84058dcfbffd441488ba353bde8408c713cfd70611468f63e9c7b4569182a",
+    "components/display/tools/esp_display_present/README_CN.md": "0c94011f64cd822a5a417d842f307f61ecf2f9a34455a123cc3590f577e64b7f",
+    "components/display/tools/esp_display_present/dev/CMakeLists.txt": "b417d23bbdb85d5a19f6f616a8c97dce136c43070c0d90d177712e64437a0274",
+    "components/display/tools/esp_display_present/dev/tests/test_legacy_facade.c": "f79b3e8768aa26f398c0c79e39b1d8cbbecdf181d522a8dfd29c68d488cb3936",
+    "components/display/tools/esp_display_present/include/esp_display_present.h": "a5492c1af6396b4ac2cd4a88df54ac748327efb4cb0ddbf7ad4494880885166e",
+    "components/display/tools/esp_display_present/src/esp_display_presenter.c": "04cd3f07bb924567887cc9b2edd6a5b73ccd0b434a65f06ba5cc44f207eaece6",
+    "components/display/tools/esp_display_present/src/platform/present_lcd_scanout.c": "c0e49afa0ca3b0868a9805dac6f6e2d8d4b6aafcc9514859614b354d5d85f514",
+    "components/display/tools/esp_display_present/src/present_lcd_scanout.h": "18fafa0bbd849771dbf987d52025700156fbc30b4739d6bd0cf146c5aef9276b",
+    "components/display/tools/esp_display_present/src/present_resources.c": "11a11fbbc3b79101a7a43f8105d14c3126383235a6f56d1ed22dba956afc2940",
+    "components/display/tools/esp_display_present/src/present_resources.h": "10b90170289daf878b42c6bbee0a2209943c3ae3a686cd45d6d9d6934c5d8bf8",
+    "components/display/tools/esp_display_present/dev/ARCHITECTURE_AUDIT_20261106.md": "09006106454fb6d7b20fcc72d9093341bd7b8c9ea5041f8a9a7934a9a29aad47"
+  },
+  "host_test_binary_sha256": "5e09cc296e2770789b5f3e201d40a23dcae393757fdca64548956845d15f71b4"
+}

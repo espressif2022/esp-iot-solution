@@ -11,6 +11,8 @@
  * Stop/destroy require the producer to be paused; callbacks may run concurrently. */
 typedef struct present_resources present_resources_t;
 typedef struct {
+    /* Creation-time allocation plan, not a mutable runtime layout snapshot.
+     * Query engine caps for the current producer dimensions after rotation. */
     esp_display_present_resolved_plan_t plan;
     const char *preferred_executor;
     uint64_t hardware_copies, cpu_copies; /* Executed attempts, including errors. */
@@ -28,5 +30,5 @@ esp_err_t present_resources_destroy(present_resources_t *, uint32_t timeout_ms);
 
 esp_err_t present_resources_stop(present_resources_t *, uint32_t timeout_ms);
 
-/* Drains native work, retains driver pool and logical shape. */
+/* Drains native work, retains the physical driver pool; logical axes may swap. */
 esp_err_t present_resources_set_rotation(present_resources_t *, esp_display_present_engine_rotation_t, uint32_t);

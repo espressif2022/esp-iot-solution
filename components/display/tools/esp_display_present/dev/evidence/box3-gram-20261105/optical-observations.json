@@ -1,0 +1,12 @@
+{
+  "observations": [
+    {
+      "phase": "original adapter, early GRAM matrix",
+      "source": "user visual observation in chat",
+      "statement": "正常，撕裂是正常的",
+      "interpretation": "Display content observed normal. Tearing accepted for ordinary SPI GRAM without TE. This is not a per-case full optical matrix acceptance."
+    }
+  ],
+  "te_not_connected": true,
+  "tearing_is_not_failure_for_this_throughput_run": true
+}

@@ -8,6 +8,8 @@ from pathlib import Path
 import shutil
 
 PACKAGES = {
+    'esp_lcd_touch': ('1.2.1_3f85a7d9', 'esp_lcd_touch.c', 'driver esp_lcd', None),
+    'esp_lcd_ili9341': ('2.1.0_840387ee', 'esp_lcd_ili9341.c', 'esp_lcd esp_driver_gpio', (2, 1, 0)),
     'esp_lcd_co5300': ('2.2.0_1a5cbaa0', 'esp_lcd_co5300.c', 'esp_lcd esp_driver_gpio', (2, 2, 0)),
     'esp_lcd_gc9503': ('3.0.1_6940bf99', 'esp_lcd_gc9503.c', 'esp_lcd esp_driver_gpio esp_lcd_panel_io_additions', (3, 0, 1)),
     'esp_lcd_panel_io_additions': ('1.0.1~1_1856c8b2', 'esp_lcd_panel_io_3wire_spi.c', 'esp_lcd esp_driver_gpio esp_io_expander', (1, 0, 1)),
@@ -17,8 +19,10 @@ PACKAGES = {
 }
 p = argparse.ArgumentParser()
 p.add_argument('--cache', type=Path, default=Path.home()/'.cache/Espressif/ComponentManager/service_d92d8f1e')
+p.add_argument('--output', type=Path, help='External output directory (recommended for unified runner)')
 a = p.parse_args()
-root = Path(__file__).resolve().parent/'deps'
+root = (a.output or Path(__file__).resolve().parent/'deps').resolve()
+root.mkdir(parents=True, exist_ok=True)
 manifest = {}
 for name, (version, source, requires, ver) in PACKAGES.items():
     origin = a.cache/f'espressif__{name}_{version}'

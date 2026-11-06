@@ -1,0 +1,17 @@
+{
+  "backup_bytes": 16777216,
+  "backup_sha256": "75d4d95c321925b6bf2afaa58ed9888f65f8f353ac2f6957144528825ce27cda",
+  "restore_prefix_bytes": 1040384,
+  "firmware": {
+    "present": {
+      "bytes": 972064,
+      "sha256": "1a476bde9a3a03479b3fd9b526be1441c0d4557407fbbf552b421fd3e0e6fa66"
+    },
+    "adapter": {
+      "bytes": 942400,
+      "sha256": "d4ee6951224b14c7d360c9ad9410e72cf9ac7bb14bdf2fc17dc0814a3c688bd7"
+    }
+  },
+  "original_backup_local_path": "/tmp/present-box3-gram-20261105/original-16MB.bin",
+  "restore_prefix_local_path": "/tmp/present-box3-gram-20261105/original-prefix.bin"
+}

@@ -251,7 +251,9 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
                 .rotation = (esp_display_present_engine_rotation_t)(hw->rotation / 90),
                 .async_copy = async,
                 .deferred_submit = deferred,
-                .fixed_rotation = true,
+                /* The panel's physical axes stay fixed. Runtime quarter-turns
+                 * transpose the producer layout in the backend. */
+                .fixed_rotation = false,
                 .active_writes = framebuffer && mode == ESP_DISPLAY_PRESENT_MODE_NONE,
                 .tx_staging = !framebuffer && !te && input->target.drawbuf.in_psram,
                 .te_gate = te ? (esp_display_present_te_gate_t)
@@ -397,7 +399,7 @@ static esp_err_t create_scanout_adapter(present_resources_t *resources, const es
     return error != ESP_OK ? error : esp_display_present_lcd_scanout_get_output_caps(resources->scanout, &config->output);
 }
 
-/* Select direct external DMA only from driver facts; TE staging must hold a full frame. */
+/* Direct DMA requires driver facts or an explicit matching IO declaration. */
 static esp_err_t create_spi_adapter(present_resources_t *resources, const esp_display_presenter_config_t *input,
                                     esp_display_present_plan_config_t *config)
 {
@@ -406,7 +408,7 @@ static esp_err_t create_spi_adapter(present_resources_t *resources, const esp_di
     bool quarter = config->presenter.backend.rotation & 1;
     size_t staging = resources->te_required ? te_staging_bytes(input->width, input->height,
                                                                config->presenter.backend.rotation, bpp) : 0;
-    bool direct_psram = false;
+    bool direct_psram = input->target.hw.spi_psram_dma_direct;
 #ifdef ESP_LCD_SPI_IO_HAS_MEMORY_INFO
     esp_lcd_panel_io_spi_memory_info_t memory;
     if (esp_lcd_panel_io_spi_get_memory_info(input->target.hw.io, &memory) == ESP_OK) {
@@ -414,7 +416,7 @@ static esp_err_t create_spi_adapter(present_resources_t *resources, const esp_di
     }
 #endif
     if (direct_psram) {
-        staging = 0; /* Driver facts establish the configured direct path. */
+        staging = 0; /* The configured IO supports direct external DMA. */
     }
     if (resources->te_required && staging) {
         size_t row = (size_t)(quarter ? input->height : input->width) * bpp;
@@ -629,15 +631,7 @@ esp_err_t present_resources_set_rotation(present_resources_t *resources, esp_dis
     if (!resources || resources->status.closing) {
         return ESP_ERR_INVALID_STATE;
     }
-    esp_err_t error = esp_display_present_engine_set_rotation(resources->presenter, rotation, timeout);
-    if (error != ESP_OK) {
-        return error;
-    }
-    esp_display_present_backend_caps_t caps;
-    error = esp_display_present_engine_get_caps(resources->presenter, &caps);
-    if (error == ESP_OK && resources->scanout) {
-        uint32_t w = caps.draw_layout.width, h = caps.draw_layout.height;
-        error = present_lcd_scanout_set_layout(resources->scanout, rotation & 1 ? h : w, rotation & 1 ? w : h);
-    }
-    return error;
+    /* The engine owns the logical layout transition. The adapter owns the
+     * immutable driver dimensions; do not introduce a second shape commit. */
+    return esp_display_present_engine_set_rotation(resources->presenter, rotation, timeout);
 }

@@ -524,19 +524,3 @@ esp_err_t esp_display_present_lcd_scanout_get_output_caps(esp_display_present_lc
     };
     return ESP_OK;
 }
-
-esp_err_t present_lcd_scanout_set_layout(esp_display_present_lcd_scanout_t *scanout, uint32_t width, uint32_t height)
-{
-    if (!scanout || !width || !height || width > INT_MAX || height > INT_MAX ||
-            (uint64_t)width * height != (uint64_t)scanout->config.width * scanout->config.height) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    present_lock_enter(&scanout->lock, false);
-    bool busy = scanout->closing || scanout->cookie;
-    if (!busy) {
-        scanout->config.width = width;
-        scanout->config.height = height;
-    }
-    present_lock_exit(&scanout->lock, false);
-    return busy ? ESP_ERR_INVALID_STATE : ESP_OK;
-}

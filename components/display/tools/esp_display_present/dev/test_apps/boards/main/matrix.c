@@ -162,7 +162,7 @@ static void run_case(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_handle_t io,
                 .panel = panel, .io = io, .rotation = rot,
 #if CONFIG_IDF_TARGET_ESP32S31
                 .panel_type = ESP_DISPLAY_PRESENT_PANEL_IO, .swap_bytes = true,
-                .te_enabled = p->te, .te_sync = {.gpio_num = QSPI_TE_GPIO, .bus_freq_hz = 40000000, .data_lines = 4},
+                .te_enabled = p->te, .spi_psram_dma_direct = true, .te_sync = {.gpio_num = QSPI_TE_GPIO, .bus_freq_hz = 40000000, .data_lines = 4},
 #elif CONFIG_IDF_TARGET_ESP32S3
                 .panel_type = ESP_DISPLAY_PRESENT_PANEL_RGB,
 #else

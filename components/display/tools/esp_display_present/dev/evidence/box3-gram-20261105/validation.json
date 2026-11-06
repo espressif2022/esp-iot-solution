@@ -1,0 +1,30 @@
+{
+  "adapter": {
+    "complete": true,
+    "passes": 4,
+    "expected_passes": 4,
+    "skips": 40,
+    "expected_skips": 40,
+    "scenes": 64,
+    "expected_scenes": 64,
+    "all_passes_16_scenes": true,
+    "errors": [],
+    "error_lines": [],
+    "boot_count": 1,
+    "passed": true
+  },
+  "present": {
+    "complete": true,
+    "passes": 20,
+    "expected_passes": 20,
+    "skips": 24,
+    "expected_skips": 24,
+    "scenes": 320,
+    "expected_scenes": 320,
+    "all_passes_16_scenes": true,
+    "errors": [],
+    "error_lines": [],
+    "boot_count": 1,
+    "passed": true
+  }
+}

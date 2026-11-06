@@ -1,3 +1,5 @@
+> 当前统一入口见 [dev/README.md](../../README.md)，板子身份以 [boards.json](../../boards/boards.json) 为准。下面保留历史专项命令与验收记录；端口号可能已经变化。P4跨轴问题已在2026-11-06修复并通过Host，旧诊断的失败描述不代表最新代码状态。
+
 # Display presenter board acceptance application
 
 This independent ESP-IDF application exercises the current presenter engine,

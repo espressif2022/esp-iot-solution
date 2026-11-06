@@ -1,0 +1,57 @@
+{
+  "date": "2026-11-05",
+  "commit": "85ae616826780fbd7c24ba7a841eea2cf41992e9",
+  "board": "ESP-BOX-3",
+  "mac": "3c:84:27:05:ba:78",
+  "chip": "ESP32-S3 rev0.2 R16",
+  "port": "/dev/ttyACM0",
+  "panel": "ILI9341 (ESP-BOX-3 BSP initialization sequence)",
+  "physical_resolution": [
+    320,
+    240
+  ],
+  "bus_hz": 40000000,
+  "data_lines": 1,
+  "spi_host": "SPI3_HOST",
+  "spi_queue_depth": 1,
+  "te_gpio": null,
+  "tile_rows": 50,
+  "lvgl": "9.6.0~1",
+  "lvgl_draw_units": 2,
+  "cpu_mhz": 240,
+  "psram_mhz": 80,
+  "worker_priority": 6,
+  "worker_stack_bytes": 24576,
+  "worker_affinity": "none",
+  "refresh_period_ms": 15,
+  "dpi": 60,
+  "idf_commit": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+  "idf_lcd_clean": true,
+  "adapter_clean": true,
+  "present_gram_background": false,
+  "rotation_policy": "Present uses software rotation with fixed panel orientation; adapter NONE software rotation unsupported, so nonzero angles marked unavailable. Hardware panel rotation is not substituted.",
+  "metric": "LVGL summary mean over all valid scenes; adapter does not supply measured transport FPS.",
+  "sha256": {
+    "present/main/main.c": "1e36d9959ed2aa7490dc1ed882ad3f720821a422b7f21e062329ad51340ff9a9",
+    "present/sdkconfig": "78bd15f293f838a1f21a6c06b121b762dab8ea7ea081b2c7cc2f844d813af6ba",
+    "present/managed_components/lvgl__lvgl/demos/benchmark/lv_demo_benchmark.c": "b76c85e35b4b17723c25b5aa4c64282f92563ef284ee4064fdcddc69fa5ad130",
+    "present/components/hw_init/lcd_init.c": "148fa2c8f9f4b93ddeb62b5bdd092400ed64a3f5144821398e2f9f60089921e5",
+    "adapter/main/main.c": "eb5cba1c75c5eb856ac30a057b9309ea593f5dd319066f98f4dacdf1adf1d79c",
+    "adapter/sdkconfig": "f35b20459fc20b3ebc46982bcdc7ff5472b9e5922cd40fae0519876e48a98426",
+    "adapter/managed_components/lvgl__lvgl/demos/benchmark/lv_demo_benchmark.c": "b76c85e35b4b17723c25b5aa4c64282f92563ef284ee4064fdcddc69fa5ad130",
+    "adapter/components/hw_init/lcd_init.c": "148fa2c8f9f4b93ddeb62b5bdd092400ed64a3f5144821398e2f9f60089921e5"
+  },
+  "backup_bytes": 16777216,
+  "backup_sha256": "75d4d95c321925b6bf2afaa58ed9888f65f8f353ac2f6957144528825ce27cda",
+  "restore_prefix_bytes": 1040384,
+  "firmware": {
+    "present": {
+      "bytes": 972064,
+      "sha256": "1a476bde9a3a03479b3fd9b526be1441c0d4557407fbbf552b421fd3e0e6fa66"
+    },
+    "adapter": {
+      "bytes": 942400,
+      "sha256": "d4ee6951224b14c7d360c9ad9410e72cf9ac7bb14bdf2fc17dc0814a3c688bd7"
+    }
+  }
+}

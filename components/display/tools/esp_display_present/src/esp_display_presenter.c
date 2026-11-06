@@ -801,6 +801,10 @@ esp_err_t esp_display_presenter_set_rotation(esp_display_presenter_t *presenter,
         ++presenter->timeline.generation;
         presenter->full_next = true;
         error = refresh_caps(presenter);
+        if (error == ESP_OK) {
+            presenter->config.width = presenter->caps.draw_layout.width;
+            presenter->config.height = presenter->caps.draw_layout.height;
+        }
     }
     present_mutex_give(presenter->gate);
     return error;

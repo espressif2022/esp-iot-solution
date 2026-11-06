@@ -202,9 +202,11 @@ esp_err_t esp_display_presenter_delete(
  * Reconfigure logical-to-physical rotation without changing panel scan mode.
  *
  * The producer must first stop submitting and quiesce the presenter. The
- * presenter object remains valid and keeps the same address; its target and
- * endpoint are rebuilt so all rotation-dependent storage and transforms are
- * updated consistently. On failure, the previous configuration is restored.
+ * presenter object and physical panel dimensions remain unchanged. Crossing
+ * between 0/180 and 90/270 swaps the logical width and height; query get_caps()
+ * again before rendering. Rotation-dependent producer storage and transforms
+ * are updated after pending work drains. On failure, the previous configuration
+ * remains valid.
  */
 esp_err_t esp_display_presenter_set_rotation(
     esp_display_presenter_t *presenter,

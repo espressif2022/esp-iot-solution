@@ -1,0 +1,15 @@
+{
+  "board": "s31-qspi",
+  "suite": "te-lifecycle",
+  "implementation": "present",
+  "cases": [],
+  "idf_commit": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+  "lvgl_version": null,
+  "lvgl_benchmark_sha256": null,
+  "comparable_sdkconfig_sha256": "b5955ca88b83d1d2e822b3dea7583e63843ed4e47f2ebc85fa89d93894e6bcf4",
+  "defaults_sha256": {
+    "base.defaults": "9a027a81dd3e883f11d7cb64da66e6efa95c6191f0c56bd43e402c0e553aedfa",
+    "s31-qspi.defaults": "b5b38330d693f3fcc774128700689fe207af180dd4fbdd558c4b5c05c6d0b6e1"
+  },
+  "firmware_sha256": "aecec0165e5763a2dea16167855b49f9c4d50ecafadffea94c3b393f2a4d4c18"
+}

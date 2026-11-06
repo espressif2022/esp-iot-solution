@@ -1,0 +1,25 @@
+{
+  "complete": true,
+  "elapsed_s": 558,
+  "passes": [
+    "I (71736) lvgl_bench: PASS mode=TE_C1_T1 te_buffers=1 rotation=0 frames=1040 transport_fps=15.0 lvgl_fps=18 cpu=100% render=30ms flush=26ms scenes=16",
+    "I (141349) lvgl_bench: PASS mode=TE_C1_T1 te_buffers=1 rotation=90 frames=1125 transport_fps=16.2 lvgl_fps=19 cpu=100% render=25ms flush=23ms scenes=16",
+    "I (210970) lvgl_bench: PASS mode=TE_C1_T2 te_buffers=1 rotation=0 frames=1140 transport_fps=16.4 lvgl_fps=19 cpu=100% render=28ms flush=21ms scenes=16",
+    "I (280410) lvgl_bench: PASS mode=TE_C1_T2 te_buffers=1 rotation=90 frames=1167 transport_fps=16.8 lvgl_fps=20 cpu=100% render=27ms flush=19ms scenes=16",
+    "I (349883) lvgl_bench: PASS mode=TE_C2_T1 te_buffers=2 rotation=0 frames=1454 transport_fps=20.9 lvgl_fps=29 cpu=100% render=27ms flush=11ms scenes=16",
+    "I (419273) lvgl_bench: PASS mode=TE_C2_T1 te_buffers=2 rotation=90 frames=1448 transport_fps=20.9 lvgl_fps=30 cpu=100% render=25ms flush=11ms scenes=16",
+    "I (488766) lvgl_bench: PASS mode=TE_C2_T2 te_buffers=2 rotation=0 frames=1513 transport_fps=21.8 lvgl_fps=30 cpu=100% render=28ms flush=8ms scenes=16",
+    "I (558160) lvgl_bench: PASS mode=TE_C2_T2 te_buffers=2 rotation=90 frames=1510 transport_fps=21.8 lvgl_fps=30 cpu=100% render=27ms flush=7ms scenes=16"
+  ],
+  "meters": [
+    "I (71732) TE_METER: label=TE_C1_T1 admitted=1040 wait_avg_us=2529 wait_max_us=8186 immediate=18 polls=7746 tx_n=1040 tx_avg_us=24001 tx_max_us=24302 hist_lt_1_4_8_12_17_34_inf_ms=527,166,346,1,0,0,0",
+    "I (141345) TE_METER: label=TE_C1_T1 admitted=1125 wait_avg_us=1961 wait_max_us=7755 immediate=29 polls=5601 tx_n=1125 tx_avg_us=23764 tx_max_us=24003 hist_lt_1_4_8_12_17_34_inf_ms=714,127,284,0,0,0,0",
+    "I (210966) TE_METER: label=TE_C1_T2 admitted=1140 wait_avg_us=2193 wait_max_us=7923 immediate=265 polls=7040 tx_n=1140 tx_avg_us=23931 tx_max_us=24198 hist_lt_1_4_8_12_17_34_inf_ms=601,220,319,0,0,0,0",
+    "I (280406) TE_METER: label=TE_C1_T2 admitted=1167 wait_avg_us=1779 wait_max_us=7750 immediate=12 polls=5514 tx_n=1167 tx_avg_us=23766 tx_max_us=24001 hist_lt_1_4_8_12_17_34_inf_ms=723,216,228,0,0,0,0",
+    "I (349879) TE_METER: label=TE_C2_T1 admitted=1454 wait_avg_us=1678 wait_max_us=8054 immediate=338 polls=4143 tx_n=1454 tx_avg_us=23959 tx_max_us=24313 hist_lt_1_4_8_12_17_34_inf_ms=861,344,248,1,0,0,0",
+    "I (419269) TE_METER: label=TE_C2_T1 admitted=1448 wait_avg_us=1687 wait_max_us=8454 immediate=60 polls=4316 tx_n=1448 tx_avg_us=23860 tx_max_us=24139 hist_lt_1_4_8_12_17_34_inf_ms=799,436,211,2,0,0,0",
+    "I (488762) TE_METER: label=TE_C2_T2 admitted=1513 wait_avg_us=1778 wait_max_us=9726 immediate=279 polls=4534 tx_n=1513 tx_avg_us=23974 tx_max_us=24316 hist_lt_1_4_8_12_17_34_inf_ms=821,394,295,3,0,0,0",
+    "I (558156) TE_METER: label=TE_C2_T2 admitted=1510 wait_avg_us=1751 wait_max_us=8068 immediate=51 polls=4451 tx_n=1510 tx_avg_us=23868 tx_max_us=24216 hist_lt_1_4_8_12_17_34_inf_ms=864,383,262,1,0,0,0"
+  ],
+  "errors": []
+}

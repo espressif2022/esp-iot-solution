@@ -1,0 +1,65 @@
+mode,te_buffers,rotation,scene,fps,cpu_percent,render_ms,flush_ms
+GRAM_T1_INTERNAL,0,0,Empty screen,27,100,3,31
+GRAM_T1_INTERNAL,0,0,Moving wallpaper,25,100,5,31
+GRAM_T1_INTERNAL,0,0,Single rectangle,66,100,0,0
+GRAM_T1_INTERNAL,0,0,Multiple rectangles,54,100,3,13
+GRAM_T1_INTERNAL,0,0,Multiple RGB images,66,100,1,0
+GRAM_T1_INTERNAL,0,0,Multiple ARGB images,66,100,1,0
+GRAM_T1_INTERNAL,0,0,Rotated ARGB images,61,100,7,7
+GRAM_T1_INTERNAL,0,0,Multiple labels,65,100,3,5
+GRAM_T1_INTERNAL,0,0,Screen sized text,14,100,32,31
+GRAM_T1_INTERNAL,0,0,Multiple arcs,66,100,0,0
+GRAM_T1_INTERNAL,0,0,Containers,61,100,3,12
+GRAM_T1_INTERNAL,0,0,Containers with overlay,22,100,11,31
+GRAM_T1_INTERNAL,0,0,Containers with opa,59,100,4,13
+GRAM_T1_INTERNAL,0,0,Containers with opa_layer,56,100,7,12
+GRAM_T1_INTERNAL,0,0,Containers with scrolling,22,100,11,31
+GRAM_T1_INTERNAL,0,0,Widgets demo,33,100,8,18
+GRAM_T2_INTERNAL,0,0,Empty screen,26,100,3,28
+GRAM_T2_INTERNAL,0,0,Moving wallpaper,30,100,6,24
+GRAM_T2_INTERNAL,0,0,Single rectangle,66,100,0,0
+GRAM_T2_INTERNAL,0,0,Multiple rectangles,64,100,3,11
+GRAM_T2_INTERNAL,0,0,Multiple RGB images,66,100,1,0
+GRAM_T2_INTERNAL,0,0,Multiple ARGB images,66,100,1,0
+GRAM_T2_INTERNAL,0,0,Rotated ARGB images,65,100,6,4
+GRAM_T2_INTERNAL,0,0,Multiple labels,66,100,2,3
+GRAM_T2_INTERNAL,0,0,Screen sized text,26,100,31,5
+GRAM_T2_INTERNAL,0,0,Multiple arcs,66,100,0,0
+GRAM_T2_INTERNAL,0,0,Containers,63,100,2,11
+GRAM_T2_INTERNAL,0,0,Containers with overlay,30,100,11,19
+GRAM_T2_INTERNAL,0,0,Containers with opa,62,100,5,8
+GRAM_T2_INTERNAL,0,0,Containers with opa_layer,60,100,7,9
+GRAM_T2_INTERNAL,0,0,Containers with scrolling,30,100,11,20
+GRAM_T2_INTERNAL,0,0,Widgets demo,47,100,8,9
+GRAM_T1_PSRAM,0,0,Empty screen,22,100,3,31
+GRAM_T1_PSRAM,0,0,Moving wallpaper,25,100,5,32
+GRAM_T1_PSRAM,0,0,Single rectangle,66,100,0,0
+GRAM_T1_PSRAM,0,0,Multiple rectangles,53,100,3,13
+GRAM_T1_PSRAM,0,0,Multiple RGB images,66,100,1,0
+GRAM_T1_PSRAM,0,0,Multiple ARGB images,66,100,1,0
+GRAM_T1_PSRAM,0,0,Rotated ARGB images,61,100,7,7
+GRAM_T1_PSRAM,0,0,Multiple labels,65,100,3,5
+GRAM_T1_PSRAM,0,0,Screen sized text,15,100,31,31
+GRAM_T1_PSRAM,0,0,Multiple arcs,65,100,0,0
+GRAM_T1_PSRAM,0,0,Containers,60,100,3,13
+GRAM_T1_PSRAM,0,0,Containers with overlay,22,100,11,32
+GRAM_T1_PSRAM,0,0,Containers with opa,58,100,5,11
+GRAM_T1_PSRAM,0,0,Containers with opa_layer,55,100,7,13
+GRAM_T1_PSRAM,0,0,Containers with scrolling,21,100,11,31
+GRAM_T1_PSRAM,0,0,Widgets demo,32,100,8,18
+GRAM_T2_PSRAM,0,0,Empty screen,26,100,3,28
+GRAM_T2_PSRAM,0,0,Moving wallpaper,29,100,8,23
+GRAM_T2_PSRAM,0,0,Single rectangle,66,100,0,0
+GRAM_T2_PSRAM,0,0,Multiple rectangles,64,100,3,10
+GRAM_T2_PSRAM,0,0,Multiple RGB images,66,100,1,0
+GRAM_T2_PSRAM,0,0,Multiple ARGB images,66,100,1,0
+GRAM_T2_PSRAM,0,0,Rotated ARGB images,65,100,7,4
+GRAM_T2_PSRAM,0,0,Multiple labels,66,100,0,4
+GRAM_T2_PSRAM,0,0,Screen sized text,25,100,32,5
+GRAM_T2_PSRAM,0,0,Multiple arcs,66,100,0,0
+GRAM_T2_PSRAM,0,0,Containers,63,100,3,10
+GRAM_T2_PSRAM,0,0,Containers with overlay,29,100,12,19
+GRAM_T2_PSRAM,0,0,Containers with opa,63,100,6,8
+GRAM_T2_PSRAM,0,0,Containers with opa_layer,58,100,9,9
+GRAM_T2_PSRAM,0,0,Containers with scrolling,29,100,12,19
+GRAM_T2_PSRAM,0,0,Widgets demo,47,100,8,9

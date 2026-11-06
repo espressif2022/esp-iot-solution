@@ -1,0 +1,497 @@
+diff --git a/components/display/tools/esp_display_present/MIGRATION_STATUS.md b/components/display/tools/esp_display_present/MIGRATION_STATUS.md
+index ce75d8f96..e6619aa75 100644
+--- a/components/display/tools/esp_display_present/MIGRATION_STATUS.md
++++ b/components/display/tools/esp_display_present/MIGRATION_STATUS.md
+@@ -13,7 +13,7 @@ ASAN_OPTIONS=detect_leaks=1 python3 dev/tools/dev.py test --lvgl-dir /path/to/lv
+ 
+ 当前提交的 Host 项、三板 benchmark 及证据见 [当前验证记录](dev/VALIDATION.md)；[历史验证记录](dev/RESULTS.md) 对应更早源码。尚未发布新组件包，真实光学 TE 时序和外部应用兼容性需独立验证。
+ 
+-最新 [三板模式／旋转矩阵](dev/MODE_ROTATION_RESULTS_20261103.md)发现：P4 非方形面板通过公开接口运行时跨轴旋转会提交超出物理尺寸的区域；S31 GRAM 以同步原地字节序转换启动时，运行时改到非零旋转返回不支持。这两项尚未修复。
++历史 [三板模式／旋转矩阵](dev/MODE_ROTATION_RESULTS_20261103.md)发现 P4 非方形面板通过公开接口运行时跨轴旋转会提交超出物理尺寸的区域。2026-11-06 已在 Host 复现并修复逻辑／物理尺寸权威冲突，固定物理 panel 的 RGB/DSI 全模式旋转验证通过，仍待 P4 上板复测，见 [架构检查](dev/ARCHITECTURE_AUDIT_20261106.md)。S31 GRAM 以同步原地字节序转换启动时，运行时改到非零旋转仍可返回不支持。
+ 
+ 为兼容既有配置，本轮保留 `PV2_LEGACY_*` Kconfig 键。RGB bounce 人工确认仅用于缺少驱动能力查询的旧驱动；可查询时以驱动事实为准。
+ 
+diff --git a/components/display/tools/esp_display_present/README_CN.md b/components/display/tools/esp_display_present/README_CN.md
+index 99dca812b..60fe1057c 100644
+--- a/components/display/tools/esp_display_present/README_CN.md
++++ b/components/display/tools/esp_display_present/README_CN.md
+@@ -14,4 +14,6 @@ RGB bounce / MIPI DSI 的多缓冲 scanout 在提交成功后先排空已经执
+ 
+ 普通内部 tile 的 GRAM 可试用 `CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND`，默认关闭。它复用引擎 sender，将可能阻塞的驱动提交移出引擎 gate，不强制增加像素复制；旋转／PSRAM 路径继续采用原有调度。实验 sender 优先级由 `CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY` 设置，默认 7。适用条件、RAM 成本和实测收益见 [GRAM 后台提交首版](dev/GRAM_BACKGROUND_RESULTS_20261104.md)。
+ 
++2026-11-06 的 [架构检查与 Host 收敛](dev/ARCHITECTURE_AUDIT_20261106.md)修复了公开接口运行时跨轴旋转的尺寸权威冲突：panel 物理尺寸固定，由 backend 更新逻辑宽高，资源层不再修改 scanout 物理视图。旋转后需重新查询 caps。新增了创建失败回滚和固定物理屏幕的 RGB/DSI/GRAM 旋转验证；该修复尚未重新上板。
++
+ 当前提交的 [三板 LVGL 帧率、Host 测试项与证据](dev/VALIDATION.md) 单独列出测试条件和边界。[模式与旋转矩阵](dev/MODE_ROTATION_RESULTS_20261103.md)记录了 P4 公开接口运行时跨轴旋转的实板缺陷，以及 S31 GRAM 的运行时旋转限制。TE 的时序假设见 [TE 说明](docs/TE_TIMING.md)。
+diff --git a/components/display/tools/esp_display_present/dev/CMakeLists.txt b/components/display/tools/esp_display_present/dev/CMakeLists.txt
+index d435d95e0..17c68a8d6 100644
+--- a/components/display/tools/esp_display_present/dev/CMakeLists.txt
++++ b/components/display/tools/esp_display_present/dev/CMakeLists.txt
+@@ -154,7 +154,7 @@ target_include_directories(test_legacy_facade PRIVATE ../src)
+ target_compile_definitions(test_legacy_facade PRIVATE PRESENT_HOST=1)
+ target_compile_options(test_legacy_facade PRIVATE -Wall -Wextra -Werror -UNDEBUG)
+ target_link_libraries(test_legacy_facade PRIVATE present_legacy)
+-target_link_options(test_legacy_facade PRIVATE -Wl,--wrap=present_presenter_control_release -Wl,--wrap=present_presenter_control_query_frame -Wl,--wrap=present_presenter_control_get_status_snapshot)
++target_link_options(test_legacy_facade PRIVATE -Wl,--wrap=present_mutex_create -Wl,--wrap=present_event_create -Wl,--wrap=present_worker_create -Wl,--wrap=present_alloc -Wl,--wrap=present_alloc_pixels_in -Wl,--wrap=present_presenter_control_release -Wl,--wrap=present_presenter_control_query_frame -Wl,--wrap=present_presenter_control_get_status_snapshot)
+ if(PRESENT_LVGL_DIR)
+     target_compile_definitions(test_legacy_facade PRIVATE LEGACY_WITH_LVGL=1)
+     target_link_libraries(test_legacy_facade PRIVATE present_legacy_lvgl m)
+diff --git a/components/display/tools/esp_display_present/dev/tests/test_legacy_facade.c b/components/display/tools/esp_display_present/dev/tests/test_legacy_facade.c
+index bb4594bd2..dde24814b 100644
+--- a/components/display/tools/esp_display_present/dev/tests/test_legacy_facade.c
++++ b/components/display/tools/esp_display_present/dev/tests/test_legacy_facade.c
+@@ -10,6 +10,53 @@
+ #ifdef LEGACY_WITH_LVGL
+ #include "esp_lv_present.h"
+ #endif
++/* Inject failures at cross-module metadata/pixel allocation boundaries.
++ * Explicit tile counts prevent the optional 2 -> 1 resource policy hiding OOM.
++ * No rendering starts during the sweep; every failed create must detach. */
++static unsigned allocation_target, allocation_index;
++static unsigned allocation_kind; /* metadata, pixels, mutex, event, worker */
++void *__real_present_alloc(size_t);
++void *__wrap_present_alloc(size_t bytes)
++{
++    if (allocation_target && allocation_kind == 0 && ++allocation_index == allocation_target) {
++        return NULL;
++    }
++    return __real_present_alloc(bytes);
++}
++void *__real_present_alloc_pixels_in(size_t, bool);
++void *__wrap_present_alloc_pixels_in(size_t bytes, bool external)
++{
++    if (allocation_target && allocation_kind == 1 && ++allocation_index == allocation_target) {
++        return NULL;
++    }
++    return __real_present_alloc_pixels_in(bytes, external);
++}
++
++present_mutex_t *__real_present_mutex_create(void);
++present_mutex_t *__wrap_present_mutex_create(void)
++{
++    if (allocation_target && allocation_kind == 2 && ++allocation_index == allocation_target) {
++        return NULL;
++    }
++    return __real_present_mutex_create();
++}
++present_os_event_t *__real_present_event_create(void);
++present_os_event_t *__wrap_present_event_create(void)
++{
++    if (allocation_target && allocation_kind == 3 && ++allocation_index == allocation_target) {
++        return NULL;
++    }
++    return __real_present_event_create();
++}
++present_worker_t *__real_present_worker_create(present_worker_entry_fn, void *, uint32_t, unsigned);
++present_worker_t *__wrap_present_worker_create(present_worker_entry_fn entry, void *user, uint32_t stack_bytes, unsigned priority)
++{
++    if (allocation_target && allocation_kind == 4 && ++allocation_index == allocation_target) {
++        return NULL;
++    }
++    return __real_present_worker_create(entry, user, stack_bytes, priority);
++}
++
+ static unsigned injected_snapshot_failures, successful_receipt_releases;
+ esp_err_t __real_present_presenter_control_get_status_snapshot(esp_display_present_engine_t *, esp_display_present_engine_status_t *, bool *);
+ esp_err_t __wrap_present_presenter_control_get_status_snapshot(esp_display_present_engine_t *presenter, esp_display_present_engine_status_t *out, bool *valid)
+@@ -953,11 +1000,16 @@ static void gram_rotation_superset(void)
+         assert(!buffers);
+         esp_display_presenter_t *presenter;
+         OK(esp_display_presenter_create(&cfg, &presenter));
+-        for (unsigned pass = 0; pass < 2; ++pass) {
+-            unsigned rotation = ((r + pass * 2) % 4) * 90;
++        for (unsigned pass = 0; pass < 4; ++pass) {
++            unsigned rotation = ((r + pass) % 4) * 90;
+             if (pass) {
+                 OK(esp_display_presenter_set_rotation(presenter, rotation));
+             }
++            unsigned width = pass & 1 ? 4 : 8;
++            unsigned height = pass & 1 ? 8 : 4;
++            esp_display_presenter_caps_t caps;
++            OK(esp_display_presenter_get_caps(presenter, &caps));
++            assert(caps.width == width && caps.height == height);
+             size_t count;
+             bool full;
+             OK(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full));
+@@ -965,20 +1017,22 @@ static void gram_rotation_superset(void)
+             esp_display_presenter_buffer_t buffer;
+             OK(esp_display_presenter_acquire_buffer(presenter, &buffer));
+             uint16_t expected[32] = {0};
+-            for (int y = 0; y < 4; ++y) {
+-                for (int x = 0; x < 8; ++x) {
+-                    uint16_t pixel = 0x100 + pass * 0x100 + y * 8 + x;
+-                    ((uint16_t *)buffer.surface.pixels)[y * 8 + x] = pixel;
+-                    esp_display_present_point_t logical = {x, y}, physical;
+-                    OK(esp_display_present_geometry_map_logical_point_to_physical(rotation,
+-                    (esp_display_present_size_t) {
+-                        8, 4
+-                    }, &logical, &physical));
+-                    expected[physical.y * panel.physical_width + physical.x] = pixel;
++            for (unsigned y = 0; y < height; ++y) {
++                for (unsigned x = 0; x < width; ++x) {
++                    uint16_t pixel = 0x100 + pass * 0x100 + y * width + x;
++                    ((uint16_t *)buffer.surface.pixels)[y * width + x] = pixel;
++                    unsigned px, py;
++                    switch (rotation) {
++                    case 90: px = height - 1 - y; py = x; break;
++                    case 180: px = width - 1 - x; py = height - 1 - y; break;
++                    case 270: px = y; py = width - 1 - x; break;
++                    default: px = x; py = y; break;
++                    }
++                    expected[py * panel.physical_width + px] = pixel;
+                 }
+             }
+-            esp_display_present_area_t area = {0, 0, 7, 3};
+-            OK(esp_display_presenter_submit_buffer(presenter, &buffer, &area, 16));
++            esp_display_present_area_t area = {0, 0, width - 1, height - 1};
++            OK(esp_display_presenter_submit_buffer(presenter, &buffer, &area, width * 2));
+             OK(esp_display_presenter_commit_frame(presenter, NULL));
+             OK(esp_display_presenter_quiesce(presenter, 1000));
+             assert(!memcmp(image, expected, sizeof(expected)));
+@@ -1049,19 +1103,29 @@ static void te_compatibility(void)
+ static void rotation_reference(void)
+ {
+     const esp_display_present_rotation_t rotations[] = {0, 90, 180, 270};
+-    const esp_display_present_mode_t modes[] = {ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL, ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL, ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT};
+-    for (unsigned mode = 0; mode < 3; ++mode) {
++    const esp_display_present_mode_t modes[] = {
++        ESP_DISPLAY_PRESENT_MODE_NONE,
++        ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL, ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL,
++        ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL, ESP_DISPLAY_PRESENT_MODE_TRIPLE_FULL,
++        ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT, ESP_DISPLAY_PRESENT_MODE_AUTO
++    };
++    for (unsigned variant = 0; variant < 2 * sizeof(modes) / sizeof(modes[0]); ++variant) {
++        unsigned mode = variant % (sizeof(modes) / sizeof(modes[0]));
++        bool rgb = variant >= sizeof(modes) / sizeof(modes[0]);
+         for (unsigned r = 0; r < 4; ++r) {
+             struct fake_lcd panel;
+             init_panel(&panel);
+             panel.physical_width = r & 1 ? 4 : 8;
+             panel.physical_height = r & 1 ? 8 : 4;
+-            esp_display_presenter_config_t cfg = config(&panel, false);
++            esp_display_presenter_config_t cfg = config(&panel, rgb);
+             cfg.target.fb.mode = modes[mode];
+             cfg.target.hw.rotation = rotations[r];
+             uint8_t buffers;
+             OK(esp_display_present_get_required_frame_buffer_count(&cfg.target, &buffers));
+-            assert(buffers == 2);
++            assert(buffers == (modes[mode] == ESP_DISPLAY_PRESENT_MODE_NONE ? 1 :
++                               modes[mode] == ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL ||
++                               modes[mode] == ESP_DISPLAY_PRESENT_MODE_TRIPLE_FULL ||
++                               modes[mode] == ESP_DISPLAY_PRESENT_MODE_AUTO ? 3 : 2));
+             cfg.pipeline_acquire_timeout_ms = 1;
+             esp_display_presenter_t *presenter;
+             OK(esp_display_presenter_create(&cfg, &presenter));
+@@ -1108,26 +1172,47 @@ static void rotation_reference(void)
+             assert(!memcmp(expected, panel.source, sizeof(expected)));
+             esp_display_presenter_frame_status_t status;
+             OK(esp_display_presenter_get_frame_status(presenter, &status));
++            if (!r && (modes[mode] == ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL ||
++                       modes[mode] == ESP_DISPLAY_PRESENT_MODE_TRIPLE_FULL ||
++                       modes[mode] == ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT)) {
++                /* Converting a direct physical pool into a logical canvas may
++                 * allocate. Failure must preserve generation, axes and panel. */
++                allocation_kind = 1;
++                allocation_index = 0;
++                allocation_target = 1;
++                esp_err_t error = esp_display_presenter_set_rotation(presenter, ESP_DISPLAY_PRESENT_ROTATE_90);
++                allocation_target = 0;
++                assert(error == ESP_ERR_NO_MEM);
++                esp_display_presenter_caps_t retained;
++                OK(esp_display_presenter_get_caps(presenter, &retained));
++                assert(retained.width == 8 && retained.height == 4);
++                esp_display_presenter_frame_status_t retained_status;
++                OK(esp_display_presenter_get_frame_status(presenter, &retained_status));
++                assert(retained_status.generation == status.generation);
++            }
+             OK(esp_display_presenter_set_rotation(presenter, rotations[(r + 1) % 4]));
+-            panel.physical_width = ((r + 1) & 1) ? 4 : 8;
+-            panel.physical_height = ((r + 1) & 1) ? 8 : 4;
++            /* Panel geometry never changes when the logical view rotates. */
++            esp_display_presenter_caps_t rotated_caps;
++            OK(esp_display_presenter_get_caps(presenter, &rotated_caps));
++            assert(rotated_caps.width == 4 && rotated_caps.height == 8);
+             OK(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full));
+             assert(full && !count);
+             OK(esp_display_presenter_acquire_buffer(presenter, &buffer));
+-            assert(buffer.surface.width == 8 && buffer.surface.height == 4);
+-            for (int cy = 0; cy < 4; ++cy) {
+-                for (int cx = 0; cx < 8; ++cx) {
+-                    uint16_t pixel = 0x200 + cy * 8 + cx;
+-                    ((uint16_t *)buffer.surface.pixels)[cy * 8 + cx] = pixel;
++            assert(buffer.surface.width == 4 && buffer.surface.height == 8);
++            for (int cy = 0; cy < 8; ++cy) {
++                for (int cx = 0; cx < 4; ++cx) {
++                    uint16_t pixel = 0x200 + cy * 4 + cx;
++                    ((uint16_t *)buffer.surface.pixels)[cy * 4 + cx] = pixel;
+                     esp_display_present_point_t logical = {cx, cy}, physical;
+                     OK(esp_display_present_geometry_map_logical_point_to_physical(rotations[(r + 1) % 4],
+                     (esp_display_present_size_t) {
+-                        8, 4
++                        4, 8
+                     }, &logical, &physical));
+                     expected[physical.y * panel.physical_width + physical.x] = pixel;
+                 }
+             }
+-            OK(esp_display_presenter_submit_buffer(presenter, &buffer, &area, 16));
++            esp_display_present_area_t rotated_area = {0, 0, 3, 7};
++            OK(esp_display_presenter_submit_buffer(presenter, &buffer, &rotated_area, 8));
+             OK(esp_display_presenter_commit_frame(presenter, NULL));
+             finish_scanout(&panel, presenter, 3);
+             OK(esp_display_presenter_quiesce(presenter, 100));
+@@ -1137,11 +1222,11 @@ static void rotation_reference(void)
+             assert(status.generation + 1 == unchanged.generation);
+             esp_display_presenter_caps_t caps;
+             OK(esp_display_presenter_get_caps(presenter, &caps));
+-            assert(caps.width == 8 && caps.height == 4);
+-            /* Same-axis 180-degree rebind preserves the old logical shape. */
++            assert(caps.width == 4 && caps.height == 8);
++            /* A second quarter-turn restores the original logical shape. */
+             OK(esp_display_presenter_set_rotation(presenter, rotations[(r + 2) % 4]));
+-            panel.physical_width = r & 1 ? 4 : 8;
+-            panel.physical_height = r & 1 ? 8 : 4;
++            OK(esp_display_presenter_get_caps(presenter, &caps));
++            assert(caps.width == 8 && caps.height == 4);
+             OK(esp_display_presenter_get_frame_status(presenter, &unchanged));
+             assert(unchanged.generation == status.generation + 2);
+             OK(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full));
+@@ -1414,8 +1499,113 @@ static void stop_unsealed(void)
+         }
+     }
+ }
++static esp_display_presenter_config_t lifecycle_config(struct fake_lcd *panel, unsigned profile)
++{
++    esp_display_presenter_config_t cfg = config(panel, profile == 3);
++    cfg.target.drawbuf.buffers = 2;
++    switch (profile) {
++    case 0: /* Synchronous internal GRAM. */
++    case 1: /* PSRAM GRAM with independent internal TX staging. */
++    case 2: /* Rotated asynchronous GRAM. */
++    case 5: /* TE: composed image, tile, copy worker and gate. */
++        cfg.target.hw.panel_type = ESP_DISPLAY_PRESENT_PANEL_IO;
++        cfg.target.hw.io = panel;
++        cfg.target.fb.mode = profile == 5 ? ESP_DISPLAY_PRESENT_MODE_TE_SYNC : ESP_DISPLAY_PRESENT_MODE_NONE;
++        cfg.target.drawbuf.in_psram = profile == 1;
++        if (profile == 2) {
++            cfg.width = 4;
++            cfg.height = 8;
++            cfg.target.hw.rotation = ESP_DISPLAY_PRESENT_ROTATE_90;
++        }
++        if (profile == 5) {
++            cfg.target.hw.te_enabled = true;
++            cfg.target.hw.te_sync = (esp_display_present_te_sync_config_t) {
++                .gpio_num = 1, .bus_freq_hz = 8000000
++            };
++            cfg.target.drawbuf.te_compose_buffers = 2;
++        }
++        break;
++    case 3:
++        cfg.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL;
++        break;
++    case 4:
++        cfg.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT;
++        break;
++    }
++    return cfg;
++}
++static void create_allocation_rollback(void)
++{
++    unsigned failures = 0;
++    unavailable = true;
++    for (unsigned profile = 0; profile < 6; ++profile) {
++        for (unsigned kind = 0; kind < 5; ++kind) {
++            bool complete = false;
++            for (unsigned target = 1; target < 128; ++target) {
++                struct fake_lcd panel;
++                init_panel(&panel);
++                esp_display_presenter_config_t cfg = lifecycle_config(&panel, profile);
++                esp_display_presenter_t *p = NULL;
++                allocation_index = 0;
++                allocation_kind = kind;
++                allocation_target = target;
++                esp_err_t error = esp_display_presenter_create(&cfg, &p);
++                unsigned reached = allocation_index;
++                allocation_target = 0;
++                if (error == ESP_OK) {
++                    /* The first target beyond the allocation sequence succeeds. */
++                    assert(reached < target && p);
++                    OK(esp_display_presenter_stop(p));
++                    OK(esp_display_presenter_stop(p));
++                    OK(esp_display_presenter_delete(p));
++                    complete = true;
++                } else {
++                    ++failures;
++                    assert(error == ESP_ERR_NO_MEM && !p);
++                    /* A failed create must not poison reuse of the same panel. */
++                    assert(!panel.user && !panel.calls && !panel.deleted);
++                    OK(esp_display_presenter_create(&cfg, &p));
++                    OK(esp_display_presenter_delete(p));
++                }
++                assert(!panel.user && !panel.calls && !panel.deleted);
++                free_panel(&panel);
++                if (complete) {
++                    break;
++                }
++            }
++            assert(complete);
++        }
++    }
++    printf("lifecycle: %u failed allocation/resource boundaries rolled back across 6 public configurations\n", failures);
++}
++static void delete_after_partial_resource_cleanup(void)
++{
++    struct fake_lcd panel;
++    init_panel(&panel);
++    unavailable = false;
++    esp_display_presenter_config_t cfg = lifecycle_config(&panel, 4);
++    esp_display_presenter_t *p;
++    OK(esp_display_presenter_create(&cfg, &p));
++    /* Stop/detach succeeds and engine is destroyed; executor teardown fails. */
++    destroy_failure = 1;
++    assert(esp_display_presenter_delete(p) == ESP_FAIL);
++    assert(!panel.user && !panel.deleted);
++    esp_display_presenter_state_t state;
++    OK(esp_display_presenter_get_state(p, &state));
++    assert(state == ESP_DISPLAY_PRESENTER_STATE_STOPPED);
++    esp_display_presenter_frame_status_t status;
++    OK(esp_display_presenter_get_frame_status(p, &status));
++    assert(!status.accepting_callbacks);
++    OK(esp_display_presenter_stop(p));
++    OK(esp_display_presenter_delete(p));
++    unavailable = true;
++    free_panel(&panel);
++}
++
+ int main(void)
+ {
++    create_allocation_rollback();
++    delete_after_partial_resource_cleanup();
+     stop_unsealed();
+     large_damage_capacity();
+     leases_and_stop();
+diff --git a/components/display/tools/esp_display_present/include/esp_display_present.h b/components/display/tools/esp_display_present/include/esp_display_present.h
+index 5b1f5e8e0..d10c4c104 100644
+--- a/components/display/tools/esp_display_present/include/esp_display_present.h
++++ b/components/display/tools/esp_display_present/include/esp_display_present.h
+@@ -202,9 +202,11 @@ esp_err_t esp_display_presenter_delete(
+  * Reconfigure logical-to-physical rotation without changing panel scan mode.
+  *
+  * The producer must first stop submitting and quiesce the presenter. The
+- * presenter object remains valid and keeps the same address; its target and
+- * endpoint are rebuilt so all rotation-dependent storage and transforms are
+- * updated consistently. On failure, the previous configuration is restored.
++ * presenter object and physical panel dimensions remain unchanged. Crossing
++ * between 0/180 and 90/270 swaps the logical width and height; query get_caps()
++ * again before rendering. Rotation-dependent producer storage and transforms
++ * are updated after pending work drains. On failure, the previous configuration
++ * remains valid.
+  */
+ esp_err_t esp_display_presenter_set_rotation(
+     esp_display_presenter_t *presenter,
+diff --git a/components/display/tools/esp_display_present/src/esp_display_presenter.c b/components/display/tools/esp_display_present/src/esp_display_presenter.c
+index 188096d58..5e7de9087 100644
+--- a/components/display/tools/esp_display_present/src/esp_display_presenter.c
++++ b/components/display/tools/esp_display_present/src/esp_display_presenter.c
+@@ -801,6 +801,10 @@ esp_err_t esp_display_presenter_set_rotation(esp_display_presenter_t *presenter,
+         ++presenter->timeline.generation;
+         presenter->full_next = true;
+         error = refresh_caps(presenter);
++        if (error == ESP_OK) {
++            presenter->config.width = presenter->caps.draw_layout.width;
++            presenter->config.height = presenter->caps.draw_layout.height;
++        }
+     }
+     present_mutex_give(presenter->gate);
+     return error;
+diff --git a/components/display/tools/esp_display_present/src/platform/present_lcd_scanout.c b/components/display/tools/esp_display_present/src/platform/present_lcd_scanout.c
+index 50f59d2b8..757f923f0 100644
+--- a/components/display/tools/esp_display_present/src/platform/present_lcd_scanout.c
++++ b/components/display/tools/esp_display_present/src/platform/present_lcd_scanout.c
+@@ -524,19 +524,3 @@ esp_err_t esp_display_present_lcd_scanout_get_output_caps(esp_display_present_lc
+     };
+     return ESP_OK;
+ }
+-
+-esp_err_t present_lcd_scanout_set_layout(esp_display_present_lcd_scanout_t *scanout, uint32_t width, uint32_t height)
+-{
+-    if (!scanout || !width || !height || width > INT_MAX || height > INT_MAX ||
+-            (uint64_t)width * height != (uint64_t)scanout->config.width * scanout->config.height) {
+-        return ESP_ERR_INVALID_ARG;
+-    }
+-    present_lock_enter(&scanout->lock, false);
+-    bool busy = scanout->closing || scanout->cookie;
+-    if (!busy) {
+-        scanout->config.width = width;
+-        scanout->config.height = height;
+-    }
+-    present_lock_exit(&scanout->lock, false);
+-    return busy ? ESP_ERR_INVALID_STATE : ESP_OK;
+-}
+diff --git a/components/display/tools/esp_display_present/src/present_lcd_scanout.h b/components/display/tools/esp_display_present/src/present_lcd_scanout.h
+index 640e4e282..12de7bc07 100644
+--- a/components/display/tools/esp_display_present/src/present_lcd_scanout.h
++++ b/components/display/tools/esp_display_present/src/present_lcd_scanout.h
+@@ -101,10 +101,6 @@ esp_err_t esp_display_present_lcd_scanout_get_output_caps(esp_display_present_lc
+  * fences FB0 selection. Only the factory may submit while this is pending. */
+ esp_err_t present_lcd_scanout_initialize(esp_display_present_lcd_scanout_t *, uint32_t timeout_ms);
+ 
+-/* Drained presenter only. Changes the tightly packed view, not driver storage
+- * or physical panel timings. Pixel count and exact borrowed capacities stay fixed. */
+-esp_err_t present_lcd_scanout_set_layout(esp_display_present_lcd_scanout_t *, uint32_t, uint32_t);
+-
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/components/display/tools/esp_display_present/src/present_resources.c b/components/display/tools/esp_display_present/src/present_resources.c
+index 431c36205..480f433e8 100644
+--- a/components/display/tools/esp_display_present/src/present_resources.c
++++ b/components/display/tools/esp_display_present/src/present_resources.c
+@@ -251,7 +251,9 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
+                 .rotation = (esp_display_present_engine_rotation_t)(hw->rotation / 90),
+                 .async_copy = async,
+                 .deferred_submit = deferred,
+-                .fixed_rotation = true,
++                /* The panel's physical axes stay fixed. Runtime quarter-turns
++                 * transpose the producer layout in the backend. */
++                .fixed_rotation = false,
+                 .active_writes = framebuffer && mode == ESP_DISPLAY_PRESENT_MODE_NONE,
+                 .tx_staging = !framebuffer && !te && input->target.drawbuf.in_psram,
+                 .te_gate = te ? (esp_display_present_te_gate_t)
+@@ -629,15 +631,7 @@ esp_err_t present_resources_set_rotation(present_resources_t *resources, esp_dis
+     if (!resources || resources->status.closing) {
+         return ESP_ERR_INVALID_STATE;
+     }
+-    esp_err_t error = esp_display_present_engine_set_rotation(resources->presenter, rotation, timeout);
+-    if (error != ESP_OK) {
+-        return error;
+-    }
+-    esp_display_present_backend_caps_t caps;
+-    error = esp_display_present_engine_get_caps(resources->presenter, &caps);
+-    if (error == ESP_OK && resources->scanout) {
+-        uint32_t w = caps.draw_layout.width, h = caps.draw_layout.height;
+-        error = present_lcd_scanout_set_layout(resources->scanout, rotation & 1 ? h : w, rotation & 1 ? w : h);
+-    }
+-    return error;
++    /* The engine owns the logical layout transition. The adapter owns the
++     * immutable driver dimensions; do not introduce a second shape commit. */
++    return esp_display_present_engine_set_rotation(resources->presenter, rotation, timeout);
+ }
+diff --git a/components/display/tools/esp_display_present/src/present_resources.h b/components/display/tools/esp_display_present/src/present_resources.h
+index 9c7c255d8..5410d3928 100644
+--- a/components/display/tools/esp_display_present/src/present_resources.h
++++ b/components/display/tools/esp_display_present/src/present_resources.h
+@@ -11,6 +11,8 @@
+  * Stop/destroy require the producer to be paused; callbacks may run concurrently. */
+ typedef struct present_resources present_resources_t;
+ typedef struct {
++    /* Creation-time allocation plan, not a mutable runtime layout snapshot.
++     * Query engine caps for the current producer dimensions after rotation. */
+     esp_display_present_resolved_plan_t plan;
+     const char *preferred_executor;
+     uint64_t hardware_copies, cpu_copies; /* Executed attempts, including errors. */
+@@ -28,5 +30,5 @@ esp_err_t present_resources_destroy(present_resources_t *, uint32_t timeout_ms);
+ 
+ esp_err_t present_resources_stop(present_resources_t *, uint32_t timeout_ms);
+ 
+-/* Drains native work, retains driver pool and logical shape. */
++/* Drains native work, retains the physical driver pool; logical axes may swap. */
+ esp_err_t present_resources_set_rotation(present_resources_t *, esp_display_present_engine_rotation_t, uint32_t);

@@ -15,3 +15,5 @@ See [TE timing and scheduling](docs/TE_TIMING.md) for automatic measurement, the
 See [current board benchmarks and host validation](dev/VALIDATION.md) for the tested commit, configurations, scene results, and limits.
 
 The [mode and rotation matrix](dev/MODE_ROTATION_RESULTS_20261103.md) records an unsafe runtime cross-axis rotation through the public API on the non-square P4 panel, and a runtime rotation limitation in S31 GRAM. These issues remain open.
+
+Test projects, board profiles, LVGL benchmark and adapter comparison: [dev/README.md](dev/README.md).

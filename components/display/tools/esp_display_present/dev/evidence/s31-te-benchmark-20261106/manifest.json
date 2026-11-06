@@ -1,0 +1,15 @@
+{
+  "board": "S31 mosaico QSPI CO5300",
+  "mac": "30:ed:a0:f4:0b:34",
+  "port": "/dev/ttyACM0",
+  "restore_prefix_bytes": 1118208,
+  "original_backup_path": "/tmp/present-s31-te-20261106/original-16MB.bin",
+  "original_sha256": "5a7d52d5c61b24fa8ab6e7a6d1af3f33b9809e52e55b190f2b88adb706253212",
+  "firmware_bytes": 1051408,
+  "firmware_sha256": "fc8ba6b0ac1ee468160ddbc34943c15e0c69dbe9c626e52fb8f3fc7dc3ee7568",
+  "idf": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+  "lvgl": "9.6.0~1",
+  "scope": "C1/C2 x T1/T2, angles0/90, full LVGL benchmark; linker wrappers only, no production changes",
+  "restore_verified_full_16MB": true,
+  "visual_confirmation": "用户确认 LVGL benchmark 显示正常"
+}

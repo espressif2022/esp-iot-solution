@@ -32,7 +32,7 @@ def main():
             parser.error('astyle_py not found; install the repository formatting tool')
         subprocess.run([formatter, '--astyle-version=3.4.7', '--version'], check=True)
         rules = ROOT.parents[4] / 'tools/ci/astyle-rules.yml'
-        files = sorted(p for directory in ('../src', '../include', '../../esp_lv_present/src', '../../esp_lv_present/include', 'tests', 'test_apps/smoke/main', '../test_apps/main')
+        files = sorted(p for directory in ('../src', '../include', '../../esp_lv_present/src', '../../esp_lv_present/include', 'tests', 'test_apps/smoke/main', 'test_apps/benchmark/main', 'test_apps/benchmark/components/hw_init', 'test_apps/te_lifecycle/main', '../test_apps/main')
                        for p in (ROOT / directory).rglob('*') if p.suffix in ('.c', '.h', '.cpp'))
         # Preserve the five stable application headers byte-for-byte on writes;
         # check mode still checks them against the repository rules.
@@ -61,7 +61,7 @@ def main():
         if not idf_path:
             parser.error('Activate ESP-IDF with its export.sh before idf-build')
         suffix = '-lvgl' if lvgl else ''
-        build = (args.build_dir or ROOT / 'build' / f'idf-{args.target}{suffix}').resolve()
+        build = (args.build_dir or Path(os.environ.get('PRESENT_TEST_WORK_ROOT', '/tmp/esp-display-present-tests')) / 'smoke' / f'{args.target}{suffix}').resolve()
         env = os.environ.copy()
         env['IDF_COMPONENT_MANAGER'] = '0'
         subprocess.run([sys.executable, str(Path(idf_path) / 'tools/idf.py'),
@@ -71,7 +71,7 @@ def main():
                         '-D', f"SDKCONFIG={build / 'sdkconfig'}", 'build'], check=True, env=env)
         return
     mode = ('sanitize' if args.sanitize else 'host') + ('-lvgl' if lvgl else '')
-    build = (args.build_dir or ROOT / 'build' / mode).resolve()
+    build = (args.build_dir or Path(os.environ.get('PRESENT_TEST_WORK_ROOT', '/tmp/esp-display-present-tests')) / mode).resolve()
     subprocess.run(['cmake', '-S', str(ROOT), '-B', str(build),
                     '-DCMAKE_BUILD_TYPE=Debug',
                     f"-DPRESENT_LVGL_DIR={lvgl or ''}",
