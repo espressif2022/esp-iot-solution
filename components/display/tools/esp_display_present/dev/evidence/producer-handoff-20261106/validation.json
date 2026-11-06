@@ -1,0 +1,20 @@
+{
+  "base_commit": "41724c0a3b5758f6bfcd5f720c334d31c1710804",
+  "host": {
+    "passed": 44,
+    "total": 44,
+    "sanitize": true,
+    "lvgl": "9.6.0~1"
+  },
+  "regression_before_fix_failed_as_expected": true,
+  "benchmark_builds_passed": [
+    "s3-rgb",
+    "p4-dsi",
+    "s31-qspi"
+  ],
+  "build_source_hashes_match": true,
+  "public_headers_changed": false,
+  "hardware_run": false,
+  "idf_modified": false,
+  "scope": "present_session_bind; successful bind followed by LVGL allocation failure retains existing unbind semantics"
+}

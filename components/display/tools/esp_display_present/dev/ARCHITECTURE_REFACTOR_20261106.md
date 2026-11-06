@@ -97,3 +97,22 @@ flowchart LR
 ```
 
 新增身份桥接回归，覆盖地址复用、原生token高位、错误指针、错误优先级、异任务调用与取消后失效。Host44/44通过；旧版facade对象替换对照也通过同一集成测试。详见[第四批证据](evidence/lease-state-refactor-20261106/README.md)。下一步检查生产者交接事务及失败回滚。
+
+
+## 第五批：交接失败时保持原生产者
+
+跨线程回归确认bind原先过早切换engine owner，prepare/drain失败后会留下两层身份不一致。现在将owner写入推迟到排空成功之后，与公共会话更新形成最后提交段，无需增加旧owner副本或失败回滚标志。
+
+```mermaid
+flowchart TD
+    BIND[取得公共gate并排除生产者调用] --> CHECK[finish_cancel / poll / 会话校验]
+    CHECK --> PREPARE[Resources prepare]
+    PREPARE --> DRAIN[Engine gate：校验并drain]
+    DRAIN --> VALIDATE[等待后重新校验可交接状态]
+    VALIDATE --> COMMIT[提交engine owner与公共producer / bound]
+    PREPARE -->|失败| RETAIN[返回错误：原生产者身份保留]
+    DRAIN -->|失败| RETAIN
+    VALIDATE -->|失败| RETAIN
+```
+
+不改变扫描回调、缓冲退休条件、成功unbind后的身份语义或公共API。Host44/44与三芯片编译验证见[第五批证据](evidence/producer-handoff-20261106/README.md)。

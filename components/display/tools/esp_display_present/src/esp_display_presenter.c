@@ -883,13 +883,10 @@ esp_err_t present_session_bind(esp_display_presenter_t *presenter, esp_display_p
         error = ESP_ERR_INVALID_STATE;
     }
     if (error == ESP_OK) {
-        error = esp_display_present_engine_rebind_producer(core(presenter), budget(presenter));
-    }
-    if (error == ESP_OK) {
         error = present_resources_prepare(presenter->resources, budget(presenter));
     }
     if (error == ESP_OK) {
-        error = esp_display_present_engine_drain(core(presenter), budget(presenter));
+        error = present_presenter_control_bind_producer(core(presenter), budget(presenter));
     }
     if (error == ESP_OK) {
         presenter->producer = present_current_task();

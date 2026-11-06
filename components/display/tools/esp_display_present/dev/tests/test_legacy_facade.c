@@ -1641,8 +1641,88 @@ static void public_lease_identity(void)
     free_panel(&panel);
 }
 
+/* A failed cross-task handoff must leave both layers with the old producer. */
+struct handoff_attempt {
+    esp_display_presenter_t *presenter;
+    esp_err_t error;
+    bool accepted;
+};
+static void *try_handoff(void *user)
+{
+    struct handoff_attempt *attempt = user;
+    esp_display_present_engine_t *engine = (void *)1;
+    attempt->error = present_session_bind(attempt->presenter, &engine);
+    if (attempt->error == ESP_OK) {
+        esp_display_present_engine_status_t status;
+        OK(esp_display_present_engine_get_status(engine, &status));
+        attempt->accepted = true;
+        present_session_unbind(attempt->presenter);
+    } else {
+        assert(!engine);
+    }
+    return NULL;
+}
+static void session_handoff_failures(void)
+{
+    for (unsigned variant = 0; variant < 3; ++variant) {
+        struct fake_lcd panel;
+        init_panel(&panel);
+        esp_display_presenter_config_t cfg = io_config(&panel);
+        cfg.pipeline_acquire_timeout_ms = 2;
+        cfg.transfer_timeout_ms = 10000;
+        if (variant == 0) {
+            cfg.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_TE_SYNC;
+            cfg.target.hw.te_enabled = true;
+            cfg.target.hw.te_sync = (esp_display_present_te_sync_config_t) {
+                .gpio_num = 6, .bus_freq_hz = 80000000, .data_lines = 4
+            };
+        }
+        esp_display_presenter_t *presenter;
+        OK(esp_display_presenter_create(&cfg, &presenter));
+        if (variant == 0) {
+            te_create_failures = 1;
+        } else if (variant == 1) {
+            immediate = false;
+            start_frame(presenter, false, true);
+            (void)draw(presenter, 0x4567);
+            OK(esp_display_presenter_commit_frame(presenter, NULL));
+        }
+        struct handoff_attempt attempt = {.presenter = presenter};
+        pthread_t thread;
+        assert(!pthread_create(&thread, NULL, try_handoff, &attempt));
+        assert(!pthread_join(thread, NULL));
+        if (variant == 2) {
+            assert(attempt.error == ESP_OK && attempt.accepted);
+            size_t count;
+            bool full;
+            assert(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full) == ESP_ERR_INVALID_STATE);
+            /* Successful unbind retains the new producer until explicit rebind. */
+            OK(esp_display_presenter_rebind_producer(presenter));
+        } else {
+            assert(attempt.error == (variant == 0 ? ESP_ERR_NO_MEM : ESP_ERR_TIMEOUT));
+            assert(!attempt.accepted);
+            if (variant == 1) {
+                assert(panel.io && panel.source);
+                for (unsigned i = 0; i < 32; ++i) {
+                    assert(((const uint16_t *)panel.source)[i] == 0x4567);
+                }
+                (void)panel.io(&panel, NULL, panel.user);
+            }
+            esp_display_present_fault_reason_t reason;
+            OK(esp_display_presenter_get_fault_reason(presenter, &reason));
+            assert(reason == ESP_DISPLAY_PRESENT_FAULT_NONE);
+        }
+        immediate = true;
+        start_frame(presenter, false, variant != 1);
+        esp_display_presenter_cancel_frame(presenter);
+        delete_eventually(presenter);
+        free_panel(&panel);
+    }
+}
+
 int main(void)
 {
+    session_handoff_failures();
     create_allocation_rollback();
     delete_after_partial_resource_cleanup();
     stop_unsealed();

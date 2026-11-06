@@ -320,11 +320,17 @@ esp_err_t esp_display_present_engine_get_rotation(esp_display_present_engine_t *
 esp_err_t esp_display_present_engine_resolve_render_area(esp_display_present_engine_t *, const esp_display_present_rect_t *, esp_display_present_rect_t *);
 
 struct esp_display_presenter;
-/* Exclusive renderer session handoff for bindings such as esp_lv_present. */
+/* Exclusive renderer session handoff for bindings such as esp_lv_present.
+ * Failed bind preserves producer identity. Successful bind transfers ownership;
+ * unbind releases the session but does not restore the previous producer. */
 esp_err_t present_session_bind(struct esp_display_presenter *presenter, esp_display_present_engine_t **out_engine);
 void present_session_unbind(struct esp_display_presenter *presenter);
 uint64_t present_session_committed(struct esp_display_presenter *presenter);
 
+/* Session controller only: caller excludes all producer calls (including native
+ * calls while drain releases the engine gate). Drain before committing owner;
+ * failure preserves owner and never cancels accepted transfers. */
+esp_err_t present_presenter_control_bind_producer(esp_display_present_engine_t *, uint32_t);
 esp_err_t present_presenter_control_get_status(esp_display_present_engine_t *, esp_display_present_engine_status_t *);
 esp_err_t present_presenter_control_get_status_snapshot(esp_display_present_engine_t *, esp_display_present_engine_status_t *, bool *valid);
 esp_err_t present_presenter_control_query_frame(esp_display_present_engine_t *, esp_display_present_engine_receipt_t, esp_display_present_frame_status_t *);

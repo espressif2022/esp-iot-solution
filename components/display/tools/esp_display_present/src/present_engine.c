@@ -298,8 +298,9 @@ static esp_err_t reap_ready(esp_display_present_engine_t *presenter)
     return ret != ESP_OK ? ret : refresh_fault(presenter);
 }
 
-/* Called with gate held; only owner waits here. Worker has a separate event,
- * so it cannot consume the owner's notification. Always recheck after wake. */
+/* Called with gate held by the owner or exclusive session controller. The
+ * controller excludes producer calls. Worker has a separate event, so it
+ * cannot consume this waiter's notification. Always recheck after wake. */
 static esp_err_t wait_change(esp_display_present_engine_t *presenter, uint64_t start, uint32_t timeout)
 {
     uint32_t budget = remaining(start, timeout);
@@ -737,10 +738,8 @@ static esp_err_t cancel_frame_impl(esp_display_present_engine_t *presenter, uint
 
 static esp_err_t drain_impl(esp_display_present_engine_t *presenter, uint32_t timeout)
 {
-    esp_err_t ret = check_owner(presenter);
-    if (ret != ESP_OK) {
-        return ret;
-    }
+    /* Gate held; public callers checked owner, session handoff excludes it. */
+    esp_err_t ret;
     if (presenter->frame.value) {
         return ESP_ERR_INVALID_STATE;
     }
@@ -996,6 +995,31 @@ esp_err_t esp_display_present_engine_drain(esp_display_present_engine_t *present
     ret = drain_impl(presenter, remaining(start, timeout));
     present_mutex_give(presenter->gate);
     return ret;
+}
+
+esp_err_t present_presenter_control_bind_producer(esp_display_present_engine_t *presenter, uint32_t timeout)
+{
+    if (!presenter) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    uint64_t start = present_now_ms();
+    if (!present_mutex_take(presenter->gate, timeout)) {
+        return ESP_ERR_TIMEOUT;
+    }
+    esp_err_t error = ESP_ERR_INVALID_STATE;
+    if (presenter->state == ESP_DISPLAY_PRESENT_ENGINE_RUNNING && !presenter->frame.value && !presenter->held.id.value && !presenter->canceling) {
+        error = drain_impl(presenter, remaining(start, timeout));
+    }
+    if (error == ESP_OK) {
+        /* Drain may release the gate while waiting. Revalidate before commit. */
+        if (presenter->state != ESP_DISPLAY_PRESENT_ENGINE_RUNNING || presenter->frame.value || presenter->held.id.value || presenter->canceling) {
+            error = ESP_ERR_INVALID_STATE;
+        } else {
+            presenter->owner = present_current_task();
+        }
+    }
+    present_mutex_give(presenter->gate);
+    return error;
 }
 
 esp_err_t present_presenter_control_get_status_snapshot(esp_display_present_engine_t *presenter, esp_display_present_engine_status_t *out, bool *valid)

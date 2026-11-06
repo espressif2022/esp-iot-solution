@@ -261,11 +261,17 @@ size_t esp_display_present_te_sync_memory(void)
 }
 static esp_display_present_te_sync_context_t *test_te;
 static unsigned te_destroy_failures;
+static unsigned te_create_failures;
 esp_err_t esp_display_present_te_sync_create(const esp_display_present_te_sync_config_t *cfg, bool end,
                                              esp_display_present_te_sync_context_t **out)
 {
     (void)cfg;
     (void)end;
+    if (te_create_failures) {
+        --te_create_failures;
+        *out = NULL;
+        return ESP_ERR_NO_MEM;
+    }
     *out = calloc(1, sizeof(**out));
     test_te = *out;
     if (*out) {
