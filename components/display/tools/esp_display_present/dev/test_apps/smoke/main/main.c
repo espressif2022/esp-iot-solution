@@ -4,7 +4,7 @@
  */
 #include "backend/present_backend.h"
 #include "platform/present_lcd_spi.h"
-#include "core/present_presenter.h"
+#include "core/present_engine.h"
 #include "platform/present_lcd_scanout.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"

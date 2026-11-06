@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #pragma once
-#include "esp_display_present.h"
-#include "core/present_presenter.h"
+#include "esp_display_present_config.h"
+#include "config/present_engine_config.h"
 
 #ifdef __cplusplus
 extern "C" {

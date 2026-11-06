@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
+#include "core/present_engine.h"
 #include "present_lvgl.h"
 #if LVGL_VERSION_MINOR == 0
 #include "src/display/lv_display_private.h"

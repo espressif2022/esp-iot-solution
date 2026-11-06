@@ -1,0 +1,39 @@
+{
+  "base_commit": "35f595573d6d106277cce4bd9da91dfb6a9314ed",
+  "host": {
+    "passed": 45,
+    "total": 45,
+    "sanitize": true,
+    "lvgl": "9.6.0~1"
+  },
+  "header_contracts": {
+    "headers": 11,
+    "languages": [
+      "C11",
+      "C++17"
+    ],
+    "negative_dependency_injection_rejected": true,
+    "restored_after_injection": true
+  },
+  "core_declarations_preserved": 43,
+  "abi_probe_values_per_compiler": 45,
+  "abi_probe_compilers": [
+    "Host",
+    "Xtensa",
+    "RISC-V"
+  ],
+  "production_c_changes_only_includes": true,
+  "benchmark_builds_passed": [
+    "s3-rgb",
+    "p4-dsi",
+    "s31-qspi"
+  ],
+  "pixels_builds_passed": [
+    "s3-rgb"
+  ],
+  "source_hashes_match_manifests": true,
+  "selected_6_hot_symbols_in_iram": true,
+  "idf_modified": false,
+  "public_headers_changed": false,
+  "hardware_run": false
+}

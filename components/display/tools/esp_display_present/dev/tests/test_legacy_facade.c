@@ -2,9 +2,11 @@
  * SPDX-License-Identifier: Apache-2.0 */
 /* Both legacy suites share the same synchronized mock driver. */
 #define esp_lcd_panel_draw_bitmap fixture_draw_bitmap
+#include "core/present_control.h"
+#include "core/present_session.h"
 #include "support/legacy_panel.h"
 #undef esp_lcd_panel_draw_bitmap
-#include "core/present_presenter.h"
+#include "core/present_engine.h"
 #include "platform/present_os.h"
 #include "config/present_geometry.h"
 #ifdef LEGACY_WITH_LVGL

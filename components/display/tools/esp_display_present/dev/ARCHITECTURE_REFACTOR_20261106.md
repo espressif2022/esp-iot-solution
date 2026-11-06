@@ -125,3 +125,10 @@ flowchart TD
 新增src/sources.cmake，统一IDF和Host源码清单，Host独立executor插件测试也复用pixel/OS组。逐文件核对52个生产源码/头文件仅include有变化，25个生产C文件的编译集合与基线完全一致。详见[目录规则](SOURCE_LAYOUT.md)及[第六批证据](evidence/source-layout-20261106/README.md)。
 
 本批仅物理归类，尚未拆分present_presenter.h或解除memory/mode/plan对engine类型的依赖。
+
+
+## 第七批：配置、生产者、控制和会话声明分离
+
+将原present_presenter.h拆为engine_config、engine_types、engine、producer、control、session六个头文件。memory预算仅前置声明配置结构，mode/plan只依赖所需配置和类型，completion_tracker与output_caps也去掉多余的engine/backend头依赖。生产C文件仅增加或调整include，43个原函数声明完整保留。
+
+Host新增独立C/C++头文件及依赖边界检查后45/45通过；Host/Xtensa/RISC-V各45项布局/枚举值对照一致。详见[接口职责](SOURCE_LAYOUT.md)及[第七批证据](evidence/header-contracts-20261106/README.md)。运行时owner检查、交接提交点、扫描和缓冲释放机制不变；backend配置与操作接口仍共用原backend头，未宣称所有层级已经解耦。

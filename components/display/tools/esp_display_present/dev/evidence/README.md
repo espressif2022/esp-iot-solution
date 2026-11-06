@@ -34,3 +34,5 @@
 - [生产者交接提交点修复](producer-handoff-20261106/README.md)：跨线程prepare失败、drain超时与成功交接回归；Host44/44及三芯片编译，未上板。
 
 - [私有源码目录整理](source-layout-20261106/README.md)：26个文件迁移、IDF/Host共享清单、源码逻辑不变核对，Host44/44与跨芯片编译；未上板。
+
+- [私有头文件职责拆分](header-contracts-20261106/README.md)：43个声明保留、11个头文件独立C/C++编译与依赖边界检查、Host45/45、三类编译器布局对照及目标编译；未上板。

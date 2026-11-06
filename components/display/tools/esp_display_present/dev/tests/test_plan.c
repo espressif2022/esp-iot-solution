@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include "config/present_plan.h"
+#include "core/present_engine.h"
 #include "../../src/platform/present_te_timer.h"
 #include <assert.h>
 #include <string.h>

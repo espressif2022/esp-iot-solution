@@ -219,3 +219,10 @@ endforeach()
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 add_test(NAME test_runner COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/tests/test_runner.py)
+
+# Compile each split contract first, independently in C and C++, and reject
+# accidental engine API dependencies in planning/accounting/type headers.
+add_test(NAME header_contracts COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_LIST_DIR}/tests/test_header_contracts.py
+    --cc ${CMAKE_C_COMPILER} --cxx ${CMAKE_CXX_COMPILER})
+set_tests_properties(header_contracts PROPERTIES TIMEOUT 30)

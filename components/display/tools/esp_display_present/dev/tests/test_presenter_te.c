@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
+#include "core/present_engine.h"
 #include "sync_panel.h"
 #include "../../src/platform/present_te_timer.h"
 #include <stdio.h>

@@ -3,74 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #pragma once
-#include "backend/present_backend.h"
-#include "backend/present_output_caps.h"
+#include "config/present_engine_config.h"
+#include "core/present_engine_types.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef struct esp_display_present_engine esp_display_present_engine_t;
-typedef struct {
-    int32_t x1, y1, x2, y2;
-} esp_display_present_engine_area_t; /* Inclusive, v1-style. */
-typedef enum {
-    ESP_DISPLAY_PRESENT_ENGINE_GRAM = 0,
-    ESP_DISPLAY_PRESENT_ENGINE_TE = 1,
-    ESP_DISPLAY_PRESENT_ENGINE_FB = 2,
-} esp_display_present_engine_backend_t;
-typedef enum {
-    ESP_DISPLAY_PRESENT_MODE_DEFAULT = 0, /* Use backend_kind/config verbatim; source compatibility. */
-    ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE,
-    ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_FULL,
-    ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_FULL,
-    ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT,
-    ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_PARTIAL,
-    ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC,
-    ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL,
-    ESP_DISPLAY_PRESENT_ENGINE_MODE_AUTO,
-} esp_display_present_present_mode_t;
-typedef struct {
-    esp_display_present_backend_config_t backend; /* GRAM/TE PARTITION or FB PARTITION/FULL/DIRECT. */
-    uint32_t timeout_ms; /* 0 polls; UINT32_MAX waits indefinitely. */
-    esp_display_present_engine_backend_t backend_kind; /* Zero preserves GRAM default. */
-    esp_display_present_present_mode_t mode;
-    /** Optional sender worker; default false retains cooperative service.
-     * GRAM requires backend.async_copy=true for background_service.
-     * Host uses pthread; IDF defaults: 4096-byte stack, priority 5. */
-    bool background_service;
-    uint32_t worker_stack_bytes; /* 0 selects default; ignored by Host. */
-    unsigned worker_priority; /* 0 selects default; ignored by Host. */
-    /** FB named modes require backend_kind FB. NONE selects a single FB and
-     * requires backend.active_writes; IO NONE selects GRAM.
-     * AUTO uses explicit backend kind (no hardware detection): FB 2/3 buffers
-     * -> PARTITION, FB 1 -> NONE; IO with both TE budgets -> TE, otherwise GRAM.
-     * Named FB modes set buffer_count; external array must have that many entries. */
-    esp_display_present_output_caps_t output_caps; /* Zero region alignments mean 1. */
-    /** Per physical panel.submit completion deadline, including driver call
-     * and callback dispatch. Zero disables (legacy V2 behavior). Timeout is a
-     * sticky fault, never synthetic completion or permission to free pixels.
-     * Checked by service/task APIs and completion ingress; an existing sender
-     * wakes at the next deadline. No extra task; a blocking driver call cannot
-     * be interrupted. Not a deadline for drawing, copy, repair or waiting TE. */
-    uint32_t transfer_timeout_ms;
-} esp_display_present_engine_config_t;
-
-typedef enum {
-    ESP_DISPLAY_PRESENT_ENGINE_RUNNING,
-    ESP_DISPLAY_PRESENT_ENGINE_CLOSING,
-    ESP_DISPLAY_PRESENT_ENGINE_STOPPED,
-} esp_display_present_engine_state_t;
-typedef struct {
-    esp_display_present_engine_state_t state;
-    bool frame_active;
-    bool cancel_pending;
-    size_t pending_frames;
-    uint64_t committed_frames;
-    uint64_t completed_frames; /* Terminal transfers, not necessarily successful. */
-    esp_err_t first_error; /* Sticky accepted-operation error, not a transient rejection. */
-    esp_err_t last_service_error; /* Latest pump result, including retryable rejection. */
-} esp_display_present_engine_status_t;
 
 /**
  * @brief Owns its backend. All task APIs, including getters and destroy, must run on
@@ -211,13 +149,6 @@ esp_err_t esp_display_present_engine_submit_buffer(esp_display_present_engine_t 
  */
 esp_err_t esp_display_present_engine_commit_frame(esp_display_present_engine_t *presenter, const esp_display_present_frame_coverage_t *coverage);
 
-/** Optional, bounded observer records (32 per presenter), independent of backend
- * buffer ownership. Tokens are instance-scoped; callers explicitly release a
- * terminal observer or cancel tracking. Untracked commit remains unchanged. */
-typedef struct {
-    uint64_t value;
-} esp_display_present_engine_receipt_t;
-
 /**
  * @brief Presenter commit with receipt.
  *
@@ -318,41 +249,6 @@ esp_err_t esp_display_present_engine_destroy(esp_display_present_engine_t *prese
 esp_err_t esp_display_present_engine_get_rotation(esp_display_present_engine_t *, esp_display_present_engine_rotation_t *);
 /* Before rendering; expands logical damage to satisfy physical panel regions. */
 esp_err_t esp_display_present_engine_resolve_render_area(esp_display_present_engine_t *, const esp_display_present_rect_t *, esp_display_present_rect_t *);
-
-struct esp_display_presenter;
-/* Exclusive renderer session handoff for bindings such as esp_lv_present.
- * Failed bind preserves producer identity. Successful bind transfers ownership;
- * unbind releases the session but does not restore the previous producer. */
-esp_err_t present_session_bind(struct esp_display_presenter *presenter, esp_display_present_engine_t **out_engine);
-void present_session_unbind(struct esp_display_presenter *presenter);
-uint64_t present_session_committed(struct esp_display_presenter *presenter);
-
-/* Session controller only: caller excludes all producer calls (including native
- * calls while drain releases the engine gate). Drain before committing owner;
- * failure preserves owner and never cancels accepted transfers. */
-esp_err_t present_presenter_control_bind_producer(esp_display_present_engine_t *, uint32_t);
-esp_err_t present_presenter_control_get_status(esp_display_present_engine_t *, esp_display_present_engine_status_t *);
-esp_err_t present_presenter_control_get_status_snapshot(esp_display_present_engine_t *, esp_display_present_engine_status_t *, bool *valid);
-esp_err_t present_presenter_control_query_frame(esp_display_present_engine_t *, esp_display_present_engine_receipt_t, esp_display_present_frame_status_t *);
-esp_err_t present_presenter_control_release(esp_display_present_engine_t *, esp_display_present_engine_receipt_t);
-esp_err_t present_presenter_control_stop(esp_display_present_engine_t *, uint32_t);
-esp_err_t present_presenter_control_destroy(esp_display_present_engine_t *);
-esp_err_t present_presenter_begin_budget(esp_display_present_engine_t *, const esp_display_present_frame_request_t *, uint32_t);
-esp_err_t present_presenter_control_cancel_tracking(esp_display_present_engine_t *, esp_display_present_engine_receipt_t);
-esp_err_t present_presenter_cancel_budget(esp_display_present_engine_t *, uint32_t);
-esp_err_t present_presenter_control_finish_cancel(esp_display_present_engine_t *, uint32_t);
-/* Facade identity bridge. Owner-only, same gate and argument validation as
- * native resolve/submit. Tokens retain full width; the facade separately
- * validates its public ID and pixel pointer. No lease/ownership is acquired. */
-esp_err_t present_presenter_resolve_lease_rows(esp_display_present_engine_t *, esp_display_present_lease_id_t,
-                                               size_t stride, uint32_t requested, uint32_t *out);
-esp_err_t present_presenter_submit_lease(esp_display_present_engine_t *, esp_display_present_lease_id_t, void *pixels,
-                                         const esp_display_present_engine_area_t *, size_t stride);
-
-#ifdef PRESENT_HOST
-void present_presenter_test_gate_lock(esp_display_present_engine_t *);
-void present_presenter_test_gate_unlock(esp_display_present_engine_t *);
-#endif
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,6 @@
 /* SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0 */
+#include "core/present_engine.h"
 #include "support/legacy_panel.h"
 /* Fail a real pixel-pool allocation, not the planning function. */
 static unsigned fail_pixel_at, pixel_calls;

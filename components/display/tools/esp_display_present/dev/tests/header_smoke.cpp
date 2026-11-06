@@ -5,15 +5,22 @@
 #include "backend/present_backend.h"
 #include "pixel/present_pixel_engine.h"
 #include "platform/present_lcd_spi.h"
-#include "core/present_presenter.h"
+#include "core/present_engine.h"
 #include "pixel/present_executor.h"
 #include "config/present_plan.h"
 #include "config/present_mode.h"
 #include "platform/present_lcd_scanout.h"
 #include "core/present_transfer_tracker.h"
 #include "core/present_completion_tracker.h"
+#include "core/present_session.h"
+#include "core/present_control.h"
+#include "core/present_producer.h"
+#include "resources/present_memory.h"
 int main()
 {
+    if (!present_event_memory()) {
+        return 3;
+    }
     esp_display_present_pixel_engine_t *engine = nullptr;
     esp_display_present_pixel_config_t config{};
     config.max_jobs = 1;

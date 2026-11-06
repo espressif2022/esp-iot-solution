@@ -1,5 +1,7 @@
 /* SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0 */
+#include "core/present_engine.h"
+#include "core/present_session.h"
 #include "esp_lv_present.h"
 #include "present_lvgl.h"
 #ifndef PRESENT_HOST

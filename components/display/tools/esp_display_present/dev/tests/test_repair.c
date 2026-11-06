@@ -5,7 +5,7 @@
 #include "backend/present_backend.h"
 #include "../../src/backend/present_te_composer.h"
 #include "scan_panel.h"
-#include "core/present_presenter.h"
+#include "core/present_engine.h"
 #include <pthread.h>
 #include <stdio.h>
 #define OK(x) assert((x)==ESP_OK)

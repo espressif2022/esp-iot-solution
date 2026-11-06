@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #pragma once
-#include "core/present_presenter.h"
+#include "config/present_engine_config.h"
+#include "core/present_engine_types.h"
 #include "config/present_mode.h"
 #include "pixel/present_executor.h"
 #include "backend/present_output_caps.h"

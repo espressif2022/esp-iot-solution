@@ -1,6 +1,6 @@
 # 私有源码目录
 
-本说明对应2026-11-06目录整理。目录表达职责归属；现有跨层类型依赖尚未全部解除，不能把本图当作已经严格隔离的依赖层级。
+本说明对应2026-11-06目录整理。目录表达职责归属；本批拆分了engine相关头文件，backend配置与协议类型仍有共享，不能把本图当作已经严格隔离的依赖层级。
 
 ```text
 src/
@@ -18,14 +18,29 @@ src/
 ## 放置规则
 
 - 新增文件按职责归入模块，src根目录保留公共入口与源码清单。暂不继续细分backend子目录；共享帧状态和历史修复仍在同一模块。
-- 私有头文件与所属模块一起放置。引用使用相对src根目录的模块路径，例如`core/present_presenter.h`、`platform/present_os.h`。构建只添加src根目录，不把所有模块目录加入搜索路径。
+- 私有头文件与所属模块一起放置。引用使用相对src根目录的模块路径，例如`core/present_engine.h`、`platform/present_os.h`。构建只添加src根目录，不把所有模块目录加入搜索路径。
 - include目录继续只承载公共API。esp_lv_present及维护中的测试依赖私有接口时，显式引用模块路径；这些私有路径不承诺对外兼容。
 - 新生产C文件加入src/sources.cmake相应组。IDF与Host使用相同engine清单；Host的独立executor测试使用相同pixel/OS组，fake资源测试复用resources组。实际TE GPIO同步由IDF使用，Host依旧使用原有shim和专项测试。
 - 本次保留文件基名、函数名和linker.lf映射。移动热路径后仍须检查目标ELF的IRAM放置，不能仅根据文件名推断映射生效。
 - dev/evidence内历史快照和日志保持原样；它们记录历史路径，不作为维护源码入口。
 
-## 下一批接口整理
+## 私有接口职责
 
-core/present_presenter.h暂时保留原名与内容，其engine配置/API、session和control声明尚未拆开。resources/present_memory.h仍会引入engine头，mode/plan也保留原类型依赖。下一批通过最小类型声明、前置声明或专用接口头逐项解除依赖；不与本次文件移动混做。
+原core/present_presenter.h已拆分；维护代码按实际调用显式包含对应头文件，不依赖plan/resources的间接导出。
 
-本次移动和构建验证见[证据](evidence/source-layout-20261106/README.md)。
+| 头文件 | 职责 | 主要依赖 |
+|---|---|---|
+| config/present_engine_config.h | backend选择、模式与engine创建配置 | backend配置、output caps |
+| core/present_engine_types.h | 不透明engine句柄、区域、状态快照、receipt token | 标准类型与esp_err |
+| core/present_engine.h | 原生运行时API；保留原owner/事件入口约束 | 配置和状态类型 |
+| core/present_producer.h | owner专用预算与lease身份桥接 | 状态类型、backend协议 |
+| core/present_control.h | 非owner的公共层控制入口及Host gate测试钩子 | 状态类型、backend协议 |
+| core/present_session.h | 公共presenter与绑定之间的独占交接 | 状态类型 |
+
+control中的查询/receipt操作沿用原gate序列化，stop/destroy要求生产者暂停；bind要求调用者排除包括native在内的生产者调用。头文件分离不是访问权限校验的替代，运行时检查仍由原实现承担。
+
+resources/present_memory.h只前置声明backend/engine配置结构，保留内存预算声明，补齐C++的C linkage。为支持前置声明，原匿名engine配置结构增加tag，不改变字段或枚举。config/present_mode.h使用公共配置头及engine配置头；config/present_plan.h使用配置与句柄类型，只有其C实现为create_planned桥接显式包含运行时API。backend/present_output_caps.h改为独立标准类型头，completion_tracker不再依赖engine配置/API。
+
+dev/tests/test_header_contracts.py独立编译11个头文件的C/C++入口，并检查上述依赖边界；现有header_smoke覆盖memory接口的C++链接。backend配置仍按值嵌入engine配置，因此尚未解除对backend类型的依赖；后续若继续缩减，应先独立拆分backend类型与操作接口。
+
+目录整理见[第一批证据](evidence/source-layout-20261106/README.md)，本轮声明拆分见[第二批证据](evidence/header-contracts-20261106/README.md)。
