@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "present_plan.h"
+#include "config/present_plan.h"
 #include "../../src/platform/present_te_timer.h"
 #include <assert.h>
 #include <string.h>

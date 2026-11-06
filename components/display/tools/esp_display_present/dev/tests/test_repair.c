@@ -2,10 +2,10 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "present_backend.h"
+#include "backend/present_backend.h"
 #include "../../src/backend/present_te_composer.h"
 #include "scan_panel.h"
-#include "present_presenter.h"
+#include "core/present_presenter.h"
 #include <pthread.h>
 #include <stdio.h>
 #define OK(x) assert((x)==ESP_OK)

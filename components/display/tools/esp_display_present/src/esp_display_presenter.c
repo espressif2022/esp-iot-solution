@@ -1,11 +1,11 @@
 /* SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0 */
 #include "esp_display_present.h"
-#include "present_geometry.h"
-#include "present_resources.h"
-#include "present_mode.h"
-#include "present_presenter.h"
-#include "present_os.h"
+#include "config/present_geometry.h"
+#include "resources/present_resources.h"
+#include "config/present_mode.h"
+#include "core/present_presenter.h"
+#include "platform/present_os.h"
 #include <limits.h>
 #include <string.h>
 #ifndef PRESENT_HOST

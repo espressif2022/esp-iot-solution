@@ -1,15 +1,13 @@
-set(PRESENT_SOURCES ../src/present_os.c ../src/platform/present_te_timing.c ../src/platform/present_te_timer.c ../src/backend/present_image_repair.c ../src/backend/present_frame_core.c ../src/present_plan.c ../src/present_mode.c ../src/present_engine.c ../src/present_transfer_tracker.c ../src/present_completion_tracker.c ../src/pixel/present_pixel_engine.c ../src/backend/present_backend_gram.c
-    ../src/pixel/executor/present_executor.c ../src/pixel/executor/present_executor_cpu.c ../src/pixel/executor/present_executor_ppa.c ../src/pixel/executor/present_executor_dma2d.c
-    ../src/platform/present_lcd_spi.c ../src/platform/present_lcd_scanout.c ../src/backend/present_te_composer.c ../src/backend/present_backend_te.c ../src/backend/present_backend_fb.c)
 cmake_minimum_required(VERSION 3.16)
 project(esp_display_present_host LANGUAGES C CXX)
+include(${CMAKE_CURRENT_LIST_DIR}/../src/sources.cmake)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(PRESENT_SANITIZE "Enable address and undefined-behavior sanitizers" OFF)
 find_package(Threads REQUIRED)
-add_library(present_engine STATIC ${PRESENT_SOURCES})
+add_library(present_engine STATIC ${PRESENT_ENGINE_SOURCES})
 target_include_directories(present_engine PUBLIC ../src ../include tests/support)
 target_compile_definitions(present_engine PRIVATE PRESENT_HOST=1)
 target_compile_options(present_engine PRIVATE -Wall -Wextra -Werror)
@@ -105,9 +103,7 @@ foreach(variant cpu ppa dma2d both)
         set(has_dma2d 1)
     endif()
     add_executable(test_executor_${variant} tests/test_executor.c
-        ../src/present_os.c ../src/pixel/present_pixel_engine.c
-        ../src/pixel/executor/present_executor.c ../src/pixel/executor/present_executor_cpu.c ../src/pixel/executor/present_executor_ppa.c
-        ../src/pixel/executor/present_executor_dma2d.c)
+        ${PRESENT_OS_SOURCES} ${PRESENT_PIXEL_SOURCES})
     target_include_directories(test_executor_${variant} PRIVATE ../src tests/support)
     target_compile_definitions(test_executor_${variant} PRIVATE PRESENT_HOST=1
         PRESENT_HOST_PPA=${has_ppa} PRESENT_HOST_DMA2D=${has_dma2d})
@@ -131,13 +127,13 @@ add_test(NAME legacy_resources COMMAND test_legacy_resources)
 set_tests_properties(legacy_resources PROPERTIES TIMEOUT 15)
 
 # Opt-in V1 symbols live outside the core: benchmarks may still link V1+V2.
-add_library(present_legacy_resources STATIC ../src/present_resources.c)
+add_library(present_legacy_resources STATIC ${PRESENT_RESOURCE_SOURCES})
 target_include_directories(present_legacy_resources PUBLIC ../include
     PRIVATE ../src)
 target_compile_definitions(present_legacy_resources PRIVATE PRESENT_HOST=1)
 target_compile_options(present_legacy_resources PRIVATE -Wall -Wextra -Werror)
 target_link_libraries(present_legacy_resources PUBLIC present_engine)
-add_library(present_legacy STATIC ../src/esp_display_presenter.c ../src/present_geometry.c)
+add_library(present_legacy STATIC ${PRESENT_FACADE_SOURCES})
 target_include_directories(present_legacy PUBLIC ../include
     PRIVATE ../src)
 target_link_libraries(present_legacy PUBLIC present_legacy_resources)
@@ -210,7 +206,7 @@ target_include_directories(test_direct_resolved PRIVATE ../src)
 
 # Exercise both clean IDF without memory query and query-authoritative drivers.
 foreach(variant IN ITEMS query no_query)
-    add_executable(test_spi_facts_${variant} tests/test_spi_facts.c ../src/present_resources.c)
+    add_executable(test_spi_facts_${variant} tests/test_spi_facts.c ${PRESENT_RESOURCE_SOURCES})
     target_include_directories(test_spi_facts_${variant} PRIVATE ../include ../src)
     target_compile_definitions(test_spi_facts_${variant} PRIVATE PRESENT_HOST=1)
     target_compile_options(test_spi_facts_${variant} PRIVATE -Wall -Wextra -Werror -Wno-unused-function -UNDEBUG)

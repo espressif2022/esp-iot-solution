@@ -2,8 +2,8 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "present_executor.h"
-#include "present_os.h"
+#include "pixel/present_executor.h"
+#include "platform/present_os.h"
 typedef struct {
     esp_display_present_executor_t base;
     present_mutex_t *gate;

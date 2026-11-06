@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #pragma once
-#include "present_pixel_engine.h"
+#include "pixel/present_pixel_engine.h"
 
 /* Internal composition core, not a panel backend. All calls are serialized
  * task-context calls. TE owns leases, receipts and panel event correlation.

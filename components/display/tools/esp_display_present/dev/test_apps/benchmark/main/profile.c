@@ -3,8 +3,8 @@
 /* Benchmark-only wall-time/payload counters. Nested/parallel stages are not additive. */
 #include <inttypes.h>
 #include "esp_display_present.h"
-#include "present_executor.h"
-#include "present_presenter.h"
+#include "pixel/present_executor.h"
+#include "core/present_presenter.h"
 #include "esp_timer.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"

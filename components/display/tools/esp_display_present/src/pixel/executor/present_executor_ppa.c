@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "present_executor.h"
+#include "pixel/present_executor.h"
 #ifdef PRESENT_HOST
 #ifndef PRESENT_HOST_PPA
 #define PRESENT_HOST_PPA 1
@@ -13,7 +13,7 @@
 #define PRESENT_PLUGIN_ENABLED SOC_PPA_SUPPORTED
 #endif
 #if PRESENT_PLUGIN_ENABLED
-#include "present_executor_hw.h"
+#include "pixel/executor/present_executor_hw.h"
 #include "driver/ppa.h"
 typedef struct {
     esp_display_present_executor_t base;

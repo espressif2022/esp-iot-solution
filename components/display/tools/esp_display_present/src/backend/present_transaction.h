@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #pragma once
-#include "present_os.h"
-#include "present_backend.h"
+#include "platform/present_os.h"
+#include "backend/present_backend.h"
 /* Acceptance and completion are independent facts. Caller holds its short
  * lock; no callbacks, allocation or driver calls here. Rejection is retryable
  * only when no completion has proved access. Fault alone never proves drain. */

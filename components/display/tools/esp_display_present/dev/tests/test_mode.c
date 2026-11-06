@@ -1,6 +1,6 @@
 /* SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0 */
-#include "present_mode.h"
+#include "config/present_mode.h"
 #include <assert.h>
 
 static void public_profiles(void)

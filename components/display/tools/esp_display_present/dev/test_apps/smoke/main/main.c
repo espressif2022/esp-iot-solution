@@ -2,10 +2,10 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "present_backend.h"
-#include "present_lcd_spi.h"
-#include "present_presenter.h"
-#include "present_lcd_scanout.h"
+#include "backend/present_backend.h"
+#include "platform/present_lcd_spi.h"
+#include "core/present_presenter.h"
+#include "platform/present_lcd_scanout.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_timer.h"

@@ -5,7 +5,7 @@
  */
 #include "../../src/backend/present_frame_core.h"
 #include <assert.h>
-#include "../../src/present_allocation.h"
+#include "../../src/platform/present_allocation.h"
 #include "../../src/backend/present_transaction.h"
 
 int main(void)

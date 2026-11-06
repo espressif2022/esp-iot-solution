@@ -4,8 +4,8 @@
  */
 #include "board.h"
 #include "boundary_trace.h"
-#include "present_presenter.h"
-#include "present_lcd_scanout.h"
+#include "core/present_presenter.h"
+#include "platform/present_lcd_scanout.h"
 #include "esp_check.h"
 #include "esp_heap_caps.h"
 #include "esp_lcd_panel_ops.h"

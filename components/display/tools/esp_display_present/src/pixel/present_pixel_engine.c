@@ -2,10 +2,10 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "present_memory.h"
-#include "present_pixel_engine.h"
-#include "present_os.h"
-#include "present_limits.h"
+#include "resources/present_memory.h"
+#include "pixel/present_pixel_engine.h"
+#include "platform/present_os.h"
+#include "platform/present_limits.h"
 #include <string.h>
 
 typedef struct {

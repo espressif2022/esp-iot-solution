@@ -2,8 +2,8 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "present_backend.h"
-#include "../../src/present_os.h"
+#include "backend/present_backend.h"
+#include "../../src/platform/present_os.h"
 #include "test_panel.h"
 #include "platform/present_te_timer.h"
 #include "backend/present_te_composer.h"

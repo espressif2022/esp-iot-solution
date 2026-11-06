@@ -11,7 +11,7 @@
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "esp_lcd_panel_io.h"
-#include "present_executor.h"
+#include "pixel/present_executor.h"
 #include "stdatomic.h"
 #include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"

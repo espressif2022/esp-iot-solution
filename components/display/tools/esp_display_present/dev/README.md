@@ -2,6 +2,8 @@
 
 所有维护中的测试源码、板级配置、运行工具和证据索引统一位于 `esp_display_present/dev`。应用示例仍保留在 examples，供用户接入使用；日常回归、性能测试和 adapter 对比以本目录为入口。
 
+生产源码的职责划分与新增文件规则见[SOURCE_LAYOUT.md](SOURCE_LAYOUT.md)。
+
 ## 目录
 
 ```text

@@ -1,0 +1,35 @@
+{
+  "elf": "/tmp/present-refactor-step1-20261106/s3-rgb/pixels/present/build/present_boards.elf",
+  "symbols": [
+    {
+      "name": "esp_display_present_engine_acquire_buffer",
+      "section": ".iram0.text",
+      "address": "0x40380950"
+    },
+    {
+      "name": "present_presenter_resolve_lease_rows",
+      "section": ".iram0.text",
+      "address": "0x40380ad4"
+    },
+    {
+      "name": "present_presenter_submit_lease",
+      "section": ".iram0.text",
+      "address": "0x40380b38"
+    },
+    {
+      "name": "present_transfer_finish",
+      "section": ".iram0.text",
+      "address": "0x4037b170"
+    },
+    {
+      "name": "present_completion_reap",
+      "section": ".iram0.text",
+      "address": "0x4037fac4"
+    },
+    {
+      "name": "present_fb_service",
+      "section": ".iram0.text",
+      "address": "0x4037e8ac"
+    }
+  ]
+}

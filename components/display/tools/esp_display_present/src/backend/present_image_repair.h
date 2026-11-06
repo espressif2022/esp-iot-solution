@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #pragma once
-#include "present_records.h"
-#include "present_allocation.h"
+#include "backend/present_records.h"
+#include "platform/present_allocation.h"
 /* Output-independent image construction bookkeeping. Owner task serialized.
  * Coverage is exact; history may conservatively widen, never invent coverage.
  * No hardware, frame receipts, TE phases or scanout state in this module. */

@@ -116,3 +116,12 @@ flowchart TD
 ```
 
 不改变扫描回调、缓冲退休条件、成功unbind后的身份语义或公共API。Host44/44与三芯片编译验证见[第五批证据](evidence/producer-handoff-20261106/README.md)。
+
+
+## 第六批：私有源码按职责归目录
+
+将26个平铺文件迁入core、config、resources、backend、pixel、platform，保留文件基名和函数名。私有include显式携带模块路径；esp_lv_present与维护测试同步更新，不扩展模块搜索目录。
+
+新增src/sources.cmake，统一IDF和Host源码清单，Host独立executor插件测试也复用pixel/OS组。逐文件核对52个生产源码/头文件仅include有变化，25个生产C文件的编译集合与基线完全一致。详见[目录规则](SOURCE_LAYOUT.md)及[第六批证据](evidence/source-layout-20261106/README.md)。
+
+本批仅物理归类，尚未拆分present_presenter.h或解除memory/mode/plan对engine类型的依赖。

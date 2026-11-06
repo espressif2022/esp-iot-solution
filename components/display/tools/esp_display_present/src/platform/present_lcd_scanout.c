@@ -2,8 +2,8 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "present_lcd_scanout.h"
-#include "present_os.h"
+#include "platform/present_lcd_scanout.h"
+#include "platform/present_os.h"
 #include "esp_cache.h"
 #include <limits.h>
 #ifdef PRESENT_HOST

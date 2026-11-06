@@ -32,3 +32,5 @@
 - [租约描述收敛与状态归属审计](lease-state-refactor-20261106/README.md)：保留逻辑撤销/物理排空差异，Host44/44、旧facade替换对照及跨芯片编译，未上板。
 
 - [生产者交接提交点修复](producer-handoff-20261106/README.md)：跨线程prepare失败、drain超时与成功交接回归；Host44/44及三芯片编译，未上板。
+
+- [私有源码目录整理](source-layout-20261106/README.md)：26个文件迁移、IDF/Host共享清单、源码逻辑不变核对，Host44/44与跨芯片编译；未上板。

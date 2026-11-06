@@ -3,7 +3,7 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "../../../src/present_resources.h"
+#include "../../../src/resources/present_resources.h"
 #include "esp_lcd_mipi_dsi.h"
 #include "esp_lcd_panel_rgb.h"
 #include "esp_lcd_panel_io.h"

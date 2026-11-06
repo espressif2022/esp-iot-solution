@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #pragma once
-#include "present_executor.h"
-#include "present_os.h"
+#include "pixel/present_executor.h"
+#include "platform/present_os.h"
 #include "esp_cache.h"
 #include "esp_private/dma2d.h"
 /* Match the driver's extended destination rows, including quarter-turn height.

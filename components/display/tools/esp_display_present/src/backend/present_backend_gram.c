@@ -2,13 +2,13 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "present_backend.h"
-#include "present_memory.h"
-#include "present_os.h"
-#include "present_limits.h"
-#include "present_frame_core.h"
-#include "present_transaction.h"
-#include "present_allocation.h"
+#include "backend/present_backend.h"
+#include "resources/present_memory.h"
+#include "platform/present_os.h"
+#include "platform/present_limits.h"
+#include "backend/present_frame_core.h"
+#include "backend/present_transaction.h"
+#include "platform/present_allocation.h"
 
 /* Draw tiles and transfer tiles have independent lifetimes. A finished copy
  * returns the draw tile while the transfer tile stays owned until the panel

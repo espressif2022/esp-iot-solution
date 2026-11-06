@@ -2,8 +2,8 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "present_pixel_engine.h"
-#include "present_os.h"
+#include "pixel/present_pixel_engine.h"
+#include "platform/present_os.h"
 #include <assert.h>
 #include <pthread.h>
 #include <stdatomic.h>

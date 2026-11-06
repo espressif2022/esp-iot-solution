@@ -3,8 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "present_image_repair.h"
-#include "present_coverage.h"
+#include "backend/present_image_repair.h"
+#include "backend/present_coverage.h"
 #include <string.h>
 #include <assert.h>
 

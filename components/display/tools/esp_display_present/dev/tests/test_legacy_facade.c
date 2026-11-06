@@ -4,9 +4,9 @@
 #define esp_lcd_panel_draw_bitmap fixture_draw_bitmap
 #include "support/legacy_panel.h"
 #undef esp_lcd_panel_draw_bitmap
-#include "present_presenter.h"
-#include "present_os.h"
-#include "present_geometry.h"
+#include "core/present_presenter.h"
+#include "platform/present_os.h"
+#include "config/present_geometry.h"
 #ifdef LEGACY_WITH_LVGL
 #include "esp_lv_present.h"
 #endif

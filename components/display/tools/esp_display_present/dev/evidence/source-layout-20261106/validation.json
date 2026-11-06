@@ -1,0 +1,28 @@
+{
+  "base_commit": "6115044ca196259d1dcc6743453437e5b2823c50",
+  "host": {
+    "passed": 44,
+    "total": 44,
+    "sanitize": true,
+    "lvgl": "9.6.0~1"
+  },
+  "benchmark_builds_passed": [
+    "s3-rgb",
+    "p4-dsi",
+    "s31-qspi"
+  ],
+  "pixels_builds_passed": [
+    "s3-rgb"
+  ],
+  "source_hashes_match_all_manifests": true,
+  "all_6_selected_retained_symbols_in_iram": true,
+  "public_headers_changed": false,
+  "idf_modified": false,
+  "hardware_run": false,
+  "build_inputs_sha256": {
+    "CMakeLists.txt": "5b0a4d4ade0258f8c55b468f65dd7951dcbf899e9f0dec8c5d7ae9a3b6b1f4b2",
+    "src/sources.cmake": "1818108413475719fb12ea99fd2d0214d453a7d2d24e3a80517d1ba91a2c3abe",
+    "dev/CMakeLists.txt": "739100ef4d4180898199f95b6118a1ff185030afbeac2102dc1dc4625580c3fa",
+    "linker.lf": "c48b9137279189c160e1d18bb414b7d03aac9832f5db8a667161608e4e6f94a1"
+  }
+}

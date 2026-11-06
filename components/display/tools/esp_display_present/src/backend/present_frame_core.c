@@ -3,8 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "present_backend.h"
-#include "present_frame_core.h"
+#include "backend/present_backend.h"
+#include "backend/present_frame_core.h"
 #include <assert.h>
 
 esp_err_t present_frame_core_init(present_frame_core_t *core, size_t count)

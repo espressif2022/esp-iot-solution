@@ -2,11 +2,11 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "present_memory.h"
-#include "present_te_composer.h"
-#include "present_os.h"
-#include "present_limits.h"
-#include "present_image_repair.h"
+#include "resources/present_memory.h"
+#include "backend/present_te_composer.h"
+#include "platform/present_os.h"
+#include "platform/present_limits.h"
+#include "backend/present_image_repair.h"
 #include <string.h>
 
 typedef enum {
