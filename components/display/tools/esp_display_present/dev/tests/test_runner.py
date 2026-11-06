@@ -38,6 +38,13 @@ class RunnerTest(unittest.TestCase):
         self.assertEqual(value['rows'][0]['wait_avg_us'], 1700)
         self.assertEqual(value['rows'][0]['tx_avg_us'], 24000)
 
+    def test_profile_metrics_and_output_isolation(self):
+        log = 'RUN mode=NONE rotation=0\nPRESENT_PROFILE: label=NONE stage=begin n=5 sum_us=100 avg_us=20 max_us=24 bytes=0 errors=0\nPASS mode=NONE rotation=0 lvgl_fps=50 scenes=16\nSUITE_PASS board=x'
+        parsed = runner.parse_log(log)
+        self.assertEqual(parsed['rows'][0]['stages']['begin']['avg_us'], 20)
+        args = SimpleNamespace(work_root=Path('/tmp/present-test'), board='s3-rgb', suite='benchmark', implementation='present', profile=True)
+        self.assertEqual(runner.location(args).name, 'present-profile')
+
     def test_error_is_not_pass(self):
         self.assertTrue(runner.parse_log('E (14) worker: error\nSUITE_PASS board=x')['errors'])
         self.assertFalse(runner.parse_log('E (14) gpio: GPIO isr service already installed')['errors'])
@@ -54,6 +61,16 @@ class RunnerTest(unittest.TestCase):
                 runner.identify(args)
             self.assertEqual(run.call_count, 1)
             self.assertIn('read-mac', run.call_args.args[0])
+
+    def test_uart_identity_retains_rom_reconnect_baud(self):
+        args = SimpleNamespace(port='/dev/example', board='s3-rgb')
+        with patch.object(runner.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, stdout=runner.BOARDS['s3-rgb']['mac'])) as call:
+            runner.identify(args)
+            command = call.call_args.args[0]
+            self.assertEqual(command[command.index('-b') + 1], '115200')
+            self.assertNotIn('--no-stub', command)
+        args.board = 's31-qspi'
+        self.assertIn('--no-stub', runner.esptool(args, 'default-reset', 'no-reset', 'read-mac'))
 
     def test_compare_and_configuration_mismatch(self):
         with tempfile.TemporaryDirectory() as tmp:

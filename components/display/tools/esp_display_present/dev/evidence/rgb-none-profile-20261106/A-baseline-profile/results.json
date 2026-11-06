@@ -1,0 +1,101 @@
+{
+  "complete": true,
+  "rows": [
+    {
+      "status": "PASS",
+      "mode": "NONE",
+      "rotation": 0,
+      "frames": 1021,
+      "transport_fps": 14.6,
+      "lvgl_fps": 18,
+      "cpu": 100,
+      "render": 40,
+      "flush": 20,
+      "scenes": 16,
+      "stages": {
+        "begin": {
+          "n": 1021,
+          "sum_us": 10210365,
+          "avg_us": 10000,
+          "max_us": 42298,
+          "bytes": 0,
+          "errors": 0
+        },
+        "acquire": {
+          "n": 2632,
+          "sum_us": 208187,
+          "avg_us": 79,
+          "max_us": 225,
+          "bytes": 0,
+          "errors": 0
+        },
+        "submit": {
+          "n": 2632,
+          "sum_us": 206627,
+          "avg_us": 78,
+          "max_us": 390,
+          "bytes": 0,
+          "errors": 0
+        },
+        "commit": {
+          "n": 1021,
+          "sum_us": 43044,
+          "avg_us": 42,
+          "max_us": 101,
+          "bytes": 0,
+          "errors": 0
+        },
+        "cpu_exec": {
+          "n": 0,
+          "sum_us": 0,
+          "avg_us": 0,
+          "max_us": 0,
+          "bytes": 0,
+          "errors": 0
+        },
+        "hw_exec": {
+          "n": 0,
+          "sum_us": 0,
+          "avg_us": 0,
+          "max_us": 0,
+          "bytes": 0,
+          "errors": 0
+        },
+        "fallback": {
+          "n": 0,
+          "sum_us": 0,
+          "avg_us": 0,
+          "max_us": 0,
+          "bytes": 0,
+          "errors": 0
+        },
+        "cache_out": {
+          "n": 2042,
+          "sum_us": 340792,
+          "avg_us": 166,
+          "max_us": 615,
+          "bytes": 940953600,
+          "errors": 0
+        },
+        "cache_in": {
+          "n": 0,
+          "sum_us": 0,
+          "avg_us": 0,
+          "max_us": 0,
+          "bytes": 0,
+          "errors": 0
+        },
+        "panel_submit": {
+          "n": 1021,
+          "sum_us": 74507,
+          "avg_us": 72,
+          "max_us": 167,
+          "bytes": 470476800,
+          "errors": 0
+        }
+      }
+    }
+  ],
+  "errors": [],
+  "matrix_complete": true
+}

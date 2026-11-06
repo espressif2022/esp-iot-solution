@@ -1,0 +1,31 @@
+{
+  "complete": true,
+  "rows": [
+    {
+      "status": "PASS",
+      "mode": "NONE",
+      "rotation": 0,
+      "frames": 2080,
+      "transport_fps": 30.0,
+      "lvgl_fps": 41,
+      "cpu": 100,
+      "render": 16,
+      "flush": 11,
+      "scenes": 16
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_DIRECT",
+      "rotation": 0,
+      "frames": 1973,
+      "transport_fps": 28.4,
+      "lvgl_fps": 39,
+      "cpu": 100,
+      "render": 17,
+      "flush": 12,
+      "scenes": 16
+    }
+  ],
+  "errors": [],
+  "matrix_complete": true
+}

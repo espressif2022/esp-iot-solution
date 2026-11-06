@@ -354,6 +354,19 @@ static void verify(esp_display_present_executor_t *e, esp_display_present_execut
         strict_alignment = 16;
         assert(esp_display_present_executor_select(&d, &r, &selected) == ESP_OK && selected.used_fallback);
         assert(selected.primary_reason == (is_dma ? ESP_DISPLAY_PRESENT_EXEC_ALIGNMENT : ESP_DISPLAY_PRESENT_EXEC_MEMORY));
+        if (!is_dma) {
+            /* IDF PPA SRM rejects strict MSPI memory even when every row and
+             * the complete window are individually aligned: macroblocks
+             * inside SRM cannot preserve that alignment. */
+            esp_display_present_layout_t aligned = {8, 2, 16, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE};
+            esp_display_present_copy_request_t aligned_request = {
+                .src = {src, 32, aligned}, .dst = {dst, 64, aligned}, .src_area = {0, 0, 8, 2},
+            };
+            unsigned prior = submissions;
+            assert(esp_display_present_executor_run(&d, &aligned_request, &selected) == ESP_OK);
+            assert(selected.used_fallback && selected.primary_reason == ESP_DISPLAY_PRESENT_EXEC_MEMORY);
+            assert(submissions == prior && memcmp(src, dst, 32) == 0);
+        }
         strict_alignment = 1;
         unregister_error = ESP_FAIL;
         assert(esp_display_present_executor_destroy(e) == ESP_FAIL);

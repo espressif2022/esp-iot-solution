@@ -90,3 +90,13 @@ Host / smoke / pixels / native / benchmark / te-lifecycle 由统一工具直接�
 旧 examples 工程及本机临时目录保留，避免破坏用户改动或原始 Flash 备份；后续测试不再从 `/tmp` 找工程。结果版本和当前有效记录见 [证据总索引](evidence/README.md)。本次整理的构建与 Host 验证见 [整理验证](UNIFIED_TESTS_20261106.md)。
 
 组件根目录的 `test_apps/` 保留 ESP-IDF 标准 Unity/pytest 测试布局，供组件 CI 自动发现；它也是 present 目录的一部分，不迁移其 CI 入口。日常 Host/硬件矩阵仍从上面的统一工具进入。
+
+## 可选分阶段统计
+
+`build/flash/capture/report` 增加 `--profile` 可构建、运行统计版 present benchmark，输出隔离在 `present-profile/`，不会覆盖普通基线。示例：
+
+```sh
+python3 dev/tools/run.py build --board s3-rgb --profiles NONE --angles 0 --profile --work-root /tmp/present-work
+```
+
+统计 engine 的 begin/acquire/submit/commit 调用壁钟时间、executor_run CPU/硬件/回退次数与有效像素字节数、缓存维护范围、panel 提交时间；S31 TE 等待和DMA另有独立统计。各阶段存在嵌套、并行及互斥等待，不能将总耗时相加或把 executor_run 当成纯计算时间。缓存字节是请求维护范围，像素字节是成功请求的有效payload，都不是实测PSRAM总线流量。统计只存在于测试工程的链接包装器，正常构建不启用。统计版不参与普通 `compare`，用于定位后需用无统计基线确认性能。

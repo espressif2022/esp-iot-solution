@@ -1,0 +1,261 @@
+{
+  "board": "S3 R16 GC9503 RGB 480x480",
+  "mac": "90:e5:b1:d0:a9:d8",
+  "base_commit": "e97025289",
+  "idf_commit": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+  "idf_patched": false,
+  "groups": {
+    "A-baseline-profile": [
+      {
+        "status": "PASS",
+        "mode": "NONE",
+        "rotation": 0,
+        "frames": 1021,
+        "transport_fps": 14.6,
+        "lvgl_fps": 18,
+        "cpu": 100,
+        "render": 40,
+        "flush": 20,
+        "scenes": 16,
+        "stages": {
+          "begin": {
+            "n": 1021,
+            "sum_us": 10210365,
+            "avg_us": 10000,
+            "max_us": 42298,
+            "bytes": 0,
+            "errors": 0
+          },
+          "acquire": {
+            "n": 2632,
+            "sum_us": 208187,
+            "avg_us": 79,
+            "max_us": 225,
+            "bytes": 0,
+            "errors": 0
+          },
+          "submit": {
+            "n": 2632,
+            "sum_us": 206627,
+            "avg_us": 78,
+            "max_us": 390,
+            "bytes": 0,
+            "errors": 0
+          },
+          "commit": {
+            "n": 1021,
+            "sum_us": 43044,
+            "avg_us": 42,
+            "max_us": 101,
+            "bytes": 0,
+            "errors": 0
+          },
+          "cpu_exec": {
+            "n": 0,
+            "sum_us": 0,
+            "avg_us": 0,
+            "max_us": 0,
+            "bytes": 0,
+            "errors": 0
+          },
+          "hw_exec": {
+            "n": 0,
+            "sum_us": 0,
+            "avg_us": 0,
+            "max_us": 0,
+            "bytes": 0,
+            "errors": 0
+          },
+          "fallback": {
+            "n": 0,
+            "sum_us": 0,
+            "avg_us": 0,
+            "max_us": 0,
+            "bytes": 0,
+            "errors": 0
+          },
+          "cache_out": {
+            "n": 2042,
+            "sum_us": 340792,
+            "avg_us": 166,
+            "max_us": 615,
+            "bytes": 940953600,
+            "errors": 0
+          },
+          "cache_in": {
+            "n": 0,
+            "sum_us": 0,
+            "avg_us": 0,
+            "max_us": 0,
+            "bytes": 0,
+            "errors": 0
+          },
+          "panel_submit": {
+            "n": 1021,
+            "sum_us": 74507,
+            "avg_us": 72,
+            "max_us": 167,
+            "bytes": 470476800,
+            "errors": 0
+          }
+        }
+      }
+    ],
+    "B-fixed-profile": [
+      {
+        "status": "PASS",
+        "mode": "NONE",
+        "rotation": 0,
+        "frames": 1303,
+        "transport_fps": 18.7,
+        "lvgl_fps": 25,
+        "cpu": 100,
+        "render": 40,
+        "flush": 13,
+        "scenes": 16,
+        "stages": {
+          "begin": {
+            "n": 1303,
+            "sum_us": 3542499,
+            "avg_us": 2718,
+            "max_us": 25763,
+            "bytes": 0,
+            "errors": 0
+          },
+          "acquire": {
+            "n": 3292,
+            "sum_us": 260950,
+            "avg_us": 79,
+            "max_us": 368,
+            "bytes": 0,
+            "errors": 0
+          },
+          "submit": {
+            "n": 3292,
+            "sum_us": 259990,
+            "avg_us": 78,
+            "max_us": 257,
+            "bytes": 0,
+            "errors": 0
+          },
+          "commit": {
+            "n": 1303,
+            "sum_us": 55272,
+            "avg_us": 42,
+            "max_us": 187,
+            "bytes": 0,
+            "errors": 0
+          },
+          "cpu_exec": {
+            "n": 0,
+            "sum_us": 0,
+            "avg_us": 0,
+            "max_us": 0,
+            "bytes": 0,
+            "errors": 0
+          },
+          "hw_exec": {
+            "n": 0,
+            "sum_us": 0,
+            "avg_us": 0,
+            "max_us": 0,
+            "bytes": 0,
+            "errors": 0
+          },
+          "fallback": {
+            "n": 0,
+            "sum_us": 0,
+            "avg_us": 0,
+            "max_us": 0,
+            "bytes": 0,
+            "errors": 0
+          },
+          "cache_out": {
+            "n": 2606,
+            "sum_us": 396006,
+            "avg_us": 151,
+            "max_us": 652,
+            "bytes": 1200844800,
+            "errors": 0
+          },
+          "cache_in": {
+            "n": 0,
+            "sum_us": 0,
+            "avg_us": 0,
+            "max_us": 0,
+            "bytes": 0,
+            "errors": 0
+          },
+          "panel_submit": {
+            "n": 1303,
+            "sum_us": 98667,
+            "avg_us": 75,
+            "max_us": 174,
+            "bytes": 600422400,
+            "errors": 0
+          }
+        }
+      }
+    ],
+    "B-fixed-no-profile": [
+      {
+        "status": "PASS",
+        "mode": "NONE",
+        "rotation": 0,
+        "frames": 1300,
+        "transport_fps": 18.7,
+        "lvgl_fps": 25,
+        "cpu": 100,
+        "render": 40,
+        "flush": 13,
+        "scenes": 16
+      },
+      {
+        "status": "PASS",
+        "mode": "DOUBLE_DIRECT",
+        "rotation": 0,
+        "frames": 1249,
+        "transport_fps": 17.9,
+        "lvgl_fps": 23,
+        "cpu": 100,
+        "render": 41,
+        "flush": 14,
+        "scenes": 16
+      }
+    ],
+    "C-fixed-original-cache": [
+      {
+        "status": "PASS",
+        "mode": "NONE",
+        "rotation": 0,
+        "frames": 2080,
+        "transport_fps": 30.0,
+        "lvgl_fps": 41,
+        "cpu": 100,
+        "render": 16,
+        "flush": 11,
+        "scenes": 16
+      },
+      {
+        "status": "PASS",
+        "mode": "DOUBLE_DIRECT",
+        "rotation": 0,
+        "frames": 1973,
+        "transport_fps": 28.4,
+        "lvgl_fps": 39,
+        "cpu": 100,
+        "render": 17,
+        "flush": 12,
+        "scenes": 16
+      }
+    ]
+  },
+  "host": "40/40",
+  "tool_tests": "11/11",
+  "visual_confirmation": "用户确认正常",
+  "restore_verified_full_flash": true,
+  "AB_config_match": true,
+  "original_sha256": "a1fb70defbe454c7a5d8fc233929fd9d9d39751910336c7baa96b905b60730fc",
+  "original_backup_bytes": 16777216,
+  "s31_profile_with_te_build_pass": true
+}

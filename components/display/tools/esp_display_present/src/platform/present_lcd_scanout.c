@@ -217,8 +217,10 @@ static esp_display_present_tx_result_t scanout_submit(void *context, const esp_d
      * old ISR in flight. This relies on the audited continuous-scan drivers and
      * exclusive panel ownership; raw VSYNC/color-done are not retirement.
      */
+    /* Single-buffer exposure has the same pre-submit ISR race. Joining it
+     * permits the next boundary without the unnecessary two-period fallback. */
     esp_err_t joined = ESP_ERR_NOT_SUPPORTED;
-    if (error == ESP_OK && scanout->config.buffer_count > 1) {
+    if (error == ESP_OK) {
         joined = present_isr_barrier(1000);
     }
     present_lock_enter(&scanout->lock, false);

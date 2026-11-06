@@ -402,6 +402,40 @@ static bool count_single(void *user, const esp_display_present_backend_event_t *
     ++*(unsigned *)user;
     return false;
 }
+static void single_buffer_join(void)
+{
+    const esp_err_t outcomes[] = {ESP_OK, ESP_ERR_TIMEOUT, ESP_ERR_NOT_SUPPORTED};
+    for (int kind = ESP_DISPLAY_PRESENT_LCD_DSI; kind <= ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE; ++kind) {
+        for (unsigned result = 0; result < 3; ++result) {
+            struct fake_lcd panel = {.early = true, .one_fb = true};
+            panel.buffers[0] = aligned_alloc(64, 64);
+            esp_display_present_lcd_scanout_config_t config = {
+                .panel = &panel, .kind = kind, .width = 3, .height = 2,
+                .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = 1,
+                .bounce = true, .delete_panel = true,
+            };
+            esp_display_present_lcd_scanout_t *adapter;
+            OK(esp_display_present_lcd_scanout_create(&config, &adapter));
+            esp_display_present_panel_adapter_t api;
+            OK(esp_display_present_lcd_scanout_get_interface(adapter, &api));
+            unsigned confirmed = 0;
+            OK(api.attach(api.context, count_single, &confirmed));
+            esp_display_present_surface_t surface = {panel.buffers[0], 12, {3, 2, 6, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}};
+            esp_display_present_rect_t area = {0, 0, 3, 2};
+            barrier_result = outcomes[result];
+            assert(api.submit(api.context, &surface, &area, 91).acceptance == ESP_DISPLAY_PRESENT_TX_ACCEPTED);
+            assert(!confirmed && !submit_barrier_panel); /* Both early callbacks and the old ISR were drained, not acknowledged. */
+            boundary(&panel);
+            assert(confirmed == (outcomes[result] == ESP_OK ? 1u : 0u));
+            boundary(&panel);
+            assert(confirmed == 1);
+            barrier_result = ESP_OK;
+            OK(api.quiesce(api.context, 100));
+            OK(esp_display_present_lcd_scanout_destroy(adapter));
+            free(panel.buffers[0]);
+        }
+    }
+}
 static void queried_rgb(void)
 {
     struct fake_lcd panel = {0};
@@ -438,7 +472,7 @@ static void queried_rgb(void)
     assert(api.submit(api.context, &surface, &area, 91).acceptance == ESP_DISPLAY_PRESENT_TX_ACCEPTED);
     assert(!panel.rgb && panel.rgb_vsync);
     (void)panel.rgb_vsync(&panel, NULL, panel.user);
-    assert(!confirmed);
+    assert(confirmed == 1);
     (void)panel.rgb_vsync(&panel, NULL, panel.user);
     assert(confirmed == 1);
     OK(api.quiesce(api.context, 100));
@@ -448,6 +482,7 @@ static void queried_rgb(void)
 }
 int main(void)
 {
+    single_buffer_join();
     /* Callers cannot force single-event retirement without the ISR join. */
     struct fake_lcd one_boundary_panel = {0};
     for (int kind = ESP_DISPLAY_PRESENT_LCD_DSI; kind <= ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE; ++kind) {

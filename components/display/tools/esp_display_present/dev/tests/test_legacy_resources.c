@@ -65,10 +65,8 @@ static void initialize(present_resources_t *resources, struct fake_lcd *panel)
     boundary(panel);
     present_resource_status_t state;
     OK(present_resources_status(resources, &state));
-    if (state.plan.images.count == 1) {
-        assert(present_resources_prepare(resources, 0) == ESP_ERR_TIMEOUT);
-        boundary(panel);
-    }
+    /* Successful post-submit ISR join makes one boundary sufficient for
+     * both single-buffer exposure and multi-buffer retirement. */
     OK(present_resources_prepare(resources, 0));
     assert(panel->calls == before + 1); /* Retry never submits a second bootstrap. */
 }

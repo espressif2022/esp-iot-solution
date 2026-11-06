@@ -45,6 +45,7 @@ static void run(void *unused)
         ESP_ERROR_CHECK(bench_open(active, &disp));
         atomic_store(&finished, false);
         bench_meter_reset();
+        bench_profile_reset();
         ESP_ERROR_CHECK(bench_lock());
         lv_demo_benchmark_set_end_cb(end_cb);
         lv_demo_benchmark();
@@ -60,6 +61,7 @@ static void run(void *unused)
         uint32_t frames = bench_frame_count();
         ESP_ERROR_CHECK(bench_close());
         bench_meter_report(active->name);
+        bench_profile_report(active->name);
         ESP_ERROR_CHECK(complete && scenes > 0 ? ESP_OK : ESP_ERR_TIMEOUT);
         ESP_LOGI(TAG, "PASS mode=%s te_buffers=%u rotation=%u frames=%u transport_fps=%.1f lvgl_fps=%d cpu=%d%% render=%dms flush=%dms scenes=%d", active->name, active->compose, active->rotation, (unsigned)frames, frames * 1000000.0 / elapsed, fps, cpu, render, flush, scenes);
     }

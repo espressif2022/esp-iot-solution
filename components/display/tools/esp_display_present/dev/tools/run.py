@@ -77,7 +77,7 @@ def idf():
 
 
 def location(args):
-    return args.work_root.resolve() / args.board / args.suite / args.implementation
+    return args.work_root.resolve() / args.board / args.suite / (args.implementation + ('-profile' if getattr(args, 'profile', False) else ''))
 
 
 def prepare(args):
@@ -87,6 +87,8 @@ def prepare(args):
 
 
 def build(args):
+    if args.profile and (args.implementation != 'present' or args.suite != 'benchmark'):
+        raise ValueError('--profile requires present benchmark')
     if args.implementation == 'adapter' and args.suite != 'benchmark':
         raise ValueError('adapter comparison applies to benchmark only')
     if args.board == 'box3-spi' and args.suite in ('pixels', 'native'):
@@ -125,7 +127,7 @@ def build(args):
             print('All adapter cases are unsupported; build emits SKIP entries, comparison uses -.')
         defaults.append(DEV / 'boards/configs/lvgl.defaults')
         flags += [f'-DPRESENT_BOARD={args.board}', f'-DPRESENT_IMPLEMENTATION={args.implementation}',
-                  f'-DPRESENT_CASE_DIR={root}', f'-DPRESENT_LVGL_DIR={alias}']
+                  f'-DPRESENT_CASE_DIR={root}', f'-DPRESENT_LVGL_DIR={alias}', f'-DPRESENT_PROFILE={"ON" if args.profile else "OFF"}']
     if args.suite in ('pixels', 'native'):
         flags += [f'-DPRESENT_MODE_ROTATION_MATRIX={"ON" if args.suite == "pixels" else "OFF"}',
                   f'-DPRESENT_NATIVE_ROTATION_MATRIX={"ON" if args.suite == "native" else "OFF"}']
@@ -136,6 +138,7 @@ def build(args):
     env = os.environ.copy()
     env['IDF_COMPONENT_MANAGER'] = '0'
     env['LVGL_VERSION'] = '9.6.0'
+    env['PRESENT_TEST_PROFILE'] = 'ON' if args.profile else 'OFF'
     if args.implementation == 'adapter':
         original = DEV.parent.parent / 'esp_lvgl_adapter'
         overlay = root / 'esp_lvgl_adapter'
@@ -166,7 +169,7 @@ def build(args):
     sdk = (root / 'sdkconfig').read_text()
     comparable = '\n'.join(l for l in sdk.splitlines() if l.startswith((
         'CONFIG_LV_', 'CONFIG_SPIRAM', 'CONFIG_ESP_DEFAULT_CPU_', 'CONFIG_COMPILER_OPTIMIZATION', 'CONFIG_FREERTOS_HZ')))
-    state = dict(board=args.board, suite=args.suite, implementation=args.implementation, cases=planned,
+    state = dict(profile=args.profile, board=args.board, suite=args.suite, implementation=args.implementation, cases=planned,
                  idf_commit=subprocess.check_output(['git', '-C', str(idf()), 'rev-parse', 'HEAD'], text=True).strip(),
                  lvgl_version='9.6.0' if lvgl else None,
                  lvgl_benchmark_sha256=sha(lvgl / 'demos/benchmark/lv_demo_benchmark.c') if lvgl else None,
@@ -186,6 +189,7 @@ def build(args):
 def parse_log(text):
     rows = []
     meters = {}
+    stages = {}
     active = None
     errors = []
     for raw in text.splitlines():
@@ -193,6 +197,10 @@ def parse_log(text):
         m = re.search(r'RUN mode=(\S+).*rotation=(\d+)', line)
         if m:
             active = (m[1], int(m[2]))
+        if 'PRESENT_PROFILE:' in line and active:
+            stage = re.search(r'stage=(\S+)', line)
+            if stage:
+                stages.setdefault(active, {})[stage[1]] = {k: int(v) for k, v in re.findall(r'(n|sum_us|avg_us|max_us|bytes|errors)=(\d+)', line)}
         if 'TE_METER:' in line and active:
             meters[active] = {k: int(v) for k, v in re.findall(r'(admitted|wait_avg_us|wait_max_us|tx_n|tx_avg_us|tx_max_us)=(\d+)', line)}
         m = re.search(r'(PASS|SKIP) mode=(\S+).*rotation=(\d+)', line)
@@ -201,6 +209,8 @@ def parse_log(text):
             row.update({k: float(v) if '.' in v else int(v) for k, v in re.findall(
                 r'(frames|transport_fps|lvgl_fps|cpu|render|flush|scenes)=([\d.]+)', line)})
             row.update(meters.get((m[2], int(m[3])), {}))
+            if (m[2], int(m[3])) in stages:
+                row['stages'] = stages[(m[2], int(m[3]))]
             if m[1] == 'SKIP':
                 row['reason'] = line.split('reason=', 1)[-1]
             rows.append(row)
@@ -261,11 +271,14 @@ def esptool(args, before, after, *command):
     if not args.port:
         raise ValueError('--port is required; ports are never assumed')
     return [sys.executable, '-m', 'esptool', '--chip', BOARDS[args.board]['target'], '-p', args.port,
-            '-b', '921600', '--before', before, '--after', after, '--no-stub', *command]
+            '-b', '921600', '--before', before, '--after', after,
+            *(['--no-stub'] if BOARDS[args.board]['target'] == 'esp32s31' else []), *command]
 
 
 def identify(args):
-    p = subprocess.run(esptool(args, 'default-reset', 'no-reset', 'read-mac'), check=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    command = esptool(args, 'default-reset', 'no-reset', 'read-mac')
+    command[command.index('-b') + 1] = '115200'
+    p = subprocess.run(command, check=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     print(p.stdout)
     if BOARDS[args.board]['mac'] not in p.stdout.lower():
         raise ValueError('MAC mismatch: no flash contents changed')
@@ -277,11 +290,12 @@ def hardware(args):
     backup.mkdir(parents=True, exist_ok=True)
     image, record = backup / 'original.bin', backup / 'manifest.json'
     identify(args)
+    before = 'no-reset' if args.port.startswith('/dev/ttyACM') else 'default-reset'
     if args.action == 'backup':
         if image.exists() or record.exists():
             raise ValueError('Backup exists; select a fresh --work-root instead of overwriting')
-        run(esptool(args, 'no-reset', 'no-reset', 'read-flash', '0', hex(BOARDS[args.board]['flash_bytes']), str(image)))
-        run(esptool(args, 'no-reset', 'hard-reset', 'verify-flash', '0', str(image)))
+        run(esptool(args, before, 'no-reset', 'read-flash', '0', hex(BOARDS[args.board]['flash_bytes']), str(image)))
+        run(esptool(args, before, 'hard-reset', 'verify-flash', '0', str(image)))
         record.write_text(json.dumps(dict(board=args.board, mac=BOARDS[args.board]['mac'], sha256=sha(image), bytes=image.stat().st_size, verified=True), indent=2)+'\n')
         return
     info = json.loads(record.read_text())
@@ -294,12 +308,12 @@ def hardware(args):
         app = json.loads((root / 'build/flasher_args.json').read_text())['app']['file']
         if sha(root / 'build' / app) != manifest['firmware_sha256']:
             raise ValueError('Firmware changed since build manifest was recorded; rebuild first')
-        run(esptool(args, 'no-reset', 'hard-reset', 'write-flash', '@flash_args'), cwd=root / 'build')
+        run(esptool(args, before, 'hard-reset', 'write-flash', '@flash_args'), cwd=root / 'build')
     elif args.action == 'restore':
         with (backup / 'restore.log').open('w') as log:
-            run(esptool(args, 'no-reset', 'no-reset', 'write-flash', '--flash-mode', 'keep', '--flash-freq', 'keep', '--flash-size', 'keep', '0', str(image)), stdout=log, stderr=subprocess.STDOUT)
+            run(esptool(args, before, 'no-reset', 'write-flash', '--flash-mode', 'keep', '--flash-freq', 'keep', '--flash-size', 'keep', '0', str(image)), stdout=log, stderr=subprocess.STDOUT)
         with (backup / 'restore-verify.log').open('w') as log:
-            run(esptool(args, 'no-reset', 'hard-reset', 'verify-flash', '0', str(image)), stdout=log, stderr=subprocess.STDOUT)
+            run(esptool(args, before, 'hard-reset', 'verify-flash', '0', str(image)), stdout=log, stderr=subprocess.STDOUT)
         (backup / 'restored.json').write_text(json.dumps(dict(verified_full_flash=True, sha256=info['sha256']), indent=2)+'\n')
 
 
@@ -329,7 +343,7 @@ def capture(args):
             while b'\n' in pending:
                 raw, pending = pending.split(b'\n', 1)
                 line = raw.decode(errors='replace')
-                if any(k in line for k in ('RUN ', 'PASS ', 'SKIP ', 'TE_METER:', 'FAIL', 'E (')):
+                if any(k in line for k in ('RUN ', 'PASS ', 'SKIP ', 'TE_METER:', 'PRESENT_PROFILE:', 'FAIL', 'E (')):
                     print(line.strip(), flush=True)
                 if any(k in line for k in stop):
                     return
@@ -352,11 +366,14 @@ def main():
     p.add_argument('--lvgl-dir', type=Path)
     p.add_argument('--angles', type=lambda v: [int(x) for x in v.split(',')], default=[0, 90, 180, 270])
     p.add_argument('--profiles', type=lambda v: v.split(','))
+    p.add_argument('--profile', action='store_true', help='Benchmark-only stage counters; isolated present-profile output')
     p.add_argument('--sanitize', action='store_true')
     p.add_argument('--check', action='store_true')
     p.add_argument('--port')
     p.add_argument('--timeout', type=int, default=2400)
     args = p.parse_args()
+    if args.action == 'compare' and args.profile:
+        p.error('Compare uninstrumented baseline runs; profiling has separate output')
     if args.action not in ('list', 'prepare', 'host', 'format') and not args.board:
         p.error('--board required')
     if any(a not in (0, 90, 180, 270) for a in args.angles) or not args.angles or len(set(args.angles)) != len(args.angles):

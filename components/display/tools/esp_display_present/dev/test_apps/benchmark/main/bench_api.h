@@ -26,3 +26,14 @@ esp_err_t bench_close(void);
 uint32_t bench_frame_count(void);
 void bench_meter_reset(void);
 void bench_meter_report(const char *);
+
+#ifdef BENCH_PROFILE
+void bench_profile_reset(void);
+void bench_profile_report(const char *label);
+#else
+static inline void bench_profile_reset(void) {}
+static inline void bench_profile_report(const char *label)
+{
+    (void)label;
+}
+#endif

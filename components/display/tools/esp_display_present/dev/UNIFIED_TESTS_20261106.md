@@ -18,3 +18,5 @@
 公共 benchmark 统一主程序、场景统计、清零、超时和日志；实现差异集中在 bridge_present/bridge_adapter。S31 的 TE 统计复用本轮实测版本，先 drain 再输出统计。board 以 MAC 配置，不保存固定端口。构建、配置和依赖默认在组件外，验证固件只用于后续明确选定板子的测试。
 
 旧 examples 中应用示例和已存在的用户修改保留。历史 evidence 的源码快照保留原样用于追溯，不再作为新测试入口。legacy_compat、scanout_boundary 和根目录标准 IDF test_apps 的自动发现入口不移动，统一由总说明索引，避免破坏已有CI或隔离观测流程。
+
+后续首次RGB板测发现统一配置遗漏已确认bounce声明、历史32KB指令cache/PSRAM XIP设置，现已补齐。对应运行与受控A/B见 [RGB NONE优化](evidence/rgb-none-profile-20261106/README.md)，本页保留整理当时的编译验证，不自动等同修正后全矩阵板测。
