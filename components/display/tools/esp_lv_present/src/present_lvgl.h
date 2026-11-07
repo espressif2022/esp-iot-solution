@@ -30,10 +30,14 @@ typedef struct esp_lv_present_native esp_lv_present_native_t;
 esp_err_t esp_lv_present_native_create(esp_display_present_engine_t *presenter, uint32_t draw_rows, esp_lv_present_native_t **out);
 
 /**
- * @brief Opt-in zero-copy: FULL/RGB565/native with LVGL-compatible stride only.
+ * @brief Opt-in zero-copy: FULL or two-physical-buffer DIRECT, RGB565/native
+ * with LVGL-compatible stride only. DIRECT acquires before LVGL's historical
+ * sync; the final flush submits the complete synchronized image once.
+ * The next synchronization waits for actual scanout retirement.
  * Renderer leases a backend framebuffer before drawing, and detaches it before
- * flush_ready. Keeps a private fallback buffer for safe failed admission.
- * Other contracts/formats must use the copy binding above. LVGL versions before 9.5 return ESP_ERR_NOT_SUPPORTED.
+ * refresh-ready. Keeps a private fallback buffer for safe failed admission.
+ * Other layouts, including rotated DIRECT conversion canvases, use the copy
+ * binding above. LVGL versions before 9.5 return ESP_ERR_NOT_SUPPORTED.
  *
  * @param presenter Presenter owned by the calling task.
  * @param out out.

@@ -45,7 +45,8 @@ esp_err_t esp_lv_present_start(esp_display_presenter_t *presenter, lv_display_t 
     if (caps.draw_layout.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 && caps.draw_layout.byte_order == ESP_DISPLAY_PRESENT_ORDER_NATIVE) {
         if (caps.contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION) {
             error = esp_lv_present_native_create_pooled(core, caps.max_tile_rows, &binding);
-        } else if (caps.contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL) {
+        } else if (caps.contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL ||
+                   caps.contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT) {
             error = esp_lv_present_native_create_zero_copy(core, &binding);
         } else {
             error = esp_lv_present_native_create(core, caps.max_tile_rows, &binding);

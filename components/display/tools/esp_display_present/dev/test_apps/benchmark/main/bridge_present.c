@@ -3,11 +3,13 @@
 #include "bench_api.h"
 #include "esp_display_present.h"
 #include "esp_lv_present.h"
+#include "present_lvgl.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 static esp_lcd_panel_handle_t panel;
 static esp_lcd_panel_io_handle_t io;
 static esp_display_presenter_t *presenter;
+static lv_display_t *active_display;
 static const esp_display_present_mode_t modes[] = {ESP_DISPLAY_PRESENT_MODE_NONE, ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL, ESP_DISPLAY_PRESENT_MODE_TRIPLE_FULL, ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT, ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL, ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL, ESP_DISPLAY_PRESENT_MODE_AUTO, ESP_DISPLAY_PRESENT_MODE_TE_SYNC};
 esp_err_t bench_init(void)
 {
@@ -40,6 +42,7 @@ esp_err_t bench_open(const bench_case_t *c, lv_display_t **disp)
         return e;
     }
     e = esp_lv_present_start(presenter, disp);
+    active_display = e == ESP_OK ? *disp : NULL;
     if (e != ESP_OK) {
         esp_display_presenter_delete(presenter);
         presenter = NULL;
@@ -61,10 +64,17 @@ esp_err_t bench_close(void)
     esp_err_t e = esp_display_presenter_quiesce(presenter, 10000);
     if (e != ESP_OK) {
         return e;
-    } e = esp_lv_present_stop();
+    }
+    /* A binding error can pause drawing while benchmark timers still finish.
+     * Check it outside the measured scene interval; cleanup remains mandatory. */
+    esp_err_t draw_error = esp_lv_present_native_get_error(lv_display_get_user_data(active_display));
+    e = esp_lv_present_stop();
     if (e != ESP_OK) {
         return e;
-    } return esp_display_presenter_delete(presenter);
+    }
+    active_display = NULL;
+    e = esp_display_presenter_delete(presenter);
+    return e != ESP_OK ? e : draw_error;
 }
 uint32_t bench_frame_count(void)
 {
