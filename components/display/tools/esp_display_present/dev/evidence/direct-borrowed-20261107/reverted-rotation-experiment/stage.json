@@ -1,0 +1,6 @@
+{
+  "action": "stopped_experiment",
+  "reason": "Rotated canvas borrowing regressed FPS; rolling back rotation optimization and eliminating duplicate0deg repair",
+  "full_suite_complete": false,
+  "original_restoration_pending": true
+}

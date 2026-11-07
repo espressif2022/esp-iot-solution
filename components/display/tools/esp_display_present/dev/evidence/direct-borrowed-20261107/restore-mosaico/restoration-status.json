@@ -1,0 +1,12 @@
+{
+  "mac": "30:ed:a0:f4:0b:34",
+  "verified_full_flash": true,
+  "sha256": "5a7d52d5c61b24fa8ab6e7a6d1af3f33b9809e52e55b190f2b88adb706253212",
+  "transport": "ROM no-stub 1MiB chunks, then whole-image verification",
+  "initial_stub_restore_interrupted": true,
+  "whole_image_rom_erase_interrupted": true,
+  "state": "restored_verified",
+  "restoration_complete": true,
+  "resumed_by_user_authorization": true,
+  "remaining_chunks": []
+}

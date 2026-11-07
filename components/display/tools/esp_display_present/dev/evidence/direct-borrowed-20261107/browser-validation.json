@@ -1,0 +1,37 @@
+{
+  "passed": true,
+  "records": 132,
+  "presentGrades": 120,
+  "adapterGrades": 75,
+  "historicalAdapterFailures": 1,
+  "boards": {
+    "s31-rgb": {
+      "cases": 28,
+      "memoryRows": 112
+    },
+    "s3-rgb": {
+      "cases": 28,
+      "memoryRows": 112
+    },
+    "p4-dsi": {
+      "cases": 28,
+      "memoryRows": 112
+    },
+    "box3-spi": {
+      "cases": 20,
+      "memoryRows": 80
+    },
+    "s31-qspi": {
+      "cases": 28,
+      "memoryRows": 112
+    }
+  },
+  "memoryKiBCheck": {
+    "expected": "366.10",
+    "actual": "366.10",
+    "dirBefore": 20,
+    "present": 23,
+    "adapter": 24
+  },
+  "runtimeErrors": []
+}

@@ -1,0 +1,10 @@
+{
+  "production_commit": "4a9daccee",
+  "component_fingerprints_match": true,
+  "checked_component_files": 96,
+  "adapter_runtime_files_unchanged": 26,
+  "idf_clean": true,
+  "idf_commit": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+  "firmware_built_before_local_commit": true,
+  "content_hashes_are_authoritative": true
+}

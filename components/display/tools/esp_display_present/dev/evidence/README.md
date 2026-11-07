@@ -48,3 +48,5 @@
 - [S31 Korvo 原配800×480 RGB补测与adapter对照](s31-rgb-korvo-20261107/README.md)：bounce像素28组；原生bounce/non-bounce×真实1/2/3 FB×两核提交12组；四个0°模式综合场景双方完成。non-bounce仍未接入生产present，不能扩展为全模式长测验收。
 
 - [S31 adapter 原生TE基线补测](s31-adapter-te-baselines-20261107/README.md)：9组有效成绩、3组同步软件旋转跳过；用户目视正常。补上此前adapter TE漏测，不映射为present C/T。mosaico原固件恢复未完成，按用户明确要求保持停止，备份完整保留。
+
+- [DIRECT 优化与 S31 RGB 全模式、四角度对照](direct-borrowed-20261107/README.md)：源码 `4a9daccee`；present28项连续完成，adapter21项PASS、7项SKIP，另有独立插桩四项。0° 20→23 FPS，旋转退化实验已撤回。两块S31原固件均已整片恢复校验；前述TE归档中的恢复中断状态属于历史，当前恢复证据以本目录为准。新固件没有目视/光学撕裂验收。

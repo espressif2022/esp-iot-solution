@@ -1,0 +1,259 @@
+{
+  "scope": "Independent instrumented16-scene rounds; not the formal FPS table; LVGL sync memcpy is outside pixel-executor counters",
+  "before": {
+    "status": "PASS",
+    "mode": "DOUBLE_DIRECT",
+    "rotation": 0,
+    "frames": 1203,
+    "transport_fps": 17.3,
+    "lvgl_fps": 19,
+    "cpu": 100,
+    "render": 35,
+    "flush": 17,
+    "scenes": 16,
+    "memory": {
+      "before_open": {
+        "internal_total": 501639,
+        "internal_free": 396451,
+        "psram_total": 16777216,
+        "psram_free": 14470368,
+        "internal_min_free": 0,
+        "psram_min_free": 0
+      },
+      "after_open": {
+        "internal_total": 501639,
+        "internal_free": 350395,
+        "psram_total": 16777216,
+        "psram_free": 13699320,
+        "internal_min_free": 0,
+        "psram_min_free": 0
+      },
+      "after_run": {
+        "internal_total": 501639,
+        "internal_free": 349799,
+        "psram_total": 16777216,
+        "psram_free": 13699320,
+        "internal_min_free": 268767,
+        "psram_min_free": 13437152
+      },
+      "after_close": {
+        "internal_total": 501639,
+        "internal_free": 374099,
+        "psram_total": 16777216,
+        "psram_free": 14470368,
+        "internal_min_free": 0,
+        "psram_min_free": 0
+      }
+    },
+    "stages": {
+      "begin": {
+        "n": 1203,
+        "sum_us": 6626632,
+        "avg_us": 5508,
+        "max_us": 26944,
+        "bytes": 0,
+        "errors": 0
+      },
+      "acquire": {
+        "n": 4203,
+        "sum_us": 623479,
+        "avg_us": 148,
+        "max_us": 314,
+        "bytes": 0,
+        "errors": 0
+      },
+      "submit": {
+        "n": 4203,
+        "sum_us": 507951,
+        "avg_us": 120,
+        "max_us": 316,
+        "bytes": 0,
+        "errors": 0
+      },
+      "commit": {
+        "n": 1203,
+        "sum_us": 418521,
+        "avg_us": 347,
+        "max_us": 1809,
+        "bytes": 0,
+        "errors": 0
+      },
+      "cpu_exec": {
+        "n": 0,
+        "sum_us": 0,
+        "avg_us": 0,
+        "max_us": 0,
+        "bytes": 0,
+        "errors": 0
+      },
+      "hw_exec": {
+        "n": 2839,
+        "sum_us": 2483069,
+        "avg_us": 874,
+        "max_us": 7275,
+        "bytes": 38211004,
+        "errors": 0
+      },
+      "fallback": {
+        "n": 0,
+        "sum_us": 0,
+        "avg_us": 0,
+        "max_us": 0,
+        "bytes": 0,
+        "errors": 0
+      },
+      "cache_out": {
+        "n": 10923,
+        "sum_us": 298610,
+        "avg_us": 27,
+        "max_us": 335,
+        "bytes": 2281308836,
+        "errors": 0
+      },
+      "cache_in": {
+        "n": 2839,
+        "sum_us": 102209,
+        "avg_us": 36,
+        "max_us": 549,
+        "bytes": 146966400,
+        "errors": 0
+      },
+      "panel_submit": {
+        "n": 1203,
+        "sum_us": 81255,
+        "avg_us": 67,
+        "max_us": 294,
+        "bytes": 923904000,
+        "errors": 0
+      }
+    }
+  },
+  "after": {
+    "status": "PASS",
+    "mode": "DOUBLE_DIRECT",
+    "rotation": 0,
+    "frames": 1419,
+    "transport_fps": 20.4,
+    "lvgl_fps": 22,
+    "cpu": 100,
+    "render": 34,
+    "flush": 0,
+    "scenes": 16,
+    "memory": {
+      "before_open": {
+        "internal_total": 501639,
+        "internal_free": 396451,
+        "psram_total": 16777216,
+        "psram_free": 14470368,
+        "internal_min_free": 0,
+        "psram_min_free": 0
+      },
+      "after_open": {
+        "internal_total": 501639,
+        "internal_free": 350263,
+        "psram_total": 16777216,
+        "psram_free": 13699320,
+        "internal_min_free": 0,
+        "psram_min_free": 0
+      },
+      "after_run": {
+        "internal_total": 501639,
+        "internal_free": 349655,
+        "psram_total": 16777216,
+        "psram_free": 13699320,
+        "internal_min_free": 267539,
+        "psram_min_free": 13437152
+      },
+      "after_close": {
+        "internal_total": 501639,
+        "internal_free": 374087,
+        "psram_total": 16777216,
+        "psram_free": 14470368,
+        "internal_min_free": 0,
+        "psram_min_free": 0
+      }
+    },
+    "stages": {
+      "begin": {
+        "n": 1419,
+        "sum_us": 14111803,
+        "avg_us": 9944,
+        "max_us": 22111,
+        "bytes": 0,
+        "errors": 0
+      },
+      "acquire": {
+        "n": 1419,
+        "sum_us": 139277,
+        "avg_us": 98,
+        "max_us": 208,
+        "bytes": 0,
+        "errors": 0
+      },
+      "submit": {
+        "n": 1419,
+        "sum_us": 268457,
+        "avg_us": 189,
+        "max_us": 304,
+        "bytes": 0,
+        "errors": 0
+      },
+      "commit": {
+        "n": 1419,
+        "sum_us": 192840,
+        "avg_us": 135,
+        "max_us": 231,
+        "bytes": 0,
+        "errors": 0
+      },
+      "cpu_exec": {
+        "n": 0,
+        "sum_us": 0,
+        "avg_us": 0,
+        "max_us": 0,
+        "bytes": 0,
+        "errors": 0
+      },
+      "hw_exec": {
+        "n": 0,
+        "sum_us": 0,
+        "avg_us": 0,
+        "max_us": 0,
+        "bytes": 0,
+        "errors": 0
+      },
+      "fallback": {
+        "n": 0,
+        "sum_us": 0,
+        "avg_us": 0,
+        "max_us": 0,
+        "bytes": 0,
+        "errors": 0
+      },
+      "cache_out": {
+        "n": 2838,
+        "sum_us": 116004,
+        "avg_us": 40,
+        "max_us": 377,
+        "bytes": 2179584000,
+        "errors": 0
+      },
+      "cache_in": {
+        "n": 0,
+        "sum_us": 0,
+        "avg_us": 0,
+        "max_us": 0,
+        "bytes": 0,
+        "errors": 0
+      },
+      "panel_submit": {
+        "n": 1419,
+        "sum_us": 72355,
+        "avg_us": 50,
+        "max_us": 169,
+        "bytes": 1089792000,
+        "errors": 0
+      }
+    }
+  }
+}

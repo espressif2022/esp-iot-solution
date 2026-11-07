@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "records": 132,
+  "present_valid_grades": 120,
+  "adapter_valid_grades": 75,
+  "historical_adapter_failures": 1,
+  "csv_exact_byte_cells": 2742,
+  "xlsx_checked_memory_cells": 1566,
+  "xlsx_sheets": 7,
+  "s31_rgb_case_rows": 28,
+  "s31_rgb_worksheet_rows": 113,
+  "all_five_html_entries_identical": true,
+  "other_board_numeric_records_unchanged": true,
+  "raw_four_board_json_unchanged": true,
+  "production_commit": "4a9daccee",
+  "test_integration_commit": "0da59112a",
+  "restored_boards": [
+    "s31-korvo-rgb-30eda0f3f7b8",
+    "s31-mosaico-qspi-30eda0f40b34"
+  ],
+  "new_firmware_visual_acceptance": false
+}

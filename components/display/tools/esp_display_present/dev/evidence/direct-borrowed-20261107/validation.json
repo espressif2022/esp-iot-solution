@@ -1,0 +1,16 @@
+{
+  "production_commit": "4a9dacceee06714a210b540c1cba1093f4e611a3",
+  "present_cases": 28,
+  "adapter_passes": 21,
+  "adapter_skips": 7,
+  "scenes_per_pass": 16,
+  "host_lvgl95": "46/46 ASan+UBSan",
+  "host_lvgl96": "46/46 ASan+UBSan",
+  "original_adapter_runtime_sources_changed": false,
+  "idf_changed": false,
+  "boards_operated": [
+    "s31-rgb",
+    "s31-qspi-original-restoration-only"
+  ],
+  "new_firmware_visual_acceptance": false
+}

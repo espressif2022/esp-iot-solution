@@ -37,7 +37,7 @@ dev/
 | s3-rgb | S3 LCD EV R16 / GC9503 RGB bounce | 480×480 | benchmark、pixels、native、smoke |
 | p4-dsi | P4 Function EV rev3 / EK79007 MIPI DSI | 1024×600 | benchmark、pixels、native、smoke |
 | box3-spi | ESP-BOX-3 / ILI9341 SPI GRAM | 320×240 | benchmark、smoke |
-| s31-rgb | S31 Korvo-1 原配 RGB，10 行 bounce | 800×480 | benchmark、pixels、rgb-events、smoke；像素/事件已验，benchmark已测四模式0° |
+| s31-rgb | S31 Korvo-1 原配 RGB，10 行 bounce | 800×480 | benchmark、pixels、rgb-events、smoke；像素/事件已验；benchmark七模式×四角度28项通过，adapter21项通过、7项跳过 |
 | s31-qspi | S31 mosaico / CO5300 QSPI，TE43 | 480×480 | benchmark、pixels、te-lifecycle、smoke |
 
 以 `boards/boards.json` 的 MAC 识别设备，不绑定 USB0/ACM0。增加新板子需要增加明确配置，不能只改端口号。
@@ -140,3 +140,9 @@ TE 路径不通过 require_double_buffer 选择 present 式 T1/T2，不强行映
 
 本轮adapter TE补测结果见[evidence/s31-adapter-te-baselines-20261107](evidence/s31-adapter-te-baselines-20261107/README.md)。
 注意：mosaico原固件恢复过程中用户明确要求保持停止，目前未完整恢复，不保证能正常启动；不得未经新授权继续操作板子。
+
+## DIRECT 优化与 S31 RGB 完整对照（2026-11-07）
+
+[完整记录](evidence/direct-borrowed-20261107/README.md)：present 一次连续完成28项，原始adapter一次完成21项支持组合并跳过7项。每项完整16场景。0° DIRECT从20提升到23 FPS，原始adapter本轮24 FPS；旋转保留copy路径。源码提交 `4a9daccee`，IDF和原始adapter未修改。
+
+benchmark 的 present 收尾会检查LVGL绑定保存的错误码，防止绘制暂停但场景计时器结束被误记PASS。插桩轮独立保存，不能替代正式跑分。打开前两实现的首次框架初始化边界不同，跨实现比较应优先看打开后、运行最小和关闭后堆余量。

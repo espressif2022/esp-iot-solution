@@ -1,0 +1,5 @@
+{
+  "purpose": "Four DIRECT angles before optimization; prefix scores retained",
+  "intentionally_stopped_after_direct": true,
+  "full_28_case_suite_complete": false
+}
