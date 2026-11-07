@@ -1,0 +1,6 @@
+{"time": 1794028346.7939732, "board": "s31-qspi", "stage": "FLASH_START", "implementation": "present"}
+{"time": 1794028364.9232774, "board": "s31-qspi", "stage": "CAPTURE_START", "implementation": "present"}
+{"time": 1794029479.84665, "board": "s31-qspi", "stage": "SUITE_PASS", "implementation": "present", "cases": 16}
+{"time": 1794029479.846767, "board": "s31-qspi", "stage": "ALL_TESTS_PASS"}
+{"time": 1794029479.8468335, "board": "s31-qspi", "stage": "RESTORE_START"}
+{"time": 1794029783.2830226, "board": "s31-qspi", "stage": "RESTORE_VERIFIED"}

@@ -1,0 +1,25 @@
+{
+  "complete": false,
+  "rows": [],
+  "errors": [],
+  "suite_memory": {
+    "before_init": {
+      "internal_total": 637463,
+      "internal_free": 554147,
+      "psram_total": 33554432,
+      "psram_free": 33551868,
+      "internal_min_free": 0,
+      "psram_min_free": 0
+    },
+    "after_init": {
+      "internal_total": 637463,
+      "internal_free": 517887,
+      "psram_total": 33554432,
+      "psram_free": 29865308,
+      "internal_min_free": 0,
+      "psram_min_free": 0
+    }
+  },
+  "matrix_complete": false,
+  "memory_complete": true
+}

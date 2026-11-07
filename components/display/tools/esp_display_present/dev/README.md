@@ -106,3 +106,14 @@ python3 dev/tools/run.py build --board s3-rgb --profiles NONE --angles 0 --profi
 对比工具同时核对公共 defaults 和共享测试源码，sdkconfig 指纹包含指令/数据缓存、LCD 与显式禁用选项；组件私有 Kconfig 不作为双方共同配置。相同模式名不代表内部渲染路径相同：RGB NONE 在 adapter 为 PARTIAL，在 present 为 DIRECT 持久画布，应结合场景和耗时判断差异。分段统计的 executor 次数不包含 LVGL binding 内的 memcpy，次数为0不代表整条路径零拷贝。
 
 架构重构进度及当前结构见 [架构收敛记录](ARCHITECTURE_REFACTOR_20261106.md)。各批按接口、文件职责、配置解析和状态归属逐步推进。
+
+
+## 综合场景内存统计
+
+benchmark在共用主程序的场景边界采样，不添加逐帧日志。每组记录before_open、after_open、after_run、after_close，另记录整套bench_init前后。内部RAM使用INTERNAL|8BIT，PSRAM使用SPIRAM|8BIT，两个口径不重叠。
+
+打开占用为after_open的total-free，打开增量为before_open到after_open的free变化；它们包含测试环境、任务栈和LVGL分配，不是单独组件的最小内存预算，也不包含链接时静态段。S3启用PSRAM XIP时还须结合heap总量和剩余量判断代码预留的影响。
+
+局部最小剩余从open前监控到benchmark结束、close前，覆盖创建和整个综合场景。IDF按各heap历史低水位求和，不保证发生在同一时刻，不能由此宣称精确的瞬时峰值。关闭后的free用于观察回收，不单凭一次差值认定泄漏。
+
+results.json保留分阶段原始字节，comparison.csv在FPS列后追加两实现的heap总占用、打开增量和最小剩余。新manifest的memory_schema=1要求所有有效组合具备完整采样；旧日志仍可解析，但不同memory schema不能混合比较。FPS仍为16个有效LVGL场景的均值，不是面板刷新率；不完整或错误场景不能采用其高分。

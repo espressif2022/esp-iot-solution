@@ -45,6 +45,31 @@ class RunnerTest(unittest.TestCase):
         args = SimpleNamespace(work_root=Path('/tmp/present-test'), board='s3-rgb', suite='benchmark', implementation='present', profile=True)
         self.assertEqual(runner.location(args).name, 'present-profile')
 
+    def test_memory_metrics_keep_phases_heaps_and_rotations_separate(self):
+        log = ('MEMORY mode=SUITE rotation=0 phase=after_init internal_total=1000 internal_free=900 psram_total=8000 psram_free=7000 internal_min_free=0 psram_min_free=0\n'
+               'MEMORY mode=DOUBLE_FULL rotation=90 phase=after_open internal_total=1000 internal_free=800 psram_total=8000 psram_free=6000 internal_min_free=0 psram_min_free=0\n'
+               'MEMORY mode=DOUBLE_FULL rotation=90 phase=after_run internal_total=1000 internal_free=750 psram_total=8000 psram_free=5900 internal_min_free=700 psram_min_free=5000\n'
+               'PASS mode=DOUBLE_FULL rotation=90 lvgl_fps=31 scenes=16\n'
+               'SKIP mode=NONE rotation=90 reason=unsupported\nSUITE_PASS board=x')
+        result = runner.parse_log(log)
+        self.assertEqual(result['suite_memory']['after_init']['internal_free'], 900)
+        self.assertEqual(result['rows'][0]['memory']['after_open']['psram_free'], 6000)
+        self.assertEqual(result['rows'][0]['memory']['after_run']['internal_min_free'], 700)
+        self.assertNotIn('memory', result['rows'][1])
+
+    def test_new_memory_schema_rejects_missing_samples(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args = SimpleNamespace(work_root=Path(tmp), board='s3-rgb', suite='benchmark', implementation='present')
+            root = runner.location(args)
+            root.mkdir(parents=True)
+            (root / 'manifest.json').write_text(json.dumps(dict(memory_schema=1, cases=runner.cases_for('s3-rgb', [0], ['NONE']))))
+            (root / 'live.log').write_text('PASS mode=NONE rotation=0 lvgl_fps=20 scenes=16\nSUITE_PASS board=x')
+            with self.assertRaises(ValueError):
+                runner.report(args)
+            result = json.loads((root / 'results.json').read_text())
+            self.assertTrue(result['matrix_complete'])
+            self.assertFalse(result['memory_complete'])
+
     def test_error_is_not_pass(self):
         self.assertTrue(runner.parse_log('E (14) worker: error\nSUITE_PASS board=x')['errors'])
         self.assertFalse(runner.parse_log('E (14) gpio: GPIO isr service already installed')['errors'])

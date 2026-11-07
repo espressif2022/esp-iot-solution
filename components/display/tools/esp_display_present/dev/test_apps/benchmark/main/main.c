@@ -6,6 +6,7 @@
 #include "bench_cases.h"
 #include "demos/lv_demos.h"
 #include "esp_log.h"
+#include "esp_heap_caps.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -13,6 +14,18 @@ static const char *TAG = "present_bench";
 static atomic_bool finished;
 static const bench_case_t *active;
 static int fps, cpu, render, flush, scenes;
+/* Disjoint byte-addressable heaps. Aggregate minima need not be simultaneous. */
+static void memory_report(const char *phase, bool local_minimum)
+{
+    const uint32_t internal = MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT;
+    const uint32_t psram = MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT;
+    ESP_LOGI(TAG, "MEMORY mode=%s rotation=%u phase=%s internal_total=%u internal_free=%u psram_total=%u psram_free=%u internal_min_free=%u psram_min_free=%u",
+             active ? active->name : "SUITE", active ? active->rotation : 0, phase,
+             (unsigned)heap_caps_get_total_size(internal), (unsigned)heap_caps_get_free_size(internal),
+             (unsigned)heap_caps_get_total_size(psram), (unsigned)heap_caps_get_free_size(psram),
+             local_minimum ? (unsigned)heap_caps_get_minimum_free_size(internal) : 0,
+             local_minimum ? (unsigned)heap_caps_get_minimum_free_size(psram) : 0);
+}
 static void end_cb(const lv_demo_benchmark_summary_t *s)
 {
     scenes = s->valid_scene_cnt;
@@ -31,7 +44,10 @@ static void end_cb(const lv_demo_benchmark_summary_t *s)
 static void run(void *unused)
 {
     (void)unused;
+    memory_report("before_init", false);
     ESP_ERROR_CHECK(bench_init());
+    vTaskDelay(pdMS_TO_TICKS(20));
+    memory_report("after_init", false);
     ESP_LOGI(TAG, "SUITE_BEGIN board=%s implementation=%s cases=%u", BENCH_BOARD, BENCH_IMPLEMENTATION, (unsigned)(sizeof(bench_cases) / sizeof(bench_cases[0])));
     for (unsigned i = 0; i < sizeof(bench_cases) / sizeof(bench_cases[0]); i++) {
         active = &bench_cases[i];
@@ -41,8 +57,11 @@ static void run(void *unused)
             continue;
         }
 #endif
+        memory_report("before_open", false);
+        ESP_ERROR_CHECK(heap_caps_monitor_local_minimum_free_size_start());
         lv_display_t *disp = NULL;
         ESP_ERROR_CHECK(bench_open(active, &disp));
+        memory_report("after_open", false);
         atomic_store(&finished, false);
         bench_meter_reset();
         bench_profile_reset();
@@ -59,7 +78,11 @@ static void run(void *unused)
         bool complete = atomic_load_explicit(&finished, memory_order_acquire);
         int64_t elapsed = esp_timer_get_time() - start;
         uint32_t frames = bench_frame_count();
+        memory_report("after_run", true);
+        ESP_ERROR_CHECK(heap_caps_monitor_local_minimum_free_size_stop());
         ESP_ERROR_CHECK(bench_close());
+        vTaskDelay(pdMS_TO_TICKS(20));
+        memory_report("after_close", false);
         bench_meter_report(active->name);
         bench_profile_report(active->name);
         ESP_ERROR_CHECK(complete && scenes > 0 ? ESP_OK : ESP_ERR_TIMEOUT);

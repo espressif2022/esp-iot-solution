@@ -1,0 +1,9 @@
+{"time": 1794028542.0626328, "board": "box3-spi", "stage": "FLASH_START", "implementation": "present"}
+{"time": 1794028551.6858482, "board": "box3-spi", "stage": "CAPTURE_START", "implementation": "present"}
+{"time": 1794029936.9139628, "board": "box3-spi", "stage": "SUITE_PASS", "implementation": "present", "cases": 20}
+{"time": 1794029936.9140759, "board": "box3-spi", "stage": "FLASH_START", "implementation": "adapter"}
+{"time": 1794029946.2565053, "board": "box3-spi", "stage": "CAPTURE_START", "implementation": "adapter"}
+{"time": 1794030224.378435, "board": "box3-spi", "stage": "SUITE_PASS", "implementation": "adapter", "cases": 20}
+{"time": 1794030224.4698913, "board": "box3-spi", "stage": "ALL_TESTS_PASS"}
+{"time": 1794030224.4700012, "board": "box3-spi", "stage": "RESTORE_START"}
+{"time": 1794030393.3220396, "board": "box3-spi", "stage": "RESTORE_VERIFIED"}

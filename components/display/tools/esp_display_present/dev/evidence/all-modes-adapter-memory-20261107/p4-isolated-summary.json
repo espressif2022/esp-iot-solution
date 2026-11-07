@@ -1,0 +1,57 @@
+[
+  {
+    "mode": "DOUBLE_PARTIAL",
+    "rotation": 90,
+    "passed": true
+  },
+  {
+    "mode": "DOUBLE_PARTIAL",
+    "rotation": 180,
+    "passed": true
+  },
+  {
+    "mode": "DOUBLE_PARTIAL",
+    "rotation": 270,
+    "passed": true
+  },
+  {
+    "mode": "TRIPLE_PARTIAL",
+    "rotation": 0,
+    "passed": true
+  },
+  {
+    "mode": "TRIPLE_PARTIAL",
+    "rotation": 90,
+    "passed": true
+  },
+  {
+    "mode": "TRIPLE_PARTIAL",
+    "rotation": 180,
+    "passed": true
+  },
+  {
+    "mode": "TRIPLE_PARTIAL",
+    "rotation": 270,
+    "passed": true
+  },
+  {
+    "mode": "AUTO",
+    "rotation": 0,
+    "passed": true
+  },
+  {
+    "mode": "AUTO",
+    "rotation": 90,
+    "passed": true
+  },
+  {
+    "mode": "AUTO",
+    "rotation": 180,
+    "passed": true
+  },
+  {
+    "mode": "AUTO",
+    "rotation": 270,
+    "passed": true
+  }
+]

@@ -1,0 +1,9 @@
+{"time": 1794028264.2050567, "board": "s3-rgb", "stage": "FLASH_START", "implementation": "present"}
+{"time": 1794028279.8631299, "board": "s3-rgb", "stage": "CAPTURE_START", "implementation": "present"}
+{"time": 1794030234.5026603, "board": "s3-rgb", "stage": "SUITE_PASS", "implementation": "present", "cases": 28}
+{"time": 1794030234.5027988, "board": "s3-rgb", "stage": "FLASH_START", "implementation": "adapter"}
+{"time": 1794030247.2740016, "board": "s3-rgb", "stage": "CAPTURE_START", "implementation": "adapter"}
+{"time": 1794031715.1671703, "board": "s3-rgb", "stage": "SUITE_PASS", "implementation": "adapter", "cases": 28}
+{"time": 1794031715.2811038, "board": "s3-rgb", "stage": "ALL_TESTS_PASS"}
+{"time": 1794031715.2812808, "board": "s3-rgb", "stage": "RESTORE_START"}
+{"time": 1794031974.6173897, "board": "s3-rgb", "stage": "RESTORE_VERIFIED"}

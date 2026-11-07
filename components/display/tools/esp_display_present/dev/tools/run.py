@@ -178,7 +178,7 @@ def build(args):
             raise
     sdk = (root / 'sdkconfig').read_text()
     comparable = comparable_sdkconfig(sdk)
-    state = dict(profile=args.profile, board=args.board, suite=args.suite, implementation=args.implementation, cases=planned,
+    state = dict(memory_schema=1, profile=args.profile, board=args.board, suite=args.suite, implementation=args.implementation, cases=planned,
                  idf_commit=subprocess.check_output(['git', '-C', str(idf()), 'rev-parse', 'HEAD'], text=True).strip(),
                  lvgl_version='9.6.0' if lvgl else None,
                  lvgl_benchmark_sha256=sha(lvgl / 'demos/benchmark/lv_demo_benchmark.c') if lvgl else None,
@@ -199,10 +199,19 @@ def parse_log(text):
     rows = []
     meters = {}
     stages = {}
+    memory = {}
+    suite_memory = {}
     active = None
     errors = []
     for raw in text.splitlines():
         line = re.sub(r'\x1b\[[0-9;]*[A-Za-z]', '', raw)
+        mem = re.search(r'MEMORY mode=(\S+) rotation=(\d+) phase=(\S+)', line)
+        if mem:
+            values = {k: int(v) for k, v in re.findall(r'(internal_total|internal_free|psram_total|psram_free|internal_min_free|psram_min_free)=(\d+)', line)}
+            if mem[1] == 'SUITE':
+                suite_memory[mem[3]] = values
+            else:
+                memory.setdefault((mem[1], int(mem[2])), {})[mem[3]] = values
         m = re.search(r'RUN mode=(\S+).*rotation=(\d+)', line)
         if m:
             active = (m[1], int(m[2]))
@@ -218,6 +227,8 @@ def parse_log(text):
             row.update({k: float(v) if '.' in v else int(v) for k, v in re.findall(
                 r'(frames|transport_fps|lvgl_fps|cpu|render|flush|scenes)=([\d.]+)', line)})
             row.update(meters.get((m[2], int(m[3])), {}))
+            if (m[2], int(m[3])) in memory:
+                row['memory'] = memory[(m[2], int(m[3]))]
             if (m[2], int(m[3])) in stages:
                 row['stages'] = stages[(m[2], int(m[3]))]
             if m[1] == 'SKIP':
@@ -227,7 +238,7 @@ def parse_log(text):
                 re.search(r'\bE \(', line) and 'GPIO isr service already installed' not in line):
             errors.append(line.strip())
     return dict(complete='SUITE_PASS ' in text or 'TE_SUITE_PASS ' in text or 'MATRIX_PASS ' in text or 'present_v2 smoke passed' in text,
-                rows=rows, errors=errors)
+                rows=rows, errors=errors, suite_memory=suite_memory)
 
 
 def report(args):
@@ -240,6 +251,14 @@ def report(args):
         result['matrix_complete'] = expected == found and len(found) == len(result['rows'])
     else:
         result['matrix_complete'] = result['complete']
+    if manifest.get('memory_schema') == 1:
+        phases = ('before_open', 'after_open', 'after_run', 'after_close')
+        fields = ('internal_total', 'internal_free', 'psram_total', 'psram_free', 'internal_min_free', 'psram_min_free')
+        records = [r.get('memory', {}) for r in result['rows'] if r['status'] == 'PASS']
+        result['memory_complete'] = all(all(p in m and all(k in m[p] for k in fields) for p in phases) for m in records)
+        result['memory_complete'] &= all(p in result['suite_memory'] for p in ('before_init', 'after_init'))
+        if not result['memory_complete']:
+            result['errors'].append('Missing required memory measurements')
     (root / 'results.json').write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps(result, indent=2))
     if not result['complete'] or result['errors'] or not result['matrix_complete']:
@@ -258,6 +277,8 @@ def compare(args):
     for key in ('board', 'cases', 'idf_commit', 'lvgl_benchmark_sha256', 'comparable_sdkconfig_sha256', 'defaults_sha256', 'test_sources_sha256'):
         if manifests['present'][key] != manifests['adapter'][key]:
             raise ValueError('Comparison configurations differ: ' + key)
+    if manifests['present'].get('memory_schema') != manifests['adapter'].get('memory_schema'):
+        raise ValueError('Comparison memory schemas differ')
     lookup = {impl: {(r['mode'], r['rotation']): r for r in result['rows']} for impl, result in results.items()}
     rows = []
     for c in manifests['present']['cases']:
@@ -265,9 +286,19 @@ def compare(args):
         for impl in ('present', 'adapter'):
             value = lookup[impl].get((c['name'], c['rotation']))
             row[impl + '_fps'] = '-' if value and value['status'] == 'SKIP' else value.get('lvgl_fps', '未测') if value else '未测'
+        for impl in ('present', 'adapter'):
+            value = lookup[impl].get((c['name'], c['rotation']))
+            mem = value.get('memory', {}) if value else {}
+            skipped = value and value['status'] == 'SKIP'
+            for heap in ('internal', 'psram'):
+                opened, before, run = (mem.get(p, {}) for p in ('after_open', 'before_open', 'after_run'))
+                prefix = impl + '_' + heap
+                row[prefix + '_open_used_bytes'] = '-' if skipped else opened[heap + '_total'] - opened[heap + '_free'] if opened else '未测'
+                row[prefix + '_open_delta_bytes'] = '-' if skipped else before[heap + '_free'] - opened[heap + '_free'] if before and opened else '未测'
+                row[prefix + '_min_free_bytes'] = '-' if skipped else run.get(heap + '_min_free', '未测')
         rows.append(row)
     with (base / 'comparison.csv').open('w') as f:
-        writer = csv.DictWriter(f, fieldnames=['board', 'mode', 'rotation', 'present_fps', 'adapter_fps'])
+        writer = csv.DictWriter(f, fieldnames=list(rows[0]), lineterminator='\n')
         writer.writeheader()
         writer.writerows(rows)
     lines = ['| Board | Mode | Angle | present FPS | adapter FPS |', '|---|---|---:|---:|---:|']

@@ -1,0 +1,85 @@
+{
+  "checks": [
+    {
+      "board": "s3-rgb",
+      "implementation": "present",
+      "passed": 28,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "board": "s3-rgb",
+      "implementation": "adapter",
+      "passed": 21,
+      "skipped": 7,
+      "failed": 0
+    },
+    {
+      "board": "p4-dsi",
+      "implementation": "present",
+      "passed": 28,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "board": "p4-dsi",
+      "implementation": "adapter",
+      "passed": 20,
+      "skipped": 7,
+      "failed": 1
+    },
+    {
+      "board": "box3-spi",
+      "implementation": "present",
+      "passed": 20,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "board": "box3-spi",
+      "implementation": "adapter",
+      "passed": 4,
+      "skipped": 16,
+      "failed": 0
+    },
+    {
+      "board": "s31-qspi",
+      "implementation": "present",
+      "passed": 16,
+      "skipped": 0,
+      "failed": 0
+    }
+  ],
+  "present_passed": 92,
+  "present_failed": 0,
+  "adapter_equivalent_passed": 45,
+  "adapter_failed": 1,
+  "adapter_continuous_stall": {
+    "board": "p4-dsi",
+    "mode": "DOUBLE_DIRECT",
+    "rotation": 270,
+    "root_cause": "unresolved"
+  },
+  "all_original_flash_restored_verified": true,
+  "configurations_and_common_source_fingerprints_equal": true,
+  "single_pass_all_suites_passed": false,
+  "adapter_unsupported_combinations": 46,
+  "adapter_unsupported_logged": 26,
+  "initial_p4_failures": [
+    {
+      "mode": "DOUBLE_DIRECT",
+      "rotation": 270,
+      "error": "ESP_ERR_INVALID_STATE"
+    },
+    {
+      "mode": "DOUBLE_PARTIAL",
+      "rotation": 90,
+      "error": "ESP_ERR_TIMEOUT"
+    }
+  ],
+  "p4_continuous_run_stability": "unresolved",
+  "isolated_retests_tracked": true,
+  "visual_confirmation": "No complete visual confirmation for this matrix; pre-flash S31 tearing observation was on original firmware",
+  "tracked_idf_clean": true,
+  "production_source_baseline": "25e335214"
+}

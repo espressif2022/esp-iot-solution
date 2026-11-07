@@ -1,0 +1,76 @@
+{"time": 1794028126.4036791, "board": "p4-dsi", "stage": "FLASH_START", "implementation": "present"}
+{"time": 1794028137.1498537, "board": "p4-dsi", "stage": "CAPTURE_START", "implementation": "present"}
+{"time": 1794029254.8225634, "board": "p4-dsi", "stage": "COMMAND_FAILED", "action": "capture", "implementation": "present"}
+{"time": 1794029254.8228166, "board": "p4-dsi", "stage": "FAILED", "error": "CalledProcessError(1, ['/home/xuxin/.espressif/python_env/idf6.2_py3.10_env/bin/python3', '/tmp/present-all-modes-20261107/source/components/display/tools/esp_display_present/dev/tools/run.py', 'capture', '--board', 'p4-dsi', '--suite', 'benchmark', '--implementation', 'present', '--port', '/dev/ttyACM0', '--work-root', '/tmp/present-all-modes-20261107', '--timeout', '4000'])"}
+{"time": 1794029254.8231733, "board": "p4-dsi", "stage": "RESTORE_START"}
+{"time": 1794029368.56613, "board": "p4-dsi", "stage": "RESTORE_VERIFIED"}
+{"time": 1794029677.4902375, "board": "p4-dsi", "stage": "FLASH_START", "followup": true, "implementation": "present"}
+{"time": 1794029686.0870287, "board": "p4-dsi", "stage": "CAPTURE_START", "followup": true, "implementation": "present"}
+{"time": 1794030114.91523, "board": "p4-dsi", "stage": "RESTORE_START", "followup": true}
+{"time": 1794030228.5252848, "board": "p4-dsi", "stage": "RESTORE_VERIFIED", "followup": true}
+{"time": 1794030302.6072652, "board": "p4-dsi", "stage": "FLASH_START", "isolated": true, "implementation": "present", "mode": "DOUBLE_PARTIAL", "rotation": 90}
+{"time": 1794030311.1963809, "board": "p4-dsi", "stage": "CAPTURE_START", "isolated": true, "implementation": "present", "mode": "DOUBLE_PARTIAL", "rotation": 90}
+{"time": 1794030382.6505475, "board": "p4-dsi", "stage": "CASE_PASS", "isolated": true, "mode": "DOUBLE_PARTIAL", "rotation": 90}
+{"time": 1794030396.8618085, "board": "p4-dsi", "stage": "FLASH_START", "isolated": true, "implementation": "present", "mode": "DOUBLE_PARTIAL", "rotation": 180}
+{"time": 1794030405.4677896, "board": "p4-dsi", "stage": "CAPTURE_START", "isolated": true, "implementation": "present", "mode": "DOUBLE_PARTIAL", "rotation": 180}
+{"time": 1794030476.8902817, "board": "p4-dsi", "stage": "CASE_PASS", "isolated": true, "mode": "DOUBLE_PARTIAL", "rotation": 180}
+{"time": 1794030491.2224452, "board": "p4-dsi", "stage": "FLASH_START", "isolated": true, "implementation": "present", "mode": "DOUBLE_PARTIAL", "rotation": 270}
+{"time": 1794030499.8747344, "board": "p4-dsi", "stage": "CAPTURE_START", "isolated": true, "implementation": "present", "mode": "DOUBLE_PARTIAL", "rotation": 270}
+{"time": 1794030571.4180937, "board": "p4-dsi", "stage": "CASE_PASS", "isolated": true, "mode": "DOUBLE_PARTIAL", "rotation": 270}
+{"time": 1794030585.6407561, "board": "p4-dsi", "stage": "FLASH_START", "isolated": true, "implementation": "present", "mode": "TRIPLE_PARTIAL", "rotation": 0}
+{"time": 1794030594.3305285, "board": "p4-dsi", "stage": "CAPTURE_START", "isolated": true, "implementation": "present", "mode": "TRIPLE_PARTIAL", "rotation": 0}
+{"time": 1794030665.6773908, "board": "p4-dsi", "stage": "CASE_PASS", "isolated": true, "mode": "TRIPLE_PARTIAL", "rotation": 0}
+{"time": 1794030679.9161444, "board": "p4-dsi", "stage": "FLASH_START", "isolated": true, "implementation": "present", "mode": "TRIPLE_PARTIAL", "rotation": 90}
+{"time": 1794030688.6183527, "board": "p4-dsi", "stage": "CAPTURE_START", "isolated": true, "implementation": "present", "mode": "TRIPLE_PARTIAL", "rotation": 90}
+{"time": 1794030760.0192623, "board": "p4-dsi", "stage": "CASE_PASS", "isolated": true, "mode": "TRIPLE_PARTIAL", "rotation": 90}
+{"time": 1794030774.1956227, "board": "p4-dsi", "stage": "FLASH_START", "isolated": true, "implementation": "present", "mode": "TRIPLE_PARTIAL", "rotation": 180}
+{"time": 1794030782.8650796, "board": "p4-dsi", "stage": "CAPTURE_START", "isolated": true, "implementation": "present", "mode": "TRIPLE_PARTIAL", "rotation": 180}
+{"time": 1794030854.2563767, "board": "p4-dsi", "stage": "CASE_PASS", "isolated": true, "mode": "TRIPLE_PARTIAL", "rotation": 180}
+{"time": 1794030868.46662, "board": "p4-dsi", "stage": "FLASH_START", "isolated": true, "implementation": "present", "mode": "TRIPLE_PARTIAL", "rotation": 270}
+{"time": 1794030877.139504, "board": "p4-dsi", "stage": "CAPTURE_START", "isolated": true, "implementation": "present", "mode": "TRIPLE_PARTIAL", "rotation": 270}
+{"time": 1794030948.6026995, "board": "p4-dsi", "stage": "CASE_PASS", "isolated": true, "mode": "TRIPLE_PARTIAL", "rotation": 270}
+{"time": 1794030963.0159805, "board": "p4-dsi", "stage": "FLASH_START", "isolated": true, "implementation": "present", "mode": "AUTO", "rotation": 0}
+{"time": 1794030971.6882918, "board": "p4-dsi", "stage": "CAPTURE_START", "isolated": true, "implementation": "present", "mode": "AUTO", "rotation": 0}
+{"time": 1794031043.0178933, "board": "p4-dsi", "stage": "CASE_PASS", "isolated": true, "mode": "AUTO", "rotation": 0}
+{"time": 1794031057.4399412, "board": "p4-dsi", "stage": "FLASH_START", "isolated": true, "implementation": "present", "mode": "AUTO", "rotation": 90}
+{"time": 1794031066.0945027, "board": "p4-dsi", "stage": "CAPTURE_START", "isolated": true, "implementation": "present", "mode": "AUTO", "rotation": 90}
+{"time": 1794031137.519013, "board": "p4-dsi", "stage": "CASE_PASS", "isolated": true, "mode": "AUTO", "rotation": 90}
+{"time": 1794031151.7594671, "board": "p4-dsi", "stage": "FLASH_START", "isolated": true, "implementation": "present", "mode": "AUTO", "rotation": 180}
+{"time": 1794031160.4752162, "board": "p4-dsi", "stage": "CAPTURE_START", "isolated": true, "implementation": "present", "mode": "AUTO", "rotation": 180}
+{"time": 1794031231.851237, "board": "p4-dsi", "stage": "CASE_PASS", "isolated": true, "mode": "AUTO", "rotation": 180}
+{"time": 1794031246.1316085, "board": "p4-dsi", "stage": "FLASH_START", "isolated": true, "implementation": "present", "mode": "AUTO", "rotation": 270}
+{"time": 1794031254.8164845, "board": "p4-dsi", "stage": "CAPTURE_START", "isolated": true, "implementation": "present", "mode": "AUTO", "rotation": 270}
+{"time": 1794031326.2613678, "board": "p4-dsi", "stage": "CASE_PASS", "isolated": true, "mode": "AUTO", "rotation": 270}
+{"time": 1794031326.2615545, "board": "p4-dsi", "stage": "FLASH_START", "isolated": true, "implementation": "adapter"}
+{"time": 1794031334.6792486, "board": "p4-dsi", "stage": "CAPTURE_START", "isolated": true, "implementation": "adapter"}
+{"time": 1794032378.919514, "board": "p4-dsi", "stage": "RESTORE_START", "isolated": true}
+{"time": 1794032493.5608292, "board": "p4-dsi", "stage": "RESTORE_VERIFIED", "isolated": true}
+{"time": 1794032523.469224, "board": "p4-dsi", "stage": "FLASH_START", "adapter_isolated": true, "implementation": "adapter", "mode": "DOUBLE_DIRECT", "rotation": 270}
+{"time": 1794032531.8278434, "board": "p4-dsi", "stage": "CAPTURE_START", "adapter_isolated": true, "implementation": "adapter", "mode": "DOUBLE_DIRECT", "rotation": 270}
+{"time": 1794032773.1146426, "board": "p4-dsi", "stage": "CASE_FAIL", "adapter_isolated": true, "mode": "DOUBLE_DIRECT", "rotation": 270}
+{"time": 1794032787.549204, "board": "p4-dsi", "stage": "FLASH_START", "adapter_isolated": true, "implementation": "adapter", "mode": "DOUBLE_PARTIAL", "rotation": 0}
+{"time": 1794032795.9286551, "board": "p4-dsi", "stage": "CAPTURE_START", "adapter_isolated": true, "implementation": "adapter", "mode": "DOUBLE_PARTIAL", "rotation": 0}
+{"time": 1794032867.404681, "board": "p4-dsi", "stage": "CASE_PASS", "adapter_isolated": true, "mode": "DOUBLE_PARTIAL", "rotation": 0}
+{"time": 1794032881.7049613, "board": "p4-dsi", "stage": "FLASH_START", "adapter_isolated": true, "implementation": "adapter", "mode": "DOUBLE_PARTIAL", "rotation": 90}
+{"time": 1794032890.0885563, "board": "p4-dsi", "stage": "CAPTURE_START", "adapter_isolated": true, "implementation": "adapter", "mode": "DOUBLE_PARTIAL", "rotation": 90}
+{"time": 1794032961.5986855, "board": "p4-dsi", "stage": "CASE_PASS", "adapter_isolated": true, "mode": "DOUBLE_PARTIAL", "rotation": 90}
+{"time": 1794032976.4221723, "board": "p4-dsi", "stage": "FLASH_START", "adapter_isolated": true, "implementation": "adapter", "mode": "DOUBLE_PARTIAL", "rotation": 180}
+{"time": 1794032984.8620253, "board": "p4-dsi", "stage": "CAPTURE_START", "adapter_isolated": true, "implementation": "adapter", "mode": "DOUBLE_PARTIAL", "rotation": 180}
+{"time": 1794033056.375784, "board": "p4-dsi", "stage": "CASE_PASS", "adapter_isolated": true, "mode": "DOUBLE_PARTIAL", "rotation": 180}
+{"time": 1794033070.8252947, "board": "p4-dsi", "stage": "FLASH_START", "adapter_isolated": true, "implementation": "adapter", "mode": "DOUBLE_PARTIAL", "rotation": 270}
+{"time": 1794033079.193641, "board": "p4-dsi", "stage": "CAPTURE_START", "adapter_isolated": true, "implementation": "adapter", "mode": "DOUBLE_PARTIAL", "rotation": 270}
+{"time": 1794033150.7401211, "board": "p4-dsi", "stage": "CASE_PASS", "adapter_isolated": true, "mode": "DOUBLE_PARTIAL", "rotation": 270}
+{"time": 1794033165.3926196, "board": "p4-dsi", "stage": "FLASH_START", "adapter_isolated": true, "implementation": "adapter", "mode": "TRIPLE_PARTIAL", "rotation": 0}
+{"time": 1794033173.824654, "board": "p4-dsi", "stage": "CAPTURE_START", "adapter_isolated": true, "implementation": "adapter", "mode": "TRIPLE_PARTIAL", "rotation": 0}
+{"time": 1794033245.2138767, "board": "p4-dsi", "stage": "CASE_PASS", "adapter_isolated": true, "mode": "TRIPLE_PARTIAL", "rotation": 0}
+{"time": 1794033259.623107, "board": "p4-dsi", "stage": "FLASH_START", "adapter_isolated": true, "implementation": "adapter", "mode": "TRIPLE_PARTIAL", "rotation": 90}
+{"time": 1794033268.0642686, "board": "p4-dsi", "stage": "CAPTURE_START", "adapter_isolated": true, "implementation": "adapter", "mode": "TRIPLE_PARTIAL", "rotation": 90}
+{"time": 1794033339.440753, "board": "p4-dsi", "stage": "CASE_PASS", "adapter_isolated": true, "mode": "TRIPLE_PARTIAL", "rotation": 90}
+{"time": 1794033353.7627904, "board": "p4-dsi", "stage": "FLASH_START", "adapter_isolated": true, "implementation": "adapter", "mode": "TRIPLE_PARTIAL", "rotation": 180}
+{"time": 1794033362.2056684, "board": "p4-dsi", "stage": "CAPTURE_START", "adapter_isolated": true, "implementation": "adapter", "mode": "TRIPLE_PARTIAL", "rotation": 180}
+{"time": 1794033433.6188886, "board": "p4-dsi", "stage": "CASE_PASS", "adapter_isolated": true, "mode": "TRIPLE_PARTIAL", "rotation": 180}
+{"time": 1794033450.9614332, "board": "p4-dsi", "stage": "FLASH_START", "adapter_isolated": true, "implementation": "adapter", "mode": "TRIPLE_PARTIAL", "rotation": 270}
+{"time": 1794033459.3774524, "board": "p4-dsi", "stage": "CAPTURE_START", "adapter_isolated": true, "implementation": "adapter", "mode": "TRIPLE_PARTIAL", "rotation": 270}
+{"time": 1794033530.7493737, "board": "p4-dsi", "stage": "CASE_PASS", "adapter_isolated": true, "mode": "TRIPLE_PARTIAL", "rotation": 270}
+{"time": 1794033530.7495816, "board": "p4-dsi", "stage": "RESTORE_START", "adapter_isolated": true}
+{"time": 1794033645.3715637, "board": "p4-dsi", "stage": "RESTORE_VERIFIED", "adapter_isolated": true}

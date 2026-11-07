@@ -1,0 +1,8 @@
+{
+  "mode": "DOUBLE_DIRECT",
+  "rotation": 270,
+  "elapsed_since_run_seconds": 204.942,
+  "error": "No scene completion; benchmark 150s budget exceeded; capture terminated to recover board",
+  "capture_pid": 1348247,
+  "time": 1794032378.9161422
+}

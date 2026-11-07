@@ -42,3 +42,5 @@
 - [Pixel拆分与运行上下文字段分组](pixel-structure-20261106/README.md)：类型/无状态运算/生命周期分离、Host46/46、22个头文件检查、状态转换与CPU算法归一化对照、上下文尺寸及跨芯片验证；未上板。
 
 - [架构重构后 RGB / DSI 硬件前后对照](refactor-hardware-ab-20261106/README.md)：112/112像素组合、16组LVGL benchmark；S3平均FPS一致，P4一组27→26其余一致；用户两屏目视正常，原固件整片恢复校验通过。
+
+- [四板全模式帧率与内存 adapter 对照](all-modes-adapter-memory-20261107/README.md)：present92组合、adapter等价46组；P4两实现连续运行异常与逐组补测分别记录，四角度；内部RAM/PSRAM打开占用与局部最小剩余，原固件恢复校验；各模式支持边界和目视限制见报告。
