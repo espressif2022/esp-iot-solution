@@ -30,13 +30,14 @@ dev/
 
 源码在仓库中维护；构建目录、sdkconfig、依赖副本、原始 Flash 备份和本次运行输出全部默认放在 `/tmp/esp-display-present-tests`。长期使用建议用 `--work-root /path/to/persistent-work`，不要将 Flash 备份只保存在 `/tmp`。本轮已归档的源码快照不再作为新测试工程的来源。
 
-## 四块板子
+## 板卡
 
 | board 参数 | 板子 / 接口 | 尺寸 | 日常套件 |
 |---|---|---|---|
 | s3-rgb | S3 LCD EV R16 / GC9503 RGB bounce | 480×480 | benchmark、pixels、native、smoke |
 | p4-dsi | P4 Function EV rev3 / EK79007 MIPI DSI | 1024×600 | benchmark、pixels、native、smoke |
 | box3-spi | ESP-BOX-3 / ILI9341 SPI GRAM | 320×240 | benchmark、smoke |
+| s31-rgb | S31 Korvo-1 原配 RGB，10 行 bounce | 800×480 | benchmark、pixels、rgb-events、smoke；像素/事件已验，benchmark已测四模式0° |
 | s31-qspi | S31 mosaico / CO5300 QSPI，TE43 | 480×480 | benchmark、pixels、te-lifecycle、smoke |
 
 以 `boards/boards.json` 的 MAC 识别设备，不绑定 USB0/ACM0。增加新板子需要增加明确配置，不能只改端口号。
@@ -117,3 +118,25 @@ benchmark在共用主程序的场景边界采样，不添加逐帧日志。每�
 局部最小剩余从open前监控到benchmark结束、close前，覆盖创建和整个综合场景。IDF按各heap历史低水位求和，不保证发生在同一时刻，不能由此宣称精确的瞬时峰值。关闭后的free用于观察回收，不单凭一次差值认定泄漏。
 
 results.json保留分阶段原始字节，comparison.csv在FPS列后追加两实现的heap总占用、打开增量和最小剩余。新manifest的memory_schema=1要求所有有效组合具备完整采样；旧日志仍可解析，但不同memory schema不能混合比较。FPS仍为16个有效LVGL场景的均值，不是面板刷新率；不完整或错误场景不能采用其高分。
+
+## S31 Korvo RGB 事件专项
+
+USB3 新接板以 MAC `30:ed:a0:f3:f7:b8` 识别，原配 800×480，18 MHz。
+`--board s31-rgb --suite rgb-events` 使用干净 IDF 原生驱动，覆盖 bounce 0/10 行、真实 1/2/3 framebuffer、提交 core0/core1 共 12 组。
+记录静止期间 frame-complete / VSYNC 次数，以及提交后的等待时间。单 framebuffer 为允许撕裂的 active-write 测试。
+这是驱动事件观测，不代表 present 已支持 non-bounce，也不能单凭回调数证明像素没有撕裂。
+
+2026-11-07 实测：[S31 Korvo RGB 补测记录](evidence/s31-rgb-korvo-20261107/README.md)。
+28组像素/角度检查、12组原生驱动事件、四个0°防撕裂模式 present/adapter 综合场景完成。
+本轮没有把 non-bounce 接入生产 present；原生事件测试结果不能替代该适配实现及后续压力验证。
+
+## S31 QSPI adapter 原生 TE 基线
+
+此前 C1/C2×T1/T2 表仅测试 present，不代表 adapter 不支持 TE。
+使用 `--board s31-qspi --implementation adapter --profiles ADAPTER_TE_SYNC_FULL,ADAPTER_TE_ASYNC_FULL,ADAPTER_TE_ASYNC_BOUNCE` 构建补测；默认四角度，同步非0°明确跳过。
+SYNC_FULL 为单全屏绘图；ASYNC_FULL 为全屏DIRECT绘图加全屏staging；ASYNC_BOUNCE 再加两个16行传输bounce。
+TE 路径不通过 require_double_buffer 选择 present 式 T1/T2，不强行映射同一 C/T 名称。
+原生 adapter 基线用 report 单侧归档，不能伪造同名 present 用例来运行 compare。
+
+本轮adapter TE补测结果见[evidence/s31-adapter-te-baselines-20261107](evidence/s31-adapter-te-baselines-20261107/README.md)。
+注意：mosaico原固件恢复过程中用户明确要求保持停止，目前未完整恢复，不保证能正常启动；不得未经新授权继续操作板子。

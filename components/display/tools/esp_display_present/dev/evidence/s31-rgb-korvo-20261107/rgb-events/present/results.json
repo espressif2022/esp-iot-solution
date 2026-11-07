@@ -1,0 +1,140 @@
+{
+  "complete": true,
+  "rows": [
+    {
+      "status": "PASS",
+      "mode": "RGB_DIRECT_FB1_CORE0",
+      "rotation": 0,
+      "frames": 80,
+      "wait_avg_us": 10640,
+      "wait_max_us": 16507,
+      "idle_frame_events": 0,
+      "idle_vsync": 10,
+      "active_write": 1
+    },
+    {
+      "status": "PASS",
+      "mode": "RGB_DIRECT_FB1_CORE1",
+      "rotation": 0,
+      "frames": 80,
+      "wait_avg_us": 10717,
+      "wait_max_us": 20052,
+      "idle_frame_events": 0,
+      "idle_vsync": 10,
+      "active_write": 1
+    },
+    {
+      "status": "PASS",
+      "mode": "RGB_DIRECT_FB2_CORE0",
+      "rotation": 0,
+      "frames": 80,
+      "wait_avg_us": 10697,
+      "wait_max_us": 20612,
+      "idle_frame_events": 0,
+      "idle_vsync": 10,
+      "active_write": 0
+    },
+    {
+      "status": "PASS",
+      "mode": "RGB_DIRECT_FB2_CORE1",
+      "rotation": 0,
+      "frames": 80,
+      "wait_avg_us": 10722,
+      "wait_max_us": 21111,
+      "idle_frame_events": 0,
+      "idle_vsync": 10,
+      "active_write": 0
+    },
+    {
+      "status": "PASS",
+      "mode": "RGB_DIRECT_FB3_CORE0",
+      "rotation": 0,
+      "frames": 80,
+      "wait_avg_us": 10709,
+      "wait_max_us": 21602,
+      "idle_frame_events": 0,
+      "idle_vsync": 10,
+      "active_write": 0
+    },
+    {
+      "status": "PASS",
+      "mode": "RGB_DIRECT_FB3_CORE1",
+      "rotation": 0,
+      "frames": 80,
+      "wait_avg_us": 10719,
+      "wait_max_us": 21095,
+      "idle_frame_events": 0,
+      "idle_vsync": 10,
+      "active_write": 0
+    },
+    {
+      "status": "PASS",
+      "mode": "RGB_BOUNCE_FB1_CORE0",
+      "rotation": 0,
+      "frames": 80,
+      "wait_avg_us": 31469,
+      "wait_max_us": 40570,
+      "idle_frame_events": 10,
+      "idle_vsync": 10,
+      "active_write": 1
+    },
+    {
+      "status": "PASS",
+      "mode": "RGB_BOUNCE_FB1_CORE1",
+      "rotation": 0,
+      "frames": 80,
+      "wait_avg_us": 33000,
+      "wait_max_us": 41936,
+      "idle_frame_events": 10,
+      "idle_vsync": 10,
+      "active_write": 1
+    },
+    {
+      "status": "PASS",
+      "mode": "RGB_BOUNCE_FB2_CORE0",
+      "rotation": 0,
+      "frames": 80,
+      "wait_avg_us": 31023,
+      "wait_max_us": 39472,
+      "idle_frame_events": 10,
+      "idle_vsync": 10,
+      "active_write": 0
+    },
+    {
+      "status": "PASS",
+      "mode": "RGB_BOUNCE_FB2_CORE1",
+      "rotation": 0,
+      "frames": 80,
+      "wait_avg_us": 32627,
+      "wait_max_us": 41940,
+      "idle_frame_events": 10,
+      "idle_vsync": 10,
+      "active_write": 0
+    },
+    {
+      "status": "PASS",
+      "mode": "RGB_BOUNCE_FB3_CORE0",
+      "rotation": 0,
+      "frames": 80,
+      "wait_avg_us": 31011,
+      "wait_max_us": 39555,
+      "idle_frame_events": 10,
+      "idle_vsync": 10,
+      "active_write": 0
+    },
+    {
+      "status": "PASS",
+      "mode": "RGB_BOUNCE_FB3_CORE1",
+      "rotation": 0,
+      "frames": 80,
+      "wait_avg_us": 32624,
+      "wait_max_us": 41903,
+      "idle_frame_events": 10,
+      "idle_vsync": 10,
+      "active_write": 0
+    }
+  ],
+  "errors": [],
+  "suite_memory": {},
+  "matrix_complete": true
+}

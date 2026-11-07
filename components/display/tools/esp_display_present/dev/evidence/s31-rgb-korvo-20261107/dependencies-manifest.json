@@ -1,0 +1,34 @@
+{
+  "esp_lcd_touch": {
+    "cache_package": "espressif__esp_lcd_touch_1.2.1_3f85a7d9",
+    "source_sha256": "c3e34cc316b7b69a80c1141672b92de8ad1b1317f4e829503126e08ba26bc782"
+  },
+  "esp_lcd_ili9341": {
+    "cache_package": "espressif__esp_lcd_ili9341_2.1.0_840387ee",
+    "source_sha256": "0155a9421945bb68ad66308e7d060cfeb15f569eacb1d2bb6b0d6d5196970382"
+  },
+  "esp_lcd_co5300": {
+    "cache_package": "espressif__esp_lcd_co5300_2.2.0_1a5cbaa0",
+    "source_sha256": "db5c9331ca11428c896ea247a78acc1495486f842fc9644e059fcf62762f1893"
+  },
+  "esp_lcd_gc9503": {
+    "cache_package": "espressif__esp_lcd_gc9503_3.0.1_6940bf99",
+    "source_sha256": "e0670ad8a0962659112273f8595c5315044b29aad6541be994e39dd81b17ea93"
+  },
+  "esp_lcd_panel_io_additions": {
+    "cache_package": "espressif__esp_lcd_panel_io_additions_1.0.1~1_1856c8b2",
+    "source_sha256": "b19823115d8a337cb9c45b512e86c035ba4ac99f273714286d87b3462ca62092"
+  },
+  "esp_io_expander": {
+    "cache_package": "espressif__esp_io_expander_1.2.1_7b7f9127",
+    "source_sha256": "f02ce47e55fae9ab0848c3aa1baa583595e45dbcdecf1bcf361db16caa301eb7"
+  },
+  "esp_io_expander_tca9554": {
+    "cache_package": "espressif__esp_io_expander_tca9554_2.0.3_ee94a439",
+    "source_sha256": "592c3bf39711aed483c922154c04e634170caee1405444a8c3c3a1d686b7f6e2"
+  },
+  "esp_lcd_ek79007": {
+    "cache_package": "espressif__esp_lcd_ek79007_2.0.2_7a0896e1",
+    "source_sha256": "0bd6882cbf9fc1a7dc932b288e99784519816d9d9989f15578abbfa094c76c1b"
+  }
+}

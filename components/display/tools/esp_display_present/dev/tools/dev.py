@@ -32,7 +32,7 @@ def main():
             parser.error('astyle_py not found; install the repository formatting tool')
         subprocess.run([formatter, '--astyle-version=3.4.7', '--version'], check=True)
         rules = ROOT.parents[4] / 'tools/ci/astyle-rules.yml'
-        files = sorted(p for directory in ('../src', '../include', '../../esp_lv_present/src', '../../esp_lv_present/include', 'tests', 'test_apps/smoke/main', 'test_apps/benchmark/main', 'test_apps/benchmark/components/hw_init', 'test_apps/te_lifecycle/main', '../test_apps/main')
+        files = sorted(p for directory in ('../src', '../include', '../../esp_lv_present/src', '../../esp_lv_present/include', 'tests', 'test_apps/smoke/main', 'test_apps/benchmark/main', 'test_apps/benchmark/components/hw_init', 'test_apps/te_lifecycle/main', 'test_apps/rgb_events/main', '../test_apps/main')
                        for p in (ROOT / directory).rglob('*') if p.suffix in ('.c', '.h', '.cpp'))
         # Preserve the five stable application headers byte-for-byte on writes;
         # check mode still checks them against the repository rules.

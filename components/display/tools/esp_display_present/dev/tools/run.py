@@ -14,7 +14,7 @@ import time
 
 DEV = Path(__file__).resolve().parents[1]
 BOARDS = json.loads((DEV / 'boards/boards.json').read_text())
-SUITES = ('benchmark', 'pixels', 'native', 'te-lifecycle', 'smoke')
+SUITES = ('benchmark', 'pixels', 'native', 'te-lifecycle', 'rgb-events', 'smoke')
 
 
 def sha(path):
@@ -34,6 +34,11 @@ def cases_for(board, angles, profiles=None):
                         ('NONE', 'DOUBLE_FULL', 'TRIPLE_FULL', 'DOUBLE_DIRECT', 'DOUBLE_PARTIAL', 'TRIPLE_PARTIAL', 'AUTO')]
     elif board == 's31-qspi':
         profiles_all = [(f'TE_C{c}_T{t}', 'B_TE', t, False, c) for c in (1, 2) for t in (1, 2)]
+        # Adapter-native baselines have distinct layouts; never relabel as C/T.
+        if profiles and any(name.startswith('ADAPTER_TE_') for name in profiles):
+            profiles_all += [('ADAPTER_TE_SYNC_FULL', 'B_TE', 1, True, 0),
+                             ('ADAPTER_TE_ASYNC_FULL', 'B_TE', 1, True, 3),
+                             ('ADAPTER_TE_ASYNC_BOUNCE', 'B_TE', 1, True, 4)]
     else:
         profiles_all = [(f'GRAM_T{t}_{m}', 'B_NONE', t, m == 'PSRAM', 0)
                         for m in ('INTERNAL', 'PSRAM') for t in (1, 2)]
@@ -51,9 +56,14 @@ def cases_for(board, angles, profiles=None):
                 reason = 'adapter_has_no_AUTO_mode'
             elif mode == 'B_NONE' and angle:
                 reason = 'adapter_NONE_has_no_software_rotation'
-            elif mode == 'B_TE':
-                reason = 'adapter_does_not_expose_equivalent_compose_tile_matrix'
-            rows.append(dict(name=name, mode=mode, tiles=tiles, psram=psram, compose=compose,
+            elif mode == 'B_TE' and not name.startswith('ADAPTER_TE_'):
+                reason = 'adapter_native_TE_baseline_not_measured_in_CT_matrix'
+            elif name == 'ADAPTER_TE_SYNC_FULL' and angle:
+                reason = 'adapter_sync_TE_has_no_software_rotation'
+            adapter_te_pipeline = {3: 1, 4: 2}.get(compose, 0) if name.startswith('ADAPTER_TE_') else 0
+            rows.append(dict(name=name, mode=mode, tiles=tiles, psram=psram,
+                             compose=0 if name.startswith('ADAPTER_TE_') else compose,
+                             adapter_te_pipeline=adapter_te_pipeline,
                              rotation=angle, adapter_supported=not reason, skip_reason=reason))
     return rows
 
@@ -63,9 +73,9 @@ def header(rows):
         return 'true' if value else 'false'
     lines = ['/* Generated from the common case planner; do not edit. */', 'static const bench_case_t bench_cases[] = {']
     for c in rows:
-        lines.append('    {%s,%s,%d,%d,%d,%s,%s,%s},' %
+        lines.append('    {%s,%s,%d,%d,%d,%s,%s,%s,%d},' %
                      (json.dumps(c['name']), c['mode'], c['rotation'], c['tiles'], c['compose'],
-                      boolean(c['psram']), boolean(c['adapter_supported']), json.dumps(c['skip_reason'])))
+                      boolean(c['psram']), boolean(c['adapter_supported']), json.dumps(c['skip_reason']), c.get('adapter_te_pipeline', 0)))
     return '\n'.join(lines + ['};', ''])
 
 
@@ -103,10 +113,14 @@ def build(args):
         raise ValueError('adapter comparison applies to benchmark only')
     if args.board == 'box3-spi' and args.suite in ('pixels', 'native'):
         raise ValueError('BOX-3 pixel matrix is not implemented; use benchmark (not a pass)')
+    if args.board == 's31-rgb' and args.suite not in ('benchmark', 'pixels', 'rgb-events', 'smoke'):
+        raise ValueError('S31 RGB currently supports benchmark, pixels, rgb-events, and smoke')
     if args.suite == 'native' and args.board not in ('s3-rgb', 'p4-dsi'):
         raise ValueError('Native scanout matrix requires RGB or DSI')
     if args.suite == 'te-lifecycle' and args.board != 's31-qspi':
         raise ValueError('TE lifecycle requires S31 mosaico')
+    if args.suite == 'rgb-events' and args.board != 's31-rgb':
+        raise ValueError('RGB event probe requires S31 Korvo RGB')
     dirty_idf = subprocess.check_output(['git', '-C', str(idf()), 'status', '--porcelain', '--untracked-files=no'], text=True)
     if dirty_idf.strip():
         raise ValueError('Clean IDF required; tracked IDF modifications detected')
@@ -118,8 +132,8 @@ def build(args):
     board = BOARDS[args.board]
     defaults = [DEV / 'boards/configs/base.defaults', DEV / f'boards/configs/{args.board}.defaults']
     app = DEV / 'test_apps' / {'benchmark': 'benchmark', 'pixels': 'boards', 'native': 'boards',
-                               'te-lifecycle': 'te_lifecycle', 'smoke': 'smoke'}[args.suite]
-    flags = []
+                               'te-lifecycle': 'te_lifecycle', 'rgb-events': 'rgb_events', 'smoke': 'smoke'}[args.suite]
+    flags = [f'-DPRESENT_BOARD={args.board}']
     planned = []
     lvgl = None
     if args.suite == 'benchmark':
@@ -132,9 +146,11 @@ def build(args):
         if not alias.exists():
             alias.symlink_to(lvgl, target_is_directory=True)
         planned = cases_for(args.board, args.angles, args.profiles)
+        if args.implementation != 'adapter' and any(c['name'].startswith('ADAPTER_TE_') for c in planned):
+            raise ValueError('ADAPTER_TE profiles describe adapter-native layouts; use --implementation adapter')
         (root / 'bench_cases.h').write_text(header(planned))
         if args.implementation == 'adapter' and not any(c['adapter_supported'] for c in planned):
-            print('All adapter cases are unsupported; build emits SKIP entries, comparison uses -.')
+            print('Selected cases have no adapter mapping; S31 TE baselines use explicit ADAPTER_TE_* profiles. SKIP entries are not capability claims.')
         defaults.append(DEV / 'boards/configs/lvgl.defaults')
         flags += [f'-DPRESENT_BOARD={args.board}', f'-DPRESENT_IMPLEMENTATION={args.implementation}',
                   f'-DPRESENT_CASE_DIR={root}', f'-DPRESENT_LVGL_DIR={alias}', f'-DPRESENT_PROFILE={"ON" if args.profile else "OFF"}']
@@ -178,7 +194,7 @@ def build(args):
             raise
     sdk = (root / 'sdkconfig').read_text()
     comparable = comparable_sdkconfig(sdk)
-    state = dict(memory_schema=1, profile=args.profile, board=args.board, suite=args.suite, implementation=args.implementation, cases=planned,
+    state = dict(memory_schema=1 if args.suite == 'benchmark' else 0, profile=args.profile, board=args.board, suite=args.suite, implementation=args.implementation, cases=planned,
                  idf_commit=subprocess.check_output(['git', '-C', str(idf()), 'rev-parse', 'HEAD'], text=True).strip(),
                  lvgl_version='9.6.0' if lvgl else None,
                  lvgl_benchmark_sha256=sha(lvgl / 'demos/benchmark/lv_demo_benchmark.c') if lvgl else None,
@@ -225,7 +241,7 @@ def parse_log(text):
         if m:
             row = dict(status=m[1], mode=m[2], rotation=int(m[3]))
             row.update({k: float(v) if '.' in v else int(v) for k, v in re.findall(
-                r'(frames|transport_fps|lvgl_fps|cpu|render|flush|scenes)=([\d.]+)', line)})
+                r'(frames|transport_fps|lvgl_fps|cpu|render|flush|scenes|wait_avg_us|wait_max_us|idle_frame_events|idle_vsync|active_write)=([\d.]+)', line)})
             row.update(meters.get((m[2], int(m[3])), {}))
             if (m[2], int(m[3])) in memory:
                 row['memory'] = memory[(m[2], int(m[3]))]
@@ -249,9 +265,13 @@ def report(args):
         expected = {(c['name'], c['rotation']) for c in manifest['cases']}
         found = {(c['mode'], c['rotation']) for c in result['rows']}
         result['matrix_complete'] = expected == found and len(found) == len(result['rows'])
+    elif args.suite == 'rgb-events':
+        expected = {(f'RGB_{kind}_FB{n}_CORE{core}', 0) for kind in ('BOUNCE', 'DIRECT') for n in (1, 2, 3) for core in (0, 1)}
+        found = {(r['mode'], r['rotation']) for r in result['rows']}
+        result['matrix_complete'] = expected == found and len(result['rows']) == 12 and all(r.get('frames') == 80 for r in result['rows'])
     else:
         result['matrix_complete'] = result['complete']
-    if manifest.get('memory_schema') == 1:
+    if args.suite == 'benchmark' and manifest.get('memory_schema') == 1:
         phases = ('before_open', 'after_open', 'after_run', 'after_close')
         fields = ('internal_total', 'internal_free', 'psram_total', 'psram_free', 'internal_min_free', 'psram_min_free')
         records = [r.get('memory', {}) for r in result['rows'] if r['status'] == 'PASS']
@@ -383,7 +403,7 @@ def capture(args):
             while b'\n' in pending:
                 raw, pending = pending.split(b'\n', 1)
                 line = raw.decode(errors='replace')
-                if any(k in line for k in ('RUN ', 'PASS ', 'SKIP ', 'TE_METER:', 'PRESENT_PROFILE:', 'FAIL', 'E (')):
+                if any(k in line for k in ('RUN ', 'PASS ', 'SKIP ', 'RGB_EVENT_BEGIN ', 'TE_METER:', 'PRESENT_PROFILE:', 'FAIL', 'E (')):
                     print(line.strip(), flush=True)
                 if any(k in line for k in stop):
                     return

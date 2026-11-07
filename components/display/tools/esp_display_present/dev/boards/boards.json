@@ -38,5 +38,15 @@
     "height": 480,
     "flash_bytes": 16777216,
     "boot_offset": 8192
+  },
+  "s31-rgb": {
+    "target": "esp32s31",
+    "mac": "30:ed:a0:f3:f7:b8",
+    "name": "S31 Korvo-1 / stock RGB 800x480",
+    "interface": "rgb",
+    "width": 800,
+    "height": 480,
+    "flash_bytes": 16777216,
+    "boot_offset": 8192
   }
 }

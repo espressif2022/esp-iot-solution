@@ -44,3 +44,7 @@
 - [架构重构后 RGB / DSI 硬件前后对照](refactor-hardware-ab-20261106/README.md)：112/112像素组合、16组LVGL benchmark；S3平均FPS一致，P4一组27→26其余一致；用户两屏目视正常，原固件整片恢复校验通过。
 
 - [四板全模式帧率与内存 adapter 对照](all-modes-adapter-memory-20261107/README.md)：present92组合、adapter等价46组；P4两实现连续运行异常与逐组补测分别记录，四角度；内部RAM/PSRAM打开占用与局部最小剩余，原固件恢复校验；各模式支持边界和目视限制见报告。
+
+- [S31 Korvo 原配800×480 RGB补测与adapter对照](s31-rgb-korvo-20261107/README.md)：bounce像素28组；原生bounce/non-bounce×真实1/2/3 FB×两核提交12组；四个0°模式综合场景双方完成。non-bounce仍未接入生产present，不能扩展为全模式长测验收。
+
+- [S31 adapter 原生TE基线补测](s31-adapter-te-baselines-20261107/README.md)：9组有效成绩、3组同步软件旋转跳过；用户目视正常。补上此前adapter TE漏测，不映射为present C/T。mosaico原固件恢复未完成，按用户明确要求保持停止，备份完整保留。

@@ -17,6 +17,8 @@ spec.loader.exec_module(runner)
 class RunnerTest(unittest.TestCase):
     def test_board_matrix(self):
         self.assertEqual(len(runner.cases_for('s3-rgb', [0, 90, 180, 270])), 28)
+        self.assertEqual(runner.BOARDS['s31-rgb']['width'], 800)
+        self.assertEqual(runner.cases_for('s31-rgb', [0, 90, 180, 270]), runner.cases_for('s3-rgb', [0, 90, 180, 270]))
         self.assertEqual(len(runner.cases_for('box3-spi', [0, 90, 180, 270])), 20)
         self.assertEqual(len(runner.cases_for('s31-qspi', [0, 90, 180, 270])), 16)
 
@@ -30,6 +32,14 @@ class RunnerTest(unittest.TestCase):
         self.assertEqual(len(runner.cases_for('s31-qspi', [0, 90], ['TE_C2_T2'])), 2)
         with self.assertRaises(ValueError):
             runner.cases_for('box3-spi', [0], ['TE_C2_T2'])
+
+    def test_adapter_native_te_modes_are_not_faked_ct_equivalents(self):
+        rows = runner.cases_for('s31-qspi', [0, 90, 180, 270], ['ADAPTER_TE_SYNC_FULL', 'ADAPTER_TE_ASYNC_FULL', 'ADAPTER_TE_ASYNC_BOUNCE'])
+        self.assertEqual(len(rows), 12)
+        self.assertEqual(sum(c['adapter_supported'] for c in rows), 9)
+        self.assertTrue(all(c['compose'] == 0 and c['adapter_te_pipeline'] == 1 and c['adapter_supported'] for c in rows if c['name'] == 'ADAPTER_TE_ASYNC_FULL'))
+        self.assertTrue(all(not c['adapter_supported'] for c in rows if c['name'] == 'ADAPTER_TE_SYNC_FULL' and c['rotation']))
+        self.assertEqual(len(runner.cases_for('s31-qspi', [0, 90, 180, 270])), 16)
 
     def test_gate_and_render_metrics_separate(self):
         log = 'RUN mode=TE_C2_T2 rotation=90\nTE_METER: admitted=5 wait_avg_us=1700 tx_avg_us=24000\nPASS mode=TE_C2_T2 rotation=90 frames=5 lvgl_fps=30 scenes=16\nSUITE_PASS board=x\n'
@@ -69,6 +79,23 @@ class RunnerTest(unittest.TestCase):
             result = json.loads((root / 'results.json').read_text())
             self.assertTrue(result['matrix_complete'])
             self.assertFalse(result['memory_complete'])
+
+    def test_rgb_probe_rejects_partial_matrix_without_benchmark_memory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args = SimpleNamespace(work_root=Path(tmp), board='s31-rgb', suite='rgb-events', implementation='present')
+            root = runner.location(args)
+            root.mkdir(parents=True)
+            (root / 'manifest.json').write_text(json.dumps(dict(memory_schema=0)))
+            rows = [f'PASS mode=RGB_{kind}_FB{n}_CORE{core} rotation=0 frames=80 idle_frame_events=0 wait_avg_us=1000' for kind in ('BOUNCE', 'DIRECT') for n in (1, 2, 3) for core in (0, 1)]
+            (root / 'live.log').write_text('\n'.join(rows[:-1] + ['RGB_EVENT_SUITE_PASS board=s31-rgb']))
+            with self.assertRaises(ValueError):
+                runner.report(args)
+            (root / 'live.log').write_text('\n'.join(rows + ['RGB_EVENT_SUITE_PASS board=s31-rgb']))
+            runner.report(args)
+            result = json.loads((root / 'results.json').read_text())
+            self.assertTrue(result['matrix_complete'])
+            self.assertEqual(result['rows'][0]['wait_avg_us'], 1000)
+            self.assertNotIn('memory_complete', result)
 
     def test_error_is_not_pass(self):
         self.assertTrue(runner.parse_log('E (14) worker: error\nSUITE_PASS board=x')['errors'])

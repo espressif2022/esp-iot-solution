@@ -1,0 +1,14 @@
+{
+  "idf_commit": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+  "idf_tracked_clean": true,
+  "production_component_unchanged": true,
+  "benchmark_shared_source_matches_manifests": true,
+  "visual_feedback": "User reported normal during pixel/event testing; no separate benchmark visual signoff",
+  "backup_bytes": 16777216,
+  "backup_sha256": "5f07493de62e062ad2ffd3b49dd38a2dc66146e67e78257dc0e2500decc36ebd",
+  "restoration": {
+    "verified_full_flash": true,
+    "sha256": "5f07493de62e062ad2ffd3b49dd38a2dc66146e67e78257dc0e2500decc36ebd",
+    "mac": "30:ed:a0:f3:f7:b8"
+  }
+}

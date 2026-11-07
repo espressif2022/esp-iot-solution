@@ -12,7 +12,7 @@
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#if CONFIG_IDF_TARGET_ESP32S31
+#if CONFIG_IDF_TARGET_ESP32S31 && !defined(PRESENT_BOARD_S31_RGB)
 #include "board_qspi.h"
 #define WIDTH 480
 #define HEIGHT 480
@@ -49,7 +49,7 @@ esp_err_t __wrap_esp_lcd_panel_draw_bitmap(esp_lcd_panel_handle_t panel, int x0,
     } else {
         ++band_calls;
     }
-#if CONFIG_IDF_TARGET_ESP32S31
+#if CONFIG_IDF_TARGET_ESP32S31 && !defined(PRESENT_BOARD_S31_RGB)
     if ((x0 & 3) || ((x1 - x0) & 3)) {
         ++invalid_calls;
     }
@@ -103,7 +103,7 @@ static void verify_pixels(unsigned rot, unsigned lw, unsigned lh, unsigned frame
             default: px = lx; py = ly; break;
             }
             uint16_t got = pixels[py * WIDTH + px];
-#if CONFIG_IDF_TARGET_ESP32S31
+#if CONFIG_IDF_TARGET_ESP32S31 && !defined(PRESENT_BOARD_S31_RGB)
             if (!gram_mode) {
                 got = __builtin_bswap16(got);
             }
@@ -123,7 +123,7 @@ typedef struct {
     unsigned compose, tiles;
     bool te;
 } profile_t;
-#if CONFIG_IDF_TARGET_ESP32S31
+#if CONFIG_IDF_TARGET_ESP32S31 && !defined(PRESENT_BOARD_S31_RGB)
 static const profile_t profiles[] = {
     {"GRAM_T1", ESP_DISPLAY_PRESENT_MODE_NONE, 0, 1, false},
     {"GRAM_T2", ESP_DISPLAY_PRESENT_MODE_NONE, 0, 2, false},
@@ -160,10 +160,10 @@ static void run_case(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_handle_t io,
         .target = {
             .hw = {
                 .panel = panel, .io = io, .rotation = rot,
-#if CONFIG_IDF_TARGET_ESP32S31
+#if CONFIG_IDF_TARGET_ESP32S31 && !defined(PRESENT_BOARD_S31_RGB)
                 .panel_type = ESP_DISPLAY_PRESENT_PANEL_IO, .swap_bytes = true,
                 .te_enabled = p->te, .spi_psram_dma_direct = true, .te_sync = {.gpio_num = QSPI_TE_GPIO, .bus_freq_hz = 40000000, .data_lines = 4},
-#elif CONFIG_IDF_TARGET_ESP32S3
+#elif CONFIG_IDF_TARGET_ESP32S3 || defined(PRESENT_BOARD_S31_RGB)
                 .panel_type = ESP_DISPLAY_PRESENT_PANEL_RGB,
 #else
                 .panel_type = ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI,
@@ -173,7 +173,7 @@ static void run_case(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_handle_t io,
         }
     };
     gram_mode = !p->te;
-#if !CONFIG_IDF_TARGET_ESP32S31
+#if !CONFIG_IDF_TARGET_ESP32S31 || defined(PRESENT_BOARD_S31_RGB)
     gram_mode = false;
 #endif
     esp_display_presenter_t *presenter = NULL;
@@ -261,7 +261,7 @@ static void run_case(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_handle_t io,
         verify_pixels(current_rot, lw, lh, f, id);
         vTaskDelay(pdMS_TO_TICKS(60));
     }
-#if CONFIG_IDF_TARGET_ESP32S31
+#if CONFIG_IDF_TARGET_ESP32S31 && !defined(PRESENT_BOARD_S31_RGB)
     /* The producer changes only the moving rectangle; TE must still submit
      * the complete physical frame. Coordinates are aligned to four pixels. */
     esp_display_present_area_t dirty = {80, lh / 2, 151, lh / 2 + 47};
@@ -322,7 +322,7 @@ static void run(void *unused)
     vTaskDelay(pdMS_TO_TICKS(3000)); /* Allow the host to attach a serial collector. */
     shadow = heap_caps_malloc(WIDTH * HEIGHT * sizeof(*shadow), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     require(shadow ? ESP_OK : ESP_ERR_NO_MEM, "shadow");
-#if CONFIG_IDF_TARGET_ESP32S31
+#if CONFIG_IDF_TARGET_ESP32S31 && !defined(PRESENT_BOARD_S31_RGB)
     require(qspi_board_create(&panel, &io), "board create");
     require(esp_lcd_panel_set_gap(panel, 0, 0), "physical full-screen gap");
 #else

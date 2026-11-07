@@ -16,6 +16,7 @@ typedef struct {
     unsigned rotation, tiles, compose;
     bool psram, adapter_supported;
     const char *skip_reason;
+    unsigned adapter_te_pipeline; /* 0=sync, 1=async full, 2=async bounce; not a buffer count. */
 } bench_case_t;
 esp_err_t bench_init(void);
 esp_err_t bench_open(const bench_case_t *, lv_display_t **);

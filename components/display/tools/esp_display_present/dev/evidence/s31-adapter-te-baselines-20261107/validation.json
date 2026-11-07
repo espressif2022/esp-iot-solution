@@ -1,0 +1,39 @@
+{
+  "source_hashes_match": true,
+  "same_idf_lvgl_sdkconfig_and_defaults_as_present_CT": true,
+  "same_production_component_fingerprints": true,
+  "same_scene_and_qspi_initialization": true,
+  "valid_adapter_scores": 9,
+  "sync_rotation_skips": 3,
+  "initial_selector_trial_excluded": true,
+  "restoration": {
+    "state": "stopped_by_user",
+    "verified_full_flash": false,
+    "restoration_complete": false,
+    "completed_chunks": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "interrupted_chunk": 10,
+    "remaining_chunks": [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      0
+    ],
+    "chunk_bytes": 1048576,
+    "reason": "User explicitly chose to keep all board operations stopped; do not resume without new authorization",
+    "backup": "/home/xuxin/xuxin/esp-dev-kits-gitlab-MR/internal/customer/xiaobai/hardware-backups/s31-mosaico-30eda0f40b34-20261107/original-flash.bin"
+  },
+  "visual_signoff": "User reported this adapter TE run looked normal; no long-duration or instrumented tearing proof"
+}

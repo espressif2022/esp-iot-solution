@@ -7,7 +7,7 @@
 static esp_lcd_panel_handle_t panel;
 static esp_lcd_panel_io_handle_t io;
 static lv_display_t *display;
-static const esp_lv_adapter_tear_avoid_mode_t modes[] = {ESP_LV_ADAPTER_TEAR_AVOID_MODE_NONE, ESP_LV_ADAPTER_TEAR_AVOID_MODE_DOUBLE_FULL, ESP_LV_ADAPTER_TEAR_AVOID_MODE_TRIPLE_FULL, ESP_LV_ADAPTER_TEAR_AVOID_MODE_DOUBLE_DIRECT, ESP_LV_ADAPTER_TEAR_AVOID_MODE_DOUBLE_PARTIAL, ESP_LV_ADAPTER_TEAR_AVOID_MODE_TRIPLE_PARTIAL};
+static const esp_lv_adapter_tear_avoid_mode_t modes[] = {ESP_LV_ADAPTER_TEAR_AVOID_MODE_NONE, ESP_LV_ADAPTER_TEAR_AVOID_MODE_DOUBLE_FULL, ESP_LV_ADAPTER_TEAR_AVOID_MODE_TRIPLE_FULL, ESP_LV_ADAPTER_TEAR_AVOID_MODE_DOUBLE_DIRECT, ESP_LV_ADAPTER_TEAR_AVOID_MODE_DOUBLE_PARTIAL, ESP_LV_ADAPTER_TEAR_AVOID_MODE_TRIPLE_PARTIAL, ESP_LV_ADAPTER_TEAR_AVOID_MODE_NONE, ESP_LV_ADAPTER_TEAR_AVOID_MODE_TE_SYNC};
 esp_err_t bench_init(void)
 {
     esp_err_t e = hw_lcd_init(&panel, &io, 3, HW_ROTATE_0); if (e != ESP_OK)return e;
@@ -16,7 +16,7 @@ esp_err_t bench_init(void)
 }
 esp_err_t bench_open(const bench_case_t *c, lv_display_t **disp)
 {
-    if (!c->adapter_supported || c->mode >= B_AUTO) {
+    if (!c->adapter_supported || c->mode == B_AUTO) {
         return ESP_ERR_NOT_SUPPORTED;
     }
 #if BENCH_RGB
@@ -25,6 +25,16 @@ esp_err_t bench_open(const bench_case_t *c, lv_display_t **disp)
     esp_lv_adapter_display_config_t cfg = ESP_LV_ADAPTER_DISPLAY_MIPI_DEFAULT_CONFIG(panel, io, HW_LCD_H_RES, HW_LCD_V_RES, c->rotation);
 #else
     esp_lv_adapter_display_config_t cfg = ESP_LV_ADAPTER_DISPLAY_SPI_WITH_PSRAM_DEFAULT_CONFIG(panel, io, HW_LCD_H_RES, HW_LCD_V_RES, c->rotation);
+#endif
+#if BENCH_QSPI
+    if (c->mode == B_TE) {
+        cfg.te_sync = (esp_lv_adapter_te_sync_config_t) {
+            .gpio_num = 43, .bus_freq_hz = 40000000, .data_lines = 4,
+            .bits_per_pixel = 16,
+            .pipeline = c->adapter_te_pipeline == 0 ? ESP_LV_ADAPTER_TE_PIPELINE_SYNC_FULL : ESP_LV_ADAPTER_TE_PIPELINE_ASYNC_FULL,
+            .bounce_buffer_enabled = c->adapter_te_pipeline == 2, .bounce_buffer_rows = 16,
+        };
+    }
 #endif
     cfg.tear_avoid_mode = modes[c->mode]; cfg.profile.buffer_height = 50; cfg.profile.use_psram = c->psram; cfg.profile.require_double_buffer = c->tiles == 2;
     esp_err_t e = esp_lv_adapter_lock(-1); if (e != ESP_OK)return e;
