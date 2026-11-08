@@ -30,6 +30,8 @@ dev/
 
 源码在仓库中维护；构建目录、sdkconfig、依赖副本、原始 Flash 备份和本次运行输出全部默认放在 `/tmp/esp-display-present-tests`。长期使用建议用 `--work-root /path/to/persistent-work`，不要将 Flash 备份只保存在 `/tmp`。本轮已归档的源码快照不再作为新测试工程的来源。
 
+P4 `pixels` 套件同时运行 PPA/DMA2D executor 检查：internal/PSRAM source、RGB565/RGB888、四角度能力选择、CPU fallback、逐像素结果，以及两个同类硬件 client 共存和单 client 销毁隔离。Host executor 测试另外核对 source C2M、destination C2M/M2C 的范围、顺序、错误传播和 `NOT_SUPPORTED` 非缓存内存语义。
+
 ## 板卡
 
 | board 参数 | 板子 / 接口 | 尺寸 | 日常套件 |
@@ -123,7 +125,7 @@ results.json保留分阶段原始字节，comparison.csv在FPS列后追加两实
 
 USB3 新接板以 MAC `30:ed:a0:f3:f7:b8` 识别，原配 800×480，18 MHz。
 `--board s31-rgb --suite rgb-events` 使用干净 IDF 原生驱动，覆盖 bounce 0/10 行、真实 1/2/3 framebuffer、提交 core0/core1 共 12 组。
-记录静止期间 frame-complete / VSYNC 次数，以及提交后的等待时间。单 framebuffer 为允许撕裂的 active-write 测试。
+记录静止期间 frame-complete / VSYNC 次数，以及提交后的等待时间。驱动提供 framebuffer capability 查询时，每组还会核对物理尺寸、像素格式、FB 数量/容量、continuous refresh、bounce 实际容量并记录 retirement 能力；配置事实不一致会立即失败。单 framebuffer 为允许撕裂的 active-write 测试。
 这是驱动事件观测，不代表 present 已支持 non-bounce，也不能单凭回调数证明像素没有撕裂。
 
 2026-11-07 实测：[S31 Korvo RGB 补测记录](evidence/s31-rgb-korvo-20261107/README.md)。

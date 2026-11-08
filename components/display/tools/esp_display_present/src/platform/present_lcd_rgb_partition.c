@@ -182,7 +182,13 @@ esp_err_t esp_display_present_lcd_rgb_partition_create(const esp_display_present
 {
     if (!config || !out || !config->panel || !config->width || !config->height ||
             config->kind < ESP_DISPLAY_PRESENT_LCD_PARTITION_RGB ||
-            config->kind > ESP_DISPLAY_PRESENT_LCD_PARTITION_DSI) return ESP_ERR_INVALID_ARG;
+            config->kind > ESP_DISPLAY_PRESENT_LCD_PARTITION_DSI ||
+            (config->format != ESP_DISPLAY_PRESENT_FORMAT_RGB565 &&
+             config->format != ESP_DISPLAY_PRESENT_FORMAT_RGB888) ||
+            config->byte_order < ESP_DISPLAY_PRESENT_ORDER_NATIVE ||
+            config->byte_order > ESP_DISPLAY_PRESENT_ORDER_SWAPPED ||
+            (config->format == ESP_DISPLAY_PRESENT_FORMAT_RGB888 &&
+             config->byte_order != ESP_DISPLAY_PRESENT_ORDER_NATIVE)) return ESP_ERR_INVALID_ARG;
     *out = present_alloc(sizeof(**out));
     if (!*out) return ESP_ERR_NO_MEM;
     if (!present_lock_init(&(*out)->lock)) {

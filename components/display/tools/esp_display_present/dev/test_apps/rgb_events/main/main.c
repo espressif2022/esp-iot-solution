@@ -28,6 +28,25 @@ static bool timed_out;
 static uint64_t wait_sum;
 static uint32_t wait_max;
 
+static void log_driver_caps(void)
+{
+#ifdef ESP_LCD_RGB_PANEL_HAS_FRAME_BUFFER_INFO
+    esp_lcd_rgb_panel_frame_buffer_info_t info;
+    ESP_ERROR_CHECK(esp_lcd_rgb_panel_get_frame_buffer_info(panel, &info));
+    ESP_ERROR_CHECK((info.width == WIDTH && info.height == HEIGHT &&
+                     info.frame_buffer_count >= fb_count &&
+                     info.frame_buffer_bytes == (size_t)WIDTH * HEIGHT * 2 &&
+                     info.bits_per_pixel == 16 && info.continuous_refresh &&
+                     !info.custom_bounce_callback && !info.transformed) ? ESP_OK : ESP_ERR_INVALID_STATE);
+    ESP_ERROR_CHECK(((bounce != 0) == (info.bounce_buffer_bytes != 0)) ? ESP_OK : ESP_ERR_INVALID_STATE);
+    ESP_LOGI(TAG, "RGB_CAPS bounce=%u fbs=%u bounce_bytes=%u retirement=%u continuous=%u",
+             bounce, fb_count, (unsigned)info.bounce_buffer_bytes,
+             info.frame_buffer_retirement, info.continuous_refresh);
+#else
+    ESP_LOGW(TAG, "RGB_CAPS unavailable bounce=%u fbs=%u", bounce, fb_count);
+#endif
+}
+
 esp_err_t board_s31_rgb_create(esp_lcd_panel_handle_t *, size_t, unsigned);
 static bool IRAM_ATTR frame_done(esp_lcd_panel_handle_t p, const esp_lcd_rgb_panel_event_data_t *e, void *u)
 {
@@ -98,6 +117,7 @@ void app_main(void)
                 bounce = b ? 10 : 0; fb_count = n; worker_core = core;
                 timed_out = false; wait_sum = 0; wait_max = 0;
                 ESP_ERROR_CHECK(board_s31_rgb_create(&panel, fb_count, bounce));
+                log_driver_caps();
                 ESP_ERROR_CHECK(esp_lcd_rgb_panel_get_frame_buffer(panel, fb_count, &buffers[0], &buffers[1], &buffers[2]));
                 const esp_lcd_rgb_panel_event_callbacks_t cb = {.on_frame_buf_complete = frame_done, .on_vsync = vsync_done};
                 ESP_ERROR_CHECK(esp_lcd_rgb_panel_register_event_callbacks(panel, &cb, NULL));

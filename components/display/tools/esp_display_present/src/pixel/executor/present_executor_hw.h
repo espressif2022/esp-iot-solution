@@ -41,6 +41,18 @@ static inline esp_err_t hw_sync(void *pixels, size_t bytes, int flags)
     esp_err_t e = esp_cache_msync(pixels, bytes, flags);
     return e == ESP_ERR_NOT_SUPPORTED ? ESP_OK : e;
 }
+
+/* Hardware reads complete source rows. Keep the request inside the declared
+ * surface and let the cache API handle unaligned first/last lines instead of
+ * extending into allocator padding that is not part of the surface contract. */
+static inline esp_err_t hw_sync_source(const esp_display_present_copy_request_t *request)
+{
+    size_t stride = request->src.layout.stride_bytes;
+    size_t start = request->src_area.y * stride;
+    size_t bytes = request->src_area.height * stride;
+    return hw_sync((uint8_t *)request->src.pixels + start, bytes,
+                   ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_UNALIGNED);
+}
 static inline esp_err_t unsupported(esp_display_present_executor_reason_t *reason, esp_display_present_executor_reason_t why)
 {
     *reason = why;

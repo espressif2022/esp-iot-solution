@@ -8,6 +8,41 @@
 #include "esp_log.h"
 #include <string.h>
 #include <stdlib.h>
+
+static void verify_multi_client(const char *tag, bool ppa)
+{
+    esp_display_present_executor_t *first, *second;
+    esp_err_t (*create)(esp_display_present_executor_t **) = ppa ?
+            esp_display_present_executor_ppa_create : esp_display_present_executor_dma2d_create;
+    ESP_ERROR_CHECK(create(&first));
+    ESP_ERROR_CHECK(create(&second));
+    uint8_t *src = heap_caps_aligned_alloc(128, 128, MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA);
+    uint8_t *dst = heap_caps_aligned_alloc(128, 128, MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA);
+    ESP_ERROR_CHECK((src && dst) ? ESP_OK : ESP_ERR_NO_MEM);
+    for (unsigned i = 0; i < 64; ++i) {
+        src[i] = (uint8_t)(i * 29 + 7);
+    }
+    esp_display_present_layout_t layout = {
+        8, 4, 16, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE
+    };
+    esp_display_present_copy_request_t request = {
+        .src = {src, 64, layout}, .dst = {dst, 128, layout}, .src_area = {0, 0, 8, 4},
+    };
+    ESP_ERROR_CHECK(esp_display_present_executor_execute(first, &request));
+    ESP_ERROR_CHECK(esp_display_present_executor_execute(second, &request));
+    ESP_ERROR_CHECK(esp_display_present_executor_destroy(first));
+    memset(dst, 0, 64);
+    ESP_ERROR_CHECK(esp_display_present_executor_execute(second, &request));
+    if (memcmp(src, dst, 64)) {
+        ESP_LOGE(tag, "FAIL multi-client primary=%s", ppa ? "ppa" : "dma2d");
+        abort();
+    }
+    ESP_ERROR_CHECK(esp_display_present_executor_destroy(second));
+    heap_caps_free(dst);
+    heap_caps_free(src);
+    ESP_LOGI(tag, "PASS multi-client primary=%s destroy_isolated=1 pixels=ALL", ppa ? "ppa" : "dma2d");
+}
+
 /* P4-only memory acceptance: require actual hardware for every supported
  * internal-memory case; report external-memory fallback instead of hiding it. */
 void present_board_test_executors(void)
@@ -88,6 +123,8 @@ void present_board_test_executors(void)
         heap_caps_free(dst);
         heap_caps_free(src);
     }
+    verify_multi_client(tag, false);
+    verify_multi_client(tag, true);
     ESP_ERROR_CHECK(esp_display_present_executor_destroy(cpu));
     if (!heap_caps_check_integrity_all(true)) {
         abort();

@@ -20,12 +20,15 @@
 #if PRESENT_HOST_PPA || PRESENT_HOST_DMA2D
 #include "esp_cache.h"
 static unsigned submissions, syncs;
-static unsigned flushes, invalidates;
+static unsigned source_flushes, flushes, invalidates;
 static void *expected_sync;
 static size_t expected_sync_bytes;
+static void *expected_source;
+static size_t expected_source_bytes;
 static size_t cache_line = 64;
 static size_t strict_alignment = 1;
-static esp_err_t driver_error, unregister_error;
+static esp_err_t driver_error, unregister_error, cache_error;
+static int cache_error_flags;
 size_t dma2d_get_buffer_alignment_constraint(const void *p)
 {
     (void)p;
@@ -38,18 +41,27 @@ size_t esp_cache_get_line_size_by_addr(const void *p)
 }
 esp_err_t esp_cache_msync(void *p, size_t n, int flags)
 {
-    assert((uintptr_t)p % cache_line == 0 && n % cache_line == 0);
-    if (expected_sync) {
-        assert(p == expected_sync && n == expected_sync_bytes);
-    }
-    if (flags == ESP_CACHE_MSYNC_FLAG_DIR_C2M) {
+    if (flags == (ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_UNALIGNED)) {
+        if (expected_source) {
+            assert(p == expected_source && n == expected_source_bytes);
+        }
+        source_flushes++;
+    } else if (flags == ESP_CACHE_MSYNC_FLAG_DIR_C2M) {
+        assert((uintptr_t)p % cache_line == 0 && n % cache_line == 0);
+        if (expected_sync) {
+            assert(p == expected_sync && n == expected_sync_bytes);
+        }
         flushes++;
     } else {
         assert(flags == ESP_CACHE_MSYNC_FLAG_DIR_M2C);
+        assert((uintptr_t)p % cache_line == 0 && n % cache_line == 0);
+        if (expected_sync) {
+            assert(p == expected_sync && n == expected_sync_bytes);
+        }
         invalidates++;
     }
     syncs++;
-    return ESP_OK;
+    return flags == cache_error_flags ? cache_error : ESP_OK;
 }
 #endif
 /* Independent pixel oracle, also used to interpret fake driver descriptors. */
@@ -186,11 +198,14 @@ static void verify_cache_bands(esp_display_present_executor_t *executor, bool is
             paint(src, 96, expected, 96, 1, 1, 3, 2, 1, request.dst_y, rotation, 2, false);
             expected_sync = dst + (last ? (quarter ? 2752 : 2880) : 256);
             expected_sync_bytes = last ? (quarter ? 320 : 192) : (quarter ? 320 : 256);
-            unsigned before_flushes = flushes, before_invalidates = invalidates;
+            expected_source = src + 96;
+            expected_source_bytes = 192;
+            unsigned before_sources = source_flushes, before_flushes = flushes, before_invalidates = invalidates;
             assert(esp_display_present_executor_execute(executor, &request) == ESP_OK);
-            assert(flushes == before_flushes + 1 && invalidates == before_invalidates + 1);
+            assert(source_flushes == before_sources + 1 && flushes == before_flushes + 1 && invalidates == before_invalidates + 1);
             assert(!memcmp(dst, expected, 3072));
             expected_sync = NULL;
+            expected_source = NULL;
         }
     }
     esp_display_present_layout_t compact = {4, 4, 8, ESP_DISPLAY_PRESENT_FORMAT_RGB565,
@@ -202,12 +217,16 @@ static void verify_cache_bands(esp_display_present_executor_t *executor, bool is
     };
     expected_sync = dst;
     expected_sync_bytes = 64;
-    unsigned before_submissions = submissions, before_flushes = flushes, before_invalidates = invalidates;
+    expected_source = src;
+    expected_source_bytes = 32;
+    unsigned before_submissions = submissions, before_sources = source_flushes;
+    unsigned before_flushes = flushes, before_invalidates = invalidates;
     assert(esp_display_present_executor_execute(executor, &request) == ESP_OK);
     assert(submissions == before_submissions + 1);
-    assert(flushes == before_flushes + 1 && invalidates == before_invalidates + 1);
+    assert(source_flushes == before_sources + 1 && flushes == before_flushes + 1 && invalidates == before_invalidates + 1);
     assert(!memcmp(src, dst, 32));
     expected_sync = NULL;
+    expected_source = NULL;
 
     /* A larger runtime cache line requires a correspondingly padded
      * destination; rejection must have no hardware or cache side effects. */
@@ -221,10 +240,71 @@ static void verify_cache_bands(esp_display_present_executor_t *executor, bool is
     request.dst.capacity_bytes = 128;
     expected_sync = dst;
     expected_sync_bytes = 128;
+    expected_source = src;
+    expected_source_bytes = 32;
     assert(esp_display_present_executor_execute(executor, &request) == ESP_OK);
     assert(submissions == before_submissions + 1 && !memcmp(src, dst, 32));
     expected_sync = NULL;
+    expected_source = NULL;
     cache_line = 64;
+    free(src);
+    free(dst);
+}
+
+static void verify_cache_failures(esp_display_present_executor_t *executor)
+{
+    uint8_t *src = aligned_alloc(64, 64), *dst = aligned_alloc(64, 64);
+    assert(src && dst);
+    esp_display_present_layout_t layout = {4, 4, 8, ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+                                           ESP_DISPLAY_PRESENT_ORDER_NATIVE};
+    esp_display_present_copy_request_t request = {
+        .src = {src, 32, layout}, .dst = {dst, 64, layout}, .src_area = {0, 0, 4, 4},
+    };
+    const int stages[] = {
+        ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_UNALIGNED,
+        ESP_CACHE_MSYNC_FLAG_DIR_C2M,
+        ESP_CACHE_MSYNC_FLAG_DIR_M2C,
+    };
+    for (size_t i = 0; i < sizeof(stages) / sizeof(stages[0]); ++i) {
+        unsigned before = submissions;
+        cache_error = ESP_FAIL;
+        cache_error_flags = stages[i];
+        assert(esp_display_present_executor_execute(executor, &request) == ESP_FAIL);
+        assert(submissions == before + (i == 2));
+    }
+    for (size_t i = 0; i < sizeof(stages) / sizeof(stages[0]); ++i) {
+        unsigned before = submissions;
+        cache_error = ESP_ERR_NOT_SUPPORTED;
+        cache_error_flags = stages[i];
+        assert(esp_display_present_executor_execute(executor, &request) == ESP_OK);
+        assert(submissions == before + 1);
+    }
+    cache_error = ESP_OK;
+    cache_error_flags = 0;
+    free(src);
+    free(dst);
+}
+
+static void verify_instance_isolation(bool is_dma)
+{
+    esp_display_present_executor_t *a = NULL, *b = NULL;
+    esp_err_t (*create)(esp_display_present_executor_t **) = is_dma ?
+            esp_display_present_executor_dma2d_create : esp_display_present_executor_ppa_create;
+    assert(create(&a) == ESP_OK && create(&b) == ESP_OK);
+    uint8_t *src = aligned_alloc(64, 64), *dst = aligned_alloc(64, 64);
+    assert(src && dst);
+    memset(src, 0x5a, 32);
+    esp_display_present_layout_t layout = {4, 4, 8, ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+                                           ESP_DISPLAY_PRESENT_ORDER_NATIVE};
+    esp_display_present_copy_request_t request = {
+        .src = {src, 32, layout}, .dst = {dst, 64, layout}, .src_area = {0, 0, 4, 4},
+    };
+    assert(esp_display_present_executor_execute(a, &request) == ESP_OK);
+    assert(esp_display_present_executor_execute(b, &request) == ESP_OK);
+    assert(esp_display_present_executor_destroy(a) == ESP_OK);
+    memset(dst, 0, 32);
+    assert(esp_display_present_executor_execute(b, &request) == ESP_OK && !memcmp(src, dst, 32));
+    assert(esp_display_present_executor_destroy(b) == ESP_OK);
     free(src);
     free(dst);
 }
@@ -441,7 +521,9 @@ int main(void)
     assert(esp_display_present_executor_ppa_create(&e) == ESP_OK);
     verify(e, cpu, false);
     verify_cache_bands(e, false);
+    verify_cache_failures(e);
     assert(esp_display_present_executor_destroy(e) == ESP_OK);
+    verify_instance_isolation(false);
 #else
     assert(esp_display_present_executor_ppa_create(&e) == ESP_ERR_NOT_SUPPORTED && !e);
 #endif
@@ -450,8 +532,10 @@ int main(void)
     assert(esp_display_present_executor_dma2d_create(&e) == ESP_OK);
     verify(e, cpu, true);
     verify_cache_bands(e, true);
+    verify_cache_failures(e);
     verify_dma_retry_and_drain(e);
     assert(esp_display_present_executor_destroy(e) == ESP_OK);
+    verify_instance_isolation(true);
 #else
     assert(esp_display_present_executor_dma2d_create(&e) == ESP_ERR_NOT_SUPPORTED && !e);
 #endif

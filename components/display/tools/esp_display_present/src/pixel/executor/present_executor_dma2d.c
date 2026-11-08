@@ -85,6 +85,10 @@ static esp_err_t dma2d_execute(void *context, const esp_display_present_copy_req
     }
     size_t bpp = request->src.layout.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
     (void)present_mutex_take(plugin->gate, UINT32_MAX);
+    error = hw_sync_source(request);
+    if (error != ESP_OK) {
+        goto done;
+    }
     error = hw_sync(band, band_bytes, ESP_CACHE_MSYNC_FLAG_DIR_C2M);
     if (error != ESP_OK) {
         goto done;

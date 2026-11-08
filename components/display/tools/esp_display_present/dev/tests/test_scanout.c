@@ -55,16 +55,23 @@ struct fake_lcd {
     void *user;
     bool early, fail, stop_timeout, deleted, detach_fail;
     size_t calls, buffer_count;
-    bool no_bounce, one_shot, transformed, custom_bounce, one_fb;
+    bool no_bounce, no_retirement, link_retirement, one_shot, transformed, custom_bounce, one_fb;
+    bool info_error, wrong_dimensions, wrong_format, wrong_size;
     const void *source;
 };
 esp_err_t esp_lcd_rgb_panel_get_frame_buffer_info(esp_lcd_panel_handle_t panel, esp_lcd_rgb_panel_frame_buffer_info_t *info)
 {
+    if (panel->info_error) {
+        return ESP_FAIL;
+    }
     *info = (esp_lcd_rgb_panel_frame_buffer_info_t) {
-        .width = 3, .height = 2,
-        .frame_buffer_count = panel->one_fb ? 1 : (panel->buffer_count ? panel->buffer_count : 2), .frame_buffer_bytes = 12, .bits_per_pixel = 16,
+        .width = panel->wrong_dimensions ? 2 : 3, .height = panel->wrong_dimensions ? 3 : 2,
+        .frame_buffer_count = panel->one_fb ? 1 : (panel->buffer_count ? panel->buffer_count : 2),
+        .frame_buffer_bytes = panel->wrong_size ? 10 : 12,
+        .bits_per_pixel = panel->wrong_format ? 24 : 16,
         .bounce_buffer_bytes = panel->no_bounce ? 0 : 6, .continuous_refresh = !panel->one_shot,
-        .frame_buffer_retirement = !panel->no_bounce, .transformed = panel->transformed,
+        .frame_buffer_retirement = !panel->no_retirement && (!panel->no_bounce || panel->link_retirement),
+        .transformed = panel->transformed,
         .custom_bounce_callback = panel->custom_bounce
     };
     return ESP_OK;
@@ -461,7 +468,29 @@ static void queried_rgb(void)
     panel.no_bounce = true;
     config.bounce = true; /* A stale caller hint cannot override facts. */
     assert(esp_display_present_lcd_scanout_create(&config, &adapter) == ESP_ERR_NOT_SUPPORTED);
+    panel.link_retirement = true;
+    config.bounce = false; /* Reliable direct-link retirement is sufficient. */
+    OK(esp_display_present_lcd_scanout_create(&config, &adapter));
+    OK(esp_display_present_lcd_scanout_destroy(adapter));
+    panel.no_bounce = false;
+    panel.link_retirement = false;
+    panel.no_retirement = true;
+    assert(esp_display_present_lcd_scanout_create(&config, &adapter) == ESP_ERR_NOT_SUPPORTED);
+    panel.no_retirement = false;
+    panel.wrong_dimensions = true;
+    assert(esp_display_present_lcd_scanout_create(&config, &adapter) == ESP_ERR_NOT_SUPPORTED);
+    panel.wrong_dimensions = false;
+    panel.wrong_format = true;
+    assert(esp_display_present_lcd_scanout_create(&config, &adapter) == ESP_ERR_NOT_SUPPORTED);
+    panel.wrong_format = false;
+    panel.wrong_size = true;
+    assert(esp_display_present_lcd_scanout_create(&config, &adapter) == ESP_ERR_NOT_SUPPORTED);
+    panel.wrong_size = false;
+    panel.info_error = true;
+    assert(esp_display_present_lcd_scanout_create(&config, &adapter) == ESP_FAIL);
+    panel.info_error = false;
     panel.one_fb = true;
+    panel.no_bounce = true;
     config.buffer_count = 1;
     OK(esp_display_present_lcd_scanout_create(&config, &adapter));
     esp_display_present_panel_adapter_t api;

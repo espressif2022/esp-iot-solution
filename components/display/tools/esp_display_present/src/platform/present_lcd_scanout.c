@@ -356,7 +356,8 @@ esp_err_t esp_display_present_lcd_scanout_create(const esp_display_present_lcd_s
             return error;
         }
         size_t bpp = config->format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
-        if (!info.continuous_refresh || info.custom_bounce_callback || info.transformed ||
+        if (info.width != config->width || info.height != config->height ||
+                !info.continuous_refresh || info.custom_bounce_callback || info.transformed ||
                 info.bits_per_pixel != bpp * 8 || info.frame_buffer_count < config->buffer_count ||
                 info.frame_buffer_bytes != (uint64_t)config->width * config->height * bpp) {
             return ESP_ERR_NOT_SUPPORTED;
