@@ -12,6 +12,7 @@
 | BOX-3 SPI GRAM 对比 | [box3-gram-20261105](box3-gram-20261105/README.md) | present20组/adapter4组，四角度与internal/PSRAM；不支持组合记 - |
 | S31 QSPI TE 生命周期 | [s31-te-lifecycle-20261106](s31-te-lifecycle-20261106/README.md) | C1/C2×T1/T2，48帧及16生命周期通过；已恢复整片固件 |
 | S31 QSPI TE LVGL benchmark | [s31-te-benchmark-20261106](s31-te-benchmark-20261106/README.md) | 8组/0°90°，10397次送帧，TE均值1.888ms、最大9.726ms；用户目视正常；无adapter C/T对比 |
+| RGB/DSI NONE PARTITION统一 | [lcd-none-partition-20261108](lcd-none-partition-20261108/README.md) | Host 42/42；P4/S3 NONE 0°固件构建通过；P4未上板，不含新帧率结论 |
 
 ## 更早专项
 

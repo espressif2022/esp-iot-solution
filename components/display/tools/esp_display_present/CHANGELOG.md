@@ -2,6 +2,8 @@
 
 - Keep the existing public API and component name; route through V2.
 - Remove the superseded V1 implementation and private-source dependencies.
+- Use driver-owned framebuffer PARTITION submission for RGB and MIPI DSI
+  `NONE`; release each source tile on the driver's color-copy completion.
 - See `../esp_display_present_v2/DEFAULT_SWITCH.md` for scope and validation.
 
 # Changelog

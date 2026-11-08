@@ -37,7 +37,7 @@ pv2_legacy_resources_destroy(resources, timeout_ms);
 
 最新逐项状态见 [兼容状态](../esp_display_present_v2/V1_COMPATIBILITY_GAPS.md)。TE 已接入测量式准入 gate、GPIO/定时器和安全 DMA staging；未测得窗口或整屏发送超窗时等待并超时，不降级成无同步发送。S31 通过 SPI 只读事实确认 direct-PSRAM，避免重复 staging 后，单/双 compose 与旋转传输通过；未知 IO 仍保守 staging。
 
-MODE_NONE 扫描使用单图像持久 DIRECT；FB swap、非 64B 有效容量和 SPI PSRAM 绘制池不再一律拒绝。运行时旋转保持 V1 逻辑尺寸，原生默认旋转契约不变。常规 coverage 只保留有界精确矩形，碎片化才惰性分配位图。
+MODE_NONE 对 RGB/MIPI DSI 使用 PARTITION：present 只管理 tile，`draw_bitmap()` 将脏区复制到驱动内部 framebuffer，`on_color_trans_done` 后释放 source；显式 FULL/DIRECT 模式仍使用 scanout framebuffer 池。FB swap、非 64B 有效容量和 SPI PSRAM 绘制池不再一律拒绝。运行时旋转保持 V1 逻辑尺寸，原生默认旋转契约不变。常规 coverage 只保留有界精确矩形，碎片化才惰性分配位图。
 
 RGB 优先使用 [公开只读 IDF 查询](../esp_display_present_v2/test_apps/driver_patches/README.md)，不要求旧应用增加调用。未修补 SDK 的显式确认仍保留。连续无 bounce 多 FB 的 S3 和 refresh-on-demand 未获得安全退休适配，继续拒绝。驱动事实不匹配和非法参数仍拒绝。
 

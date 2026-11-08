@@ -51,21 +51,16 @@ esp_err_t present_mode_resolve_target(const esp_display_present_target_config_t 
             (!fb && mode != ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE && mode != ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC)) {
         return ESP_ERR_NOT_SUPPORTED;
     }
-    bool driver_partition = target->hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB &&
-                            mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE;
+    bool driver_partition = fb && mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE;
     *out = (present_mode_resolution_t) {
         .kind = fb && !driver_partition ? ESP_DISPLAY_PRESENT_ENGINE_FB : mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC ? ESP_DISPLAY_PRESENT_ENGINE_TE : ESP_DISPLAY_PRESENT_ENGINE_GRAM,
         .engine_mode = mode,
         .contract = profiles[mode].contract,
-        /* RGB NONE still requires one driver-owned framebuffer, but does not
-         * expose it as a presenter image slot. */
+        /* RGB/DSI NONE still requires one driver-owned framebuffer, but does
+         * not expose it as a presenter image slot. */
         .frame_buffers = fb ? profiles[mode].frame_buffers : 0,
-        .active_writes = fb && mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE && !driver_partition,
+        .active_writes = false,
     };
-    if (out->active_writes) {
-        out->engine_mode = ESP_DISPLAY_PRESENT_MODE_DEFAULT;
-        out->contract = ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT;
-    }
     return ESP_OK;
 }
 

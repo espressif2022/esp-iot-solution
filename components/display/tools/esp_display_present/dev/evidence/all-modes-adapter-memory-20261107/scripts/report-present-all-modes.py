@@ -152,6 +152,7 @@ notes=[
  'open_delta为每组合before_open到after_open的堆变化；首次组合可能包含LVGL延迟初始化，不能单凭该列认定组件固定净占用。',
  'RGB/DSI共用板级初始化预分配3块framebuffer；模式的整机堆占用受这项共享预留影响，不是组件最小内存需求。',
  'NONE允许撕裂；下方2026-11-07 R16矩阵中的RGB NONE为adapter PARTIAL、present旧DIRECT持久画布，同名模式的内部路径不完全相同。2026-11-08起present RGB NONE已改为PARTITION，见顶部R8补测。',
+ '下方2026-11-07 P4 DSI NONE行同样属于已移除的present DIRECT路径；2026-11-08起DSI NONE也改为PARTITION。当前仅完成Host与P4固件构建，旧26 FPS不得作为新路径成绩，新实板帧率与内存待补测。',
  'S31只测试TE C1/C2×T1/T2；adapter没有等价compose/tile配置，-不代表adapter完全没有TE功能。没有测试关闭TE的S31普通GRAM基线。',
  'AUTO、adapter NONE的软件旋转、S31显式C/T无等价配置记 -，不使用历史结果填充。BOX-3包括internal/PSRAM与tile1/2及AUTO。',
  '原固件均在测试结束后完整恢复并独立校验。串口成功只证明测试完成，不能自动判定屏幕无撕裂；目视异常单独记录。',

@@ -6,6 +6,12 @@
 #include "platform/present_os.h"
 #include "resources/present_memory.h"
 #include "esp_lcd_panel_rgb.h"
+#ifndef PRESENT_HOST
+#include "soc/soc_caps.h"
+#endif
+#if defined(PRESENT_HOST) || SOC_MIPI_DSI_SUPPORTED
+#include "esp_lcd_mipi_dsi.h"
+#endif
 
 struct esp_display_present_lcd_rgb_partition {
     present_lock_t lock;
@@ -17,11 +23,8 @@ struct esp_display_present_lcd_rgb_partition {
     bool attached, submitting, closing;
 };
 
-static bool PRESENT_ISR_ATTR color_done(esp_lcd_panel_handle_t panel,
-                                        const esp_lcd_rgb_panel_event_data_t *data, void *user)
+static bool PRESENT_ISR_ATTR partition_done(void *user)
 {
-    (void)panel;
-    (void)data;
     esp_display_present_lcd_rgb_partition_t *rgb = user;
     if (!rgb) return false;
     present_lock_enter(&rgb->lock, true);
@@ -46,6 +49,45 @@ static bool PRESENT_ISR_ATTR color_done(esp_lcd_panel_handle_t panel,
     return yield;
 }
 
+static bool PRESENT_ISR_ATTR rgb_color_done(esp_lcd_panel_handle_t panel,
+                                            const esp_lcd_rgb_panel_event_data_t *data, void *user)
+{
+    (void)panel;
+    (void)data;
+    return partition_done(user);
+}
+
+#if defined(PRESENT_HOST) || SOC_MIPI_DSI_SUPPORTED
+static bool PRESENT_ISR_ATTR dsi_color_done(esp_lcd_panel_handle_t panel,
+                                            esp_lcd_dpi_panel_event_data_t *data, void *user)
+{
+    (void)panel;
+    (void)data;
+    return partition_done(user);
+}
+#endif
+
+static esp_err_t register_color_done(esp_display_present_lcd_rgb_partition_t *rgb, bool attach)
+{
+    if (rgb->config.kind == ESP_DISPLAY_PRESENT_LCD_PARTITION_RGB) {
+        esp_lcd_rgb_panel_event_callbacks_t callbacks = {
+            .on_color_trans_done = attach ? rgb_color_done : NULL,
+        };
+        return esp_lcd_rgb_panel_register_event_callbacks(rgb->config.panel, &callbacks,
+                                                           attach ? rgb : NULL);
+    }
+#if defined(PRESENT_HOST) || SOC_MIPI_DSI_SUPPORTED
+    esp_lcd_dpi_panel_event_callbacks_t callbacks = {
+        .on_color_trans_done = attach ? dsi_color_done : NULL,
+    };
+    return esp_lcd_dpi_panel_register_event_callbacks(rgb->config.panel, &callbacks,
+                                                       attach ? rgb : NULL);
+#else
+    (void)attach;
+    return ESP_ERR_NOT_SUPPORTED;
+#endif
+}
+
 static esp_err_t rgb_attach(void *context, esp_display_present_panel_event_fn callback, void *user)
 {
     esp_display_present_lcd_rgb_partition_t *rgb = context;
@@ -58,8 +100,7 @@ static esp_err_t rgb_attach(void *context, esp_display_present_panel_event_fn ca
     }
     present_lock_exit(&rgb->lock, false);
     if (busy) return ESP_ERR_INVALID_STATE;
-    esp_lcd_rgb_panel_event_callbacks_t callbacks = {.on_color_trans_done = color_done};
-    esp_err_t error = esp_lcd_rgb_panel_register_event_callbacks(rgb->config.panel, &callbacks, rgb);
+    esp_err_t error = register_color_done(rgb, true);
     present_lock_enter(&rgb->lock, false);
     rgb->attached = error == ESP_OK;
     if (error != ESP_OK) {
@@ -117,8 +158,7 @@ static esp_err_t rgb_quiesce(void *context, uint32_t timeout)
         if (present_expired(start, timeout)) return ESP_ERR_TIMEOUT;
         present_pause();
     }
-    const esp_lcd_rgb_panel_event_callbacks_t callbacks = {0};
-    esp_err_t error = esp_lcd_rgb_panel_register_event_callbacks(rgb->config.panel, &callbacks, NULL);
+    esp_err_t error = register_color_done(rgb, false);
     if (error != ESP_OK) return error;
     uint64_t elapsed = present_now_ms() - start;
     uint32_t left = timeout == UINT32_MAX ? UINT32_MAX : elapsed >= timeout ? 0 : timeout - (uint32_t)elapsed;
@@ -140,7 +180,9 @@ static esp_err_t rgb_quiesce(void *context, uint32_t timeout)
 esp_err_t esp_display_present_lcd_rgb_partition_create(const esp_display_present_lcd_rgb_partition_config_t *config,
                                                         esp_display_present_lcd_rgb_partition_t **out)
 {
-    if (!config || !out || !config->panel || !config->width || !config->height) return ESP_ERR_INVALID_ARG;
+    if (!config || !out || !config->panel || !config->width || !config->height ||
+            config->kind < ESP_DISPLAY_PRESENT_LCD_PARTITION_RGB ||
+            config->kind > ESP_DISPLAY_PRESENT_LCD_PARTITION_DSI) return ESP_ERR_INVALID_ARG;
     *out = present_alloc(sizeof(**out));
     if (!*out) return ESP_ERR_NO_MEM;
     if (!present_lock_init(&(*out)->lock)) {

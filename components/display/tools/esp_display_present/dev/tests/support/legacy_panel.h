@@ -20,7 +20,7 @@ struct fake_lcd {
     pthread_mutex_t lock;
     pthread_cond_t changed;
     void *buffers[3];
-    dpi_cb_t dsi, dsi_vsync;
+    dpi_cb_t dsi_color, dsi, dsi_vsync;
     rgb_cb_t rgb_color, rgb, rgb_vsync;
     esp_lcd_panel_io_color_trans_done_cb_t io;
     void *user;
@@ -140,7 +140,11 @@ static esp_err_t register_callbacks(struct fake_lcd *panel, dpi_cb_t dsi, dpi_cb
 }
 esp_err_t esp_lcd_dpi_panel_register_event_callbacks(esp_lcd_panel_handle_t panel, const esp_lcd_dpi_panel_event_callbacks_t *callbacks, void *user)
 {
-    return register_callbacks(panel, callbacks->on_frame_buf_complete, callbacks->on_vsync, NULL, NULL, user);
+    esp_err_t error = register_callbacks(panel, callbacks->on_frame_buf_complete, callbacks->on_vsync, NULL, NULL, user);
+    if (error == ESP_OK) {
+        panel->dsi_color = callbacks->on_color_trans_done;
+    }
+    return error;
 }
 esp_err_t esp_lcd_rgb_panel_register_event_callbacks(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_event_callbacks_t *callbacks, void *user)
 {
@@ -197,12 +201,16 @@ esp_err_t esp_lcd_panel_draw_bitmap(esp_lcd_panel_handle_t panel, int x, int y, 
     pthread_mutex_lock(&panel->lock);
     panel->source = source;
     ++panel->calls;
-    rgb_cb_t done = panel->rgb_color;
+    rgb_cb_t rgb_done = panel->rgb_color;
+    dpi_cb_t dsi_done = panel->dsi_color;
     void *user = panel->user;
     pthread_cond_broadcast(&panel->changed);
     pthread_mutex_unlock(&panel->lock);
-    if (done) {
-        (void)done(panel, NULL, user);
+    if (rgb_done) {
+        (void)rgb_done(panel, NULL, user);
+    }
+    if (dsi_done) {
+        (void)dsi_done(panel, NULL, user);
     }
     return ESP_OK;
 }
@@ -238,7 +246,7 @@ static void init_panel(struct fake_lcd *panel)
 }
 static void free_panel(struct fake_lcd *panel)
 {
-    assert(!panel->deleted && !panel->dsi && !panel->rgb && !panel->io);
+    assert(!panel->deleted && !panel->dsi_color && !panel->dsi && !panel->rgb && !panel->io);
     for (unsigned i = 0; i < 3; ++i) {
         free(panel->buffers[i]);
     }

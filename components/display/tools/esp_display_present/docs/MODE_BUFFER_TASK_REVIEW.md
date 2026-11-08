@@ -173,7 +173,7 @@ compose 图像的状态是 `IDLE`、`BUILDING`、`REPAIR`、`READY`、`INFLIGHT`
 
 ## 4. FB 模式：扫描池与绘制池
 
-### 4.1 FULL / DIRECT / NONE
+### 4.1 FULL / DIRECT
 
 ```mermaid
 flowchart LR
@@ -192,7 +192,7 @@ flowchart LR
 - **FULL** 要求一帧完整覆盖；0°、同字节序时应用直接画入 FB，不需要整屏复制。
 - **DIRECT** 仍提供整屏寻址，但只声明/更新部分区域。切换到不同基线的目标时先预填；封帧后结合历史损伤修复未写区域。本帧被标成 full redraw 时跳过预填。公开门面何时这样标，见第 3.1 节。
 - **旋转/swap 路径** 为 FULL/DIRECT 额外分配一张逻辑整屏画布；各物理 slot 引用同一张画布，封帧后转换到各自物理扫描 FB。不能理解成“双 FB 再额外配两张逻辑 FB”。
-- **NONE** 刻意允许当前扫描 FB 的写入；N=1，没有“另一个旧 FB 退休后再画”的隔离能力。这是该模式合同，不能称其具备双缓冲防撕裂保证。
+- **NONE** 不再属于这条扫描池路径。RGB/MIPI DSI均使用PARTITION tile，通过`draw_bitmap()`复制脏区到驱动内部 framebuffer；允许撕裂，但present不借用当前扫描FB作为持久画布。
 - RGB/DSI FB 由面板驱动提供，组件借用，不再为每个 slot 新分配同等大小的扫描 FB。用户提供地址时必须与驱动查询到的池一致。
 
 依据：[状态机说明](../src/backend/present_backend_fb.c#L17)、[创建与逻辑画布共享](../src/backend/present_backend_fb.c#L730)、[begin/预填](../src/backend/present_backend_fb.c#L836)、[借用驱动 FB](../src/present_resources.c#L380)。
@@ -327,7 +327,8 @@ pixel engine 主要是像素搬运/坐标旋转/字节序处理，不提供 alph
 
 | 路径 | copy ticket 配置容量 | pixel worker 数 | 待确认输出容量 |
 | --- | --- | --- | --- |
-| FB FULL/DIRECT/NONE | 1 | 1 | 1 |
+| FB FULL/DIRECT | 1 | 1 | 1 |
+| RGB/DSI NONE PARTITION | T | 1 | 1 |
 | FB PARTIAL | T | 1 | 1 |
 | 普通同步 GRAM | T，执行为同步 | 0 | 至多 T，受 adapter 限制 |
 | 实验后台普通 GRAM | T，像素准备仍同步 | 0 | 至多 T，受 adapter 限制 |
@@ -384,8 +385,9 @@ adapter 的 staging 实现会 copy→cache 同步→draw→等该段完成后再
 
 | 路径 | 像素内存组成 |
 | --- | --- |
-| FB FULL/DIRECT/NONE，0°同字节序 | 驱动 FB：`N×W×H×B`；组件不另分配同尺寸画布 |
-| FB FULL/DIRECT/NONE，需转换 | 驱动 FB + 1 张共享逻辑画布：`N×W×H×B + W×H×B` |
+| FB FULL/DIRECT，0°同字节序 | 驱动 FB：`N×W×H×B`；组件不另分配同尺寸画布 |
+| FB FULL/DIRECT，需转换 | 驱动 FB + 1 张共享逻辑画布：`N×W×H×B + W×H×B` |
+| RGB/DSI NONE PARTITION | 驱动内部 FB + tile：`W×H×B + T×W×R×B` |
 | FB PARTIAL | 驱动 FB + tile：`N×W×H×B + T×W×R×B` |
 | GRAM 普通内部 | tile：`T×W×R×B` |
 | GRAM 异步转换 | source + converted：`2×T×W×R×B` |

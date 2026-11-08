@@ -25,7 +25,7 @@ struct present_resources {
     esp_display_present_engine_t *presenter;
     esp_display_present_lcd_scanout_t *scanout;
     esp_display_present_lcd_spi_t *spi;
-    esp_display_present_lcd_rgb_partition_t *rgb_partition;
+    esp_display_present_lcd_rgb_partition_t *lcd_partition;
     esp_display_present_te_sync_context_t *te;
     esp_display_present_te_sync_config_t te_config;
     bool te_required, te_armed;
@@ -330,12 +330,12 @@ static esp_err_t free_resources(present_resources_t *resources)
         }
         resources->spi = NULL;
     }
-    if (resources->rgb_partition) {
-        esp_err_t error = esp_display_present_lcd_rgb_partition_destroy(resources->rgb_partition);
+    if (resources->lcd_partition) {
+        esp_err_t error = esp_display_present_lcd_rgb_partition_destroy(resources->lcd_partition);
         if (error != ESP_OK) {
             return error;
         }
-        resources->rgb_partition = NULL;
+        resources->lcd_partition = NULL;
     }
     esp_display_present_executor_t **executors[] = {&resources->ppa, &resources->dma2d, &resources->cpu};
     for (size_t i = 0; i < 3; ++i) {
@@ -446,26 +446,28 @@ static esp_err_t create_spi_adapter(present_resources_t *resources, const esp_di
     return esp_display_present_lcd_spi_get_output_caps(resources->spi, &config->output);
 }
 
-static esp_err_t create_rgb_partition_adapter(present_resources_t *resources,
+static esp_err_t create_lcd_partition_adapter(present_resources_t *resources,
                                               const esp_display_presenter_config_t *input,
                                               esp_display_present_plan_config_t *config)
 {
     bool quarter = config->presenter.backend.rotation & 1;
     esp_display_present_lcd_rgb_partition_config_t rgb = {
         .panel = input->target.hw.panel,
+        .kind = input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB ?
+                ESP_DISPLAY_PRESENT_LCD_PARTITION_RGB : ESP_DISPLAY_PRESENT_LCD_PARTITION_DSI,
         .width = quarter ? input->height : input->width,
         .height = quarter ? input->width : input->height,
         .format = config->presenter.backend.format,
         .byte_order = config->presenter.backend.panel_order,
     };
-    esp_err_t error = esp_display_present_lcd_rgb_partition_create(&rgb, &resources->rgb_partition);
+    esp_err_t error = esp_display_present_lcd_rgb_partition_create(&rgb, &resources->lcd_partition);
     if (error != ESP_OK) {
         return error;
     }
-    error = esp_display_present_lcd_rgb_partition_get_interface(resources->rgb_partition,
+    error = esp_display_present_lcd_rgb_partition_get_interface(resources->lcd_partition,
                                                                  &config->presenter.backend.panel);
     return error != ESP_OK ? error :
-           esp_display_present_lcd_rgb_partition_get_output_caps(resources->rgb_partition, &config->output);
+           esp_display_present_lcd_rgb_partition_get_output_caps(resources->lcd_partition, &config->output);
 }
 
 static esp_err_t create_planned_engine(present_resources_t *resources, const esp_display_presenter_config_t *input,
@@ -507,10 +509,11 @@ esp_err_t present_resources_create(const esp_display_presenter_config_t *input, 
     if (error != ESP_OK) {
         return error;
     }
-    bool rgb_partition = config.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM &&
-                         input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB;
+    bool lcd_partition = config.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM &&
+                         (input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB ||
+                          input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI);
     if (!input->target.hw.panel || (config.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM &&
-                                    !rgb_partition && !input->target.hw.io)) {
+                                    !lcd_partition && !input->target.hw.io)) {
         return ESP_ERR_INVALID_ARG;
     }
     present_resources_t *resources = present_alloc(sizeof(*resources));
@@ -531,8 +534,8 @@ esp_err_t present_resources_create(const esp_display_presenter_config_t *input, 
     resources->te_config = input->target.hw.te_sync;
     if (config.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB) {
         error = create_scanout_adapter(resources, input, bounce, on_vsync, vsync_user, &config);
-    } else if (rgb_partition) {
-        error = create_rgb_partition_adapter(resources, input, &config);
+    } else if (lcd_partition) {
+        error = create_lcd_partition_adapter(resources, input, &config);
     } else {
         error = create_spi_adapter(resources, input, &config);
     }

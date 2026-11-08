@@ -8,8 +8,13 @@
 #include "esp_lcd_panel_ops.h"
 
 typedef struct esp_display_present_lcd_rgb_partition esp_display_present_lcd_rgb_partition_t;
+typedef enum {
+    ESP_DISPLAY_PRESENT_LCD_PARTITION_RGB,
+    ESP_DISPLAY_PRESENT_LCD_PARTITION_DSI,
+} esp_display_present_lcd_partition_kind_t;
 typedef struct {
     esp_lcd_panel_handle_t panel;
+    esp_display_present_lcd_partition_kind_t kind;
     uint32_t width, height;
     esp_display_present_engine_pixel_format_t format;
     esp_display_present_byte_order_t byte_order;
