@@ -29,6 +29,17 @@ before adapter storage can be destroyed. Other framebuffer modes and MIPI DSI
 | present, RGB NONE PARTITION path | 50 | 15 ms | 4 ms |
 | esp_lvgl_adapter NONE/PARTIAL | 51 | 16 ms | 3 ms |
 
+The corresponding whole-system heap snapshot is:
+
+| Implementation | Internal used after open | PSRAM used after open | Internal open delta | PSRAM open delta | Internal minimum free | PSRAM minimum free |
+|---|---:|---:|---:|---:|---:|---:|
+| present, RGB NONE PARTITION | 166.21 KiB | 1401.21 KiB | 75.68 KiB | 47.03 KiB | 129.63 KiB | 5834.88 KiB |
+| esp_lvgl_adapter NONE/PARTIAL | 188.55 KiB | 1354.14 KiB | 54.70 KiB | 0.03 KiB | 128.85 KiB | 5874.71 KiB |
+
+Used heap is `total-free` after display open and includes firmware and benchmark
+resident allocations; it is not the component's isolated footprint. Open delta
+is the change from `before_open` to `after_open`.
+
 The new present run completed with `2428` committed frames and `SUITE_PASS`.
 The one-FPS difference from adapter is within this single-run benchmark's
 integer resolution. NONE permits tearing in both implementations.

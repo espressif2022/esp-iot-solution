@@ -151,21 +151,34 @@ notes=[
  'S3启用PSRAM XIP，可用heap总量会随固件代码大小变化；used heap不包括XIP预留，整机预算还应看剩余量与total_bytes，不只看已用堆。',
  'open_delta为每组合before_open到after_open的堆变化；首次组合可能包含LVGL延迟初始化，不能单凭该列认定组件固定净占用。',
  'RGB/DSI共用板级初始化预分配3块framebuffer；模式的整机堆占用受这项共享预留影响，不是组件最小内存需求。',
- 'NONE允许撕裂；RGB NONE在adapter为PARTIAL、present为DIRECT持久画布，同名模式的内部路径不完全相同。',
+ 'NONE允许撕裂；下方2026-11-07 R16矩阵中的RGB NONE为adapter PARTIAL、present旧DIRECT持久画布，同名模式的内部路径不完全相同。2026-11-08起present RGB NONE已改为PARTITION，见顶部R8补测。',
  'S31只测试TE C1/C2×T1/T2；adapter没有等价compose/tile配置，-不代表adapter完全没有TE功能。没有测试关闭TE的S31普通GRAM基线。',
  'AUTO、adapter NONE的软件旋转、S31显式C/T无等价配置记 -，不使用历史结果填充。BOX-3包括internal/PSRAM与tile1/2及AUTO。',
  '原固件均在测试结束后完整恢复并独立校验。串口成功只证明测试完成，不能自动判定屏幕无撕裂；目视异常单独记录。',
  '本轮源码基线25e335214，另补共用测试内存采样及报告解析，生产组件源码不修改；IDF 7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe，LVGL9.6.0~1。'
 ]
-md=['# present / adapter 全模式帧率与内存对比','']+['- '+n for n in notes]+['']
+supplement_notes=[
+ '板卡：ESP32-S3 480×480 function board / GC9503，8 MiB PSRAM，MAC 7c:df:a1:fd:c6:04。',
+ '仅补测NONE、0°；present与adapter均为PARTITION语义，RGB驱动内部维护framebuffer。测试负载为相同LVGL综合benchmark（16个有效场景）。',
+ '这是独立R8批次，不覆盖下方2026-11-07 R16全模式四角度矩阵；旧矩阵的present NONE 90°/180°/270°属于已移除的DIRECT路径，不能当作新PARTITION路径结果。',
+ 'RAM/PSRAM占用仍按打开后堆total-free计算，包含固件和测试环境常驻分配，不是组件净占用；打开增量为before_open到after_open变化。',
+ '源码提交fdf4cf55；IDF 7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe，LVGL 9.6.0~1。present完成2428帧并SUITE_PASS。'
+]
+supplement_headers=['实现','模式','角度','LVGL FPS','render','flush','RAM占用 KiB','PSRAM占用 KiB','RAM打开增量 KiB','PSRAM打开增量 KiB','RAM打开剩余 KiB','PSRAM打开剩余 KiB','RAM最小剩余 KiB','PSRAM最小剩余 KiB']
+supplement_rows=[
+ ['present','NONE / PARTITION',0,50,'15 ms','4 ms',166.21,1401.21,75.68,47.03,182.84,5905.38,129.63,5834.88],
+ ['adapter','NONE / PARTIAL',0,51,'16 ms','3 ms',188.55,1354.14,54.70,0.03,183.20,5945.22,128.85,5874.71]
+]
+md=['# present / adapter 全模式帧率与内存对比','']+['- '+n for n in notes]+['','## 2026-11-08 S3 R8 RGB NONE PARTITION 补测','']+['- '+n for n in supplement_notes]+['','| '+' | '.join(supplement_headers)+' |','|'+ '|'.join(['---']*len(supplement_headers))+'|']+['| '+' | '.join(map(str,z))+' |' for z in supplement_rows]+['']
 for board in boards:
- md+=['## '+board,'','| '+' | '.join(headers[1:9])+' |','|'+ '|'.join(['---']*8)+'|']
+ md+=['## 2026-11-07 全模式矩阵：'+board+('（R16）' if board=='s3-rgb' else ''),'','| '+' | '.join(headers[1:9])+' |','|'+ '|'.join(['---']*8)+'|']
  md+=['| '+' | '.join(map(str,human(z)[1:9]))+' |' for z in rows if z['board']==board]
  md+=['']
 (out/'README.md').write_text('\n'.join(md)+'\n')
 body='<h1>present / adapter 全模式帧率与内存对比</h1><ul>'+''.join('<li>'+html.escape(n)+'</li>' for n in notes)+'</ul>'
+body+='<h2>2026-11-08 S3 R8 RGB NONE PARTITION补测</h2><ul>'+''.join('<li>'+html.escape(n)+'</li>' for n in supplement_notes)+'</ul><div class="scroll"><table><thead><tr>'+''.join('<th>'+html.escape(h)+'</th>' for h in supplement_headers)+'</tr></thead><tbody>'+''.join('<tr>'+''.join('<td>'+html.escape(str(v))+'</td>' for v in row)+'</tr>' for row in supplement_rows)+'</tbody></table></div>'
 for board in boards:
- body+='<h2>'+board+'</h2><div class="scroll"><table><thead><tr>'+''.join('<th>'+html.escape(h)+'</th>' for h in headers[1:])+'</tr></thead><tbody>'
+ body+='<h2>2026-11-07 全模式矩阵：'+board+('（R16）' if board=='s3-rgb' else '')+'</h2><div class="scroll"><table><thead><tr>'+''.join('<th>'+html.escape(h)+'</th>' for h in headers[1:])+'</tr></thead><tbody>'
  for z in rows:
   if z['board']==board:body+='<tr>'+''.join('<td>'+html.escape(str(v))+'</td>' for v in human(z)[1:])+'</tr>'
  body+='</tbody></table></div>'
