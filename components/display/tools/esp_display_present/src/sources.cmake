@@ -27,6 +27,7 @@ set(PRESENT_ENGINE_SOURCES
     ${PRESENT_PIXEL_SOURCES}
     ${CMAKE_CURRENT_LIST_DIR}/backend/present_backend_gram.c
     ${CMAKE_CURRENT_LIST_DIR}/platform/present_lcd_spi.c
+    ${CMAKE_CURRENT_LIST_DIR}/platform/present_lcd_rgb_partition.c
     ${CMAKE_CURRENT_LIST_DIR}/platform/present_lcd_scanout.c
     ${CMAKE_CURRENT_LIST_DIR}/backend/present_te_composer.c
     ${CMAKE_CURRENT_LIST_DIR}/backend/present_backend_te.c

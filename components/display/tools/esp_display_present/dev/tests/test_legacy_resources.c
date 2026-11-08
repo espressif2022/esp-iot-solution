@@ -197,7 +197,12 @@ static void platform_matrix(void)
                 unavailable = true;
                 present_resources_t *resources;
                 OK(present_resources_create(&input, rgb, NULL, NULL, &resources));
-                initialize(resources, &panel);
+                if (rgb && modes[mode] == ESP_DISPLAY_PRESENT_MODE_NONE) {
+                    OK(present_resources_prepare(resources, 0));
+                    assert(panel.calls == 0);
+                } else {
+                    initialize(resources, &panel);
+                }
                 esp_display_present_engine_t *presenter = present_resources_presenter(resources);
                 esp_display_present_frame_request_t request = {.full_redraw = true};
                 OK(esp_display_present_engine_begin_next_frame(presenter, &request));
@@ -220,7 +225,10 @@ static void platform_matrix(void)
                 boundary(&panel);
                 boundary(&panel);
                 esp_display_present_frame_status_t status;
-                OK(esp_display_present_engine_wait_frame(presenter, receipt, ESP_DISPLAY_PRESENT_COMPLETION_PRESENT_CONFIRMED, 1000, &status));
+                bool rgb_none = rgb && modes[mode] == ESP_DISPLAY_PRESENT_MODE_NONE;
+                OK(esp_display_present_engine_wait_frame(presenter, receipt,
+                   rgb_none ? ESP_DISPLAY_PRESENT_COMPLETION_SOURCE_RELEASED : ESP_DISPLAY_PRESENT_COMPLETION_PRESENT_CONFIRMED,
+                   1000, &status));
                 for (unsigned i = 0; i < 24; ++i) {
                     uint16_t expected = 0x1200 + i;
                     if (swap) {
@@ -272,6 +280,7 @@ static void plans(void)
     }
     input.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_NONE;
     OK(present_resources_plan(&input, false, &plan));
+    assert(plan.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB);
     assert(plan.resources.image_count == 1 && plan.presenter.backend.active_writes);
     input.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL;
     input.width = 4;

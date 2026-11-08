@@ -10,7 +10,7 @@ static void public_profiles(void)
         unsigned count;
         esp_display_present_render_contract_t contract;
     } cases[] = {
-        {ESP_DISPLAY_PRESENT_MODE_NONE, 1, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT},
+        {ESP_DISPLAY_PRESENT_MODE_NONE, 1, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION},
         {ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL, 2, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL},
         {ESP_DISPLAY_PRESENT_MODE_TRIPLE_FULL, 3, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL},
         {ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT, 2, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT},
@@ -23,11 +23,12 @@ static void public_profiles(void)
             esp_display_present_target_config_t target = {.hw = {.panel_type = panel}, .fb = {.mode = cases[i].mode}};
             present_mode_resolution_t mode;
             assert(present_mode_resolve_target(&target, &mode) == ESP_OK);
-            assert(mode.kind == ESP_DISPLAY_PRESENT_ENGINE_FB && mode.frame_buffers == cases[i].count && mode.contract == cases[i].contract);
-            assert(mode.active_writes == (cases[i].mode == ESP_DISPLAY_PRESENT_MODE_NONE));
-            if (mode.active_writes) {
-                assert(mode.engine_mode == ESP_DISPLAY_PRESENT_MODE_DEFAULT);
-            }
+            bool rgb_none = panel == ESP_DISPLAY_PRESENT_PANEL_RGB && cases[i].mode == ESP_DISPLAY_PRESENT_MODE_NONE;
+            assert(mode.kind == (rgb_none ? ESP_DISPLAY_PRESENT_ENGINE_GRAM : ESP_DISPLAY_PRESENT_ENGINE_FB));
+            assert(mode.frame_buffers == cases[i].count);
+            assert(mode.contract == (cases[i].mode == ESP_DISPLAY_PRESENT_MODE_NONE && !rgb_none ?
+                                     ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT : cases[i].contract));
+            assert(mode.active_writes == (cases[i].mode == ESP_DISPLAY_PRESENT_MODE_NONE && !rgb_none));
         }
     }
     esp_display_present_target_config_t target = {.hw = {.panel_type = ESP_DISPLAY_PRESENT_PANEL_IO, .te_enabled = true,

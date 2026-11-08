@@ -1133,10 +1133,15 @@ static void rotation_reference(void)
             OK(esp_display_presenter_create(&cfg, &presenter));
             size_t count;
             bool full;
-            assert(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full) == ESP_ERR_TIMEOUT);
-            boundary(&panel);
-            boundary(&panel);
-            OK(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full));
+            bool rgb_none = rgb && modes[mode] == ESP_DISPLAY_PRESENT_MODE_NONE;
+            if (rgb_none) {
+                OK(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full));
+            } else {
+                assert(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full) == ESP_ERR_TIMEOUT);
+                boundary(&panel);
+                boundary(&panel);
+                OK(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full));
+            }
             assert(full && !count);
             esp_display_presenter_buffer_t buffer;
             OK(esp_display_presenter_acquire_buffer(presenter, &buffer));
@@ -1169,8 +1174,10 @@ static void rotation_reference(void)
             esp_display_present_area_t area = {0, 0, 7, 3};
             OK(esp_display_presenter_submit_buffer(presenter, &buffer, &area, 16));
             OK(esp_display_presenter_commit_frame(presenter, NULL));
-            finish_scanout(&panel, presenter, 2);
-            OK(esp_display_presenter_quiesce(presenter, 100));
+            finish_scanout(&panel, presenter, rgb_none ? 1 : 2);
+            if (!rgb_none) {
+                OK(esp_display_presenter_quiesce(presenter, 100));
+            }
             assert(!memcmp(expected, panel.source, sizeof(expected)));
             esp_display_presenter_frame_status_t status;
             OK(esp_display_presenter_get_frame_status(presenter, &status));
@@ -1216,8 +1223,10 @@ static void rotation_reference(void)
             esp_display_present_area_t rotated_area = {0, 0, 3, 7};
             OK(esp_display_presenter_submit_buffer(presenter, &buffer, &rotated_area, 8));
             OK(esp_display_presenter_commit_frame(presenter, NULL));
-            finish_scanout(&panel, presenter, 3);
-            OK(esp_display_presenter_quiesce(presenter, 100));
+            finish_scanout(&panel, presenter, rgb_none ? 2 : 3);
+            if (!rgb_none) {
+                OK(esp_display_presenter_quiesce(presenter, 100));
+            }
             assert(!memcmp(expected, panel.source, sizeof(expected)));
             esp_display_presenter_frame_status_t unchanged;
             OK(esp_display_presenter_get_frame_status(presenter, &unchanged));
@@ -1249,7 +1258,7 @@ static void rotation_reference(void)
             }
             OK(esp_display_presenter_submit_buffer(presenter, &buffer, &area, 16));
             OK(esp_display_presenter_commit_frame(presenter, NULL));
-            finish_scanout(&panel, presenter, 4);
+            finish_scanout(&panel, presenter, rgb_none ? 3 : 4);
             OK(esp_display_presenter_quiesce(presenter, 100));
             assert(!memcmp(expected, panel.source, sizeof(expected)));
             delete_eventually(presenter);

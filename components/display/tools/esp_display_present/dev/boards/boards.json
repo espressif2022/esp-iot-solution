@@ -1,8 +1,8 @@
 {
   "s3-rgb": {
     "target": "esp32s3",
-    "mac": "90:e5:b1:d0:a9:d8",
-    "name": "S3 LCD EV R16 / GC9503",
+    "mac": "7c:df:a1:fd:c6:04",
+    "name": "S3 Function Board / GC9503",
     "interface": "rgb",
     "width": 480,
     "height": 480,

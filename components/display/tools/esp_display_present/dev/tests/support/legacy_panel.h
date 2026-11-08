@@ -21,7 +21,7 @@ struct fake_lcd {
     pthread_cond_t changed;
     void *buffers[3];
     dpi_cb_t dsi, dsi_vsync;
-    rgb_cb_t rgb, rgb_vsync;
+    rgb_cb_t rgb_color, rgb, rgb_vsync;
     esp_lcd_panel_io_color_trans_done_cb_t io;
     void *user;
     const void *source;
@@ -144,7 +144,11 @@ esp_err_t esp_lcd_dpi_panel_register_event_callbacks(esp_lcd_panel_handle_t pane
 }
 esp_err_t esp_lcd_rgb_panel_register_event_callbacks(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_event_callbacks_t *callbacks, void *user)
 {
-    return register_callbacks(panel, NULL, NULL, callbacks->on_frame_buf_complete, callbacks->on_vsync, user);
+    esp_err_t error = register_callbacks(panel, NULL, NULL, callbacks->on_frame_buf_complete, callbacks->on_vsync, user);
+    if (error == ESP_OK) {
+        panel->rgb_color = callbacks->on_color_trans_done;
+    }
+    return error;
 }
 esp_err_t esp_lcd_panel_io_register_event_callbacks(esp_lcd_panel_io_handle_t panel, const esp_lcd_panel_io_callbacks_t *callbacks, void *user)
 {
@@ -188,13 +192,18 @@ esp_err_t esp_cache_msync(void *pixels, size_t bytes, int flags)
 }
 esp_err_t esp_lcd_panel_draw_bitmap(esp_lcd_panel_handle_t panel, int x, int y, int ex, int ey, const void *source)
 {
-    assert(x == 0 && y == 0 && ex == (int)(panel->physical_width ? panel->physical_width : 8) &&
-           ey == (int)(panel->physical_height ? panel->physical_height : 4));
+    assert(x >= 0 && y >= 0 && ex <= (int)(panel->physical_width ? panel->physical_width : 8) &&
+           ey <= (int)(panel->physical_height ? panel->physical_height : 4) && x < ex && y < ey);
     pthread_mutex_lock(&panel->lock);
     panel->source = source;
     ++panel->calls;
+    rgb_cb_t done = panel->rgb_color;
+    void *user = panel->user;
     pthread_cond_broadcast(&panel->changed);
     pthread_mutex_unlock(&panel->lock);
+    if (done) {
+        (void)done(panel, NULL, user);
+    }
     return ESP_OK;
 }
 esp_err_t esp_lcd_panel_del(esp_lcd_panel_handle_t panel)
