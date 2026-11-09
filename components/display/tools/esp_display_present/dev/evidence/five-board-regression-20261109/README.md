@@ -39,3 +39,7 @@ S3 RGB 在同一张总网页按同级板卡区块展示：S3 RGB · 480×480 · 
 ## S31单tile性能定位
 
 本总表S31双方XIP关闭。新专项的XIP开关、burst/缓存维护及相同容量对照单独归档：[上板分析](../present-s31-rgb-analysis-20261109/comparison.html)，不替换本表分数。公共sdkconfig及同填50行不代表实际旋转缓冲容量相同：S31 RGB PARTIAL 90°/270°为present48000B、adapter80000B；P4 DSI对应为60000B、102400B。专项相同容量复核固定双方单tile、同开XIP。
+
+## S31 全面诊断补充
+
+[逐场景全面定位](../present-s31-deep-analysis-20261109/README.md)新增8项完整诊断。原始矩阵数据不替换；LVGL FPS包含空刷新，原CPU百分比缺少有效idle hook，不作真实负载依据。新诊断统一双方单输入tile及实际字节容量，分别统计有效绘制、提交、任务运行时间及缓存停顿。

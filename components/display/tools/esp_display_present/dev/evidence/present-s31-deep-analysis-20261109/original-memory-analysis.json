@@ -1,0 +1,82 @@
+[
+  {
+    "mode": "DOUBLE_FULL",
+    "rotation": 0,
+    "present_internal_open_KiB": 45.08984375,
+    "present_psram_open_KiB": 752.9765625,
+    "adapter_internal_open_KiB": 10.4609375,
+    "adapter_psram_open_KiB": 5.71875
+  },
+  {
+    "mode": "DOUBLE_FULL",
+    "rotation": 90,
+    "present_internal_open_KiB": 23.23828125,
+    "present_psram_open_KiB": 1502.98046875,
+    "adapter_internal_open_KiB": 7.15625,
+    "adapter_psram_open_KiB": 2.6171875
+  },
+  {
+    "mode": "TRIPLE_FULL",
+    "rotation": 0,
+    "present_internal_open_KiB": 23.23828125,
+    "present_psram_open_KiB": 752.9765625,
+    "adapter_internal_open_KiB": 7.0703125,
+    "adapter_psram_open_KiB": 2.6171875
+  },
+  {
+    "mode": "TRIPLE_FULL",
+    "rotation": 90,
+    "present_internal_open_KiB": 23.23828125,
+    "present_psram_open_KiB": 1502.98046875,
+    "adapter_internal_open_KiB": 7.0703125,
+    "adapter_psram_open_KiB": 2.6171875
+  },
+  {
+    "mode": "DOUBLE_DIRECT",
+    "rotation": 0,
+    "present_internal_open_KiB": 23.26171875,
+    "present_psram_open_KiB": 752.9765625,
+    "adapter_internal_open_KiB": 7.1484375,
+    "adapter_psram_open_KiB": 2.6171875
+  },
+  {
+    "mode": "DOUBLE_DIRECT",
+    "rotation": 90,
+    "present_internal_open_KiB": 23.19140625,
+    "present_psram_open_KiB": 1502.98046875,
+    "adapter_internal_open_KiB": 7.15625,
+    "adapter_psram_open_KiB": 2.6171875
+  },
+  {
+    "mode": "DOUBLE_PARTIAL",
+    "rotation": 0,
+    "present_internal_open_KiB": 101.47265625,
+    "present_psram_open_KiB": 80.9765625,
+    "adapter_internal_open_KiB": 85.19921875,
+    "adapter_psram_open_KiB": 2.6171875
+  },
+  {
+    "mode": "DOUBLE_PARTIAL",
+    "rotation": 90,
+    "present_internal_open_KiB": 70.22265625,
+    "present_psram_open_KiB": 47.9765625,
+    "adapter_internal_open_KiB": 85.19921875,
+    "adapter_psram_open_KiB": 2.6171875
+  },
+  {
+    "mode": "TRIPLE_PARTIAL",
+    "rotation": 0,
+    "present_internal_open_KiB": 101.47265625,
+    "present_psram_open_KiB": 80.9765625,
+    "adapter_internal_open_KiB": 85.20703125,
+    "adapter_psram_open_KiB": 2.6171875
+  },
+  {
+    "mode": "TRIPLE_PARTIAL",
+    "rotation": 90,
+    "present_internal_open_KiB": 70.22265625,
+    "present_psram_open_KiB": 47.9765625,
+    "adapter_internal_open_KiB": 85.20703125,
+    "adapter_psram_open_KiB": 2.6171875
+  }
+]

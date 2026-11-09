@@ -1,0 +1,2897 @@
+﻿board,implementation,mode,rotation,name,fps,cpu,render,flush
+s3-rgb,present,DOUBLE_FULL,0,Empty screen,27,100,30,0
+s3-rgb,present,DOUBLE_FULL,0,Moving wallpaper,20,100,47,0
+s3-rgb,present,DOUBLE_FULL,0,Single rectangle,30,100,31,0
+s3-rgb,present,DOUBLE_FULL,0,Multiple rectangles,29,100,30,0
+s3-rgb,present,DOUBLE_FULL,0,Multiple RGB images,30,100,31,0
+s3-rgb,present,DOUBLE_FULL,0,Multiple ARGB images,30,100,30,0
+s3-rgb,present,DOUBLE_FULL,0,Rotated ARGB images,30,100,31,0
+s3-rgb,present,DOUBLE_FULL,0,Multiple labels,30,100,30,0
+s3-rgb,present,DOUBLE_FULL,0,Screen sized text,20,100,47,0
+s3-rgb,present,DOUBLE_FULL,0,Multiple arcs,30,100,30,0
+s3-rgb,present,DOUBLE_FULL,0,Containers,36,100,29,0
+s3-rgb,present,DOUBLE_FULL,0,Containers with overlay,20,100,47,0
+s3-rgb,present,DOUBLE_FULL,0,Containers with opa,38,100,29,0
+s3-rgb,present,DOUBLE_FULL,0,Containers with opa_layer,19,100,49,0
+s3-rgb,present,DOUBLE_FULL,0,Containers with scrolling,29,100,31,0
+s3-rgb,present,DOUBLE_FULL,0,Widgets demo,17,100,53,0
+s3-rgb,present,DOUBLE_FULL,90,Empty screen,17,100,47,0
+s3-rgb,present,DOUBLE_FULL,90,Moving wallpaper,15,100,64,0
+s3-rgb,present,DOUBLE_FULL,90,Single rectangle,20,100,47,0
+s3-rgb,present,DOUBLE_FULL,90,Multiple rectangles,20,100,47,0
+s3-rgb,present,DOUBLE_FULL,90,Multiple RGB images,20,100,47,0
+s3-rgb,present,DOUBLE_FULL,90,Multiple ARGB images,20,100,47,0
+s3-rgb,present,DOUBLE_FULL,90,Rotated ARGB images,18,100,52,0
+s3-rgb,present,DOUBLE_FULL,90,Multiple labels,20,100,46,0
+s3-rgb,present,DOUBLE_FULL,90,Screen sized text,15,100,63,0
+s3-rgb,present,DOUBLE_FULL,90,Multiple arcs,20,100,47,0
+s3-rgb,present,DOUBLE_FULL,90,Containers,22,100,46,0
+s3-rgb,present,DOUBLE_FULL,90,Containers with overlay,15,100,63,0
+s3-rgb,present,DOUBLE_FULL,90,Containers with opa,20,100,46,0
+s3-rgb,present,DOUBLE_FULL,90,Containers with opa_layer,12,100,79,0
+s3-rgb,present,DOUBLE_FULL,90,Containers with scrolling,15,100,63,0
+s3-rgb,present,DOUBLE_FULL,90,Widgets demo,11,100,77,0
+s3-rgb,present,DOUBLE_FULL,180,Empty screen,17,100,47,0
+s3-rgb,present,DOUBLE_FULL,180,Moving wallpaper,15,100,64,0
+s3-rgb,present,DOUBLE_FULL,180,Single rectangle,20,100,47,0
+s3-rgb,present,DOUBLE_FULL,180,Multiple rectangles,19,100,51,0
+s3-rgb,present,DOUBLE_FULL,180,Multiple RGB images,20,100,47,0
+s3-rgb,present,DOUBLE_FULL,180,Multiple ARGB images,20,100,47,0
+s3-rgb,present,DOUBLE_FULL,180,Rotated ARGB images,17,100,53,0
+s3-rgb,present,DOUBLE_FULL,180,Multiple labels,20,100,46,0
+s3-rgb,present,DOUBLE_FULL,180,Screen sized text,15,100,64,0
+s3-rgb,present,DOUBLE_FULL,180,Multiple arcs,20,100,46,0
+s3-rgb,present,DOUBLE_FULL,180,Containers,23,100,46,0
+s3-rgb,present,DOUBLE_FULL,180,Containers with overlay,14,100,63,0
+s3-rgb,present,DOUBLE_FULL,180,Containers with opa,22,100,46,0
+s3-rgb,present,DOUBLE_FULL,180,Containers with opa_layer,12,100,78,0
+s3-rgb,present,DOUBLE_FULL,180,Containers with scrolling,15,100,63,0
+s3-rgb,present,DOUBLE_FULL,180,Widgets demo,11,100,77,0
+s3-rgb,present,DOUBLE_FULL,270,Empty screen,17,100,47,0
+s3-rgb,present,DOUBLE_FULL,270,Moving wallpaper,15,100,64,0
+s3-rgb,present,DOUBLE_FULL,270,Single rectangle,20,100,47,0
+s3-rgb,present,DOUBLE_FULL,270,Multiple rectangles,20,100,47,0
+s3-rgb,present,DOUBLE_FULL,270,Multiple RGB images,20,100,47,0
+s3-rgb,present,DOUBLE_FULL,270,Multiple ARGB images,20,100,47,0
+s3-rgb,present,DOUBLE_FULL,270,Rotated ARGB images,18,100,51,0
+s3-rgb,present,DOUBLE_FULL,270,Multiple labels,20,100,47,0
+s3-rgb,present,DOUBLE_FULL,270,Screen sized text,15,100,64,0
+s3-rgb,present,DOUBLE_FULL,270,Multiple arcs,20,100,47,0
+s3-rgb,present,DOUBLE_FULL,270,Containers,21,100,46,0
+s3-rgb,present,DOUBLE_FULL,270,Containers with overlay,15,100,63,0
+s3-rgb,present,DOUBLE_FULL,270,Containers with opa,21,100,46,0
+s3-rgb,present,DOUBLE_FULL,270,Containers with opa_layer,12,100,79,0
+s3-rgb,present,DOUBLE_FULL,270,Containers with scrolling,15,100,63,0
+s3-rgb,present,DOUBLE_FULL,270,Widgets demo,11,100,77,0
+s3-rgb,present,TRIPLE_FULL,0,Empty screen,49,100,15,0
+s3-rgb,present,TRIPLE_FULL,0,Moving wallpaper,23,100,39,0
+s3-rgb,present,TRIPLE_FULL,0,Single rectangle,52,100,17,0
+s3-rgb,present,TRIPLE_FULL,0,Multiple rectangles,38,100,23,0
+s3-rgb,present,TRIPLE_FULL,0,Multiple RGB images,41,100,21,0
+s3-rgb,present,TRIPLE_FULL,0,Multiple ARGB images,42,100,21,0
+s3-rgb,present,TRIPLE_FULL,0,Rotated ARGB images,42,100,21,0
+s3-rgb,present,TRIPLE_FULL,0,Multiple labels,48,100,18,0
+s3-rgb,present,TRIPLE_FULL,0,Screen sized text,27,100,33,0
+s3-rgb,present,TRIPLE_FULL,0,Multiple arcs,50,100,17,0
+s3-rgb,present,TRIPLE_FULL,0,Containers,44,100,25,0
+s3-rgb,present,TRIPLE_FULL,0,Containers with overlay,23,100,40,0
+s3-rgb,present,TRIPLE_FULL,0,Containers with opa,43,100,25,0
+s3-rgb,present,TRIPLE_FULL,0,Containers with opa_layer,21,100,47,0
+s3-rgb,present,TRIPLE_FULL,0,Containers with scrolling,31,100,29,0
+s3-rgb,present,TRIPLE_FULL,0,Widgets demo,18,100,48,0
+s3-rgb,present,TRIPLE_FULL,90,Empty screen,21,100,38,0
+s3-rgb,present,TRIPLE_FULL,90,Moving wallpaper,15,100,62,0
+s3-rgb,present,TRIPLE_FULL,90,Single rectangle,23,100,40,0
+s3-rgb,present,TRIPLE_FULL,90,Multiple rectangles,20,100,45,0
+s3-rgb,present,TRIPLE_FULL,90,Multiple RGB images,22,100,42,0
+s3-rgb,present,TRIPLE_FULL,90,Multiple ARGB images,22,100,42,0
+s3-rgb,present,TRIPLE_FULL,90,Rotated ARGB images,21,100,43,0
+s3-rgb,present,TRIPLE_FULL,90,Multiple labels,23,100,40,0
+s3-rgb,present,TRIPLE_FULL,90,Screen sized text,16,100,56,0
+s3-rgb,present,TRIPLE_FULL,90,Multiple arcs,23,100,40,0
+s3-rgb,present,TRIPLE_FULL,90,Containers,20,100,45,0
+s3-rgb,present,TRIPLE_FULL,90,Containers with overlay,15,100,60,0
+s3-rgb,present,TRIPLE_FULL,90,Containers with opa,23,100,44,0
+s3-rgb,present,TRIPLE_FULL,90,Containers with opa_layer,14,100,67,0
+s3-rgb,present,TRIPLE_FULL,90,Containers with scrolling,18,100,51,0
+s3-rgb,present,TRIPLE_FULL,90,Widgets demo,13,100,66,0
+s3-rgb,present,TRIPLE_FULL,180,Empty screen,21,100,38,0
+s3-rgb,present,TRIPLE_FULL,180,Moving wallpaper,15,100,62,0
+s3-rgb,present,TRIPLE_FULL,180,Single rectangle,23,100,40,0
+s3-rgb,present,TRIPLE_FULL,180,Multiple rectangles,20,100,46,0
+s3-rgb,present,TRIPLE_FULL,180,Multiple RGB images,21,100,42,0
+s3-rgb,present,TRIPLE_FULL,180,Multiple ARGB images,22,100,42,0
+s3-rgb,present,TRIPLE_FULL,180,Rotated ARGB images,20,100,45,0
+s3-rgb,present,TRIPLE_FULL,180,Multiple labels,23,100,40,0
+s3-rgb,present,TRIPLE_FULL,180,Screen sized text,16,100,57,0
+s3-rgb,present,TRIPLE_FULL,180,Multiple arcs,22,100,40,0
+s3-rgb,present,TRIPLE_FULL,180,Containers,25,100,43,0
+s3-rgb,present,TRIPLE_FULL,180,Containers with overlay,15,100,61,0
+s3-rgb,present,TRIPLE_FULL,180,Containers with opa,22,100,44,0
+s3-rgb,present,TRIPLE_FULL,180,Containers with opa_layer,14,100,67,0
+s3-rgb,present,TRIPLE_FULL,180,Containers with scrolling,18,100,51,0
+s3-rgb,present,TRIPLE_FULL,180,Widgets demo,13,100,67,0
+s3-rgb,present,TRIPLE_FULL,270,Empty screen,21,100,38,0
+s3-rgb,present,TRIPLE_FULL,270,Moving wallpaper,15,100,62,0
+s3-rgb,present,TRIPLE_FULL,270,Single rectangle,23,100,40,0
+s3-rgb,present,TRIPLE_FULL,270,Multiple rectangles,20,100,45,0
+s3-rgb,present,TRIPLE_FULL,270,Multiple RGB images,22,100,42,0
+s3-rgb,present,TRIPLE_FULL,270,Multiple ARGB images,22,100,42,0
+s3-rgb,present,TRIPLE_FULL,270,Rotated ARGB images,20,100,44,0
+s3-rgb,present,TRIPLE_FULL,270,Multiple labels,23,100,39,0
+s3-rgb,present,TRIPLE_FULL,270,Screen sized text,16,100,56,0
+s3-rgb,present,TRIPLE_FULL,270,Multiple arcs,23,100,39,0
+s3-rgb,present,TRIPLE_FULL,270,Containers,23,100,43,0
+s3-rgb,present,TRIPLE_FULL,270,Containers with overlay,15,100,60,0
+s3-rgb,present,TRIPLE_FULL,270,Containers with opa,23,100,43,0
+s3-rgb,present,TRIPLE_FULL,270,Containers with opa_layer,14,100,67,0
+s3-rgb,present,TRIPLE_FULL,270,Containers with scrolling,18,100,51,0
+s3-rgb,present,TRIPLE_FULL,270,Widgets demo,13,100,66,0
+s3-rgb,present,DOUBLE_DIRECT,0,Empty screen,26,100,16,0
+s3-rgb,present,DOUBLE_DIRECT,0,Moving wallpaper,20,100,39,0
+s3-rgb,present,DOUBLE_DIRECT,0,Single rectangle,61,100,1,0
+s3-rgb,present,DOUBLE_DIRECT,0,Multiple rectangles,58,100,9,0
+s3-rgb,present,DOUBLE_DIRECT,0,Multiple RGB images,59,100,6,0
+s3-rgb,present,DOUBLE_DIRECT,0,Multiple ARGB images,57,100,7,0
+s3-rgb,present,DOUBLE_DIRECT,0,Rotated ARGB images,59,100,10,0
+s3-rgb,present,DOUBLE_DIRECT,0,Multiple labels,57,100,10,0
+s3-rgb,present,DOUBLE_DIRECT,0,Screen sized text,20,100,34,0
+s3-rgb,present,DOUBLE_DIRECT,0,Multiple arcs,62,100,1,0
+s3-rgb,present,DOUBLE_DIRECT,0,Containers,60,100,7,0
+s3-rgb,present,DOUBLE_DIRECT,0,Containers with overlay,20,100,40,0
+s3-rgb,present,DOUBLE_DIRECT,0,Containers with opa,59,100,8,0
+s3-rgb,present,DOUBLE_DIRECT,0,Containers with opa_layer,33,100,23,0
+s3-rgb,present,DOUBLE_DIRECT,0,Containers with scrolling,29,100,30,0
+s3-rgb,present,DOUBLE_DIRECT,0,Widgets demo,19,100,37,0
+s3-rgb,present,DOUBLE_DIRECT,90,Empty screen,17,100,29,25
+s3-rgb,present,DOUBLE_DIRECT,90,Moving wallpaper,11,100,57,23
+s3-rgb,present,DOUBLE_DIRECT,90,Single rectangle,61,100,1,7
+s3-rgb,present,DOUBLE_DIRECT,90,Multiple rectangles,20,100,14,31
+s3-rgb,present,DOUBLE_DIRECT,90,Multiple RGB images,29,100,14,16
+s3-rgb,present,DOUBLE_DIRECT,90,Multiple ARGB images,28,100,17,15
+s3-rgb,present,DOUBLE_DIRECT,90,Rotated ARGB images,60,100,11,2
+s3-rgb,present,DOUBLE_DIRECT,90,Multiple labels,28,100,15,12
+s3-rgb,present,DOUBLE_DIRECT,90,Screen sized text,12,100,53,21
+s3-rgb,present,DOUBLE_DIRECT,90,Multiple arcs,59,100,1,12
+s3-rgb,present,DOUBLE_DIRECT,90,Containers,53,100,10,7
+s3-rgb,present,DOUBLE_DIRECT,90,Containers with overlay,13,100,48,20
+s3-rgb,present,DOUBLE_DIRECT,90,Containers with opa,51,100,12,7
+s3-rgb,present,DOUBLE_DIRECT,90,Containers with opa_layer,31,100,29,4
+s3-rgb,present,DOUBLE_DIRECT,90,Containers with scrolling,12,100,49,22
+s3-rgb,present,DOUBLE_DIRECT,90,Widgets demo,12,100,49,21
+s3-rgb,present,DOUBLE_DIRECT,180,Empty screen,17,100,29,26
+s3-rgb,present,DOUBLE_DIRECT,180,Moving wallpaper,12,100,59,21
+s3-rgb,present,DOUBLE_DIRECT,180,Single rectangle,59,100,1,9
+s3-rgb,present,DOUBLE_DIRECT,180,Multiple rectangles,20,100,14,32
+s3-rgb,present,DOUBLE_DIRECT,180,Multiple RGB images,29,100,14,15
+s3-rgb,present,DOUBLE_DIRECT,180,Multiple ARGB images,30,100,16,13
+s3-rgb,present,DOUBLE_DIRECT,180,Rotated ARGB images,63,100,9,2
+s3-rgb,present,DOUBLE_DIRECT,180,Multiple labels,30,100,13,15
+s3-rgb,present,DOUBLE_DIRECT,180,Screen sized text,12,100,53,22
+s3-rgb,present,DOUBLE_DIRECT,180,Multiple arcs,60,100,1,11
+s3-rgb,present,DOUBLE_DIRECT,180,Containers,58,100,9,5
+s3-rgb,present,DOUBLE_DIRECT,180,Containers with overlay,14,100,47,20
+s3-rgb,present,DOUBLE_DIRECT,180,Containers with opa,54,100,11,6
+s3-rgb,present,DOUBLE_DIRECT,180,Containers with opa_layer,35,100,26,4
+s3-rgb,present,DOUBLE_DIRECT,180,Containers with scrolling,13,100,49,22
+s3-rgb,present,DOUBLE_DIRECT,180,Widgets demo,12,100,48,21
+s3-rgb,present,DOUBLE_DIRECT,270,Empty screen,18,100,28,26
+s3-rgb,present,DOUBLE_DIRECT,270,Moving wallpaper,11,100,59,21
+s3-rgb,present,DOUBLE_DIRECT,270,Single rectangle,60,100,1,9
+s3-rgb,present,DOUBLE_DIRECT,270,Multiple rectangles,20,100,14,32
+s3-rgb,present,DOUBLE_DIRECT,270,Multiple RGB images,29,100,14,16
+s3-rgb,present,DOUBLE_DIRECT,270,Multiple ARGB images,28,100,16,14
+s3-rgb,present,DOUBLE_DIRECT,270,Rotated ARGB images,60,100,10,2
+s3-rgb,present,DOUBLE_DIRECT,270,Multiple labels,28,100,15,13
+s3-rgb,present,DOUBLE_DIRECT,270,Screen sized text,12,100,53,22
+s3-rgb,present,DOUBLE_DIRECT,270,Multiple arcs,60,100,1,11
+s3-rgb,present,DOUBLE_DIRECT,270,Containers,53,100,11,7
+s3-rgb,present,DOUBLE_DIRECT,270,Containers with overlay,13,100,49,20
+s3-rgb,present,DOUBLE_DIRECT,270,Containers with opa,52,100,11,6
+s3-rgb,present,DOUBLE_DIRECT,270,Containers with opa_layer,32,100,29,4
+s3-rgb,present,DOUBLE_DIRECT,270,Containers with scrolling,13,100,49,22
+s3-rgb,present,DOUBLE_DIRECT,270,Widgets demo,12,100,49,21
+s3-rgb,present,DOUBLE_PARTIAL,0,Empty screen,26,100,6,24
+s3-rgb,present,DOUBLE_PARTIAL,0,Moving wallpaper,30,100,15,15
+s3-rgb,present,DOUBLE_PARTIAL,0,Single rectangle,61,100,0,12
+s3-rgb,present,DOUBLE_PARTIAL,0,Multiple rectangles,53,100,5,10
+s3-rgb,present,DOUBLE_PARTIAL,0,Multiple RGB images,63,100,1,7
+s3-rgb,present,DOUBLE_PARTIAL,0,Multiple ARGB images,61,100,4,6
+s3-rgb,present,DOUBLE_PARTIAL,0,Rotated ARGB images,64,100,6,2
+s3-rgb,present,DOUBLE_PARTIAL,0,Multiple labels,57,100,7,5
+s3-rgb,present,DOUBLE_PARTIAL,0,Screen sized text,10,100,72,16
+s3-rgb,present,DOUBLE_PARTIAL,0,Multiple arcs,60,100,1,11
+s3-rgb,present,DOUBLE_PARTIAL,0,Containers,65,100,4,2
+s3-rgb,present,DOUBLE_PARTIAL,0,Containers with overlay,20,100,26,20
+s3-rgb,present,DOUBLE_PARTIAL,0,Containers with opa,64,100,5,2
+s3-rgb,present,DOUBLE_PARTIAL,0,Containers with opa_layer,46,100,16,7
+s3-rgb,present,DOUBLE_PARTIAL,0,Containers with scrolling,20,100,26,20
+s3-rgb,present,DOUBLE_PARTIAL,0,Widgets demo,14,100,53,12
+s3-rgb,present,DOUBLE_PARTIAL,90,Empty screen,26,100,5,25
+s3-rgb,present,DOUBLE_PARTIAL,90,Moving wallpaper,20,100,14,32
+s3-rgb,present,DOUBLE_PARTIAL,90,Single rectangle,61,100,0,10
+s3-rgb,present,DOUBLE_PARTIAL,90,Multiple rectangles,54,100,5,10
+s3-rgb,present,DOUBLE_PARTIAL,90,Multiple RGB images,63,100,2,7
+s3-rgb,present,DOUBLE_PARTIAL,90,Multiple ARGB images,62,100,4,6
+s3-rgb,present,DOUBLE_PARTIAL,90,Rotated ARGB images,63,100,5,3
+s3-rgb,present,DOUBLE_PARTIAL,90,Multiple labels,29,100,8,18
+s3-rgb,present,DOUBLE_PARTIAL,90,Screen sized text,9,100,73,26
+s3-rgb,present,DOUBLE_PARTIAL,90,Multiple arcs,61,100,1,10
+s3-rgb,present,DOUBLE_PARTIAL,90,Containers,64,100,5,3
+s3-rgb,present,DOUBLE_PARTIAL,90,Containers with overlay,20,100,26,20
+s3-rgb,present,DOUBLE_PARTIAL,90,Containers with opa,63,100,5,4
+s3-rgb,present,DOUBLE_PARTIAL,90,Containers with opa_layer,37,100,16,13
+s3-rgb,present,DOUBLE_PARTIAL,90,Containers with scrolling,19,100,26,21
+s3-rgb,present,DOUBLE_PARTIAL,90,Widgets demo,12,100,53,22
+s3-rgb,present,DOUBLE_PARTIAL,180,Empty screen,26,100,5,25
+s3-rgb,present,DOUBLE_PARTIAL,180,Moving wallpaper,30,100,15,15
+s3-rgb,present,DOUBLE_PARTIAL,180,Single rectangle,61,100,0,10
+s3-rgb,present,DOUBLE_PARTIAL,180,Multiple rectangles,54,100,5,10
+s3-rgb,present,DOUBLE_PARTIAL,180,Multiple RGB images,64,100,2,5
+s3-rgb,present,DOUBLE_PARTIAL,180,Multiple ARGB images,61,100,4,6
+s3-rgb,present,DOUBLE_PARTIAL,180,Rotated ARGB images,62,100,5,3
+s3-rgb,present,DOUBLE_PARTIAL,180,Multiple labels,57,100,7,5
+s3-rgb,present,DOUBLE_PARTIAL,180,Screen sized text,10,100,74,18
+s3-rgb,present,DOUBLE_PARTIAL,180,Multiple arcs,60,100,1,11
+s3-rgb,present,DOUBLE_PARTIAL,180,Containers,65,100,4,2
+s3-rgb,present,DOUBLE_PARTIAL,180,Containers with overlay,20,100,26,20
+s3-rgb,present,DOUBLE_PARTIAL,180,Containers with opa,64,100,6,3
+s3-rgb,present,DOUBLE_PARTIAL,180,Containers with opa_layer,44,100,16,9
+s3-rgb,present,DOUBLE_PARTIAL,180,Containers with scrolling,19,100,25,21
+s3-rgb,present,DOUBLE_PARTIAL,180,Widgets demo,13,100,53,14
+s3-rgb,present,DOUBLE_PARTIAL,270,Empty screen,26,100,5,24
+s3-rgb,present,DOUBLE_PARTIAL,270,Moving wallpaper,20,100,15,31
+s3-rgb,present,DOUBLE_PARTIAL,270,Single rectangle,61,100,0,10
+s3-rgb,present,DOUBLE_PARTIAL,270,Multiple rectangles,53,100,5,10
+s3-rgb,present,DOUBLE_PARTIAL,270,Multiple RGB images,62,100,1,7
+s3-rgb,present,DOUBLE_PARTIAL,270,Multiple ARGB images,60,100,4,7
+s3-rgb,present,DOUBLE_PARTIAL,270,Rotated ARGB images,63,100,6,3
+s3-rgb,present,DOUBLE_PARTIAL,270,Multiple labels,29,100,8,19
+s3-rgb,present,DOUBLE_PARTIAL,270,Screen sized text,9,100,73,25
+s3-rgb,present,DOUBLE_PARTIAL,270,Multiple arcs,61,100,1,10
+s3-rgb,present,DOUBLE_PARTIAL,270,Containers,63,100,5,4
+s3-rgb,present,DOUBLE_PARTIAL,270,Containers with overlay,19,100,26,20
+s3-rgb,present,DOUBLE_PARTIAL,270,Containers with opa,62,100,6,4
+s3-rgb,present,DOUBLE_PARTIAL,270,Containers with opa_layer,36,100,15,13
+s3-rgb,present,DOUBLE_PARTIAL,270,Containers with scrolling,19,100,26,21
+s3-rgb,present,DOUBLE_PARTIAL,270,Widgets demo,12,100,53,22
+s3-rgb,present,TRIPLE_PARTIAL,0,Empty screen,41,100,5,12
+s3-rgb,present,TRIPLE_PARTIAL,0,Moving wallpaper,35,100,15,10
+s3-rgb,present,TRIPLE_PARTIAL,0,Single rectangle,62,100,0,9
+s3-rgb,present,TRIPLE_PARTIAL,0,Multiple rectangles,59,100,4,8
+s3-rgb,present,TRIPLE_PARTIAL,0,Multiple RGB images,62,100,1,7
+s3-rgb,present,TRIPLE_PARTIAL,0,Multiple ARGB images,64,100,3,3
+s3-rgb,present,TRIPLE_PARTIAL,0,Rotated ARGB images,64,100,5,1
+s3-rgb,present,TRIPLE_PARTIAL,0,Multiple labels,60,100,7,5
+s3-rgb,present,TRIPLE_PARTIAL,0,Screen sized text,11,100,74,8
+s3-rgb,present,TRIPLE_PARTIAL,0,Multiple arcs,61,100,1,9
+s3-rgb,present,TRIPLE_PARTIAL,0,Containers,65,100,5,1
+s3-rgb,present,TRIPLE_PARTIAL,0,Containers with overlay,25,100,26,9
+s3-rgb,present,TRIPLE_PARTIAL,0,Containers with opa,65,100,5,1
+s3-rgb,present,TRIPLE_PARTIAL,0,Containers with opa_layer,55,100,15,2
+s3-rgb,present,TRIPLE_PARTIAL,0,Containers with scrolling,25,100,26,9
+s3-rgb,present,TRIPLE_PARTIAL,0,Widgets demo,15,100,53,7
+s3-rgb,present,TRIPLE_PARTIAL,90,Empty screen,29,100,6,21
+s3-rgb,present,TRIPLE_PARTIAL,90,Moving wallpaper,27,100,15,19
+s3-rgb,present,TRIPLE_PARTIAL,90,Single rectangle,60,100,0,12
+s3-rgb,present,TRIPLE_PARTIAL,90,Multiple rectangles,60,100,5,7
+s3-rgb,present,TRIPLE_PARTIAL,90,Multiple RGB images,63,100,2,6
+s3-rgb,present,TRIPLE_PARTIAL,90,Multiple ARGB images,65,100,3,3
+s3-rgb,present,TRIPLE_PARTIAL,90,Rotated ARGB images,64,100,5,2
+s3-rgb,present,TRIPLE_PARTIAL,90,Multiple labels,52,100,8,4
+s3-rgb,present,TRIPLE_PARTIAL,90,Screen sized text,10,100,73,18
+s3-rgb,present,TRIPLE_PARTIAL,90,Multiple arcs,61,100,1,10
+s3-rgb,present,TRIPLE_PARTIAL,90,Containers,65,100,4,1
+s3-rgb,present,TRIPLE_PARTIAL,90,Containers with overlay,20,100,26,18
+s3-rgb,present,TRIPLE_PARTIAL,90,Containers with opa,64,100,6,2
+s3-rgb,present,TRIPLE_PARTIAL,90,Containers with opa_layer,52,100,14,4
+s3-rgb,present,TRIPLE_PARTIAL,90,Containers with scrolling,20,100,26,18
+s3-rgb,present,TRIPLE_PARTIAL,90,Widgets demo,13,100,53,15
+s3-rgb,present,TRIPLE_PARTIAL,180,Empty screen,40,100,6,13
+s3-rgb,present,TRIPLE_PARTIAL,180,Moving wallpaper,33,100,15,11
+s3-rgb,present,TRIPLE_PARTIAL,180,Single rectangle,61,100,0,11
+s3-rgb,present,TRIPLE_PARTIAL,180,Multiple rectangles,59,100,5,8
+s3-rgb,present,TRIPLE_PARTIAL,180,Multiple RGB images,64,100,2,5
+s3-rgb,present,TRIPLE_PARTIAL,180,Multiple ARGB images,64,100,4,3
+s3-rgb,present,TRIPLE_PARTIAL,180,Rotated ARGB images,64,100,5,2
+s3-rgb,present,TRIPLE_PARTIAL,180,Multiple labels,58,100,7,5
+s3-rgb,present,TRIPLE_PARTIAL,180,Screen sized text,11,100,73,11
+s3-rgb,present,TRIPLE_PARTIAL,180,Multiple arcs,60,100,1,11
+s3-rgb,present,TRIPLE_PARTIAL,180,Containers,65,100,4,1
+s3-rgb,present,TRIPLE_PARTIAL,180,Containers with overlay,24,100,25,12
+s3-rgb,present,TRIPLE_PARTIAL,180,Containers with opa,64,100,5,2
+s3-rgb,present,TRIPLE_PARTIAL,180,Containers with opa_layer,54,100,15,3
+s3-rgb,present,TRIPLE_PARTIAL,180,Containers with scrolling,24,100,25,11
+s3-rgb,present,TRIPLE_PARTIAL,180,Widgets demo,14,100,53,9
+s3-rgb,present,TRIPLE_PARTIAL,270,Empty screen,29,100,6,21
+s3-rgb,present,TRIPLE_PARTIAL,270,Moving wallpaper,27,100,15,19
+s3-rgb,present,TRIPLE_PARTIAL,270,Single rectangle,60,100,0,12
+s3-rgb,present,TRIPLE_PARTIAL,270,Multiple rectangles,60,100,5,7
+s3-rgb,present,TRIPLE_PARTIAL,270,Multiple RGB images,63,100,2,6
+s3-rgb,present,TRIPLE_PARTIAL,270,Multiple ARGB images,64,100,3,3
+s3-rgb,present,TRIPLE_PARTIAL,270,Rotated ARGB images,64,100,6,2
+s3-rgb,present,TRIPLE_PARTIAL,270,Multiple labels,51,100,8,4
+s3-rgb,present,TRIPLE_PARTIAL,270,Screen sized text,10,100,74,17
+s3-rgb,present,TRIPLE_PARTIAL,270,Multiple arcs,60,100,1,10
+s3-rgb,present,TRIPLE_PARTIAL,270,Containers,65,100,5,1
+s3-rgb,present,TRIPLE_PARTIAL,270,Containers with overlay,20,100,26,18
+s3-rgb,present,TRIPLE_PARTIAL,270,Containers with opa,65,100,5,2
+s3-rgb,present,TRIPLE_PARTIAL,270,Containers with opa_layer,52,100,14,4
+s3-rgb,present,TRIPLE_PARTIAL,270,Containers with scrolling,20,100,26,18
+s3-rgb,present,TRIPLE_PARTIAL,270,Widgets demo,13,100,52,15
+s3-rgb,present,AUTO,0,Empty screen,41,100,6,12
+s3-rgb,present,AUTO,0,Moving wallpaper,35,100,15,9
+s3-rgb,present,AUTO,0,Single rectangle,61,100,0,11
+s3-rgb,present,AUTO,0,Multiple rectangles,59,100,5,8
+s3-rgb,present,AUTO,0,Multiple RGB images,65,100,2,4
+s3-rgb,present,AUTO,0,Multiple ARGB images,65,100,3,3
+s3-rgb,present,AUTO,0,Rotated ARGB images,64,100,6,1
+s3-rgb,present,AUTO,0,Multiple labels,60,100,7,5
+s3-rgb,present,AUTO,0,Screen sized text,11,100,73,8
+s3-rgb,present,AUTO,0,Multiple arcs,60,100,1,11
+s3-rgb,present,AUTO,0,Containers,66,100,4,1
+s3-rgb,present,AUTO,0,Containers with overlay,25,100,26,9
+s3-rgb,present,AUTO,0,Containers with opa,65,100,5,1
+s3-rgb,present,AUTO,0,Containers with opa_layer,56,100,14,2
+s3-rgb,present,AUTO,0,Containers with scrolling,25,100,26,9
+s3-rgb,present,AUTO,0,Widgets demo,15,100,53,7
+s3-rgb,present,AUTO,90,Empty screen,29,100,6,21
+s3-rgb,present,AUTO,90,Moving wallpaper,27,100,15,18
+s3-rgb,present,AUTO,90,Single rectangle,60,100,0,12
+s3-rgb,present,AUTO,90,Multiple rectangles,60,100,5,8
+s3-rgb,present,AUTO,90,Multiple RGB images,65,100,1,3
+s3-rgb,present,AUTO,90,Multiple ARGB images,63,100,4,4
+s3-rgb,present,AUTO,90,Rotated ARGB images,62,100,5,4
+s3-rgb,present,AUTO,90,Multiple labels,51,100,8,5
+s3-rgb,present,AUTO,90,Screen sized text,10,100,73,18
+s3-rgb,present,AUTO,90,Multiple arcs,61,100,1,10
+s3-rgb,present,AUTO,90,Containers,65,100,5,1
+s3-rgb,present,AUTO,90,Containers with overlay,20,100,26,18
+s3-rgb,present,AUTO,90,Containers with opa,65,100,5,2
+s3-rgb,present,AUTO,90,Containers with opa_layer,51,100,15,3
+s3-rgb,present,AUTO,90,Containers with scrolling,20,100,26,18
+s3-rgb,present,AUTO,90,Widgets demo,13,100,53,15
+s3-rgb,present,AUTO,180,Empty screen,40,100,5,13
+s3-rgb,present,AUTO,180,Moving wallpaper,33,100,15,11
+s3-rgb,present,AUTO,180,Single rectangle,62,100,0,9
+s3-rgb,present,AUTO,180,Multiple rectangles,60,100,4,8
+s3-rgb,present,AUTO,180,Multiple RGB images,64,100,2,5
+s3-rgb,present,AUTO,180,Multiple ARGB images,63,100,4,4
+s3-rgb,present,AUTO,180,Rotated ARGB images,63,100,5,2
+s3-rgb,present,AUTO,180,Multiple labels,59,100,7,5
+s3-rgb,present,AUTO,180,Screen sized text,11,100,74,11
+s3-rgb,present,AUTO,180,Multiple arcs,60,100,1,11
+s3-rgb,present,AUTO,180,Containers,65,100,5,1
+s3-rgb,present,AUTO,180,Containers with overlay,24,100,26,12
+s3-rgb,present,AUTO,180,Containers with opa,65,100,5,1
+s3-rgb,present,AUTO,180,Containers with opa_layer,55,100,15,2
+s3-rgb,present,AUTO,180,Containers with scrolling,24,100,26,11
+s3-rgb,present,AUTO,180,Widgets demo,14,100,53,9
+s3-rgb,present,AUTO,270,Empty screen,29,100,6,21
+s3-rgb,present,AUTO,270,Moving wallpaper,27,100,15,18
+s3-rgb,present,AUTO,270,Single rectangle,60,100,0,11
+s3-rgb,present,AUTO,270,Multiple rectangles,59,100,5,8
+s3-rgb,present,AUTO,270,Multiple RGB images,64,100,2,5
+s3-rgb,present,AUTO,270,Multiple ARGB images,63,100,4,3
+s3-rgb,present,AUTO,270,Rotated ARGB images,64,100,5,2
+s3-rgb,present,AUTO,270,Multiple labels,51,100,8,4
+s3-rgb,present,AUTO,270,Screen sized text,10,100,73,18
+s3-rgb,present,AUTO,270,Multiple arcs,61,100,1,9
+s3-rgb,present,AUTO,270,Containers,65,100,5,2
+s3-rgb,present,AUTO,270,Containers with overlay,20,100,26,18
+s3-rgb,present,AUTO,270,Containers with opa,65,100,6,2
+s3-rgb,present,AUTO,270,Containers with opa_layer,52,100,15,4
+s3-rgb,present,AUTO,270,Containers with scrolling,20,100,26,18
+s3-rgb,present,AUTO,270,Widgets demo,13,100,53,15
+s3-rgb,adapter,DOUBLE_FULL,0,Empty screen,29,100,16,14
+s3-rgb,adapter,DOUBLE_FULL,0,Moving wallpaper,20,100,39,8
+s3-rgb,adapter,DOUBLE_FULL,0,Single rectangle,30,100,17,14
+s3-rgb,adapter,DOUBLE_FULL,0,Multiple rectangles,30,100,24,7
+s3-rgb,adapter,DOUBLE_FULL,0,Multiple RGB images,30,100,21,9
+s3-rgb,adapter,DOUBLE_FULL,0,Multiple ARGB images,30,100,21,9
+s3-rgb,adapter,DOUBLE_FULL,0,Rotated ARGB images,30,100,22,7
+s3-rgb,adapter,DOUBLE_FULL,0,Multiple labels,30,100,18,13
+s3-rgb,adapter,DOUBLE_FULL,0,Screen sized text,20,100,34,11
+s3-rgb,adapter,DOUBLE_FULL,0,Multiple arcs,30,100,17,13
+s3-rgb,adapter,DOUBLE_FULL,0,Containers,34,100,25,6
+s3-rgb,adapter,DOUBLE_FULL,0,Containers with overlay,20,100,40,6
+s3-rgb,adapter,DOUBLE_FULL,0,Containers with opa,35,100,25,6
+s3-rgb,adapter,DOUBLE_FULL,0,Containers with opa_layer,17,100,47,7
+s3-rgb,adapter,DOUBLE_FULL,0,Containers with scrolling,28,100,31,2
+s3-rgb,adapter,DOUBLE_FULL,0,Widgets demo,16,100,48,8
+s3-rgb,adapter,DOUBLE_FULL,90,Empty screen,17,100,16,32
+s3-rgb,adapter,DOUBLE_FULL,90,Moving wallpaper,12,100,38,40
+s3-rgb,adapter,DOUBLE_FULL,90,Single rectangle,20,100,17,31
+s3-rgb,adapter,DOUBLE_FULL,90,Multiple rectangles,19,100,23,39
+s3-rgb,adapter,DOUBLE_FULL,90,Multiple RGB images,16,100,21,35
+s3-rgb,adapter,DOUBLE_FULL,90,Multiple ARGB images,16,100,21,36
+s3-rgb,adapter,DOUBLE_FULL,90,Rotated ARGB images,15,100,23,38
+s3-rgb,adapter,DOUBLE_FULL,90,Multiple labels,20,100,18,32
+s3-rgb,adapter,DOUBLE_FULL,90,Screen sized text,14,100,34,33
+s3-rgb,adapter,DOUBLE_FULL,90,Multiple arcs,19,100,17,31
+s3-rgb,adapter,DOUBLE_FULL,90,Containers,15,100,25,38
+s3-rgb,adapter,DOUBLE_FULL,90,Containers with overlay,12,100,40,39
+s3-rgb,adapter,DOUBLE_FULL,90,Containers with opa,15,100,25,39
+s3-rgb,adapter,DOUBLE_FULL,90,Containers with opa_layer,12,100,47,32
+s3-rgb,adapter,DOUBLE_FULL,90,Containers with scrolling,15,100,30,34
+s3-rgb,adapter,DOUBLE_FULL,90,Widgets demo,11,100,48,33
+s3-rgb,adapter,DOUBLE_FULL,180,Empty screen,17,100,16,32
+s3-rgb,adapter,DOUBLE_FULL,180,Moving wallpaper,14,100,38,29
+s3-rgb,adapter,DOUBLE_FULL,180,Single rectangle,20,100,17,31
+s3-rgb,adapter,DOUBLE_FULL,180,Multiple rectangles,21,100,24,29
+s3-rgb,adapter,DOUBLE_FULL,180,Multiple RGB images,19,100,21,26
+s3-rgb,adapter,DOUBLE_FULL,180,Multiple ARGB images,20,100,21,26
+s3-rgb,adapter,DOUBLE_FULL,180,Rotated ARGB images,17,100,23,31
+s3-rgb,adapter,DOUBLE_FULL,180,Multiple labels,20,100,18,30
+s3-rgb,adapter,DOUBLE_FULL,180,Screen sized text,14,100,34,30
+s3-rgb,adapter,DOUBLE_FULL,180,Multiple arcs,20,100,17,30
+s3-rgb,adapter,DOUBLE_FULL,180,Containers,15,100,25,34
+s3-rgb,adapter,DOUBLE_FULL,180,Containers with overlay,12,100,40,33
+s3-rgb,adapter,DOUBLE_FULL,180,Containers with opa,17,100,25,32
+s3-rgb,adapter,DOUBLE_FULL,180,Containers with opa_layer,12,100,47,32
+s3-rgb,adapter,DOUBLE_FULL,180,Containers with scrolling,15,100,30,34
+s3-rgb,adapter,DOUBLE_FULL,180,Widgets demo,11,100,48,32
+s3-rgb,adapter,DOUBLE_FULL,270,Empty screen,17,100,16,32
+s3-rgb,adapter,DOUBLE_FULL,270,Moving wallpaper,12,100,39,41
+s3-rgb,adapter,DOUBLE_FULL,270,Single rectangle,20,100,17,31
+s3-rgb,adapter,DOUBLE_FULL,270,Multiple rectangles,18,100,24,40
+s3-rgb,adapter,DOUBLE_FULL,270,Multiple RGB images,16,100,21,35
+s3-rgb,adapter,DOUBLE_FULL,270,Multiple ARGB images,16,100,21,37
+s3-rgb,adapter,DOUBLE_FULL,270,Rotated ARGB images,15,100,23,36
+s3-rgb,adapter,DOUBLE_FULL,270,Multiple labels,20,100,18,32
+s3-rgb,adapter,DOUBLE_FULL,270,Screen sized text,14,100,34,32
+s3-rgb,adapter,DOUBLE_FULL,270,Multiple arcs,20,100,17,30
+s3-rgb,adapter,DOUBLE_FULL,270,Containers,14,100,24,39
+s3-rgb,adapter,DOUBLE_FULL,270,Containers with overlay,12,100,40,39
+s3-rgb,adapter,DOUBLE_FULL,270,Containers with opa,15,100,25,39
+s3-rgb,adapter,DOUBLE_FULL,270,Containers with opa_layer,12,100,47,32
+s3-rgb,adapter,DOUBLE_FULL,270,Containers with scrolling,15,100,30,34
+s3-rgb,adapter,DOUBLE_FULL,270,Widgets demo,11,100,48,33
+s3-rgb,adapter,TRIPLE_FULL,0,Empty screen,50,100,16,0
+s3-rgb,adapter,TRIPLE_FULL,0,Moving wallpaper,24,100,39,0
+s3-rgb,adapter,TRIPLE_FULL,0,Single rectangle,52,100,17,0
+s3-rgb,adapter,TRIPLE_FULL,0,Multiple rectangles,39,100,23,0
+s3-rgb,adapter,TRIPLE_FULL,0,Multiple RGB images,42,100,22,0
+s3-rgb,adapter,TRIPLE_FULL,0,Multiple ARGB images,42,100,21,0
+s3-rgb,adapter,TRIPLE_FULL,0,Rotated ARGB images,43,100,22,0
+s3-rgb,adapter,TRIPLE_FULL,0,Multiple labels,49,100,18,0
+s3-rgb,adapter,TRIPLE_FULL,0,Screen sized text,27,100,34,0
+s3-rgb,adapter,TRIPLE_FULL,0,Multiple arcs,50,100,17,0
+s3-rgb,adapter,TRIPLE_FULL,0,Containers,43,100,25,0
+s3-rgb,adapter,TRIPLE_FULL,0,Containers with overlay,23,100,40,0
+s3-rgb,adapter,TRIPLE_FULL,0,Containers with opa,42,100,25,0
+s3-rgb,adapter,TRIPLE_FULL,0,Containers with opa_layer,20,100,47,0
+s3-rgb,adapter,TRIPLE_FULL,0,Containers with scrolling,30,100,30,0
+s3-rgb,adapter,TRIPLE_FULL,0,Widgets demo,18,100,48,0
+s3-rgb,adapter,TRIPLE_FULL,90,Empty screen,17,100,16,32
+s3-rgb,adapter,TRIPLE_FULL,90,Moving wallpaper,12,100,38,40
+s3-rgb,adapter,TRIPLE_FULL,90,Single rectangle,20,100,17,31
+s3-rgb,adapter,TRIPLE_FULL,90,Multiple rectangles,19,100,23,39
+s3-rgb,adapter,TRIPLE_FULL,90,Multiple RGB images,15,100,21,38
+s3-rgb,adapter,TRIPLE_FULL,90,Multiple ARGB images,15,100,21,38
+s3-rgb,adapter,TRIPLE_FULL,90,Rotated ARGB images,15,100,22,37
+s3-rgb,adapter,TRIPLE_FULL,90,Multiple labels,19,100,18,31
+s3-rgb,adapter,TRIPLE_FULL,90,Screen sized text,14,100,34,33
+s3-rgb,adapter,TRIPLE_FULL,90,Multiple arcs,19,100,17,31
+s3-rgb,adapter,TRIPLE_FULL,90,Containers,15,100,24,39
+s3-rgb,adapter,TRIPLE_FULL,90,Containers with overlay,12,100,40,40
+s3-rgb,adapter,TRIPLE_FULL,90,Containers with opa,15,100,25,39
+s3-rgb,adapter,TRIPLE_FULL,90,Containers with opa_layer,12,100,47,33
+s3-rgb,adapter,TRIPLE_FULL,90,Containers with scrolling,15,100,30,34
+s3-rgb,adapter,TRIPLE_FULL,90,Widgets demo,11,100,48,34
+s3-rgb,adapter,TRIPLE_FULL,180,Empty screen,17,100,16,32
+s3-rgb,adapter,TRIPLE_FULL,180,Moving wallpaper,14,100,39,28
+s3-rgb,adapter,TRIPLE_FULL,180,Single rectangle,20,100,17,31
+s3-rgb,adapter,TRIPLE_FULL,180,Multiple rectangles,20,100,23,27
+s3-rgb,adapter,TRIPLE_FULL,180,Multiple RGB images,19,100,21,27
+s3-rgb,adapter,TRIPLE_FULL,180,Multiple ARGB images,20,100,21,26
+s3-rgb,adapter,TRIPLE_FULL,180,Rotated ARGB images,17,100,22,31
+s3-rgb,adapter,TRIPLE_FULL,180,Multiple labels,20,100,18,30
+s3-rgb,adapter,TRIPLE_FULL,180,Screen sized text,15,100,34,30
+s3-rgb,adapter,TRIPLE_FULL,180,Multiple arcs,20,100,17,30
+s3-rgb,adapter,TRIPLE_FULL,180,Containers,15,100,25,34
+s3-rgb,adapter,TRIPLE_FULL,180,Containers with overlay,13,100,40,31
+s3-rgb,adapter,TRIPLE_FULL,180,Containers with opa,16,100,25,32
+s3-rgb,adapter,TRIPLE_FULL,180,Containers with opa_layer,12,100,47,33
+s3-rgb,adapter,TRIPLE_FULL,180,Containers with scrolling,15,100,30,34
+s3-rgb,adapter,TRIPLE_FULL,180,Widgets demo,11,100,48,32
+s3-rgb,adapter,TRIPLE_FULL,270,Empty screen,17,100,16,32
+s3-rgb,adapter,TRIPLE_FULL,270,Moving wallpaper,12,100,39,41
+s3-rgb,adapter,TRIPLE_FULL,270,Single rectangle,20,100,17,31
+s3-rgb,adapter,TRIPLE_FULL,270,Multiple rectangles,18,100,23,40
+s3-rgb,adapter,TRIPLE_FULL,270,Multiple RGB images,16,100,21,35
+s3-rgb,adapter,TRIPLE_FULL,270,Multiple ARGB images,16,100,21,36
+s3-rgb,adapter,TRIPLE_FULL,270,Rotated ARGB images,15,100,23,37
+s3-rgb,adapter,TRIPLE_FULL,270,Multiple labels,20,100,18,31
+s3-rgb,adapter,TRIPLE_FULL,270,Screen sized text,14,100,34,33
+s3-rgb,adapter,TRIPLE_FULL,270,Multiple arcs,19,100,18,30
+s3-rgb,adapter,TRIPLE_FULL,270,Containers,15,100,24,39
+s3-rgb,adapter,TRIPLE_FULL,270,Containers with overlay,12,100,40,39
+s3-rgb,adapter,TRIPLE_FULL,270,Containers with opa,15,100,25,38
+s3-rgb,adapter,TRIPLE_FULL,270,Containers with opa_layer,12,100,47,32
+s3-rgb,adapter,TRIPLE_FULL,270,Containers with scrolling,15,100,30,34
+s3-rgb,adapter,TRIPLE_FULL,270,Widgets demo,11,100,48,34
+s3-rgb,adapter,DOUBLE_DIRECT,0,Empty screen,26,100,16,14
+s3-rgb,adapter,DOUBLE_DIRECT,0,Moving wallpaper,20,100,39,8
+s3-rgb,adapter,DOUBLE_DIRECT,0,Single rectangle,59,100,1,14
+s3-rgb,adapter,DOUBLE_DIRECT,0,Multiple rectangles,57,100,10,6
+s3-rgb,adapter,DOUBLE_DIRECT,0,Multiple RGB images,58,100,6,5
+s3-rgb,adapter,DOUBLE_DIRECT,0,Multiple ARGB images,58,100,7,5
+s3-rgb,adapter,DOUBLE_DIRECT,0,Rotated ARGB images,58,100,10,5
+s3-rgb,adapter,DOUBLE_DIRECT,0,Multiple labels,57,100,12,3
+s3-rgb,adapter,DOUBLE_DIRECT,0,Screen sized text,20,100,34,13
+s3-rgb,adapter,DOUBLE_DIRECT,0,Multiple arcs,60,100,1,13
+s3-rgb,adapter,DOUBLE_DIRECT,0,Containers,58,100,7,8
+s3-rgb,adapter,DOUBLE_DIRECT,0,Containers with overlay,20,100,40,6
+s3-rgb,adapter,DOUBLE_DIRECT,0,Containers with opa,57,100,8,7
+s3-rgb,adapter,DOUBLE_DIRECT,0,Containers with opa_layer,28,100,23,9
+s3-rgb,adapter,DOUBLE_DIRECT,0,Containers with scrolling,27,100,30,2
+s3-rgb,adapter,DOUBLE_DIRECT,0,Widgets demo,19,100,38,8
+s3-rgb,adapter,DOUBLE_DIRECT,90,Empty screen,16,100,14,61
+s3-rgb,adapter,DOUBLE_DIRECT,90,Moving wallpaper,9,100,39,60
+s3-rgb,adapter,DOUBLE_DIRECT,90,Single rectangle,57,100,1,15
+s3-rgb,adapter,DOUBLE_DIRECT,90,Multiple rectangles,21,100,10,40
+s3-rgb,adapter,DOUBLE_DIRECT,90,Multiple RGB images,29,100,10,21
+s3-rgb,adapter,DOUBLE_DIRECT,90,Multiple ARGB images,27,100,12,21
+s3-rgb,adapter,DOUBLE_DIRECT,90,Rotated ARGB images,51,100,10,8
+s3-rgb,adapter,DOUBLE_DIRECT,90,Multiple labels,27,100,11,23
+s3-rgb,adapter,DOUBLE_DIRECT,90,Screen sized text,10,100,34,63
+s3-rgb,adapter,DOUBLE_DIRECT,90,Multiple arcs,60,100,1,13
+s3-rgb,adapter,DOUBLE_DIRECT,90,Containers,35,100,8,21
+s3-rgb,adapter,DOUBLE_DIRECT,90,Containers with overlay,12,100,31,46
+s3-rgb,adapter,DOUBLE_DIRECT,90,Containers with opa,35,100,9,21
+s3-rgb,adapter,DOUBLE_DIRECT,90,Containers with opa_layer,21,100,26,23
+s3-rgb,adapter,DOUBLE_DIRECT,90,Containers with scrolling,10,100,30,67
+s3-rgb,adapter,DOUBLE_DIRECT,90,Widgets demo,9,100,39,57
+s3-rgb,adapter,DOUBLE_DIRECT,180,Empty screen,17,100,16,50
+s3-rgb,adapter,DOUBLE_DIRECT,180,Moving wallpaper,10,100,40,57
+s3-rgb,adapter,DOUBLE_DIRECT,180,Single rectangle,58,100,1,15
+s3-rgb,adapter,DOUBLE_DIRECT,180,Multiple rectangles,20,100,10,38
+s3-rgb,adapter,DOUBLE_DIRECT,180,Multiple RGB images,28,100,10,21
+s3-rgb,adapter,DOUBLE_DIRECT,180,Multiple ARGB images,28,100,12,20
+s3-rgb,adapter,DOUBLE_DIRECT,180,Rotated ARGB images,54,100,9,8
+s3-rgb,adapter,DOUBLE_DIRECT,180,Multiple labels,29,100,11,20
+s3-rgb,adapter,DOUBLE_DIRECT,180,Screen sized text,10,100,34,59
+s3-rgb,adapter,DOUBLE_DIRECT,180,Multiple arcs,58,100,1,14
+s3-rgb,adapter,DOUBLE_DIRECT,180,Containers,52,100,7,12
+s3-rgb,adapter,DOUBLE_DIRECT,180,Containers with overlay,13,100,31,40
+s3-rgb,adapter,DOUBLE_DIRECT,180,Containers with opa,47,100,9,14
+s3-rgb,adapter,DOUBLE_DIRECT,180,Containers with opa_layer,25,100,23,17
+s3-rgb,adapter,DOUBLE_DIRECT,180,Containers with scrolling,11,100,30,50
+s3-rgb,adapter,DOUBLE_DIRECT,180,Widgets demo,10,100,38,46
+s3-rgb,adapter,DOUBLE_DIRECT,270,Empty screen,14,100,13,56
+s3-rgb,adapter,DOUBLE_DIRECT,270,Moving wallpaper,9,100,39,62
+s3-rgb,adapter,DOUBLE_DIRECT,270,Single rectangle,59,100,1,14
+s3-rgb,adapter,DOUBLE_DIRECT,270,Multiple rectangles,21,100,10,40
+s3-rgb,adapter,DOUBLE_DIRECT,270,Multiple RGB images,29,100,10,21
+s3-rgb,adapter,DOUBLE_DIRECT,270,Multiple ARGB images,28,100,12,20
+s3-rgb,adapter,DOUBLE_DIRECT,270,Rotated ARGB images,49,100,10,9
+s3-rgb,adapter,DOUBLE_DIRECT,270,Multiple labels,27,100,11,23
+s3-rgb,adapter,DOUBLE_DIRECT,270,Screen sized text,9,100,34,63
+s3-rgb,adapter,DOUBLE_DIRECT,270,Multiple arcs,58,100,1,13
+s3-rgb,adapter,DOUBLE_DIRECT,270,Containers,35,100,9,22
+s3-rgb,adapter,DOUBLE_DIRECT,270,Containers with overlay,12,100,31,44
+s3-rgb,adapter,DOUBLE_DIRECT,270,Containers with opa,35,100,10,22
+s3-rgb,adapter,DOUBLE_DIRECT,270,Containers with opa_layer,18,100,29,25
+s3-rgb,adapter,DOUBLE_DIRECT,270,Containers with scrolling,9,100,30,67
+s3-rgb,adapter,DOUBLE_DIRECT,270,Widgets demo,9,100,38,57
+s3-rgb,adapter,DOUBLE_PARTIAL,0,Empty screen,26,100,6,25
+s3-rgb,adapter,DOUBLE_PARTIAL,0,Moving wallpaper,30,100,14,17
+s3-rgb,adapter,DOUBLE_PARTIAL,0,Single rectangle,60,100,0,15
+s3-rgb,adapter,DOUBLE_PARTIAL,0,Multiple rectangles,57,100,5,11
+s3-rgb,adapter,DOUBLE_PARTIAL,0,Multiple RGB images,60,100,2,13
+s3-rgb,adapter,DOUBLE_PARTIAL,0,Multiple ARGB images,58,100,4,11
+s3-rgb,adapter,DOUBLE_PARTIAL,0,Rotated ARGB images,60,100,6,9
+s3-rgb,adapter,DOUBLE_PARTIAL,0,Multiple labels,57,100,10,6
+s3-rgb,adapter,DOUBLE_PARTIAL,0,Screen sized text,10,100,74,16
+s3-rgb,adapter,DOUBLE_PARTIAL,0,Multiple arcs,60,100,1,14
+s3-rgb,adapter,DOUBLE_PARTIAL,0,Containers,58,100,4,12
+s3-rgb,adapter,DOUBLE_PARTIAL,0,Containers with overlay,20,100,26,21
+s3-rgb,adapter,DOUBLE_PARTIAL,0,Containers with opa,57,100,6,11
+s3-rgb,adapter,DOUBLE_PARTIAL,0,Containers with opa_layer,33,100,16,15
+s3-rgb,adapter,DOUBLE_PARTIAL,0,Containers with scrolling,20,100,26,21
+s3-rgb,adapter,DOUBLE_PARTIAL,0,Widgets demo,13,100,53,15
+s3-rgb,adapter,DOUBLE_PARTIAL,90,Empty screen,17,100,6,42
+s3-rgb,adapter,DOUBLE_PARTIAL,90,Moving wallpaper,20,100,14,34
+s3-rgb,adapter,DOUBLE_PARTIAL,90,Single rectangle,60,100,0,15
+s3-rgb,adapter,DOUBLE_PARTIAL,90,Multiple rectangles,30,100,5,26
+s3-rgb,adapter,DOUBLE_PARTIAL,90,Multiple RGB images,58,100,1,13
+s3-rgb,adapter,DOUBLE_PARTIAL,90,Multiple ARGB images,55,100,3,12
+s3-rgb,adapter,DOUBLE_PARTIAL,90,Rotated ARGB images,59,100,6,9
+s3-rgb,adapter,DOUBLE_PARTIAL,90,Multiple labels,53,100,7,9
+s3-rgb,adapter,DOUBLE_PARTIAL,90,Screen sized text,8,100,73,36
+s3-rgb,adapter,DOUBLE_PARTIAL,90,Multiple arcs,59,100,1,14
+s3-rgb,adapter,DOUBLE_PARTIAL,90,Containers,54,100,5,15
+s3-rgb,adapter,DOUBLE_PARTIAL,90,Containers with overlay,15,100,23,36
+s3-rgb,adapter,DOUBLE_PARTIAL,90,Containers with opa,54,100,6,13
+s3-rgb,adapter,DOUBLE_PARTIAL,90,Containers with opa_layer,27,100,19,21
+s3-rgb,adapter,DOUBLE_PARTIAL,90,Containers with scrolling,15,100,26,38
+s3-rgb,adapter,DOUBLE_PARTIAL,90,Widgets demo,11,100,52,32
+s3-rgb,adapter,DOUBLE_PARTIAL,180,Empty screen,26,100,6,25
+s3-rgb,adapter,DOUBLE_PARTIAL,180,Moving wallpaper,30,100,14,17
+s3-rgb,adapter,DOUBLE_PARTIAL,180,Single rectangle,60,100,0,15
+s3-rgb,adapter,DOUBLE_PARTIAL,180,Multiple rectangles,55,100,5,11
+s3-rgb,adapter,DOUBLE_PARTIAL,180,Multiple RGB images,60,100,1,13
+s3-rgb,adapter,DOUBLE_PARTIAL,180,Multiple ARGB images,58,100,3,11
+s3-rgb,adapter,DOUBLE_PARTIAL,180,Rotated ARGB images,60,100,6,9
+s3-rgb,adapter,DOUBLE_PARTIAL,180,Multiple labels,57,100,11,5
+s3-rgb,adapter,DOUBLE_PARTIAL,180,Screen sized text,10,100,73,19
+s3-rgb,adapter,DOUBLE_PARTIAL,180,Multiple arcs,59,100,1,14
+s3-rgb,adapter,DOUBLE_PARTIAL,180,Containers,59,100,5,12
+s3-rgb,adapter,DOUBLE_PARTIAL,180,Containers with overlay,20,100,27,20
+s3-rgb,adapter,DOUBLE_PARTIAL,180,Containers with opa,57,100,6,12
+s3-rgb,adapter,DOUBLE_PARTIAL,180,Containers with opa_layer,34,100,16,15
+s3-rgb,adapter,DOUBLE_PARTIAL,180,Containers with scrolling,20,100,26,21
+s3-rgb,adapter,DOUBLE_PARTIAL,180,Widgets demo,13,100,53,18
+s3-rgb,adapter,DOUBLE_PARTIAL,270,Empty screen,17,100,6,41
+s3-rgb,adapter,DOUBLE_PARTIAL,270,Moving wallpaper,20,100,14,34
+s3-rgb,adapter,DOUBLE_PARTIAL,270,Single rectangle,60,100,0,15
+s3-rgb,adapter,DOUBLE_PARTIAL,270,Multiple rectangles,30,100,5,26
+s3-rgb,adapter,DOUBLE_PARTIAL,270,Multiple RGB images,58,100,1,13
+s3-rgb,adapter,DOUBLE_PARTIAL,270,Multiple ARGB images,55,100,4,12
+s3-rgb,adapter,DOUBLE_PARTIAL,270,Rotated ARGB images,58,100,6,10
+s3-rgb,adapter,DOUBLE_PARTIAL,270,Multiple labels,52,100,7,10
+s3-rgb,adapter,DOUBLE_PARTIAL,270,Screen sized text,8,100,73,35
+s3-rgb,adapter,DOUBLE_PARTIAL,270,Multiple arcs,59,100,1,14
+s3-rgb,adapter,DOUBLE_PARTIAL,270,Containers,54,100,4,14
+s3-rgb,adapter,DOUBLE_PARTIAL,270,Containers with overlay,15,100,23,36
+s3-rgb,adapter,DOUBLE_PARTIAL,270,Containers with opa,52,100,6,14
+s3-rgb,adapter,DOUBLE_PARTIAL,270,Containers with opa_layer,29,100,17,19
+s3-rgb,adapter,DOUBLE_PARTIAL,270,Containers with scrolling,15,100,25,38
+s3-rgb,adapter,DOUBLE_PARTIAL,270,Widgets demo,11,100,52,32
+s3-rgb,adapter,TRIPLE_PARTIAL,0,Empty screen,40,100,6,13
+s3-rgb,adapter,TRIPLE_PARTIAL,0,Moving wallpaper,36,100,15,10
+s3-rgb,adapter,TRIPLE_PARTIAL,0,Single rectangle,60,100,0,14
+s3-rgb,adapter,TRIPLE_PARTIAL,0,Multiple rectangles,59,100,5,9
+s3-rgb,adapter,TRIPLE_PARTIAL,0,Multiple RGB images,60,100,1,12
+s3-rgb,adapter,TRIPLE_PARTIAL,0,Multiple ARGB images,60,100,3,10
+s3-rgb,adapter,TRIPLE_PARTIAL,0,Rotated ARGB images,63,100,5,4
+s3-rgb,adapter,TRIPLE_PARTIAL,0,Multiple labels,60,100,10,4
+s3-rgb,adapter,TRIPLE_PARTIAL,0,Screen sized text,11,100,76,8
+s3-rgb,adapter,TRIPLE_PARTIAL,0,Multiple arcs,60,100,1,13
+s3-rgb,adapter,TRIPLE_PARTIAL,0,Containers,65,100,5,5
+s3-rgb,adapter,TRIPLE_PARTIAL,0,Containers with overlay,25,100,27,9
+s3-rgb,adapter,TRIPLE_PARTIAL,0,Containers with opa,64,100,6,6
+s3-rgb,adapter,TRIPLE_PARTIAL,0,Containers with opa_layer,49,100,16,5
+s3-rgb,adapter,TRIPLE_PARTIAL,0,Containers with scrolling,25,100,26,9
+s3-rgb,adapter,TRIPLE_PARTIAL,0,Widgets demo,15,100,53,8
+s3-rgb,adapter,TRIPLE_PARTIAL,90,Empty screen,22,100,6,30
+s3-rgb,adapter,TRIPLE_PARTIAL,90,Moving wallpaper,22,100,14,28
+s3-rgb,adapter,TRIPLE_PARTIAL,90,Single rectangle,60,100,0,14
+s3-rgb,adapter,TRIPLE_PARTIAL,90,Multiple rectangles,51,100,4,12
+s3-rgb,adapter,TRIPLE_PARTIAL,90,Multiple RGB images,61,100,2,11
+s3-rgb,adapter,TRIPLE_PARTIAL,90,Multiple ARGB images,61,100,3,9
+s3-rgb,adapter,TRIPLE_PARTIAL,90,Rotated ARGB images,64,100,6,5
+s3-rgb,adapter,TRIPLE_PARTIAL,90,Multiple labels,58,100,7,7
+s3-rgb,adapter,TRIPLE_PARTIAL,90,Screen sized text,9,100,73,28
+s3-rgb,adapter,TRIPLE_PARTIAL,90,Multiple arcs,59,100,1,12
+s3-rgb,adapter,TRIPLE_PARTIAL,90,Containers,62,100,4,9
+s3-rgb,adapter,TRIPLE_PARTIAL,90,Containers with overlay,17,100,24,27
+s3-rgb,adapter,TRIPLE_PARTIAL,90,Containers with opa,60,100,6,9
+s3-rgb,adapter,TRIPLE_PARTIAL,90,Containers with opa_layer,42,100,15,9
+s3-rgb,adapter,TRIPLE_PARTIAL,90,Containers with scrolling,17,100,26,28
+s3-rgb,adapter,TRIPLE_PARTIAL,90,Widgets demo,11,100,52,25
+s3-rgb,adapter,TRIPLE_PARTIAL,180,Empty screen,39,100,8,12
+s3-rgb,adapter,TRIPLE_PARTIAL,180,Moving wallpaper,34,100,14,11
+s3-rgb,adapter,TRIPLE_PARTIAL,180,Single rectangle,60,100,0,15
+s3-rgb,adapter,TRIPLE_PARTIAL,180,Multiple rectangles,61,100,5,9
+s3-rgb,adapter,TRIPLE_PARTIAL,180,Multiple RGB images,60,100,1,12
+s3-rgb,adapter,TRIPLE_PARTIAL,180,Multiple ARGB images,59,100,4,10
+s3-rgb,adapter,TRIPLE_PARTIAL,180,Rotated ARGB images,63,100,5,4
+s3-rgb,adapter,TRIPLE_PARTIAL,180,Multiple labels,60,100,10,4
+s3-rgb,adapter,TRIPLE_PARTIAL,180,Screen sized text,11,100,74,11
+s3-rgb,adapter,TRIPLE_PARTIAL,180,Multiple arcs,60,100,1,14
+s3-rgb,adapter,TRIPLE_PARTIAL,180,Containers,64,100,5,6
+s3-rgb,adapter,TRIPLE_PARTIAL,180,Containers with overlay,23,100,27,11
+s3-rgb,adapter,TRIPLE_PARTIAL,180,Containers with opa,64,100,7,5
+s3-rgb,adapter,TRIPLE_PARTIAL,180,Containers with opa_layer,48,100,16,6
+s3-rgb,adapter,TRIPLE_PARTIAL,180,Containers with scrolling,24,100,26,11
+s3-rgb,adapter,TRIPLE_PARTIAL,180,Widgets demo,14,100,53,10
+s3-rgb,adapter,TRIPLE_PARTIAL,270,Empty screen,22,100,6,30
+s3-rgb,adapter,TRIPLE_PARTIAL,270,Moving wallpaper,22,100,14,28
+s3-rgb,adapter,TRIPLE_PARTIAL,270,Single rectangle,60,100,0,15
+s3-rgb,adapter,TRIPLE_PARTIAL,270,Multiple rectangles,51,100,4,12
+s3-rgb,adapter,TRIPLE_PARTIAL,270,Multiple RGB images,60,100,2,11
+s3-rgb,adapter,TRIPLE_PARTIAL,270,Multiple ARGB images,62,100,4,9
+s3-rgb,adapter,TRIPLE_PARTIAL,270,Rotated ARGB images,63,100,6,5
+s3-rgb,adapter,TRIPLE_PARTIAL,270,Multiple labels,58,100,7,7
+s3-rgb,adapter,TRIPLE_PARTIAL,270,Screen sized text,9,100,74,28
+s3-rgb,adapter,TRIPLE_PARTIAL,270,Multiple arcs,60,100,1,13
+s3-rgb,adapter,TRIPLE_PARTIAL,270,Containers,62,100,4,9
+s3-rgb,adapter,TRIPLE_PARTIAL,270,Containers with overlay,17,100,25,27
+s3-rgb,adapter,TRIPLE_PARTIAL,270,Containers with opa,59,100,6,10
+s3-rgb,adapter,TRIPLE_PARTIAL,270,Containers with opa_layer,42,100,15,10
+s3-rgb,adapter,TRIPLE_PARTIAL,270,Containers with scrolling,17,100,25,28
+s3-rgb,adapter,TRIPLE_PARTIAL,270,Widgets demo,11,100,52,25
+s31-rgb,present,DOUBLE_FULL,0,Empty screen,40,100,21,0
+s31-rgb,present,DOUBLE_FULL,0,Moving wallpaper,13,100,70,0
+s31-rgb,present,DOUBLE_FULL,0,Single rectangle,42,100,21,0
+s31-rgb,present,DOUBLE_FULL,0,Multiple rectangles,25,100,36,0
+s31-rgb,present,DOUBLE_FULL,0,Multiple RGB images,20,100,42,0
+s31-rgb,present,DOUBLE_FULL,0,Multiple ARGB images,20,100,42,0
+s31-rgb,present,DOUBLE_FULL,0,Rotated ARGB images,20,100,43,0
+s31-rgb,present,DOUBLE_FULL,0,Multiple labels,20,100,43,0
+s31-rgb,present,DOUBLE_FULL,0,Screen sized text,10,100,91,0
+s31-rgb,present,DOUBLE_FULL,0,Multiple arcs,37,100,22,0
+s31-rgb,present,DOUBLE_FULL,0,Containers,21,100,43,1
+s31-rgb,present,DOUBLE_FULL,0,Containers with overlay,13,100,66,1
+s31-rgb,present,DOUBLE_FULL,0,Containers with opa,20,100,44,1
+s31-rgb,present,DOUBLE_FULL,0,Containers with opa_layer,10,100,90,1
+s31-rgb,present,DOUBLE_FULL,0,Containers with scrolling,20,100,44,0
+s31-rgb,present,DOUBLE_FULL,0,Widgets demo,11,100,78,1
+s31-rgb,present,DOUBLE_FULL,90,Empty screen,18,100,43,0
+s31-rgb,present,DOUBLE_FULL,90,Moving wallpaper,10,100,91,0
+s31-rgb,present,DOUBLE_FULL,90,Single rectangle,21,100,44,0
+s31-rgb,present,DOUBLE_FULL,90,Multiple rectangles,21,100,44,0
+s31-rgb,present,DOUBLE_FULL,90,Multiple RGB images,20,100,42,0
+s31-rgb,present,DOUBLE_FULL,90,Multiple ARGB images,13,100,66,0
+s31-rgb,present,DOUBLE_FULL,90,Rotated ARGB images,21,100,43,0
+s31-rgb,present,DOUBLE_FULL,90,Multiple labels,21,100,43,0
+s31-rgb,present,DOUBLE_FULL,90,Screen sized text,10,100,91,0
+s31-rgb,present,DOUBLE_FULL,90,Multiple arcs,20,100,43,0
+s31-rgb,present,DOUBLE_FULL,90,Containers,14,100,66,0
+s31-rgb,present,DOUBLE_FULL,90,Containers with overlay,14,100,66,0
+s31-rgb,present,DOUBLE_FULL,90,Containers with opa,14,100,66,0
+s31-rgb,present,DOUBLE_FULL,90,Containers with opa_layer,10,100,90,0
+s31-rgb,present,DOUBLE_FULL,90,Containers with scrolling,13,100,67,0
+s31-rgb,present,DOUBLE_FULL,90,Widgets demo,27,100,76,0
+s31-rgb,present,DOUBLE_FULL,180,Empty screen,18,100,43,0
+s31-rgb,present,DOUBLE_FULL,180,Moving wallpaper,10,100,91,0
+s31-rgb,present,DOUBLE_FULL,180,Single rectangle,21,100,44,0
+s31-rgb,present,DOUBLE_FULL,180,Multiple rectangles,21,100,43,0
+s31-rgb,present,DOUBLE_FULL,180,Multiple RGB images,20,100,42,0
+s31-rgb,present,DOUBLE_FULL,180,Multiple ARGB images,13,100,65,0
+s31-rgb,present,DOUBLE_FULL,180,Rotated ARGB images,15,100,58,0
+s31-rgb,present,DOUBLE_FULL,180,Multiple labels,20,100,43,0
+s31-rgb,present,DOUBLE_FULL,180,Screen sized text,10,100,91,0
+s31-rgb,present,DOUBLE_FULL,180,Multiple arcs,20,100,43,0
+s31-rgb,present,DOUBLE_FULL,180,Containers,14,100,66,0
+s31-rgb,present,DOUBLE_FULL,180,Containers with overlay,14,100,66,0
+s31-rgb,present,DOUBLE_FULL,180,Containers with opa,14,100,66,0
+s31-rgb,present,DOUBLE_FULL,180,Containers with opa_layer,10,100,90,0
+s31-rgb,present,DOUBLE_FULL,180,Containers with scrolling,13,100,67,0
+s31-rgb,present,DOUBLE_FULL,180,Widgets demo,9,100,90,0
+s31-rgb,present,DOUBLE_FULL,270,Empty screen,18,100,43,0
+s31-rgb,present,DOUBLE_FULL,270,Moving wallpaper,10,100,91,0
+s31-rgb,present,DOUBLE_FULL,270,Single rectangle,21,100,44,0
+s31-rgb,present,DOUBLE_FULL,270,Multiple rectangles,21,100,44,0
+s31-rgb,present,DOUBLE_FULL,270,Multiple RGB images,20,100,42,0
+s31-rgb,present,DOUBLE_FULL,270,Multiple ARGB images,13,100,66,0
+s31-rgb,present,DOUBLE_FULL,270,Rotated ARGB images,21,100,44,0
+s31-rgb,present,DOUBLE_FULL,270,Multiple labels,21,100,43,0
+s31-rgb,present,DOUBLE_FULL,270,Screen sized text,10,100,91,0
+s31-rgb,present,DOUBLE_FULL,270,Multiple arcs,21,100,43,0
+s31-rgb,present,DOUBLE_FULL,270,Containers,14,100,66,0
+s31-rgb,present,DOUBLE_FULL,270,Containers with overlay,14,100,66,0
+s31-rgb,present,DOUBLE_FULL,270,Containers with opa,14,100,66,0
+s31-rgb,present,DOUBLE_FULL,270,Containers with opa_layer,10,100,90,0
+s31-rgb,present,DOUBLE_FULL,270,Containers with scrolling,13,100,67,0
+s31-rgb,present,DOUBLE_FULL,270,Widgets demo,27,100,76,0
+s31-rgb,present,TRIPLE_FULL,0,Empty screen,37,100,20,0
+s31-rgb,present,TRIPLE_FULL,0,Moving wallpaper,14,100,63,0
+s31-rgb,present,TRIPLE_FULL,0,Single rectangle,42,100,20,0
+s31-rgb,present,TRIPLE_FULL,0,Multiple rectangles,38,100,22,0
+s31-rgb,present,TRIPLE_FULL,0,Multiple RGB images,27,100,31,0
+s31-rgb,present,TRIPLE_FULL,0,Multiple ARGB images,22,100,39,0
+s31-rgb,present,TRIPLE_FULL,0,Rotated ARGB images,23,100,38,0
+s31-rgb,present,TRIPLE_FULL,0,Multiple labels,27,100,31,0
+s31-rgb,present,TRIPLE_FULL,0,Screen sized text,12,100,75,0
+s31-rgb,present,TRIPLE_FULL,0,Multiple arcs,41,100,20,0
+s31-rgb,present,TRIPLE_FULL,0,Containers,21,100,41,1
+s31-rgb,present,TRIPLE_FULL,0,Containers with overlay,16,100,56,0
+s31-rgb,present,TRIPLE_FULL,0,Containers with opa,20,100,43,1
+s31-rgb,present,TRIPLE_FULL,0,Containers with opa_layer,11,100,78,1
+s31-rgb,present,TRIPLE_FULL,0,Containers with scrolling,23,100,38,1
+s31-rgb,present,TRIPLE_FULL,0,Widgets demo,12,100,72,1
+s31-rgb,present,TRIPLE_FULL,90,Empty screen,31,100,24,0
+s31-rgb,present,TRIPLE_FULL,90,Moving wallpaper,12,100,72,0
+s31-rgb,present,TRIPLE_FULL,90,Single rectangle,33,100,26,0
+s31-rgb,present,TRIPLE_FULL,90,Multiple rectangles,28,100,32,0
+s31-rgb,present,TRIPLE_FULL,90,Multiple RGB images,22,100,39,0
+s31-rgb,present,TRIPLE_FULL,90,Multiple ARGB images,19,100,46,0
+s31-rgb,present,TRIPLE_FULL,90,Rotated ARGB images,23,100,38,0
+s31-rgb,present,TRIPLE_FULL,90,Multiple labels,23,100,38,0
+s31-rgb,present,TRIPLE_FULL,90,Screen sized text,11,100,82,0
+s31-rgb,present,TRIPLE_FULL,90,Multiple arcs,30,100,29,0
+s31-rgb,present,TRIPLE_FULL,90,Containers,20,100,44,0
+s31-rgb,present,TRIPLE_FULL,90,Containers with overlay,15,100,58,0
+s31-rgb,present,TRIPLE_FULL,90,Containers with opa,19,100,46,0
+s31-rgb,present,TRIPLE_FULL,90,Containers with opa_layer,12,100,71,0
+s31-rgb,present,TRIPLE_FULL,90,Containers with scrolling,15,100,60,0
+s31-rgb,present,TRIPLE_FULL,90,Widgets demo,27,100,72,0
+s31-rgb,present,TRIPLE_FULL,180,Empty screen,30,100,25,0
+s31-rgb,present,TRIPLE_FULL,180,Moving wallpaper,12,100,73,0
+s31-rgb,present,TRIPLE_FULL,180,Single rectangle,33,100,27,0
+s31-rgb,present,TRIPLE_FULL,180,Multiple rectangles,28,100,32,0
+s31-rgb,present,TRIPLE_FULL,180,Multiple RGB images,22,100,39,0
+s31-rgb,present,TRIPLE_FULL,180,Multiple ARGB images,18,100,47,0
+s31-rgb,present,TRIPLE_FULL,180,Rotated ARGB images,21,100,41,0
+s31-rgb,present,TRIPLE_FULL,180,Multiple labels,22,100,39,0
+s31-rgb,present,TRIPLE_FULL,180,Screen sized text,11,100,83,0
+s31-rgb,present,TRIPLE_FULL,180,Multiple arcs,29,100,29,0
+s31-rgb,present,TRIPLE_FULL,180,Containers,18,100,50,0
+s31-rgb,present,TRIPLE_FULL,180,Containers with overlay,14,100,64,0
+s31-rgb,present,TRIPLE_FULL,180,Containers with opa,17,100,51,0
+s31-rgb,present,TRIPLE_FULL,180,Containers with opa_layer,10,100,86,0
+s31-rgb,present,TRIPLE_FULL,180,Containers with scrolling,19,100,47,0
+s31-rgb,present,TRIPLE_FULL,180,Widgets demo,11,100,77,0
+s31-rgb,present,TRIPLE_FULL,270,Empty screen,31,100,24,0
+s31-rgb,present,TRIPLE_FULL,270,Moving wallpaper,12,100,73,0
+s31-rgb,present,TRIPLE_FULL,270,Single rectangle,33,100,26,0
+s31-rgb,present,TRIPLE_FULL,270,Multiple rectangles,28,100,31,0
+s31-rgb,present,TRIPLE_FULL,270,Multiple RGB images,22,100,39,0
+s31-rgb,present,TRIPLE_FULL,270,Multiple ARGB images,19,100,46,0
+s31-rgb,present,TRIPLE_FULL,270,Rotated ARGB images,23,100,38,0
+s31-rgb,present,TRIPLE_FULL,270,Multiple labels,23,100,37,0
+s31-rgb,present,TRIPLE_FULL,270,Screen sized text,11,100,82,0
+s31-rgb,present,TRIPLE_FULL,270,Multiple arcs,29,100,29,0
+s31-rgb,present,TRIPLE_FULL,270,Containers,20,100,45,0
+s31-rgb,present,TRIPLE_FULL,270,Containers with overlay,15,100,59,0
+s31-rgb,present,TRIPLE_FULL,270,Containers with opa,19,100,46,0
+s31-rgb,present,TRIPLE_FULL,270,Containers with opa_layer,13,100,71,0
+s31-rgb,present,TRIPLE_FULL,270,Containers with scrolling,15,100,60,0
+s31-rgb,present,TRIPLE_FULL,270,Widgets demo,27,100,71,0
+s31-rgb,present,DOUBLE_DIRECT,0,Empty screen,37,100,15,0
+s31-rgb,present,DOUBLE_DIRECT,0,Moving wallpaper,13,100,63,0
+s31-rgb,present,DOUBLE_DIRECT,0,Single rectangle,41,100,2,0
+s31-rgb,present,DOUBLE_DIRECT,0,Multiple rectangles,42,100,10,0
+s31-rgb,present,DOUBLE_DIRECT,0,Multiple RGB images,21,100,25,0
+s31-rgb,present,DOUBLE_DIRECT,0,Multiple ARGB images,18,100,36,0
+s31-rgb,present,DOUBLE_DIRECT,0,Rotated ARGB images,21,100,28,0
+s31-rgb,present,DOUBLE_DIRECT,0,Multiple labels,20,100,32,0
+s31-rgb,present,DOUBLE_DIRECT,0,Screen sized text,10,100,74,1
+s31-rgb,present,DOUBLE_DIRECT,0,Multiple arcs,41,100,5,0
+s31-rgb,present,DOUBLE_DIRECT,0,Containers,23,100,22,0
+s31-rgb,present,DOUBLE_DIRECT,0,Containers with overlay,12,100,52,1
+s31-rgb,present,DOUBLE_DIRECT,0,Containers with opa,22,100,24,1
+s31-rgb,present,DOUBLE_DIRECT,0,Containers with opa_layer,10,100,71,1
+s31-rgb,present,DOUBLE_DIRECT,0,Containers with scrolling,20,100,38,1
+s31-rgb,present,DOUBLE_DIRECT,0,Widgets demo,12,100,57,0
+s31-rgb,present,DOUBLE_DIRECT,90,Empty screen,18,100,22,21
+s31-rgb,present,DOUBLE_DIRECT,90,Moving wallpaper,10,100,69,19
+s31-rgb,present,DOUBLE_DIRECT,90,Single rectangle,42,100,2,18
+s31-rgb,present,DOUBLE_DIRECT,90,Multiple rectangles,19,100,19,24
+s31-rgb,present,DOUBLE_DIRECT,90,Multiple RGB images,15,100,36,21
+s31-rgb,present,DOUBLE_DIRECT,90,Multiple ARGB images,13,100,48,19
+s31-rgb,present,DOUBLE_DIRECT,90,Rotated ARGB images,30,100,20,7
+s31-rgb,present,DOUBLE_DIRECT,90,Multiple labels,15,100,47,19
+s31-rgb,present,DOUBLE_DIRECT,90,Screen sized text,9,100,80,19
+s31-rgb,present,DOUBLE_DIRECT,90,Multiple arcs,21,100,16,25
+s31-rgb,present,DOUBLE_DIRECT,90,Containers,40,100,16,6
+s31-rgb,present,DOUBLE_DIRECT,90,Containers with overlay,13,100,49,17
+s31-rgb,present,DOUBLE_DIRECT,90,Containers with opa,39,100,17,6
+s31-rgb,present,DOUBLE_DIRECT,90,Containers with opa_layer,13,100,59,9
+s31-rgb,present,DOUBLE_DIRECT,90,Containers with scrolling,12,100,56,19
+s31-rgb,present,DOUBLE_DIRECT,90,Widgets demo,32,100,45,12
+s31-rgb,present,DOUBLE_DIRECT,180,Empty screen,18,100,22,21
+s31-rgb,present,DOUBLE_DIRECT,180,Moving wallpaper,10,100,69,19
+s31-rgb,present,DOUBLE_DIRECT,180,Single rectangle,42,100,2,18
+s31-rgb,present,DOUBLE_DIRECT,180,Multiple rectangles,19,100,20,24
+s31-rgb,present,DOUBLE_DIRECT,180,Multiple RGB images,15,100,36,21
+s31-rgb,present,DOUBLE_DIRECT,180,Multiple ARGB images,12,100,49,20
+s31-rgb,present,DOUBLE_DIRECT,180,Rotated ARGB images,20,100,32,10
+s31-rgb,present,DOUBLE_DIRECT,180,Multiple labels,14,100,44,21
+s31-rgb,present,DOUBLE_DIRECT,180,Screen sized text,9,100,81,19
+s31-rgb,present,DOUBLE_DIRECT,180,Multiple arcs,21,100,17,25
+s31-rgb,present,DOUBLE_DIRECT,180,Containers,21,100,30,13
+s31-rgb,present,DOUBLE_DIRECT,180,Containers with overlay,11,100,58,17
+s31-rgb,present,DOUBLE_DIRECT,180,Containers with opa,21,100,32,11
+s31-rgb,present,DOUBLE_DIRECT,180,Containers with opa_layer,9,100,83,12
+s31-rgb,present,DOUBLE_DIRECT,180,Containers with scrolling,14,100,43,19
+s31-rgb,present,DOUBLE_DIRECT,180,Widgets demo,11,100,61,15
+s31-rgb,present,DOUBLE_DIRECT,270,Empty screen,18,100,22,21
+s31-rgb,present,DOUBLE_DIRECT,270,Moving wallpaper,10,100,67,19
+s31-rgb,present,DOUBLE_DIRECT,270,Single rectangle,42,100,2,18
+s31-rgb,present,DOUBLE_DIRECT,270,Multiple rectangles,20,100,20,23
+s31-rgb,present,DOUBLE_DIRECT,270,Multiple RGB images,14,100,36,23
+s31-rgb,present,DOUBLE_DIRECT,270,Multiple ARGB images,12,100,49,19
+s31-rgb,present,DOUBLE_DIRECT,270,Rotated ARGB images,34,100,18,5
+s31-rgb,present,DOUBLE_DIRECT,270,Multiple labels,15,100,45,20
+s31-rgb,present,DOUBLE_DIRECT,270,Screen sized text,9,100,80,19
+s31-rgb,present,DOUBLE_DIRECT,270,Multiple arcs,21,100,16,25
+s31-rgb,present,DOUBLE_DIRECT,270,Containers,42,100,15,6
+s31-rgb,present,DOUBLE_DIRECT,270,Containers with overlay,13,100,50,16
+s31-rgb,present,DOUBLE_DIRECT,270,Containers with opa,36,100,19,7
+s31-rgb,present,DOUBLE_DIRECT,270,Containers with opa_layer,13,100,59,8
+s31-rgb,present,DOUBLE_DIRECT,270,Containers with scrolling,12,100,56,19
+s31-rgb,present,DOUBLE_DIRECT,270,Widgets demo,31,100,45,12
+s31-rgb,present,DOUBLE_PARTIAL,0,Empty screen,18,100,19,24
+s31-rgb,present,DOUBLE_PARTIAL,0,Moving wallpaper,14,100,40,26
+s31-rgb,present,DOUBLE_PARTIAL,0,Single rectangle,41,100,1,19
+s31-rgb,present,DOUBLE_PARTIAL,0,Multiple rectangles,35,100,13,9
+s31-rgb,present,DOUBLE_PARTIAL,0,Multiple RGB images,19,100,26,15
+s31-rgb,present,DOUBLE_PARTIAL,0,Multiple ARGB images,14,100,37,23
+s31-rgb,present,DOUBLE_PARTIAL,0,Rotated ARGB images,20,100,26,15
+s31-rgb,present,DOUBLE_PARTIAL,0,Multiple labels,15,100,40,20
+s31-rgb,present,DOUBLE_PARTIAL,0,Screen sized text,5,100,142,21
+s31-rgb,present,DOUBLE_PARTIAL,0,Multiple arcs,21,100,11,27
+s31-rgb,present,DOUBLE_PARTIAL,0,Containers,21,100,23,17
+s31-rgb,present,DOUBLE_PARTIAL,0,Containers with overlay,11,100,58,17
+s31-rgb,present,DOUBLE_PARTIAL,0,Containers with opa,21,100,24,16
+s31-rgb,present,DOUBLE_PARTIAL,0,Containers with opa_layer,10,100,74,12
+s31-rgb,present,DOUBLE_PARTIAL,0,Containers with scrolling,10,100,62,28
+s31-rgb,present,DOUBLE_PARTIAL,0,Widgets demo,5,100,145,17
+s31-rgb,present,DOUBLE_PARTIAL,90,Empty screen,16,100,24,32
+s31-rgb,present,DOUBLE_PARTIAL,90,Moving wallpaper,10,100,58,31
+s31-rgb,present,DOUBLE_PARTIAL,90,Single rectangle,42,100,2,17
+s31-rgb,present,DOUBLE_PARTIAL,90,Multiple rectangles,23,100,12,24
+s31-rgb,present,DOUBLE_PARTIAL,90,Multiple RGB images,18,100,27,18
+s31-rgb,present,DOUBLE_PARTIAL,90,Multiple ARGB images,14,100,38,26
+s31-rgb,present,DOUBLE_PARTIAL,90,Rotated ARGB images,20,100,24,18
+s31-rgb,present,DOUBLE_PARTIAL,90,Multiple labels,15,100,36,27
+s31-rgb,present,DOUBLE_PARTIAL,90,Screen sized text,4,100,168,33
+s31-rgb,present,DOUBLE_PARTIAL,90,Multiple arcs,21,100,12,29
+s31-rgb,present,DOUBLE_PARTIAL,90,Containers,21,100,26,19
+s31-rgb,present,DOUBLE_PARTIAL,90,Containers with overlay,9,100,61,38
+s31-rgb,present,DOUBLE_PARTIAL,90,Containers with opa,19,100,32,22
+s31-rgb,present,DOUBLE_PARTIAL,90,Containers with opa_layer,12,100,56,19
+s31-rgb,present,DOUBLE_PARTIAL,90,Containers with scrolling,6,100,94,41
+s31-rgb,present,DOUBLE_PARTIAL,90,Widgets demo,31,100,110,19
+s31-rgb,present,DOUBLE_PARTIAL,180,Empty screen,18,100,19,24
+s31-rgb,present,DOUBLE_PARTIAL,180,Moving wallpaper,14,100,40,26
+s31-rgb,present,DOUBLE_PARTIAL,180,Single rectangle,41,100,2,19
+s31-rgb,present,DOUBLE_PARTIAL,180,Multiple rectangles,21,100,14,27
+s31-rgb,present,DOUBLE_PARTIAL,180,Multiple RGB images,19,100,27,17
+s31-rgb,present,DOUBLE_PARTIAL,180,Multiple ARGB images,14,100,37,26
+s31-rgb,present,DOUBLE_PARTIAL,180,Rotated ARGB images,18,100,31,15
+s31-rgb,present,DOUBLE_PARTIAL,180,Multiple labels,15,100,38,31
+s31-rgb,present,DOUBLE_PARTIAL,180,Screen sized text,5,100,139,27
+s31-rgb,present,DOUBLE_PARTIAL,180,Multiple arcs,21,100,12,30
+s31-rgb,present,DOUBLE_PARTIAL,180,Containers,18,100,25,21
+s31-rgb,present,DOUBLE_PARTIAL,180,Containers with overlay,10,100,57,27
+s31-rgb,present,DOUBLE_PARTIAL,180,Containers with opa,18,100,26,20
+s31-rgb,present,DOUBLE_PARTIAL,180,Containers with opa_layer,9,100,75,20
+s31-rgb,present,DOUBLE_PARTIAL,180,Containers with scrolling,10,100,62,28
+s31-rgb,present,DOUBLE_PARTIAL,180,Widgets demo,5,100,144,22
+s31-rgb,present,DOUBLE_PARTIAL,270,Empty screen,16,100,24,33
+s31-rgb,present,DOUBLE_PARTIAL,270,Moving wallpaper,10,100,58,32
+s31-rgb,present,DOUBLE_PARTIAL,270,Single rectangle,42,100,2,18
+s31-rgb,present,DOUBLE_PARTIAL,270,Multiple rectangles,21,100,12,27
+s31-rgb,present,DOUBLE_PARTIAL,270,Multiple RGB images,18,100,27,17
+s31-rgb,present,DOUBLE_PARTIAL,270,Multiple ARGB images,13,100,37,26
+s31-rgb,present,DOUBLE_PARTIAL,270,Rotated ARGB images,32,100,16,9
+s31-rgb,present,DOUBLE_PARTIAL,270,Multiple labels,15,100,34,27
+s31-rgb,present,DOUBLE_PARTIAL,270,Screen sized text,4,100,171,33
+s31-rgb,present,DOUBLE_PARTIAL,270,Multiple arcs,20,100,12,30
+s31-rgb,present,DOUBLE_PARTIAL,270,Containers,20,100,28,20
+s31-rgb,present,DOUBLE_PARTIAL,270,Containers with overlay,8,100,63,39
+s31-rgb,present,DOUBLE_PARTIAL,270,Containers with opa,20,100,29,19
+s31-rgb,present,DOUBLE_PARTIAL,270,Containers with opa_layer,12,100,56,19
+s31-rgb,present,DOUBLE_PARTIAL,270,Containers with scrolling,6,100,96,40
+s31-rgb,present,DOUBLE_PARTIAL,270,Widgets demo,31,100,110,19
+s31-rgb,present,TRIPLE_PARTIAL,0,Empty screen,26,100,19,9
+s31-rgb,present,TRIPLE_PARTIAL,0,Moving wallpaper,17,100,41,11
+s31-rgb,present,TRIPLE_PARTIAL,0,Single rectangle,42,100,1,19
+s31-rgb,present,TRIPLE_PARTIAL,0,Multiple rectangles,39,100,13,6
+s31-rgb,present,TRIPLE_PARTIAL,0,Multiple RGB images,23,100,26,6
+s31-rgb,present,TRIPLE_PARTIAL,0,Multiple ARGB images,17,100,37,7
+s31-rgb,present,TRIPLE_PARTIAL,0,Rotated ARGB images,27,100,26,3
+s31-rgb,present,TRIPLE_PARTIAL,0,Multiple labels,15,100,40,16
+s31-rgb,present,TRIPLE_PARTIAL,0,Screen sized text,5,100,143,11
+s31-rgb,present,TRIPLE_PARTIAL,0,Multiple arcs,32,100,11,11
+s31-rgb,present,TRIPLE_PARTIAL,0,Containers,47,100,14,3
+s31-rgb,present,TRIPLE_PARTIAL,0,Containers with overlay,12,100,57,13
+s31-rgb,present,TRIPLE_PARTIAL,0,Containers with opa,47,100,14,3
+s31-rgb,present,TRIPLE_PARTIAL,0,Containers with opa_layer,11,100,72,5
+s31-rgb,present,TRIPLE_PARTIAL,0,Containers with scrolling,12,100,62,13
+s31-rgb,present,TRIPLE_PARTIAL,0,Widgets demo,5,100,147,12
+s31-rgb,present,TRIPLE_PARTIAL,90,Empty screen,17,100,25,19
+s31-rgb,present,TRIPLE_PARTIAL,90,Moving wallpaper,11,100,57,22
+s31-rgb,present,TRIPLE_PARTIAL,90,Single rectangle,42,100,2,18
+s31-rgb,present,TRIPLE_PARTIAL,90,Multiple rectangles,35,100,12,10
+s31-rgb,present,TRIPLE_PARTIAL,90,Multiple RGB images,21,100,26,11
+s31-rgb,present,TRIPLE_PARTIAL,90,Multiple ARGB images,17,100,38,12
+s31-rgb,present,TRIPLE_PARTIAL,90,Rotated ARGB images,38,100,17,4
+s31-rgb,present,TRIPLE_PARTIAL,90,Multiple labels,15,100,35,22
+s31-rgb,present,TRIPLE_PARTIAL,90,Screen sized text,4,100,170,23
+s31-rgb,present,TRIPLE_PARTIAL,90,Multiple arcs,27,100,12,19
+s31-rgb,present,TRIPLE_PARTIAL,90,Containers,40,100,17,5
+s31-rgb,present,TRIPLE_PARTIAL,90,Containers with overlay,11,100,55,22
+s31-rgb,present,TRIPLE_PARTIAL,90,Containers with opa,38,100,18,6
+s31-rgb,present,TRIPLE_PARTIAL,90,Containers with opa_layer,14,100,51,9
+s31-rgb,present,TRIPLE_PARTIAL,90,Containers with scrolling,7,100,95,25
+s31-rgb,present,TRIPLE_PARTIAL,90,Widgets demo,31,100,110,16
+s31-rgb,present,TRIPLE_PARTIAL,180,Empty screen,22,100,20,15
+s31-rgb,present,TRIPLE_PARTIAL,180,Moving wallpaper,15,100,41,17
+s31-rgb,present,TRIPLE_PARTIAL,180,Single rectangle,42,100,1,19
+s31-rgb,present,TRIPLE_PARTIAL,180,Multiple rectangles,33,100,14,10
+s31-rgb,present,TRIPLE_PARTIAL,180,Multiple RGB images,21,100,26,11
+s31-rgb,present,TRIPLE_PARTIAL,180,Multiple ARGB images,16,100,37,12
+s31-rgb,present,TRIPLE_PARTIAL,180,Rotated ARGB images,27,100,26,5
+s31-rgb,present,TRIPLE_PARTIAL,180,Multiple labels,15,100,37,24
+s31-rgb,present,TRIPLE_PARTIAL,180,Screen sized text,5,100,141,17
+s31-rgb,present,TRIPLE_PARTIAL,180,Multiple arcs,27,100,11,19
+s31-rgb,present,TRIPLE_PARTIAL,180,Containers,44,100,14,5
+s31-rgb,present,TRIPLE_PARTIAL,180,Containers with overlay,11,100,60,18
+s31-rgb,present,TRIPLE_PARTIAL,180,Containers with opa,41,100,16,5
+s31-rgb,present,TRIPLE_PARTIAL,180,Containers with opa_layer,10,100,74,9
+s31-rgb,present,TRIPLE_PARTIAL,180,Containers with scrolling,11,100,63,18
+s31-rgb,present,TRIPLE_PARTIAL,180,Widgets demo,5,100,145,16
+s31-rgb,present,TRIPLE_PARTIAL,270,Empty screen,17,100,25,19
+s31-rgb,present,TRIPLE_PARTIAL,270,Moving wallpaper,11,100,58,22
+s31-rgb,present,TRIPLE_PARTIAL,270,Single rectangle,42,100,2,17
+s31-rgb,present,TRIPLE_PARTIAL,270,Multiple rectangles,34,100,13,9
+s31-rgb,present,TRIPLE_PARTIAL,270,Multiple RGB images,21,100,27,11
+s31-rgb,present,TRIPLE_PARTIAL,270,Multiple ARGB images,17,100,37,11
+s31-rgb,present,TRIPLE_PARTIAL,270,Rotated ARGB images,43,100,14,3
+s31-rgb,present,TRIPLE_PARTIAL,270,Multiple labels,15,100,36,22
+s31-rgb,present,TRIPLE_PARTIAL,270,Screen sized text,4,100,170,23
+s31-rgb,present,TRIPLE_PARTIAL,270,Multiple arcs,27,100,12,19
+s31-rgb,present,TRIPLE_PARTIAL,270,Containers,39,100,18,5
+s31-rgb,present,TRIPLE_PARTIAL,270,Containers with overlay,11,100,55,21
+s31-rgb,present,TRIPLE_PARTIAL,270,Containers with opa,37,100,19,6
+s31-rgb,present,TRIPLE_PARTIAL,270,Containers with opa_layer,14,100,52,10
+s31-rgb,present,TRIPLE_PARTIAL,270,Containers with scrolling,7,100,94,25
+s31-rgb,present,TRIPLE_PARTIAL,270,Widgets demo,31,100,110,15
+s31-rgb,present,AUTO,0,Empty screen,26,100,19,9
+s31-rgb,present,AUTO,0,Moving wallpaper,17,100,41,11
+s31-rgb,present,AUTO,0,Single rectangle,42,100,1,19
+s31-rgb,present,AUTO,0,Multiple rectangles,39,100,12,6
+s31-rgb,present,AUTO,0,Multiple RGB images,23,100,26,7
+s31-rgb,present,AUTO,0,Multiple ARGB images,18,100,37,7
+s31-rgb,present,AUTO,0,Rotated ARGB images,29,100,24,3
+s31-rgb,present,AUTO,0,Multiple labels,15,100,38,16
+s31-rgb,present,AUTO,0,Screen sized text,5,100,142,12
+s31-rgb,present,AUTO,0,Multiple arcs,32,100,11,11
+s31-rgb,present,AUTO,0,Containers,47,100,13,3
+s31-rgb,present,AUTO,0,Containers with overlay,12,100,58,12
+s31-rgb,present,AUTO,0,Containers with opa,46,100,14,3
+s31-rgb,present,AUTO,0,Containers with opa_layer,11,100,72,6
+s31-rgb,present,AUTO,0,Containers with scrolling,12,100,62,13
+s31-rgb,present,AUTO,0,Widgets demo,5,100,147,12
+s31-rgb,present,AUTO,90,Empty screen,17,100,25,19
+s31-rgb,present,AUTO,90,Moving wallpaper,11,100,58,22
+s31-rgb,present,AUTO,90,Single rectangle,42,100,2,18
+s31-rgb,present,AUTO,90,Multiple rectangles,35,100,12,10
+s31-rgb,present,AUTO,90,Multiple RGB images,21,100,26,12
+s31-rgb,present,AUTO,90,Multiple ARGB images,17,100,37,11
+s31-rgb,present,AUTO,90,Rotated ARGB images,42,100,15,3
+s31-rgb,present,AUTO,90,Multiple labels,15,100,35,23
+s31-rgb,present,AUTO,90,Screen sized text,4,100,170,23
+s31-rgb,present,AUTO,90,Multiple arcs,26,100,12,18
+s31-rgb,present,AUTO,90,Containers,39,100,18,6
+s31-rgb,present,AUTO,90,Containers with overlay,11,100,54,21
+s31-rgb,present,AUTO,90,Containers with opa,36,100,20,6
+s31-rgb,present,AUTO,90,Containers with opa_layer,14,100,53,10
+s31-rgb,present,AUTO,90,Containers with scrolling,7,100,94,25
+s31-rgb,present,AUTO,90,Widgets demo,31,100,110,15
+s31-rgb,present,AUTO,180,Empty screen,22,100,19,15
+s31-rgb,present,AUTO,180,Moving wallpaper,15,100,41,16
+s31-rgb,present,AUTO,180,Single rectangle,42,100,1,19
+s31-rgb,present,AUTO,180,Multiple rectangles,32,100,14,11
+s31-rgb,present,AUTO,180,Multiple RGB images,21,100,26,12
+s31-rgb,present,AUTO,180,Multiple ARGB images,17,100,37,12
+s31-rgb,present,AUTO,180,Rotated ARGB images,27,100,26,4
+s31-rgb,present,AUTO,180,Multiple labels,15,100,39,24
+s31-rgb,present,AUTO,180,Screen sized text,5,100,141,17
+s31-rgb,present,AUTO,180,Multiple arcs,27,100,12,19
+s31-rgb,present,AUTO,180,Containers,45,100,14,4
+s31-rgb,present,AUTO,180,Containers with overlay,11,100,59,17
+s31-rgb,present,AUTO,180,Containers with opa,43,100,15,5
+s31-rgb,present,AUTO,180,Containers with opa_layer,10,100,73,9
+s31-rgb,present,AUTO,180,Containers with scrolling,11,100,63,18
+s31-rgb,present,AUTO,180,Widgets demo,5,100,145,16
+s31-rgb,present,AUTO,270,Empty screen,17,100,25,19
+s31-rgb,present,AUTO,270,Moving wallpaper,11,100,58,23
+s31-rgb,present,AUTO,270,Single rectangle,42,100,2,17
+s31-rgb,present,AUTO,270,Multiple rectangles,34,100,13,9
+s31-rgb,present,AUTO,270,Multiple RGB images,21,100,27,11
+s31-rgb,present,AUTO,270,Multiple ARGB images,17,100,37,12
+s31-rgb,present,AUTO,270,Rotated ARGB images,43,100,13,4
+s31-rgb,present,AUTO,270,Multiple labels,15,100,37,22
+s31-rgb,present,AUTO,270,Screen sized text,4,100,170,23
+s31-rgb,present,AUTO,270,Multiple arcs,27,100,12,19
+s31-rgb,present,AUTO,270,Containers,40,100,17,5
+s31-rgb,present,AUTO,270,Containers with overlay,11,100,54,21
+s31-rgb,present,AUTO,270,Containers with opa,38,100,19,5
+s31-rgb,present,AUTO,270,Containers with opa_layer,14,100,53,10
+s31-rgb,present,AUTO,270,Containers with scrolling,7,100,95,24
+s31-rgb,present,AUTO,270,Widgets demo,31,100,110,16
+s31-rgb,adapter,DOUBLE_FULL,0,Empty screen,40,100,12,9
+s31-rgb,adapter,DOUBLE_FULL,0,Moving wallpaper,13,100,64,8
+s31-rgb,adapter,DOUBLE_FULL,0,Single rectangle,42,100,13,7
+s31-rgb,adapter,DOUBLE_FULL,0,Multiple rectangles,38,100,20,3
+s31-rgb,adapter,DOUBLE_FULL,0,Multiple RGB images,21,100,27,16
+s31-rgb,adapter,DOUBLE_FULL,0,Multiple ARGB images,21,100,35,7
+s31-rgb,adapter,DOUBLE_FULL,0,Rotated ARGB images,21,100,31,12
+s31-rgb,adapter,DOUBLE_FULL,0,Multiple labels,20,100,21,21
+s31-rgb,adapter,DOUBLE_FULL,0,Screen sized text,21,100,31,13
+s31-rgb,adapter,DOUBLE_FULL,0,Multiple arcs,41,100,16,3
+s31-rgb,adapter,DOUBLE_FULL,0,Containers,21,100,35,8
+s31-rgb,adapter,DOUBLE_FULL,0,Containers with overlay,13,100,51,15
+s31-rgb,adapter,DOUBLE_FULL,0,Containers with opa,21,100,37,7
+s31-rgb,adapter,DOUBLE_FULL,0,Containers with opa_layer,10,100,71,18
+s31-rgb,adapter,DOUBLE_FULL,0,Containers with scrolling,20,100,32,12
+s31-rgb,adapter,DOUBLE_FULL,0,Widgets demo,11,100,66,9
+s31-rgb,adapter,DOUBLE_FULL,90,Empty screen,18,100,13,32
+s31-rgb,adapter,DOUBLE_FULL,90,Moving wallpaper,12,100,60,24
+s31-rgb,adapter,DOUBLE_FULL,90,Single rectangle,21,100,14,31
+s31-rgb,adapter,DOUBLE_FULL,90,Multiple rectangles,21,100,21,24
+s31-rgb,adapter,DOUBLE_FULL,90,Multiple RGB images,21,100,28,16
+s31-rgb,adapter,DOUBLE_FULL,90,Multiple ARGB images,14,100,36,27
+s31-rgb,adapter,DOUBLE_FULL,90,Rotated ARGB images,21,100,25,19
+s31-rgb,adapter,DOUBLE_FULL,90,Multiple labels,21,100,21,22
+s31-rgb,adapter,DOUBLE_FULL,90,Screen sized text,21,100,30,15
+s31-rgb,adapter,DOUBLE_FULL,90,Multiple arcs,21,100,17,27
+s31-rgb,adapter,DOUBLE_FULL,90,Containers,20,100,31,14
+s31-rgb,adapter,DOUBLE_FULL,90,Containers with overlay,14,100,44,23
+s31-rgb,adapter,DOUBLE_FULL,90,Containers with opa,19,100,32,15
+s31-rgb,adapter,DOUBLE_FULL,90,Containers with opa_layer,12,100,56,16
+s31-rgb,adapter,DOUBLE_FULL,90,Containers with scrolling,13,100,44,25
+s31-rgb,adapter,DOUBLE_FULL,90,Widgets demo,26,100,61,21
+s31-rgb,adapter,DOUBLE_FULL,180,Empty screen,18,100,13,31
+s31-rgb,adapter,DOUBLE_FULL,180,Moving wallpaper,11,100,59,23
+s31-rgb,adapter,DOUBLE_FULL,180,Single rectangle,21,100,14,31
+s31-rgb,adapter,DOUBLE_FULL,180,Multiple rectangles,21,100,20,24
+s31-rgb,adapter,DOUBLE_FULL,180,Multiple RGB images,21,100,28,15
+s31-rgb,adapter,DOUBLE_FULL,180,Multiple ARGB images,14,100,36,29
+s31-rgb,adapter,DOUBLE_FULL,180,Rotated ARGB images,20,100,31,14
+s31-rgb,adapter,DOUBLE_FULL,180,Multiple labels,20,100,22,21
+s31-rgb,adapter,DOUBLE_FULL,180,Screen sized text,20,100,30,15
+s31-rgb,adapter,DOUBLE_FULL,180,Multiple arcs,21,100,17,27
+s31-rgb,adapter,DOUBLE_FULL,180,Containers,14,100,36,31
+s31-rgb,adapter,DOUBLE_FULL,180,Containers with overlay,14,100,50,17
+s31-rgb,adapter,DOUBLE_FULL,180,Containers with opa,14,100,38,29
+s31-rgb,adapter,DOUBLE_FULL,180,Containers with opa_layer,10,100,71,19
+s31-rgb,adapter,DOUBLE_FULL,180,Containers with scrolling,19,100,33,15
+s31-rgb,adapter,DOUBLE_FULL,180,Widgets demo,9,100,65,23
+s31-rgb,adapter,DOUBLE_FULL,270,Empty screen,18,100,13,32
+s31-rgb,adapter,DOUBLE_FULL,270,Moving wallpaper,11,100,60,25
+s31-rgb,adapter,DOUBLE_FULL,270,Single rectangle,21,100,14,31
+s31-rgb,adapter,DOUBLE_FULL,270,Multiple rectangles,21,100,21,24
+s31-rgb,adapter,DOUBLE_FULL,270,Multiple RGB images,21,100,28,16
+s31-rgb,adapter,DOUBLE_FULL,270,Multiple ARGB images,15,100,35,27
+s31-rgb,adapter,DOUBLE_FULL,270,Rotated ARGB images,21,100,24,20
+s31-rgb,adapter,DOUBLE_FULL,270,Multiple labels,21,100,21,22
+s31-rgb,adapter,DOUBLE_FULL,270,Screen sized text,20,100,30,15
+s31-rgb,adapter,DOUBLE_FULL,270,Multiple arcs,21,100,17,27
+s31-rgb,adapter,DOUBLE_FULL,270,Containers,21,100,31,14
+s31-rgb,adapter,DOUBLE_FULL,270,Containers with overlay,14,100,44,23
+s31-rgb,adapter,DOUBLE_FULL,270,Containers with opa,20,100,33,15
+s31-rgb,adapter,DOUBLE_FULL,270,Containers with opa_layer,12,100,56,16
+s31-rgb,adapter,DOUBLE_FULL,270,Containers with scrolling,14,100,44,24
+s31-rgb,adapter,DOUBLE_FULL,270,Widgets demo,26,100,61,21
+s31-rgb,adapter,TRIPLE_FULL,0,Empty screen,37,100,13,8
+s31-rgb,adapter,TRIPLE_FULL,0,Moving wallpaper,15,100,59,0
+s31-rgb,adapter,TRIPLE_FULL,0,Single rectangle,42,100,14,8
+s31-rgb,adapter,TRIPLE_FULL,0,Multiple rectangles,42,100,20,0
+s31-rgb,adapter,TRIPLE_FULL,0,Multiple RGB images,30,100,28,0
+s31-rgb,adapter,TRIPLE_FULL,0,Multiple ARGB images,24,100,36,0
+s31-rgb,adapter,TRIPLE_FULL,0,Rotated ARGB images,26,100,33,0
+s31-rgb,adapter,TRIPLE_FULL,0,Multiple labels,38,100,21,0
+s31-rgb,adapter,TRIPLE_FULL,0,Screen sized text,29,100,30,0
+s31-rgb,adapter,TRIPLE_FULL,0,Multiple arcs,42,100,17,4
+s31-rgb,adapter,TRIPLE_FULL,0,Containers,25,100,36,0
+s31-rgb,adapter,TRIPLE_FULL,0,Containers with overlay,18,100,50,0
+s31-rgb,adapter,TRIPLE_FULL,0,Containers with opa,24,100,37,0
+s31-rgb,adapter,TRIPLE_FULL,0,Containers with opa_layer,13,100,70,0
+s31-rgb,adapter,TRIPLE_FULL,0,Containers with scrolling,27,100,32,0
+s31-rgb,adapter,TRIPLE_FULL,0,Widgets demo,13,100,65,0
+s31-rgb,adapter,TRIPLE_FULL,90,Empty screen,18,100,13,32
+s31-rgb,adapter,TRIPLE_FULL,90,Moving wallpaper,11,100,60,25
+s31-rgb,adapter,TRIPLE_FULL,90,Single rectangle,21,100,14,31
+s31-rgb,adapter,TRIPLE_FULL,90,Multiple rectangles,21,100,21,23
+s31-rgb,adapter,TRIPLE_FULL,90,Multiple RGB images,21,100,28,15
+s31-rgb,adapter,TRIPLE_FULL,90,Multiple ARGB images,14,100,36,28
+s31-rgb,adapter,TRIPLE_FULL,90,Rotated ARGB images,21,100,24,20
+s31-rgb,adapter,TRIPLE_FULL,90,Multiple labels,21,100,21,22
+s31-rgb,adapter,TRIPLE_FULL,90,Screen sized text,21,100,30,15
+s31-rgb,adapter,TRIPLE_FULL,90,Multiple arcs,21,100,17,27
+s31-rgb,adapter,TRIPLE_FULL,90,Containers,21,100,31,13
+s31-rgb,adapter,TRIPLE_FULL,90,Containers with overlay,13,100,45,22
+s31-rgb,adapter,TRIPLE_FULL,90,Containers with opa,19,100,33,15
+s31-rgb,adapter,TRIPLE_FULL,90,Containers with opa_layer,12,100,56,15
+s31-rgb,adapter,TRIPLE_FULL,90,Containers with scrolling,13,100,44,24
+s31-rgb,adapter,TRIPLE_FULL,90,Widgets demo,26,100,60,21
+s31-rgb,adapter,TRIPLE_FULL,180,Empty screen,18,100,13,31
+s31-rgb,adapter,TRIPLE_FULL,180,Moving wallpaper,11,100,59,26
+s31-rgb,adapter,TRIPLE_FULL,180,Single rectangle,21,100,14,31
+s31-rgb,adapter,TRIPLE_FULL,180,Multiple rectangles,21,100,20,24
+s31-rgb,adapter,TRIPLE_FULL,180,Multiple RGB images,21,100,28,15
+s31-rgb,adapter,TRIPLE_FULL,180,Multiple ARGB images,14,100,36,29
+s31-rgb,adapter,TRIPLE_FULL,180,Rotated ARGB images,21,100,28,15
+s31-rgb,adapter,TRIPLE_FULL,180,Multiple labels,21,100,22,21
+s31-rgb,adapter,TRIPLE_FULL,180,Screen sized text,21,100,30,14
+s31-rgb,adapter,TRIPLE_FULL,180,Multiple arcs,21,100,17,27
+s31-rgb,adapter,TRIPLE_FULL,180,Containers,14,100,36,31
+s31-rgb,adapter,TRIPLE_FULL,180,Containers with overlay,14,100,49,17
+s31-rgb,adapter,TRIPLE_FULL,180,Containers with opa,13,100,38,29
+s31-rgb,adapter,TRIPLE_FULL,180,Containers with opa_layer,10,100,71,20
+s31-rgb,adapter,TRIPLE_FULL,180,Containers with scrolling,20,100,32,14
+s31-rgb,adapter,TRIPLE_FULL,180,Widgets demo,9,100,65,23
+s31-rgb,adapter,TRIPLE_FULL,270,Empty screen,18,100,13,32
+s31-rgb,adapter,TRIPLE_FULL,270,Moving wallpaper,11,100,60,24
+s31-rgb,adapter,TRIPLE_FULL,270,Single rectangle,21,100,14,32
+s31-rgb,adapter,TRIPLE_FULL,270,Multiple rectangles,21,100,20,23
+s31-rgb,adapter,TRIPLE_FULL,270,Multiple RGB images,21,100,28,16
+s31-rgb,adapter,TRIPLE_FULL,270,Multiple ARGB images,15,100,35,25
+s31-rgb,adapter,TRIPLE_FULL,270,Rotated ARGB images,21,100,25,20
+s31-rgb,adapter,TRIPLE_FULL,270,Multiple labels,21,100,21,22
+s31-rgb,adapter,TRIPLE_FULL,270,Screen sized text,21,100,30,15
+s31-rgb,adapter,TRIPLE_FULL,270,Multiple arcs,21,100,17,27
+s31-rgb,adapter,TRIPLE_FULL,270,Containers,21,100,31,14
+s31-rgb,adapter,TRIPLE_FULL,270,Containers with overlay,13,100,44,23
+s31-rgb,adapter,TRIPLE_FULL,270,Containers with opa,19,100,33,14
+s31-rgb,adapter,TRIPLE_FULL,270,Containers with opa_layer,12,100,56,18
+s31-rgb,adapter,TRIPLE_FULL,270,Containers with scrolling,13,100,44,24
+s31-rgb,adapter,TRIPLE_FULL,270,Widgets demo,26,100,60,22
+s31-rgb,adapter,DOUBLE_DIRECT,0,Empty screen,37,100,13,8
+s31-rgb,adapter,DOUBLE_DIRECT,0,Moving wallpaper,14,100,58,9
+s31-rgb,adapter,DOUBLE_DIRECT,0,Single rectangle,42,100,2,19
+s31-rgb,adapter,DOUBLE_DIRECT,0,Multiple rectangles,41,100,12,9
+s31-rgb,adapter,DOUBLE_DIRECT,0,Multiple RGB images,21,100,29,14
+s31-rgb,adapter,DOUBLE_DIRECT,0,Multiple ARGB images,19,100,41,5
+s31-rgb,adapter,DOUBLE_DIRECT,0,Rotated ARGB images,21,100,30,13
+s31-rgb,adapter,DOUBLE_DIRECT,0,Multiple labels,21,100,29,13
+s31-rgb,adapter,DOUBLE_DIRECT,0,Screen sized text,21,100,30,14
+s31-rgb,adapter,DOUBLE_DIRECT,0,Multiple arcs,41,100,6,13
+s31-rgb,adapter,DOUBLE_DIRECT,0,Containers,30,100,17,11
+s31-rgb,adapter,DOUBLE_DIRECT,0,Containers with overlay,14,100,47,16
+s31-rgb,adapter,DOUBLE_DIRECT,0,Containers with opa,25,100,21,12
+s31-rgb,adapter,DOUBLE_DIRECT,0,Containers with opa_layer,10,100,68,19
+s31-rgb,adapter,DOUBLE_DIRECT,0,Containers with scrolling,20,100,33,11
+s31-rgb,adapter,DOUBLE_DIRECT,0,Widgets demo,13,100,54,13
+s31-rgb,adapter,DOUBLE_DIRECT,90,Empty screen,18,100,13,32
+s31-rgb,adapter,DOUBLE_DIRECT,90,Moving wallpaper,10,100,60,32
+s31-rgb,adapter,DOUBLE_DIRECT,90,Single rectangle,42,100,2,20
+s31-rgb,adapter,DOUBLE_DIRECT,90,Multiple rectangles,21,100,12,32
+s31-rgb,adapter,DOUBLE_DIRECT,90,Multiple RGB images,19,100,30,17
+s31-rgb,adapter,DOUBLE_DIRECT,90,Multiple ARGB images,14,100,41,25
+s31-rgb,adapter,DOUBLE_DIRECT,90,Rotated ARGB images,35,100,16,8
+s31-rgb,adapter,DOUBLE_DIRECT,90,Multiple labels,21,100,26,17
+s31-rgb,adapter,DOUBLE_DIRECT,90,Screen sized text,14,100,30,38
+s31-rgb,adapter,DOUBLE_DIRECT,90,Multiple arcs,42,100,6,14
+s31-rgb,adapter,DOUBLE_DIRECT,90,Containers,36,100,14,15
+s31-rgb,adapter,DOUBLE_DIRECT,90,Containers with overlay,14,100,39,24
+s31-rgb,adapter,DOUBLE_DIRECT,90,Containers with opa,26,100,16,19
+s31-rgb,adapter,DOUBLE_DIRECT,90,Containers with opa_layer,16,100,45,15
+s31-rgb,adapter,DOUBLE_DIRECT,90,Containers with scrolling,13,100,44,24
+s31-rgb,adapter,DOUBLE_DIRECT,90,Widgets demo,31,100,38,24
+s31-rgb,adapter,DOUBLE_DIRECT,180,Empty screen,18,100,14,31
+s31-rgb,adapter,DOUBLE_DIRECT,180,Moving wallpaper,10,100,60,32
+s31-rgb,adapter,DOUBLE_DIRECT,180,Single rectangle,42,100,2,20
+s31-rgb,adapter,DOUBLE_DIRECT,180,Multiple rectangles,21,100,12,33
+s31-rgb,adapter,DOUBLE_DIRECT,180,Multiple RGB images,19,100,28,18
+s31-rgb,adapter,DOUBLE_DIRECT,180,Multiple ARGB images,14,100,41,26
+s31-rgb,adapter,DOUBLE_DIRECT,180,Rotated ARGB images,21,100,29,16
+s31-rgb,adapter,DOUBLE_DIRECT,180,Multiple labels,19,100,28,18
+s31-rgb,adapter,DOUBLE_DIRECT,180,Screen sized text,14,100,31,38
+s31-rgb,adapter,DOUBLE_DIRECT,180,Multiple arcs,42,100,6,14
+s31-rgb,adapter,DOUBLE_DIRECT,180,Containers,21,100,22,21
+s31-rgb,adapter,DOUBLE_DIRECT,180,Containers with overlay,12,100,47,26
+s31-rgb,adapter,DOUBLE_DIRECT,180,Containers with opa,20,100,24,20
+s31-rgb,adapter,DOUBLE_DIRECT,180,Containers with opa_layer,10,100,68,21
+s31-rgb,adapter,DOUBLE_DIRECT,180,Containers with scrolling,14,100,33,35
+s31-rgb,adapter,DOUBLE_DIRECT,180,Widgets demo,11,100,53,26
+s31-rgb,adapter,DOUBLE_DIRECT,270,Empty screen,18,100,13,32
+s31-rgb,adapter,DOUBLE_DIRECT,270,Moving wallpaper,10,100,61,31
+s31-rgb,adapter,DOUBLE_DIRECT,270,Single rectangle,42,100,2,20
+s31-rgb,adapter,DOUBLE_DIRECT,270,Multiple rectangles,21,100,12,33
+s31-rgb,adapter,DOUBLE_DIRECT,270,Multiple RGB images,19,100,30,17
+s31-rgb,adapter,DOUBLE_DIRECT,270,Multiple ARGB images,14,100,41,25
+s31-rgb,adapter,DOUBLE_DIRECT,270,Rotated ARGB images,37,100,15,8
+s31-rgb,adapter,DOUBLE_DIRECT,270,Multiple labels,20,100,26,18
+s31-rgb,adapter,DOUBLE_DIRECT,270,Screen sized text,14,100,30,38
+s31-rgb,adapter,DOUBLE_DIRECT,270,Multiple arcs,41,100,6,14
+s31-rgb,adapter,DOUBLE_DIRECT,270,Containers,35,100,13,15
+s31-rgb,adapter,DOUBLE_DIRECT,270,Containers with overlay,14,100,39,24
+s31-rgb,adapter,DOUBLE_DIRECT,270,Containers with opa,28,100,16,18
+s31-rgb,adapter,DOUBLE_DIRECT,270,Containers with opa_layer,17,100,44,14
+s31-rgb,adapter,DOUBLE_DIRECT,270,Containers with scrolling,14,100,44,24
+s31-rgb,adapter,DOUBLE_DIRECT,270,Widgets demo,30,100,38,25
+s31-rgb,adapter,DOUBLE_PARTIAL,0,Empty screen,33,100,15,8
+s31-rgb,adapter,DOUBLE_PARTIAL,0,Moving wallpaper,19,100,36,12
+s31-rgb,adapter,DOUBLE_PARTIAL,0,Single rectangle,42,100,1,21
+s31-rgb,adapter,DOUBLE_PARTIAL,0,Multiple rectangles,38,100,12,10
+s31-rgb,adapter,DOUBLE_PARTIAL,0,Multiple RGB images,21,100,25,19
+s31-rgb,adapter,DOUBLE_PARTIAL,0,Multiple ARGB images,19,100,36,12
+s31-rgb,adapter,DOUBLE_PARTIAL,0,Rotated ARGB images,20,100,24,20
+s31-rgb,adapter,DOUBLE_PARTIAL,0,Multiple labels,19,100,30,16
+s31-rgb,adapter,DOUBLE_PARTIAL,0,Screen sized text,10,100,68,18
+s31-rgb,adapter,DOUBLE_PARTIAL,0,Multiple arcs,42,100,8,13
+s31-rgb,adapter,DOUBLE_PARTIAL,0,Containers,38,100,14,11
+s31-rgb,adapter,DOUBLE_PARTIAL,0,Containers with overlay,12,100,52,21
+s31-rgb,adapter,DOUBLE_PARTIAL,0,Containers with opa,36,100,15,11
+s31-rgb,adapter,DOUBLE_PARTIAL,0,Containers with opa_layer,10,100,67,22
+s31-rgb,adapter,DOUBLE_PARTIAL,0,Containers with scrolling,13,100,53,15
+s31-rgb,adapter,DOUBLE_PARTIAL,0,Widgets demo,6,100,124,18
+s31-rgb,adapter,DOUBLE_PARTIAL,90,Empty screen,18,100,14,31
+s31-rgb,adapter,DOUBLE_PARTIAL,90,Moving wallpaper,14,100,44,24
+s31-rgb,adapter,DOUBLE_PARTIAL,90,Single rectangle,41,100,1,21
+s31-rgb,adapter,DOUBLE_PARTIAL,90,Multiple rectangles,38,100,11,12
+s31-rgb,adapter,DOUBLE_PARTIAL,90,Multiple RGB images,21,100,25,18
+s31-rgb,adapter,DOUBLE_PARTIAL,90,Multiple ARGB images,19,100,36,11
+s31-rgb,adapter,DOUBLE_PARTIAL,90,Rotated ARGB images,21,100,22,22
+s31-rgb,adapter,DOUBLE_PARTIAL,90,Multiple labels,19,100,28,17
+s31-rgb,adapter,DOUBLE_PARTIAL,90,Screen sized text,9,100,67,29
+s31-rgb,adapter,DOUBLE_PARTIAL,90,Multiple arcs,42,100,8,13
+s31-rgb,adapter,DOUBLE_PARTIAL,90,Containers,43,100,11,11
+s31-rgb,adapter,DOUBLE_PARTIAL,90,Containers with overlay,13,100,42,27
+s31-rgb,adapter,DOUBLE_PARTIAL,90,Containers with opa,42,100,13,11
+s31-rgb,adapter,DOUBLE_PARTIAL,90,Containers with opa_layer,16,100,44,15
+s31-rgb,adapter,DOUBLE_PARTIAL,90,Containers with scrolling,10,100,64,28
+s31-rgb,adapter,DOUBLE_PARTIAL,90,Widgets demo,29,100,71,20
+s31-rgb,adapter,DOUBLE_PARTIAL,180,Empty screen,18,100,15,30
+s31-rgb,adapter,DOUBLE_PARTIAL,180,Moving wallpaper,15,100,36,31
+s31-rgb,adapter,DOUBLE_PARTIAL,180,Single rectangle,41,100,1,21
+s31-rgb,adapter,DOUBLE_PARTIAL,180,Multiple rectangles,36,100,12,12
+s31-rgb,adapter,DOUBLE_PARTIAL,180,Multiple RGB images,21,100,25,18
+s31-rgb,adapter,DOUBLE_PARTIAL,180,Multiple ARGB images,19,100,36,11
+s31-rgb,adapter,DOUBLE_PARTIAL,180,Rotated ARGB images,21,100,32,12
+s31-rgb,adapter,DOUBLE_PARTIAL,180,Multiple labels,17,100,28,30
+s31-rgb,adapter,DOUBLE_PARTIAL,180,Screen sized text,10,100,67,24
+s31-rgb,adapter,DOUBLE_PARTIAL,180,Multiple arcs,39,100,8,14
+s31-rgb,adapter,DOUBLE_PARTIAL,180,Containers,35,100,15,12
+s31-rgb,adapter,DOUBLE_PARTIAL,180,Containers with overlay,12,100,53,21
+s31-rgb,adapter,DOUBLE_PARTIAL,180,Containers with opa,28,100,18,15
+s31-rgb,adapter,DOUBLE_PARTIAL,180,Containers with opa_layer,10,100,67,22
+s31-rgb,adapter,DOUBLE_PARTIAL,180,Containers with scrolling,12,100,54,19
+s31-rgb,adapter,DOUBLE_PARTIAL,180,Widgets demo,6,100,126,24
+s31-rgb,adapter,DOUBLE_PARTIAL,270,Empty screen,18,100,14,31
+s31-rgb,adapter,DOUBLE_PARTIAL,270,Moving wallpaper,14,100,43,25
+s31-rgb,adapter,DOUBLE_PARTIAL,270,Single rectangle,41,100,1,21
+s31-rgb,adapter,DOUBLE_PARTIAL,270,Multiple rectangles,38,100,11,11
+s31-rgb,adapter,DOUBLE_PARTIAL,270,Multiple RGB images,21,100,25,19
+s31-rgb,adapter,DOUBLE_PARTIAL,270,Multiple ARGB images,19,100,36,11
+s31-rgb,adapter,DOUBLE_PARTIAL,270,Rotated ARGB images,39,100,16,7
+s31-rgb,adapter,DOUBLE_PARTIAL,270,Multiple labels,19,100,26,19
+s31-rgb,adapter,DOUBLE_PARTIAL,270,Screen sized text,9,100,67,27
+s31-rgb,adapter,DOUBLE_PARTIAL,270,Multiple arcs,41,100,8,13
+s31-rgb,adapter,DOUBLE_PARTIAL,270,Containers,42,100,12,11
+s31-rgb,adapter,DOUBLE_PARTIAL,270,Containers with overlay,13,100,42,27
+s31-rgb,adapter,DOUBLE_PARTIAL,270,Containers with opa,40,100,12,12
+s31-rgb,adapter,DOUBLE_PARTIAL,270,Containers with opa_layer,17,100,44,15
+s31-rgb,adapter,DOUBLE_PARTIAL,270,Containers with scrolling,10,100,65,27
+s31-rgb,adapter,DOUBLE_PARTIAL,270,Widgets demo,30,100,71,19
+s31-rgb,adapter,TRIPLE_PARTIAL,0,Empty screen,37,100,15,6
+s31-rgb,adapter,TRIPLE_PARTIAL,0,Moving wallpaper,21,100,36,6
+s31-rgb,adapter,TRIPLE_PARTIAL,0,Single rectangle,42,100,1,21
+s31-rgb,adapter,TRIPLE_PARTIAL,0,Multiple rectangles,41,100,12,9
+s31-rgb,adapter,TRIPLE_PARTIAL,0,Multiple RGB images,31,100,24,3
+s31-rgb,adapter,TRIPLE_PARTIAL,0,Multiple ARGB images,22,100,34,7
+s31-rgb,adapter,TRIPLE_PARTIAL,0,Rotated ARGB images,32,100,25,2
+s31-rgb,adapter,TRIPLE_PARTIAL,0,Multiple labels,22,100,30,9
+s31-rgb,adapter,TRIPLE_PARTIAL,0,Screen sized text,12,100,67,7
+s31-rgb,adapter,TRIPLE_PARTIAL,0,Multiple arcs,42,100,8,13
+s31-rgb,adapter,TRIPLE_PARTIAL,0,Containers,51,100,11,5
+s31-rgb,adapter,TRIPLE_PARTIAL,0,Containers with overlay,14,100,54,7
+s31-rgb,adapter,TRIPLE_PARTIAL,0,Containers with opa,50,100,13,4
+s31-rgb,adapter,TRIPLE_PARTIAL,0,Containers with opa_layer,16,100,53,3
+s31-rgb,adapter,TRIPLE_PARTIAL,0,Containers with scrolling,15,100,52,7
+s31-rgb,adapter,TRIPLE_PARTIAL,0,Widgets demo,6,100,125,6
+s31-rgb,adapter,TRIPLE_PARTIAL,90,Empty screen,27,100,12,15
+s31-rgb,adapter,TRIPLE_PARTIAL,90,Moving wallpaper,15,100,43,16
+s31-rgb,adapter,TRIPLE_PARTIAL,90,Single rectangle,42,100,1,21
+s31-rgb,adapter,TRIPLE_PARTIAL,90,Multiple rectangles,42,100,11,10
+s31-rgb,adapter,TRIPLE_PARTIAL,90,Multiple RGB images,27,100,24,6
+s31-rgb,adapter,TRIPLE_PARTIAL,90,Multiple ARGB images,20,100,35,7
+s31-rgb,adapter,TRIPLE_PARTIAL,90,Rotated ARGB images,41,100,17,4
+s31-rgb,adapter,TRIPLE_PARTIAL,90,Multiple labels,21,100,27,13
+s31-rgb,adapter,TRIPLE_PARTIAL,90,Screen sized text,11,100,66,16
+s31-rgb,adapter,TRIPLE_PARTIAL,90,Multiple arcs,41,100,8,13
+s31-rgb,adapter,TRIPLE_PARTIAL,90,Containers,54,100,10,5
+s31-rgb,adapter,TRIPLE_PARTIAL,90,Containers with overlay,15,100,45,14
+s31-rgb,adapter,TRIPLE_PARTIAL,90,Containers with opa,52,100,11,6
+s31-rgb,adapter,TRIPLE_PARTIAL,90,Containers with opa_layer,28,100,30,4
+s31-rgb,adapter,TRIPLE_PARTIAL,90,Containers with scrolling,11,100,64,16
+s31-rgb,adapter,TRIPLE_PARTIAL,90,Widgets demo,30,100,71,11
+s31-rgb,adapter,TRIPLE_PARTIAL,180,Empty screen,29,100,14,12
+s31-rgb,adapter,TRIPLE_PARTIAL,180,Moving wallpaper,19,100,36,12
+s31-rgb,adapter,TRIPLE_PARTIAL,180,Single rectangle,42,100,1,21
+s31-rgb,adapter,TRIPLE_PARTIAL,180,Multiple rectangles,41,100,12,8
+s31-rgb,adapter,TRIPLE_PARTIAL,180,Multiple RGB images,27,100,24,6
+s31-rgb,adapter,TRIPLE_PARTIAL,180,Multiple ARGB images,19,100,36,7
+s31-rgb,adapter,TRIPLE_PARTIAL,180,Rotated ARGB images,31,100,24,3
+s31-rgb,adapter,TRIPLE_PARTIAL,180,Multiple labels,19,100,30,14
+s31-rgb,adapter,TRIPLE_PARTIAL,180,Screen sized text,11,100,67,13
+s31-rgb,adapter,TRIPLE_PARTIAL,180,Multiple arcs,42,100,8,13
+s31-rgb,adapter,TRIPLE_PARTIAL,180,Containers,49,100,12,6
+s31-rgb,adapter,TRIPLE_PARTIAL,180,Containers with overlay,13,100,54,12
+s31-rgb,adapter,TRIPLE_PARTIAL,180,Containers with opa,48,100,12,6
+s31-rgb,adapter,TRIPLE_PARTIAL,180,Containers with opa_layer,13,100,61,7
+s31-rgb,adapter,TRIPLE_PARTIAL,180,Containers with scrolling,14,100,53,13
+s31-rgb,adapter,TRIPLE_PARTIAL,180,Widgets demo,6,100,125,12
+s31-rgb,adapter,TRIPLE_PARTIAL,270,Empty screen,27,100,13,15
+s31-rgb,adapter,TRIPLE_PARTIAL,270,Moving wallpaper,15,100,43,15
+s31-rgb,adapter,TRIPLE_PARTIAL,270,Single rectangle,42,100,1,21
+s31-rgb,adapter,TRIPLE_PARTIAL,270,Multiple rectangles,41,100,11,10
+s31-rgb,adapter,TRIPLE_PARTIAL,270,Multiple RGB images,27,100,24,6
+s31-rgb,adapter,TRIPLE_PARTIAL,270,Multiple ARGB images,20,100,36,7
+s31-rgb,adapter,TRIPLE_PARTIAL,270,Rotated ARGB images,42,100,15,5
+s31-rgb,adapter,TRIPLE_PARTIAL,270,Multiple labels,21,100,27,13
+s31-rgb,adapter,TRIPLE_PARTIAL,270,Screen sized text,11,100,66,16
+s31-rgb,adapter,TRIPLE_PARTIAL,270,Multiple arcs,41,100,8,13
+s31-rgb,adapter,TRIPLE_PARTIAL,270,Containers,54,100,10,6
+s31-rgb,adapter,TRIPLE_PARTIAL,270,Containers with overlay,15,100,45,14
+s31-rgb,adapter,TRIPLE_PARTIAL,270,Containers with opa,53,100,11,5
+s31-rgb,adapter,TRIPLE_PARTIAL,270,Containers with opa_layer,27,100,31,4
+s31-rgb,adapter,TRIPLE_PARTIAL,270,Containers with scrolling,11,100,64,17
+s31-rgb,adapter,TRIPLE_PARTIAL,270,Widgets demo,31,100,69,10
+p4-dsi,present,DOUBLE_FULL,0,Empty screen,28,100,29,1
+p4-dsi,present,DOUBLE_FULL,0,Moving wallpaper,15,100,62,1
+p4-dsi,present,DOUBLE_FULL,0,Single rectangle,30,100,30,1
+p4-dsi,present,DOUBLE_FULL,0,Multiple rectangles,30,100,30,1
+p4-dsi,present,DOUBLE_FULL,0,Multiple RGB images,20,100,43,1
+p4-dsi,present,DOUBLE_FULL,0,Multiple ARGB images,19,100,45,1
+p4-dsi,present,DOUBLE_FULL,0,Rotated ARGB images,20,100,46,1
+p4-dsi,present,DOUBLE_FULL,0,Multiple labels,30,100,30,1
+p4-dsi,present,DOUBLE_FULL,0,Screen sized text,20,100,46,1
+p4-dsi,present,DOUBLE_FULL,0,Multiple arcs,30,100,29,1
+p4-dsi,present,DOUBLE_FULL,0,Containers,20,100,45,1
+p4-dsi,present,DOUBLE_FULL,0,Containers with overlay,15,100,62,1
+p4-dsi,present,DOUBLE_FULL,0,Containers with opa,20,100,46,1
+p4-dsi,present,DOUBLE_FULL,0,Containers with opa_layer,13,100,68,0
+p4-dsi,present,DOUBLE_FULL,0,Containers with scrolling,15,100,63,1
+p4-dsi,present,DOUBLE_FULL,0,Widgets demo,20,100,75,1
+p4-dsi,present,DOUBLE_FULL,90,Empty screen,17,100,46,0
+p4-dsi,present,DOUBLE_FULL,90,Moving wallpaper,13,100,68,0
+p4-dsi,present,DOUBLE_FULL,90,Single rectangle,20,100,47,0
+p4-dsi,present,DOUBLE_FULL,90,Multiple rectangles,20,100,47,0
+p4-dsi,present,DOUBLE_FULL,90,Multiple RGB images,15,100,62,0
+p4-dsi,present,DOUBLE_FULL,90,Multiple ARGB images,15,100,62,0
+p4-dsi,present,DOUBLE_FULL,90,Rotated ARGB images,15,100,62,0
+p4-dsi,present,DOUBLE_FULL,90,Multiple labels,20,100,47,0
+p4-dsi,present,DOUBLE_FULL,90,Screen sized text,15,100,63,0
+p4-dsi,present,DOUBLE_FULL,90,Multiple arcs,20,100,46,0
+p4-dsi,present,DOUBLE_FULL,90,Containers,15,100,62,0
+p4-dsi,present,DOUBLE_FULL,90,Containers with overlay,12,100,78,0
+p4-dsi,present,DOUBLE_FULL,90,Containers with opa,15,100,62,0
+p4-dsi,present,DOUBLE_FULL,90,Containers with opa_layer,10,100,95,0
+p4-dsi,present,DOUBLE_FULL,90,Containers with scrolling,15,100,63,0
+p4-dsi,present,DOUBLE_FULL,90,Widgets demo,45,100,62,0
+p4-dsi,present,DOUBLE_FULL,180,Empty screen,17,100,46,0
+p4-dsi,present,DOUBLE_FULL,180,Moving wallpaper,12,100,79,0
+p4-dsi,present,DOUBLE_FULL,180,Single rectangle,20,100,47,0
+p4-dsi,present,DOUBLE_FULL,180,Multiple rectangles,19,100,47,0
+p4-dsi,present,DOUBLE_FULL,180,Multiple RGB images,20,100,46,0
+p4-dsi,present,DOUBLE_FULL,180,Multiple ARGB images,15,100,62,0
+p4-dsi,present,DOUBLE_FULL,180,Rotated ARGB images,16,100,55,0
+p4-dsi,present,DOUBLE_FULL,180,Multiple labels,20,100,47,0
+p4-dsi,present,DOUBLE_FULL,180,Screen sized text,15,100,63,0
+p4-dsi,present,DOUBLE_FULL,180,Multiple arcs,20,100,46,0
+p4-dsi,present,DOUBLE_FULL,180,Containers,15,100,63,0
+p4-dsi,present,DOUBLE_FULL,180,Containers with overlay,12,100,78,0
+p4-dsi,present,DOUBLE_FULL,180,Containers with opa,15,100,62,0
+p4-dsi,present,DOUBLE_FULL,180,Containers with opa_layer,12,100,79,0
+p4-dsi,present,DOUBLE_FULL,180,Containers with scrolling,12,100,77,0
+p4-dsi,present,DOUBLE_FULL,180,Widgets demo,20,100,85,0
+p4-dsi,present,DOUBLE_FULL,270,Empty screen,17,100,46,0
+p4-dsi,present,DOUBLE_FULL,270,Moving wallpaper,13,100,69,0
+p4-dsi,present,DOUBLE_FULL,270,Single rectangle,20,100,47,0
+p4-dsi,present,DOUBLE_FULL,270,Multiple rectangles,20,100,47,0
+p4-dsi,present,DOUBLE_FULL,270,Multiple RGB images,15,100,62,0
+p4-dsi,present,DOUBLE_FULL,270,Multiple ARGB images,15,100,62,0
+p4-dsi,present,DOUBLE_FULL,270,Rotated ARGB images,15,100,61,0
+p4-dsi,present,DOUBLE_FULL,270,Multiple labels,20,100,47,0
+p4-dsi,present,DOUBLE_FULL,270,Screen sized text,15,100,63,0
+p4-dsi,present,DOUBLE_FULL,270,Multiple arcs,20,100,46,0
+p4-dsi,present,DOUBLE_FULL,270,Containers,15,100,62,0
+p4-dsi,present,DOUBLE_FULL,270,Containers with overlay,12,100,78,0
+p4-dsi,present,DOUBLE_FULL,270,Containers with opa,15,100,62,0
+p4-dsi,present,DOUBLE_FULL,270,Containers with opa_layer,10,100,94,0
+p4-dsi,present,DOUBLE_FULL,270,Containers with scrolling,15,100,63,0
+p4-dsi,present,DOUBLE_FULL,270,Widgets demo,45,100,62,0
+p4-dsi,present,TRIPLE_FULL,0,Empty screen,38,100,20,1
+p4-dsi,present,TRIPLE_FULL,0,Moving wallpaper,17,100,52,1
+p4-dsi,present,TRIPLE_FULL,0,Single rectangle,41,100,21,1
+p4-dsi,present,TRIPLE_FULL,0,Multiple rectangles,31,100,29,1
+p4-dsi,present,TRIPLE_FULL,0,Multiple RGB images,27,100,32,1
+p4-dsi,present,TRIPLE_FULL,0,Multiple ARGB images,23,100,38,1
+p4-dsi,present,TRIPLE_FULL,0,Rotated ARGB images,26,100,34,1
+p4-dsi,present,TRIPLE_FULL,0,Multiple labels,35,100,25,1
+p4-dsi,present,TRIPLE_FULL,0,Screen sized text,24,100,37,1
+p4-dsi,present,TRIPLE_FULL,0,Multiple arcs,32,100,27,1
+p4-dsi,present,TRIPLE_FULL,0,Containers,24,100,37,1
+p4-dsi,present,TRIPLE_FULL,0,Containers with overlay,15,100,58,1
+p4-dsi,present,TRIPLE_FULL,0,Containers with opa,24,100,37,1
+p4-dsi,present,TRIPLE_FULL,0,Containers with opa_layer,14,100,64,0
+p4-dsi,present,TRIPLE_FULL,0,Containers with scrolling,18,100,51,1
+p4-dsi,present,TRIPLE_FULL,0,Widgets demo,20,100,73,1
+p4-dsi,present,TRIPLE_FULL,90,Empty screen,24,100,32,0
+p4-dsi,present,TRIPLE_FULL,90,Moving wallpaper,15,100,61,0
+p4-dsi,present,TRIPLE_FULL,90,Single rectangle,27,100,34,0
+p4-dsi,present,TRIPLE_FULL,90,Multiple rectangles,21,100,43,0
+p4-dsi,present,TRIPLE_FULL,90,Multiple RGB images,19,100,47,0
+p4-dsi,present,TRIPLE_FULL,90,Multiple ARGB images,17,100,54,0
+p4-dsi,present,TRIPLE_FULL,90,Rotated ARGB images,18,100,50,0
+p4-dsi,present,TRIPLE_FULL,90,Multiple labels,25,100,36,0
+p4-dsi,present,TRIPLE_FULL,90,Screen sized text,19,100,48,0
+p4-dsi,present,TRIPLE_FULL,90,Multiple arcs,23,100,38,0
+p4-dsi,present,TRIPLE_FULL,90,Containers,17,100,52,0
+p4-dsi,present,TRIPLE_FULL,90,Containers with overlay,12,100,74,0
+p4-dsi,present,TRIPLE_FULL,90,Containers with opa,17,100,52,0
+p4-dsi,present,TRIPLE_FULL,90,Containers with opa_layer,11,100,85,0
+p4-dsi,present,TRIPLE_FULL,90,Containers with scrolling,15,100,60,0
+p4-dsi,present,TRIPLE_FULL,90,Widgets demo,45,100,60,0
+p4-dsi,present,TRIPLE_FULL,180,Empty screen,24,100,32,0
+p4-dsi,present,TRIPLE_FULL,180,Moving wallpaper,14,100,64,0
+p4-dsi,present,TRIPLE_FULL,180,Single rectangle,27,100,34,0
+p4-dsi,present,TRIPLE_FULL,180,Multiple rectangles,22,100,41,0
+p4-dsi,present,TRIPLE_FULL,180,Multiple RGB images,21,100,43,0
+p4-dsi,present,TRIPLE_FULL,180,Multiple ARGB images,18,100,49,0
+p4-dsi,present,TRIPLE_FULL,180,Rotated ARGB images,19,100,46,0
+p4-dsi,present,TRIPLE_FULL,180,Multiple labels,25,100,37,0
+p4-dsi,present,TRIPLE_FULL,180,Screen sized text,18,100,50,0
+p4-dsi,present,TRIPLE_FULL,180,Multiple arcs,23,100,38,0
+p4-dsi,present,TRIPLE_FULL,180,Containers,18,100,49,0
+p4-dsi,present,TRIPLE_FULL,180,Containers with overlay,13,100,69,0
+p4-dsi,present,TRIPLE_FULL,180,Containers with opa,18,100,49,0
+p4-dsi,present,TRIPLE_FULL,180,Containers with opa_layer,12,100,75,0
+p4-dsi,present,TRIPLE_FULL,180,Containers with scrolling,14,100,63,0
+p4-dsi,present,TRIPLE_FULL,180,Widgets demo,20,100,81,0
+p4-dsi,present,TRIPLE_FULL,270,Empty screen,24,100,32,0
+p4-dsi,present,TRIPLE_FULL,270,Moving wallpaper,15,100,61,0
+p4-dsi,present,TRIPLE_FULL,270,Single rectangle,27,100,34,0
+p4-dsi,present,TRIPLE_FULL,270,Multiple rectangles,21,100,43,0
+p4-dsi,present,TRIPLE_FULL,270,Multiple RGB images,19,100,47,0
+p4-dsi,present,TRIPLE_FULL,270,Multiple ARGB images,16,100,54,0
+p4-dsi,present,TRIPLE_FULL,270,Rotated ARGB images,17,100,51,0
+p4-dsi,present,TRIPLE_FULL,270,Multiple labels,25,100,35,0
+p4-dsi,present,TRIPLE_FULL,270,Screen sized text,19,100,48,0
+p4-dsi,present,TRIPLE_FULL,270,Multiple arcs,23,100,38,0
+p4-dsi,present,TRIPLE_FULL,270,Containers,17,100,52,0
+p4-dsi,present,TRIPLE_FULL,270,Containers with overlay,12,100,75,0
+p4-dsi,present,TRIPLE_FULL,270,Containers with opa,17,100,52,0
+p4-dsi,present,TRIPLE_FULL,270,Containers with opa_layer,11,100,85,0
+p4-dsi,present,TRIPLE_FULL,270,Containers with scrolling,15,100,61,0
+p4-dsi,present,TRIPLE_FULL,270,Widgets demo,45,100,60,0
+p4-dsi,present,DOUBLE_DIRECT,0,Empty screen,26,100,19,1
+p4-dsi,present,DOUBLE_DIRECT,0,Moving wallpaper,14,100,51,1
+p4-dsi,present,DOUBLE_DIRECT,0,Single rectangle,61,100,1,0
+p4-dsi,present,DOUBLE_DIRECT,0,Multiple rectangles,57,100,11,1
+p4-dsi,present,DOUBLE_DIRECT,0,Multiple RGB images,30,100,17,0
+p4-dsi,present,DOUBLE_DIRECT,0,Multiple ARGB images,30,100,24,0
+p4-dsi,present,DOUBLE_DIRECT,0,Rotated ARGB images,29,100,20,0
+p4-dsi,present,DOUBLE_DIRECT,0,Multiple labels,30,100,17,1
+p4-dsi,present,DOUBLE_DIRECT,0,Screen sized text,20,100,37,1
+p4-dsi,present,DOUBLE_DIRECT,0,Multiple arcs,30,100,26,1
+p4-dsi,present,DOUBLE_DIRECT,0,Containers,58,100,8,0
+p4-dsi,present,DOUBLE_DIRECT,0,Containers with overlay,15,100,49,1
+p4-dsi,present,DOUBLE_DIRECT,0,Containers with opa,56,100,8,0
+p4-dsi,present,DOUBLE_DIRECT,0,Containers with opa_layer,23,100,32,0
+p4-dsi,present,DOUBLE_DIRECT,0,Containers with scrolling,14,100,51,1
+p4-dsi,present,DOUBLE_DIRECT,0,Widgets demo,23,100,51,1
+p4-dsi,present,DOUBLE_DIRECT,90,Empty screen,17,100,26,29
+p4-dsi,present,DOUBLE_DIRECT,90,Moving wallpaper,11,100,59,24
+p4-dsi,present,DOUBLE_DIRECT,90,Single rectangle,60,100,3,11
+p4-dsi,present,DOUBLE_DIRECT,90,Multiple rectangles,21,100,30,19
+p4-dsi,present,DOUBLE_DIRECT,90,Multiple RGB images,14,100,45,19
+p4-dsi,present,DOUBLE_DIRECT,90,Multiple ARGB images,9,100,69,22
+p4-dsi,present,DOUBLE_DIRECT,90,Rotated ARGB images,14,100,51,10
+p4-dsi,present,DOUBLE_DIRECT,90,Multiple labels,19,100,25,17
+p4-dsi,present,DOUBLE_DIRECT,90,Screen sized text,13,100,46,24
+p4-dsi,present,DOUBLE_DIRECT,90,Multiple arcs,15,100,34,24
+p4-dsi,present,DOUBLE_DIRECT,90,Containers,27,100,21,12
+p4-dsi,present,DOUBLE_DIRECT,90,Containers with overlay,12,100,52,21
+p4-dsi,present,DOUBLE_DIRECT,90,Containers with opa,28,100,22,10
+p4-dsi,present,DOUBLE_DIRECT,90,Containers with opa_layer,10,100,73,11
+p4-dsi,present,DOUBLE_DIRECT,90,Containers with scrolling,11,100,56,24
+p4-dsi,present,DOUBLE_DIRECT,90,Widgets demo,51,100,20,7
+p4-dsi,present,DOUBLE_DIRECT,180,Empty screen,17,100,27,28
+p4-dsi,present,DOUBLE_DIRECT,180,Moving wallpaper,11,100,62,24
+p4-dsi,present,DOUBLE_DIRECT,180,Single rectangle,58,100,3,11
+p4-dsi,present,DOUBLE_DIRECT,180,Multiple rectangles,20,100,24,24
+p4-dsi,present,DOUBLE_DIRECT,180,Multiple RGB images,18,100,28,19
+p4-dsi,present,DOUBLE_DIRECT,180,Multiple ARGB images,15,100,39,22
+p4-dsi,present,DOUBLE_DIRECT,180,Rotated ARGB images,28,100,25,6
+p4-dsi,present,DOUBLE_DIRECT,180,Multiple labels,20,100,32,14
+p4-dsi,present,DOUBLE_DIRECT,180,Screen sized text,13,100,48,24
+p4-dsi,present,DOUBLE_DIRECT,180,Multiple arcs,15,100,35,24
+p4-dsi,present,DOUBLE_DIRECT,180,Containers,54,100,10,5
+p4-dsi,present,DOUBLE_DIRECT,180,Containers with overlay,12,100,51,21
+p4-dsi,present,DOUBLE_DIRECT,180,Containers with opa,55,100,10,4
+p4-dsi,present,DOUBLE_DIRECT,180,Containers with opa_layer,22,100,36,8
+p4-dsi,present,DOUBLE_DIRECT,180,Containers with scrolling,11,100,61,24
+p4-dsi,present,DOUBLE_DIRECT,180,Widgets demo,22,100,52,17
+p4-dsi,present,DOUBLE_DIRECT,270,Empty screen,17,100,26,29
+p4-dsi,present,DOUBLE_DIRECT,270,Moving wallpaper,11,100,59,24
+p4-dsi,present,DOUBLE_DIRECT,270,Single rectangle,60,100,2,11
+p4-dsi,present,DOUBLE_DIRECT,270,Multiple rectangles,20,100,30,19
+p4-dsi,present,DOUBLE_DIRECT,270,Multiple RGB images,14,100,46,18
+p4-dsi,present,DOUBLE_DIRECT,270,Multiple ARGB images,10,100,69,22
+p4-dsi,present,DOUBLE_DIRECT,270,Rotated ARGB images,14,100,52,10
+p4-dsi,present,DOUBLE_DIRECT,270,Multiple labels,19,100,25,16
+p4-dsi,present,DOUBLE_DIRECT,270,Screen sized text,13,100,46,24
+p4-dsi,present,DOUBLE_DIRECT,270,Multiple arcs,15,100,35,24
+p4-dsi,present,DOUBLE_DIRECT,270,Containers,31,100,19,10
+p4-dsi,present,DOUBLE_DIRECT,270,Containers with overlay,12,100,52,21
+p4-dsi,present,DOUBLE_DIRECT,270,Containers with opa,28,100,21,9
+p4-dsi,present,DOUBLE_DIRECT,270,Containers with opa_layer,10,100,74,11
+p4-dsi,present,DOUBLE_DIRECT,270,Containers with scrolling,11,100,56,24
+p4-dsi,present,DOUBLE_DIRECT,270,Widgets demo,50,100,22,8
+p4-dsi,present,DOUBLE_PARTIAL,0,Empty screen,53,100,3,12
+p4-dsi,present,DOUBLE_PARTIAL,0,Moving wallpaper,60,100,9,6
+p4-dsi,present,DOUBLE_PARTIAL,0,Single rectangle,61,100,0,13
+p4-dsi,present,DOUBLE_PARTIAL,0,Multiple rectangles,60,100,2,12
+p4-dsi,present,DOUBLE_PARTIAL,0,Multiple RGB images,60,100,1,12
+p4-dsi,present,DOUBLE_PARTIAL,0,Multiple ARGB images,59,100,6,7
+p4-dsi,present,DOUBLE_PARTIAL,0,Rotated ARGB images,39,100,12,10
+p4-dsi,present,DOUBLE_PARTIAL,0,Multiple labels,60,100,6,6
+p4-dsi,present,DOUBLE_PARTIAL,0,Screen sized text,17,100,45,12
+p4-dsi,present,DOUBLE_PARTIAL,0,Multiple arcs,41,100,10,13
+p4-dsi,present,DOUBLE_PARTIAL,0,Containers,66,100,2,0
+p4-dsi,present,DOUBLE_PARTIAL,0,Containers with overlay,30,100,19,10
+p4-dsi,present,DOUBLE_PARTIAL,0,Containers with opa,66,100,2,1
+p4-dsi,present,DOUBLE_PARTIAL,0,Containers with opa_layer,41,100,16,7
+p4-dsi,present,DOUBLE_PARTIAL,0,Containers with scrolling,30,100,20,11
+p4-dsi,present,DOUBLE_PARTIAL,0,Widgets demo,26,100,40,7
+p4-dsi,present,DOUBLE_PARTIAL,90,Empty screen,53,100,4,11
+p4-dsi,present,DOUBLE_PARTIAL,90,Moving wallpaper,30,100,12,18
+p4-dsi,present,DOUBLE_PARTIAL,90,Single rectangle,61,100,0,12
+p4-dsi,present,DOUBLE_PARTIAL,90,Multiple rectangles,60,100,2,11
+p4-dsi,present,DOUBLE_PARTIAL,90,Multiple RGB images,60,100,2,10
+p4-dsi,present,DOUBLE_PARTIAL,90,Multiple ARGB images,30,100,12,16
+p4-dsi,present,DOUBLE_PARTIAL,90,Rotated ARGB images,30,100,15,14
+p4-dsi,present,DOUBLE_PARTIAL,90,Multiple labels,41,100,8,8
+p4-dsi,present,DOUBLE_PARTIAL,90,Screen sized text,11,100,70,16
+p4-dsi,present,DOUBLE_PARTIAL,90,Multiple arcs,30,100,13,17
+p4-dsi,present,DOUBLE_PARTIAL,90,Containers,62,100,3,5
+p4-dsi,present,DOUBLE_PARTIAL,90,Containers with overlay,20,100,25,21
+p4-dsi,present,DOUBLE_PARTIAL,90,Containers with opa,63,100,4,4
+p4-dsi,present,DOUBLE_PARTIAL,90,Containers with opa_layer,19,100,32,14
+p4-dsi,present,DOUBLE_PARTIAL,90,Containers with scrolling,23,100,21,19
+p4-dsi,present,DOUBLE_PARTIAL,90,Widgets demo,51,100,16,4
+p4-dsi,present,DOUBLE_PARTIAL,180,Empty screen,53,100,3,12
+p4-dsi,present,DOUBLE_PARTIAL,180,Moving wallpaper,30,100,9,21
+p4-dsi,present,DOUBLE_PARTIAL,180,Single rectangle,61,100,0,12
+p4-dsi,present,DOUBLE_PARTIAL,180,Multiple rectangles,60,100,2,11
+p4-dsi,present,DOUBLE_PARTIAL,180,Multiple RGB images,60,100,1,11
+p4-dsi,present,DOUBLE_PARTIAL,180,Multiple ARGB images,44,100,8,12
+p4-dsi,present,DOUBLE_PARTIAL,180,Rotated ARGB images,41,100,12,9
+p4-dsi,present,DOUBLE_PARTIAL,180,Multiple labels,59,100,6,6
+p4-dsi,present,DOUBLE_PARTIAL,180,Screen sized text,16,100,45,14
+p4-dsi,present,DOUBLE_PARTIAL,180,Multiple arcs,30,100,10,20
+p4-dsi,present,DOUBLE_PARTIAL,180,Containers,65,100,2,1
+p4-dsi,present,DOUBLE_PARTIAL,180,Containers with overlay,30,100,19,10
+p4-dsi,present,DOUBLE_PARTIAL,180,Containers with opa,66,100,3,1
+p4-dsi,present,DOUBLE_PARTIAL,180,Containers with opa_layer,42,100,14,7
+p4-dsi,present,DOUBLE_PARTIAL,180,Containers with scrolling,29,100,20,11
+p4-dsi,present,DOUBLE_PARTIAL,180,Widgets demo,24,100,41,12
+p4-dsi,present,DOUBLE_PARTIAL,270,Empty screen,53,100,4,11
+p4-dsi,present,DOUBLE_PARTIAL,270,Moving wallpaper,30,100,12,18
+p4-dsi,present,DOUBLE_PARTIAL,270,Single rectangle,61,100,0,13
+p4-dsi,present,DOUBLE_PARTIAL,270,Multiple rectangles,60,100,3,11
+p4-dsi,present,DOUBLE_PARTIAL,270,Multiple RGB images,60,100,1,10
+p4-dsi,present,DOUBLE_PARTIAL,270,Multiple ARGB images,29,100,13,16
+p4-dsi,present,DOUBLE_PARTIAL,270,Rotated ARGB images,30,100,15,14
+p4-dsi,present,DOUBLE_PARTIAL,270,Multiple labels,41,100,8,8
+p4-dsi,present,DOUBLE_PARTIAL,270,Screen sized text,10,100,71,16
+p4-dsi,present,DOUBLE_PARTIAL,270,Multiple arcs,30,100,12,17
+p4-dsi,present,DOUBLE_PARTIAL,270,Containers,64,100,3,4
+p4-dsi,present,DOUBLE_PARTIAL,270,Containers with overlay,20,100,25,21
+p4-dsi,present,DOUBLE_PARTIAL,270,Containers with opa,63,100,4,4
+p4-dsi,present,DOUBLE_PARTIAL,270,Containers with opa_layer,19,100,32,15
+p4-dsi,present,DOUBLE_PARTIAL,270,Containers with scrolling,23,100,21,18
+p4-dsi,present,DOUBLE_PARTIAL,270,Widgets demo,51,100,17,4
+p4-dsi,present,TRIPLE_PARTIAL,0,Empty screen,53,100,3,11
+p4-dsi,present,TRIPLE_PARTIAL,0,Moving wallpaper,60,100,8,6
+p4-dsi,present,TRIPLE_PARTIAL,0,Single rectangle,61,100,0,13
+p4-dsi,present,TRIPLE_PARTIAL,0,Multiple rectangles,60,100,2,11
+p4-dsi,present,TRIPLE_PARTIAL,0,Multiple RGB images,61,100,1,10
+p4-dsi,present,TRIPLE_PARTIAL,0,Multiple ARGB images,60,100,5,6
+p4-dsi,present,TRIPLE_PARTIAL,0,Rotated ARGB images,62,100,8,1
+p4-dsi,present,TRIPLE_PARTIAL,0,Multiple labels,60,100,6,6
+p4-dsi,present,TRIPLE_PARTIAL,0,Screen sized text,19,100,45,4
+p4-dsi,present,TRIPLE_PARTIAL,0,Multiple arcs,56,100,10,4
+p4-dsi,present,TRIPLE_PARTIAL,0,Containers,66,100,2,0
+p4-dsi,present,TRIPLE_PARTIAL,0,Containers with overlay,37,100,19,5
+p4-dsi,present,TRIPLE_PARTIAL,0,Containers with opa,66,100,2,0
+p4-dsi,present,TRIPLE_PARTIAL,0,Containers with opa_layer,55,100,13,1
+p4-dsi,present,TRIPLE_PARTIAL,0,Containers with scrolling,37,100,19,5
+p4-dsi,present,TRIPLE_PARTIAL,0,Widgets demo,26,100,40,3
+p4-dsi,present,TRIPLE_PARTIAL,90,Empty screen,53,100,4,10
+p4-dsi,present,TRIPLE_PARTIAL,90,Moving wallpaper,40,100,13,9
+p4-dsi,present,TRIPLE_PARTIAL,90,Single rectangle,60,100,0,13
+p4-dsi,present,TRIPLE_PARTIAL,90,Multiple rectangles,60,100,3,10
+p4-dsi,present,TRIPLE_PARTIAL,90,Multiple RGB images,60,100,1,11
+p4-dsi,present,TRIPLE_PARTIAL,90,Multiple ARGB images,51,100,9,6
+p4-dsi,present,TRIPLE_PARTIAL,90,Rotated ARGB images,58,100,11,2
+p4-dsi,present,TRIPLE_PARTIAL,90,Multiple labels,56,100,10,0
+p4-dsi,present,TRIPLE_PARTIAL,90,Screen sized text,12,100,68,9
+p4-dsi,present,TRIPLE_PARTIAL,90,Multiple arcs,40,100,12,9
+p4-dsi,present,TRIPLE_PARTIAL,90,Containers,66,100,2,1
+p4-dsi,present,TRIPLE_PARTIAL,90,Containers with overlay,25,100,25,10
+p4-dsi,present,TRIPLE_PARTIAL,90,Containers with opa,65,100,4,1
+p4-dsi,present,TRIPLE_PARTIAL,90,Containers with opa_layer,31,100,24,6
+p4-dsi,present,TRIPLE_PARTIAL,90,Containers with scrolling,29,100,22,10
+p4-dsi,present,TRIPLE_PARTIAL,90,Widgets demo,52,100,17,2
+p4-dsi,present,TRIPLE_PARTIAL,180,Empty screen,53,100,3,11
+p4-dsi,present,TRIPLE_PARTIAL,180,Moving wallpaper,52,100,8,8
+p4-dsi,present,TRIPLE_PARTIAL,180,Single rectangle,61,100,0,13
+p4-dsi,present,TRIPLE_PARTIAL,180,Multiple rectangles,60,100,2,11
+p4-dsi,present,TRIPLE_PARTIAL,180,Multiple RGB images,61,100,1,10
+p4-dsi,present,TRIPLE_PARTIAL,180,Multiple ARGB images,61,100,6,5
+p4-dsi,present,TRIPLE_PARTIAL,180,Rotated ARGB images,62,100,8,2
+p4-dsi,present,TRIPLE_PARTIAL,180,Multiple labels,60,100,6,6
+p4-dsi,present,TRIPLE_PARTIAL,180,Screen sized text,17,100,46,7
+p4-dsi,present,TRIPLE_PARTIAL,180,Multiple arcs,48,100,10,8
+p4-dsi,present,TRIPLE_PARTIAL,180,Containers,66,100,2,0
+p4-dsi,present,TRIPLE_PARTIAL,180,Containers with overlay,33,100,19,7
+p4-dsi,present,TRIPLE_PARTIAL,180,Containers with opa,66,100,3,0
+p4-dsi,present,TRIPLE_PARTIAL,180,Containers with opa_layer,55,100,13,2
+p4-dsi,present,TRIPLE_PARTIAL,180,Containers with scrolling,32,100,20,8
+p4-dsi,present,TRIPLE_PARTIAL,180,Widgets demo,26,100,41,5
+p4-dsi,present,TRIPLE_PARTIAL,270,Empty screen,53,100,4,10
+p4-dsi,present,TRIPLE_PARTIAL,270,Moving wallpaper,41,100,15,7
+p4-dsi,present,TRIPLE_PARTIAL,270,Single rectangle,60,100,0,14
+p4-dsi,present,TRIPLE_PARTIAL,270,Multiple rectangles,60,100,3,10
+p4-dsi,present,TRIPLE_PARTIAL,270,Multiple RGB images,62,100,1,9
+p4-dsi,present,TRIPLE_PARTIAL,270,Multiple ARGB images,51,100,9,6
+p4-dsi,present,TRIPLE_PARTIAL,270,Rotated ARGB images,60,100,10,2
+p4-dsi,present,TRIPLE_PARTIAL,270,Multiple labels,57,100,10,0
+p4-dsi,present,TRIPLE_PARTIAL,270,Screen sized text,12,100,69,9
+p4-dsi,present,TRIPLE_PARTIAL,270,Multiple arcs,40,100,12,9
+p4-dsi,present,TRIPLE_PARTIAL,270,Containers,66,100,2,1
+p4-dsi,present,TRIPLE_PARTIAL,270,Containers with overlay,25,100,25,10
+p4-dsi,present,TRIPLE_PARTIAL,270,Containers with opa,65,100,3,1
+p4-dsi,present,TRIPLE_PARTIAL,270,Containers with opa_layer,31,100,24,6
+p4-dsi,present,TRIPLE_PARTIAL,270,Containers with scrolling,29,100,21,10
+p4-dsi,present,TRIPLE_PARTIAL,270,Widgets demo,52,100,16,2
+p4-dsi,present,AUTO,0,Empty screen,53,100,3,11
+p4-dsi,present,AUTO,0,Moving wallpaper,60,100,9,6
+p4-dsi,present,AUTO,0,Single rectangle,61,100,0,13
+p4-dsi,present,AUTO,0,Multiple rectangles,60,100,2,12
+p4-dsi,present,AUTO,0,Multiple RGB images,60,100,1,11
+p4-dsi,present,AUTO,0,Multiple ARGB images,61,100,5,6
+p4-dsi,present,AUTO,0,Rotated ARGB images,64,100,8,1
+p4-dsi,present,AUTO,0,Multiple labels,60,100,6,6
+p4-dsi,present,AUTO,0,Screen sized text,19,100,46,4
+p4-dsi,present,AUTO,0,Multiple arcs,56,100,10,4
+p4-dsi,present,AUTO,0,Containers,66,100,2,0
+p4-dsi,present,AUTO,0,Containers with overlay,37,100,19,4
+p4-dsi,present,AUTO,0,Containers with opa,66,100,2,0
+p4-dsi,present,AUTO,0,Containers with opa_layer,57,100,12,1
+p4-dsi,present,AUTO,0,Containers with scrolling,37,100,19,5
+p4-dsi,present,AUTO,0,Widgets demo,27,100,40,3
+p4-dsi,present,AUTO,90,Empty screen,53,100,4,10
+p4-dsi,present,AUTO,90,Moving wallpaper,41,100,13,9
+p4-dsi,present,AUTO,90,Single rectangle,61,100,0,12
+p4-dsi,present,AUTO,90,Multiple rectangles,61,100,3,10
+p4-dsi,present,AUTO,90,Multiple RGB images,61,100,2,9
+p4-dsi,present,AUTO,90,Multiple ARGB images,51,100,9,6
+p4-dsi,present,AUTO,90,Rotated ARGB images,56,100,11,2
+p4-dsi,present,AUTO,90,Multiple labels,57,100,10,0
+p4-dsi,present,AUTO,90,Screen sized text,12,100,69,9
+p4-dsi,present,AUTO,90,Multiple arcs,40,100,12,10
+p4-dsi,present,AUTO,90,Containers,65,100,2,1
+p4-dsi,present,AUTO,90,Containers with overlay,25,100,25,10
+p4-dsi,present,AUTO,90,Containers with opa,66,100,3,1
+p4-dsi,present,AUTO,90,Containers with opa_layer,30,100,24,6
+p4-dsi,present,AUTO,90,Containers with scrolling,29,100,22,10
+p4-dsi,present,AUTO,90,Widgets demo,52,100,17,2
+p4-dsi,present,AUTO,180,Empty screen,53,100,3,11
+p4-dsi,present,AUTO,180,Moving wallpaper,52,100,9,8
+p4-dsi,present,AUTO,180,Single rectangle,61,100,0,12
+p4-dsi,present,AUTO,180,Multiple rectangles,60,100,2,11
+p4-dsi,present,AUTO,180,Multiple RGB images,60,100,1,11
+p4-dsi,present,AUTO,180,Multiple ARGB images,62,100,6,5
+p4-dsi,present,AUTO,180,Rotated ARGB images,62,100,8,2
+p4-dsi,present,AUTO,180,Multiple labels,60,100,6,6
+p4-dsi,present,AUTO,180,Screen sized text,18,100,46,7
+p4-dsi,present,AUTO,180,Multiple arcs,48,100,9,8
+p4-dsi,present,AUTO,180,Containers,66,100,2,0
+p4-dsi,present,AUTO,180,Containers with overlay,33,100,19,8
+p4-dsi,present,AUTO,180,Containers with opa,66,100,3,0
+p4-dsi,present,AUTO,180,Containers with opa_layer,54,100,13,2
+p4-dsi,present,AUTO,180,Containers with scrolling,32,100,20,8
+p4-dsi,present,AUTO,180,Widgets demo,26,100,41,5
+p4-dsi,present,AUTO,270,Empty screen,53,100,4,11
+p4-dsi,present,AUTO,270,Moving wallpaper,41,100,13,8
+p4-dsi,present,AUTO,270,Single rectangle,61,100,0,13
+p4-dsi,present,AUTO,270,Multiple rectangles,61,100,3,10
+p4-dsi,present,AUTO,270,Multiple RGB images,62,100,2,9
+p4-dsi,present,AUTO,270,Multiple ARGB images,50,100,9,6
+p4-dsi,present,AUTO,270,Rotated ARGB images,58,100,11,2
+p4-dsi,present,AUTO,270,Multiple labels,57,100,10,0
+p4-dsi,present,AUTO,270,Screen sized text,12,100,68,9
+p4-dsi,present,AUTO,270,Multiple arcs,40,100,12,9
+p4-dsi,present,AUTO,270,Containers,66,100,2,1
+p4-dsi,present,AUTO,270,Containers with overlay,25,100,25,10
+p4-dsi,present,AUTO,270,Containers with opa,66,100,3,1
+p4-dsi,present,AUTO,270,Containers with opa_layer,30,100,24,6
+p4-dsi,present,AUTO,270,Containers with scrolling,29,100,21,10
+p4-dsi,present,AUTO,270,Widgets demo,52,100,16,2
+p4-dsi,adapter,DOUBLE_FULL,0,Empty screen,29,100,19,12
+p4-dsi,adapter,DOUBLE_FULL,0,Moving wallpaper,15,100,53,10
+p4-dsi,adapter,DOUBLE_FULL,0,Single rectangle,30,100,20,10
+p4-dsi,adapter,DOUBLE_FULL,0,Multiple rectangles,30,100,28,3
+p4-dsi,adapter,DOUBLE_FULL,0,Multiple RGB images,20,100,31,15
+p4-dsi,adapter,DOUBLE_FULL,0,Multiple ARGB images,20,100,38,8
+p4-dsi,adapter,DOUBLE_FULL,0,Rotated ARGB images,20,100,33,13
+p4-dsi,adapter,DOUBLE_FULL,0,Multiple labels,29,100,24,6
+p4-dsi,adapter,DOUBLE_FULL,0,Screen sized text,20,100,38,9
+p4-dsi,adapter,DOUBLE_FULL,0,Multiple arcs,30,100,26,4
+p4-dsi,adapter,DOUBLE_FULL,0,Containers,20,100,36,9
+p4-dsi,adapter,DOUBLE_FULL,0,Containers with overlay,15,100,57,5
+p4-dsi,adapter,DOUBLE_FULL,0,Containers with opa,20,100,37,9
+p4-dsi,adapter,DOUBLE_FULL,0,Containers with opa_layer,12,100,64,14
+p4-dsi,adapter,DOUBLE_FULL,0,Containers with scrolling,15,100,52,12
+p4-dsi,adapter,DOUBLE_FULL,0,Widgets demo,20,100,73,10
+p4-dsi,adapter,DOUBLE_FULL,90,Empty screen,17,100,19,29
+p4-dsi,adapter,DOUBLE_FULL,90,Moving wallpaper,13,100,49,19
+p4-dsi,adapter,DOUBLE_FULL,90,Single rectangle,20,100,20,28
+p4-dsi,adapter,DOUBLE_FULL,90,Multiple rectangles,20,100,30,18
+p4-dsi,adapter,DOUBLE_FULL,90,Multiple RGB images,17,100,33,21
+p4-dsi,adapter,DOUBLE_FULL,90,Multiple ARGB images,15,100,40,23
+p4-dsi,adapter,DOUBLE_FULL,90,Rotated ARGB images,15,100,37,26
+p4-dsi,adapter,DOUBLE_FULL,90,Multiple labels,20,100,22,25
+p4-dsi,adapter,DOUBLE_FULL,90,Screen sized text,15,100,35,28
+p4-dsi,adapter,DOUBLE_FULL,90,Multiple arcs,20,100,25,22
+p4-dsi,adapter,DOUBLE_FULL,90,Containers,14,100,40,23
+p4-dsi,adapter,DOUBLE_FULL,90,Containers with overlay,12,100,62,17
+p4-dsi,adapter,DOUBLE_FULL,90,Containers with opa,15,100,40,23
+p4-dsi,adapter,DOUBLE_FULL,90,Containers with opa_layer,10,100,74,22
+p4-dsi,adapter,DOUBLE_FULL,90,Containers with scrolling,14,100,48,16
+p4-dsi,adapter,DOUBLE_FULL,90,Widgets demo,43,100,57,18
+p4-dsi,adapter,DOUBLE_FULL,180,Empty screen,17,100,19,29
+p4-dsi,adapter,DOUBLE_FULL,180,Moving wallpaper,12,100,52,26
+p4-dsi,adapter,DOUBLE_FULL,180,Single rectangle,20,100,20,28
+p4-dsi,adapter,DOUBLE_FULL,180,Multiple rectangles,20,100,28,19
+p4-dsi,adapter,DOUBLE_FULL,180,Multiple RGB images,20,100,30,16
+p4-dsi,adapter,DOUBLE_FULL,180,Multiple ARGB images,15,100,36,26
+p4-dsi,adapter,DOUBLE_FULL,180,Rotated ARGB images,17,100,33,20
+p4-dsi,adapter,DOUBLE_FULL,180,Multiple labels,20,100,24,24
+p4-dsi,adapter,DOUBLE_FULL,180,Screen sized text,15,100,37,26
+p4-dsi,adapter,DOUBLE_FULL,180,Multiple arcs,20,100,25,21
+p4-dsi,adapter,DOUBLE_FULL,180,Containers,15,100,36,27
+p4-dsi,adapter,DOUBLE_FULL,180,Containers with overlay,12,100,56,23
+p4-dsi,adapter,DOUBLE_FULL,180,Containers with opa,15,100,36,27
+p4-dsi,adapter,DOUBLE_FULL,180,Containers with opa_layer,11,100,64,16
+p4-dsi,adapter,DOUBLE_FULL,180,Containers with scrolling,13,100,50,20
+p4-dsi,adapter,DOUBLE_FULL,180,Widgets demo,19,100,73,19
+p4-dsi,adapter,DOUBLE_FULL,270,Empty screen,17,100,18,29
+p4-dsi,adapter,DOUBLE_FULL,270,Moving wallpaper,13,100,49,19
+p4-dsi,adapter,DOUBLE_FULL,270,Single rectangle,20,100,20,28
+p4-dsi,adapter,DOUBLE_FULL,270,Multiple rectangles,20,100,29,18
+p4-dsi,adapter,DOUBLE_FULL,270,Multiple RGB images,17,100,33,21
+p4-dsi,adapter,DOUBLE_FULL,270,Multiple ARGB images,15,100,39,23
+p4-dsi,adapter,DOUBLE_FULL,270,Rotated ARGB images,15,100,38,26
+p4-dsi,adapter,DOUBLE_FULL,270,Multiple labels,20,100,23,25
+p4-dsi,adapter,DOUBLE_FULL,270,Screen sized text,15,100,35,28
+p4-dsi,adapter,DOUBLE_FULL,270,Multiple arcs,20,100,25,22
+p4-dsi,adapter,DOUBLE_FULL,270,Containers,15,100,40,23
+p4-dsi,adapter,DOUBLE_FULL,270,Containers with overlay,12,100,63,16
+p4-dsi,adapter,DOUBLE_FULL,270,Containers with opa,15,100,40,23
+p4-dsi,adapter,DOUBLE_FULL,270,Containers with opa_layer,9,100,74,22
+p4-dsi,adapter,DOUBLE_FULL,270,Containers with scrolling,14,100,48,16
+p4-dsi,adapter,DOUBLE_FULL,270,Widgets demo,43,100,57,19
+p4-dsi,adapter,TRIPLE_FULL,0,Empty screen,40,100,19,0
+p4-dsi,adapter,TRIPLE_FULL,0,Moving wallpaper,18,100,49,0
+p4-dsi,adapter,TRIPLE_FULL,0,Single rectangle,43,100,20,0
+p4-dsi,adapter,TRIPLE_FULL,0,Multiple rectangles,32,100,28,0
+p4-dsi,adapter,TRIPLE_FULL,0,Multiple RGB images,29,100,30,0
+p4-dsi,adapter,TRIPLE_FULL,0,Multiple ARGB images,24,100,37,0
+p4-dsi,adapter,TRIPLE_FULL,0,Rotated ARGB images,27,100,32,0
+p4-dsi,adapter,TRIPLE_FULL,0,Multiple labels,37,100,24,0
+p4-dsi,adapter,TRIPLE_FULL,0,Screen sized text,24,100,37,0
+p4-dsi,adapter,TRIPLE_FULL,0,Multiple arcs,34,100,26,0
+p4-dsi,adapter,TRIPLE_FULL,0,Containers,24,100,36,0
+p4-dsi,adapter,TRIPLE_FULL,0,Containers with overlay,16,100,56,0
+p4-dsi,adapter,TRIPLE_FULL,0,Containers with opa,24,100,36,0
+p4-dsi,adapter,TRIPLE_FULL,0,Containers with opa_layer,14,100,64,0
+p4-dsi,adapter,TRIPLE_FULL,0,Containers with scrolling,18,100,50,0
+p4-dsi,adapter,TRIPLE_FULL,0,Widgets demo,20,100,72,0
+p4-dsi,adapter,TRIPLE_FULL,90,Empty screen,17,100,18,29
+p4-dsi,adapter,TRIPLE_FULL,90,Moving wallpaper,13,100,49,19
+p4-dsi,adapter,TRIPLE_FULL,90,Single rectangle,20,100,20,28
+p4-dsi,adapter,TRIPLE_FULL,90,Multiple rectangles,20,100,30,18
+p4-dsi,adapter,TRIPLE_FULL,90,Multiple RGB images,16,100,33,23
+p4-dsi,adapter,TRIPLE_FULL,90,Multiple ARGB images,15,100,40,23
+p4-dsi,adapter,TRIPLE_FULL,90,Rotated ARGB images,15,100,38,25
+p4-dsi,adapter,TRIPLE_FULL,90,Multiple labels,20,100,23,25
+p4-dsi,adapter,TRIPLE_FULL,90,Screen sized text,15,100,35,29
+p4-dsi,adapter,TRIPLE_FULL,90,Multiple arcs,20,100,24,22
+p4-dsi,adapter,TRIPLE_FULL,90,Containers,15,100,40,23
+p4-dsi,adapter,TRIPLE_FULL,90,Containers with overlay,11,100,62,17
+p4-dsi,adapter,TRIPLE_FULL,90,Containers with opa,15,100,40,23
+p4-dsi,adapter,TRIPLE_FULL,90,Containers with opa_layer,10,100,74,22
+p4-dsi,adapter,TRIPLE_FULL,90,Containers with scrolling,15,100,47,16
+p4-dsi,adapter,TRIPLE_FULL,90,Widgets demo,43,100,57,18
+p4-dsi,adapter,TRIPLE_FULL,180,Empty screen,17,100,19,29
+p4-dsi,adapter,TRIPLE_FULL,180,Moving wallpaper,12,100,52,26
+p4-dsi,adapter,TRIPLE_FULL,180,Single rectangle,20,100,20,28
+p4-dsi,adapter,TRIPLE_FULL,180,Multiple rectangles,20,100,28,19
+p4-dsi,adapter,TRIPLE_FULL,180,Multiple RGB images,20,100,30,16
+p4-dsi,adapter,TRIPLE_FULL,180,Multiple ARGB images,15,100,36,27
+p4-dsi,adapter,TRIPLE_FULL,180,Rotated ARGB images,18,100,33,18
+p4-dsi,adapter,TRIPLE_FULL,180,Multiple labels,20,100,24,24
+p4-dsi,adapter,TRIPLE_FULL,180,Screen sized text,15,100,37,26
+p4-dsi,adapter,TRIPLE_FULL,180,Multiple arcs,20,100,25,21
+p4-dsi,adapter,TRIPLE_FULL,180,Containers,15,100,36,27
+p4-dsi,adapter,TRIPLE_FULL,180,Containers with overlay,11,100,56,23
+p4-dsi,adapter,TRIPLE_FULL,180,Containers with opa,15,100,36,27
+p4-dsi,adapter,TRIPLE_FULL,180,Containers with opa_layer,11,100,64,16
+p4-dsi,adapter,TRIPLE_FULL,180,Containers with scrolling,13,100,50,19
+p4-dsi,adapter,TRIPLE_FULL,180,Widgets demo,18,100,73,20
+p4-dsi,adapter,TRIPLE_FULL,270,Empty screen,17,100,18,29
+p4-dsi,adapter,TRIPLE_FULL,270,Moving wallpaper,13,100,49,20
+p4-dsi,adapter,TRIPLE_FULL,270,Single rectangle,20,100,20,28
+p4-dsi,adapter,TRIPLE_FULL,270,Multiple rectangles,20,100,30,18
+p4-dsi,adapter,TRIPLE_FULL,270,Multiple RGB images,16,100,33,23
+p4-dsi,adapter,TRIPLE_FULL,270,Multiple ARGB images,15,100,40,23
+p4-dsi,adapter,TRIPLE_FULL,270,Rotated ARGB images,15,100,39,25
+p4-dsi,adapter,TRIPLE_FULL,270,Multiple labels,20,100,23,25
+p4-dsi,adapter,TRIPLE_FULL,270,Screen sized text,15,100,35,29
+p4-dsi,adapter,TRIPLE_FULL,270,Multiple arcs,20,100,25,22
+p4-dsi,adapter,TRIPLE_FULL,270,Containers,15,100,40,23
+p4-dsi,adapter,TRIPLE_FULL,270,Containers with overlay,12,100,62,16
+p4-dsi,adapter,TRIPLE_FULL,270,Containers with opa,15,100,40,22
+p4-dsi,adapter,TRIPLE_FULL,270,Containers with opa_layer,9,100,75,21
+p4-dsi,adapter,TRIPLE_FULL,270,Containers with scrolling,14,100,47,16
+p4-dsi,adapter,TRIPLE_FULL,270,Widgets demo,43,100,57,18
+p4-dsi,adapter,DOUBLE_DIRECT,0,Empty screen,26,100,19,11
+p4-dsi,adapter,DOUBLE_DIRECT,0,Moving wallpaper,15,100,49,13
+p4-dsi,adapter,DOUBLE_DIRECT,0,Single rectangle,60,100,2,12
+p4-dsi,adapter,DOUBLE_DIRECT,0,Multiple rectangles,54,100,11,3
+p4-dsi,adapter,DOUBLE_DIRECT,0,Multiple RGB images,30,100,16,12
+p4-dsi,adapter,DOUBLE_DIRECT,0,Multiple ARGB images,28,100,24,6
+p4-dsi,adapter,DOUBLE_DIRECT,0,Rotated ARGB images,29,100,20,9
+p4-dsi,adapter,DOUBLE_DIRECT,0,Multiple labels,30,100,18,11
+p4-dsi,adapter,DOUBLE_DIRECT,0,Screen sized text,20,100,37,9
+p4-dsi,adapter,DOUBLE_DIRECT,0,Multiple arcs,30,100,26,3
+p4-dsi,adapter,DOUBLE_DIRECT,0,Containers,53,100,8,7
+p4-dsi,adapter,DOUBLE_DIRECT,0,Containers with overlay,15,100,49,6
+p4-dsi,adapter,DOUBLE_DIRECT,0,Containers with opa,51,100,9,7
+p4-dsi,adapter,DOUBLE_DIRECT,0,Containers with opa_layer,23,100,30,6
+p4-dsi,adapter,DOUBLE_DIRECT,0,Containers with scrolling,15,100,51,12
+p4-dsi,adapter,DOUBLE_DIRECT,0,Widgets demo,22,100,51,10
+p4-dsi,adapter,DOUBLE_DIRECT,90,Empty screen,17,100,18,29
+p4-dsi,adapter,DOUBLE_DIRECT,90,Moving wallpaper,12,100,48,31
+p4-dsi,adapter,DOUBLE_DIRECT,90,Single rectangle,60,100,1,14
+p4-dsi,adapter,DOUBLE_DIRECT,90,Multiple rectangles,20,100,19,28
+p4-dsi,adapter,DOUBLE_DIRECT,90,Multiple RGB images,27,100,16,16
+p4-dsi,adapter,DOUBLE_DIRECT,90,Multiple ARGB images,19,100,33,16
+p4-dsi,adapter,DOUBLE_DIRECT,90,Rotated ARGB images,19,100,37,12
+p4-dsi,adapter,DOUBLE_DIRECT,90,Multiple labels,30,100,11,20
+p4-dsi,adapter,DOUBLE_DIRECT,90,Screen sized text,15,100,35,29
+p4-dsi,adapter,DOUBLE_DIRECT,90,Multiple arcs,15,100,24,38
+p4-dsi,adapter,DOUBLE_DIRECT,90,Containers,32,100,14,13
+p4-dsi,adapter,DOUBLE_DIRECT,90,Containers with overlay,12,100,49,24
+p4-dsi,adapter,DOUBLE_DIRECT,90,Containers with opa,29,100,17,14
+p4-dsi,adapter,DOUBLE_DIRECT,90,Containers with opa_layer,11,100,67,13
+p4-dsi,adapter,DOUBLE_DIRECT,90,Containers with scrolling,12,100,47,33
+p4-dsi,adapter,DOUBLE_DIRECT,90,Widgets demo,51,100,17,14
+p4-dsi,adapter,DOUBLE_DIRECT,180,Empty screen,17,100,19,29
+p4-dsi,adapter,DOUBLE_DIRECT,180,Moving wallpaper,11,100,51,29
+p4-dsi,adapter,DOUBLE_DIRECT,180,Single rectangle,58,100,1,14
+p4-dsi,adapter,DOUBLE_DIRECT,180,Multiple rectangles,27,100,11,22
+p4-dsi,adapter,DOUBLE_DIRECT,180,Multiple RGB images,28,100,17,15
+p4-dsi,adapter,DOUBLE_DIRECT,180,Multiple ARGB images,20,100,25,21
+p4-dsi,adapter,DOUBLE_DIRECT,180,Rotated ARGB images,28,100,20,11
+p4-dsi,adapter,DOUBLE_DIRECT,180,Multiple labels,20,100,18,29
+p4-dsi,adapter,DOUBLE_DIRECT,180,Screen sized text,13,100,37,30
+p4-dsi,adapter,DOUBLE_DIRECT,180,Multiple arcs,15,100,25,38
+p4-dsi,adapter,DOUBLE_DIRECT,180,Containers,53,100,8,10
+p4-dsi,adapter,DOUBLE_DIRECT,180,Containers with overlay,13,100,43,27
+p4-dsi,adapter,DOUBLE_DIRECT,180,Containers with opa,50,100,9,10
+p4-dsi,adapter,DOUBLE_DIRECT,180,Containers with opa_layer,22,100,31,11
+p4-dsi,adapter,DOUBLE_DIRECT,180,Containers with scrolling,11,100,50,30
+p4-dsi,adapter,DOUBLE_DIRECT,180,Widgets demo,22,100,50,26
+p4-dsi,adapter,DOUBLE_DIRECT,270,Empty screen,17,100,18,29
+p4-dsi,adapter,DOUBLE_DIRECT,270,Moving wallpaper,12,100,48,32
+p4-dsi,adapter,DOUBLE_DIRECT,270,Single rectangle,60,100,1,14
+p4-dsi,adapter,DOUBLE_DIRECT,270,Multiple rectangles,20,100,18,28
+p4-dsi,adapter,DOUBLE_DIRECT,270,Multiple RGB images,26,100,16,17
+p4-dsi,adapter,DOUBLE_DIRECT,270,Multiple ARGB images,18,100,32,17
+p4-dsi,adapter,DOUBLE_DIRECT,270,Rotated ARGB images,18,100,40,13
+p4-dsi,adapter,DOUBLE_DIRECT,270,Multiple labels,30,100,11,20
+p4-dsi,adapter,DOUBLE_DIRECT,270,Screen sized text,15,100,35,29
+p4-dsi,adapter,DOUBLE_DIRECT,270,Multiple arcs,15,100,24,38
+p4-dsi,adapter,DOUBLE_DIRECT,270,Containers,32,100,14,14
+p4-dsi,adapter,DOUBLE_DIRECT,270,Containers with overlay,12,100,49,26
+p4-dsi,adapter,DOUBLE_DIRECT,270,Containers with opa,29,100,17,14
+p4-dsi,adapter,DOUBLE_DIRECT,270,Containers with opa_layer,12,100,64,13
+p4-dsi,adapter,DOUBLE_DIRECT,270,Containers with scrolling,12,100,48,32
+p4-dsi,adapter,DOUBLE_DIRECT,270,Widgets demo,51,100,18,16
+p4-dsi,adapter,DOUBLE_PARTIAL,0,Empty screen,53,100,3,12
+p4-dsi,adapter,DOUBLE_PARTIAL,0,Moving wallpaper,60,100,8,7
+p4-dsi,adapter,DOUBLE_PARTIAL,0,Single rectangle,60,100,0,16
+p4-dsi,adapter,DOUBLE_PARTIAL,0,Multiple rectangles,60,100,2,13
+p4-dsi,adapter,DOUBLE_PARTIAL,0,Multiple RGB images,60,100,1,14
+p4-dsi,adapter,DOUBLE_PARTIAL,0,Multiple ARGB images,59,100,4,10
+p4-dsi,adapter,DOUBLE_PARTIAL,0,Rotated ARGB images,57,100,8,7
+p4-dsi,adapter,DOUBLE_PARTIAL,0,Multiple labels,60,100,6,9
+p4-dsi,adapter,DOUBLE_PARTIAL,0,Screen sized text,17,100,45,11
+p4-dsi,adapter,DOUBLE_PARTIAL,0,Multiple arcs,60,100,10,4
+p4-dsi,adapter,DOUBLE_PARTIAL,0,Containers,62,100,2,10
+p4-dsi,adapter,DOUBLE_PARTIAL,0,Containers with overlay,30,100,19,12
+p4-dsi,adapter,DOUBLE_PARTIAL,0,Containers with opa,60,100,3,12
+p4-dsi,adapter,DOUBLE_PARTIAL,0,Containers with opa_layer,42,100,13,9
+p4-dsi,adapter,DOUBLE_PARTIAL,0,Containers with scrolling,30,100,19,12
+p4-dsi,adapter,DOUBLE_PARTIAL,0,Widgets demo,26,100,39,8
+p4-dsi,adapter,DOUBLE_PARTIAL,90,Empty screen,53,100,3,12
+p4-dsi,adapter,DOUBLE_PARTIAL,90,Moving wallpaper,30,100,8,24
+p4-dsi,adapter,DOUBLE_PARTIAL,90,Single rectangle,60,100,0,16
+p4-dsi,adapter,DOUBLE_PARTIAL,90,Multiple rectangles,60,100,2,14
+p4-dsi,adapter,DOUBLE_PARTIAL,90,Multiple RGB images,59,100,1,13
+p4-dsi,adapter,DOUBLE_PARTIAL,90,Multiple ARGB images,59,100,6,8
+p4-dsi,adapter,DOUBLE_PARTIAL,90,Rotated ARGB images,30,100,20,11
+p4-dsi,adapter,DOUBLE_PARTIAL,90,Multiple labels,60,100,6,9
+p4-dsi,adapter,DOUBLE_PARTIAL,90,Screen sized text,15,100,47,18
+p4-dsi,adapter,DOUBLE_PARTIAL,90,Multiple arcs,30,100,9,21
+p4-dsi,adapter,DOUBLE_PARTIAL,90,Containers,59,100,2,13
+p4-dsi,adapter,DOUBLE_PARTIAL,90,Containers with overlay,20,100,21,25
+p4-dsi,adapter,DOUBLE_PARTIAL,90,Containers with opa,60,100,3,11
+p4-dsi,adapter,DOUBLE_PARTIAL,90,Containers with opa_layer,19,100,33,14
+p4-dsi,adapter,DOUBLE_PARTIAL,90,Containers with scrolling,30,100,14,17
+p4-dsi,adapter,DOUBLE_PARTIAL,90,Widgets demo,52,100,11,10
+p4-dsi,adapter,DOUBLE_PARTIAL,180,Empty screen,53,100,3,12
+p4-dsi,adapter,DOUBLE_PARTIAL,180,Moving wallpaper,57,100,8,8
+p4-dsi,adapter,DOUBLE_PARTIAL,180,Single rectangle,60,100,0,16
+p4-dsi,adapter,DOUBLE_PARTIAL,180,Multiple rectangles,60,100,2,13
+p4-dsi,adapter,DOUBLE_PARTIAL,180,Multiple RGB images,60,100,1,14
+p4-dsi,adapter,DOUBLE_PARTIAL,180,Multiple ARGB images,59,100,4,10
+p4-dsi,adapter,DOUBLE_PARTIAL,180,Rotated ARGB images,56,100,9,7
+p4-dsi,adapter,DOUBLE_PARTIAL,180,Multiple labels,60,100,6,8
+p4-dsi,adapter,DOUBLE_PARTIAL,180,Screen sized text,16,100,45,14
+p4-dsi,adapter,DOUBLE_PARTIAL,180,Multiple arcs,30,100,10,20
+p4-dsi,adapter,DOUBLE_PARTIAL,180,Containers,60,100,2,12
+p4-dsi,adapter,DOUBLE_PARTIAL,180,Containers with overlay,30,100,19,12
+p4-dsi,adapter,DOUBLE_PARTIAL,180,Containers with opa,59,100,3,12
+p4-dsi,adapter,DOUBLE_PARTIAL,180,Containers with opa_layer,41,100,14,9
+p4-dsi,adapter,DOUBLE_PARTIAL,180,Containers with scrolling,30,100,18,12
+p4-dsi,adapter,DOUBLE_PARTIAL,180,Widgets demo,25,100,39,13
+p4-dsi,adapter,DOUBLE_PARTIAL,270,Empty screen,53,100,3,12
+p4-dsi,adapter,DOUBLE_PARTIAL,270,Moving wallpaper,30,100,8,24
+p4-dsi,adapter,DOUBLE_PARTIAL,270,Single rectangle,60,100,0,16
+p4-dsi,adapter,DOUBLE_PARTIAL,270,Multiple rectangles,60,100,2,14
+p4-dsi,adapter,DOUBLE_PARTIAL,270,Multiple RGB images,59,100,1,13
+p4-dsi,adapter,DOUBLE_PARTIAL,270,Multiple ARGB images,59,100,6,8
+p4-dsi,adapter,DOUBLE_PARTIAL,270,Rotated ARGB images,30,100,19,12
+p4-dsi,adapter,DOUBLE_PARTIAL,270,Multiple labels,60,100,6,9
+p4-dsi,adapter,DOUBLE_PARTIAL,270,Screen sized text,15,100,47,18
+p4-dsi,adapter,DOUBLE_PARTIAL,270,Multiple arcs,30,100,9,21
+p4-dsi,adapter,DOUBLE_PARTIAL,270,Containers,59,100,2,12
+p4-dsi,adapter,DOUBLE_PARTIAL,270,Containers with overlay,20,100,21,25
+p4-dsi,adapter,DOUBLE_PARTIAL,270,Containers with opa,60,100,3,11
+p4-dsi,adapter,DOUBLE_PARTIAL,270,Containers with opa_layer,19,100,33,14
+p4-dsi,adapter,DOUBLE_PARTIAL,270,Containers with scrolling,30,100,14,17
+p4-dsi,adapter,DOUBLE_PARTIAL,270,Widgets demo,52,100,11,10
+p4-dsi,adapter,TRIPLE_PARTIAL,0,Empty screen,53,100,3,11
+p4-dsi,adapter,TRIPLE_PARTIAL,0,Moving wallpaper,60,100,8,7
+p4-dsi,adapter,TRIPLE_PARTIAL,0,Single rectangle,60,100,0,16
+p4-dsi,adapter,TRIPLE_PARTIAL,0,Multiple rectangles,60,100,2,13
+p4-dsi,adapter,TRIPLE_PARTIAL,0,Multiple RGB images,60,100,1,14
+p4-dsi,adapter,TRIPLE_PARTIAL,0,Multiple ARGB images,60,100,4,10
+p4-dsi,adapter,TRIPLE_PARTIAL,0,Rotated ARGB images,61,100,7,5
+p4-dsi,adapter,TRIPLE_PARTIAL,0,Multiple labels,60,100,6,8
+p4-dsi,adapter,TRIPLE_PARTIAL,0,Screen sized text,19,100,44,2
+p4-dsi,adapter,TRIPLE_PARTIAL,0,Multiple arcs,60,100,10,4
+p4-dsi,adapter,TRIPLE_PARTIAL,0,Containers,65,100,2,1
+p4-dsi,adapter,TRIPLE_PARTIAL,0,Containers with overlay,40,100,19,3
+p4-dsi,adapter,TRIPLE_PARTIAL,0,Containers with opa,65,100,2,2
+p4-dsi,adapter,TRIPLE_PARTIAL,0,Containers with opa_layer,55,100,12,2
+p4-dsi,adapter,TRIPLE_PARTIAL,0,Containers with scrolling,40,100,18,3
+p4-dsi,adapter,TRIPLE_PARTIAL,0,Widgets demo,27,100,39,2
+p4-dsi,adapter,TRIPLE_PARTIAL,90,Empty screen,53,100,3,12
+p4-dsi,adapter,TRIPLE_PARTIAL,90,Moving wallpaper,49,100,8,10
+p4-dsi,adapter,TRIPLE_PARTIAL,90,Single rectangle,60,100,0,15
+p4-dsi,adapter,TRIPLE_PARTIAL,90,Multiple rectangles,60,100,2,13
+p4-dsi,adapter,TRIPLE_PARTIAL,90,Multiple RGB images,60,100,1,13
+p4-dsi,adapter,TRIPLE_PARTIAL,90,Multiple ARGB images,60,100,6,8
+p4-dsi,adapter,TRIPLE_PARTIAL,90,Rotated ARGB images,51,100,14,2
+p4-dsi,adapter,TRIPLE_PARTIAL,90,Multiple labels,60,100,5,8
+p4-dsi,adapter,TRIPLE_PARTIAL,90,Screen sized text,16,100,47,10
+p4-dsi,adapter,TRIPLE_PARTIAL,90,Multiple arcs,44,100,9,9
+p4-dsi,adapter,TRIPLE_PARTIAL,90,Containers,65,100,2,3
+p4-dsi,adapter,TRIPLE_PARTIAL,90,Containers with overlay,28,100,21,10
+p4-dsi,adapter,TRIPLE_PARTIAL,90,Containers with opa,64,100,3,3
+p4-dsi,adapter,TRIPLE_PARTIAL,90,Containers with opa_layer,32,100,23,4
+p4-dsi,adapter,TRIPLE_PARTIAL,90,Containers with scrolling,36,100,14,10
+p4-dsi,adapter,TRIPLE_PARTIAL,90,Widgets demo,53,100,11,3
+p4-dsi,adapter,TRIPLE_PARTIAL,180,Empty screen,53,100,3,11
+p4-dsi,adapter,TRIPLE_PARTIAL,180,Moving wallpaper,59,100,7,7
+p4-dsi,adapter,TRIPLE_PARTIAL,180,Single rectangle,60,100,0,16
+p4-dsi,adapter,TRIPLE_PARTIAL,180,Multiple rectangles,60,100,2,13
+p4-dsi,adapter,TRIPLE_PARTIAL,180,Multiple RGB images,60,100,1,14
+p4-dsi,adapter,TRIPLE_PARTIAL,180,Multiple ARGB images,60,100,4,9
+p4-dsi,adapter,TRIPLE_PARTIAL,180,Rotated ARGB images,62,100,7,5
+p4-dsi,adapter,TRIPLE_PARTIAL,180,Multiple labels,60,100,6,8
+p4-dsi,adapter,TRIPLE_PARTIAL,180,Screen sized text,18,100,44,7
+p4-dsi,adapter,TRIPLE_PARTIAL,180,Multiple arcs,49,100,11,5
+p4-dsi,adapter,TRIPLE_PARTIAL,180,Containers,65,100,2,2
+p4-dsi,adapter,TRIPLE_PARTIAL,180,Containers with overlay,34,100,19,6
+p4-dsi,adapter,TRIPLE_PARTIAL,180,Containers with opa,65,100,2,2
+p4-dsi,adapter,TRIPLE_PARTIAL,180,Containers with opa_layer,55,100,12,3
+p4-dsi,adapter,TRIPLE_PARTIAL,180,Containers with scrolling,35,100,18,7
+p4-dsi,adapter,TRIPLE_PARTIAL,180,Widgets demo,26,100,39,5
+p4-dsi,adapter,TRIPLE_PARTIAL,270,Empty screen,53,100,3,12
+p4-dsi,adapter,TRIPLE_PARTIAL,270,Moving wallpaper,49,100,7,10
+p4-dsi,adapter,TRIPLE_PARTIAL,270,Single rectangle,60,100,0,15
+p4-dsi,adapter,TRIPLE_PARTIAL,270,Multiple rectangles,60,100,2,13
+p4-dsi,adapter,TRIPLE_PARTIAL,270,Multiple RGB images,60,100,1,13
+p4-dsi,adapter,TRIPLE_PARTIAL,270,Multiple ARGB images,60,100,6,8
+p4-dsi,adapter,TRIPLE_PARTIAL,270,Rotated ARGB images,51,100,14,2
+p4-dsi,adapter,TRIPLE_PARTIAL,270,Multiple labels,60,100,5,8
+p4-dsi,adapter,TRIPLE_PARTIAL,270,Screen sized text,16,100,47,10
+p4-dsi,adapter,TRIPLE_PARTIAL,270,Multiple arcs,44,100,9,9
+p4-dsi,adapter,TRIPLE_PARTIAL,270,Containers,65,100,2,4
+p4-dsi,adapter,TRIPLE_PARTIAL,270,Containers with overlay,28,100,21,10
+p4-dsi,adapter,TRIPLE_PARTIAL,270,Containers with opa,64,100,3,3
+p4-dsi,adapter,TRIPLE_PARTIAL,270,Containers with opa_layer,32,100,24,4
+p4-dsi,adapter,TRIPLE_PARTIAL,270,Containers with scrolling,36,100,14,10
+p4-dsi,adapter,TRIPLE_PARTIAL,270,Widgets demo,53,100,11,3
+s31-qspi,present,TE_C1_T1,0,Empty screen,18,100,21,30
+s31-qspi,present,TE_C1_T1,0,Moving wallpaper,11,100,41,36
+s31-qspi,present,TE_C1_T1,0,Single rectangle,29,100,2,28
+s31-qspi,present,TE_C1_T1,0,Multiple rectangles,19,100,14,26
+s31-qspi,present,TE_C1_T1,0,Multiple RGB images,23,100,10,24
+s31-qspi,present,TE_C1_T1,0,Multiple ARGB images,19,100,15,28
+s31-qspi,present,TE_C1_T1,0,Rotated ARGB images,28,100,8,16
+s31-qspi,present,TE_C1_T1,0,Multiple labels,17,100,22,27
+s31-qspi,present,TE_C1_T1,0,Screen sized text,6,100,101,35
+s31-qspi,present,TE_C1_T1,0,Multiple arcs,26,100,7,17
+s31-qspi,present,TE_C1_T1,0,Containers,21,100,17,22
+s31-qspi,present,TE_C1_T1,0,Containers with overlay,12,100,39,29
+s31-qspi,present,TE_C1_T1,0,Containers with opa,21,100,18,21
+s31-qspi,present,TE_C1_T1,0,Containers with opa_layer,15,100,29,24
+s31-qspi,present,TE_C1_T1,0,Containers with scrolling,9,100,65,30
+s31-qspi,present,TE_C1_T1,0,Widgets demo,6,100,98,23
+s31-qspi,present,TE_C1_T1,90,Empty screen,17,100,19,29
+s31-qspi,present,TE_C1_T1,90,Moving wallpaper,13,100,31,30
+s31-qspi,present,TE_C1_T1,90,Single rectangle,29,100,2,28
+s31-qspi,present,TE_C1_T1,90,Multiple rectangles,19,100,15,27
+s31-qspi,present,TE_C1_T1,90,Multiple RGB images,26,100,6,19
+s31-qspi,present,TE_C1_T1,90,Multiple ARGB images,24,100,9,20
+s31-qspi,present,TE_C1_T1,90,Rotated ARGB images,28,100,7,20
+s31-qspi,present,TE_C1_T1,90,Multiple labels,17,100,20,25
+s31-qspi,present,TE_C1_T1,90,Screen sized text,6,100,98,33
+s31-qspi,present,TE_C1_T1,90,Multiple arcs,27,100,7,16
+s31-qspi,present,TE_C1_T1,90,Containers,28,100,15,18
+s31-qspi,present,TE_C1_T1,90,Containers with overlay,13,100,36,27
+s31-qspi,present,TE_C1_T1,90,Containers with opa,24,100,15,19
+s31-qspi,present,TE_C1_T1,90,Containers with opa_layer,15,100,28,25
+s31-qspi,present,TE_C1_T1,90,Containers with scrolling,9,100,55,37
+s31-qspi,present,TE_C1_T1,90,Widgets demo,7,100,95,24
+s31-qspi,present,TE_C1_T1,180,Empty screen,17,100,19,29
+s31-qspi,present,TE_C1_T1,180,Moving wallpaper,13,100,31,32
+s31-qspi,present,TE_C1_T1,180,Single rectangle,29,100,2,28
+s31-qspi,present,TE_C1_T1,180,Multiple rectangles,19,100,15,26
+s31-qspi,present,TE_C1_T1,180,Multiple RGB images,26,100,6,20
+s31-qspi,present,TE_C1_T1,180,Multiple ARGB images,24,100,8,21
+s31-qspi,present,TE_C1_T1,180,Rotated ARGB images,28,100,8,20
+s31-qspi,present,TE_C1_T1,180,Multiple labels,19,100,22,25
+s31-qspi,present,TE_C1_T1,180,Screen sized text,6,100,99,33
+s31-qspi,present,TE_C1_T1,180,Multiple arcs,28,100,7,16
+s31-qspi,present,TE_C1_T1,180,Containers,28,100,14,17
+s31-qspi,present,TE_C1_T1,180,Containers with overlay,13,100,37,26
+s31-qspi,present,TE_C1_T1,180,Containers with opa,23,100,15,20
+s31-qspi,present,TE_C1_T1,180,Containers with opa_layer,15,100,28,26
+s31-qspi,present,TE_C1_T1,180,Containers with scrolling,9,100,55,38
+s31-qspi,present,TE_C1_T1,180,Widgets demo,7,100,95,24
+s31-qspi,present,TE_C1_T1,270,Empty screen,16,100,19,29
+s31-qspi,present,TE_C1_T1,270,Moving wallpaper,13,100,32,31
+s31-qspi,present,TE_C1_T1,270,Single rectangle,29,100,3,28
+s31-qspi,present,TE_C1_T1,270,Multiple rectangles,19,100,14,26
+s31-qspi,present,TE_C1_T1,270,Multiple RGB images,26,100,6,20
+s31-qspi,present,TE_C1_T1,270,Multiple ARGB images,24,100,8,21
+s31-qspi,present,TE_C1_T1,270,Rotated ARGB images,28,100,8,19
+s31-qspi,present,TE_C1_T1,270,Multiple labels,17,100,19,25
+s31-qspi,present,TE_C1_T1,270,Screen sized text,6,100,98,33
+s31-qspi,present,TE_C1_T1,270,Multiple arcs,27,100,7,16
+s31-qspi,present,TE_C1_T1,270,Containers,28,100,15,17
+s31-qspi,present,TE_C1_T1,270,Containers with overlay,13,100,34,26
+s31-qspi,present,TE_C1_T1,270,Containers with opa,21,100,15,21
+s31-qspi,present,TE_C1_T1,270,Containers with opa_layer,15,100,28,25
+s31-qspi,present,TE_C1_T1,270,Containers with scrolling,9,100,55,37
+s31-qspi,present,TE_C1_T1,270,Widgets demo,7,100,95,24
+s31-qspi,present,TE_C1_T2,0,Empty screen,17,100,26,20
+s31-qspi,present,TE_C1_T2,0,Moving wallpaper,13,100,39,23
+s31-qspi,present,TE_C1_T2,0,Single rectangle,29,100,2,29
+s31-qspi,present,TE_C1_T2,0,Multiple rectangles,23,100,12,21
+s31-qspi,present,TE_C1_T2,0,Multiple RGB images,26,100,9,19
+s31-qspi,present,TE_C1_T2,0,Multiple ARGB images,23,100,14,20
+s31-qspi,present,TE_C1_T2,0,Rotated ARGB images,28,100,8,19
+s31-qspi,present,TE_C1_T2,0,Multiple labels,19,100,20,20
+s31-qspi,present,TE_C1_T2,0,Screen sized text,6,100,105,25
+s31-qspi,present,TE_C1_T2,0,Multiple arcs,29,100,7,20
+s31-qspi,present,TE_C1_T2,0,Containers,23,100,17,18
+s31-qspi,present,TE_C1_T2,0,Containers with overlay,13,100,43,18
+s31-qspi,present,TE_C1_T2,0,Containers with opa,25,100,17,17
+s31-qspi,present,TE_C1_T2,0,Containers with opa_layer,19,100,29,22
+s31-qspi,present,TE_C1_T2,0,Containers with scrolling,9,100,65,29
+s31-qspi,present,TE_C1_T2,0,Widgets demo,7,100,96,17
+s31-qspi,present,TE_C1_T2,90,Empty screen,17,100,20,18
+s31-qspi,present,TE_C1_T2,90,Moving wallpaper,14,100,35,26
+s31-qspi,present,TE_C1_T2,90,Single rectangle,29,100,2,28
+s31-qspi,present,TE_C1_T2,90,Multiple rectangles,21,100,13,22
+s31-qspi,present,TE_C1_T2,90,Multiple RGB images,28,100,7,16
+s31-qspi,present,TE_C1_T2,90,Multiple ARGB images,25,100,10,16
+s31-qspi,present,TE_C1_T2,90,Rotated ARGB images,29,100,6,17
+s31-qspi,present,TE_C1_T2,90,Multiple labels,18,100,23,19
+s31-qspi,present,TE_C1_T2,90,Screen sized text,7,100,101,23
+s31-qspi,present,TE_C1_T2,90,Multiple arcs,28,100,7,16
+s31-qspi,present,TE_C1_T2,90,Containers,25,100,14,17
+s31-qspi,present,TE_C1_T2,90,Containers with overlay,13,100,40,17
+s31-qspi,present,TE_C1_T2,90,Containers with opa,23,100,15,17
+s31-qspi,present,TE_C1_T2,90,Containers with opa_layer,16,100,29,24
+s31-qspi,present,TE_C1_T2,90,Containers with scrolling,10,100,59,23
+s31-qspi,present,TE_C1_T2,90,Widgets demo,7,100,98,17
+s31-qspi,present,TE_C1_T2,180,Empty screen,17,100,20,18
+s31-qspi,present,TE_C1_T2,180,Moving wallpaper,14,100,35,28
+s31-qspi,present,TE_C1_T2,180,Single rectangle,29,100,3,28
+s31-qspi,present,TE_C1_T2,180,Multiple rectangles,21,100,13,23
+s31-qspi,present,TE_C1_T2,180,Multiple RGB images,28,100,8,15
+s31-qspi,present,TE_C1_T2,180,Multiple ARGB images,25,100,10,16
+s31-qspi,present,TE_C1_T2,180,Rotated ARGB images,28,100,7,20
+s31-qspi,present,TE_C1_T2,180,Multiple labels,18,100,24,19
+s31-qspi,present,TE_C1_T2,180,Screen sized text,7,100,101,24
+s31-qspi,present,TE_C1_T2,180,Multiple arcs,27,100,7,16
+s31-qspi,present,TE_C1_T2,180,Containers,26,100,14,17
+s31-qspi,present,TE_C1_T2,180,Containers with overlay,13,100,41,18
+s31-qspi,present,TE_C1_T2,180,Containers with opa,28,100,16,16
+s31-qspi,present,TE_C1_T2,180,Containers with opa_layer,17,100,29,24
+s31-qspi,present,TE_C1_T2,180,Containers with scrolling,10,100,61,22
+s31-qspi,present,TE_C1_T2,180,Widgets demo,7,100,98,18
+s31-qspi,present,TE_C1_T2,270,Empty screen,18,100,20,18
+s31-qspi,present,TE_C1_T2,270,Moving wallpaper,14,100,35,27
+s31-qspi,present,TE_C1_T2,270,Single rectangle,29,100,2,28
+s31-qspi,present,TE_C1_T2,270,Multiple rectangles,21,100,14,22
+s31-qspi,present,TE_C1_T2,270,Multiple RGB images,28,100,7,15
+s31-qspi,present,TE_C1_T2,270,Multiple ARGB images,25,100,9,17
+s31-qspi,present,TE_C1_T2,270,Rotated ARGB images,28,100,9,20
+s31-qspi,present,TE_C1_T2,270,Multiple labels,18,100,23,19
+s31-qspi,present,TE_C1_T2,270,Screen sized text,7,100,100,23
+s31-qspi,present,TE_C1_T2,270,Multiple arcs,28,100,7,16
+s31-qspi,present,TE_C1_T2,270,Containers,27,100,14,16
+s31-qspi,present,TE_C1_T2,270,Containers with overlay,14,100,41,18
+s31-qspi,present,TE_C1_T2,270,Containers with opa,24,100,15,17
+s31-qspi,present,TE_C1_T2,270,Containers with opa_layer,15,100,30,25
+s31-qspi,present,TE_C1_T2,270,Containers with scrolling,10,100,60,24
+s31-qspi,present,TE_C1_T2,270,Widgets demo,7,100,98,17
+s31-qspi,present,TE_C2_T1,0,Empty screen,22,100,23,13
+s31-qspi,present,TE_C2_T1,0,Moving wallpaper,17,100,37,12
+s31-qspi,present,TE_C2_T1,0,Single rectangle,39,100,2,20
+s31-qspi,present,TE_C2_T1,0,Multiple rectangles,28,100,13,10
+s31-qspi,present,TE_C2_T1,0,Multiple RGB images,38,100,7,12
+s31-qspi,present,TE_C2_T1,0,Multiple ARGB images,33,100,12,9
+s31-qspi,present,TE_C2_T1,0,Rotated ARGB images,48,100,7,8
+s31-qspi,present,TE_C2_T1,0,Multiple labels,24,100,20,8
+s31-qspi,present,TE_C2_T1,0,Screen sized text,8,100,100,12
+s31-qspi,present,TE_C2_T1,0,Multiple arcs,38,100,6,14
+s31-qspi,present,TE_C2_T1,0,Containers,52,100,12,5
+s31-qspi,present,TE_C2_T1,0,Containers with overlay,15,100,43,13
+s31-qspi,present,TE_C2_T1,0,Containers with opa,48,100,14,6
+s31-qspi,present,TE_C2_T1,0,Containers with opa_layer,37,100,20,5
+s31-qspi,present,TE_C2_T1,0,Containers with scrolling,12,100,63,13
+s31-qspi,present,TE_C2_T1,0,Widgets demo,8,100,94,11
+s31-qspi,present,TE_C2_T1,90,Empty screen,20,100,19,14
+s31-qspi,present,TE_C2_T1,90,Moving wallpaper,18,100,33,14
+s31-qspi,present,TE_C2_T1,90,Single rectangle,39,100,2,21
+s31-qspi,present,TE_C2_T1,90,Multiple rectangles,27,100,14,11
+s31-qspi,present,TE_C2_T1,90,Multiple RGB images,38,100,6,14
+s31-qspi,present,TE_C2_T1,90,Multiple ARGB images,37,100,7,13
+s31-qspi,present,TE_C2_T1,90,Rotated ARGB images,48,100,6,9
+s31-qspi,present,TE_C2_T1,90,Multiple labels,20,100,22,13
+s31-qspi,present,TE_C2_T1,90,Screen sized text,7,100,99,13
+s31-qspi,present,TE_C2_T1,90,Multiple arcs,38,100,7,14
+s31-qspi,present,TE_C2_T1,90,Containers,53,100,11,4
+s31-qspi,present,TE_C2_T1,90,Containers with overlay,15,100,40,16
+s31-qspi,present,TE_C2_T1,90,Containers with opa,51,100,11,5
+s31-qspi,present,TE_C2_T1,90,Containers with opa_layer,36,100,19,5
+s31-qspi,present,TE_C2_T1,90,Containers with scrolling,12,100,56,14
+s31-qspi,present,TE_C2_T1,90,Widgets demo,7,100,95,13
+s31-qspi,present,TE_C2_T1,180,Empty screen,20,100,20,14
+s31-qspi,present,TE_C2_T1,180,Moving wallpaper,17,100,32,15
+s31-qspi,present,TE_C2_T1,180,Single rectangle,39,100,2,20
+s31-qspi,present,TE_C2_T1,180,Multiple rectangles,27,100,14,14
+s31-qspi,present,TE_C2_T1,180,Multiple RGB images,38,100,6,14
+s31-qspi,present,TE_C2_T1,180,Multiple ARGB images,37,100,7,14
+s31-qspi,present,TE_C2_T1,180,Rotated ARGB images,47,100,6,10
+s31-qspi,present,TE_C2_T1,180,Multiple labels,20,100,22,14
+s31-qspi,present,TE_C2_T1,180,Screen sized text,7,100,99,13
+s31-qspi,present,TE_C2_T1,180,Multiple arcs,38,100,7,14
+s31-qspi,present,TE_C2_T1,180,Containers,52,100,11,5
+s31-qspi,present,TE_C2_T1,180,Containers with overlay,15,100,40,16
+s31-qspi,present,TE_C2_T1,180,Containers with opa,49,100,12,5
+s31-qspi,present,TE_C2_T1,180,Containers with opa_layer,37,100,19,4
+s31-qspi,present,TE_C2_T1,180,Containers with scrolling,12,100,55,14
+s31-qspi,present,TE_C2_T1,180,Widgets demo,7,100,95,13
+s31-qspi,present,TE_C2_T1,270,Empty screen,20,100,20,14
+s31-qspi,present,TE_C2_T1,270,Moving wallpaper,18,100,32,14
+s31-qspi,present,TE_C2_T1,270,Single rectangle,39,100,2,20
+s31-qspi,present,TE_C2_T1,270,Multiple rectangles,27,100,14,10
+s31-qspi,present,TE_C2_T1,270,Multiple RGB images,38,100,5,15
+s31-qspi,present,TE_C2_T1,270,Multiple ARGB images,37,100,7,13
+s31-qspi,present,TE_C2_T1,270,Rotated ARGB images,50,100,6,8
+s31-qspi,present,TE_C2_T1,270,Multiple labels,20,100,22,13
+s31-qspi,present,TE_C2_T1,270,Screen sized text,7,100,98,14
+s31-qspi,present,TE_C2_T1,270,Multiple arcs,38,100,7,14
+s31-qspi,present,TE_C2_T1,270,Containers,54,100,11,4
+s31-qspi,present,TE_C2_T1,270,Containers with overlay,15,100,40,15
+s31-qspi,present,TE_C2_T1,270,Containers with opa,51,100,12,4
+s31-qspi,present,TE_C2_T1,270,Containers with opa_layer,38,100,20,4
+s31-qspi,present,TE_C2_T1,270,Containers with scrolling,11,100,55,15
+s31-qspi,present,TE_C2_T1,270,Widgets demo,7,100,95,13
+s31-qspi,present,TE_C2_T2,0,Empty screen,24,100,24,7
+s31-qspi,present,TE_C2_T2,0,Moving wallpaper,18,100,41,5
+s31-qspi,present,TE_C2_T2,0,Single rectangle,39,100,2,20
+s31-qspi,present,TE_C2_T2,0,Multiple rectangles,33,100,13,8
+s31-qspi,present,TE_C2_T2,0,Multiple RGB images,38,100,8,12
+s31-qspi,present,TE_C2_T2,0,Multiple ARGB images,34,100,13,8
+s31-qspi,present,TE_C2_T2,0,Rotated ARGB images,48,100,8,8
+s31-qspi,present,TE_C2_T2,0,Multiple labels,26,100,20,6
+s31-qspi,present,TE_C2_T2,0,Screen sized text,8,100,106,4
+s31-qspi,present,TE_C2_T2,0,Multiple arcs,38,100,6,14
+s31-qspi,present,TE_C2_T2,0,Containers,51,100,12,4
+s31-qspi,present,TE_C2_T2,0,Containers with overlay,15,100,46,7
+s31-qspi,present,TE_C2_T2,0,Containers with opa,48,100,13,5
+s31-qspi,present,TE_C2_T2,0,Containers with opa_layer,39,100,20,3
+s31-qspi,present,TE_C2_T2,0,Containers with scrolling,12,100,67,5
+s31-qspi,present,TE_C2_T2,0,Widgets demo,8,100,96,4
+s31-qspi,present,TE_C2_T2,90,Empty screen,25,100,21,8
+s31-qspi,present,TE_C2_T2,90,Moving wallpaper,19,100,33,4
+s31-qspi,present,TE_C2_T2,90,Single rectangle,39,100,2,20
+s31-qspi,present,TE_C2_T2,90,Multiple rectangles,31,100,16,6
+s31-qspi,present,TE_C2_T2,90,Multiple RGB images,38,100,7,13
+s31-qspi,present,TE_C2_T2,90,Multiple ARGB images,37,100,8,12
+s31-qspi,present,TE_C2_T2,90,Rotated ARGB images,49,100,6,8
+s31-qspi,present,TE_C2_T2,90,Multiple labels,21,100,25,8
+s31-qspi,present,TE_C2_T2,90,Screen sized text,8,100,102,6
+s31-qspi,present,TE_C2_T2,90,Multiple arcs,37,100,7,14
+s31-qspi,present,TE_C2_T2,90,Containers,55,100,12,3
+s31-qspi,present,TE_C2_T2,90,Containers with overlay,15,100,45,8
+s31-qspi,present,TE_C2_T2,90,Containers with opa,53,100,12,3
+s31-qspi,present,TE_C2_T2,90,Containers with opa_layer,40,100,19,3
+s31-qspi,present,TE_C2_T2,90,Containers with scrolling,13,100,59,6
+s31-qspi,present,TE_C2_T2,90,Widgets demo,8,100,97,6
+s31-qspi,present,TE_C2_T2,180,Empty screen,25,100,21,8
+s31-qspi,present,TE_C2_T2,180,Moving wallpaper,19,100,34,3
+s31-qspi,present,TE_C2_T2,180,Single rectangle,38,100,2,20
+s31-qspi,present,TE_C2_T2,180,Multiple rectangles,30,100,15,8
+s31-qspi,present,TE_C2_T2,180,Multiple RGB images,38,100,7,13
+s31-qspi,present,TE_C2_T2,180,Multiple ARGB images,37,100,8,12
+s31-qspi,present,TE_C2_T2,180,Rotated ARGB images,51,100,6,7
+s31-qspi,present,TE_C2_T2,180,Multiple labels,22,100,25,7
+s31-qspi,present,TE_C2_T2,180,Screen sized text,8,100,102,5
+s31-qspi,present,TE_C2_T2,180,Multiple arcs,38,100,7,14
+s31-qspi,present,TE_C2_T2,180,Containers,55,100,11,3
+s31-qspi,present,TE_C2_T2,180,Containers with overlay,15,100,45,8
+s31-qspi,present,TE_C2_T2,180,Containers with opa,52,100,12,4
+s31-qspi,present,TE_C2_T2,180,Containers with opa_layer,40,100,20,3
+s31-qspi,present,TE_C2_T2,180,Containers with scrolling,13,100,60,6
+s31-qspi,present,TE_C2_T2,180,Widgets demo,8,100,98,5
+s31-qspi,present,TE_C2_T2,270,Empty screen,25,100,21,8
+s31-qspi,present,TE_C2_T2,270,Moving wallpaper,19,100,34,4
+s31-qspi,present,TE_C2_T2,270,Single rectangle,39,100,2,20
+s31-qspi,present,TE_C2_T2,270,Multiple rectangles,30,100,15,7
+s31-qspi,present,TE_C2_T2,270,Multiple RGB images,38,100,7,13
+s31-qspi,present,TE_C2_T2,270,Multiple ARGB images,37,100,8,12
+s31-qspi,present,TE_C2_T2,270,Rotated ARGB images,49,100,6,8
+s31-qspi,present,TE_C2_T2,270,Multiple labels,22,100,25,7
+s31-qspi,present,TE_C2_T2,270,Screen sized text,8,100,101,5
+s31-qspi,present,TE_C2_T2,270,Multiple arcs,38,100,7,14
+s31-qspi,present,TE_C2_T2,270,Containers,55,100,11,3
+s31-qspi,present,TE_C2_T2,270,Containers with overlay,15,100,44,8
+s31-qspi,present,TE_C2_T2,270,Containers with opa,52,100,12,4
+s31-qspi,present,TE_C2_T2,270,Containers with opa_layer,37,100,24,3
+s31-qspi,present,TE_C2_T2,270,Containers with scrolling,13,100,60,6
+s31-qspi,present,TE_C2_T2,270,Widgets demo,8,100,97,5
+s31-qspi,adapter,ADAPTER_TE_SYNC_FULL,0,Empty screen,19,100,7,41
+s31-qspi,adapter,ADAPTER_TE_SYNC_FULL,0,Moving wallpaper,14,100,21,43
+s31-qspi,adapter,ADAPTER_TE_SYNC_FULL,0,Single rectangle,19,100,8,41
+s31-qspi,adapter,ADAPTER_TE_SYNC_FULL,0,Multiple rectangles,19,100,11,36
+s31-qspi,adapter,ADAPTER_TE_SYNC_FULL,0,Multiple RGB images,19,100,13,33
+s31-qspi,adapter,ADAPTER_TE_SYNC_FULL,0,Multiple ARGB images,18,100,16,31
+s31-qspi,adapter,ADAPTER_TE_SYNC_FULL,0,Rotated ARGB images,19,100,13,34
+s31-qspi,adapter,ADAPTER_TE_SYNC_FULL,0,Multiple labels,19,100,10,36
+s31-qspi,adapter,ADAPTER_TE_SYNC_FULL,0,Screen sized text,19,100,16,32
+s31-qspi,adapter,ADAPTER_TE_SYNC_FULL,0,Multiple arcs,19,100,9,38
+s31-qspi,adapter,ADAPTER_TE_SYNC_FULL,0,Containers,19,100,17,31
+s31-qspi,adapter,ADAPTER_TE_SYNC_FULL,0,Containers with overlay,14,100,24,39
+s31-qspi,adapter,ADAPTER_TE_SYNC_FULL,0,Containers with opa,18,100,18,32
+s31-qspi,adapter,ADAPTER_TE_SYNC_FULL,0,Containers with opa_layer,14,100,30,33
+s31-qspi,adapter,ADAPTER_TE_SYNC_FULL,0,Containers with scrolling,14,100,24,40
+s31-qspi,adapter,ADAPTER_TE_SYNC_FULL,0,Widgets demo,11,100,36,40
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,0,Empty screen,17,100,7,40
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,0,Moving wallpaper,19,100,22,25
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,0,Single rectangle,29,100,1,30
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,0,Multiple rectangles,19,100,10,36
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,0,Multiple RGB images,19,100,12,34
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,0,Multiple ARGB images,19,100,17,29
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,0,Rotated ARGB images,29,100,7,23
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,0,Multiple labels,19,100,18,29
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,0,Screen sized text,19,100,17,29
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,0,Multiple arcs,28,100,5,27
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,0,Containers,42,100,9,15
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,0,Containers with overlay,19,100,25,20
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,0,Containers with opa,35,100,11,19
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,0,Containers with opa_layer,36,100,19,10
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,0,Containers with scrolling,19,100,25,22
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,0,Widgets demo,18,100,35,9
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,90,Empty screen,16,100,7,40
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,90,Moving wallpaper,19,100,22,25
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,90,Single rectangle,28,100,1,31
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,90,Multiple rectangles,19,100,11,38
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,90,Multiple RGB images,19,100,10,36
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,90,Multiple ARGB images,19,100,15,31
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,90,Rotated ARGB images,28,100,8,25
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,90,Multiple labels,18,100,15,32
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,90,Screen sized text,19,100,17,30
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,90,Multiple arcs,28,100,4,27
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,90,Containers,35,100,9,20
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,90,Containers with overlay,19,100,25,21
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,90,Containers with opa,30,100,10,22
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,90,Containers with opa_layer,31,100,20,14
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,90,Containers with scrolling,19,100,25,22
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,90,Widgets demo,18,100,34,10
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,180,Empty screen,16,100,7,40
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,180,Moving wallpaper,19,100,22,25
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,180,Single rectangle,28,100,1,30
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,180,Multiple rectangles,18,100,10,37
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,180,Multiple RGB images,19,100,12,34
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,180,Multiple ARGB images,19,100,16,30
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,180,Rotated ARGB images,28,100,9,22
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,180,Multiple labels,19,100,13,34
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,180,Screen sized text,19,100,17,30
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,180,Multiple arcs,28,100,5,27
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,180,Containers,35,100,9,21
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,180,Containers with overlay,19,100,25,21
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,180,Containers with opa,32,100,10,21
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,180,Containers with opa_layer,31,100,20,14
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,180,Containers with scrolling,19,100,25,21
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,180,Widgets demo,18,100,34,10
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,270,Empty screen,16,100,7,39
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,270,Moving wallpaper,19,100,22,25
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,270,Single rectangle,28,100,1,31
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,270,Multiple rectangles,19,100,11,37
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,270,Multiple RGB images,19,100,10,35
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,270,Multiple ARGB images,19,100,16,30
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,270,Rotated ARGB images,28,100,7,25
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,270,Multiple labels,19,100,14,32
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,270,Screen sized text,19,100,17,30
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,270,Multiple arcs,28,100,4,27
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,270,Containers,34,100,9,22
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,270,Containers with overlay,19,100,25,21
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,270,Containers with opa,32,100,10,20
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,270,Containers with opa_layer,31,100,20,14
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,270,Containers with scrolling,19,100,25,22
+s31-qspi,adapter,ADAPTER_TE_ASYNC_FULL,270,Widgets demo,18,100,34,10
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,0,Empty screen,16,100,8,38
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,0,Moving wallpaper,19,100,25,21
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,0,Single rectangle,27,100,1,31
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,0,Multiple rectangles,19,100,9,37
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,0,Multiple RGB images,19,100,12,35
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,0,Multiple ARGB images,18,100,18,32
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,0,Rotated ARGB images,28,100,10,21
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,0,Multiple labels,18,100,13,35
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,0,Screen sized text,19,100,22,24
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,0,Multiple arcs,19,100,4,42
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,0,Containers,29,100,13,20
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,0,Containers with overlay,18,100,34,14
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,0,Containers with opa,26,100,15,21
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,0,Containers with opa_layer,19,100,28,18
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,0,Containers with scrolling,18,100,37,13
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,0,Widgets demo,14,100,46,10
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,90,Empty screen,16,100,8,39
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,90,Moving wallpaper,19,100,25,21
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,90,Single rectangle,27,100,2,30
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,90,Multiple rectangles,17,100,10,46
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,90,Multiple RGB images,18,100,12,38
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,90,Multiple ARGB images,18,100,17,32
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,90,Rotated ARGB images,27,100,10,21
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,90,Multiple labels,17,100,14,43
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,90,Screen sized text,19,100,23,24
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,90,Multiple arcs,19,100,4,42
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,90,Containers,22,100,13,29
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,90,Containers with overlay,19,100,34,12
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,90,Containers with opa,27,100,15,24
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,90,Containers with opa_layer,19,100,28,20
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,90,Containers with scrolling,18,100,37,12
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,90,Widgets demo,15,100,46,10
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,180,Empty screen,16,100,8,39
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,180,Moving wallpaper,19,100,26,21
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,180,Single rectangle,27,100,2,30
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,180,Multiple rectangles,17,100,10,47
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,180,Multiple RGB images,18,100,12,37
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,180,Multiple ARGB images,18,100,19,30
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,180,Rotated ARGB images,26,100,11,21
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,180,Multiple labels,16,100,14,43
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,180,Screen sized text,19,100,22,25
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,180,Multiple arcs,19,100,4,42
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,180,Containers,25,100,13,25
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,180,Containers with overlay,19,100,34,12
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,180,Containers with opa,21,100,14,28
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,180,Containers with opa_layer,18,100,28,19
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,180,Containers with scrolling,18,100,36,12
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,180,Widgets demo,15,100,46,9
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,270,Empty screen,16,100,8,39
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,270,Moving wallpaper,19,100,25,21
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,270,Single rectangle,27,100,2,30
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,270,Multiple rectangles,17,100,10,46
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,270,Multiple RGB images,18,100,12,38
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,270,Multiple ARGB images,18,100,18,30
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,270,Rotated ARGB images,27,100,11,21
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,270,Multiple labels,17,100,14,44
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,270,Screen sized text,19,100,23,24
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,270,Multiple arcs,19,100,4,42
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,270,Containers,22,100,13,28
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,270,Containers with overlay,19,100,33,13
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,270,Containers with opa,26,100,15,24
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,270,Containers with opa_layer,17,100,28,24
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,270,Containers with scrolling,18,100,36,12
+s31-qspi,adapter,ADAPTER_TE_ASYNC_BOUNCE,270,Widgets demo,15,100,46,10
+box3-spi,present,GRAM_T1_INTERNAL,0,Empty screen,24,100,5,33
+box3-spi,present,GRAM_T1_INTERNAL,0,Moving wallpaper,24,100,7,32
+box3-spi,present,GRAM_T1_INTERNAL,0,Single rectangle,66,100,0,1
+box3-spi,present,GRAM_T1_INTERNAL,0,Multiple rectangles,48,100,6,12
+box3-spi,present,GRAM_T1_INTERNAL,0,Multiple RGB images,66,100,1,1
+box3-spi,present,GRAM_T1_INTERNAL,0,Multiple ARGB images,66,100,2,0
+box3-spi,present,GRAM_T1_INTERNAL,0,Rotated ARGB images,57,100,8,8
+box3-spi,present,GRAM_T1_INTERNAL,0,Multiple labels,64,100,5,5
+box3-spi,present,GRAM_T1_INTERNAL,0,Screen sized text,14,100,32,33
+box3-spi,present,GRAM_T1_INTERNAL,0,Multiple arcs,65,100,1,0
+box3-spi,present,GRAM_T1_INTERNAL,0,Containers,58,100,4,14
+box3-spi,present,GRAM_T1_INTERNAL,0,Containers with overlay,21,100,12,32
+box3-spi,present,GRAM_T1_INTERNAL,0,Containers with opa,58,100,6,12
+box3-spi,present,GRAM_T1_INTERNAL,0,Containers with opa_layer,53,100,7,15
+box3-spi,present,GRAM_T1_INTERNAL,0,Containers with scrolling,21,100,12,33
+box3-spi,present,GRAM_T1_INTERNAL,0,Widgets demo,31,100,9,18
+box3-spi,present,GRAM_T1_INTERNAL,90,Empty screen,24,100,3,31
+box3-spi,present,GRAM_T1_INTERNAL,90,Moving wallpaper,26,100,6,29
+box3-spi,present,GRAM_T1_INTERNAL,90,Single rectangle,65,100,1,0
+box3-spi,present,GRAM_T1_INTERNAL,90,Multiple rectangles,49,100,8,8
+box3-spi,present,GRAM_T1_INTERNAL,90,Multiple RGB images,66,100,1,0
+box3-spi,present,GRAM_T1_INTERNAL,90,Multiple ARGB images,66,100,2,0
+box3-spi,present,GRAM_T1_INTERNAL,90,Rotated ARGB images,64,100,8,3
+box3-spi,present,GRAM_T1_INTERNAL,90,Multiple labels,65,100,3,4
+box3-spi,present,GRAM_T1_INTERNAL,90,Screen sized text,20,100,42,5
+box3-spi,present,GRAM_T1_INTERNAL,90,Multiple arcs,66,100,1,0
+box3-spi,present,GRAM_T1_INTERNAL,90,Containers,64,100,4,9
+box3-spi,present,GRAM_T1_INTERNAL,90,Containers with overlay,26,100,12,24
+box3-spi,present,GRAM_T1_INTERNAL,90,Containers with opa,64,100,4,9
+box3-spi,present,GRAM_T1_INTERNAL,90,Containers with opa_layer,64,100,8,5
+box3-spi,present,GRAM_T1_INTERNAL,90,Containers with scrolling,25,100,13,23
+box3-spi,present,GRAM_T1_INTERNAL,90,Widgets demo,32,100,15,11
+box3-spi,present,GRAM_T1_INTERNAL,180,Empty screen,24,100,4,31
+box3-spi,present,GRAM_T1_INTERNAL,180,Moving wallpaper,27,100,7,27
+box3-spi,present,GRAM_T1_INTERNAL,180,Single rectangle,66,100,0,0
+box3-spi,present,GRAM_T1_INTERNAL,180,Multiple rectangles,51,100,8,8
+box3-spi,present,GRAM_T1_INTERNAL,180,Multiple RGB images,66,100,1,0
+box3-spi,present,GRAM_T1_INTERNAL,180,Multiple ARGB images,66,100,2,0
+box3-spi,present,GRAM_T1_INTERNAL,180,Rotated ARGB images,65,100,7,5
+box3-spi,present,GRAM_T1_INTERNAL,180,Multiple labels,65,100,4,5
+box3-spi,present,GRAM_T1_INTERNAL,180,Screen sized text,24,100,32,6
+box3-spi,present,GRAM_T1_INTERNAL,180,Multiple arcs,66,100,1,0
+box3-spi,present,GRAM_T1_INTERNAL,180,Containers,61,100,4,11
+box3-spi,present,GRAM_T1_INTERNAL,180,Containers with overlay,27,100,11,24
+box3-spi,present,GRAM_T1_INTERNAL,180,Containers with opa,61,100,5,10
+box3-spi,present,GRAM_T1_INTERNAL,180,Containers with opa_layer,59,100,8,10
+box3-spi,present,GRAM_T1_INTERNAL,180,Containers with scrolling,27,100,12,22
+box3-spi,present,GRAM_T1_INTERNAL,180,Widgets demo,43,100,8,10
+box3-spi,present,GRAM_T1_INTERNAL,270,Empty screen,24,100,3,31
+box3-spi,present,GRAM_T1_INTERNAL,270,Moving wallpaper,26,100,6,29
+box3-spi,present,GRAM_T1_INTERNAL,270,Single rectangle,65,100,1,0
+box3-spi,present,GRAM_T1_INTERNAL,270,Multiple rectangles,49,100,8,8
+box3-spi,present,GRAM_T1_INTERNAL,270,Multiple RGB images,66,100,1,0
+box3-spi,present,GRAM_T1_INTERNAL,270,Multiple ARGB images,66,100,2,0
+box3-spi,present,GRAM_T1_INTERNAL,270,Rotated ARGB images,64,100,7,3
+box3-spi,present,GRAM_T1_INTERNAL,270,Multiple labels,65,100,3,4
+box3-spi,present,GRAM_T1_INTERNAL,270,Screen sized text,20,100,43,5
+box3-spi,present,GRAM_T1_INTERNAL,270,Multiple arcs,66,100,1,0
+box3-spi,present,GRAM_T1_INTERNAL,270,Containers,65,100,4,9
+box3-spi,present,GRAM_T1_INTERNAL,270,Containers with overlay,26,100,12,23
+box3-spi,present,GRAM_T1_INTERNAL,270,Containers with opa,64,100,4,9
+box3-spi,present,GRAM_T1_INTERNAL,270,Containers with opa_layer,64,100,7,7
+box3-spi,present,GRAM_T1_INTERNAL,270,Containers with scrolling,25,100,13,24
+box3-spi,present,GRAM_T1_INTERNAL,270,Widgets demo,32,100,15,11
+box3-spi,present,GRAM_T2_INTERNAL,0,Empty screen,27,100,3,26
+box3-spi,present,GRAM_T2_INTERNAL,0,Moving wallpaper,31,100,6,24
+box3-spi,present,GRAM_T2_INTERNAL,0,Single rectangle,66,100,0,1
+box3-spi,present,GRAM_T2_INTERNAL,0,Multiple rectangles,64,100,4,10
+box3-spi,present,GRAM_T2_INTERNAL,0,Multiple RGB images,66,100,1,0
+box3-spi,present,GRAM_T2_INTERNAL,0,Multiple ARGB images,66,100,2,0
+box3-spi,present,GRAM_T2_INTERNAL,0,Rotated ARGB images,65,100,5,0
+box3-spi,present,GRAM_T2_INTERNAL,0,Multiple labels,66,100,5,0
+box3-spi,present,GRAM_T2_INTERNAL,0,Screen sized text,25,100,32,5
+box3-spi,present,GRAM_T2_INTERNAL,0,Multiple arcs,66,100,1,0
+box3-spi,present,GRAM_T2_INTERNAL,0,Containers,63,100,3,10
+box3-spi,present,GRAM_T2_INTERNAL,0,Containers with overlay,31,100,11,18
+box3-spi,present,GRAM_T2_INTERNAL,0,Containers with opa,61,100,5,10
+box3-spi,present,GRAM_T2_INTERNAL,0,Containers with opa_layer,60,100,8,8
+box3-spi,present,GRAM_T2_INTERNAL,0,Containers with scrolling,31,100,11,18
+box3-spi,present,GRAM_T2_INTERNAL,0,Widgets demo,49,100,8,8
+box3-spi,present,GRAM_T2_INTERNAL,90,Empty screen,27,100,8,21
+box3-spi,present,GRAM_T2_INTERNAL,90,Moving wallpaper,30,100,8,18
+box3-spi,present,GRAM_T2_INTERNAL,90,Single rectangle,66,100,1,0
+box3-spi,present,GRAM_T2_INTERNAL,90,Multiple rectangles,60,100,6,7
+box3-spi,present,GRAM_T2_INTERNAL,90,Multiple RGB images,66,100,1,0
+box3-spi,present,GRAM_T2_INTERNAL,90,Multiple ARGB images,66,100,2,0
+box3-spi,present,GRAM_T2_INTERNAL,90,Rotated ARGB images,66,100,5,0
+box3-spi,present,GRAM_T2_INTERNAL,90,Multiple labels,66,100,4,0
+box3-spi,present,GRAM_T2_INTERNAL,90,Screen sized text,21,100,45,0
+box3-spi,present,GRAM_T2_INTERNAL,90,Multiple arcs,66,100,1,0
+box3-spi,present,GRAM_T2_INTERNAL,90,Containers,66,100,5,2
+box3-spi,present,GRAM_T2_INTERNAL,90,Containers with overlay,29,100,15,13
+box3-spi,present,GRAM_T2_INTERNAL,90,Containers with opa,66,100,6,1
+box3-spi,present,GRAM_T2_INTERNAL,90,Containers with opa_layer,65,100,7,1
+box3-spi,present,GRAM_T2_INTERNAL,90,Containers with scrolling,29,100,18,13
+box3-spi,present,GRAM_T2_INTERNAL,90,Widgets demo,37,100,16,3
+box3-spi,present,GRAM_T2_INTERNAL,180,Empty screen,28,100,8,20
+box3-spi,present,GRAM_T2_INTERNAL,180,Moving wallpaper,32,100,6,18
+box3-spi,present,GRAM_T2_INTERNAL,180,Single rectangle,66,100,0,0
+box3-spi,present,GRAM_T2_INTERNAL,180,Multiple rectangles,64,100,2,9
+box3-spi,present,GRAM_T2_INTERNAL,180,Multiple RGB images,66,100,1,0
+box3-spi,present,GRAM_T2_INTERNAL,180,Multiple ARGB images,66,100,2,0
+box3-spi,present,GRAM_T2_INTERNAL,180,Rotated ARGB images,65,100,6,0
+box3-spi,present,GRAM_T2_INTERNAL,180,Multiple labels,66,100,5,0
+box3-spi,present,GRAM_T2_INTERNAL,180,Screen sized text,27,100,33,1
+box3-spi,present,GRAM_T2_INTERNAL,180,Multiple arcs,66,100,1,0
+box3-spi,present,GRAM_T2_INTERNAL,180,Containers,65,100,3,4
+box3-spi,present,GRAM_T2_INTERNAL,180,Containers with overlay,32,100,13,12
+box3-spi,present,GRAM_T2_INTERNAL,180,Containers with opa,65,100,6,3
+box3-spi,present,GRAM_T2_INTERNAL,180,Containers with opa_layer,64,100,8,3
+box3-spi,present,GRAM_T2_INTERNAL,180,Containers with scrolling,32,100,16,13
+box3-spi,present,GRAM_T2_INTERNAL,180,Widgets demo,49,100,8,2
+box3-spi,present,GRAM_T2_INTERNAL,270,Empty screen,27,100,9,21
+box3-spi,present,GRAM_T2_INTERNAL,270,Moving wallpaper,30,100,9,17
+box3-spi,present,GRAM_T2_INTERNAL,270,Single rectangle,66,100,1,0
+box3-spi,present,GRAM_T2_INTERNAL,270,Multiple rectangles,60,100,6,7
+box3-spi,present,GRAM_T2_INTERNAL,270,Multiple RGB images,66,100,1,0
+box3-spi,present,GRAM_T2_INTERNAL,270,Multiple ARGB images,66,100,2,0
+box3-spi,present,GRAM_T2_INTERNAL,270,Rotated ARGB images,66,100,7,0
+box3-spi,present,GRAM_T2_INTERNAL,270,Multiple labels,66,100,4,0
+box3-spi,present,GRAM_T2_INTERNAL,270,Screen sized text,21,100,45,0
+box3-spi,present,GRAM_T2_INTERNAL,270,Multiple arcs,66,100,1,0
+box3-spi,present,GRAM_T2_INTERNAL,270,Containers,66,100,5,2
+box3-spi,present,GRAM_T2_INTERNAL,270,Containers with overlay,29,100,15,13
+box3-spi,present,GRAM_T2_INTERNAL,270,Containers with opa,66,100,6,1
+box3-spi,present,GRAM_T2_INTERNAL,270,Containers with opa_layer,65,100,7,1
+box3-spi,present,GRAM_T2_INTERNAL,270,Containers with scrolling,29,100,18,13
+box3-spi,present,GRAM_T2_INTERNAL,270,Widgets demo,37,100,16,3
+box3-spi,present,GRAM_T1_PSRAM,0,Empty screen,24,100,4,30
+box3-spi,present,GRAM_T1_PSRAM,0,Moving wallpaper,27,100,7,27
+box3-spi,present,GRAM_T1_PSRAM,0,Single rectangle,66,100,0,0
+box3-spi,present,GRAM_T1_PSRAM,0,Multiple rectangles,51,100,8,8
+box3-spi,present,GRAM_T1_PSRAM,0,Multiple RGB images,66,100,1,0
+box3-spi,present,GRAM_T1_PSRAM,0,Multiple ARGB images,66,100,2,0
+box3-spi,present,GRAM_T1_PSRAM,0,Rotated ARGB images,65,100,7,5
+box3-spi,present,GRAM_T1_PSRAM,0,Multiple labels,65,100,4,5
+box3-spi,present,GRAM_T1_PSRAM,0,Screen sized text,24,100,32,6
+box3-spi,present,GRAM_T1_PSRAM,0,Multiple arcs,66,100,1,0
+box3-spi,present,GRAM_T1_PSRAM,0,Containers,61,100,4,11
+box3-spi,present,GRAM_T1_PSRAM,0,Containers with overlay,27,100,11,23
+box3-spi,present,GRAM_T1_PSRAM,0,Containers with opa,61,100,5,10
+box3-spi,present,GRAM_T1_PSRAM,0,Containers with opa_layer,58,100,8,10
+box3-spi,present,GRAM_T1_PSRAM,0,Containers with scrolling,27,100,12,22
+box3-spi,present,GRAM_T1_PSRAM,0,Widgets demo,43,100,8,10
+box3-spi,present,GRAM_T1_PSRAM,90,Empty screen,24,100,3,31
+box3-spi,present,GRAM_T1_PSRAM,90,Moving wallpaper,26,100,7,29
+box3-spi,present,GRAM_T1_PSRAM,90,Single rectangle,65,100,1,0
+box3-spi,present,GRAM_T1_PSRAM,90,Multiple rectangles,49,100,8,8
+box3-spi,present,GRAM_T1_PSRAM,90,Multiple RGB images,66,100,1,0
+box3-spi,present,GRAM_T1_PSRAM,90,Multiple ARGB images,66,100,2,0
+box3-spi,present,GRAM_T1_PSRAM,90,Rotated ARGB images,64,100,6,4
+box3-spi,present,GRAM_T1_PSRAM,90,Multiple labels,65,100,3,4
+box3-spi,present,GRAM_T1_PSRAM,90,Screen sized text,20,100,43,5
+box3-spi,present,GRAM_T1_PSRAM,90,Multiple arcs,66,100,1,0
+box3-spi,present,GRAM_T1_PSRAM,90,Containers,65,100,6,7
+box3-spi,present,GRAM_T1_PSRAM,90,Containers with overlay,26,100,11,23
+box3-spi,present,GRAM_T1_PSRAM,90,Containers with opa,64,100,4,9
+box3-spi,present,GRAM_T1_PSRAM,90,Containers with opa_layer,64,100,7,5
+box3-spi,present,GRAM_T1_PSRAM,90,Containers with scrolling,25,100,13,23
+box3-spi,present,GRAM_T1_PSRAM,90,Widgets demo,32,100,15,11
+box3-spi,present,GRAM_T1_PSRAM,180,Empty screen,24,100,4,30
+box3-spi,present,GRAM_T1_PSRAM,180,Moving wallpaper,27,100,7,27
+box3-spi,present,GRAM_T1_PSRAM,180,Single rectangle,66,100,0,0
+box3-spi,present,GRAM_T1_PSRAM,180,Multiple rectangles,51,100,8,8
+box3-spi,present,GRAM_T1_PSRAM,180,Multiple RGB images,66,100,1,0
+box3-spi,present,GRAM_T1_PSRAM,180,Multiple ARGB images,66,100,2,0
+box3-spi,present,GRAM_T1_PSRAM,180,Rotated ARGB images,65,100,5,6
+box3-spi,present,GRAM_T1_PSRAM,180,Multiple labels,65,100,4,5
+box3-spi,present,GRAM_T1_PSRAM,180,Screen sized text,24,100,32,6
+box3-spi,present,GRAM_T1_PSRAM,180,Multiple arcs,66,100,1,0
+box3-spi,present,GRAM_T1_PSRAM,180,Containers,61,100,4,11
+box3-spi,present,GRAM_T1_PSRAM,180,Containers with overlay,27,100,11,23
+box3-spi,present,GRAM_T1_PSRAM,180,Containers with opa,61,100,5,10
+box3-spi,present,GRAM_T1_PSRAM,180,Containers with opa_layer,58,100,8,10
+box3-spi,present,GRAM_T1_PSRAM,180,Containers with scrolling,27,100,11,22
+box3-spi,present,GRAM_T1_PSRAM,180,Widgets demo,43,100,8,10
+box3-spi,present,GRAM_T1_PSRAM,270,Empty screen,24,100,3,31
+box3-spi,present,GRAM_T1_PSRAM,270,Moving wallpaper,26,100,6,29
+box3-spi,present,GRAM_T1_PSRAM,270,Single rectangle,66,100,1,0
+box3-spi,present,GRAM_T1_PSRAM,270,Multiple rectangles,50,100,8,8
+box3-spi,present,GRAM_T1_PSRAM,270,Multiple RGB images,66,100,1,0
+box3-spi,present,GRAM_T1_PSRAM,270,Multiple ARGB images,66,100,2,0
+box3-spi,present,GRAM_T1_PSRAM,270,Rotated ARGB images,64,100,6,4
+box3-spi,present,GRAM_T1_PSRAM,270,Multiple labels,65,100,3,4
+box3-spi,present,GRAM_T1_PSRAM,270,Screen sized text,20,100,42,5
+box3-spi,present,GRAM_T1_PSRAM,270,Multiple arcs,66,100,1,0
+box3-spi,present,GRAM_T1_PSRAM,270,Containers,64,100,5,8
+box3-spi,present,GRAM_T1_PSRAM,270,Containers with overlay,26,100,12,23
+box3-spi,present,GRAM_T1_PSRAM,270,Containers with opa,64,100,4,9
+box3-spi,present,GRAM_T1_PSRAM,270,Containers with opa_layer,64,100,8,6
+box3-spi,present,GRAM_T1_PSRAM,270,Containers with scrolling,24,100,14,23
+box3-spi,present,GRAM_T1_PSRAM,270,Widgets demo,32,100,15,11
+box3-spi,present,GRAM_T2_PSRAM,0,Empty screen,28,100,8,20
+box3-spi,present,GRAM_T2_PSRAM,0,Moving wallpaper,32,100,9,15
+box3-spi,present,GRAM_T2_PSRAM,0,Single rectangle,66,100,0,0
+box3-spi,present,GRAM_T2_PSRAM,0,Multiple rectangles,64,100,2,9
+box3-spi,present,GRAM_T2_PSRAM,0,Multiple RGB images,66,100,1,0
+box3-spi,present,GRAM_T2_PSRAM,0,Multiple ARGB images,66,100,2,0
+box3-spi,present,GRAM_T2_PSRAM,0,Rotated ARGB images,66,100,8,0
+box3-spi,present,GRAM_T2_PSRAM,0,Multiple labels,66,100,5,0
+box3-spi,present,GRAM_T2_PSRAM,0,Screen sized text,26,100,34,1
+box3-spi,present,GRAM_T2_PSRAM,0,Multiple arcs,66,100,1,0
+box3-spi,present,GRAM_T2_PSRAM,0,Containers,66,100,4,3
+box3-spi,present,GRAM_T2_PSRAM,0,Containers with overlay,32,100,14,11
+box3-spi,present,GRAM_T2_PSRAM,0,Containers with opa,65,100,6,3
+box3-spi,present,GRAM_T2_PSRAM,0,Containers with opa_layer,65,100,8,2
+box3-spi,present,GRAM_T2_PSRAM,0,Containers with scrolling,32,100,17,11
+box3-spi,present,GRAM_T2_PSRAM,0,Widgets demo,49,100,9,1
+box3-spi,present,GRAM_T2_PSRAM,90,Empty screen,27,100,9,21
+box3-spi,present,GRAM_T2_PSRAM,90,Moving wallpaper,30,100,10,17
+box3-spi,present,GRAM_T2_PSRAM,90,Single rectangle,65,100,1,0
+box3-spi,present,GRAM_T2_PSRAM,90,Multiple rectangles,59,100,5,7
+box3-spi,present,GRAM_T2_PSRAM,90,Multiple RGB images,66,100,1,0
+box3-spi,present,GRAM_T2_PSRAM,90,Multiple ARGB images,66,100,2,0
+box3-spi,present,GRAM_T2_PSRAM,90,Rotated ARGB images,66,100,7,0
+box3-spi,present,GRAM_T2_PSRAM,90,Multiple labels,65,100,4,0
+box3-spi,present,GRAM_T2_PSRAM,90,Screen sized text,21,100,44,0
+box3-spi,present,GRAM_T2_PSRAM,90,Multiple arcs,66,100,1,0
+box3-spi,present,GRAM_T2_PSRAM,90,Containers,66,100,4,1
+box3-spi,present,GRAM_T2_PSRAM,90,Containers with overlay,29,100,15,12
+box3-spi,present,GRAM_T2_PSRAM,90,Containers with opa,65,100,6,2
+box3-spi,present,GRAM_T2_PSRAM,90,Containers with opa_layer,65,100,8,0
+box3-spi,present,GRAM_T2_PSRAM,90,Containers with scrolling,29,100,19,12
+box3-spi,present,GRAM_T2_PSRAM,90,Widgets demo,36,100,16,3
+box3-spi,present,GRAM_T2_PSRAM,180,Empty screen,28,100,8,20
+box3-spi,present,GRAM_T2_PSRAM,180,Moving wallpaper,32,100,9,15
+box3-spi,present,GRAM_T2_PSRAM,180,Single rectangle,66,100,0,0
+box3-spi,present,GRAM_T2_PSRAM,180,Multiple rectangles,64,100,2,9
+box3-spi,present,GRAM_T2_PSRAM,180,Multiple RGB images,66,100,1,0
+box3-spi,present,GRAM_T2_PSRAM,180,Multiple ARGB images,66,100,2,0
+box3-spi,present,GRAM_T2_PSRAM,180,Rotated ARGB images,65,100,8,0
+box3-spi,present,GRAM_T2_PSRAM,180,Multiple labels,66,100,5,0
+box3-spi,present,GRAM_T2_PSRAM,180,Screen sized text,26,100,34,1
+box3-spi,present,GRAM_T2_PSRAM,180,Multiple arcs,66,100,1,0
+box3-spi,present,GRAM_T2_PSRAM,180,Containers,66,100,5,3
+box3-spi,present,GRAM_T2_PSRAM,180,Containers with overlay,32,100,15,11
+box3-spi,present,GRAM_T2_PSRAM,180,Containers with opa,65,100,6,3
+box3-spi,present,GRAM_T2_PSRAM,180,Containers with opa_layer,65,100,8,3
+box3-spi,present,GRAM_T2_PSRAM,180,Containers with scrolling,32,100,17,12
+box3-spi,present,GRAM_T2_PSRAM,180,Widgets demo,50,100,9,1
+box3-spi,present,GRAM_T2_PSRAM,270,Empty screen,27,100,9,21
+box3-spi,present,GRAM_T2_PSRAM,270,Moving wallpaper,30,100,10,17
+box3-spi,present,GRAM_T2_PSRAM,270,Single rectangle,66,100,1,0
+box3-spi,present,GRAM_T2_PSRAM,270,Multiple rectangles,60,100,6,7
+box3-spi,present,GRAM_T2_PSRAM,270,Multiple RGB images,66,100,1,0
+box3-spi,present,GRAM_T2_PSRAM,270,Multiple ARGB images,66,100,2,0
+box3-spi,present,GRAM_T2_PSRAM,270,Rotated ARGB images,66,100,7,0
+box3-spi,present,GRAM_T2_PSRAM,270,Multiple labels,66,100,4,0
+box3-spi,present,GRAM_T2_PSRAM,270,Screen sized text,21,100,44,0
+box3-spi,present,GRAM_T2_PSRAM,270,Multiple arcs,66,100,1,0
+box3-spi,present,GRAM_T2_PSRAM,270,Containers,66,100,4,2
+box3-spi,present,GRAM_T2_PSRAM,270,Containers with overlay,29,100,15,12
+box3-spi,present,GRAM_T2_PSRAM,270,Containers with opa,65,100,6,1
+box3-spi,present,GRAM_T2_PSRAM,270,Containers with opa_layer,66,100,7,0
+box3-spi,present,GRAM_T2_PSRAM,270,Containers with scrolling,29,100,19,12
+box3-spi,present,GRAM_T2_PSRAM,270,Widgets demo,36,100,16,3
+box3-spi,present,AUTO_T2_INTERNAL,0,Empty screen,27,100,3,26
+box3-spi,present,AUTO_T2_INTERNAL,0,Moving wallpaper,31,100,6,24
+box3-spi,present,AUTO_T2_INTERNAL,0,Single rectangle,66,100,0,1
+box3-spi,present,AUTO_T2_INTERNAL,0,Multiple rectangles,64,100,4,10
+box3-spi,present,AUTO_T2_INTERNAL,0,Multiple RGB images,66,100,1,0
+box3-spi,present,AUTO_T2_INTERNAL,0,Multiple ARGB images,66,100,2,0
+box3-spi,present,AUTO_T2_INTERNAL,0,Rotated ARGB images,65,100,5,6
+box3-spi,present,AUTO_T2_INTERNAL,0,Multiple labels,66,100,5,0
+box3-spi,present,AUTO_T2_INTERNAL,0,Screen sized text,25,100,32,5
+box3-spi,present,AUTO_T2_INTERNAL,0,Multiple arcs,66,100,1,0
+box3-spi,present,AUTO_T2_INTERNAL,0,Containers,63,100,3,9
+box3-spi,present,AUTO_T2_INTERNAL,0,Containers with overlay,31,100,11,18
+box3-spi,present,AUTO_T2_INTERNAL,0,Containers with opa,62,100,5,9
+box3-spi,present,AUTO_T2_INTERNAL,0,Containers with opa_layer,60,100,8,8
+box3-spi,present,AUTO_T2_INTERNAL,0,Containers with scrolling,31,100,11,18
+box3-spi,present,AUTO_T2_INTERNAL,0,Widgets demo,49,100,8,8
+box3-spi,present,AUTO_T2_INTERNAL,90,Empty screen,27,100,8,21
+box3-spi,present,AUTO_T2_INTERNAL,90,Moving wallpaper,30,100,9,17
+box3-spi,present,AUTO_T2_INTERNAL,90,Single rectangle,66,100,1,0
+box3-spi,present,AUTO_T2_INTERNAL,90,Multiple rectangles,60,100,6,7
+box3-spi,present,AUTO_T2_INTERNAL,90,Multiple RGB images,66,100,1,0
+box3-spi,present,AUTO_T2_INTERNAL,90,Multiple ARGB images,66,100,2,0
+box3-spi,present,AUTO_T2_INTERNAL,90,Rotated ARGB images,66,100,6,0
+box3-spi,present,AUTO_T2_INTERNAL,90,Multiple labels,65,100,4,0
+box3-spi,present,AUTO_T2_INTERNAL,90,Screen sized text,21,100,45,0
+box3-spi,present,AUTO_T2_INTERNAL,90,Multiple arcs,66,100,1,0
+box3-spi,present,AUTO_T2_INTERNAL,90,Containers,65,100,5,2
+box3-spi,present,AUTO_T2_INTERNAL,90,Containers with overlay,29,100,15,13
+box3-spi,present,AUTO_T2_INTERNAL,90,Containers with opa,66,100,6,2
+box3-spi,present,AUTO_T2_INTERNAL,90,Containers with opa_layer,66,100,7,1
+box3-spi,present,AUTO_T2_INTERNAL,90,Containers with scrolling,29,100,18,13
+box3-spi,present,AUTO_T2_INTERNAL,90,Widgets demo,37,100,16,3
+box3-spi,present,AUTO_T2_INTERNAL,180,Empty screen,28,100,8,20
+box3-spi,present,AUTO_T2_INTERNAL,180,Moving wallpaper,32,100,6,18
+box3-spi,present,AUTO_T2_INTERNAL,180,Single rectangle,66,100,0,0
+box3-spi,present,AUTO_T2_INTERNAL,180,Multiple rectangles,64,100,2,9
+box3-spi,present,AUTO_T2_INTERNAL,180,Multiple RGB images,66,100,1,0
+box3-spi,present,AUTO_T2_INTERNAL,180,Multiple ARGB images,66,100,2,0
+box3-spi,present,AUTO_T2_INTERNAL,180,Rotated ARGB images,66,100,5,0
+box3-spi,present,AUTO_T2_INTERNAL,180,Multiple labels,66,100,5,0
+box3-spi,present,AUTO_T2_INTERNAL,180,Screen sized text,27,100,33,1
+box3-spi,present,AUTO_T2_INTERNAL,180,Multiple arcs,66,100,1,0
+box3-spi,present,AUTO_T2_INTERNAL,180,Containers,66,100,3,4
+box3-spi,present,AUTO_T2_INTERNAL,180,Containers with overlay,32,100,13,13
+box3-spi,present,AUTO_T2_INTERNAL,180,Containers with opa,65,100,6,3
+box3-spi,present,AUTO_T2_INTERNAL,180,Containers with opa_layer,65,100,7,3
+box3-spi,present,AUTO_T2_INTERNAL,180,Containers with scrolling,32,100,16,12
+box3-spi,present,AUTO_T2_INTERNAL,180,Widgets demo,50,100,8,2
+box3-spi,present,AUTO_T2_INTERNAL,270,Empty screen,27,100,8,21
+box3-spi,present,AUTO_T2_INTERNAL,270,Moving wallpaper,30,100,9,17
+box3-spi,present,AUTO_T2_INTERNAL,270,Single rectangle,66,100,1,0
+box3-spi,present,AUTO_T2_INTERNAL,270,Multiple rectangles,60,100,5,7
+box3-spi,present,AUTO_T2_INTERNAL,270,Multiple RGB images,66,100,1,0
+box3-spi,present,AUTO_T2_INTERNAL,270,Multiple ARGB images,66,100,2,0
+box3-spi,present,AUTO_T2_INTERNAL,270,Rotated ARGB images,66,100,7,0
+box3-spi,present,AUTO_T2_INTERNAL,270,Multiple labels,66,100,4,0
+box3-spi,present,AUTO_T2_INTERNAL,270,Screen sized text,21,100,45,0
+box3-spi,present,AUTO_T2_INTERNAL,270,Multiple arcs,66,100,1,0
+box3-spi,present,AUTO_T2_INTERNAL,270,Containers,65,100,5,2
+box3-spi,present,AUTO_T2_INTERNAL,270,Containers with overlay,29,100,15,13
+box3-spi,present,AUTO_T2_INTERNAL,270,Containers with opa,66,100,6,1
+box3-spi,present,AUTO_T2_INTERNAL,270,Containers with opa_layer,65,100,7,1
+box3-spi,present,AUTO_T2_INTERNAL,270,Containers with scrolling,29,100,18,13
+box3-spi,present,AUTO_T2_INTERNAL,270,Widgets demo,37,100,16,3
+box3-spi,adapter,GRAM_T1_INTERNAL,0,Empty screen,26,100,3,31
+box3-spi,adapter,GRAM_T1_INTERNAL,0,Moving wallpaper,25,100,5,31
+box3-spi,adapter,GRAM_T1_INTERNAL,0,Single rectangle,66,100,0,0
+box3-spi,adapter,GRAM_T1_INTERNAL,0,Multiple rectangles,53,100,4,11
+box3-spi,adapter,GRAM_T1_INTERNAL,0,Multiple RGB images,66,100,1,0
+box3-spi,adapter,GRAM_T1_INTERNAL,0,Multiple ARGB images,66,100,1,0
+box3-spi,adapter,GRAM_T1_INTERNAL,0,Rotated ARGB images,60,100,7,7
+box3-spi,adapter,GRAM_T1_INTERNAL,0,Multiple labels,65,100,3,6
+box3-spi,adapter,GRAM_T1_INTERNAL,0,Screen sized text,14,100,32,31
+box3-spi,adapter,GRAM_T1_INTERNAL,0,Multiple arcs,66,100,0,0
+box3-spi,adapter,GRAM_T1_INTERNAL,0,Containers,61,100,3,12
+box3-spi,adapter,GRAM_T1_INTERNAL,0,Containers with overlay,22,100,11,31
+box3-spi,adapter,GRAM_T1_INTERNAL,0,Containers with opa,59,100,5,12
+box3-spi,adapter,GRAM_T1_INTERNAL,0,Containers with opa_layer,55,100,7,13
+box3-spi,adapter,GRAM_T1_INTERNAL,0,Containers with scrolling,22,100,11,31
+box3-spi,adapter,GRAM_T1_INTERNAL,0,Widgets demo,32,100,8,18
+box3-spi,adapter,GRAM_T2_INTERNAL,0,Empty screen,26,100,4,27
+box3-spi,adapter,GRAM_T2_INTERNAL,0,Moving wallpaper,30,100,5,25
+box3-spi,adapter,GRAM_T2_INTERNAL,0,Single rectangle,66,100,0,0
+box3-spi,adapter,GRAM_T2_INTERNAL,0,Multiple rectangles,64,100,3,11
+box3-spi,adapter,GRAM_T2_INTERNAL,0,Multiple RGB images,66,100,1,0
+box3-spi,adapter,GRAM_T2_INTERNAL,0,Multiple ARGB images,66,100,1,0
+box3-spi,adapter,GRAM_T2_INTERNAL,0,Rotated ARGB images,65,100,7,5
+box3-spi,adapter,GRAM_T2_INTERNAL,0,Multiple labels,66,100,4,1
+box3-spi,adapter,GRAM_T2_INTERNAL,0,Screen sized text,25,100,31,5
+box3-spi,adapter,GRAM_T2_INTERNAL,0,Multiple arcs,66,100,0,0
+box3-spi,adapter,GRAM_T2_INTERNAL,0,Containers,63,100,3,11
+box3-spi,adapter,GRAM_T2_INTERNAL,0,Containers with overlay,30,100,11,19
+box3-spi,adapter,GRAM_T2_INTERNAL,0,Containers with opa,62,100,6,8
+box3-spi,adapter,GRAM_T2_INTERNAL,0,Containers with opa_layer,60,100,7,9
+box3-spi,adapter,GRAM_T2_INTERNAL,0,Containers with scrolling,30,100,11,19
+box3-spi,adapter,GRAM_T2_INTERNAL,0,Widgets demo,47,100,8,9
+box3-spi,adapter,GRAM_T1_PSRAM,0,Empty screen,23,100,3,32
+box3-spi,adapter,GRAM_T1_PSRAM,0,Moving wallpaper,25,100,6,32
+box3-spi,adapter,GRAM_T1_PSRAM,0,Single rectangle,66,100,0,0
+box3-spi,adapter,GRAM_T1_PSRAM,0,Multiple rectangles,52,100,3,13
+box3-spi,adapter,GRAM_T1_PSRAM,0,Multiple RGB images,66,100,1,0
+box3-spi,adapter,GRAM_T1_PSRAM,0,Multiple ARGB images,66,100,1,0
+box3-spi,adapter,GRAM_T1_PSRAM,0,Rotated ARGB images,60,100,7,7
+box3-spi,adapter,GRAM_T1_PSRAM,0,Multiple labels,65,100,3,6
+box3-spi,adapter,GRAM_T1_PSRAM,0,Screen sized text,14,100,32,31
+box3-spi,adapter,GRAM_T1_PSRAM,0,Multiple arcs,66,100,0,1
+box3-spi,adapter,GRAM_T1_PSRAM,0,Containers,61,100,3,12
+box3-spi,adapter,GRAM_T1_PSRAM,0,Containers with overlay,21,100,11,32
+box3-spi,adapter,GRAM_T1_PSRAM,0,Containers with opa,57,100,5,13
+box3-spi,adapter,GRAM_T1_PSRAM,0,Containers with opa_layer,53,100,8,13
+box3-spi,adapter,GRAM_T1_PSRAM,0,Containers with scrolling,21,100,11,32
+box3-spi,adapter,GRAM_T1_PSRAM,0,Widgets demo,32,100,8,18
+box3-spi,adapter,GRAM_T2_PSRAM,0,Empty screen,25,100,3,27
+box3-spi,adapter,GRAM_T2_PSRAM,0,Moving wallpaper,29,100,8,23
+box3-spi,adapter,GRAM_T2_PSRAM,0,Single rectangle,66,100,0,0
+box3-spi,adapter,GRAM_T2_PSRAM,0,Multiple rectangles,64,100,2,11
+box3-spi,adapter,GRAM_T2_PSRAM,0,Multiple RGB images,66,100,1,0
+box3-spi,adapter,GRAM_T2_PSRAM,0,Multiple ARGB images,66,100,2,0
+box3-spi,adapter,GRAM_T2_PSRAM,0,Rotated ARGB images,65,100,7,5
+box3-spi,adapter,GRAM_T2_PSRAM,0,Multiple labels,66,100,5,0
+box3-spi,adapter,GRAM_T2_PSRAM,0,Screen sized text,25,100,32,5
+box3-spi,adapter,GRAM_T2_PSRAM,0,Multiple arcs,66,100,0,0
+box3-spi,adapter,GRAM_T2_PSRAM,0,Containers,63,100,4,10
+box3-spi,adapter,GRAM_T2_PSRAM,0,Containers with overlay,29,100,12,19
+box3-spi,adapter,GRAM_T2_PSRAM,0,Containers with opa,62,100,4,10
+box3-spi,adapter,GRAM_T2_PSRAM,0,Containers with opa_layer,58,100,10,9
+box3-spi,adapter,GRAM_T2_PSRAM,0,Containers with scrolling,29,100,12,19
+box3-spi,adapter,GRAM_T2_PSRAM,0,Widgets demo,46,100,9,8

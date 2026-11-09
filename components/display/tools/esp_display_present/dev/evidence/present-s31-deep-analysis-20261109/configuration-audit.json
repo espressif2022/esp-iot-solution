@@ -1,0 +1,162 @@
+{
+  "s3-rgb": {
+    "present": {
+      "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ": "240",
+      "CONFIG_SPIRAM_SPEED": "80",
+      "CONFIG_SPIRAM_XIP_FROM_PSRAM": "y",
+      "CONFIG_SPIRAM_FETCH_INSTRUCTIONS": "y",
+      "CONFIG_SPIRAM_RODATA": "y",
+      "CONFIG_ESPTOOLPY_FLASHMODE": "\"dio\"",
+      "CONFIG_ESPTOOLPY_FLASHFREQ": "\"80m\"",
+      "CONFIG_CACHE_L1_ICACHE_SIZE": "not applicable",
+      "CONFIG_CACHE_L1_DCACHE_SIZE": "not applicable",
+      "CONFIG_ESP32S3_INSTRUCTION_CACHE_SIZE": "0x8000",
+      "CONFIG_LV_DRAW_SW_DRAW_UNIT_CNT": "2",
+      "CONFIG_LV_DEF_REFR_PERIOD": "15",
+      "CONFIG_LV_OS_IDLE_PERCENT_CUSTOM": "n"
+    },
+    "adapter": {
+      "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ": "240",
+      "CONFIG_SPIRAM_SPEED": "80",
+      "CONFIG_SPIRAM_XIP_FROM_PSRAM": "y",
+      "CONFIG_SPIRAM_FETCH_INSTRUCTIONS": "y",
+      "CONFIG_SPIRAM_RODATA": "y",
+      "CONFIG_ESPTOOLPY_FLASHMODE": "\"dio\"",
+      "CONFIG_ESPTOOLPY_FLASHFREQ": "\"80m\"",
+      "CONFIG_CACHE_L1_ICACHE_SIZE": "not applicable",
+      "CONFIG_CACHE_L1_DCACHE_SIZE": "not applicable",
+      "CONFIG_ESP32S3_INSTRUCTION_CACHE_SIZE": "0x8000",
+      "CONFIG_LV_DRAW_SW_DRAW_UNIT_CNT": "2",
+      "CONFIG_LV_DEF_REFR_PERIOD": "15",
+      "CONFIG_LV_OS_IDLE_PERCENT_CUSTOM": "n"
+    }
+  },
+  "s31-rgb": {
+    "present": {
+      "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ": "320",
+      "CONFIG_SPIRAM_SPEED": "200",
+      "CONFIG_SPIRAM_XIP_FROM_PSRAM": "n",
+      "CONFIG_SPIRAM_FETCH_INSTRUCTIONS": "not applicable",
+      "CONFIG_SPIRAM_RODATA": "not applicable",
+      "CONFIG_ESPTOOLPY_FLASHMODE": "\"dio\"",
+      "CONFIG_ESPTOOLPY_FLASHFREQ": "\"80m\"",
+      "CONFIG_CACHE_L1_ICACHE_SIZE": "0x4000",
+      "CONFIG_CACHE_L1_DCACHE_SIZE": "0x10000",
+      "CONFIG_ESP32S3_INSTRUCTION_CACHE_SIZE": "not applicable",
+      "CONFIG_LV_DRAW_SW_DRAW_UNIT_CNT": "2",
+      "CONFIG_LV_DEF_REFR_PERIOD": "15",
+      "CONFIG_LV_OS_IDLE_PERCENT_CUSTOM": "n"
+    },
+    "adapter": {
+      "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ": "320",
+      "CONFIG_SPIRAM_SPEED": "200",
+      "CONFIG_SPIRAM_XIP_FROM_PSRAM": "n",
+      "CONFIG_SPIRAM_FETCH_INSTRUCTIONS": "not applicable",
+      "CONFIG_SPIRAM_RODATA": "not applicable",
+      "CONFIG_ESPTOOLPY_FLASHMODE": "\"dio\"",
+      "CONFIG_ESPTOOLPY_FLASHFREQ": "\"80m\"",
+      "CONFIG_CACHE_L1_ICACHE_SIZE": "0x4000",
+      "CONFIG_CACHE_L1_DCACHE_SIZE": "0x10000",
+      "CONFIG_ESP32S3_INSTRUCTION_CACHE_SIZE": "not applicable",
+      "CONFIG_LV_DRAW_SW_DRAW_UNIT_CNT": "2",
+      "CONFIG_LV_DEF_REFR_PERIOD": "15",
+      "CONFIG_LV_OS_IDLE_PERCENT_CUSTOM": "n"
+    }
+  },
+  "p4-dsi": {
+    "present": {
+      "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ": "400",
+      "CONFIG_SPIRAM_SPEED": "200",
+      "CONFIG_SPIRAM_XIP_FROM_PSRAM": "n",
+      "CONFIG_SPIRAM_FETCH_INSTRUCTIONS": "not applicable",
+      "CONFIG_SPIRAM_RODATA": "not applicable",
+      "CONFIG_ESPTOOLPY_FLASHMODE": "\"dio\"",
+      "CONFIG_ESPTOOLPY_FLASHFREQ": "\"80m\"",
+      "CONFIG_CACHE_L1_ICACHE_SIZE": "not applicable",
+      "CONFIG_CACHE_L1_DCACHE_SIZE": "not applicable",
+      "CONFIG_ESP32S3_INSTRUCTION_CACHE_SIZE": "not applicable",
+      "CONFIG_LV_DRAW_SW_DRAW_UNIT_CNT": "2",
+      "CONFIG_LV_DEF_REFR_PERIOD": "15",
+      "CONFIG_LV_OS_IDLE_PERCENT_CUSTOM": "n"
+    },
+    "adapter": {
+      "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ": "400",
+      "CONFIG_SPIRAM_SPEED": "200",
+      "CONFIG_SPIRAM_XIP_FROM_PSRAM": "n",
+      "CONFIG_SPIRAM_FETCH_INSTRUCTIONS": "not applicable",
+      "CONFIG_SPIRAM_RODATA": "not applicable",
+      "CONFIG_ESPTOOLPY_FLASHMODE": "\"dio\"",
+      "CONFIG_ESPTOOLPY_FLASHFREQ": "\"80m\"",
+      "CONFIG_CACHE_L1_ICACHE_SIZE": "not applicable",
+      "CONFIG_CACHE_L1_DCACHE_SIZE": "not applicable",
+      "CONFIG_ESP32S3_INSTRUCTION_CACHE_SIZE": "not applicable",
+      "CONFIG_LV_DRAW_SW_DRAW_UNIT_CNT": "2",
+      "CONFIG_LV_DEF_REFR_PERIOD": "15",
+      "CONFIG_LV_OS_IDLE_PERCENT_CUSTOM": "n"
+    }
+  },
+  "s31-qspi": {
+    "present": {
+      "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ": "320",
+      "CONFIG_SPIRAM_SPEED": "200",
+      "CONFIG_SPIRAM_XIP_FROM_PSRAM": "n",
+      "CONFIG_SPIRAM_FETCH_INSTRUCTIONS": "not applicable",
+      "CONFIG_SPIRAM_RODATA": "not applicable",
+      "CONFIG_ESPTOOLPY_FLASHMODE": "\"dio\"",
+      "CONFIG_ESPTOOLPY_FLASHFREQ": "\"80m\"",
+      "CONFIG_CACHE_L1_ICACHE_SIZE": "0x4000",
+      "CONFIG_CACHE_L1_DCACHE_SIZE": "0x10000",
+      "CONFIG_ESP32S3_INSTRUCTION_CACHE_SIZE": "not applicable",
+      "CONFIG_LV_DRAW_SW_DRAW_UNIT_CNT": "2",
+      "CONFIG_LV_DEF_REFR_PERIOD": "15",
+      "CONFIG_LV_OS_IDLE_PERCENT_CUSTOM": "n"
+    },
+    "adapter": {
+      "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ": "320",
+      "CONFIG_SPIRAM_SPEED": "200",
+      "CONFIG_SPIRAM_XIP_FROM_PSRAM": "n",
+      "CONFIG_SPIRAM_FETCH_INSTRUCTIONS": "not applicable",
+      "CONFIG_SPIRAM_RODATA": "not applicable",
+      "CONFIG_ESPTOOLPY_FLASHMODE": "\"dio\"",
+      "CONFIG_ESPTOOLPY_FLASHFREQ": "\"80m\"",
+      "CONFIG_CACHE_L1_ICACHE_SIZE": "0x4000",
+      "CONFIG_CACHE_L1_DCACHE_SIZE": "0x10000",
+      "CONFIG_ESP32S3_INSTRUCTION_CACHE_SIZE": "not applicable",
+      "CONFIG_LV_DRAW_SW_DRAW_UNIT_CNT": "2",
+      "CONFIG_LV_DEF_REFR_PERIOD": "15",
+      "CONFIG_LV_OS_IDLE_PERCENT_CUSTOM": "n"
+    }
+  },
+  "box3-spi": {
+    "present": {
+      "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ": "240",
+      "CONFIG_SPIRAM_SPEED": "80",
+      "CONFIG_SPIRAM_XIP_FROM_PSRAM": "y",
+      "CONFIG_SPIRAM_FETCH_INSTRUCTIONS": "y",
+      "CONFIG_SPIRAM_RODATA": "y",
+      "CONFIG_ESPTOOLPY_FLASHMODE": "\"dio\"",
+      "CONFIG_ESPTOOLPY_FLASHFREQ": "\"80m\"",
+      "CONFIG_CACHE_L1_ICACHE_SIZE": "not applicable",
+      "CONFIG_CACHE_L1_DCACHE_SIZE": "not applicable",
+      "CONFIG_ESP32S3_INSTRUCTION_CACHE_SIZE": "0x8000",
+      "CONFIG_LV_DRAW_SW_DRAW_UNIT_CNT": "2",
+      "CONFIG_LV_DEF_REFR_PERIOD": "15",
+      "CONFIG_LV_OS_IDLE_PERCENT_CUSTOM": "n"
+    },
+    "adapter": {
+      "CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ": "240",
+      "CONFIG_SPIRAM_SPEED": "80",
+      "CONFIG_SPIRAM_XIP_FROM_PSRAM": "y",
+      "CONFIG_SPIRAM_FETCH_INSTRUCTIONS": "y",
+      "CONFIG_SPIRAM_RODATA": "y",
+      "CONFIG_ESPTOOLPY_FLASHMODE": "\"dio\"",
+      "CONFIG_ESPTOOLPY_FLASHFREQ": "\"80m\"",
+      "CONFIG_CACHE_L1_ICACHE_SIZE": "not applicable",
+      "CONFIG_CACHE_L1_DCACHE_SIZE": "not applicable",
+      "CONFIG_ESP32S3_INSTRUCTION_CACHE_SIZE": "0x8000",
+      "CONFIG_LV_DRAW_SW_DRAW_UNIT_CNT": "2",
+      "CONFIG_LV_DEF_REFR_PERIOD": "15",
+      "CONFIG_LV_OS_IDLE_PERCENT_CUSTOM": "n"
+    }
+  }
+}

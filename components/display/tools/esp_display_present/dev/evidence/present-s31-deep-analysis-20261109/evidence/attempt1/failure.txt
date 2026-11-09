@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/tmp/run_s31_deep.py", line 50, in <module>
+    changed=True;run(v,'flash',impl);run(v,'capture',impl);run(v,'report',impl)
+  File "/tmp/run_s31_deep.py", line 25, in run
+    if proc.returncode:raise RuntimeError('capture failed')
+RuntimeError: capture failed

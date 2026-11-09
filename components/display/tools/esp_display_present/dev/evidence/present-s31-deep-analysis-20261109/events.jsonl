@@ -1,0 +1,24 @@
+{"time": "2026-11-09T09:19:17.459887+00:00", "action": "build", "variant": "off", "implementation": "adapter"}
+{"time": "2026-11-09T09:22:29.711361+00:00", "action": "flash", "variant": "off", "implementation": "present"}
+{"time": "2026-11-09T09:22:42.612913+00:00", "action": "capture", "variant": "off", "implementation": "present"}
+{"time": "2026-11-09T09:25:07.760321+00:00", "action": "failed", "error": "RuntimeError('capture failed')"}
+{"time": "2026-11-09T09:25:07.761328+00:00", "action": "restore", "variant": "off", "implementation": "present"}
+{"time": "2026-11-09T09:28:34.183762+00:00", "action": "done", "success": false, "restored": true, "firmware_changed": true}
+{"time": "2026-11-09T09:28:53.179691+00:00", "action": "flash", "variant": "off", "implementation": "present"}
+{"time": "2026-11-09T09:29:05.639084+00:00", "action": "capture", "variant": "off", "implementation": "present"}
+{"time": "2026-11-09T09:31:35.784254+00:00", "action": "report", "variant": "off", "implementation": "present"}
+{"time": "2026-11-09T09:31:35.898492+00:00", "action": "variant_done", "variant": "off", "implementation": "present", "grades": [16, 18]}
+{"time": "2026-11-09T09:31:35.898737+00:00", "action": "flash", "variant": "off", "implementation": "adapter"}
+{"time": "2026-11-09T09:31:48.285615+00:00", "action": "capture", "variant": "off", "implementation": "adapter"}
+{"time": "2026-11-09T09:34:13.419884+00:00", "action": "report", "variant": "off", "implementation": "adapter"}
+{"time": "2026-11-09T09:34:13.534247+00:00", "action": "variant_done", "variant": "off", "implementation": "adapter", "grades": [20, 22]}
+{"time": "2026-11-09T09:34:13.534459+00:00", "action": "flash", "variant": "on", "implementation": "present"}
+{"time": "2026-11-09T09:34:26.272593+00:00", "action": "capture", "variant": "on", "implementation": "present"}
+{"time": "2026-11-09T09:36:51.412688+00:00", "action": "report", "variant": "on", "implementation": "present"}
+{"time": "2026-11-09T09:36:51.526926+00:00", "action": "variant_done", "variant": "on", "implementation": "present", "grades": [36, 36]}
+{"time": "2026-11-09T09:36:51.527162+00:00", "action": "flash", "variant": "on", "implementation": "adapter"}
+{"time": "2026-11-09T09:37:03.914835+00:00", "action": "capture", "variant": "on", "implementation": "adapter"}
+{"time": "2026-11-09T09:39:29.051245+00:00", "action": "report", "variant": "on", "implementation": "adapter"}
+{"time": "2026-11-09T09:39:29.165548+00:00", "action": "variant_done", "variant": "on", "implementation": "adapter", "grades": [37, 36]}
+{"time": "2026-11-09T09:39:29.165810+00:00", "action": "restore", "variant": "off", "implementation": "present"}
+{"time": "2026-11-09T09:42:55.154079+00:00", "action": "done", "success": true, "restored": true, "firmware_changed": true}

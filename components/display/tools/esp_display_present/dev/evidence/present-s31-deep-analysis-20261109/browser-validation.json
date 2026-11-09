@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "cases": 8,
+  "scenes": 128,
+  "comparedCells": 952,
+  "tableRows": [
+    4,
+    16,
+    16,
+    16,
+    16,
+    10
+  ],
+  "noDropdown": true,
+  "runtimeErrors": []
+}

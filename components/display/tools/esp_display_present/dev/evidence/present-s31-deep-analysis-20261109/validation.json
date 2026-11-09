@@ -1,0 +1,17 @@
+{
+  "task_runtime_to_two_core_wall_min": 0.9999384297386101,
+  "task_runtime_to_two_core_wall_max": 1.000825280013861,
+  "passed": true,
+  "cases": 8,
+  "scenes": 128,
+  "single_input_tile": true,
+  "capacity_bytes": {
+    "0": 80000,
+    "90": 48000
+  },
+  "shared_sdkconfig_identical_within_pairs": true,
+  "cache_saturation_samples": 0,
+  "original_firmware_restored": true,
+  "production_runtime_changed": false,
+  "first_attempt_failed_not_counted": true
+}

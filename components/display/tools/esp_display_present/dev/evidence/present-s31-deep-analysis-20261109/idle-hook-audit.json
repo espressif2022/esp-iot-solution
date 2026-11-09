@@ -1,0 +1,20 @@
+[
+  {
+    "implementation": "present",
+    "elf": "/tmp/present-s31-rgb-analysis-20261109/baseline/s31-rgb/benchmark/present/build/present_benchmark.elf",
+    "symbols": {
+      "lv_os_get_idle_percent": true,
+      "lv_freertos_task_switch_in": false,
+      "lv_freertos_task_switch_out": false
+    }
+  },
+  {
+    "implementation": "adapter",
+    "elf": "/tmp/present-s31-rgb-analysis-20261109/baseline/s31-rgb/benchmark/adapter/build/present_benchmark.elf",
+    "symbols": {
+      "lv_os_get_idle_percent": true,
+      "lv_freertos_task_switch_in": false,
+      "lv_freertos_task_switch_out": false
+    }
+  }
+]

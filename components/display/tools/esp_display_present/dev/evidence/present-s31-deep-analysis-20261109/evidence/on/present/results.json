@@ -1,0 +1,118 @@
+{
+  "complete": true,
+  "rows": [
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_PARTIAL",
+      "rotation": 0,
+      "frames": 1976,
+      "transport_fps": 28.4,
+      "lvgl_fps": 36,
+      "cpu": 100,
+      "render": 14,
+      "flush": 13,
+      "scenes": 16,
+      "memory": {
+        "before_open": {
+          "internal_total": 488023,
+          "internal_free": 382619,
+          "psram_total": 15825024,
+          "psram_free": 13517008,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 488023,
+          "internal_free": 256115,
+          "psram_total": 15825024,
+          "psram_free": 13434036,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 488023,
+          "internal_free": 255467,
+          "psram_total": 15825024,
+          "psram_free": 13405872,
+          "internal_min_free": 193623,
+          "psram_min_free": 13291172
+        },
+        "after_close": {
+          "internal_total": 488023,
+          "internal_free": 360159,
+          "psram_total": 15825024,
+          "psram_free": 13517008,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_PARTIAL",
+      "rotation": 90,
+      "frames": 1727,
+      "transport_fps": 24.8,
+      "lvgl_fps": 36,
+      "cpu": 100,
+      "render": 15,
+      "flush": 16,
+      "scenes": 16,
+      "memory": {
+        "before_open": {
+          "internal_total": 488023,
+          "internal_free": 360159,
+          "psram_total": 15825024,
+          "psram_free": 13517008,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 488023,
+          "internal_free": 288119,
+          "psram_total": 15825024,
+          "psram_free": 13467828,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 488023,
+          "internal_free": 287507,
+          "psram_total": 15825024,
+          "psram_free": 13439664,
+          "internal_min_free": 231631,
+          "psram_min_free": 13367464
+        },
+        "after_close": {
+          "internal_total": 488023,
+          "internal_free": 360159,
+          "psram_total": 15825024,
+          "psram_free": 13517008,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      }
+    }
+  ],
+  "errors": [],
+  "suite_memory": {
+    "before_init": {
+      "internal_total": 488023,
+      "internal_free": 406563,
+      "psram_total": 15825024,
+      "psram_free": 15821440,
+      "internal_min_free": 0,
+      "psram_min_free": 0
+    },
+    "after_init": {
+      "internal_total": 488023,
+      "internal_free": 382619,
+      "psram_total": 15825024,
+      "psram_free": 13517008,
+      "internal_min_free": 0,
+      "psram_min_free": 0
+    }
+  },
+  "matrix_complete": true,
+  "memory_complete": true
+}

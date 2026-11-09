@@ -1,0 +1,5 @@
+{"time": "2026-11-09T09:19:17.459887+00:00", "action": "build", "variant": "off", "implementation": "adapter"}
+{"time": "2026-11-09T09:22:29.711361+00:00", "action": "flash", "variant": "off", "implementation": "present"}
+{"time": "2026-11-09T09:22:42.612913+00:00", "action": "capture", "variant": "off", "implementation": "present"}
+{"time": "2026-11-09T09:25:07.760321+00:00", "action": "failed", "error": "RuntimeError('capture failed')"}
+{"time": "2026-11-09T09:25:07.761328+00:00", "action": "restore", "variant": "off", "implementation": "present"}

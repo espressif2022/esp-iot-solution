@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "cases": 8,
+  "sceneRows": 128,
+  "csvMatchesJson": true,
+  "taskRuntimeBudgetsChecked": 128,
+  "cacheSaturationSamples": 0,
+  "noBuildOrFirmware": true,
+  "relativeLinksExist": true,
+  "verifiedFullFlashRestore": true
+}
