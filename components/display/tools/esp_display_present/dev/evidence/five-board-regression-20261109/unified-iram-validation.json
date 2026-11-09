@@ -1,9 +1,14 @@
 {
   "passed": true,
   "boards": 5,
+  "independentTables": 6,
+  "s3Tables": [
+    "IRAM开 vs adapter",
+    "IRAM关 vs adapter"
+  ],
   "offCases": 24,
-  "fpsCellsChecked": 264,
-  "memoryCellsChecked": 2112,
+  "fpsCellsChecked": 288,
+  "memoryCellsChecked": 2304,
   "memoryDeltasChecked": 672,
   "runtimeErrors": []
 }
