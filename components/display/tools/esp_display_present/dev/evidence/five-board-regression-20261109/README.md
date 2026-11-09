@@ -32,6 +32,6 @@ Host ASan/UBSan 47/47通过。P4 adapter DIRECT 270°本轮完整16场景通过�
 
 comparison-current.html：所有板卡默认并列，FPS和剩余内存差值都放在present单元格内；剩余越多越好，内存四时点直接并排。comparison-current.xlsx：同一份数据。comparison-current.csv / comparison-current.json：精确字节。raw-results.json：原始解析结果。manifests.json：构建/输入/固件指纹。validation.json：矩阵与恢复校验。
 
-## S3 FB_IRAM 开关补测
+## S3 FB_IRAM 开关同表对比
 
-[同版本开启／关闭24项对照](../present-s3-fb-iram-on-off-20261109/comparison.html)：默认五板表仍使用开启配置；关闭数据单独列出，不替换默认成绩。关闭回收内部堆约21.36KiB；当前32KiB指令缓存/XIP配置下，FULL/DIRECT基本接近，PARTIAL/AUTO低1～3FPS。原固件已恢复并整片校验。
+S3 RGB 在原表直接并列 present IRAM开、present IRAM关、adapter；帧率与四时点RAM/PSRAM都按此顺序。两组present箭头均相对adapter，剩余越多越好。关闭组24项为本次补测，每项完整16场景；与开启组唯一SDK配置差异为该开关，生产源码与测试输入一致。关闭后内部堆增加21.36KiB；32KiB指令缓存＋PSRAM XIP配置下FULL/DIRECT持平或低1FPS，PARTIAL/AUTO低1～3FPS。单轮数据不代表统计显著差异。原固件已恢复校验，组件默认仍开启。其他板卡无此变体；不新增NONE模式。JSON/CSV增加present_off字段，Excel同表增加对应列；原始证据位于相邻present-s3-fb-iram-on-off-20261109目录。

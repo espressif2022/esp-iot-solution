@@ -134,5 +134,6 @@
   "row_count": 120,
   "present_grades": 108,
   "adapter_grades": 73,
-  "all_restored_verified": true
+  "all_restored_verified": true,
+  "s3_present_off_grades": 24
 }
