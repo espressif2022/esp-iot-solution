@@ -16,14 +16,17 @@ spec.loader.exec_module(runner)
 
 class RunnerTest(unittest.TestCase):
     def test_board_matrix(self):
-        self.assertEqual(len(runner.cases_for('s3-rgb', [0, 90, 180, 270])), 28)
+        self.assertEqual(len(runner.cases_for('s3-rgb', [0, 90, 180, 270])), 24)
+        for board in ('s3-rgb', 's31-rgb', 'p4-dsi'):
+            self.assertTrue(all(c['name'] != 'NONE' for c in runner.cases_for(board, [0, 90, 180, 270])))
+            self.assertEqual(len(runner.cases_for(board, [0, 90, 180, 270], ['NONE'])), 4)
         self.assertEqual(runner.BOARDS['s31-rgb']['width'], 800)
         self.assertEqual(runner.cases_for('s31-rgb', [0, 90, 180, 270]), runner.cases_for('s3-rgb', [0, 90, 180, 270]))
         self.assertEqual(len(runner.cases_for('box3-spi', [0, 90, 180, 270])), 20)
         self.assertEqual(len(runner.cases_for('s31-qspi', [0, 90, 180, 270])), 16)
 
     def test_adapter_none_rotation_and_auto_not_faked(self):
-        a = runner.cases_for('s3-rgb', [0, 90])
+        a = runner.cases_for('s3-rgb', [0, 90], ['NONE', 'DOUBLE_DIRECT', 'AUTO'])
         self.assertFalse(next(c for c in a if c['name'] == 'NONE' and c['rotation'] == 90)['adapter_supported'])
         self.assertTrue(next(c for c in a if c['name'] == 'DOUBLE_DIRECT' and c['rotation'] == 90)['adapter_supported'])
         self.assertTrue(all(not c['adapter_supported'] for c in a if c['name'] == 'AUTO'))
@@ -122,7 +125,9 @@ class RunnerTest(unittest.TestCase):
             self.assertEqual(command[command.index('-b') + 1], '115200')
             self.assertNotIn('--no-stub', command)
         args.board = 's31-qspi'
-        self.assertIn('--no-stub', runner.esptool(args, 'default-reset', 'no-reset', 'read-mac'))
+        # S31 uses the supported esptool RAM stub as well: its USB ROM
+        # read path can stop before a complete backup has been collected.
+        self.assertNotIn('--no-stub', runner.esptool(args, 'default-reset', 'no-reset', 'read-mac'))
 
     def test_compare_and_configuration_mismatch(self):
         with tempfile.TemporaryDirectory() as tmp:

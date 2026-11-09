@@ -1,0 +1,17 @@
+{"time": "2026-11-09T02:16:38.048047+00:00", "board": "s31-rgb", "stage": "backup", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/rgb-retry/s31-rgb-benchmark-present-backup.log"}
+{"time": "2026-11-09T02:21:33.257114+00:00", "board": "s31-rgb", "stage": "build_wait", "implementation": "present"}
+{"time": "2026-11-09T02:21:33.257396+00:00", "board": "s31-rgb", "stage": "build", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/rgb-retry/s31-rgb-benchmark-present-build.log"}
+{"time": "2026-11-09T02:23:03.763319+00:00", "board": "s31-rgb", "stage": "build_wait", "implementation": "adapter"}
+{"time": "2026-11-09T02:23:03.763558+00:00", "board": "s31-rgb", "stage": "build", "implementation": "adapter", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/rgb-retry/s31-rgb-benchmark-adapter-build.log"}
+{"time": "2026-11-09T02:24:28.089783+00:00", "board": "s31-rgb", "stage": "flash", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/rgb-retry/s31-rgb-benchmark-present-flash.log"}
+{"time": "2026-11-09T02:24:40.725865+00:00", "board": "s31-rgb", "stage": "capture", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/rgb-retry/s31-rgb-benchmark-present-capture.log"}
+{"time": "2026-11-09T02:52:38.434059+00:00", "board": "s31-rgb", "stage": "report", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/rgb-retry/s31-rgb-benchmark-present-report.log"}
+{"time": "2026-11-09T02:52:38.534086+00:00", "board": "s31-rgb", "stage": "SUITE_PASS", "implementation": "present", "passed": 24, "skipped": 0}
+{"time": "2026-11-09T02:52:38.534288+00:00", "board": "s31-rgb", "stage": "flash", "implementation": "adapter", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/rgb-retry/s31-rgb-benchmark-adapter-flash.log"}
+{"time": "2026-11-09T02:52:51.135699+00:00", "board": "s31-rgb", "stage": "capture", "implementation": "adapter", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/rgb-retry/s31-rgb-benchmark-adapter-capture.log"}
+{"time": "2026-11-09T03:16:09.586605+00:00", "board": "s31-rgb", "stage": "report", "implementation": "adapter", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/rgb-retry/s31-rgb-benchmark-adapter-report.log"}
+{"time": "2026-11-09T03:16:09.675317+00:00", "board": "s31-rgb", "stage": "SUITE_PASS", "implementation": "adapter", "passed": 20, "skipped": 4}
+{"time": "2026-11-09T03:16:09.675517+00:00", "board": "s31-rgb", "stage": "compare", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/rgb-retry/s31-rgb-benchmark-present-compare.log"}
+{"time": "2026-11-09T03:16:09.758037+00:00", "board": "s31-rgb", "stage": "restore", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/rgb-retry/s31-rgb-benchmark-present-restore.log"}
+{"time": "2026-11-09T03:19:35.573533+00:00", "board": "s31-rgb", "stage": "RESTORE_VERIFIED"}
+{"time": "2026-11-09T03:19:35.573695+00:00", "board": "s31-rgb", "stage": "done", "tests_succeeded": true, "firmware_changed": true, "restored": true}

@@ -1,0 +1,16 @@
+{"time": "2026-11-09T02:13:16.861087+00:00", "board": "s31-qspi", "stage": "backup", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/te-retry/s31-qspi-benchmark-present-backup.log"}
+{"time": "2026-11-09T02:15:24.688345+00:00", "board": "s31-qspi", "stage": "build_wait", "implementation": "present"}
+{"time": "2026-11-09T02:15:24.800650+00:00", "board": "s31-qspi", "stage": "build", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/te-retry/s31-qspi-benchmark-present-build.log"}
+{"time": "2026-11-09T02:18:13.562435+00:00", "board": "s31-qspi", "stage": "build_wait", "implementation": "adapter"}
+{"time": "2026-11-09T02:18:13.811623+00:00", "board": "s31-qspi", "stage": "build", "implementation": "adapter", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/te-retry/s31-qspi-benchmark-adapter-build.log"}
+{"time": "2026-11-09T02:20:53.370862+00:00", "board": "s31-qspi", "stage": "flash", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/te-retry/s31-qspi-benchmark-present-flash.log"}
+{"time": "2026-11-09T02:21:03.648499+00:00", "board": "s31-qspi", "stage": "capture", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/te-retry/s31-qspi-benchmark-present-capture.log"}
+{"time": "2026-11-09T02:39:39.761410+00:00", "board": "s31-qspi", "stage": "report", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/te-retry/s31-qspi-benchmark-present-report.log"}
+{"time": "2026-11-09T02:39:39.865818+00:00", "board": "s31-qspi", "stage": "SUITE_PASS", "implementation": "present", "passed": 16, "skipped": 0}
+{"time": "2026-11-09T02:39:39.866030+00:00", "board": "s31-qspi", "stage": "flash", "implementation": "adapter", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/te-retry/s31-qspi-benchmark-adapter-flash.log"}
+{"time": "2026-11-09T02:39:49.554055+00:00", "board": "s31-qspi", "stage": "capture", "implementation": "adapter", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/te-retry/s31-qspi-benchmark-adapter-capture.log"}
+{"time": "2026-11-09T02:50:17.925022+00:00", "board": "s31-qspi", "stage": "report", "implementation": "adapter", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/te-retry/s31-qspi-benchmark-adapter-report.log"}
+{"time": "2026-11-09T02:50:18.010671+00:00", "board": "s31-qspi", "stage": "SUITE_PASS", "implementation": "adapter", "passed": 9, "skipped": 3}
+{"time": "2026-11-09T02:50:18.010987+00:00", "board": "s31-qspi", "stage": "restore", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/te-retry/s31-qspi-benchmark-present-restore.log"}
+{"time": "2026-11-09T02:52:41.477998+00:00", "board": "s31-qspi", "stage": "RESTORE_VERIFIED"}
+{"time": "2026-11-09T02:52:41.478145+00:00", "board": "s31-qspi", "stage": "done", "tests_succeeded": true, "firmware_changed": true, "restored": true}

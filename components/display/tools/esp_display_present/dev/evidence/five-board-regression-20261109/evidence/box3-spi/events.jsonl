@@ -1,0 +1,17 @@
+{"time": "2026-11-09T02:11:52.600267+00:00", "board": "box3-spi", "stage": "backup", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/box3-spi-benchmark-present-backup.log"}
+{"time": "2026-11-09T02:14:32.453477+00:00", "board": "box3-spi", "stage": "build_wait", "implementation": "present"}
+{"time": "2026-11-09T02:14:32.532942+00:00", "board": "box3-spi", "stage": "build", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/box3-spi-benchmark-present-build.log"}
+{"time": "2026-11-09T02:17:05.917540+00:00", "board": "box3-spi", "stage": "build_wait", "implementation": "adapter"}
+{"time": "2026-11-09T02:19:37.983762+00:00", "board": "box3-spi", "stage": "build", "implementation": "adapter", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/box3-spi-benchmark-adapter-build.log"}
+{"time": "2026-11-09T02:21:45.018593+00:00", "board": "box3-spi", "stage": "flash", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/box3-spi-benchmark-present-flash.log"}
+{"time": "2026-11-09T02:21:54.966567+00:00", "board": "box3-spi", "stage": "capture", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/box3-spi-benchmark-present-capture.log"}
+{"time": "2026-11-09T02:45:00.217969+00:00", "board": "box3-spi", "stage": "report", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/box3-spi-benchmark-present-report.log"}
+{"time": "2026-11-09T02:45:00.309249+00:00", "board": "box3-spi", "stage": "SUITE_PASS", "implementation": "present", "passed": 20, "skipped": 0}
+{"time": "2026-11-09T02:45:00.309567+00:00", "board": "box3-spi", "stage": "flash", "implementation": "adapter", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/box3-spi-benchmark-adapter-flash.log"}
+{"time": "2026-11-09T02:45:09.698440+00:00", "board": "box3-spi", "stage": "capture", "implementation": "adapter", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/box3-spi-benchmark-adapter-capture.log"}
+{"time": "2026-11-09T02:49:47.860143+00:00", "board": "box3-spi", "stage": "report", "implementation": "adapter", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/box3-spi-benchmark-adapter-report.log"}
+{"time": "2026-11-09T02:49:47.947044+00:00", "board": "box3-spi", "stage": "SUITE_PASS", "implementation": "adapter", "passed": 4, "skipped": 16}
+{"time": "2026-11-09T02:49:47.947341+00:00", "board": "box3-spi", "stage": "compare", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/box3-spi-benchmark-present-compare.log"}
+{"time": "2026-11-09T02:49:48.038064+00:00", "board": "box3-spi", "stage": "restore", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/box3-spi-benchmark-present-restore.log"}
+{"time": "2026-11-09T02:52:36.590394+00:00", "board": "box3-spi", "stage": "RESTORE_VERIFIED"}
+{"time": "2026-11-09T02:52:36.590556+00:00", "board": "box3-spi", "stage": "done", "tests_succeeded": true, "firmware_changed": true, "restored": true}

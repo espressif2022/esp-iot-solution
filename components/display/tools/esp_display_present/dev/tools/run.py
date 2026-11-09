@@ -43,6 +43,10 @@ def cases_for(board, angles, profiles=None):
         profiles_all = [(f'GRAM_T{t}_{m}', 'B_NONE', t, m == 'PSRAM', 0)
                         for m in ('INTERNAL', 'PSRAM') for t in (1, 2)]
         profiles_all += [('AUTO_T2_INTERNAL', 'B_AUTO', 2, False, 0)]
+    # The normal scanout comparison covers tear-avoidance modes only. NONE
+    # remains available explicitly for standalone active-write diagnostics.
+    if scanout and not profiles:
+        profiles_all = [p for p in profiles_all if p[0] != 'NONE']
     if profiles:
         unknown = set(profiles) - {p[0] for p in profiles_all}
         if unknown:
@@ -332,7 +336,7 @@ def esptool(args, before, after, *command):
         raise ValueError('--port is required; ports are never assumed')
     return [sys.executable, '-m', 'esptool', '--chip', BOARDS[args.board]['target'], '-p', args.port,
             '-b', '921600', '--before', before, '--after', after,
-            *(['--no-stub'] if BOARDS[args.board]['target'] == 'esp32s31' else []), *command]
+            *command]
 
 
 def identify(args):

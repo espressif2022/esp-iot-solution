@@ -4,6 +4,10 @@
 
 生产源码的职责划分与新增文件规则见[SOURCE_LAYOUT.md](SOURCE_LAYOUT.md)。
 
+## 最新五板对照（2026-11-09）
+
+[报告与口径](evidence/five-board-regression-20261109/README.md) · [帧率及四时点内存网页](evidence/five-board-regression-20261109/comparison-current.html) · [Excel](evidence/five-board-regression-20261109/comparison-current.xlsx)。生产源码 `b607bb9a1`，present108项、adapter73项通过，31项明确跳过；每项完整16场景，未拼接历史成绩。RGB/DSI不含NONE，mosaico仅TE，BOX-3测GRAM。五板原固件全部恢复并独立整片校验；新固件没有新增目视/光学防撕裂验收。S3本轮为R16/16MiB PSRAM，MAC已更新，旧R8成绩不混用。
+
 ## 目录
 
 ```text
@@ -39,7 +43,7 @@ P4 `pixels` 套件同时运行 PPA/DMA2D executor 检查：internal/PSRAM source
 | s3-rgb | S3 LCD EV R16 / GC9503 RGB bounce | 480×480 | benchmark、pixels、native、smoke |
 | p4-dsi | P4 Function EV rev3 / EK79007 MIPI DSI | 1024×600 | benchmark、pixels、native、smoke |
 | box3-spi | ESP-BOX-3 / ILI9341 SPI GRAM | 320×240 | benchmark、smoke |
-| s31-rgb | S31 Korvo-1 原配 RGB，10 行 bounce | 800×480 | benchmark、pixels、rgb-events、smoke；像素/事件已验；benchmark七模式×四角度28项通过，adapter21项通过、7项跳过 |
+| s31-rgb | S31 Korvo-1 原配 RGB，10 行 bounce | 800×480 | benchmark、pixels、rgb-events、smoke；像素/事件已验；当前防撕裂benchmark六模式×四角度24项通过，adapter20项通过、4项AUTO跳过；旧28项见历史记录 |
 | s31-qspi | S31 mosaico / CO5300 QSPI，TE43 | 480×480 | benchmark、pixels、te-lifecycle、smoke |
 
 以 `boards/boards.json` 的 MAC 识别设备，不绑定 USB0/ACM0。增加新板子需要增加明确配置，不能只改端口号。
@@ -58,13 +62,15 @@ python3 dev/tools/run.py build --board p4-dsi --suite pixels --work-root /tmp/pr
 python3 dev/tools/run.py build --board s31-qspi --suite te-lifecycle --work-root /tmp/present-work
 ```
 
+RGB / MIPI DSI 默认 benchmark 矩阵只含防撕裂模式，不含 NONE。NONE 仅供显式 `--profiles NONE` 的专项诊断，不纳入日常对比表。S31 mosaico 默认只测 TE；允许撕裂的 GRAM 配置在 BOX-3 运行。
+
 benchmark 默认四个角度，`--angles 0,90` 可选子集；`--profiles DOUBLE_DIRECT` 或 `--profiles TE_C2_T1,TE_C2_T2` 可选模式。同一次对比双方必须使用完全相同的 profiles 和 angles。pixels/native 使用各自固件内的固定矩阵，`--angles/--profiles` 只作用于 benchmark。
 
 原始 adapter 的运行源码不修改。离线构建在工作目录创建 symlink overlay，只将 CMake 依赖名称 `lvgl__lvgl`/`espressif__esp_lcd_touch` 映射到同版离线组件。运行源码仍指向仓库原始 adapter，测试不会写入它的 src/include 或 IDF。
 
 ## 板上运行与原固件恢复
 
-以下命令会访问指定硬件，依次执行；`--port` 必须传当前连接端口。backup 先验证 MAC，再读取并独立校验整片 Flash；不会覆盖已存在备份。flash 必须有这块板的校验通过备份。若更换固件或板子，用新的 work-root 开始。
+以下命令会访问指定硬件，依次执行；`--port` 必须传当前连接端口。当前板测验证使用 esptool 5.4.0 的 RAM stub（包括 S31），不强制 ROM-only；S31 USB ROM-only 整片读取曾在约60KiB中断。backup 先验证 MAC，再读取并独立校验整片 Flash；不会覆盖已存在备份。flash 必须有这块板的校验通过备份。若更换固件或板子，用新的 work-root 开始。
 
 ```sh
 python3 dev/tools/run.py backup --board s3-rgb --port /dev/ttyUSB0 --work-root /tmp/present-work
@@ -141,7 +147,7 @@ TE 路径不通过 require_double_buffer 选择 present 式 T1/T2，不强行映
 原生 adapter 基线用 report 单侧归档，不能伪造同名 present 用例来运行 compare。
 
 本轮adapter TE补测结果见[evidence/s31-adapter-te-baselines-20261107](evidence/s31-adapter-te-baselines-20261107/README.md)。
-注意：mosaico原固件恢复过程中用户明确要求保持停止，目前未完整恢复，不保证能正常启动；不得未经新授权继续操作板子。
+2026-11-07的恢复中断已完成恢复和校验。2026-11-09五板重测也已全部恢复原固件并整片校验，当前状态以最新记录为准。
 
 ## DIRECT 优化与 S31 RGB 完整对照（2026-11-07）
 

@@ -1,0 +1,10 @@
+{
+  "p4-dsi": {
+    "time": "2026-11-09T03:12:51.477731+00:00",
+    "board": "p4-dsi",
+    "stage": "done",
+    "tests_succeeded": true,
+    "firmware_changed": true,
+    "restored": true
+  }
+}

@@ -4,11 +4,12 @@
 
 | 范围 | 记录 | 状态 / 适用范围 |
 |---|---|---|
+| 最新五板防撕裂/GRAM完整对照 | [five-board-regression-20261109](five-board-regression-20261109/README.md) | 生产源码b607bb9a1；present108、adapter73项通过，31项跳过；RGB/DSI排除NONE、mosaico仅TE、BOX-3 GRAM；四角度/四时点内存；五板原固件整片恢复校验；无新增目视验收 |
 | 测试工程统一整理 | [unified-tests-20261106](unified-tests-20261106/README.md) | 40/40 Host、8个benchmark构建、3个专项构建；仅编译，未板测 |
 | RGB NONE 等待与统计优化 | [rgb-none-profile-20261106](rgb-none-profile-20261106/README.md) | 同配置18→25FPS，补回历史cache/XIP后NONE41、DIRECT39；0°，非完整矩阵 |
 | 最新架构 Host / 运行时旋转 | [architecture-20261106](architecture-20261106/README.md) | 修复逻辑/物理尺寸混用；当时37项Host，P4硬件跨轴复测尚待完成 |
 | S3 RGB 原始 adapter 对比 | [rgb-adapter-compare-20261105](rgb-adapter-compare-20261105/README.md) | 原始完整模式四角度；其中DIRECT结果已由下一行替代，其他原始数据保留 |
-| S3 RGB DIRECT 修复 | [direct-resolved-20261105](direct-resolved-20261105/README.md) | 当前DIRECT参考：present 39/30/32/31，adapter42/26/29/24；不是新架构改动后的重跑 |
+| S3 RGB DIRECT 修复 | [direct-resolved-20261105](direct-resolved-20261105/README.md) | 2026-11-05历史DIRECT参考：present 39/30/32/31，adapter42/26/29/24；不是新架构改动后的重跑 |
 | BOX-3 SPI GRAM 对比 | [box3-gram-20261105](box3-gram-20261105/README.md) | present20组/adapter4组，四角度与internal/PSRAM；不支持组合记 - |
 | S31 QSPI TE 生命周期 | [s31-te-lifecycle-20261106](s31-te-lifecycle-20261106/README.md) | C1/C2×T1/T2，48帧及16生命周期通过；已恢复整片固件 |
 | S31 QSPI TE LVGL benchmark | [s31-te-benchmark-20261106](s31-te-benchmark-20261106/README.md) | 8组/0°90°，10397次送帧，TE均值1.888ms、最大9.726ms；用户目视正常；无adapter C/T对比 |

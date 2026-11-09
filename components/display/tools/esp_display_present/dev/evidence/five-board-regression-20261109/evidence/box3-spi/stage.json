@@ -1,0 +1,10 @@
+{
+  "box3-spi": {
+    "time": "2026-11-09T02:52:36.590556+00:00",
+    "board": "box3-spi",
+    "stage": "done",
+    "tests_succeeded": true,
+    "firmware_changed": true,
+    "restored": true
+  }
+}

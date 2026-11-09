@@ -1,0 +1,26 @@
+{
+  "s3-rgb": {
+    "actual_cases": 24,
+    "new_default_matches_measured_explicit_cases": true,
+    "NONE_excluded": true,
+    "current_runner_transport_matches_measured_ram_stub_wrapper": true
+  },
+  "s31-rgb": {
+    "actual_cases": 24,
+    "new_default_matches_measured_explicit_cases": true,
+    "NONE_excluded": true,
+    "current_runner_transport_matches_measured_ram_stub_wrapper": true
+  },
+  "p4-dsi": {
+    "actual_cases": 24,
+    "new_default_matches_measured_explicit_cases": true,
+    "NONE_excluded": true,
+    "current_runner_transport_matches_measured_ram_stub_wrapper": true
+  },
+  "s31-qspi": {
+    "current_runner_transport_matches_measured_ram_stub_wrapper": true
+  },
+  "box3-spi": {
+    "current_runner_transport_matches_measured_ram_stub_wrapper": true
+  }
+}

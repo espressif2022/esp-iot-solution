@@ -1,0 +1,47 @@
+{
+  "s3-rgb": {
+    "work_root": "/tmp/present-five-board-20261109",
+    "time": "2026-11-09T03:17:36.447618+00:00",
+    "board": "s3-rgb",
+    "stage": "done",
+    "tests_succeeded": true,
+    "firmware_changed": true,
+    "restored": true
+  },
+  "p4-dsi": {
+    "work_root": "/tmp/present-five-board-20261109",
+    "time": "2026-11-09T03:12:51.477731+00:00",
+    "board": "p4-dsi",
+    "stage": "done",
+    "tests_succeeded": true,
+    "firmware_changed": true,
+    "restored": true
+  },
+  "box3-spi": {
+    "work_root": "/tmp/present-five-board-20261109",
+    "time": "2026-11-09T02:52:36.590556+00:00",
+    "board": "box3-spi",
+    "stage": "done",
+    "tests_succeeded": true,
+    "firmware_changed": true,
+    "restored": true
+  },
+  "s31-rgb": {
+    "work_root": "/tmp/present-five-board-20261109/rgb-retry",
+    "time": "2026-11-09T03:19:35.573695+00:00",
+    "board": "s31-rgb",
+    "stage": "done",
+    "tests_succeeded": true,
+    "firmware_changed": true,
+    "restored": true
+  },
+  "s31-qspi": {
+    "work_root": "/tmp/present-five-board-20261109/te-retry",
+    "time": "2026-11-09T02:52:41.478145+00:00",
+    "board": "s31-qspi",
+    "stage": "done",
+    "tests_succeeded": true,
+    "firmware_changed": true,
+    "restored": true
+  }
+}

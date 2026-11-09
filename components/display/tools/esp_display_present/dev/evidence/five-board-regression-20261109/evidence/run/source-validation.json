@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "production_files_checked": 99,
+  "production_matches_pinned_commit": "b607bb9a1326682c1eb3f3a980d983885338fd02",
+  "idf_clean": true,
+  "idf_commit": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+  "test_only_changes": [
+    "default RGB/DSI matrix excludes NONE",
+    "S3 R16 MAC recorded",
+    "S31 RAM stub matches verified hardware transport"
+  ]
+}

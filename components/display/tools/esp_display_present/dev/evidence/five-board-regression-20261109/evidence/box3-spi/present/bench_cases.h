@@ -1,0 +1,23 @@
+/* Generated from the common case planner; do not edit. */
+static const bench_case_t bench_cases[] = {
+    {"GRAM_T1_INTERNAL",B_NONE,0,1,0,false,true,"",0},
+    {"GRAM_T1_INTERNAL",B_NONE,90,1,0,false,false,"adapter_NONE_has_no_software_rotation",0},
+    {"GRAM_T1_INTERNAL",B_NONE,180,1,0,false,false,"adapter_NONE_has_no_software_rotation",0},
+    {"GRAM_T1_INTERNAL",B_NONE,270,1,0,false,false,"adapter_NONE_has_no_software_rotation",0},
+    {"GRAM_T2_INTERNAL",B_NONE,0,2,0,false,true,"",0},
+    {"GRAM_T2_INTERNAL",B_NONE,90,2,0,false,false,"adapter_NONE_has_no_software_rotation",0},
+    {"GRAM_T2_INTERNAL",B_NONE,180,2,0,false,false,"adapter_NONE_has_no_software_rotation",0},
+    {"GRAM_T2_INTERNAL",B_NONE,270,2,0,false,false,"adapter_NONE_has_no_software_rotation",0},
+    {"GRAM_T1_PSRAM",B_NONE,0,1,0,true,true,"",0},
+    {"GRAM_T1_PSRAM",B_NONE,90,1,0,true,false,"adapter_NONE_has_no_software_rotation",0},
+    {"GRAM_T1_PSRAM",B_NONE,180,1,0,true,false,"adapter_NONE_has_no_software_rotation",0},
+    {"GRAM_T1_PSRAM",B_NONE,270,1,0,true,false,"adapter_NONE_has_no_software_rotation",0},
+    {"GRAM_T2_PSRAM",B_NONE,0,2,0,true,true,"",0},
+    {"GRAM_T2_PSRAM",B_NONE,90,2,0,true,false,"adapter_NONE_has_no_software_rotation",0},
+    {"GRAM_T2_PSRAM",B_NONE,180,2,0,true,false,"adapter_NONE_has_no_software_rotation",0},
+    {"GRAM_T2_PSRAM",B_NONE,270,2,0,true,false,"adapter_NONE_has_no_software_rotation",0},
+    {"AUTO_T2_INTERNAL",B_AUTO,0,2,0,false,false,"adapter_has_no_AUTO_mode",0},
+    {"AUTO_T2_INTERNAL",B_AUTO,90,2,0,false,false,"adapter_has_no_AUTO_mode",0},
+    {"AUTO_T2_INTERNAL",B_AUTO,180,2,0,false,false,"adapter_has_no_AUTO_mode",0},
+    {"AUTO_T2_INTERNAL",B_AUTO,270,2,0,false,false,"adapter_has_no_AUTO_mode",0},
+};

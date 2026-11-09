@@ -1,0 +1,95 @@
+diff --git a/components/display/tools/esp_display_present/dev/README.md b/components/display/tools/esp_display_present/dev/README.md
+index 8c5e4c0a2..6986ab8c7 100644
+--- a/components/display/tools/esp_display_present/dev/README.md
++++ b/components/display/tools/esp_display_present/dev/README.md
+@@ -58,13 +58,15 @@ python3 dev/tools/run.py build --board p4-dsi --suite pixels --work-root /tmp/pr
+ python3 dev/tools/run.py build --board s31-qspi --suite te-lifecycle --work-root /tmp/present-work
+ ```
+ 
++RGB / MIPI DSI 默认 benchmark 矩阵只含防撕裂模式，不含 NONE。NONE 仅供显式 `--profiles NONE` 的专项诊断，不纳入日常对比表。S31 mosaico 默认只测 TE；允许撕裂的 GRAM 配置在 BOX-3 运行。
++
+ benchmark 默认四个角度，`--angles 0,90` 可选子集；`--profiles DOUBLE_DIRECT` 或 `--profiles TE_C2_T1,TE_C2_T2` 可选模式。同一次对比双方必须使用完全相同的 profiles 和 angles。pixels/native 使用各自固件内的固定矩阵，`--angles/--profiles` 只作用于 benchmark。
+ 
+ 原始 adapter 的运行源码不修改。离线构建在工作目录创建 symlink overlay，只将 CMake 依赖名称 `lvgl__lvgl`/`espressif__esp_lcd_touch` 映射到同版离线组件。运行源码仍指向仓库原始 adapter，测试不会写入它的 src/include 或 IDF。
+ 
+ ## 板上运行与原固件恢复
+ 
+-以下命令会访问指定硬件，依次执行；`--port` 必须传当前连接端口。backup 先验证 MAC，再读取并独立校验整片 Flash；不会覆盖已存在备份。flash 必须有这块板的校验通过备份。若更换固件或板子，用新的 work-root 开始。
++以下命令会访问指定硬件，依次执行；`--port` 必须传当前连接端口。当前板测验证使用 esptool 5.4.0 的 RAM stub（包括 S31），不强制 ROM-only；S31 USB ROM-only 整片读取曾在约60KiB中断。backup 先验证 MAC，再读取并独立校验整片 Flash；不会覆盖已存在备份。flash 必须有这块板的校验通过备份。若更换固件或板子，用新的 work-root 开始。
+ 
+ ```sh
+ python3 dev/tools/run.py backup --board s3-rgb --port /dev/ttyUSB0 --work-root /tmp/present-work
+diff --git a/components/display/tools/esp_display_present/dev/boards/boards.json b/components/display/tools/esp_display_present/dev/boards/boards.json
+index 365e98b75..e6cd6da82 100644
+--- a/components/display/tools/esp_display_present/dev/boards/boards.json
++++ b/components/display/tools/esp_display_present/dev/boards/boards.json
+@@ -1,8 +1,8 @@
+ {
+   "s3-rgb": {
+     "target": "esp32s3",
+-    "mac": "7c:df:a1:fd:c6:04",
+-    "name": "S3 Function Board / GC9503",
++    "mac": "90:e5:b1:d0:a9:d8",
++    "name": "S3 LCD EV R16 / GC9503 (16 MiB PSRAM)",
+     "interface": "rgb",
+     "width": 480,
+     "height": 480,
+diff --git a/components/display/tools/esp_display_present/dev/tests/test_runner.py b/components/display/tools/esp_display_present/dev/tests/test_runner.py
+index 2dba36ab3..469ad293d 100644
+--- a/components/display/tools/esp_display_present/dev/tests/test_runner.py
++++ b/components/display/tools/esp_display_present/dev/tests/test_runner.py
+@@ -16,14 +16,17 @@ spec.loader.exec_module(runner)
+ 
+ class RunnerTest(unittest.TestCase):
+     def test_board_matrix(self):
+-        self.assertEqual(len(runner.cases_for('s3-rgb', [0, 90, 180, 270])), 28)
++        self.assertEqual(len(runner.cases_for('s3-rgb', [0, 90, 180, 270])), 24)
++        for board in ('s3-rgb', 's31-rgb', 'p4-dsi'):
++            self.assertTrue(all(c['name'] != 'NONE' for c in runner.cases_for(board, [0, 90, 180, 270])))
++            self.assertEqual(len(runner.cases_for(board, [0, 90, 180, 270], ['NONE'])), 4)
+         self.assertEqual(runner.BOARDS['s31-rgb']['width'], 800)
+         self.assertEqual(runner.cases_for('s31-rgb', [0, 90, 180, 270]), runner.cases_for('s3-rgb', [0, 90, 180, 270]))
+         self.assertEqual(len(runner.cases_for('box3-spi', [0, 90, 180, 270])), 20)
+         self.assertEqual(len(runner.cases_for('s31-qspi', [0, 90, 180, 270])), 16)
+ 
+     def test_adapter_none_rotation_and_auto_not_faked(self):
+-        a = runner.cases_for('s3-rgb', [0, 90])
++        a = runner.cases_for('s3-rgb', [0, 90], ['NONE', 'DOUBLE_DIRECT', 'AUTO'])
+         self.assertFalse(next(c for c in a if c['name'] == 'NONE' and c['rotation'] == 90)['adapter_supported'])
+         self.assertTrue(next(c for c in a if c['name'] == 'DOUBLE_DIRECT' and c['rotation'] == 90)['adapter_supported'])
+         self.assertTrue(all(not c['adapter_supported'] for c in a if c['name'] == 'AUTO'))
+@@ -122,7 +125,9 @@ class RunnerTest(unittest.TestCase):
+             self.assertEqual(command[command.index('-b') + 1], '115200')
+             self.assertNotIn('--no-stub', command)
+         args.board = 's31-qspi'
+-        self.assertIn('--no-stub', runner.esptool(args, 'default-reset', 'no-reset', 'read-mac'))
++        # S31 uses the supported esptool RAM stub as well: its USB ROM
++        # read path can stop before a complete backup has been collected.
++        self.assertNotIn('--no-stub', runner.esptool(args, 'default-reset', 'no-reset', 'read-mac'))
+ 
+     def test_compare_and_configuration_mismatch(self):
+         with tempfile.TemporaryDirectory() as tmp:
+diff --git a/components/display/tools/esp_display_present/dev/tools/run.py b/components/display/tools/esp_display_present/dev/tools/run.py
+index b703a3b30..96b76aeba 100644
+--- a/components/display/tools/esp_display_present/dev/tools/run.py
++++ b/components/display/tools/esp_display_present/dev/tools/run.py
+@@ -43,6 +43,10 @@ def cases_for(board, angles, profiles=None):
+         profiles_all = [(f'GRAM_T{t}_{m}', 'B_NONE', t, m == 'PSRAM', 0)
+                         for m in ('INTERNAL', 'PSRAM') for t in (1, 2)]
+         profiles_all += [('AUTO_T2_INTERNAL', 'B_AUTO', 2, False, 0)]
++    # The normal scanout comparison covers tear-avoidance modes only. NONE
++    # remains available explicitly for standalone active-write diagnostics.
++    if scanout and not profiles:
++        profiles_all = [p for p in profiles_all if p[0] != 'NONE']
+     if profiles:
+         unknown = set(profiles) - {p[0] for p in profiles_all}
+         if unknown:
+@@ -332,7 +336,7 @@ def esptool(args, before, after, *command):
+         raise ValueError('--port is required; ports are never assumed')
+     return [sys.executable, '-m', 'esptool', '--chip', BOARDS[args.board]['target'], '-p', args.port,
+             '-b', '921600', '--before', before, '--after', after,
+-            *(['--no-stub'] if BOARDS[args.board]['target'] == 'esp32s31' else []), *command]
++            *command]
+ 
+ 
+ def identify(args):

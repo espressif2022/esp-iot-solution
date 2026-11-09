@@ -1,0 +1,10 @@
+{
+  "s3-rgb": {
+    "time": "2026-11-09T03:17:36.447618+00:00",
+    "board": "s3-rgb",
+    "stage": "done",
+    "tests_succeeded": true,
+    "firmware_changed": true,
+    "restored": true
+  }
+}

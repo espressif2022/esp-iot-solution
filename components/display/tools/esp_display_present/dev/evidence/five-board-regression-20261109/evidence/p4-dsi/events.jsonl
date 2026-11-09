@@ -1,0 +1,17 @@
+{"time": "2026-11-09T02:11:52.599400+00:00", "board": "p4-dsi", "stage": "backup", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/p4-dsi-benchmark-present-backup.log"}
+{"time": "2026-11-09T02:13:58.221573+00:00", "board": "p4-dsi", "stage": "build_wait", "implementation": "present"}
+{"time": "2026-11-09T02:13:58.222493+00:00", "board": "p4-dsi", "stage": "build", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/p4-dsi-benchmark-present-build.log"}
+{"time": "2026-11-09T02:16:50.565332+00:00", "board": "p4-dsi", "stage": "build_wait", "implementation": "adapter"}
+{"time": "2026-11-09T02:16:50.565822+00:00", "board": "p4-dsi", "stage": "build", "implementation": "adapter", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/p4-dsi-benchmark-adapter-build.log"}
+{"time": "2026-11-09T02:19:37.983013+00:00", "board": "p4-dsi", "stage": "flash", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/p4-dsi-benchmark-present-flash.log"}
+{"time": "2026-11-09T02:19:47.154563+00:00", "board": "p4-dsi", "stage": "capture", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/p4-dsi-benchmark-present-capture.log"}
+{"time": "2026-11-09T02:47:35.671694+00:00", "board": "p4-dsi", "stage": "report", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/p4-dsi-benchmark-present-report.log"}
+{"time": "2026-11-09T02:47:35.766039+00:00", "board": "p4-dsi", "stage": "SUITE_PASS", "implementation": "present", "passed": 24, "skipped": 0}
+{"time": "2026-11-09T02:47:35.766482+00:00", "board": "p4-dsi", "stage": "flash", "implementation": "adapter", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/p4-dsi-benchmark-adapter-flash.log"}
+{"time": "2026-11-09T02:47:44.199010+00:00", "board": "p4-dsi", "stage": "capture", "implementation": "adapter", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/p4-dsi-benchmark-adapter-capture.log"}
+{"time": "2026-11-09T03:10:56.596307+00:00", "board": "p4-dsi", "stage": "report", "implementation": "adapter", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/p4-dsi-benchmark-adapter-report.log"}
+{"time": "2026-11-09T03:10:56.686736+00:00", "board": "p4-dsi", "stage": "SUITE_PASS", "implementation": "adapter", "passed": 20, "skipped": 4}
+{"time": "2026-11-09T03:10:56.694035+00:00", "board": "p4-dsi", "stage": "compare", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/p4-dsi-benchmark-present-compare.log"}
+{"time": "2026-11-09T03:10:56.780008+00:00", "board": "p4-dsi", "stage": "restore", "implementation": "present", "suite": "benchmark", "log": "/tmp/present-five-board-20261109/p4-dsi-benchmark-present-restore.log"}
+{"time": "2026-11-09T03:12:51.477570+00:00", "board": "p4-dsi", "stage": "RESTORE_VERIFIED"}
+{"time": "2026-11-09T03:12:51.477731+00:00", "board": "p4-dsi", "stage": "done", "tests_succeeded": true, "firmware_changed": true, "restored": true}
