@@ -4,6 +4,10 @@
 
 生产源码的职责划分与新增文件规则见[SOURCE_LAYOUT.md](SOURCE_LAYOUT.md)。
 
+## S3 FB_IRAM 开关对照（2026-11-09）
+
+[完整24项帧率／内存对照](evidence/present-s3-fb-iram-on-off-20261109/comparison.html)：同版本源码，SDK唯一差别为FB_IRAM y/n。关闭增加内部堆21.36KiB；当前32KiB指令缓存/XIP配置下，FULL/DIRECT基本接近，PARTIAL/AUTO低1～3FPS。关闭只用于隔离补测，组件默认仍开启；原固件整片恢复校验通过。
+
 ## 最新五板对照（2026-11-09）
 
 [报告与口径](evidence/five-board-regression-20261109/README.md) · [帧率及四时点内存网页](evidence/five-board-regression-20261109/comparison-current.html) · [Excel](evidence/five-board-regression-20261109/comparison-current.xlsx)。生产源码 `b607bb9a1`，present108项、adapter73项通过，31项明确跳过；每项完整16场景，未拼接历史成绩。RGB/DSI不含NONE，mosaico仅TE，BOX-3测GRAM。五板原固件全部恢复并独立整片校验；新固件没有新增目视/光学防撕裂验收。S3本轮为R16/16MiB PSRAM，MAC已更新，旧R8成绩不混用。

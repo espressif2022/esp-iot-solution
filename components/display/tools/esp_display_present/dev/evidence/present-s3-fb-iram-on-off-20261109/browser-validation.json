@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "fpsCasesChecked": 24,
+  "memoryRows": 96,
+  "memoryComparisonsChecked": 192,
+  "moreRemainingIsBetter": true,
+  "internalHeapGainBytes": 21872,
+  "runtimeErrors": []
+}

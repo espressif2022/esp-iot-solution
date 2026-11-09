@@ -1,0 +1,24 @@
+{
+  "production_commit": "b607bb9a1326682c1eb3f3a980d983885338fd02",
+  "test_checkout_commit": "78e7ae7dc8fdc467a5716c1c5f9b00fc03b3510b",
+  "board": "s3-rgb",
+  "mac": "90:e5:b1:d0:a9:d8",
+  "port": "/dev/ttyUSB1",
+  "changed_setting": "CONFIG_ESP_DISPLAY_PRESENT_FB_IRAM=n",
+  "on_baseline": "/tmp/present-five-board-20261109/s3-rgb/benchmark/present",
+  "profiles": [
+    "DOUBLE_FULL",
+    "TRIPLE_FULL",
+    "DOUBLE_DIRECT",
+    "DOUBLE_PARTIAL",
+    "TRIPLE_PARTIAL",
+    "AUTO"
+  ],
+  "angles": [
+    0,
+    90,
+    180,
+    270
+  ],
+  "fresh_backup": true
+}

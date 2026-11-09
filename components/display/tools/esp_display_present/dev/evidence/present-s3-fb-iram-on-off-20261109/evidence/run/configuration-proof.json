@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "differences": {
+    "CONFIG_ESP_DISPLAY_PRESENT_FB_IRAM": [
+      "y",
+      "n"
+    ]
+  },
+  "baseline": "/tmp/present-five-board-20261109/s3-rgb/benchmark/present",
+  "cases": 24,
+  "original_verified": {
+    "board": "s3-rgb",
+    "mac": "90:e5:b1:d0:a9:d8",
+    "sha256": "a1fb70defbe454c7a5d8fc233929fd9d9d39751910336c7baa96b905b60730fc",
+    "bytes": 16777216,
+    "verified": true
+  }
+}

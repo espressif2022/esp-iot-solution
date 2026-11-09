@@ -1,0 +1,18 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';
+const root='/home/xuxin/xuxin/esp-dev-kits-gitlab-MR/internal/customer/xiaobai/deliveries/present-s3-fb-iram-on-off-20261109';
+const payload=JSON.parse(fs.readFileSync(root+'/comparison.json','utf8')),rows=payload.rows;
+const address=fs.readFileSync('/tmp/present-s3-iram-browser.log','utf8').match(/DevTools listening on (ws:\/\/[^\s]+)/)?.[1];assert(address);
+const targets=await(await fetch(`http://127.0.0.1:${new URL(address).port}/json/list`)).json(),target=targets.find(x=>x.type==='page');assert(target);
+const ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((ok,no)=>{ws.onopen=ok;ws.onerror=no});let serial=0;const pending=new Map(),errors=[];
+ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);if(m.id){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(m.error):p.resolve(m.result)}};
+function call(method,params={}){return new Promise((resolve,reject)=>{const id=++serial;pending.set(id,{resolve,reject});ws.send(JSON.stringify({id,method,params}))})}
+async function evaluate(expression){const r=await call('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw r.exceptionDetails;return r.result.value}
+await call('Runtime.enable');await call('Page.enable');await call('Page.navigate',{url:`file://${root}/comparison.html`});
+for(let i=0;i<100;i++){if(await evaluate("document.readyState==='complete'&&document.querySelectorAll('#fps tbody tr').length===24"))break;await new Promise(r=>setTimeout(r,100));}
+const fps=await evaluate("[...document.querySelectorAll('#fps tbody tr')].map(tr=>[...tr.children].map(td=>({text:td.firstChild.textContent,delta:td.querySelector('.delta')?.dataset.delta,down:td.querySelector('.delta')?.classList.contains('down')})))");assert.equal(fps.length,24);
+for(let n=0;n<rows.length;n++){const r=rows[n],v=fps[n];assert.equal(v[0].text,r.mode);assert.equal(v[1].text,r.rotation+'°');assert.equal(Number(v[2].text),r.on_fps);assert.equal(Number(v[3].text),r.off_fps);assert.equal(Number(v[3].delta),r.off_fps-r.on_fps);assert.equal(v[3].down,r.off_fps<r.on_fps);assert.equal(v[4].text,String(r.adapter_fps));}
+const memory=await evaluate("(()=>{document.querySelector('details').open=true;return [...document.querySelectorAll('#memory tbody tr')].map(tr=>[...tr.children].map(td=>({value:td.querySelector('.memory-value')?.textContent,delta:td.querySelector('.delta')?.dataset.delta,down:td.querySelector('.delta')?.classList.contains('down')})))})()");assert.equal(memory.length,96);let checked=0;
+const phases=['before_open','after_open','after_run','after_close'];
+for(let n=0;n<rows.length;n++)for(let j=0;j<4;j++)for(let h=0;h<2;h++){const r=rows[n],phase=phases[j],heap=h===0?'internal':'psram',offset=(j===0?2:1)+h*2,on=r[`on_${heap}_${phase}_free_bytes`]/1024,off=r[`off_${heap}_${phase}_free_bytes`]/1024,tr=memory[n*4+j];assert.equal(tr[offset].value,on.toFixed(2));assert.equal(tr[offset+1].value,off.toFixed(2));assert.equal(Number(tr[offset+1].delta),off-on);assert.equal(tr[offset+1].down,off<on);checked++;}
+assert.equal(errors.length,0);assert(await evaluate("document.body.innerText.includes('21.36 KiB')"));
+fs.writeFileSync(root+'/browser-validation.json',JSON.stringify({passed:true,fpsCasesChecked:24,memoryRows:96,memoryComparisonsChecked:checked,moreRemainingIsBetter:true,internalHeapGainBytes:payload.metadata.internal_heap_gain_bytes,runtimeErrors:errors},null,2)+'\n');await call('Browser.close');ws.close();console.log('S3 IRAM browser validation passed');
