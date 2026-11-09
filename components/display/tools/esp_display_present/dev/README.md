@@ -162,3 +162,9 @@ TE 路径不通过 require_double_buffer 选择 present 式 T1/T2，不强行映
 [完整记录](evidence/direct-borrowed-20261107/README.md)：present 一次连续完成28项，原始adapter一次完成21项支持组合并跳过7项。每项完整16场景。0° DIRECT从20提升到23 FPS，原始adapter本轮24 FPS；旋转保留copy路径。源码提交 `4a9daccee`，IDF和原始adapter未修改。
 
 benchmark 的 present 收尾会检查LVGL绑定保存的错误码，防止绘制暂停但场景计时器结束被误记PASS。插桩轮独立保存，不能替代正式跑分。打开前两实现的首次框架初始化边界不同，跨实现比较应优先看打开后、运行最小和关闭后堆余量。
+
+### PARTIAL input capacity alignment
+
+Benchmark builds default to `--buffer-policy logical-50`: both implementations use logical width × 50 rows × RGB565 for each PARTIAL input tile. The adapter public API measures rows against physical width, which cannot express the exact rotated P4 capacity; the runner therefore changes only its PARTIAL allocation expression in an isolated build overlay. The checkout and framebuffer handoff code are unchanged. `legacy-physical-50` reproduces the previous adapter allocation. Manifests record the policy, expected byte capacities and actual overlay source hashes.
+
+Every successful benchmark must report `BUFFER_AUDIT`. The runner rejects missing audits or incorrect capacities. FULL verifies each active whole-frame buffer, independently of rotation; configured tile count does not describe FULL descriptor/framebuffer counts. Native TE layouts stay separate rather than being labelled equivalent. RGB/DSI NONE remains outside the default comparison.

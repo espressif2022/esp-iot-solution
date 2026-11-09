@@ -11,6 +11,9 @@ import re
 import subprocess
 import sys
 import time
+import shutil
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from benchmark_buffers import POLICIES, align_adapter_allocation, expected_input_bytes
 
 DEV = Path(__file__).resolve().parents[1]
 BOARDS = json.loads((DEV / 'boards/boards.json').read_text())
@@ -139,6 +142,7 @@ def build(args):
                                'te-lifecycle': 'te_lifecycle', 'rgb-events': 'rgb_events', 'smoke': 'smoke'}[args.suite]
     flags = [f'-DPRESENT_BOARD={args.board}']
     planned = []
+    buffer_policy = getattr(args, 'buffer_policy', 'logical-50')
     lvgl = None
     if args.suite == 'benchmark':
         lvgl = (args.lvgl_dir or args.cache / 'lvgl__lvgl_9.6.0~1_7d824107').resolve()
@@ -168,6 +172,7 @@ def build(args):
     env = os.environ.copy()
     env['IDF_COMPONENT_MANAGER'] = '0'
     env['LVGL_VERSION'] = '9.6.0'
+    env['PRESENT_TEST_BUFFER_POLICY'] = buffer_policy
     env['PRESENT_TEST_PROFILE'] = 'ON' if args.profile else 'OFF'
     if args.implementation == 'adapter':
         original = DEV.parent.parent / 'esp_lvgl_adapter'
@@ -177,6 +182,17 @@ def build(args):
             if child.name in ('CMakeLists.txt', 'idf_component.yml'):
                 continue
             link = overlay / child.name
+            if child.name == 'src' and buffer_policy == 'logical-50':
+                if link.is_symlink():
+                    link.unlink()
+                elif link.exists():
+                    shutil.rmtree(link)
+                shutil.copytree(child, link)
+                manager = link / 'display/display_manager.c'
+                manager.write_text(align_adapter_allocation(manager.read_text()))
+                continue
+            if link.is_dir() and not link.is_symlink() and child.name == 'src':
+                shutil.rmtree(link)  # Previous isolated aligned overlay; never the checkout.
             if not link.exists():
                 link.symlink_to(child, target_is_directory=child.is_dir())
         # Only fix the offline dependency name during IDF's early requirements
@@ -198,7 +214,7 @@ def build(args):
             raise
     sdk = (root / 'sdkconfig').read_text()
     comparable = comparable_sdkconfig(sdk)
-    state = dict(memory_schema=1 if args.suite == 'benchmark' else 0, profile=args.profile, board=args.board, suite=args.suite, implementation=args.implementation, cases=planned,
+    state = dict(buffer_schema=1 if args.suite == 'benchmark' else 0, buffer_policy=buffer_policy, memory_schema=1 if args.suite == 'benchmark' else 0, profile=args.profile, board=args.board, suite=args.suite, implementation=args.implementation, cases=planned,
                  idf_commit=subprocess.check_output(['git', '-C', str(idf()), 'rev-parse', 'HEAD'], text=True).strip(),
                  lvgl_version='9.6.0' if lvgl else None,
                  lvgl_benchmark_sha256=sha(lvgl / 'demos/benchmark/lv_demo_benchmark.c') if lvgl else None,
@@ -211,6 +227,13 @@ def build(args):
         for name in ('esp_display_present', 'esp_lv_present', 'esp_lvgl_adapter')
         for sub in ('src', 'include') for p in (DEV.parent.parent / name / sub).rglob('*')
         if p.is_file() and p.suffix in ('.c', '.h')}
+    if args.suite == 'benchmark':
+        state['expected_input_bytes'] = {f"{c['name']}/{c['rotation']}": expected_input_bytes(board, c, args.implementation, buffer_policy) for c in planned}
+        if args.implementation == 'adapter' and buffer_policy == 'logical-50':
+            state['adapter_allocation_shim_sha256'] = sha(overlay / 'src/display/display_manager.c')
+            for key in list(state['component_sources_sha256']):
+                if key.startswith('esp_lvgl_adapter/src/'):
+                    state['component_sources_sha256'][key] = sha(overlay / key.removeprefix('esp_lvgl_adapter/'))
     (root / 'manifest.json').write_text(json.dumps(state, indent=2) + '\n')
     print('Build passed:', root)
 
@@ -221,6 +244,7 @@ def parse_log(text):
     stages = {}
     memory = {}
     suite_memory = {}
+    buffers = {}
     active = None
     errors = []
     for raw in text.splitlines():
@@ -235,6 +259,10 @@ def parse_log(text):
         m = re.search(r'RUN mode=(\S+).*rotation=(\d+)', line)
         if m:
             active = (m[1], int(m[2]))
+        if 'BUFFER_AUDIT:' in line:
+            identity = re.search(r'mode=(\S+) rotation=(\d+)', line)
+            if identity:
+                buffers[identity[1], int(identity[2])] = {k: int(v) for k, v in re.findall(r'(\w+)=(\d+)', line)}
         if 'PRESENT_PROFILE:' in line and active:
             stage = re.search(r'stage=(\S+)', line)
             if stage:
@@ -247,6 +275,8 @@ def parse_log(text):
             row.update({k: float(v) if '.' in v else int(v) for k, v in re.findall(
                 r'(frames|transport_fps|lvgl_fps|cpu|render|flush|scenes|wait_avg_us|wait_max_us|idle_frame_events|idle_vsync|active_write)=([\d.]+)', line)})
             row.update(meters.get((m[2], int(m[3])), {}))
+            if (m[2], int(m[3])) in buffers:
+                row['buffer_audit'] = buffers[m[2], int(m[3])]
             if (m[2], int(m[3])) in memory:
                 row['memory'] = memory[(m[2], int(m[3]))]
             if (m[2], int(m[3])) in stages:
@@ -283,6 +313,19 @@ def report(args):
         result['memory_complete'] &= all(p in result['suite_memory'] for p in ('before_init', 'after_init'))
         if not result['memory_complete']:
             result['errors'].append('Missing required memory measurements')
+    if args.suite == 'benchmark' and manifest.get('buffer_schema') == 1:
+        result['buffers_verified'] = True
+        for row in result['rows']:
+            if row['status'] != 'PASS':
+                continue
+            audit = row.get('buffer_audit', {})
+            expected = manifest['expected_input_bytes'][f"{row['mode']}/{row['rotation']}"]
+            valid = audit.get('flushes', 0) > 0 and audit.get('rendered', 0) > 0
+            if expected is not None:
+                valid &= audit.get('min_bytes') == expected == audit.get('max_bytes')
+            if not valid:
+                result['buffers_verified'] = False
+                result['errors'].append(f"Missing or mismatched buffer audit: {row['mode']}/{row['rotation']}")
     (root / 'results.json').write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps(result, indent=2))
     if not result['complete'] or result['errors'] or not result['matrix_complete']:
@@ -301,6 +344,8 @@ def compare(args):
     for key in ('board', 'cases', 'idf_commit', 'lvgl_benchmark_sha256', 'comparable_sdkconfig_sha256', 'defaults_sha256', 'test_sources_sha256'):
         if manifests['present'][key] != manifests['adapter'][key]:
             raise ValueError('Comparison configurations differ: ' + key)
+    if manifests['present'].get('buffer_policy', 'legacy-physical-50') != manifests['adapter'].get('buffer_policy', 'legacy-physical-50'):
+        raise ValueError('Comparison allocation policies differ')
     if manifests['present'].get('memory_schema') != manifests['adapter'].get('memory_schema'):
         raise ValueError('Comparison memory schemas differ')
     lookup = {impl: {(r['mode'], r['rotation']): r for r in result['rows']} for impl, result in results.items()}
@@ -430,6 +475,7 @@ def main():
     p.add_argument('--lvgl-dir', type=Path)
     p.add_argument('--angles', type=lambda v: [int(x) for x in v.split(',')], default=[0, 90, 180, 270])
     p.add_argument('--profiles', type=lambda v: v.split(','))
+    p.add_argument('--buffer-policy', choices=POLICIES, default='logical-50', help='PARTIAL byte-capacity alignment; legacy policy reproduces old allocation')
     p.add_argument('--profile', action='store_true', help='Benchmark-only stage counters; isolated present-profile output')
     p.add_argument('--sanitize', action='store_true')
     p.add_argument('--check', action='store_true')

@@ -38,3 +38,7 @@ static inline void bench_profile_report(const char *label)
     (void)label;
 }
 #endif
+
+void bench_buffer_audit_start(lv_display_t *, const bench_case_t *);
+void bench_buffer_audit_stop(lv_display_t *);
+void bench_buffer_audit_report(void);

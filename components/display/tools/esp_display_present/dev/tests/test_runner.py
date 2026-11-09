@@ -160,6 +160,25 @@ class RunnerTest(unittest.TestCase):
         self.assertEqual(baseline, runner.comparable_sdkconfig(common + 'CONFIG_LOG_DEFAULT_LEVEL=3\n'))
         self.assertEqual(baseline, runner.comparable_sdkconfig('CONFIG_SPIRAM=y\nCONFIG_LV_COLOR_DEPTH=16\n'))
 
+    def test_buffer_audit_rejects_missing_or_wrong_capacity(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args = SimpleNamespace(work_root=Path(tmp), board='s31-rgb', suite='benchmark', implementation='adapter')
+            root = runner.location(args)
+            root.mkdir(parents=True)
+            manifest = dict(buffer_schema=1, cases=runner.cases_for('s31-rgb', [90], ['DOUBLE_PARTIAL']),
+                            expected_input_bytes={'DOUBLE_PARTIAL/90': 48000})
+            (root / 'manifest.json').write_text(json.dumps(manifest))
+            tail = 'PASS mode=DOUBLE_PARTIAL rotation=90 lvgl_fps=20 scenes=16\nSUITE_PASS board=x'
+            for capacity in [None, 80000, 48000]:
+                audit = '' if capacity is None else f'BUFFER_AUDIT: mode=DOUBLE_PARTIAL rotation=90 min_bytes={capacity} max_bytes={capacity} flushes=20 rendered=4\n'
+                (root / 'live.log').write_text(audit + tail)
+                if capacity == 48000:
+                    runner.report(args)
+                    self.assertTrue(json.loads((root / 'results.json').read_text())['buffers_verified'])
+                else:
+                    with self.assertRaises(ValueError):
+                        runner.report(args)
+
     def test_partial_report_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             args = SimpleNamespace(work_root=Path(tmp), board='s3-rgb', suite='benchmark', implementation='present')

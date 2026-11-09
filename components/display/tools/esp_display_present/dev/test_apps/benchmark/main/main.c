@@ -66,6 +66,7 @@ static void run(void *unused)
         bench_meter_reset();
         bench_profile_reset();
         ESP_ERROR_CHECK(bench_lock());
+        bench_buffer_audit_start(disp, active);
         lv_demo_benchmark_set_end_cb(end_cb);
         lv_demo_benchmark();
         lv_obj_invalidate(lv_display_get_screen_active(disp));
@@ -78,11 +79,15 @@ static void run(void *unused)
         bool complete = atomic_load_explicit(&finished, memory_order_acquire);
         int64_t elapsed = esp_timer_get_time() - start;
         uint32_t frames = bench_frame_count();
+        ESP_ERROR_CHECK(bench_lock());
+        bench_buffer_audit_stop(disp);
+        bench_unlock();
         memory_report("after_run", true);
         ESP_ERROR_CHECK(heap_caps_monitor_local_minimum_free_size_stop());
         ESP_ERROR_CHECK(bench_close());
         vTaskDelay(pdMS_TO_TICKS(20));
         memory_report("after_close", false);
+        bench_buffer_audit_report();
         bench_meter_report(active->name);
         bench_profile_report(active->name);
         ESP_ERROR_CHECK(complete && scenes > 0 ? ESP_OK : ESP_ERR_TIMEOUT);
