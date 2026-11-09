@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "sections": 6,
+  "fpsCells": 288,
+  "bufferCells": 288,
+  "memoryCells": 1800,
+  "deltaCells": 672,
+  "alignedRows": 72,
+  "overviewRows": 8,
+  "noDropdown": true,
+  "runtimeErrors": []
+}

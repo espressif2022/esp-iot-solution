@@ -1,0 +1,10 @@
+{
+  "CONFIG_ESP_DISPLAY_PRESENT_FB_IRAM": [
+    "CONFIG_ESP_DISPLAY_PRESENT_FB_IRAM=y",
+    null
+  ],
+  "# CONFIG_ESP_DISPLAY_PRESENT_FB_IRAM is not set": [
+    null,
+    "# CONFIG_ESP_DISPLAY_PRESENT_FB_IRAM is not set"
+  ]
+}

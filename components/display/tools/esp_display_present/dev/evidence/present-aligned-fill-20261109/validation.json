@@ -1,0 +1,22 @@
+{
+  "complete": true,
+  "pass_grades": 122,
+  "skipped_cases": 6,
+  "verified_pairs": 66,
+  "boards_newly_tested": [
+    "s3-rgb",
+    "s31-rgb",
+    "p4-dsi",
+    "box3-spi"
+  ],
+  "originals_restored": true,
+  "none_scanout_excluded": true,
+  "single_input_tile": true,
+  "historical_modes_retained": [
+    "DOUBLE_DIRECT",
+    "AUTO",
+    "TE",
+    "GRAM_T2"
+  ],
+  "production_idf_patched": false
+}

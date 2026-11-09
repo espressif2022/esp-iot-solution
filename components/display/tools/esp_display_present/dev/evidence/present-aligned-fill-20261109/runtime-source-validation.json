@@ -1,0 +1,496 @@
+{
+  "revision": "d84edb1d0e41ecea8a7ed6be543ceca950041db1",
+  "runtime_files": [
+    {
+      "path": "esp_display_present/src/esp_display_presenter.c",
+      "sha256": "5acb6dadf38e60f6fd2c70fd9de24f4f807ca98e28deef5109deb4c2f80ea6c5",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/core/present_control.h",
+      "sha256": "b5707a81eeceaa60b7c3f31befb4fa1211baabc73e4dfba4d0f49fd006bda3b8",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/core/present_engine.c",
+      "sha256": "64fda1f7080ee82655adb652d7f804ed00c4c8ca829fff075d3c2154eb48c4cd",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/core/present_transfer_tracker.h",
+      "sha256": "8d09b471abd5ccd08e95a6b0aef43d6b051eb8f068765aae8eadbc55bbf3dae3",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/core/present_session.h",
+      "sha256": "7cbc5cf859c86290ad49c0fe61b662603bfe152ff9d91d0fdf88a1ab834d0ab3",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/core/present_engine.h",
+      "sha256": "148bce3ea17695682a3f918af7f3a036818911a75f3b313c0bf596ff5f723a8a",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/core/present_completion_tracker.c",
+      "sha256": "68b410dc0802990a10ded3d176b78685dd9e5f29b5d220fd4c12fb0ecc8728dc",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/core/present_completion_tracker.h",
+      "sha256": "3e45f88c1f4aa3e3360d6edaa87f9dbf8976c49fe509fe7a697c754f7f1c8c5f",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/core/present_engine_types.h",
+      "sha256": "fb5a1e21f7a23d75ca1d4104b3c805024ce87cd9d0ca53d1a1d3b6e588f9691b",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/core/present_transfer_tracker.c",
+      "sha256": "45202c2b5996f81632cdba6e737dec56c3862128e489a7199bcb84552660e060",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/core/present_producer.h",
+      "sha256": "bb19904f36973640b96868bee4826fc2db8fd4e539cfdf17c753e52ff7008ac5",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/platform/present_te_timing.c",
+      "sha256": "b9d49e7032199b382b11d5cfea1b56d971ad766c71e5806ab2d7736e60e900b9",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/platform/present_limits.h",
+      "sha256": "55ac48df4ff22f1d1da74504834b6a84df5df3b3f15b98148102dd2afa4f6415",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/platform/present_lcd_rgb_partition.c",
+      "sha256": "181e508541daf5087ac331ca111ee566785693aa9960a2b5f4f58d43f8e99857",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/platform/present_os.h",
+      "sha256": "d118f81761ffed2688588e9487f4004daf9f2112403233ab56562e0d5ff6787c",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/platform/present_os.c",
+      "sha256": "e03fe3b8ef93d4ed24659df598aa69bbf1ebb1c0ed0ad40257cb1e9b8bb5e46f",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/platform/present_lcd_spi.c",
+      "sha256": "4ec367e63aaea9134af88bdd65ebaff7d0675459aae64869ed810455d8fa8c91",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/platform/present_te_timing.h",
+      "sha256": "91abca6d81f4e5a0b8d8b1bf54e13cb999d942a4a04748a48b092450127fe1b0",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/platform/present_te_timer.h",
+      "sha256": "4f39a3e189997fe00b9af721e312025194ca55145117873128def2218d307f38",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/platform/present_allocation.h",
+      "sha256": "258260be96d14a9b8005142606e4661dfce3016b861d6a6e3959786c39830759",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/platform/present_te_timer.c",
+      "sha256": "48ecf455727352a5c284ffb9f7de262118c828061ce410fadcd2917e991d4896",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/platform/present_lcd_rgb_partition.h",
+      "sha256": "aeb11dcbc47a3da0ca0c3515e60e72ce326fc9239de2cb7fcc04e6d04648d562",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/platform/present_te_sync.c",
+      "sha256": "c4911c7d2dc37c660ecb5b68c5fce3b5b761b74389d96a61d0677ff184edac5d",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/platform/present_te_sync.h",
+      "sha256": "a7b5318a79754f8a4dd51aebe20639b09c61848e53c15d1bc69df2aa657898db",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/platform/present_lcd_scanout.h",
+      "sha256": "695a6d04d7fd7c682956edca3280bf9af022fba1f991918dfbe5708aae9430a9",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/platform/present_lcd_spi.h",
+      "sha256": "ead783e6168292b425ab035a3967e23e4db61d100c2c9fadb4b7a4b7e9926a3a",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/platform/present_lcd_scanout.c",
+      "sha256": "2da4d8e260b68ffd6646d0b87e5e82f0bf315c57dca53f39ab0d04fb759380d4",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/pixel/present_pixel_ops_internal.h",
+      "sha256": "9eed74462e614d48e83ce9ef0d882a58977fb68b8f81b99ee39ab6b4cb8afe11",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/pixel/present_pixel_engine.c",
+      "sha256": "fe7a22822b66b059693291116c72f119de87e5d874d36affd957f20823ab75bb",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/pixel/present_pixel_ops.c",
+      "sha256": "ddb0c1be44687abd0cd727d71e1cb41976ac7b121052dd595de8e746a0405a80",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/pixel/present_pixel_ops.h",
+      "sha256": "3b05df706e191de26bcbbfa2171a571907d9ff5b3cef84769ba38a05d3d533a1",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/pixel/present_pixel_engine.h",
+      "sha256": "8ff77779a4c062ca281ddd27b09c3c36a72ac02342a9a611f7bbaa9427c27401",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/pixel/present_pixel_types.h",
+      "sha256": "14a21a9631e2b9dd1c3e9c68d3541e1c0ae103203d38737c2c4df829548b2f0a",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/pixel/present_executor.h",
+      "sha256": "2cf396321960d195434f154bfff62a0baea6df7c24640288777c17a40f9d1f60",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/pixel/executor/present_executor_dma2d.c",
+      "sha256": "20c191f6c94159418c170a3449025d40053c60bb7dd8dff61f4b0fabd2231ffc",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/pixel/executor/present_executor.c",
+      "sha256": "cbb71f63d23f89ac8b5daa24a8e07b893f5c60cd85760b40f1429bf32482942e",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/pixel/executor/present_executor_ppa.c",
+      "sha256": "a386a1b6820374831ec004c71e68e9936c068f94ac8b64dfb15ae00dcdadd327",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/pixel/executor/present_executor_hw.h",
+      "sha256": "3c455a4a9de3e76c0a755a2eee785fb5e8aef8387b87071312e952174479a171",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/pixel/executor/present_executor_cpu.c",
+      "sha256": "0b43444e5688d2828e0e5651f1e3bd51db551568a1b9d8dd287b7a0cc46f9226",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/config/present_plan.c",
+      "sha256": "61e01fac313e295bb52fe718cf09bc8beface0fdd03d418397755103bb738dfa",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/config/present_engine_config.h",
+      "sha256": "a77706f60deab15dab0aa9a9b80b8b29b21f711ea72e113e8c7e5e86a920e4a7",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/config/present_geometry.h",
+      "sha256": "248f0353b5e2da4265ec7399f6a1f6be6e773b543570d05729e8d3bf23cd0db1",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/config/present_mode.c",
+      "sha256": "a0c233eaa255660cf524568c1705a3a82ec6df833adacccd8620fa11cdc667fe",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/config/present_mode.h",
+      "sha256": "d3e525cd33e4cfe9c417b7c8992320265c787c3f2f1b1b2802c97ea01069ec65",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/config/present_geometry.c",
+      "sha256": "f56b3dda88070ca0c003027d3f46dba2a8f6b0f9d18ba805c88980132d7dd885",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/config/present_plan.h",
+      "sha256": "7b633ca61809ff27dd30316bad5dbbdd34cff8eb67aa6414e70b81a500807749",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/backend/present_te_composer.h",
+      "sha256": "205cefbe57c84019bfebe0aa8d7e3eab55e0cbb1f34c4a8f2e4793b7565eefa5",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/backend/present_backend_types.h",
+      "sha256": "c535c0d3c1ae497728900e24fc8588d5932525dd2b35a490a94d30ea7229de59",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/backend/present_image_repair.h",
+      "sha256": "51731b4be3c2830ef6cf0348882b6d54303ec452ff8f5f98cdb255b92e857092",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/backend/present_te_composer.c",
+      "sha256": "b46972b2e228cd47045952363a8da6d88d1df5df4fbc681d7c71bbc8956440d4",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/backend/present_frame_core.h",
+      "sha256": "706f427a97bc7b18b831db4d0c332ba4e3ab80015672e805952b45fbea0bbad8",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/backend/present_backend_gram.c",
+      "sha256": "16180ab3497cd4313c0dd3200d8e99e84142bf2610e18855c5ac9d064096a5c7",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/backend/present_backend_fb.c",
+      "sha256": "1e6ea65a4289439f8ca6d085e9daa47bd41073445d7ea5aa28d2e05488fc30bf",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/backend/present_output_caps.h",
+      "sha256": "507b7b21e84bb3bf33bab88b49f6d955224d1bb359e6fb326963019682d001a4",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/backend/present_image_repair.c",
+      "sha256": "cf3ad2f67f0b5109cab33b20da40c1c39bbc9ed66a12786af538782796179bab",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/backend/present_coverage.h",
+      "sha256": "b3e8ce6162ad8f5389223783a6d9ababb13259629ebfa2772dc6ec2d267c3d3a",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/backend/present_backend_te.c",
+      "sha256": "35477ed1bd3b3f12729456ffd46e9e725fbbc7013701cd7364083ca326997878",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/backend/present_transaction.h",
+      "sha256": "0dae71bef49bdca1e8bf22c9faad52a76fe2ced8c1bcc24c7ba519934e32cc9a",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/backend/present_records.h",
+      "sha256": "e03cb91435e8b8fee29f6e1a65230b60e9fcdaeeaec62c82b0d2da29d2466bdc",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/backend/present_backend.h",
+      "sha256": "68ea370fe1120f9fe39ede80ed5ac1afda52c77786a45efb5bf8f9a5ff2e118e",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/backend/present_backend_config.h",
+      "sha256": "02cf7d33ffcb61da7017e7318b803472bb2fc00557f3573b8b83f78ecb746034",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/backend/present_frame_core.c",
+      "sha256": "3032ea7471f686727be453d507b633c6507d9357d5e9d2628f06535a5d24e913",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/resources/present_memory.h",
+      "sha256": "668ed3b9edadffbff32ed613d37cbfec4446a686bc82d9a329d7865245618011",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/resources/present_resources.h",
+      "sha256": "4161bc78b0ccbd5da8cdf463d016d9d745d6e40cc346df0ec7f1615414de8b41",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/src/resources/present_resources.c",
+      "sha256": "59a565601dc4a6e9f2ecf1e3dfaebf7897791d17ff789f550833be1edabe0bf7",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/include/esp_display_present_types.h",
+      "sha256": "82185a1987a691eca711daaee0ddb613719fc8f9c9f3efdea0d286fa32401369",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/include/esp_display_present.h",
+      "sha256": "a5492c1af6396b4ac2cd4a88df54ac748327efb4cb0ddbf7ad4494880885166e",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_display_present/include/esp_display_present_config.h",
+      "sha256": "dc17c98194d264b602bd6815bcf3a4ad0ebfe6db311d45cb3a731d2c122c3755",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lv_present/src/present_lvgl.c",
+      "sha256": "4d061bc1251b102207914534fb2074f69777b4ae6204790ed0157e09eb730ea4",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lv_present/src/present_lvgl.h",
+      "sha256": "e7ea94229314f284f93ac031c4ab16b760c10bd17566176f4697d92e39fe0b6e",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lv_present/src/esp_lv_present.c",
+      "sha256": "b747d27ff4471f40172808dc2c1bb16f8f2fa05f54a6413c3b9f0d971862d237",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lv_present/include/esp_lv_present.h",
+      "sha256": "fb2ce8e0081e0bece48296d3371a6b77dad27f4c0399a7756ab66eb1f7832587",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/adapter/esp_lv_adapter.c",
+      "sha256": "8f7a2e4a742d14dd5fea6ac2b52321569e1034dd8c57245991e976bb5d911f7d",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/adapter/adapter_internal.h",
+      "sha256": "4cb002d56da6147768918f6168e956fa4dcea5e2c0115355f139e2a80924e0c7",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/input/esp_lv_adapter_input_touch.c",
+      "sha256": "27b5d268a55a5929e3eb4f26ef543814ef2f5e052564526e5f187d1a2aa5f67f",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/input/esp_lv_adapter_input_button.c",
+      "sha256": "6c3cbe6e003b6ca425612c130fe62befde19dada699ce5c89821405a7842f9c6",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/input/esp_lv_adapter_input_knob.c",
+      "sha256": "29f014264031a6cb020aa0170602f36fb2ca436ebe0790f0f7b68f9d20a86c2e",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/input/button_compat.h",
+      "sha256": "e508fc7f5192c58dfea09c28eec5cfc7fce0faa3a6ef72f2615217267c040d89",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/freetype/esp_lv_adapter_freetype_ftoption.h",
+      "sha256": "70e3c4fd8685495c767fc5a4aceb38fabd1b0fe451317ff24e71c42302007f61",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/freetype/esp_lv_adapter_freetype_ftmodule.h",
+      "sha256": "318726850533157cc0aa119dc6dd188c431a8abda00efc3b952d61b131a08372",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/display/display_te_sync.c",
+      "sha256": "248acc9a69b91be3dcd1be849c169294f6ba5ee0d09b4921c72a75ebc3b13233",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/display/display_manager.c",
+      "sha256": "1f280fa4b98f970eb8d9f26fa3c87431f1225ea64ec4fab676956e740c9838e9",
+      "identical_to_production_revision": false
+    },
+    {
+      "path": "esp_lvgl_adapter/src/display/display_manager.h",
+      "sha256": "355c8616309328a996d28eba0b2b776debe131e364d70364dd8074d31226f073",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/display/display_te_sync.h",
+      "sha256": "cc60416c7bf7b13dde94bece6424e19f1d9733a092d99a2cf3ff1ff94592db9d",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/display/ports/lvgl_port_ppa.h",
+      "sha256": "cfcb8c67dbf7c467c692b865312f6267f2eaecdf79c088303d66e2170edc6704",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/display/ports/lvgl_port_draw_private.h",
+      "sha256": "35c2800af0039bebdd5a115d960369c8cefdbbfa194f1d039ad6be59127d1a18",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/display/ports/display_bridge.h",
+      "sha256": "3b093af7dedecbfe87c15a84d77e7828308be52a86d71448ccd3a6e1a7c73eb5",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/display/ports/lvgl_port_alignment.h",
+      "sha256": "3f114c851f7a871007a0ef759c450b0af8d185590df20beb37482bf003896998",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/display/ports/lvgl_port_private.h",
+      "sha256": "438186d9108aa191cdbb1e1de971b8ee06d52c66e8c52545ab62b906383339ed",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/display/bridge/v8/lvgl_ppa_accel_v8.c",
+      "sha256": "9d4fcada7a1a04852343936027c264ade81ecc54301be5038f0e8030c16f6d54",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/display/bridge/v8/lvgl_bridge_v8.c",
+      "sha256": "b0d5f477af87695671cb2c61fe05571dddcd602811ae5641de9bcdeac74df354",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/display/bridge/v9/lvgl_ppa_accel_v9.c",
+      "sha256": "81805108c775cf80d91a33b98f9624ff29adb2891670e29ede7f47d8feece1c4",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/display/bridge/v9/lvgl_bridge_v9.c",
+      "sha256": "9e7ff6fb4d37e013294150bcce398ed58d98ea29112b52bfeecada59bed53b8e",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/display/bridge/common/display_bridge_common.h",
+      "sha256": "323abd79b17138aadfb4fd547c1358628ba357f7e95284b657041bd16e64cc85",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/src/display/bridge/common/display_bridge_common.c",
+      "sha256": "7a4d18f1ddb405735b19006e50a1462d071455f6bd72a8525be54ce28786661a",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/include/esp_lv_adapter.h",
+      "sha256": "97cca97675bcd395ba2a4c6fe7dd3a050033d588ef26a188316330c748119b17",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/include/esp_lv_adapter_input.h",
+      "sha256": "6d5f26271a23ee1ba972364e353ac84b04155b9fb41e8273fa76816ecfe42979",
+      "identical_to_production_revision": true
+    },
+    {
+      "path": "esp_lvgl_adapter/include/esp_lv_adapter_display.h",
+      "sha256": "c62ac7a2dd9d2abdeaabdb320f9fbeaba2951d604c9a19d78d3f68addc6fb36c",
+      "identical_to_production_revision": true
+    }
+  ],
+  "only_change": "esp_lvgl_adapter/src/display/display_manager.c PARTIAL input allocation; see adapter-allocation-only.patch"
+}

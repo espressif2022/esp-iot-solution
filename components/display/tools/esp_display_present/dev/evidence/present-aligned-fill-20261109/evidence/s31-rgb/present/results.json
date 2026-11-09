@@ -1,0 +1,762 @@
+{
+  "complete": true,
+  "rows": [
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_FULL",
+      "rotation": 0,
+      "frames": 1391,
+      "transport_fps": 20.0,
+      "lvgl_fps": 22,
+      "cpu": 100,
+      "render": 47,
+      "flush": 0,
+      "scenes": 16,
+      "memory": {
+        "before_open": {
+          "internal_total": 502215,
+          "internal_free": 397027,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 502215,
+          "internal_free": 350855,
+          "psram_total": 16777216,
+          "psram_free": 13699320,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 502215,
+          "internal_free": 350279,
+          "psram_total": 16777216,
+          "psram_free": 13699320,
+          "internal_min_free": 262379,
+          "psram_min_free": 13306068
+        },
+        "after_close": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_FULL",
+      "rotation": 90,
+      "frames": 993,
+      "transport_fps": 14.2,
+      "lvgl_fps": 17,
+      "cpu": 100,
+      "render": 58,
+      "flush": 0,
+      "scenes": 16,
+      "memory": {
+        "before_open": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 502215,
+          "internal_free": 350867,
+          "psram_total": 16777216,
+          "psram_free": 12931316,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 502215,
+          "internal_free": 350295,
+          "psram_total": 16777216,
+          "psram_free": 12931316,
+          "internal_min_free": 256799,
+          "psram_min_free": 12594900
+        },
+        "after_close": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_FULL",
+      "rotation": 180,
+      "frames": 1023,
+      "transport_fps": 14.6,
+      "lvgl_fps": 15,
+      "cpu": 100,
+      "render": 60,
+      "flush": 0,
+      "scenes": 16,
+      "memory": {
+        "before_open": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 502215,
+          "internal_free": 350867,
+          "psram_total": 16777216,
+          "psram_free": 12931316,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 502215,
+          "internal_free": 350275,
+          "psram_total": 16777216,
+          "psram_free": 12931316,
+          "internal_min_free": 263251,
+          "psram_min_free": 12455112
+        },
+        "after_close": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_FULL",
+      "rotation": 270,
+      "frames": 990,
+      "transport_fps": 14.2,
+      "lvgl_fps": 17,
+      "cpu": 100,
+      "render": 58,
+      "flush": 0,
+      "scenes": 16,
+      "memory": {
+        "before_open": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 502215,
+          "internal_free": 350867,
+          "psram_total": 16777216,
+          "psram_free": 12931316,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 502215,
+          "internal_free": 350295,
+          "psram_total": 16777216,
+          "psram_free": 12931316,
+          "internal_min_free": 257187,
+          "psram_min_free": 12597972
+        },
+        "after_close": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "mode": "TRIPLE_FULL",
+      "rotation": 0,
+      "frames": 1564,
+      "transport_fps": 22.5,
+      "lvgl_fps": 25,
+      "cpu": 100,
+      "render": 40,
+      "flush": 0,
+      "scenes": 16,
+      "memory": {
+        "before_open": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 502215,
+          "internal_free": 350867,
+          "psram_total": 16777216,
+          "psram_free": 13699320,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 502215,
+          "internal_free": 350295,
+          "psram_total": 16777216,
+          "psram_free": 13699320,
+          "internal_min_free": 263039,
+          "psram_min_free": 13223116
+        },
+        "after_close": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "mode": "TRIPLE_FULL",
+      "rotation": 90,
+      "frames": 1269,
+      "transport_fps": 18.2,
+      "lvgl_fps": 22,
+      "cpu": 100,
+      "render": 45,
+      "flush": 0,
+      "scenes": 16,
+      "memory": {
+        "before_open": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 502215,
+          "internal_free": 350867,
+          "psram_total": 16777216,
+          "psram_free": 12931316,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 502215,
+          "internal_free": 350283,
+          "psram_total": 16777216,
+          "psram_free": 12931316,
+          "internal_min_free": 256891,
+          "psram_min_free": 12723936
+        },
+        "after_close": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "mode": "TRIPLE_FULL",
+      "rotation": 180,
+      "frames": 1317,
+      "transport_fps": 18.9,
+      "lvgl_fps": 20,
+      "cpu": 100,
+      "render": 47,
+      "flush": 0,
+      "scenes": 16,
+      "memory": {
+        "before_open": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 502215,
+          "internal_free": 350867,
+          "psram_total": 16777216,
+          "psram_free": 12931316,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 502215,
+          "internal_free": 350295,
+          "psram_total": 16777216,
+          "psram_free": 12931316,
+          "internal_min_free": 262591,
+          "psram_min_free": 12503244
+        },
+        "after_close": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "mode": "TRIPLE_FULL",
+      "rotation": 270,
+      "frames": 1270,
+      "transport_fps": 18.3,
+      "lvgl_fps": 22,
+      "cpu": 100,
+      "render": 45,
+      "flush": 0,
+      "scenes": 16,
+      "memory": {
+        "before_open": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 502215,
+          "internal_free": 350867,
+          "psram_total": 16777216,
+          "psram_free": 12931316,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 502215,
+          "internal_free": 350295,
+          "psram_total": 16777216,
+          "psram_free": 12931316,
+          "internal_min_free": 256715,
+          "psram_min_free": 12723936
+        },
+        "after_close": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_PARTIAL",
+      "rotation": 0,
+      "frames": 1003,
+      "transport_fps": 14.4,
+      "lvgl_fps": 17,
+      "cpu": 100,
+      "render": 43,
+      "flush": 19,
+      "scenes": 16,
+      "memory": {
+        "before_open": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 502215,
+          "internal_free": 270755,
+          "psram_total": 16777216,
+          "psram_free": 14387448,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 502215,
+          "internal_free": 270175,
+          "psram_total": 16777216,
+          "psram_free": 14387448,
+          "internal_min_free": 214583,
+          "psram_min_free": 14272748
+        },
+        "after_close": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_PARTIAL",
+      "rotation": 90,
+      "frames": 893,
+      "transport_fps": 12.8,
+      "lvgl_fps": 18,
+      "cpu": 100,
+      "render": 46,
+      "flush": 25,
+      "scenes": 16,
+      "memory": {
+        "before_open": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 502215,
+          "internal_free": 302755,
+          "psram_total": 16777216,
+          "psram_free": 14421240,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 502215,
+          "internal_free": 302175,
+          "psram_total": 16777216,
+          "psram_free": 14421240,
+          "internal_min_free": 246279,
+          "psram_min_free": 14349040
+        },
+        "after_close": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_PARTIAL",
+      "rotation": 180,
+      "frames": 959,
+      "transport_fps": 13.7,
+      "lvgl_fps": 16,
+      "cpu": 100,
+      "render": 43,
+      "flush": 23,
+      "scenes": 16,
+      "memory": {
+        "before_open": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 502215,
+          "internal_free": 270755,
+          "psram_total": 16777216,
+          "psram_free": 14387448,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 502215,
+          "internal_free": 270175,
+          "psram_total": 16777216,
+          "psram_free": 14387448,
+          "internal_min_free": 214535,
+          "psram_min_free": 14272748
+        },
+        "after_close": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_PARTIAL",
+      "rotation": 270,
+      "frames": 913,
+      "transport_fps": 13.1,
+      "lvgl_fps": 18,
+      "cpu": 100,
+      "render": 46,
+      "flush": 24,
+      "scenes": 16,
+      "memory": {
+        "before_open": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 502215,
+          "internal_free": 302755,
+          "psram_total": 16777216,
+          "psram_free": 14421240,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 502215,
+          "internal_free": 302175,
+          "psram_total": 16777216,
+          "psram_free": 14421240,
+          "internal_min_free": 246275,
+          "psram_min_free": 14349040
+        },
+        "after_close": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "mode": "TRIPLE_PARTIAL",
+      "rotation": 0,
+      "frames": 1273,
+      "transport_fps": 18.3,
+      "lvgl_fps": 23,
+      "cpu": 100,
+      "render": 42,
+      "flush": 9,
+      "scenes": 16,
+      "memory": {
+        "before_open": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 502215,
+          "internal_free": 270755,
+          "psram_total": 16777216,
+          "psram_free": 14387448,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 502215,
+          "internal_free": 270175,
+          "psram_total": 16777216,
+          "psram_free": 14387448,
+          "internal_min_free": 214295,
+          "psram_min_free": 14272748
+        },
+        "after_close": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "mode": "TRIPLE_PARTIAL",
+      "rotation": 90,
+      "frames": 1078,
+      "transport_fps": 15.5,
+      "lvgl_fps": 22,
+      "cpu": 100,
+      "render": 44,
+      "flush": 15,
+      "scenes": 16,
+      "memory": {
+        "before_open": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 502215,
+          "internal_free": 302755,
+          "psram_total": 16777216,
+          "psram_free": 14421240,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 502215,
+          "internal_free": 302175,
+          "psram_total": 16777216,
+          "psram_free": 14421240,
+          "internal_min_free": 246275,
+          "psram_min_free": 14349040
+        },
+        "after_close": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "mode": "TRIPLE_PARTIAL",
+      "rotation": 180,
+      "frames": 1160,
+      "transport_fps": 16.7,
+      "lvgl_fps": 21,
+      "cpu": 100,
+      "render": 42,
+      "flush": 13,
+      "scenes": 16,
+      "memory": {
+        "before_open": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 502215,
+          "internal_free": 270755,
+          "psram_total": 16777216,
+          "psram_free": 14387448,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 502215,
+          "internal_free": 270175,
+          "psram_total": 16777216,
+          "psram_free": 14387448,
+          "internal_min_free": 213787,
+          "psram_min_free": 14272748
+        },
+        "after_close": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "mode": "TRIPLE_PARTIAL",
+      "rotation": 270,
+      "frames": 1111,
+      "transport_fps": 15.9,
+      "lvgl_fps": 23,
+      "cpu": 100,
+      "render": 43,
+      "flush": 15,
+      "scenes": 16,
+      "memory": {
+        "before_open": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 502215,
+          "internal_free": 302755,
+          "psram_total": 16777216,
+          "psram_free": 14421240,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 502215,
+          "internal_free": 302175,
+          "psram_total": 16777216,
+          "psram_free": 14421240,
+          "internal_min_free": 246279,
+          "psram_min_free": 14349040
+        },
+        "after_close": {
+          "internal_total": 502215,
+          "internal_free": 374663,
+          "psram_total": 16777216,
+          "psram_free": 14470368,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      }
+    }
+  ],
+  "errors": [],
+  "suite_memory": {
+    "before_init": {
+      "internal_total": 502215,
+      "internal_free": 420983,
+      "psram_total": 16777216,
+      "psram_free": 16774784,
+      "internal_min_free": 0,
+      "psram_min_free": 0
+    },
+    "after_init": {
+      "internal_total": 502215,
+      "internal_free": 397027,
+      "psram_total": 16777216,
+      "psram_free": 14470368,
+      "internal_min_free": 0,
+      "psram_min_free": 0
+    }
+  },
+  "matrix_complete": true,
+  "memory_complete": true
+}

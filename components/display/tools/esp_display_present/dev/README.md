@@ -4,6 +4,10 @@
 
 生产源码的职责划分与新增文件规则见[SOURCE_LAYOUT.md](SOURCE_LAYOUT.md)。
 
+## FULL/PARTIAL 同容量重测（2026-11-09）
+
+[最新合并网页](evidence/five-board-regression-20261109/comparison-current.html) · [新测证据与口径](evidence/present-aligned-fill-20261109/README.md) · [分析](evidence/present-aligned-fill-20261109/ANALYSIS.md)。122项有效成绩、6项跳过，每项完整16场景。S3 IRAM开／关、S31 RGB、P4 DSI的FULL/PARTIAL四角度及BOX-3单tile更新；固定单输入tile，PARTIAL双方按逻辑宽×50行分配，运行时核对实际bytes。DIRECT/AUTO、mosaico TE、GRAM双tile保留历史并在网页标注。四块板原固件全部恢复并独立整片校验；生产交接代码及IDF未修改。测试工具默认使用隔离adapter分配overlay，不更改其checkout。
+
 ## S31 RGB 单tile性能定位（2026-11-09）
 
 [专项数据与证据](evidence/present-s31-rgb-analysis-20261109/comparison.html)：双方单tile，PARTIAL 0°/90°；40项完整16场景对照。双方同开XIP后四项均为37/36/40/40 FPS，相同旋转缓冲容量复核相同；burst与缓存维护精简未带来综合提升。只验证本专项，不替换五板全矩阵成绩；默认配置、生产源码和IDF未修改，原固件已恢复并整片校验。此前双tile尝试停止并从对比中排除。
@@ -12,9 +16,9 @@
 
 [完整24项帧率／内存对照](evidence/present-s3-fb-iram-on-off-20261109/comparison.html)：同版本源码，SDK唯一差别为FB_IRAM y/n。关闭增加内部堆21.36KiB；当前32KiB指令缓存/XIP配置下，FULL/DIRECT基本接近，PARTIAL/AUTO低1～3FPS。关闭只用于隔离补测，组件默认仍开启；原固件整片恢复校验通过。
 
-## 最新五板对照（2026-11-09）
+## 首轮五板基线（历史记录，2026-11-09）
 
-[报告与口径](evidence/five-board-regression-20261109/README.md) · [帧率及四时点内存网页](evidence/five-board-regression-20261109/comparison-current.html) · [Excel](evidence/five-board-regression-20261109/comparison-current.xlsx)。生产源码 `b607bb9a1`，present108项、adapter73项通过，31项明确跳过；每项完整16场景，未拼接历史成绩。RGB/DSI不含NONE，mosaico仅TE，BOX-3测GRAM。五板原固件全部恢复并独立整片校验；新固件没有新增目视/光学防撕裂验收。S3本轮为R16/16MiB PSRAM，MAC已更新，旧R8成绩不混用。
+首轮生产源码为b607bb9a1，present108项、adapter73项通过，31项跳过；原始口径保留在[首轮说明](evidence/five-board-regression-20261109/README-before-alignment.md)。目前合并网页中的FULL/PARTIAL已经由上面的同容量重测替换，其他项保留历史，不能再将整页称为同一轮数据。五板首轮恢复记录仍保留。
 
 ## 目录
 

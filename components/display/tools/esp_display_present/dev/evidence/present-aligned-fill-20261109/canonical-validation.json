@@ -1,0 +1,7 @@
+{
+  "passed": true,
+  "p4_adapter_build": true,
+  "expected_quarter_turn_bytes": 60000,
+  "overlay_matches_running_test_source": true,
+  "original_checkout_not_patched": true
+}

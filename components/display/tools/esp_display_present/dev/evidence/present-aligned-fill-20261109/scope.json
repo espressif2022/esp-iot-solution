@@ -1,0 +1,26 @@
+{
+  "revision": "d84edb1d0e41ecea8a7ed6be543ceca950041db1",
+  "ports": {
+    "s31-rgb": "/dev/ttyUSB0",
+    "s3-rgb": "/dev/ttyUSB1",
+    "p4-dsi": "/dev/ttyACM0",
+    "box3-spi": "/dev/ttyACM2"
+  },
+  "scanout_profiles": [
+    "DOUBLE_FULL",
+    "TRIPLE_FULL",
+    "DOUBLE_PARTIAL",
+    "TRIPLE_PARTIAL"
+  ],
+  "angles": [
+    0,
+    90,
+    180,
+    270
+  ],
+  "input_tiles": 1,
+  "tile_policy": "logical_width*50*RGB565; adapter allocation only shim",
+  "clean_idf": true,
+  "original_xip_preserved": true,
+  "mosaico": "expected original board MAC not yet identified; current software CDC busy"
+}

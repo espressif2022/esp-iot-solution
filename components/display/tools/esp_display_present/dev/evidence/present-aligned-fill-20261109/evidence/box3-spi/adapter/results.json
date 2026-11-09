@@ -1,0 +1,154 @@
+{
+  "complete": true,
+  "rows": [
+    {
+      "status": "PASS",
+      "mode": "GRAM_T1_INTERNAL",
+      "rotation": 0,
+      "frames": 0,
+      "transport_fps": 0.0,
+      "lvgl_fps": 47,
+      "cpu": 100,
+      "render": 6,
+      "flush": 14,
+      "scenes": 16,
+      "memory": {
+        "before_open": {
+          "internal_total": 372523,
+          "internal_free": 253327,
+          "psram_total": 15930308,
+          "psram_free": 15927496,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 372523,
+          "internal_free": 213319,
+          "psram_total": 15930308,
+          "psram_free": 15927468,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 372523,
+          "internal_free": 212711,
+          "psram_total": 15930308,
+          "psram_free": 15927468,
+          "internal_min_free": 168959,
+          "psram_min_free": 15894696
+        },
+        "after_close": {
+          "internal_total": 372523,
+          "internal_free": 250539,
+          "psram_total": 15930308,
+          "psram_free": 15927496,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      }
+    },
+    {
+      "status": "SKIP",
+      "mode": "GRAM_T1_INTERNAL",
+      "rotation": 90,
+      "reason": "adapter_NONE_has_no_software_rotation"
+    },
+    {
+      "status": "SKIP",
+      "mode": "GRAM_T1_INTERNAL",
+      "rotation": 180,
+      "reason": "adapter_NONE_has_no_software_rotation"
+    },
+    {
+      "status": "SKIP",
+      "mode": "GRAM_T1_INTERNAL",
+      "rotation": 270,
+      "reason": "adapter_NONE_has_no_software_rotation"
+    },
+    {
+      "status": "PASS",
+      "mode": "GRAM_T1_PSRAM",
+      "rotation": 0,
+      "frames": 0,
+      "transport_fps": 0.0,
+      "lvgl_fps": 46,
+      "cpu": 100,
+      "render": 6,
+      "flush": 15,
+      "scenes": 16,
+      "memory": {
+        "before_open": {
+          "internal_total": 372523,
+          "internal_free": 250539,
+          "psram_total": 15930308,
+          "psram_free": 15927496,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 372523,
+          "internal_free": 245339,
+          "psram_total": 15930308,
+          "psram_free": 15895464,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 372523,
+          "internal_free": 219119,
+          "psram_total": 15930308,
+          "psram_free": 15895464,
+          "internal_min_free": 168675,
+          "psram_min_free": 15862692
+        },
+        "after_close": {
+          "internal_total": 372523,
+          "internal_free": 224935,
+          "psram_total": 15930308,
+          "psram_free": 15927496,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      }
+    },
+    {
+      "status": "SKIP",
+      "mode": "GRAM_T1_PSRAM",
+      "rotation": 90,
+      "reason": "adapter_NONE_has_no_software_rotation"
+    },
+    {
+      "status": "SKIP",
+      "mode": "GRAM_T1_PSRAM",
+      "rotation": 180,
+      "reason": "adapter_NONE_has_no_software_rotation"
+    },
+    {
+      "status": "SKIP",
+      "mode": "GRAM_T1_PSRAM",
+      "rotation": 270,
+      "reason": "adapter_NONE_has_no_software_rotation"
+    }
+  ],
+  "errors": [],
+  "suite_memory": {
+    "before_init": {
+      "internal_total": 372523,
+      "internal_free": 279011,
+      "psram_total": 15930308,
+      "psram_free": 15927496,
+      "internal_min_free": 0,
+      "psram_min_free": 0
+    },
+    "after_init": {
+      "internal_total": 372523,
+      "internal_free": 253327,
+      "psram_total": 15930308,
+      "psram_free": 15927496,
+      "internal_min_free": 0,
+      "psram_min_free": 0
+    }
+  },
+  "matrix_complete": true,
+  "memory_complete": true
+}

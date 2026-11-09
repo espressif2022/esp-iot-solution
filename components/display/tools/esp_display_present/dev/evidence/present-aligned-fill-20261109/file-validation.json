@@ -1,0 +1,13 @@
+{
+  "csv_exact": 120,
+  "html_exact": true,
+  "xlsx_raw_exact": 120,
+  "xlsx_memory_phase_rows": 576,
+  "pass_grades": 122,
+  "skips": 6,
+  "verified_pairs": 66,
+  "restored_boards": 4,
+  "matching_comparable_sdkconfig": 4,
+  "scene_rows": 1952,
+  "no_build_or_firmware": true
+}

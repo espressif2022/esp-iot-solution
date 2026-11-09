@@ -1,0 +1,386 @@
+[
+  {
+    "board": "s3-rgb",
+    "group": "PARTIAL",
+    "scene": "Empty screen",
+    "case_count": 8,
+    "present_mean": 30.25,
+    "adapter_mean": 26.75
+  },
+  {
+    "board": "s3-rgb",
+    "group": "PARTIAL",
+    "scene": "Moving wallpaper",
+    "case_count": 8,
+    "present_mean": 27.75,
+    "adapter_mean": 27
+  },
+  {
+    "board": "s3-rgb",
+    "group": "PARTIAL",
+    "scene": "Single rectangle",
+    "case_count": 8,
+    "present_mean": 61,
+    "adapter_mean": 60
+  },
+  {
+    "board": "s3-rgb",
+    "group": "PARTIAL",
+    "scene": "Multiple rectangles",
+    "case_count": 8,
+    "present_mean": 56.75,
+    "adapter_mean": 49.375
+  },
+  {
+    "board": "s3-rgb",
+    "group": "PARTIAL",
+    "scene": "Multiple RGB images",
+    "case_count": 8,
+    "present_mean": 63.625,
+    "adapter_mean": 59.5
+  },
+  {
+    "board": "s3-rgb",
+    "group": "PARTIAL",
+    "scene": "Multiple ARGB images",
+    "case_count": 8,
+    "present_mean": 63,
+    "adapter_mean": 58.625
+  },
+  {
+    "board": "s3-rgb",
+    "group": "PARTIAL",
+    "scene": "Rotated ARGB images",
+    "case_count": 8,
+    "present_mean": 63.125,
+    "adapter_mean": 61.125
+  },
+  {
+    "board": "s3-rgb",
+    "group": "PARTIAL",
+    "scene": "Multiple labels",
+    "case_count": 8,
+    "present_mean": 48.75,
+    "adapter_mean": 56.5
+  },
+  {
+    "board": "s3-rgb",
+    "group": "PARTIAL",
+    "scene": "Screen sized text",
+    "case_count": 8,
+    "present_mean": 10,
+    "adapter_mean": 9.75
+  },
+  {
+    "board": "s3-rgb",
+    "group": "PARTIAL",
+    "scene": "Multiple arcs",
+    "case_count": 8,
+    "present_mean": 60,
+    "adapter_mean": 59.5
+  },
+  {
+    "board": "s3-rgb",
+    "group": "PARTIAL",
+    "scene": "Containers",
+    "case_count": 8,
+    "present_mean": 65.125,
+    "adapter_mean": 59.75
+  },
+  {
+    "board": "s3-rgb",
+    "group": "PARTIAL",
+    "scene": "Containers with overlay",
+    "case_count": 8,
+    "present_mean": 21,
+    "adapter_mean": 19.25
+  },
+  {
+    "board": "s3-rgb",
+    "group": "PARTIAL",
+    "scene": "Containers with opa",
+    "case_count": 8,
+    "present_mean": 64.375,
+    "adapter_mean": 58
+  },
+  {
+    "board": "s3-rgb",
+    "group": "PARTIAL",
+    "scene": "Containers with opa_layer",
+    "case_count": 8,
+    "present_mean": 47.125,
+    "adapter_mean": 39.375
+  },
+  {
+    "board": "s3-rgb",
+    "group": "PARTIAL",
+    "scene": "Containers with scrolling",
+    "case_count": 8,
+    "present_mean": 20.875,
+    "adapter_mean": 19.25
+  },
+  {
+    "board": "s3-rgb",
+    "group": "PARTIAL",
+    "scene": "Widgets demo",
+    "case_count": 8,
+    "present_mean": 13.25,
+    "adapter_mean": 12.625
+  },
+  {
+    "board": "s31-rgb",
+    "group": "PARTIAL",
+    "scene": "Empty screen",
+    "case_count": 8,
+    "present_mean": 19.125,
+    "adapter_mean": 21.875
+  },
+  {
+    "board": "s31-rgb",
+    "group": "PARTIAL",
+    "scene": "Moving wallpaper",
+    "case_count": 8,
+    "present_mean": 12.875,
+    "adapter_mean": 14.125
+  },
+  {
+    "board": "s31-rgb",
+    "group": "PARTIAL",
+    "scene": "Single rectangle",
+    "case_count": 8,
+    "present_mean": 41.625,
+    "adapter_mean": 41.75
+  },
+  {
+    "board": "s31-rgb",
+    "group": "PARTIAL",
+    "scene": "Multiple rectangles",
+    "case_count": 8,
+    "present_mean": 27.75,
+    "adapter_mean": 35.75
+  },
+  {
+    "board": "s31-rgb",
+    "group": "PARTIAL",
+    "scene": "Multiple RGB images",
+    "case_count": 8,
+    "present_mean": 20.125,
+    "adapter_mean": 23.5
+  },
+  {
+    "board": "s31-rgb",
+    "group": "PARTIAL",
+    "scene": "Multiple ARGB images",
+    "case_count": 8,
+    "present_mean": 15.375,
+    "adapter_mean": 19
+  },
+  {
+    "board": "s31-rgb",
+    "group": "PARTIAL",
+    "scene": "Rotated ARGB images",
+    "case_count": 8,
+    "present_mean": 29.5,
+    "adapter_mean": 31.5
+  },
+  {
+    "board": "s31-rgb",
+    "group": "PARTIAL",
+    "scene": "Multiple labels",
+    "case_count": 8,
+    "present_mean": 15.25,
+    "adapter_mean": 19.125
+  },
+  {
+    "board": "s31-rgb",
+    "group": "PARTIAL",
+    "scene": "Screen sized text",
+    "case_count": 8,
+    "present_mean": 5.75,
+    "adapter_mean": 8.625
+  },
+  {
+    "board": "s31-rgb",
+    "group": "PARTIAL",
+    "scene": "Multiple arcs",
+    "case_count": 8,
+    "present_mean": 24,
+    "adapter_mean": 40
+  },
+  {
+    "board": "s31-rgb",
+    "group": "PARTIAL",
+    "scene": "Containers",
+    "case_count": 8,
+    "present_mean": 32.125,
+    "adapter_mean": 37.875
+  },
+  {
+    "board": "s31-rgb",
+    "group": "PARTIAL",
+    "scene": "Containers with overlay",
+    "case_count": 8,
+    "present_mean": 11,
+    "adapter_mean": 12.5
+  },
+  {
+    "board": "s31-rgb",
+    "group": "PARTIAL",
+    "scene": "Containers with opa",
+    "case_count": 8,
+    "present_mean": 30,
+    "adapter_mean": 36.125
+  },
+  {
+    "board": "s31-rgb",
+    "group": "PARTIAL",
+    "scene": "Containers with opa_layer",
+    "case_count": 8,
+    "present_mean": 11.625,
+    "adapter_mean": 14.625
+  },
+  {
+    "board": "s31-rgb",
+    "group": "PARTIAL",
+    "scene": "Containers with scrolling",
+    "case_count": 8,
+    "present_mean": 9.125,
+    "adapter_mean": 10.375
+  },
+  {
+    "board": "s31-rgb",
+    "group": "PARTIAL",
+    "scene": "Widgets demo",
+    "case_count": 8,
+    "present_mean": 17.5,
+    "adapter_mean": 17.125
+  },
+  {
+    "board": "p4-dsi",
+    "group": "PARTIAL",
+    "scene": "Empty screen",
+    "case_count": 8,
+    "present_mean": 53,
+    "adapter_mean": 53
+  },
+  {
+    "board": "p4-dsi",
+    "group": "PARTIAL",
+    "scene": "Moving wallpaper",
+    "case_count": 8,
+    "present_mean": 42.75,
+    "adapter_mean": 49.25
+  },
+  {
+    "board": "p4-dsi",
+    "group": "PARTIAL",
+    "scene": "Single rectangle",
+    "case_count": 8,
+    "present_mean": 61.25,
+    "adapter_mean": 60
+  },
+  {
+    "board": "p4-dsi",
+    "group": "PARTIAL",
+    "scene": "Multiple rectangles",
+    "case_count": 8,
+    "present_mean": 60.25,
+    "adapter_mean": 60
+  },
+  {
+    "board": "p4-dsi",
+    "group": "PARTIAL",
+    "scene": "Multiple RGB images",
+    "case_count": 8,
+    "present_mean": 60.25,
+    "adapter_mean": 59.75
+  },
+  {
+    "board": "p4-dsi",
+    "group": "PARTIAL",
+    "scene": "Multiple ARGB images",
+    "case_count": 8,
+    "present_mean": 46.875,
+    "adapter_mean": 59.5
+  },
+  {
+    "board": "p4-dsi",
+    "group": "PARTIAL",
+    "scene": "Rotated ARGB images",
+    "case_count": 8,
+    "present_mean": 48.125,
+    "adapter_mean": 57.75
+  },
+  {
+    "board": "p4-dsi",
+    "group": "PARTIAL",
+    "scene": "Multiple labels",
+    "case_count": 8,
+    "present_mean": 50.5,
+    "adapter_mean": 60
+  },
+  {
+    "board": "p4-dsi",
+    "group": "PARTIAL",
+    "scene": "Screen sized text",
+    "case_count": 8,
+    "present_mean": 14.375,
+    "adapter_mean": 14.5
+  },
+  {
+    "board": "p4-dsi",
+    "group": "PARTIAL",
+    "scene": "Multiple arcs",
+    "case_count": 8,
+    "present_mean": 39,
+    "adapter_mean": 43
+  },
+  {
+    "board": "p4-dsi",
+    "group": "PARTIAL",
+    "scene": "Containers",
+    "case_count": 8,
+    "present_mean": 65,
+    "adapter_mean": 63.375
+  },
+  {
+    "board": "p4-dsi",
+    "group": "PARTIAL",
+    "scene": "Containers with overlay",
+    "case_count": 8,
+    "present_mean": 26.875,
+    "adapter_mean": 28.75
+  },
+  {
+    "board": "p4-dsi",
+    "group": "PARTIAL",
+    "scene": "Containers with opa",
+    "case_count": 8,
+    "present_mean": 64.75,
+    "adapter_mean": 62.625
+  },
+  {
+    "board": "p4-dsi",
+    "group": "PARTIAL",
+    "scene": "Containers with opa_layer",
+    "case_count": 8,
+    "present_mean": 34.875,
+    "adapter_mean": 39.75
+  },
+  {
+    "board": "p4-dsi",
+    "group": "PARTIAL",
+    "scene": "Containers with scrolling",
+    "case_count": 8,
+    "present_mean": 27.625,
+    "adapter_mean": 33.5
+  },
+  {
+    "board": "p4-dsi",
+    "group": "PARTIAL",
+    "scene": "Widgets demo",
+    "case_count": 8,
+    "present_mean": 38.25,
+    "adapter_mean": 38.75
+  }
+]

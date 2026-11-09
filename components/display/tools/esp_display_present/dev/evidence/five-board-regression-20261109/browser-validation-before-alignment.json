@@ -1,0 +1,43 @@
+{
+  "passed": true,
+  "records": 120,
+  "presentGrades": 108,
+  "adapterGrades": 73,
+  "noDropdown": true,
+  "rgbDsiNoneExcluded": true,
+  "mosaicoTeOnly": true,
+  "boards": {
+    "s3-rgb": {
+      "records": 24,
+      "memoryRows": 96
+    },
+    "s31-rgb": {
+      "records": 24,
+      "memoryRows": 96
+    },
+    "p4-dsi": {
+      "records": 24,
+      "memoryRows": 96
+    },
+    "s31-qspi": {
+      "records": 28,
+      "memoryRows": 112
+    },
+    "box3-spi": {
+      "records": 20,
+      "memoryRows": 80
+    }
+  },
+  "memory": {
+    "expected": "258.52",
+    "actual": "258.52"
+  },
+  "memoryDeltaChecks": {
+    "positive": 326,
+    "negative": 184,
+    "equal": 2,
+    "missing": 448
+  },
+  "moreRemainingIsBetter": true,
+  "runtimeErrors": []
+}
