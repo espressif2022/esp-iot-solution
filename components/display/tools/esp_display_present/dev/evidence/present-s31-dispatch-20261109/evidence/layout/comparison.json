@@ -1,0 +1,8 @@
+{
+  "baseline_render_per_s": 7.177618911501512,
+  "baseline_fills_per_render": 17964.546391752578,
+  "baseline_stalls_per_render": 25879852.045360826,
+  "early_render_change_percent": 16.010275944765027,
+  "early_fill_change_percent": -38.13243759131547,
+  "early_stall_change_percent": -36.80760856307514
+}

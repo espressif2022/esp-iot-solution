@@ -1,0 +1,11 @@
+--- a/components/display/tools/esp_display_present/dev/test_apps/benchmark/CMakeLists.txt
++++ b/components/display/tools/esp_display_present/dev/test_apps/benchmark/CMakeLists.txt
+@@ -31,3 +31,8 @@
+ foreach(symbol IN ITEMS lv_display_send_event esp_lcd_panel_draw_bitmap esp_display_present_executor_run)
+  target_link_options(${CMAKE_PROJECT_NAME}.elf PRIVATE "-Wl,--wrap=${symbol}")
+ endforeach()
++
++# Layout diagnostic only: force early extraction of the same LVGL blend objects.
++if(PRESENT_IMPLEMENTATION STREQUAL "present")
++ target_link_options(${CMAKE_PROJECT_NAME}.elf PRIVATE "-Wl,-u,lv_draw_sw_blend_color_to_rgb565" "-Wl,-u,lv_draw_sw_blend_color_to_rgb888")
++endif()

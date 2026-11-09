@@ -1,0 +1,1 @@
+{"reason":"Clean IDF linker rejects increased .flash.text section alignment64: text VMA starts40000040 and overlaps .flash_rodata_dummy. No IDF or linker-script patch applied; test32-byte function minimum alignment instead.","flashed":false}

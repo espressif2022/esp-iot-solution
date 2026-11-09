@@ -1,0 +1,14 @@
+--- a/esp_lvgl_adapter/src/display/display_manager.c
++++ b/esp_lvgl_adapter/src/display/display_manager.c
+@@ -1358,7 +1358,10 @@
+             ESP_LOGW(TAG, "%d frames needed, but only %d available", needed, cfg->frame_buffer_count);
+             return false;
+         }
+-        cfg->draw_buf_pixels = (size_t)profile->hor_res * profile->buffer_height;
++        /* Benchmark allocation alignment only: same logical-width tile as present. */
++        size_t input_width = (profile->rotation == ESP_LV_ADAPTER_ROTATE_90 ||
++                              profile->rotation == ESP_LV_ADAPTER_ROTATE_270) ? profile->ver_res : profile->hor_res;
++        cfg->draw_buf_pixels = input_width * profile->buffer_height;
+         void *buf = display_manager_alloc_draw_buffer(cfg->draw_buf_pixels * color_size, false, false);
+         if (!buf) {
+             ESP_LOGE(TAG, "alloc partial draw buffer %zu bytes failed", cfg->draw_buf_pixels * color_size);

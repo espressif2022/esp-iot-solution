@@ -1,0 +1,74 @@
+[
+  {
+    "xip": "off",
+    "rotation": 0,
+    "other": "adapter",
+    "stall_factor": 3.2438356001912787,
+    "fill_factor": 2.7016500313954173,
+    "stall_per_fill_factor": 1.2006868256418168,
+    "render_factor": 1.3937462145393973
+  },
+  {
+    "xip": "off",
+    "rotation": 0,
+    "other": "inline",
+    "stall_factor": 1.0921319850289763,
+    "fill_factor": 1.0170321845188077,
+    "stall_per_fill_factor": 1.0738421080997556,
+    "render_factor": 0.9999941226585821
+  },
+  {
+    "xip": "off",
+    "rotation": 90,
+    "other": "adapter",
+    "stall_factor": 2.635862449630951,
+    "fill_factor": 2.3114359819898596,
+    "stall_per_fill_factor": 1.1403571070836238,
+    "render_factor": 1.3699025987025555
+  },
+  {
+    "xip": "off",
+    "rotation": 90,
+    "other": "inline",
+    "stall_factor": 1.0365741338865802,
+    "fill_factor": 0.9756605641367745,
+    "stall_per_fill_factor": 1.0624331575845742,
+    "render_factor": 0.9738456912854943
+  },
+  {
+    "xip": "on",
+    "rotation": 0,
+    "other": "adapter",
+    "stall_factor": 4.011229770164381,
+    "fill_factor": 3.9605658047751,
+    "stall_per_fill_factor": 1.0127921029182745,
+    "render_factor": 1.0812666583594446
+  },
+  {
+    "xip": "on",
+    "rotation": 0,
+    "other": "inline",
+    "stall_factor": 1.045398529338601,
+    "fill_factor": 1.0132016667680477,
+    "stall_per_fill_factor": 1.0317773486035176,
+    "render_factor": 0.9878977006834234
+  },
+  {
+    "xip": "on",
+    "rotation": 90,
+    "other": "adapter",
+    "stall_factor": 3.1729055290499026,
+    "fill_factor": 3.018345483205663,
+    "stall_per_fill_factor": 1.0512068769808578,
+    "render_factor": 1.0581671279526708
+  },
+  {
+    "xip": "on",
+    "rotation": 90,
+    "other": "inline",
+    "stall_factor": 1.0095758881463763,
+    "fill_factor": 0.978594997071996,
+    "stall_per_fill_factor": 1.0316585422642428,
+    "render_factor": 0.9881175516022969
+  }
+]

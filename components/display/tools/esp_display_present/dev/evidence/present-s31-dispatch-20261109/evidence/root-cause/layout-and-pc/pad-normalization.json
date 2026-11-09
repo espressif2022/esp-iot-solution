@@ -1,0 +1,174 @@
+{
+  "success": true,
+  "font_objects_identical_addresses": true,
+  "font_object_count": 12,
+  "code_shift_bytes": 24,
+  "before": {
+    "lv_font_montserrat_20": [
+      1074402544,
+      44
+    ],
+    "lv_draw_sw_blend_color_to_rgb565": [
+      1074162406,
+      1524
+    ],
+    "lv_draw_sw_blend": [
+      1074098176,
+      916
+    ],
+    "lv_font_get_glyph_dsc_fmt_txt": [
+      1074077960,
+      454
+    ],
+    "lv_text_get_next_line": [
+      1073938802,
+      20
+    ],
+    "font_objects": [
+      [
+        "cmaps",
+        1074386856,
+        48
+      ],
+      [
+        "cmaps",
+        1074405940,
+        48
+      ],
+      [
+        "cmaps",
+        1074427760,
+        48
+      ],
+      [
+        "font_dsc",
+        1074383504,
+        24
+      ],
+      [
+        "font_dsc",
+        1074402588,
+        24
+      ],
+      [
+        "font_dsc",
+        1074424408,
+        24
+      ],
+      [
+        "glyph_bitmap",
+        1074388292,
+        8832
+      ],
+      [
+        "glyph_bitmap",
+        1074407376,
+        16986
+      ],
+      [
+        "glyph_bitmap",
+        1074429196,
+        28088
+      ],
+      [
+        "glyph_dsc",
+        1074387028,
+        1264
+      ],
+      [
+        "glyph_dsc",
+        1074406112,
+        1264
+      ],
+      [
+        "glyph_dsc",
+        1074427932,
+        1264
+      ]
+    ]
+  },
+  "after": {
+    "lv_font_montserrat_20": [
+      1074402544,
+      44
+    ],
+    "lv_draw_sw_blend_color_to_rgb565": [
+      1074162430,
+      1524
+    ],
+    "lv_draw_sw_blend": [
+      1074098200,
+      916
+    ],
+    "lv_font_get_glyph_dsc_fmt_txt": [
+      1074077984,
+      454
+    ],
+    "lv_text_get_next_line": [
+      1073938826,
+      20
+    ],
+    "font_objects": [
+      [
+        "cmaps",
+        1074386856,
+        48
+      ],
+      [
+        "cmaps",
+        1074405940,
+        48
+      ],
+      [
+        "cmaps",
+        1074427760,
+        48
+      ],
+      [
+        "font_dsc",
+        1074383504,
+        24
+      ],
+      [
+        "font_dsc",
+        1074402588,
+        24
+      ],
+      [
+        "font_dsc",
+        1074424408,
+        24
+      ],
+      [
+        "glyph_bitmap",
+        1074388292,
+        8832
+      ],
+      [
+        "glyph_bitmap",
+        1074407376,
+        16986
+      ],
+      [
+        "glyph_bitmap",
+        1074429196,
+        28088
+      ],
+      [
+        "glyph_dsc",
+        1074387028,
+        1264
+      ],
+      [
+        "glyph_dsc",
+        1074406112,
+        1264
+      ],
+      [
+        "glyph_dsc",
+        1074427932,
+        1264
+      ]
+    ]
+  }
+}

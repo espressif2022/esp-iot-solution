@@ -1,0 +1,49 @@
+--- a/src/pixel/present_pixel_engine.c
++++ b/src/pixel/present_pixel_engine.c
+@@ -207,13 +207,16 @@
+     if (result != ESP_OK) {
+         return result;
+     }
+-    unsigned priority = engine->worker.asynchronous ? present_task_priority() : 0;
++    /* Diagnostic only: retain the worker/resources; bypass dispatch for this case. */
++    extern bool bench_diag_inline(void);
++    bool dispatch_async = engine->worker.asynchronous && !bench_diag_inline();
++    unsigned priority = dispatch_async ? present_task_priority() : 0;
+     present_lock_enter(&engine->sync.lock, false);
+     if (engine->lifecycle.closing) {
+         present_lock_exit(&engine->sync.lock, false);
+         return ESP_ERR_INVALID_STATE;
+     }
+-    if ((!engine->worker.asynchronous && engine->lifecycle.executing) ||
++    if ((!dispatch_async && engine->lifecycle.executing) ||
+             (engine->notification.active && present_same_task(engine->notification.task, present_current_task()))) {
+         present_lock_exit(&engine->sync.lock, false);
+         return ESP_ERR_NO_MEM;
+@@ -230,23 +233,23 @@
+         present_lock_exit(&engine->sync.lock, false);
+         return ESP_ERR_NO_MEM;
+     }
+-    bool inherit_priority = engine->worker.asynchronous && !engine->worker.priority.initialized;
++    bool inherit_priority = dispatch_async && !engine->worker.priority.initialized;
+     if (inherit_priority) {
+         engine->worker.priority.value = priority;
+         engine->worker.priority.initialized = true;
+     }
+     record->token = token;
+     record->status = (esp_display_present_copy_status_t) {
+-        .state = engine->worker.asynchronous ? ESP_DISPLAY_PRESENT_COPY_QUEUED : ESP_DISPLAY_PRESENT_COPY_RUNNING
++        .state = dispatch_async ? ESP_DISPLAY_PRESENT_COPY_QUEUED : ESP_DISPLAY_PRESENT_COPY_RUNNING
+     };
+     record->request = *request;
+     record->canceled = false;
+     out->value = token;
+-    if (!engine->worker.asynchronous) {
++    if (!dispatch_async) {
+         engine->lifecycle.executing = true;
+     }
+     present_lock_exit(&engine->sync.lock, false);
+-    if (engine->worker.asynchronous) {
++    if (dispatch_async) {
+         (void)present_event_signal(engine->worker.work, false);
+     } else {
+         esp_err_t exec_res = engine->executor.execute ? engine->executor.execute(engine->executor.user, request) : (present_pixel_copy_cpu_validated(request), ESP_OK);

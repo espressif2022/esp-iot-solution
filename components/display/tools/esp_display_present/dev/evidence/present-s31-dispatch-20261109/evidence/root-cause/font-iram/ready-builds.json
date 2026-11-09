@@ -1,0 +1,30 @@
+{
+  "ready": true,
+  "same_function_address_under_pad24": true,
+  "proof": [
+    {
+      "variant": "baseline",
+      "implementation": "present",
+      "address": "0x2f00d6c0",
+      "function_bytes": 1006,
+      "iram_text_bytes": 63132,
+      "flash_text_bytes": 551420
+    },
+    {
+      "variant": "baseline",
+      "implementation": "adapter",
+      "address": "0x2f00d430",
+      "function_bytes": 1006,
+      "iram_text_bytes": 62476,
+      "flash_text_bytes": 517714
+    },
+    {
+      "variant": "pad24",
+      "implementation": "present",
+      "address": "0x2f00d6c0",
+      "function_bytes": 1006,
+      "iram_text_bytes": 63132,
+      "flash_text_bytes": 551444
+    }
+  ]
+}

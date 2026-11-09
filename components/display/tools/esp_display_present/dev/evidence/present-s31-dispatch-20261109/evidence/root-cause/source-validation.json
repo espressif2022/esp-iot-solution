@@ -1,0 +1,68 @@
+[
+  {
+    "image": "pc-present",
+    "source_hashes_verified": 29,
+    "idf_commit": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+    "sdkconfig_sha256": "f273483fd118f6418337cb87839199ebf956385cbb30a646a9c40dd3ad42064b"
+  },
+  {
+    "image": "pc-adapter",
+    "source_hashes_verified": 29,
+    "idf_commit": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+    "sdkconfig_sha256": "f273483fd118f6418337cb87839199ebf956385cbb30a646a9c40dd3ad42064b"
+  },
+  {
+    "image": "pc-early",
+    "source_hashes_verified": 29,
+    "idf_commit": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+    "sdkconfig_sha256": "f273483fd118f6418337cb87839199ebf956385cbb30a646a9c40dd3ad42064b"
+  },
+  {
+    "image": "pc-pad24",
+    "source_hashes_verified": 29,
+    "idf_commit": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+    "sdkconfig_sha256": "f273483fd118f6418337cb87839199ebf956385cbb30a646a9c40dd3ad42064b"
+  },
+  {
+    "image": "plain-pad24",
+    "source_hashes_verified": 27,
+    "idf_commit": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+    "sdkconfig_sha256": "f273483fd118f6418337cb87839199ebf956385cbb30a646a9c40dd3ad42064b"
+  },
+  {
+    "image": "aligned-present",
+    "source_hashes_verified": 27,
+    "idf_commit": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+    "sdkconfig_sha256": "f273483fd118f6418337cb87839199ebf956385cbb30a646a9c40dd3ad42064b"
+  },
+  {
+    "image": "aligned-adapter",
+    "source_hashes_verified": 27,
+    "idf_commit": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+    "sdkconfig_sha256": "f273483fd118f6418337cb87839199ebf956385cbb30a646a9c40dd3ad42064b"
+  },
+  {
+    "image": "aligned-pad24",
+    "source_hashes_verified": 27,
+    "idf_commit": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+    "sdkconfig_sha256": "f273483fd118f6418337cb87839199ebf956385cbb30a646a9c40dd3ad42064b"
+  },
+  {
+    "image": "font-present",
+    "source_hashes_verified": 27,
+    "idf_commit": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+    "sdkconfig_sha256": "f273483fd118f6418337cb87839199ebf956385cbb30a646a9c40dd3ad42064b"
+  },
+  {
+    "image": "font-adapter",
+    "source_hashes_verified": 27,
+    "idf_commit": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+    "sdkconfig_sha256": "f273483fd118f6418337cb87839199ebf956385cbb30a646a9c40dd3ad42064b"
+  },
+  {
+    "image": "font-pad24",
+    "source_hashes_verified": 27,
+    "idf_commit": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+    "sdkconfig_sha256": "f273483fd118f6418337cb87839199ebf956385cbb30a646a9c40dd3ad42064b"
+  }
+]

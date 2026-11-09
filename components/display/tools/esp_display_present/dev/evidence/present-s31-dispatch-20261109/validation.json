@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "cases": 24,
+  "scene_records": 384,
+  "groups": 192,
+  "repetitions": 2,
+  "restored": true,
+  "idf_patched": false,
+  "production_checkout_modified": false,
+  "diagnostic_dispatch_patch": true
+}

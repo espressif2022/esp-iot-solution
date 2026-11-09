@@ -1,0 +1,4 @@
+[mapping:font_bitmap_diagnostic]
+archive: liblvgl.a
+entries:
+    lv_font_fmt_txt:lv_font_get_bitmap_fmt_txt (noflash)

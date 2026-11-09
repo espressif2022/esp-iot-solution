@@ -1,0 +1,30 @@
+[
+  {
+    "variant": "baseline",
+    "implementation": "present",
+    "constructor": "0x2f002730",
+    "watch": "0x2f0152a5",
+    "constructor_registered": true
+  },
+  {
+    "variant": "baseline",
+    "implementation": "adapter",
+    "constructor": "0x2f002850",
+    "watch": "0x2f01510d",
+    "constructor_registered": true
+  },
+  {
+    "variant": "early",
+    "implementation": "present",
+    "constructor": "0x2f002730",
+    "watch": "0x2f0152a5",
+    "constructor_registered": true
+  },
+  {
+    "variant": "padsample",
+    "implementation": "present",
+    "constructor": "0x2f002730",
+    "watch": "0x2f0152a5",
+    "constructor_registered": true
+  }
+]

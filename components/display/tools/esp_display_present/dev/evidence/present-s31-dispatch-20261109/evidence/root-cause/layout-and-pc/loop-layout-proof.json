@@ -1,0 +1,38 @@
+[
+  {
+    "implementation": "present-original",
+    "loop_start": "0x40051fb6",
+    "loop_end_exclusive": "0x40051fe6",
+    "bytes": 48,
+    "offset_in_cache_line": 54,
+    "cache_lines": 2,
+    "loop_sha256": "4cd6e77d3f706e240b860badd0c54cc83e3850acbe40414361ae42d7f6248826"
+  },
+  {
+    "implementation": "adapter",
+    "loop_start": "0x40062d38",
+    "loop_end_exclusive": "0x40062d68",
+    "bytes": 48,
+    "offset_in_cache_line": 56,
+    "cache_lines": 2,
+    "loop_sha256": "4cd6e77d3f706e240b860badd0c54cc83e3850acbe40414361ae42d7f6248826"
+  },
+  {
+    "implementation": "present-early",
+    "loop_start": "0x4005802e",
+    "loop_end_exclusive": "0x4005805e",
+    "bytes": 48,
+    "offset_in_cache_line": 46,
+    "cache_lines": 2,
+    "loop_sha256": "4cd6e77d3f706e240b860badd0c54cc83e3850acbe40414361ae42d7f6248826"
+  },
+  {
+    "implementation": "present-pad24",
+    "loop_start": "0x40051fce",
+    "loop_end_exclusive": "0x40051ffe",
+    "bytes": 48,
+    "offset_in_cache_line": 14,
+    "cache_lines": 1,
+    "loop_sha256": "4cd6e77d3f706e240b860badd0c54cc83e3850acbe40414361ae42d7f6248826"
+  }
+]

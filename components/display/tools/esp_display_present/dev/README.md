@@ -4,6 +4,10 @@
 
 生产源码的职责划分与新增文件规则见[SOURCE_LAYOUT.md](SOURCE_LAYOUT.md)。
 
+## S31 取指停顿与pixel派发对照（2026-11-09）
+
+[根因定位与证据](evidence/present-s31-dispatch-20261109/root-cause.html)：24项完整16场景与38项定点运行，固定单tile及同容量。用真实补入、停顿、PC热点和24字节代码平移，定位LVGL字形解包的缓存布局敏感性；约1KiB单函数IRAM对照收敛本轮排列波动。pixel worker绕过未追回文字吞吐，全局32B对齐被反例否决。具体cache set替换序列未直接trace。原固件已恢复并整片校验，生产源码和IDF未修改；正式帧率与内存数据未替换。
+
 ## FULL/PARTIAL 同容量重测（2026-11-09）
 
 [最新合并网页](evidence/five-board-regression-20261109/comparison-current.html) · [新测证据与口径](evidence/present-aligned-fill-20261109/README.md) · [分析](evidence/present-aligned-fill-20261109/ANALYSIS.md)。122项有效成绩、6项跳过，每项完整16场景。S3 IRAM开／关、S31 RGB、P4 DSI的FULL/PARTIAL四角度及BOX-3单tile更新；固定单输入tile，PARTIAL双方按逻辑宽×50行分配，运行时核对实际bytes。DIRECT/AUTO、mosaico TE、GRAM双tile保留历史并在网页标注。四块板原固件全部恢复并独立整片校验；生产交接代码及IDF未修改。测试工具默认使用隔离adapter分配overlay，不更改其checkout。

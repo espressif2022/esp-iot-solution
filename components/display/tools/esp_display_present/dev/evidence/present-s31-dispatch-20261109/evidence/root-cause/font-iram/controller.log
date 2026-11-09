@@ -1,0 +1,11 @@
+{"time": "2026-11-09T22:21:22.384888", "action": "identify_and_verify_original"}
+{"time": "2026-11-09T22:21:46.076267", "action": "flash", "tag": "font-before"}
+{"time": "2026-11-09T22:21:56.829641", "action": "capture", "tag": "font-before"}
+{"time": "2026-11-09T22:22:36.920907", "action": "flash", "tag": "font-adapter"}
+{"time": "2026-11-09T22:22:47.175402", "action": "capture", "tag": "font-adapter"}
+{"time": "2026-11-09T22:23:27.563730", "action": "flash", "tag": "font-pad24"}
+{"time": "2026-11-09T22:23:38.119392", "action": "capture", "tag": "font-pad24"}
+{"time": "2026-11-09T22:24:18.402304", "action": "flash", "tag": "font-after"}
+{"time": "2026-11-09T22:24:28.953858", "action": "capture", "tag": "font-after"}
+{"time": "2026-11-09T22:25:09.294452", "action": "restore", "tag": "original"}
+{"time": "2026-11-09T22:28:34.260721", "action": "done", "success": true, "restored": true}

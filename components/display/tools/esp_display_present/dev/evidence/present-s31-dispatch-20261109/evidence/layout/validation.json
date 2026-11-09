@@ -1,0 +1,53 @@
+{
+  "passed": true,
+  "case_count": 8,
+  "runs": [
+    {
+      "tag": "base-before",
+      "render_counts": [
+        120,
+        123
+      ],
+      "measured_us": [
+        16830274,
+        17014238
+      ]
+    },
+    {
+      "tag": "adapter",
+      "render_counts": [
+        144,
+        143
+      ],
+      "measured_us": [
+        16915296,
+        16939003
+      ]
+    },
+    {
+      "tag": "early",
+      "render_counts": [
+        142,
+        140
+      ],
+      "measured_us": [
+        16920336,
+        16946315
+      ]
+    },
+    {
+      "tag": "base-after",
+      "render_counts": [
+        119,
+        123
+      ],
+      "measured_us": [
+        16733313,
+        16993330
+      ]
+    }
+  ],
+  "restored": true,
+  "common_configuration": true,
+  "same_present_runtime": true
+}

@@ -1,0 +1,11 @@
+{"time": "2026-11-09T21:30:51.738340", "action": "identify_and_verify_original"}
+{"time": "2026-11-09T21:31:15.295579", "action": "flash", "tag": "base-before"}
+{"time": "2026-11-09T21:31:26.000565", "action": "capture", "tag": "base-before"}
+{"time": "2026-11-09T21:32:06.355454", "action": "flash", "tag": "adapter"}
+{"time": "2026-11-09T21:32:16.756439", "action": "capture", "tag": "adapter"}
+{"time": "2026-11-09T21:32:57.169397", "action": "flash", "tag": "early"}
+{"time": "2026-11-09T21:33:07.967044", "action": "capture", "tag": "early"}
+{"time": "2026-11-09T21:33:48.324167", "action": "flash", "tag": "base-after"}
+{"time": "2026-11-09T21:33:58.874108", "action": "capture", "tag": "base-after"}
+{"time": "2026-11-09T21:34:38.959484", "action": "restore", "tag": "original"}
+{"time": "2026-11-09T21:38:26.906747", "action": "done", "success": true, "restored": true}

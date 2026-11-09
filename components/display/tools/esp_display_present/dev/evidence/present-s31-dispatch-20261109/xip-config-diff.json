@@ -1,0 +1,38 @@
+{
+  "present": {
+    "CONFIG_SPIRAM_FETCH_INSTRUCTIONS": [
+      null,
+      "y"
+    ],
+    "CONFIG_SPIRAM_FLASH_LOAD_TO_PSRAM": [
+      null,
+      "y"
+    ],
+    "CONFIG_SPIRAM_RODATA": [
+      null,
+      "y"
+    ],
+    "CONFIG_SPIRAM_XIP_FROM_PSRAM": [
+      "n",
+      "y"
+    ]
+  },
+  "adapter": {
+    "CONFIG_SPIRAM_FETCH_INSTRUCTIONS": [
+      null,
+      "y"
+    ],
+    "CONFIG_SPIRAM_FLASH_LOAD_TO_PSRAM": [
+      null,
+      "y"
+    ],
+    "CONFIG_SPIRAM_RODATA": [
+      null,
+      "y"
+    ],
+    "CONFIG_SPIRAM_XIP_FROM_PSRAM": [
+      "n",
+      "y"
+    ]
+  }
+}

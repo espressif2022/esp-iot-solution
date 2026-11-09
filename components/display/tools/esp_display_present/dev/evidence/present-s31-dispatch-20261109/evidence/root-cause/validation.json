@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "targeted_cases": 30,
+  "pc_images": 4,
+  "samples_first_case_only": true,
+  "counter_input_capacity_verified": true,
+  "original_firmware_restored": true,
+  "production_and_idf_unchanged": true
+}

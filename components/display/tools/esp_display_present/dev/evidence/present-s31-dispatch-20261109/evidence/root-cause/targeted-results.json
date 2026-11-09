@@ -1,0 +1,4424 @@
+[
+  {
+    "root": "/tmp/present-s31-stable-20261109",
+    "tag": "original-before",
+    "cases": [
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16824319,
+          "refresh": 120,
+          "empty": 0,
+          "render": 120,
+          "flush": 1200,
+          "panel": 120,
+          "errors": 0,
+          "pixels": 46080000,
+          "refr_us": 16515534,
+          "render_us": 16394656,
+          "flush_us": 450991,
+          "wait_us": 2820845,
+          "core0": 112,
+          "core1": 8,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1757555239,
+          "is0": 1407314585,
+          "ic0": 0,
+          "if0": 938021,
+          "ia1": 1849055324,
+          "is1": 1830686905,
+          "ic1": 0,
+          "if1": 1267539,
+          "da0": 327759811,
+          "ds0": 149008481,
+          "dc0": 102099001,
+          "df0": 155672,
+          "da1": 194433499,
+          "ds1": 86517362,
+          "dc1": 76599701,
+          "df1": 87216,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 394619,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 268115,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 267511,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 264339,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 372159,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 4450117
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 3552949
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 3124389
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 9,
+            "us": 301939
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 10,
+            "us": 1252741
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 11,
+            "us": 11044830
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 4949
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 3113
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 9914629
+          }
+        ]
+      },
+      {
+        "probe": {
+          "scene": 0,
+          "us": 17039237,
+          "refresh": 123,
+          "empty": 0,
+          "render": 123,
+          "flush": 1230,
+          "panel": 123,
+          "errors": 0,
+          "pixels": 47232000,
+          "refr_us": 16743931,
+          "render_us": 16628121,
+          "flush_us": 492858,
+          "wait_us": 2681232,
+          "core0": 123,
+          "core1": 0,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1623584341,
+          "is0": 1685204268,
+          "ic0": 0,
+          "if0": 1172990,
+          "ia1": 2052633440,
+          "is1": 1362380523,
+          "ic1": 0,
+          "if1": 984866,
+          "da0": 306536605,
+          "ds0": 77767884,
+          "dc0": 74316560,
+          "df0": 87540,
+          "da1": 224800341,
+          "ds1": 171417524,
+          "dc1": 104133312,
+          "df1": 182514,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 372159,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 268119,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 267527,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 264539,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 372159,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 4393191
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 3658236
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 3746343
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 15,
+            "us": 336631
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 11,
+            "us": 10433560
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 16,
+            "us": 1093788
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 6775
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 3319
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 10408210
+          }
+        ]
+      }
+    ],
+    "render_per_s": 7.175855955588362,
+    "instruction_accesses_per_render": 29970487.01234568,
+    "instruction_fills_per_render": 17956.444444444445,
+    "instruction_stalls_per_render": 25866610.209876545,
+    "instruction_conflicts": 0,
+    "software_cpu_ms_per_render": 172.02151851851852
+  },
+  {
+    "root": "/tmp/present-s31-stable-20261109",
+    "tag": "pad24",
+    "cases": [
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16874251,
+          "refresh": 141,
+          "empty": 0,
+          "render": 141,
+          "flush": 1410,
+          "panel": 141,
+          "errors": 0,
+          "pixels": 54144000,
+          "refr_us": 16525053,
+          "render_us": 16415142,
+          "flush_us": 540420,
+          "wait_us": 3096272,
+          "core0": 135,
+          "core1": 6,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 2048403081,
+          "is0": 851125024,
+          "ic0": 0,
+          "if0": 547817,
+          "ia1": 2175074057,
+          "is1": 1464800474,
+          "ic1": 0,
+          "if1": 1025360,
+          "da0": 360131895,
+          "ds0": 160119446,
+          "dc0": 103520801,
+          "df0": 179661,
+          "da1": 227726791,
+          "ds1": 72638215,
+          "dc1": 72041582,
+          "df1": 81870,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 394619,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 268115,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 267511,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 264339,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 372159,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 5069330
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 4137539
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 3058930
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 9,
+            "us": 365962
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 10,
+            "us": 1413707
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 11,
+            "us": 10418994
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 4943
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 2842
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 9277434
+          }
+        ]
+      },
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16922220,
+          "refresh": 140,
+          "empty": 0,
+          "render": 140,
+          "flush": 1400,
+          "panel": 140,
+          "errors": 0,
+          "pixels": 53760000,
+          "refr_us": 16596702,
+          "render_us": 16494823,
+          "flush_us": 565906,
+          "wait_us": 2979665,
+          "core0": 140,
+          "core1": 0,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1694976729,
+          "is0": 1480694477,
+          "ic0": 0,
+          "if0": 1069041,
+          "ia1": 2495125408,
+          "is1": 635137415,
+          "ic1": 0,
+          "if1": 395129,
+          "da0": 312206963,
+          "ds0": 71864094,
+          "dc0": 66380862,
+          "df0": 93284,
+          "da1": 272435226,
+          "ds1": 170188185,
+          "dc1": 105200063,
+          "df1": 195367,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 372159,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 268119,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 267527,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 264579,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 372159,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 4975983
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 4088357
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 3987532
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 15,
+            "us": 364487
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 11,
+            "us": 9659332
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 16,
+            "us": 1218405
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 7170
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 2833
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 9541901
+          }
+        ]
+      }
+    ],
+    "render_per_s": 8.314477567791029,
+    "instruction_accesses_per_render": 29941563.256227758,
+    "instruction_fills_per_render": 10809.064056939502,
+    "instruction_stalls_per_render": 15771378.612099644,
+    "instruction_conflicts": 0,
+    "software_cpu_ms_per_render": 138.42583985765125
+  },
+  {
+    "root": "/tmp/present-s31-stable-20261109",
+    "tag": "original-after",
+    "cases": [
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16805266,
+          "refresh": 120,
+          "empty": 0,
+          "render": 120,
+          "flush": 1200,
+          "panel": 121,
+          "errors": 0,
+          "pixels": 46080000,
+          "refr_us": 16492331,
+          "render_us": 16372812,
+          "flush_us": 451757,
+          "wait_us": 2752932,
+          "core0": 113,
+          "core1": 7,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1766839840,
+          "is0": 1404963524,
+          "ic0": 0,
+          "if0": 934905,
+          "ia1": 1862000664,
+          "is1": 1836145471,
+          "ic1": 0,
+          "if1": 1270759,
+          "da0": 328864565,
+          "ds0": 149879599,
+          "dc0": 101812959,
+          "df0": 156723,
+          "da1": 195782515,
+          "ds1": 85493639,
+          "dc1": 77293227,
+          "df1": 86114,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 394619,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 268115,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 267527,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 264339,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 372159,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 4442155
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 3500238
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 3037331
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 9,
+            "us": 300605
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 10,
+            "us": 1249157
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 11,
+            "us": 11114834
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 4910
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 3112
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 9959786
+          }
+        ]
+      },
+      {
+        "probe": {
+          "scene": 0,
+          "us": 17135333,
+          "refresh": 125,
+          "empty": 0,
+          "render": 125,
+          "flush": 1250,
+          "panel": 125,
+          "errors": 0,
+          "pixels": 48000000,
+          "refr_us": 16836367,
+          "render_us": 16725544,
+          "flush_us": 500575,
+          "wait_us": 2653153,
+          "core0": 125,
+          "core1": 0,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1636453459,
+          "is0": 1700897063,
+          "ic0": 0,
+          "if0": 1186130,
+          "ia1": 2087514159,
+          "is1": 1346814919,
+          "ic1": 0,
+          "if1": 981736,
+          "da0": 308554073,
+          "ds0": 78538150,
+          "dc0": 73866681,
+          "df0": 88784,
+          "da1": 228578457,
+          "ds1": 173726608,
+          "dc1": 109248032,
+          "df1": 185751,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 372159,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 268119,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 267527,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 264543,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 372159,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 4463126
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 3731607
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 3640147
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 15,
+            "us": 337537
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 11,
+            "us": 10503446
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 16,
+            "us": 1108006
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 6527
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 3314
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 10478190
+          }
+        ]
+      }
+    ],
+    "render_per_s": 7.218493698358123,
+    "instruction_accesses_per_render": 30011461.72244898,
+    "instruction_fills_per_render": 17851.14285714286,
+    "instruction_stalls_per_render": 25668657.04897959,
+    "instruction_conflicts": 0,
+    "software_cpu_ms_per_render": 171.65818775510203
+  },
+  {
+    "root": "/tmp/present-s31-stable-20261109",
+    "tag": "sample-present",
+    "cases": [
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16803282,
+          "refresh": 120,
+          "empty": 0,
+          "render": 120,
+          "flush": 1200,
+          "panel": 120,
+          "errors": 0,
+          "pixels": 46080000,
+          "refr_us": 16495500,
+          "render_us": 16373217,
+          "flush_us": 454204,
+          "wait_us": 2785256,
+          "core0": 115,
+          "core1": 5,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1766586667,
+          "is0": 1425490946,
+          "ic0": 0,
+          "if0": 945042,
+          "ia1": 1861453142,
+          "is1": 1845357723,
+          "ic1": 0,
+          "if1": 1270814,
+          "da0": 328685775,
+          "ds0": 150618726,
+          "dc0": 102667537,
+          "df0": 157304,
+          "da1": 195575490,
+          "ds1": 86026836,
+          "dc1": 77813467,
+          "df1": 86080,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 324159,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 197651,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 197063,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 193875,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 301695,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 8,
+            "us": 4471201
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 10,
+            "us": 308510
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 7,
+            "us": 3078854
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 6,
+            "us": 3498549
+          },
+          {
+            "name": "pc_dump",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 11,
+            "us": 1260981
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 11060620
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 4509
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 3008
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 4,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 13,
+            "us": 9922007
+          }
+        ]
+      },
+      {
+        "probe": {
+          "scene": 0,
+          "us": 17133261,
+          "refresh": 125,
+          "empty": 0,
+          "render": 125,
+          "flush": 1250,
+          "panel": 125,
+          "errors": 0,
+          "pixels": 48000000,
+          "refr_us": 16827416,
+          "render_us": 16714323,
+          "flush_us": 503212,
+          "wait_us": 2688459,
+          "core0": 125,
+          "core1": 0,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1634811286,
+          "is0": 1704546779,
+          "ic0": 0,
+          "if0": 1183178,
+          "ia1": 2094422635,
+          "is1": 1364722057,
+          "ic1": 0,
+          "if1": 988436,
+          "da0": 308299028,
+          "ds0": 78246446,
+          "dc0": 74325273,
+          "df0": 87527,
+          "da1": 229214534,
+          "ds1": 174800754,
+          "dc1": 107173422,
+          "df1": 185262,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 301695,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 197655,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 197063,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 194079,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 301695,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 8,
+            "us": 4470624
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 16,
+            "us": 334604
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 7,
+            "us": 3648045
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 6,
+            "us": 3789148
+          },
+          {
+            "name": "pc_dump",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 10458572
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 17,
+            "us": 1118322
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 6568
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 3336
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 4,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 13,
+            "us": 10438857
+          }
+        ]
+      }
+    ],
+    "render_per_s": 7.219356432386174,
+    "instruction_accesses_per_render": 30029688.69387755,
+    "instruction_fills_per_render": 17908.04081632653,
+    "instruction_stalls_per_render": 25878030.63265306,
+    "instruction_conflicts": 0,
+    "software_cpu_ms_per_render": 170.93900408163265
+  },
+  {
+    "root": "/tmp/present-s31-stable-20261109",
+    "tag": "sample-adapter",
+    "cases": [
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16915237,
+          "refresh": 144,
+          "empty": 0,
+          "render": 144,
+          "flush": 1440,
+          "panel": 144,
+          "errors": 0,
+          "pixels": 55296000,
+          "refr_us": 16792265,
+          "render_us": 16685910,
+          "flush_us": 2842273,
+          "wait_us": 48150,
+          "core0": 141,
+          "core1": 3,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 2184376076,
+          "is0": 1313366795,
+          "ic0": 0,
+          "if0": 1059785,
+          "ia1": 2126120674,
+          "is1": 199229712,
+          "ic1": 0,
+          "if1": 147592,
+          "da0": 365793025,
+          "ds0": 93372048,
+          "dc0": 77274271,
+          "df0": 151345,
+          "da1": 231590925,
+          "ds1": 164171872,
+          "dc1": 91361159,
+          "df1": 180266,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499639,
+            "internal_free": 280075,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499639,
+            "internal_free": 189387,
+            "psram_total": 16777216,
+            "psram_free": 14464360,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499639,
+            "internal_free": 188763,
+            "psram_total": 16777216,
+            "psram_free": 14434148,
+            "internal_min_free": 185755,
+            "psram_min_free": 14434148
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499639,
+            "internal_free": 276663,
+            "psram_total": 16777216,
+            "psram_free": 14436900,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "lvgl",
+            "scene": 0,
+            "id": 11,
+            "us": 4664529
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 7,
+            "us": 7163279
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 6,
+            "us": 2362765
+          },
+          {
+            "name": "pc_dump",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 8,
+            "us": 63783
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 10,
+            "us": 9844222
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 9,
+            "us": 9417595
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 4,
+            "us": 316859
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 0
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 0
+          }
+        ]
+      },
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16962660,
+          "refresh": 144,
+          "empty": 0,
+          "render": 144,
+          "flush": 1440,
+          "panel": 144,
+          "errors": 0,
+          "pixels": 55296000,
+          "refr_us": 16839745,
+          "render_us": 16735543,
+          "flush_us": 2925858,
+          "wait_us": 48017,
+          "core0": 140,
+          "core1": 4,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 2182739957,
+          "is0": 1337002385,
+          "ic0": 0,
+          "if0": 1082052,
+          "ia1": 2110881406,
+          "is1": 165535685,
+          "ic1": 0,
+          "if1": 123234,
+          "da0": 365549498,
+          "ds0": 98730033,
+          "dc0": 77715288,
+          "df0": 158384,
+          "da1": 230400868,
+          "ds1": 157997409,
+          "dc1": 89520697,
+          "df1": 172217,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499639,
+            "internal_free": 276663,
+            "psram_total": 16777216,
+            "psram_free": 14467112,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499639,
+            "internal_free": 189391,
+            "psram_total": 16777216,
+            "psram_free": 14464360,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499639,
+            "internal_free": 188787,
+            "psram_total": 16777216,
+            "psram_free": 14434148,
+            "internal_min_free": 185819,
+            "psram_min_free": 14434148
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499639,
+            "internal_free": 276663,
+            "psram_total": 16777216,
+            "psram_free": 14436900,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "lvgl",
+            "scene": 0,
+            "id": 11,
+            "us": 4672458
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 7,
+            "us": 7403640
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 6,
+            "us": 2305975
+          },
+          {
+            "name": "pc_dump",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 8,
+            "us": 60922
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 10,
+            "us": 9801391
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 9,
+            "us": 9364159
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 4,
+            "us": 317446
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 0
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 0
+          }
+        ]
+      }
+    ],
+    "render_per_s": 8.50111800032924,
+    "instruction_accesses_per_render": 29875410.114583332,
+    "instruction_fills_per_render": 8377.302083333334,
+    "instruction_stalls_per_render": 10469217.28125,
+    "instruction_conflicts": 0,
+    "software_cpu_ms_per_render": 133.42835763888888
+  },
+  {
+    "root": "/tmp/present-s31-stable-20261109",
+    "tag": "sample-early",
+    "cases": [
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16874351,
+          "refresh": 141,
+          "empty": 0,
+          "render": 141,
+          "flush": 1410,
+          "panel": 140,
+          "errors": 0,
+          "pixels": 54144000,
+          "refr_us": 16529262,
+          "render_us": 16411336,
+          "flush_us": 496703,
+          "wait_us": 3194241,
+          "core0": 135,
+          "core1": 6,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 2050799295,
+          "is0": 954107282,
+          "ic0": 0,
+          "if0": 605475,
+          "ia1": 2185270195,
+          "is1": 1482719601,
+          "ic1": 0,
+          "if1": 1023076,
+          "da0": 360681121,
+          "ds0": 169358755,
+          "dc0": 110511725,
+          "df0": 181373,
+          "da1": 228494550,
+          "ds1": 72730012,
+          "dc1": 75156711,
+          "df1": 84703,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 324159,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 197651,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 197047,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 193875,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 301695,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 8,
+            "us": 5058056
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 10,
+            "us": 437356
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 6,
+            "us": 3933512
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 7,
+            "us": 3078170
+          },
+          {
+            "name": "pc_dump",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 2722
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 13,
+            "us": 9252894
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 10608198
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 11,
+            "us": 1374056
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 4,
+            "us": 0
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 5098
+          }
+        ]
+      },
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16921259,
+          "refresh": 140,
+          "empty": 0,
+          "render": 140,
+          "flush": 1400,
+          "panel": 140,
+          "errors": 0,
+          "pixels": 53760000,
+          "refr_us": 16593061,
+          "render_us": 16485161,
+          "flush_us": 536148,
+          "wait_us": 3036819,
+          "core0": 140,
+          "core1": 0,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1657453114,
+          "is0": 1489499339,
+          "ic0": 0,
+          "if0": 1080470,
+          "ia1": 2535403980,
+          "is1": 681056853,
+          "ic1": 0,
+          "if1": 420488,
+          "da0": 308273839,
+          "ds0": 71888952,
+          "dc0": 67089617,
+          "df0": 93690,
+          "da1": 276561751,
+          "ds1": 180655283,
+          "dc1": 117683113,
+          "df1": 206447,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 301695,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 197655,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 197079,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 194119,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 301695,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 8,
+            "us": 4866446
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 6,
+            "us": 4212540
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 7,
+            "us": 3888980
+          },
+          {
+            "name": "pc_dump",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 16,
+            "us": 388006
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 9839691
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 17,
+            "us": 1183327
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 8988
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 2087
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 4,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 13,
+            "us": 9454147
+          }
+        ]
+      }
+    ],
+    "render_per_s": 8.314689393089813,
+    "instruction_accesses_per_render": 29996180.014234874,
+    "instruction_fills_per_render": 11137.042704626334,
+    "instruction_stalls_per_render": 16396381.049822064,
+    "instruction_conflicts": 0,
+    "software_cpu_ms_per_render": 139.34138790035587
+  },
+  {
+    "root": "/tmp/present-s31-stable-20261109",
+    "tag": "sample-pad24",
+    "cases": [
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16876283,
+          "refresh": 141,
+          "empty": 0,
+          "render": 141,
+          "flush": 1410,
+          "panel": 141,
+          "errors": 0,
+          "pixels": 54144000,
+          "refr_us": 16527318,
+          "render_us": 16418157,
+          "flush_us": 542910,
+          "wait_us": 3130555,
+          "core0": 135,
+          "core1": 6,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 2058281863,
+          "is0": 865843143,
+          "ic0": 0,
+          "if0": 557318,
+          "ia1": 2179706741,
+          "is1": 1462372290,
+          "ic1": 0,
+          "if1": 1019985,
+          "da0": 361149229,
+          "ds0": 158823358,
+          "dc0": 103338061,
+          "df0": 178856,
+          "da1": 228175677,
+          "ds1": 74512699,
+          "dc1": 72494719,
+          "df1": 83356,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 324159,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 197651,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 197047,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 193875,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 301695,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 8,
+            "us": 5084765
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 5036
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 7,
+            "us": 3123490
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 6,
+            "us": 4141923
+          },
+          {
+            "name": "pc_dump",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 13,
+            "us": 9227345
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 11,
+            "us": 1422982
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 10373918
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 10,
+            "us": 372082
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 4,
+            "us": 0
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 2593
+          }
+        ]
+      },
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16902268,
+          "refresh": 140,
+          "empty": 0,
+          "render": 140,
+          "flush": 1400,
+          "panel": 140,
+          "errors": 0,
+          "pixels": 53760000,
+          "refr_us": 16574946,
+          "render_us": 16473582,
+          "flush_us": 566828,
+          "wait_us": 2995046,
+          "core0": 140,
+          "core1": 0,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1716121843,
+          "is0": 1481977511,
+          "ic0": 0,
+          "if0": 1070681,
+          "ia1": 2490478590,
+          "is1": 635560243,
+          "ic1": 0,
+          "if1": 396699,
+          "da0": 314333750,
+          "ds0": 72709159,
+          "dc0": 66505616,
+          "df0": 93748,
+          "da1": 271785017,
+          "ds1": 169872104,
+          "dc1": 109169963,
+          "df1": 196216,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 301695,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 197655,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 197063,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 194115,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499239,
+            "internal_free": 301695,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 8,
+            "us": 4973958
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 7,
+            "us": 4166577
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 6,
+            "us": 3941882
+          },
+          {
+            "name": "pc_dump",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 16,
+            "us": 376917
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 9614376
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 17,
+            "us": 1213416
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 7899
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 2813
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 4,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 13,
+            "us": 9508162
+          }
+        ]
+      }
+    ],
+    "render_per_s": 8.318888515969794,
+    "instruction_accesses_per_render": 30051918.28113879,
+    "instruction_fills_per_render": 10835.170818505338,
+    "instruction_stalls_per_render": 15821185.71886121,
+    "instruction_conflicts": 0,
+    "software_cpu_ms_per_render": 137.80712099644128
+  },
+  {
+    "root": "/tmp/present-s31-align-20261109",
+    "tag": "aligned-before",
+    "cases": [
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16877242,
+          "refresh": 133,
+          "empty": 0,
+          "render": 133,
+          "flush": 1330,
+          "panel": 133,
+          "errors": 0,
+          "pixels": 51072000,
+          "refr_us": 16521459,
+          "render_us": 16396177,
+          "flush_us": 582103,
+          "wait_us": 2892144,
+          "core0": 124,
+          "core1": 9,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1946704699,
+          "is0": 902182906,
+          "ic0": 0,
+          "if0": 580465,
+          "ia1": 2049702791,
+          "is1": 1682774790,
+          "ic1": 0,
+          "if1": 1200496,
+          "da0": 349495270,
+          "ds0": 169092767,
+          "dc0": 105437934,
+          "df0": 184420,
+          "da1": 215436242,
+          "ds1": 79486623,
+          "dc1": 74629846,
+          "df1": 98228,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 394619,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 268115,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 267527,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 264339,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 372159,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 6082139
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 9,
+            "us": 393101
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 2854175
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 4373175
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 10,
+            "us": 1296724
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 11,
+            "us": 10051840
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 4156
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 2973
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 8697784
+          }
+        ]
+      },
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16925313,
+          "refresh": 133,
+          "empty": 0,
+          "render": 133,
+          "flush": 1330,
+          "panel": 133,
+          "errors": 0,
+          "pixels": 51072000,
+          "refr_us": 16592971,
+          "render_us": 16471958,
+          "flush_us": 583363,
+          "wait_us": 2765241,
+          "core0": 133,
+          "core1": 0,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1478640892,
+          "is0": 1749340361,
+          "ic0": 0,
+          "if0": 1283725,
+          "ia1": 2522005451,
+          "is1": 608919688,
+          "ic1": 0,
+          "if1": 351698,
+          "da0": 289823740,
+          "ds0": 77288574,
+          "dc0": 62751331,
+          "df0": 107286,
+          "da1": 276604028,
+          "ds1": 180330347,
+          "dc1": 115362574,
+          "df1": 203723,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 372159,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 268119,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 267527,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 264819,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 372159,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 5956835
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 4042512
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 3960433
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 15,
+            "us": 471802
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 11,
+            "us": 9418634
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 16,
+            "us": 1120600
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 5062
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 3016
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 8873201
+          }
+        ]
+      }
+    ],
+    "render_per_s": 7.869227636786627,
+    "instruction_accesses_per_render": 30064112.15413534,
+    "instruction_fills_per_render": 12843.54887218045,
+    "instruction_stalls_per_render": 18583525.35714286,
+    "instruction_conflicts": 0,
+    "software_cpu_ms_per_render": 139.25360526315788
+  },
+  {
+    "root": "/tmp/present-s31-align-20261109",
+    "tag": "aligned-adapter",
+    "cases": [
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16867822,
+          "refresh": 132,
+          "empty": 0,
+          "render": 132,
+          "flush": 1320,
+          "panel": 132,
+          "errors": 0,
+          "pixels": 50688000,
+          "refr_us": 16749927,
+          "render_us": 16641790,
+          "flush_us": 2628802,
+          "wait_us": 107301,
+          "core0": 130,
+          "core1": 2,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1992207840,
+          "is0": 1520168810,
+          "ic0": 0,
+          "if0": 1217388,
+          "ia1": 1953824751,
+          "is1": 563248592,
+          "ic1": 0,
+          "if1": 414382,
+          "da0": 346822670,
+          "ds0": 95134981,
+          "dc0": 78299566,
+          "df0": 141770,
+          "da1": 213864447,
+          "ds1": 169498314,
+          "dc1": 96970692,
+          "df1": 174443,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 500327,
+            "internal_free": 350519,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 500327,
+            "internal_free": 259835,
+            "psram_total": 16777216,
+            "psram_free": 14464360,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 500327,
+            "internal_free": 259211,
+            "psram_total": 16777216,
+            "psram_free": 14434148,
+            "internal_min_free": 256195,
+            "psram_min_free": 14434148
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 500327,
+            "internal_free": 347107,
+            "psram_total": 16777216,
+            "psram_free": 14436900,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "lvgl",
+            "scene": 0,
+            "id": 10,
+            "us": 4203260
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 6566439
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 2377936
+          },
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 49711
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 9,
+            "us": 10232658
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 8,
+            "us": 9811402
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 496423
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 0
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 0
+          }
+        ]
+      },
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16962740,
+          "refresh": 133,
+          "empty": 0,
+          "render": 133,
+          "flush": 1330,
+          "panel": 133,
+          "errors": 0,
+          "pixels": 51072000,
+          "refr_us": 16844937,
+          "render_us": 16734669,
+          "flush_us": 2638319,
+          "wait_us": 108863,
+          "core0": 128,
+          "core1": 5,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1974918760,
+          "is0": 1526076066,
+          "ic0": 0,
+          "if0": 1219992,
+          "ia1": 2002155017,
+          "is1": 576705108,
+          "ic1": 0,
+          "if1": 426031,
+          "da0": 345503945,
+          "ds0": 94006122,
+          "dc0": 77676659,
+          "df0": 140067,
+          "da1": 218405520,
+          "ds1": 171563444,
+          "dc1": 98749283,
+          "df1": 177177,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 500327,
+            "internal_free": 347107,
+            "psram_total": 16777216,
+            "psram_free": 14467112,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 500327,
+            "internal_free": 259835,
+            "psram_total": 16777216,
+            "psram_free": 14464360,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 500327,
+            "internal_free": 259215,
+            "psram_total": 16777216,
+            "psram_free": 14434148,
+            "internal_min_free": 256255,
+            "psram_min_free": 14434148
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 500327,
+            "internal_free": 347107,
+            "psram_total": 16777216,
+            "psram_free": 14436900,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "lvgl",
+            "scene": 0,
+            "id": 10,
+            "us": 4226107
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 6436173
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 2521571
+          },
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 51986
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 9,
+            "us": 10313198
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 8,
+            "us": 9914224
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 463754
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 0
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 0
+          }
+        ]
+      }
+    ],
+    "render_per_s": 7.833153939328587,
+    "instruction_accesses_per_render": 29898514.596226417,
+    "instruction_fills_per_render": 12369.030188679246,
+    "instruction_stalls_per_render": 15796975.758490566,
+    "instruction_conflicts": 0,
+    "software_cpu_ms_per_render": 151.96785660377358
+  },
+  {
+    "root": "/tmp/present-s31-align-20261109",
+    "tag": "aligned-pad24",
+    "cases": [
+      {
+        "probe": {
+          "scene": 0,
+          "us": 17065117,
+          "refresh": 108,
+          "empty": 0,
+          "render": 108,
+          "flush": 1080,
+          "panel": 108,
+          "errors": 0,
+          "pixels": 41472000,
+          "refr_us": 16758321,
+          "render_us": 16629781,
+          "flush_us": 453096,
+          "wait_us": 2516489,
+          "core0": 99,
+          "core1": 9,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1577616244,
+          "is0": 1707690121,
+          "ic0": 0,
+          "if0": 1051420,
+          "ia1": 1664891601,
+          "is1": 2297250204,
+          "ic1": 0,
+          "if1": 1501803,
+          "da0": 310702322,
+          "ds0": 168380997,
+          "dc0": 118343873,
+          "df0": 157017,
+          "da1": 174954261,
+          "ds1": 89637187,
+          "dc1": 76240345,
+          "df1": 91971,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 394619,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 268115,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 267507,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 264339,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 372159,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 4704370
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 2620661
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 3479930
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 9,
+            "us": 290361
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 10,
+            "us": 1079100
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 11,
+            "us": 11658138
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 4695
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 2394
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 10292324
+          }
+        ]
+      },
+      {
+        "probe": {
+          "scene": 0,
+          "us": 17090278,
+          "refresh": 110,
+          "empty": 0,
+          "render": 110,
+          "flush": 1100,
+          "panel": 110,
+          "errors": 0,
+          "pixels": 42240000,
+          "refr_us": 16811627,
+          "render_us": 16679862,
+          "flush_us": 499836,
+          "wait_us": 2314396,
+          "core0": 110,
+          "core1": 0,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1455919611,
+          "is0": 1958338074,
+          "ic0": 0,
+          "if0": 1327403,
+          "ia1": 1842415144,
+          "is1": 1738642672,
+          "ic1": 0,
+          "if1": 1169890,
+          "da0": 290232445,
+          "ds0": 97876906,
+          "dc0": 85395647,
+          "df0": 101905,
+          "da1": 202285832,
+          "ds1": 169450190,
+          "dc1": 100814868,
+          "df1": 173930,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 372159,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 268119,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 267543,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 264347,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 372159,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 4680824
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 3398941
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 3534566
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 15,
+            "us": 370503
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 11,
+            "us": 10680109
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 16,
+            "us": 855388
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 6136
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 2986
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 10652525
+          }
+        ]
+      }
+    ],
+    "render_per_s": 6.382593438020553,
+    "instruction_accesses_per_render": 30003865.13761468,
+    "instruction_fills_per_render": 23167.504587155963,
+    "instruction_stalls_per_render": 35329913.16972477,
+    "instruction_conflicts": 0,
+    "software_cpu_ms_per_render": 198.5463119266055
+  },
+  {
+    "root": "/tmp/present-s31-align-20261109",
+    "tag": "aligned-after",
+    "cases": [
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16967277,
+          "refresh": 134,
+          "empty": 0,
+          "render": 134,
+          "flush": 1340,
+          "panel": 134,
+          "errors": 0,
+          "pixels": 51456000,
+          "refr_us": 16598964,
+          "render_us": 16473437,
+          "flush_us": 586045,
+          "wait_us": 2891234,
+          "core0": 131,
+          "core1": 3,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1957669229,
+          "is0": 907484003,
+          "ic0": 0,
+          "if0": 582981,
+          "ia1": 2058444941,
+          "is1": 1696364468,
+          "ic1": 0,
+          "if1": 1209859,
+          "da0": 351529237,
+          "ds0": 170812281,
+          "dc0": 106278362,
+          "df0": 186098,
+          "da1": 216292504,
+          "ds1": 79742987,
+          "dc1": 73215356,
+          "df1": 97674,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 394619,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 268115,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 267511,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 264339,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 372159,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 6123997
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 2875029
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 4385575
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 11,
+            "us": 10094158
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 10,
+            "us": 1308345
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 4333
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 3068
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 9,
+            "us": 393584
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 8747911
+          }
+        ]
+      },
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16922295,
+          "refresh": 133,
+          "empty": 0,
+          "render": 133,
+          "flush": 1330,
+          "panel": 133,
+          "errors": 0,
+          "pixels": 51072000,
+          "refr_us": 16585554,
+          "render_us": 16464937,
+          "flush_us": 583223,
+          "wait_us": 2788767,
+          "core0": 133,
+          "core1": 0,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1476190676,
+          "is0": 1750683675,
+          "ic0": 0,
+          "if0": 1284222,
+          "ia1": 2517237287,
+          "is1": 607359169,
+          "ic1": 0,
+          "if1": 351505,
+          "da0": 288806702,
+          "ds0": 76460610,
+          "dc0": 61990865,
+          "df0": 105956,
+          "da1": 276330869,
+          "ds1": 180800254,
+          "dc1": 112645889,
+          "df1": 202563,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 372159,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 268119,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 267543,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 264819,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499943,
+            "internal_free": 372159,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 5946755
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 3974690
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 4071173
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 11,
+            "us": 9398939
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 16,
+            "us": 1118170
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 5175
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 3608
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 15,
+            "us": 472894
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 8854526
+          }
+        ]
+      }
+    ],
+    "render_per_s": 7.878529714096124,
+    "instruction_accesses_per_render": 29998285.142322097,
+    "instruction_fills_per_render": 12841.074906367041,
+    "instruction_stalls_per_render": 18583862.602996256,
+    "instruction_conflicts": 0,
+    "software_cpu_ms_per_render": 138.9345842696629
+  },
+  {
+    "root": "/tmp/present-s31-font-iram-20261109",
+    "tag": "font-before",
+    "cases": [
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16875256,
+          "refresh": 144,
+          "empty": 0,
+          "render": 144,
+          "flush": 1440,
+          "panel": 144,
+          "errors": 0,
+          "pixels": 55296000,
+          "refr_us": 16528202,
+          "render_us": 16418300,
+          "flush_us": 542470,
+          "wait_us": 3122622,
+          "core0": 131,
+          "core1": 13,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1905219947,
+          "is0": 815804192,
+          "ic0": 0,
+          "if0": 523400,
+          "ia1": 2021391059,
+          "is1": 1461969959,
+          "ic1": 0,
+          "if1": 1032561,
+          "da0": 364868414,
+          "ds0": 162952598,
+          "dc0": 104002264,
+          "df0": 180585,
+          "da1": 231105425,
+          "ds1": 75758605,
+          "dc1": 73322022,
+          "df1": 89688,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 393595,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 267091,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 266503,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 263315,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 371135,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 5257115
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 3055777
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 4203417
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 9,
+            "us": 338575
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 11,
+            "us": 10332192
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 10,
+            "us": 1392070
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 5251
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 4311
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 9162947
+          }
+        ]
+      },
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16876291,
+          "refresh": 143,
+          "empty": 0,
+          "render": 143,
+          "flush": 1430,
+          "panel": 143,
+          "errors": 0,
+          "pixels": 54912000,
+          "refr_us": 16547504,
+          "render_us": 16442815,
+          "flush_us": 539382,
+          "wait_us": 2922139,
+          "core0": 143,
+          "core1": 0,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1653237231,
+          "is0": 1477481415,
+          "ic0": 0,
+          "if0": 1081518,
+          "ia1": 2259536237,
+          "is1": 525368124,
+          "ic1": 0,
+          "if1": 307762,
+          "da0": 310711168,
+          "ds0": 69408170,
+          "dc0": 64900500,
+          "df0": 97145,
+          "da1": 283485759,
+          "ds1": 174425401,
+          "dc1": 106319277,
+          "df1": 202148,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 371135,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 267095,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 266519,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 263559,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 371135,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 4999951
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 4103836
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 4108678
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 15,
+            "us": 335129
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 11,
+            "us": 9569097
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 16,
+            "us": 1167544
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 3348
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 4441
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 9461911
+          }
+        ]
+      }
+    ],
+    "render_per_s": 8.503313936987837,
+    "instruction_accesses_per_render": 27314928.48083624,
+    "instruction_fills_per_render": 10262.163763066203,
+    "instruction_stalls_per_render": 14915065.121951219,
+    "instruction_conflicts": 0,
+    "software_cpu_ms_per_render": 134.23744599303134
+  },
+  {
+    "root": "/tmp/present-s31-font-iram-20261109",
+    "tag": "font-adapter",
+    "cases": [
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16915267,
+          "refresh": 145,
+          "empty": 0,
+          "render": 145,
+          "flush": 1450,
+          "panel": 145,
+          "errors": 0,
+          "pixels": 55680000,
+          "refr_us": 16797703,
+          "render_us": 16693754,
+          "flush_us": 2778520,
+          "wait_us": 44878,
+          "core0": 141,
+          "core1": 4,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 2031277781,
+          "is0": 1273208533,
+          "ic0": 0,
+          "if0": 1026990,
+          "ia1": 1941619865,
+          "is1": 207521616,
+          "ic1": 0,
+          "if1": 153557,
+          "da0": 367641864,
+          "ds0": 93628920,
+          "dc0": 77220551,
+          "df0": 150422,
+          "da1": 232646574,
+          "ds1": 162852577,
+          "dc1": 92747515,
+          "df1": 181334,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499303,
+            "internal_free": 349495,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499303,
+            "internal_free": 258811,
+            "psram_total": 16777216,
+            "psram_free": 14464360,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499303,
+            "internal_free": 258191,
+            "psram_total": 16777216,
+            "psram_free": 14434148,
+            "internal_min_free": 255171,
+            "psram_min_free": 14434148
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499303,
+            "internal_free": 346083,
+            "psram_total": 16777216,
+            "psram_free": 14436900,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "lvgl",
+            "scene": 0,
+            "id": 10,
+            "us": 4530737
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 7061209
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 2375125
+          },
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 62432
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 9,
+            "us": 9908712
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 8,
+            "us": 9527545
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 366242
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 0
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 0
+          }
+        ]
+      },
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16915282,
+          "refresh": 145,
+          "empty": 0,
+          "render": 145,
+          "flush": 1450,
+          "panel": 145,
+          "errors": 0,
+          "pixels": 55680000,
+          "refr_us": 16796446,
+          "render_us": 16690072,
+          "flush_us": 2777940,
+          "wait_us": 42396,
+          "core0": 141,
+          "core1": 4,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 2031797758,
+          "is0": 1294716397,
+          "ic0": 0,
+          "if0": 1048073,
+          "ia1": 1931279481,
+          "is1": 184958702,
+          "ic1": 0,
+          "if1": 137098,
+          "da0": 367862525,
+          "ds0": 96539885,
+          "dc0": 77805390,
+          "df0": 154987,
+          "da1": 231554907,
+          "ds1": 159864683,
+          "dc1": 92236942,
+          "df1": 177588,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 499303,
+            "internal_free": 346083,
+            "psram_total": 16777216,
+            "psram_free": 14467112,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 499303,
+            "internal_free": 258811,
+            "psram_total": 16777216,
+            "psram_free": 14464360,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 499303,
+            "internal_free": 258191,
+            "psram_total": 16777216,
+            "psram_free": 14434148,
+            "internal_min_free": 255007,
+            "psram_min_free": 14434148
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 499303,
+            "internal_free": 346083,
+            "psram_total": 16777216,
+            "psram_free": 14436900,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "lvgl",
+            "scene": 0,
+            "id": 10,
+            "us": 4542388
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 7191171
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 2278067
+          },
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 58412
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 9,
+            "us": 9899102
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 8,
+            "us": 9495512
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 367344
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 0
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 0
+          }
+        ]
+      }
+    ],
+    "render_per_s": 8.572134020053888,
+    "instruction_accesses_per_render": 27365430.637931034,
+    "instruction_fills_per_render": 8157.648275862069,
+    "instruction_stalls_per_render": 10208293.95862069,
+    "instruction_conflicts": 0,
+    "software_cpu_ms_per_render": 133.89955517241378
+  },
+  {
+    "root": "/tmp/present-s31-font-iram-20261109",
+    "tag": "font-pad24",
+    "cases": [
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16946173,
+          "refresh": 145,
+          "empty": 0,
+          "render": 145,
+          "flush": 1450,
+          "panel": 145,
+          "errors": 0,
+          "pixels": 55680000,
+          "refr_us": 16596792,
+          "render_us": 16486598,
+          "flush_us": 553981,
+          "wait_us": 3208362,
+          "core0": 133,
+          "core1": 12,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1919702148,
+          "is0": 866679392,
+          "ic0": 0,
+          "if0": 559697,
+          "ia1": 2024958148,
+          "is1": 1349622679,
+          "ic1": 0,
+          "if1": 937312,
+          "da0": 366329440,
+          "ds0": 155232364,
+          "dc0": 100827124,
+          "df0": 175444,
+          "da1": 232192244,
+          "ds1": 86174365,
+          "dc1": 75087264,
+          "df1": 98973,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 393595,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 267091,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 266487,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 263315,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 371135,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 5234887
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 4096391
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 3437026
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 9,
+            "us": 373232
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 10,
+            "us": 1391580
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 11,
+            "us": 10222211
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 4621
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 3248
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 9130652
+          }
+        ]
+      },
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16900329,
+          "refresh": 144,
+          "empty": 0,
+          "render": 144,
+          "flush": 1440,
+          "panel": 144,
+          "errors": 0,
+          "pixels": 55296000,
+          "refr_us": 16567331,
+          "render_us": 16467280,
+          "flush_us": 568118,
+          "wait_us": 2959910,
+          "core0": 144,
+          "core1": 0,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1666747160,
+          "is0": 1460917611,
+          "ic0": 0,
+          "if0": 1070781,
+          "ia1": 2276675411,
+          "is1": 485525899,
+          "ic1": 0,
+          "if1": 283344,
+          "da0": 312264670,
+          "ds0": 72845436,
+          "dc0": 65299059,
+          "df0": 98011,
+          "da1": 285437836,
+          "ds1": 177923264,
+          "dc1": 107651918,
+          "df1": 203344,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 371135,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 267095,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 266519,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 263683,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 371135,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 5032798
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 4132023
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 4178743
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 15,
+            "us": 315755
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 11,
+            "us": 9559069
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 16,
+            "us": 1156022
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 3966
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 2492
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 9420996
+          }
+        ]
+      }
+    ],
+    "render_per_s": 8.538548533021226,
+    "instruction_accesses_per_render": 27294404.384083044,
+    "instruction_fills_per_render": 9865.515570934256,
+    "instruction_stalls_per_render": 14403963.948096886,
+    "instruction_conflicts": 0,
+    "software_cpu_ms_per_render": 132.6398892733564
+  },
+  {
+    "root": "/tmp/present-s31-font-iram-20261109",
+    "tag": "font-after",
+    "cases": [
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16943268,
+          "refresh": 144,
+          "empty": 0,
+          "render": 144,
+          "flush": 1440,
+          "panel": 144,
+          "errors": 0,
+          "pixels": 55296000,
+          "refr_us": 16595862,
+          "render_us": 16483361,
+          "flush_us": 542898,
+          "wait_us": 3163791,
+          "core0": 133,
+          "core1": 11,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1912792455,
+          "is0": 827418863,
+          "ic0": 0,
+          "if0": 533253,
+          "ia1": 2021158490,
+          "is1": 1455812001,
+          "ic1": 0,
+          "if1": 1027440,
+          "da0": 366057611,
+          "ds0": 162493386,
+          "dc0": 104136445,
+          "df0": 180486,
+          "da1": 231227667,
+          "ds1": 76345659,
+          "dc1": 73276473,
+          "df1": 90523,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 393595,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 267091,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 266487,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 263315,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 371135,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 5267715
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 4208001
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 3140388
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 9,
+            "us": 338685
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 10,
+            "us": 1396405
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 11,
+            "us": 10340482
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 5175
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 4106
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 9187318
+          }
+        ]
+      },
+      {
+        "probe": {
+          "scene": 0,
+          "us": 16924317,
+          "refresh": 143,
+          "empty": 0,
+          "render": 143,
+          "flush": 1430,
+          "panel": 143,
+          "errors": 0,
+          "pixels": 54912000,
+          "refr_us": 16582805,
+          "render_us": 16474106,
+          "flush_us": 532924,
+          "wait_us": 2970219,
+          "core0": 143,
+          "core1": 0,
+          "capacity": 80000,
+          "stride": 1600
+        },
+        "cache": {
+          "scene": 0,
+          "ia0": 1648954023,
+          "is0": 1474190173,
+          "ic0": 0,
+          "if0": 1078736,
+          "ia1": 2264227861,
+          "is1": 526942729,
+          "ic1": 0,
+          "if1": 308150,
+          "da0": 310453360,
+          "ds0": 70524546,
+          "dc0": 64668673,
+          "df0": 97849,
+          "da1": 284027570,
+          "ds1": 173243039,
+          "dc1": 109836522,
+          "df1": 202480,
+          "saturated": 0
+        },
+        "memory": {
+          "before_open": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 371135,
+            "psram_total": 16777216,
+            "psram_free": 14470368,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_open": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 267095,
+            "psram_total": 16777216,
+            "psram_free": 14387424,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_run": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 266503,
+            "psram_total": 16777216,
+            "psram_free": 14357212,
+            "internal_min_free": 263559,
+            "psram_min_free": 14357212
+          },
+          "after_close": {
+            "rotation": 0,
+            "internal_total": 498919,
+            "internal_free": 371135,
+            "psram_total": 16777216,
+            "psram_free": 14440156,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "tasks": [
+          {
+            "name": "benchmark",
+            "scene": 0,
+            "id": 7,
+            "us": 4996036
+          },
+          {
+            "name": "IDLE0",
+            "scene": 0,
+            "id": 5,
+            "us": 4187883
+          },
+          {
+            "name": "IDLE1",
+            "scene": 0,
+            "id": 6,
+            "us": 4116714
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 15,
+            "us": 334875
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 11,
+            "us": 9586514
+          },
+          {
+            "name": "present_service",
+            "scene": 0,
+            "id": 16,
+            "us": 1163781
+          },
+          {
+            "name": "ipc0",
+            "scene": 0,
+            "id": 1,
+            "us": 4339
+          },
+          {
+            "name": "ipc1",
+            "scene": 0,
+            "id": 2,
+            "us": 5218
+          },
+          {
+            "name": "esp_timer",
+            "scene": 0,
+            "id": 3,
+            "us": 0
+          },
+          {
+            "name": "swdraw",
+            "scene": 0,
+            "id": 12,
+            "us": 9454522
+          }
+        ]
+      }
+    ],
+    "render_per_s": 8.474179661762124,
+    "instruction_accesses_per_render": 27341926.233449478,
+    "instruction_fills_per_render": 10270.310104529617,
+    "instruction_stalls_per_render": 14928096.7456446,
+    "instruction_conflicts": 0,
+    "software_cpu_ms_per_render": 134.3861881533101
+  }
+]

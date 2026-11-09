@@ -1,0 +1,9 @@
+2026-11-09T22:14:05.505453 flash aligned-before
+2026-11-09T22:14:16.212436 capture aligned-before
+2026-11-09T22:14:56.551241 flash aligned-adapter
+2026-11-09T22:15:07.052209 capture aligned-adapter
+2026-11-09T22:15:47.248092 flash aligned-pad24
+2026-11-09T22:15:58.052618 capture aligned-pad24
+2026-11-09T22:16:38.389131 flash aligned-after
+2026-11-09T22:16:48.892082 capture aligned-after
+Resumed sampler controller for original firmware restoration

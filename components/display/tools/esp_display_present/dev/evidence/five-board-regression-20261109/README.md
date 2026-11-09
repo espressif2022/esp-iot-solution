@@ -11,3 +11,7 @@ PARTIAL双方按逻辑宽×50行×RGB565核对：S3 48000B；S31 0/180°80000B�
 comparison-current.json/csv/xlsx为合并新旧数据，cohort明确区分。本目录aligned-raw-results.json、aligned-manifests.json、buffer-verification.json只涉及新测；原始raw-results.json/manifests.json、evidence及*-before-alignment文件保留历史，不代表最新重测。完整新日志、配置、恢复证明在相邻present-aligned-fill-20261109目录。最新validation/file-validation/browser-validation针对本轮更新，历史验证另存before-alignment。
 
 四块重测板均恢复运行前整片固件并独立校验；mosaico本轮未操作。P4原固件含旧NONE用例，恢复后可能再次显示，与本轮排除NONE的矩阵区分。串口跑完不替代目视防撕裂验收。
+
+## S31 取指停顿与派发定位
+
+[根因定位](../present-s31-dispatch-20261109/root-cause.html)：24项完整16场景及38项定点运行，固定单tile、同容量；验证代码排列对字体解包取指缓存的影响，记录PC热点与约1KiB单函数IRAM对照。原固件已恢复并整片校验。本页原性能和内存矩阵不替换。

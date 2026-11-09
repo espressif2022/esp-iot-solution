@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "cases": 24,
+  "scene_records": 384,
+  "groups": 192,
+  "worker_resources_retained": true,
+  "counters_per_scene": 16,
+  "restored": true,
+  "no_build_or_firmware": true
+}

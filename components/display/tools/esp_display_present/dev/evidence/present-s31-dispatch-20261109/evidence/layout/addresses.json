@@ -1,0 +1,92 @@
+[
+  {
+    "layout": "baseline",
+    "implementation": "present",
+    "function": "lv_draw_sw_blend_color_to_rgb565",
+    "address": "0x40066ae6"
+  },
+  {
+    "layout": "baseline",
+    "implementation": "present",
+    "function": "lv_draw_sw_blend_image_to_rgb565",
+    "address": "0x400670da"
+  },
+  {
+    "layout": "baseline",
+    "implementation": "present",
+    "function": "lv_draw_sw_blend",
+    "address": "0x40057000"
+  },
+  {
+    "layout": "baseline",
+    "implementation": "present",
+    "function": "lv_draw_sw_letter",
+    "address": "0x4004e02c"
+  },
+  {
+    "layout": "baseline",
+    "implementation": "present",
+    "function": "lv_draw_sw_label",
+    "address": "0x4004e0ac"
+  },
+  {
+    "layout": "baseline",
+    "implementation": "adapter",
+    "function": "lv_draw_sw_blend_color_to_rgb565",
+    "address": "0x40023120"
+  },
+  {
+    "layout": "baseline",
+    "implementation": "adapter",
+    "function": "lv_draw_sw_blend_image_to_rgb565",
+    "address": "0x40023714"
+  },
+  {
+    "layout": "baseline",
+    "implementation": "adapter",
+    "function": "lv_draw_sw_blend",
+    "address": "0x4005000a"
+  },
+  {
+    "layout": "baseline",
+    "implementation": "adapter",
+    "function": "lv_draw_sw_letter",
+    "address": "0x4002cfac"
+  },
+  {
+    "layout": "baseline",
+    "implementation": "adapter",
+    "function": "lv_draw_sw_label",
+    "address": "0x4002d02c"
+  },
+  {
+    "layout": "early",
+    "implementation": "present",
+    "function": "lv_draw_sw_blend_color_to_rgb565",
+    "address": "0x40009cda"
+  },
+  {
+    "layout": "early",
+    "implementation": "present",
+    "function": "lv_draw_sw_blend_image_to_rgb565",
+    "address": "0x4000a2ce"
+  },
+  {
+    "layout": "early",
+    "implementation": "present",
+    "function": "lv_draw_sw_blend",
+    "address": "0x40045300"
+  },
+  {
+    "layout": "early",
+    "implementation": "present",
+    "function": "lv_draw_sw_letter",
+    "address": "0x40039348"
+  },
+  {
+    "layout": "early",
+    "implementation": "present",
+    "function": "lv_draw_sw_label",
+    "address": "0x400393c8"
+  }
+]

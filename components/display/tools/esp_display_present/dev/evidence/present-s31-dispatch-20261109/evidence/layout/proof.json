@@ -1,0 +1,149 @@
+{
+  "lvgl_source_objects": 139,
+  "all_lvgl_relocatable_text_identical": true,
+  "present_sdkconfig_identical": true,
+  "present_source_diffs": [
+    "components/display/tools/esp_display_present/dev/test_apps/benchmark/CMakeLists.txt"
+  ],
+  "only_change": "two forced-undefined linker symbols",
+  "idf_patched": false,
+  "linked_function_set_identical": true,
+  "linked_function_sizes_different": {
+    "lv_anim_core_init": [
+      64,
+      62
+    ],
+    "lv_anim_delete": [
+      160,
+      152
+    ],
+    "lv_anim_get": [
+      84,
+      80
+    ],
+    "lv_anim_path_ease_out": [
+      66,
+      64
+    ],
+    "lv_anim_start": [
+      264,
+      260
+    ],
+    "lv_bin_decoder_init": [
+      86,
+      76
+    ],
+    "lv_color16_premultiply": [
+      58,
+      56
+    ],
+    "lv_color_premultiply": [
+      52,
+      50
+    ],
+    "lv_display_create": [
+      588,
+      586
+    ],
+    "lv_display_refr_timer": [
+      1664,
+      1670
+    ],
+    "lv_draw_arc": [
+      218,
+      212
+    ],
+    "lv_draw_layer_alloc_buf": [
+      130,
+      132
+    ],
+    "lv_draw_layer_finish_drop_shadow": [
+      156,
+      160
+    ],
+    "lv_draw_sw_mask_rect": [
+      494,
+      488
+    ],
+    "lv_event_add": [
+      120,
+      116
+    ],
+    "lv_event_get_dsc": [
+      22,
+      20
+    ],
+    "lv_event_remove": [
+      84,
+      82
+    ],
+    "lv_event_remove_all": [
+      106,
+      104
+    ],
+    "lv_event_send": [
+      290,
+      288
+    ],
+    "lv_free": [
+      18,
+      20
+    ],
+    "lv_image_decoder_close": [
+      74,
+      76
+    ],
+    "lv_image_decoder_open": [
+      272,
+      274
+    ],
+    "lv_layout_init": [
+      42,
+      40
+    ],
+    "lv_lock": [
+      10,
+      12
+    ],
+    "lv_malloc": [
+      14,
+      16
+    ],
+    "lv_malloc_zeroed": [
+      44,
+      46
+    ],
+    "lv_os_init": [
+      10,
+      12
+    ],
+    "lv_realloc": [
+      52,
+      58
+    ],
+    "lv_sysmon_create": [
+      140,
+      136
+    ],
+    "lv_sysmon_show_performance": [
+      184,
+      180
+    ],
+    "lv_timer_delete": [
+      42,
+      44
+    ],
+    "lv_timer_get_time_to_next": [
+      134,
+      126
+    ],
+    "lv_unlock": [
+      10,
+      12
+    ]
+  },
+  "linked_function_counts": {
+    "baseline": 1925,
+    "early": 1925
+  }
+}

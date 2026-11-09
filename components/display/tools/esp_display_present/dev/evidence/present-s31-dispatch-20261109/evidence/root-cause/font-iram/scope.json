@@ -1,0 +1,11 @@
+{
+  "experiment": "Move only lv_font_get_bitmap_fmt_txt to IRAM through an application linker fragment; same mapping for present and adapter",
+  "source_unchanged": true,
+  "idf_patched": false,
+  "scanout_unchanged": true,
+  "xip": "off",
+  "tiles": 1,
+  "bounce_lines": 10,
+  "scene": "Screen sized text",
+  "seconds": 18
+}

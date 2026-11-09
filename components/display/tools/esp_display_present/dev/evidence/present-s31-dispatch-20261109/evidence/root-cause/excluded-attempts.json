@@ -1,0 +1,7 @@
+{
+  "wrapper_not_flashed": "/tmp/present-s31-hot-20261109/cancelled.json",
+  "first_pc_attempt": "Dump starved idle task and triggered watchdog; excluded, original firmware restored",
+  "first_constructor_attempt": "Unreferenced archive member discarded; no PC_DONE, excluded, original firmware restored",
+  "alignment64": "Link failure on clean IDF; never flashed",
+  "data_tables": "Only explicit tags with SUITE_PASS, two passes, no runtime error, valid counters and buffer checks"
+}

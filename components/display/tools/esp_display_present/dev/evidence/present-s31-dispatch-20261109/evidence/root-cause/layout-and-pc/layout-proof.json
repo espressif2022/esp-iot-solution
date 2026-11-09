@@ -1,0 +1,26 @@
+[
+  {
+    "variant": "baseline",
+    "implementation": "present",
+    "watch_address": "0x2f0152a5",
+    "lvgl_global_function_address_changes": {},
+    "lvgl_global_function_count": 809,
+    "sampler_hash": "45c23b4dabf00a53e540380e116303bb4ea77953c392cc689c5009fbacd0a3e7"
+  },
+  {
+    "variant": "baseline",
+    "implementation": "adapter",
+    "watch_address": "0x2f01510d",
+    "lvgl_global_function_address_changes": {},
+    "lvgl_global_function_count": 834,
+    "sampler_hash": "154239683acaaaba217c1d5196d7b737d45454e04a2505d06c8fb623f9bbc078"
+  },
+  {
+    "variant": "early",
+    "implementation": "present",
+    "watch_address": "0x2f0152a5",
+    "lvgl_global_function_address_changes": {},
+    "lvgl_global_function_count": 809,
+    "sampler_hash": "45c23b4dabf00a53e540380e116303bb4ea77953c392cc689c5009fbacd0a3e7"
+  }
+]

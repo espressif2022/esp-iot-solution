@@ -1,0 +1,13 @@
+{
+  "parent": "/tmp/present-s31-dispatch-20261109",
+  "xip": "off",
+  "scene": "Screen sized text",
+  "seconds": 18,
+  "angle": 0,
+  "repeats": 2,
+  "inline": false,
+  "tiles": 1,
+  "bounce_lines": 10,
+  "only_intervention": "Force undefined RGB565 and RGB888 blend symbols before archive extraction",
+  "formal_matrix": false
+}

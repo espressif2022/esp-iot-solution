@@ -1,0 +1,1128 @@
+{
+  "off": {
+    "lvgl_source_objects": 139,
+    "identical_text": true,
+    "differing_objects": [],
+    "objects": {
+      "src/core/lv_group.c.obj": {
+        "bytes": 2288,
+        "sha256": "7753b6b44410a06241fddd32f22b680580c4f79ec5297f7dcec56ab42919eb0c"
+      },
+      "src/core/lv_obj.c.obj": {
+        "bytes": 10586,
+        "sha256": "b4cac76036955c14579513377014f07268a9486d7e599a2e93ce2f2abc05e350"
+      },
+      "src/core/lv_obj_class.c.obj": {
+        "bytes": 854,
+        "sha256": "db263f810bf084b6e4cb295e32f21409f66b9d0b471bd060191251fb26c8b6f8"
+      },
+      "src/core/lv_obj_draw.c.obj": {
+        "bytes": 4408,
+        "sha256": "c8b82745539b7eca22632029428c0d388b208db19d6b172ef48d0ecb1aa01b35"
+      },
+      "src/core/lv_obj_event.c.obj": {
+        "bytes": 1544,
+        "sha256": "29a3add04f9a51ae01d269ea4a1c63b34e3911aa52d52e684a138931c5f8a209"
+      },
+      "src/core/lv_obj_pos.c.obj": {
+        "bytes": 12034,
+        "sha256": "8639b63ec38a6bb6cd50b21f5d1e4c341e8418b872ff13109bfb813f6f14dcdc"
+      },
+      "src/core/lv_obj_scroll.c.obj": {
+        "bytes": 7440,
+        "sha256": "33bed470a6abc622296d7eb1056bd7f8d194e08312f573d9a8355b5253b62baf"
+      },
+      "src/core/lv_obj_style.c.obj": {
+        "bytes": 12842,
+        "sha256": "f3dce721d07596f18fbfe9798eb3ad99e7d370cb538458b3765f1ad09ae0b14b"
+      },
+      "src/core/lv_obj_style_gen.c.obj": {
+        "bytes": 7800,
+        "sha256": "7dfa5a50f5f8d6437809439128fe8503f80f46994f419a0f44b096f0f2adea45"
+      },
+      "src/core/lv_obj_tree.c.obj": {
+        "bytes": 3118,
+        "sha256": "91afb00b48642ba1366d968975442f03aea52f55b5f624ec8a0c2d4386a2129e"
+      },
+      "src/core/lv_observer.c.obj": {
+        "bytes": 6560,
+        "sha256": "dc3b0c5a4bbecaac8d9ea8dd7816365c2c280dc3b74fb9861d87733c7d32ec7e"
+      },
+      "src/core/lv_refr.c.obj": {
+        "bytes": 6806,
+        "sha256": "194d70e7766f295470d08761874a044be245ec647c86b40b3b0ffca5d2a0773e"
+      },
+      "src/debugging/sysmon/lv_sysmon.c.obj": {
+        "bytes": 1436,
+        "sha256": "302bffab3786aa2d8ba100483b4b19d2a8eaf82251312cc52376efd84bc803e6"
+      },
+      "src/display/lv_display.c.obj": {
+        "bytes": 6922,
+        "sha256": "b9e5821f7a59d7255e26b789bf295f8df27e7b1b38eedf2c1a93599d7831eab9"
+      },
+      "src/draw/convert/lv_draw_buf_convert.c.obj": {
+        "bytes": 460,
+        "sha256": "463c6e968f0fef2dc52beb0143c12deb84139509d7fd5c749a647717e739e1d9"
+      },
+      "src/draw/lv_draw.c.obj": {
+        "bytes": 2874,
+        "sha256": "dca93f0dd46890c9998c555a4afb21cd50398a0661c52a88cbf1ad5c938a4d26"
+      },
+      "src/draw/lv_draw_arc.c.obj": {
+        "bytes": 1818,
+        "sha256": "27b5c33432dced930b6348841adc3485957737edec1f5d872edff72c0acc6f78"
+      },
+      "src/draw/lv_draw_blur.c.obj": {
+        "bytes": 144,
+        "sha256": "0edf1193df6edb936b37994366d866c523e05f61cbeffd796595009098346d2e"
+      },
+      "src/draw/lv_draw_buf.c.obj": {
+        "bytes": 3374,
+        "sha256": "6d510836701aed7f7022b7d691888819556bf68a0e74249d4e67ea52ea823643"
+      },
+      "src/draw/lv_draw_image.c.obj": {
+        "bytes": 2382,
+        "sha256": "3c3a6fa985504d024a96101b81c80933687439081de853e7c4ddf0c7148f6f96"
+      },
+      "src/draw/lv_draw_label.c.obj": {
+        "bytes": 4284,
+        "sha256": "879991cb564161d89589cdd44be6e8b7b85c33781b054aeec05c4a889cfceb34"
+      },
+      "src/draw/lv_draw_line.c.obj": {
+        "bytes": 754,
+        "sha256": "a3b79401cfcdb24d5571fc5025daf638cc4bcb79f1cc70ca7d3574530a19f407"
+      },
+      "src/draw/lv_draw_mask.c.obj": {
+        "bytes": 222,
+        "sha256": "acf20f636baf787d46af1934c92dbc1a26edb8423bc179e04ac39a8b9f16def1"
+      },
+      "src/draw/lv_draw_rect.c.obj": {
+        "bytes": 2920,
+        "sha256": "8adec5a9aff69b2f4bfc8512fd6eafacd55392ef1b2e7d62695d2f411747f850"
+      },
+      "src/draw/lv_draw_triangle.c.obj": {
+        "bytes": 404,
+        "sha256": "0efd75f025ebb669d07a50113c21ed097b4ce86624397f1078f9424d8378f2de"
+      },
+      "src/draw/lv_draw_utils.c.obj": {
+        "bytes": 1582,
+        "sha256": "89a0325cedf0d3001228b37ed0d961e0dea89367e23d1e7f7c5af5d29dc29518"
+      },
+      "src/draw/sw/blend/lv_draw_sw_blend.c.obj": {
+        "bytes": 1064,
+        "sha256": "b2ba3a87ce30c52f066e178f14991277cc0d64e3a0dc629574ef95e538e46cec"
+      },
+      "src/draw/sw/blend/lv_draw_sw_blend_to_a8.c.obj": {
+        "bytes": 1998,
+        "sha256": "77f459984dea9ba2e1447943f8b2d1116582e3ff33be02cd4a9b1d62b2e919bd"
+      },
+      "src/draw/sw/blend/lv_draw_sw_blend_to_al88.c.obj": {
+        "bytes": 10722,
+        "sha256": "b49029eea6bf6afd9e69dd6aa645cf58da33a735ba63cec65037e10fca2565be"
+      },
+      "src/draw/sw/blend/lv_draw_sw_blend_to_argb8888.c.obj": {
+        "bytes": 19278,
+        "sha256": "49c8f5088f7ff1dfb4b8d8542d672a2082f0808a0b23388e56da745c5178f5fd"
+      },
+      "src/draw/sw/blend/lv_draw_sw_blend_to_argb8888_premultiplied.c.obj": {
+        "bytes": 11796,
+        "sha256": "2254ab1958ac6207fb8f2085375ea7ce6e0a42817da5b9ab671cda57acd7be5c"
+      },
+      "src/draw/sw/blend/lv_draw_sw_blend_to_i1.c.obj": {
+        "bytes": 9972,
+        "sha256": "086b845dde7c27965b782e0013dd3c55b3fa5a8adeea204e8d525a2041fab63c"
+      },
+      "src/draw/sw/blend/lv_draw_sw_blend_to_l8.c.obj": {
+        "bytes": 7922,
+        "sha256": "44d28fd68a37a3d9a9a05f2ab9c6877b73c05872ce471d25ffa0906703194eff"
+      },
+      "src/draw/sw/blend/lv_draw_sw_blend_to_rgb565.c.obj": {
+        "bytes": 13976,
+        "sha256": "fddb9269b3b7b6a58acec3bedb8e5dd6b75ea704aae4d946c1a5f0345bf3c97d"
+      },
+      "src/draw/sw/blend/lv_draw_sw_blend_to_rgb565_swapped.c.obj": {
+        "bytes": 14678,
+        "sha256": "0edb5a598c887ed15b7acf79d91827197b5bd8589c618ece3f7a42d4b3c3ef81"
+      },
+      "src/draw/sw/blend/lv_draw_sw_blend_to_rgb888.c.obj": {
+        "bytes": 10270,
+        "sha256": "5551c61b2076f9038bcd808abda4ad50e027990d42665f79fceace5ec41472ab"
+      },
+      "src/draw/sw/lv_draw_sw.c.obj": {
+        "bytes": 1312,
+        "sha256": "611d243111630c0380161f8eedad5307aa1c591b8ee65771f828c73ad0b8e8d2"
+      },
+      "src/draw/sw/lv_draw_sw_arc.c.obj": {
+        "bytes": 1936,
+        "sha256": "fe60f46072d8d5d9c26888814afa2dddf7a54c1e5563cf243d0dbe1cc4a21199"
+      },
+      "src/draw/sw/lv_draw_sw_blur.c.obj": {
+        "bytes": 3556,
+        "sha256": "ecf590eb211869ccd361c2e4840e9143d0e3777ffc0bf6fcfff3f83673c78418"
+      },
+      "src/draw/sw/lv_draw_sw_border.c.obj": {
+        "bytes": 1860,
+        "sha256": "f816646b675514b2503502aa357d222536b8b028880d3fa6a60f1461a547134f"
+      },
+      "src/draw/sw/lv_draw_sw_box_shadow.c.obj": {
+        "bytes": 4264,
+        "sha256": "306d2d9e6b4baf87ba3dbf3936993b69064a49ee98b9da2f931d6f5e70adffb8"
+      },
+      "src/draw/sw/lv_draw_sw_fill.c.obj": {
+        "bytes": 1192,
+        "sha256": "92b302b96d448e1516bf6271ab15e1e98ff9edca7c849af202004b6a01e1ae72"
+      },
+      "src/draw/sw/lv_draw_sw_grad.c.obj": {
+        "bytes": 576,
+        "sha256": "a42f86a0ab63abc4420ad9fcdf1597121da7bed70bc4eea85557b76d0e0f40fb"
+      },
+      "src/draw/sw/lv_draw_sw_img.c.obj": {
+        "bytes": 5640,
+        "sha256": "a1418813b70b565611cc0698437925bf68477c50145a6cad29721580b0a35d28"
+      },
+      "src/draw/sw/lv_draw_sw_letter.c.obj": {
+        "bytes": 764,
+        "sha256": "ca7b2973aed11c40f08712e2544ff045435e976459c68f929332544b0448282a"
+      },
+      "src/draw/sw/lv_draw_sw_line.c.obj": {
+        "bytes": 2108,
+        "sha256": "42dfcbaf068821a3e851ed9fbe4d179e69e948d68d4356caddb1f0a72772cfa0"
+      },
+      "src/draw/sw/lv_draw_sw_mask.c.obj": {
+        "bytes": 6088,
+        "sha256": "fc918d12720ce3e0cf8e20f63f143ca458da8cb51530f68f3a3b23bedc5304aa"
+      },
+      "src/draw/sw/lv_draw_sw_mask_rect.c.obj": {
+        "bytes": 590,
+        "sha256": "cce63a983ba33ecc1789817a6ec47b2844c3a211a782aec83a4d1fd80589e22c"
+      },
+      "src/draw/sw/lv_draw_sw_transform.c.obj": {
+        "bytes": 11920,
+        "sha256": "db03d52d0de7d085574bd593f803d0dde0bdc300895cb390721f101e67aa2e2a"
+      },
+      "src/draw/sw/lv_draw_sw_triangle.c.obj": {
+        "bytes": 1178,
+        "sha256": "0777bb80c7443be964e9c5cb356b0ad2ad03e75fc57b2a83c668303f18eedd6d"
+      },
+      "src/font/binfont_loader/lv_binfont_loader.c.obj": {
+        "bytes": 4500,
+        "sha256": "f6167a9a89a42780f4659fd3fea8ba04608725f200ae650484b7053a8050ba25"
+      },
+      "src/font/fmt_txt/lv_font_fmt_txt.c.obj": {
+        "bytes": 1880,
+        "sha256": "01334f2789cbb71ef5490b834f98a9de36efcbe9e3ae73737f36e184071c2955"
+      },
+      "src/font/lv_font.c.obj": {
+        "bytes": 1014,
+        "sha256": "4fe091871781e5256f5ae07e1372e4f7ebf9b31c691af71232cdea2f9558bf90"
+      },
+      "src/fs/lv_fs.c.obj": {
+        "bytes": 3676,
+        "sha256": "58be9b8ccb89997ece9cd4995b28c30893ebce2a86b91ea0bc7e87862597ea4a"
+      },
+      "src/image/lv_bin_decoder.c.obj": {
+        "bytes": 3804,
+        "sha256": "3bb41f8843573bc0c31e7c055aedce224fb533cd59d4ff17edc6124e1ec32e73"
+      },
+      "src/image/lv_image_decoder.c.obj": {
+        "bytes": 1850,
+        "sha256": "3e2e1c1605cf136a82eac68029ac4ce7d6c3cd4144df49cc61c239731fe1d107"
+      },
+      "src/indev/lv_indev.c.obj": {
+        "bytes": 9124,
+        "sha256": "b88eab7545d2d62e44213001fcb6a7380958f30c0813f61e859e8883ac27551d"
+      },
+      "src/indev/lv_indev_scroll.c.obj": {
+        "bytes": 5050,
+        "sha256": "26d1fc4cbab706174aa5a8e373feb37d78e76f5742d8dc6b746a3cbd06abb4ad"
+      },
+      "src/layouts/flex/lv_flex.c.obj": {
+        "bytes": 4768,
+        "sha256": "016fb749ac5ecf47c51bc3e687a5b173f3123784e6dea1f09cdaaa344812dd0a"
+      },
+      "src/layouts/grid/lv_grid.c.obj": {
+        "bytes": 4414,
+        "sha256": "e75dd400c4b78f47d5a641588bbf90c982aba808c2fc7844fee2b1c0a1516c98"
+      },
+      "src/layouts/lv_layout.c.obj": {
+        "bytes": 416,
+        "sha256": "61c4146f5d1bd1659404e72c956a5726778bdf9f41fd9f468b03273ec4f1a300"
+      },
+      "src/libs/frogfs/src/decomp_raw.c.obj": {
+        "bytes": 176,
+        "sha256": "77e38a5db2afc73717e1e37155a24d2f832010e023c9f8338b4c4231793cc70c"
+      },
+      "src/lv_init.c.obj": {
+        "bytes": 544,
+        "sha256": "73fb75a77b26ee8d3bffad1197ba17e20977d1afbcefa8d0e111dd882c0d3260"
+      },
+      "src/misc/cache/class/lv_cache_lru_ll.c.obj": {
+        "bytes": 1092,
+        "sha256": "7471f72b6f4820e8fbea1303589bccf5e7feb77b723aa0141ec86d192e377e47"
+      },
+      "src/misc/cache/class/lv_cache_lru_rb.c.obj": {
+        "bytes": 1426,
+        "sha256": "0f8c76038631b750d1022abc723fc60ee31cbaa2b315c77bea4922fb55541e8b"
+      },
+      "src/misc/cache/class/lv_cache_sc_da.c.obj": {
+        "bytes": 1170,
+        "sha256": "fd179cff4ac39a67ba6c0fe0188a49eff3c6f74f23ec79965660796783445f6d"
+      },
+      "src/misc/cache/instance/lv_image_cache.c.obj": {
+        "bytes": 580,
+        "sha256": "00b22a3a65e1b11cb0057466b1b19f61fcbf8a97f191c1f94ded932d07dbac40"
+      },
+      "src/misc/cache/instance/lv_image_header_cache.c.obj": {
+        "bytes": 480,
+        "sha256": "f3179b66e2a23ec11f42ad5f59470a40f16dedeae79782d9f92909965b70579c"
+      },
+      "src/misc/cache/lv_cache.c.obj": {
+        "bytes": 1318,
+        "sha256": "7abf93b7ce988db662a411574f04568a478844cb9faeba27c3ee7b7d8ff8a168"
+      },
+      "src/misc/cache/lv_cache_entry.c.obj": {
+        "bytes": 248,
+        "sha256": "5a153440f6994d54fe2d40cfe41d434ae14c296737caa50ec071be136b501842"
+      },
+      "src/misc/lv_anim.c.obj": {
+        "bytes": 3814,
+        "sha256": "536649782c6dc1c9e4f6bccf2a1b639948b3ec9df37cab7c5dd8bae00607711d"
+      },
+      "src/misc/lv_anim_timeline.c.obj": {
+        "bytes": 1918,
+        "sha256": "3a3e71b67bff13f51957eb36a5340be1d14757817d43d40be64c7916036ee8e4"
+      },
+      "src/misc/lv_area.c.obj": {
+        "bytes": 3152,
+        "sha256": "f07c9ea0d4a2b3ae3c8065dda2eea4bf4e333977ddf3e9bfe4ebcff3fe6f3c09"
+      },
+      "src/misc/lv_array.c.obj": {
+        "bytes": 1184,
+        "sha256": "0e325151b7fc97b8168cb0943661abc1aa8c45b48d6f590fcb87851fa58eb7f9"
+      },
+      "src/misc/lv_async.c.obj": {
+        "bytes": 296,
+        "sha256": "acd0c385a8a00d613d330c1042fd342de427fd8ee77574cb7a437ccf7353be7a"
+      },
+      "src/misc/lv_bidi_common.c.obj": {
+        "bytes": 24,
+        "sha256": "b41975cbb9e96a77c805e085c62aab9ceac86a385b6e4d1c1e22559e7a2f0aec"
+      },
+      "src/misc/lv_circle_buf.c.obj": {
+        "bytes": 952,
+        "sha256": "a68be554576ca42e2955082dcfe0f6cb744034fcf314f9a59566dd931f9bac90"
+      },
+      "src/misc/lv_color.c.obj": {
+        "bytes": 1706,
+        "sha256": "d8557d5f7ad8e8e048d54677acd94c725f22a3958760c22e46578761845f09ec"
+      },
+      "src/misc/lv_color_op.c.obj": {
+        "bytes": 566,
+        "sha256": "ed978e40a10f4fae65b7993701f708910f104c0ab0cbe8a49bcf915048474389"
+      },
+      "src/misc/lv_event.c.obj": {
+        "bytes": 2638,
+        "sha256": "0708bb229822000fafadefcb2d0f1e739b870116c5ace4bcaa6617ccae0097c4"
+      },
+      "src/misc/lv_grad.c.obj": {
+        "bytes": 282,
+        "sha256": "9081b998dd8b10d326f050d92cc25e467db1ce32215ca161ac549bec10a312bb"
+      },
+      "src/misc/lv_iter.c.obj": {
+        "bytes": 672,
+        "sha256": "f686ecc093b58b2cee47b4fbaaebfadf82664bf0eeea8bafa778977d46dd61c4"
+      },
+      "src/misc/lv_ll.c.obj": {
+        "bytes": 876,
+        "sha256": "2bcee1be6e0e02de3411cfdc45c17a1ebb8755571feaa3432d552af2f4023c84"
+      },
+      "src/misc/lv_lru.c.obj": {
+        "bytes": 1254,
+        "sha256": "1f9d783cc5fee78157994def9933c830fe45f5c53f5288fa94666d435d6c4139"
+      },
+      "src/misc/lv_math.c.obj": {
+        "bytes": 1612,
+        "sha256": "4ba8fbc391c779d906d668877925a183b9dd99b7ce1f302eeed1b75923ca7207"
+      },
+      "src/misc/lv_palette.c.obj": {
+        "bytes": 170,
+        "sha256": "8d064f0487697017deb4f8fb4d3e9ec053441329699fa383f05f38465f116f98"
+      },
+      "src/misc/lv_pending.c.obj": {
+        "bytes": 458,
+        "sha256": "0a29a0b317e3b4fdb9cb55236dcef665f67f7620390f1af0a083df70005a6540"
+      },
+      "src/misc/lv_rb.c.obj": {
+        "bytes": 1668,
+        "sha256": "4ce12952240d77b4e3d07c27aa3de7edd9cd98cf4e4f22fc135f8f6bf9bbf6a9"
+      },
+      "src/misc/lv_style.c.obj": {
+        "bytes": 1818,
+        "sha256": "4b83267fd5109c7a8e2810873e23b51a862f74ffda2b56eea817425a5cfeb663"
+      },
+      "src/misc/lv_style_gen.c.obj": {
+        "bytes": 3340,
+        "sha256": "a5599e85afd41f9ce4f5daaf51affafe3dfb00680b37afa3e63f2b5b83dcd555"
+      },
+      "src/misc/lv_text.c.obj": {
+        "bytes": 3496,
+        "sha256": "e02fd09f78e5176059be43c22dcdc256e94457dfaf69b8ccdd5c67c94da75c3c"
+      },
+      "src/misc/lv_timer.c.obj": {
+        "bytes": 1584,
+        "sha256": "b4d46e5315c1153897b5a52714568175dd74bac759865ebc19e475f4066c5325"
+      },
+      "src/misc/lv_tree.c.obj": {
+        "bytes": 808,
+        "sha256": "d0eee68c80e2c4d4b48e5f697120b7604d725daab79b0d8fc3a5c2042d121a2b"
+      },
+      "src/misc/lv_utils.c.obj": {
+        "bytes": 262,
+        "sha256": "98f11aa4d4647c65756754ed4f1886d8237d59c7c53cb7302f85c37b3ee916ba"
+      },
+      "src/osal/lv_freertos.c.obj": {
+        "bytes": 1364,
+        "sha256": "ddd77658e5c3b78cdba35a5c3e6b186b3af36d1ac03ad1ff444aefbe3d57ae7f"
+      },
+      "src/osal/lv_os.c.obj": {
+        "bytes": 64,
+        "sha256": "f4b9b504cdebab173dedf87badc7fc2fd1a6132a1a907039de81778f1ba4be3b"
+      },
+      "src/stdlib/clib/lv_mem_core_clib.c.obj": {
+        "bytes": 40,
+        "sha256": "2f978479a22dd95362ef740614e2309137f6c2935c0ef274117ae3cf2d36931e"
+      },
+      "src/stdlib/clib/lv_sprintf_clib.c.obj": {
+        "bytes": 44,
+        "sha256": "6b865c98b5ff1a709aedb995a3cce4a6f1ee288ae63642096a1f842af1dced70"
+      },
+      "src/stdlib/clib/lv_string_clib.c.obj": {
+        "bytes": 312,
+        "sha256": "3aef06f9ff2abddef60c208269b5906ffcce2f5e006d3e45cf11ba1e0334ac55"
+      },
+      "src/stdlib/lv_mem.c.obj": {
+        "bytes": 472,
+        "sha256": "544b6994af2fc58270adf0834c7856dfb54d8cf69b032dd91a15ed83983d757b"
+      },
+      "src/themes/default/lv_theme_default.c.obj": {
+        "bytes": 17026,
+        "sha256": "98d97ef9686ccd2c0c716033f2962bac9fe314d31506f1ed338fdc614c2d6981"
+      },
+      "src/themes/lv_theme.c.obj": {
+        "bytes": 886,
+        "sha256": "80a709fe7c565cb37a719d6ca8fe195f3d4a30c617f0fc5c75aa2a308f530eba"
+      },
+      "src/themes/mono/lv_theme_mono.c.obj": {
+        "bytes": 5558,
+        "sha256": "319b5265ef3ef05160ffaa6007ce4c470ffd3206816ad14f0b133ce1bf9d2643"
+      },
+      "src/themes/simple/lv_theme_simple.c.obj": {
+        "bytes": 3222,
+        "sha256": "a2830c4b0a6b8fc30ed6111ef1f47ffd240732e205a751ede932ab066839458e"
+      },
+      "src/tick/lv_tick.c.obj": {
+        "bytes": 330,
+        "sha256": "8d549c7e1e43e7582e5fd1e11f55ac7a3ae1f870a522c47576db7592048c6153"
+      },
+      "src/widgets/animimage/lv_animimage.c.obj": {
+        "bytes": 452,
+        "sha256": "8b1ff8d361840abac7e51765008ec615986707f5bfa7d8b35bfb529d2ba49da7"
+      },
+      "src/widgets/arc/lv_arc.c.obj": {
+        "bytes": 6144,
+        "sha256": "c3c77299ad6490e3e4dbdfcfc4617ee5b8794deb1e8ddcbb59b32ea6b96ce9b1"
+      },
+      "src/widgets/arclabel/lv_arclabel.c.obj": {
+        "bytes": 3146,
+        "sha256": "f0f7014cbc1f769aec1cd898af9b371cad8789e3b8586e8a530d8928974d8902"
+      },
+      "src/widgets/bar/lv_bar.c.obj": {
+        "bytes": 3884,
+        "sha256": "79990e75b48b4d3dc23f5332b04dc48f68566f24d9a5148bfe4227c1c2095a4f"
+      },
+      "src/widgets/button/lv_button.c.obj": {
+        "bytes": 74,
+        "sha256": "bb27a28f9acbab6c876bc5cb2b7d769feaf92e248188c33bc8feda79a7bde8fc"
+      },
+      "src/widgets/buttonmatrix/lv_buttonmatrix.c.obj": {
+        "bytes": 6160,
+        "sha256": "a2de9757bf643e24c3865abc4a4ac4e808dc0fc2faff3be70f1446b7f45d0d96"
+      },
+      "src/widgets/calendar/lv_calendar.c.obj": {
+        "bytes": 2286,
+        "sha256": "079d047872095d375c59ba99a7101df5ddb5d84a739f48503a45fa15da97bed5"
+      },
+      "src/widgets/calendar/lv_calendar_header_arrow.c.obj": {
+        "bytes": 696,
+        "sha256": "b6cfbf28a30b777d5c24c9b0d811a72a812a3e14b80420474434612876ff3bd1"
+      },
+      "src/widgets/calendar/lv_calendar_header_dropdown.c.obj": {
+        "bytes": 810,
+        "sha256": "465a11b1cb9b2fa5027af1229c258d5adc7ba973715f01e3f374de1251d534ad"
+      },
+      "src/widgets/canvas/lv_canvas.c.obj": {
+        "bytes": 1984,
+        "sha256": "d2aa0a2e6a53127f59e9e5b25ce62fa212b5f6e398311238d3a895bb99ba0920"
+      },
+      "src/widgets/chart/lv_chart.c.obj": {
+        "bytes": 10398,
+        "sha256": "86b4ad19d0696935ac037fc8c68fc1d359cb2ba95940abaa3a630085762194b3"
+      },
+      "src/widgets/checkbox/lv_checkbox.c.obj": {
+        "bytes": 1514,
+        "sha256": "f54d70789a7540058f7ba3922b1382ed0899e386afdb1193871f9d02d5712fdb"
+      },
+      "src/widgets/dropdown/lv_dropdown.c.obj": {
+        "bytes": 7172,
+        "sha256": "1ff2487236fea0e45e1c1b084a53095ec632045147e2e23cdf28113a9eaa8ee4"
+      },
+      "src/widgets/image/lv_image.c.obj": {
+        "bytes": 5236,
+        "sha256": "8a647306b3a6f65209bef723c1c0d40cc806c4bc514be79e4dac7b4073106d7d"
+      },
+      "src/widgets/imagebutton/lv_imagebutton.c.obj": {
+        "bytes": 1944,
+        "sha256": "ada83af40c4744178c2f8889b4244027335d455183799922b9785bebbd064e94"
+      },
+      "src/widgets/keyboard/lv_keyboard.c.obj": {
+        "bytes": 1364,
+        "sha256": "9bb23e9a44c200518458c43ed25574ceff055121041f87d9e4c0aa4ceaa2e896"
+      },
+      "src/widgets/label/lv_label.c.obj": {
+        "bytes": 7362,
+        "sha256": "28231f67b7828dfd91ea59687f0b564e82e0b956cdeb698fda5643a205a941d5"
+      },
+      "src/widgets/led/lv_led.c.obj": {
+        "bytes": 1428,
+        "sha256": "b7b01c65a75a2652f5d0cc61f5ed8ad7ea84795198261d4b069d12a358b9e63c"
+      },
+      "src/widgets/line/lv_line.c.obj": {
+        "bytes": 1070,
+        "sha256": "eb174783c2cff06811eda4d62f712036c01ff40c01c20e83f74e8d3119b26601"
+      },
+      "src/widgets/list/lv_list.c.obj": {
+        "bytes": 546,
+        "sha256": "989d0b44395f47c628b185aeadc273511295b9df8da2e648a25c2128f0033963"
+      },
+      "src/widgets/menu/lv_menu.c.obj": {
+        "bytes": 3610,
+        "sha256": "473a9cabbacb1e5ace4901bd6522563c23f88d040ebb5dae3998a83426c05612"
+      },
+      "src/widgets/msgbox/lv_msgbox.c.obj": {
+        "bytes": 1340,
+        "sha256": "6acf386cd29b86252bf5e2f1c3e5328730b690e4530d922758a8461e9aeaf06a"
+      },
+      "src/widgets/roller/lv_roller.c.obj": {
+        "bytes": 5400,
+        "sha256": "0a9ecd402c62d72cfc3742cb7cc25ddd0e858aea0b6bb1e208de9eb4b1ab05fa"
+      },
+      "src/widgets/scale/lv_scale.c.obj": {
+        "bytes": 10708,
+        "sha256": "2c42b9ca839725274cb0594a645a78bc5b148daff4e339fb2814c3ce3d6b7d8b"
+      },
+      "src/widgets/slider/lv_slider.c.obj": {
+        "bytes": 4108,
+        "sha256": "5d803f0446394dda0902cb534b7db485e9e92939934fbbef3c9d6c86475e55d8"
+      },
+      "src/widgets/span/lv_span.c.obj": {
+        "bytes": 8082,
+        "sha256": "7f735c67deca043b1f77fe1550b09ee36dd8b51bf000c44fdc99f541e9ca65a6"
+      },
+      "src/widgets/spinbox/lv_spinbox.c.obj": {
+        "bytes": 2370,
+        "sha256": "52ac0249330aec3be2eeee9ebf657f6009d22f343cf07441424d0165db1db3ab"
+      },
+      "src/widgets/spinner/lv_spinner.c.obj": {
+        "bytes": 364,
+        "sha256": "3bd2390b3f8a6971ba7e30b05fe7510a7ee526d98be2cd36719f475117b32243"
+      },
+      "src/widgets/switch/lv_switch.c.obj": {
+        "bytes": 1356,
+        "sha256": "0121c4fa2b7e51c93c507e7c638b3060a4660ee57379ba493cf5d407b4060967"
+      },
+      "src/widgets/table/lv_table.c.obj": {
+        "bytes": 6382,
+        "sha256": "ffde553a335faf715da1f18b4929d2d7d922e25fcae9646196e3f2641667b4ce"
+      },
+      "src/widgets/tabview/lv_tabview.c.obj": {
+        "bytes": 2262,
+        "sha256": "bf1e54ad3ef865b0d5617894e5eb9dd81161bc3ac4bc463a4f5d19683459d5c9"
+      },
+      "src/widgets/textarea/lv_textarea.c.obj": {
+        "bytes": 7690,
+        "sha256": "53efaa609a016b30ab280872b423129296c8a6c1d7f2ce5f93271960d945dbdb"
+      },
+      "src/widgets/tileview/lv_tileview.c.obj": {
+        "bytes": 894,
+        "sha256": "4259dbee367553bff511c3576a68af994ba89257ca47626f66ac77d6efc18457"
+      },
+      "src/widgets/win/lv_win.c.obj": {
+        "bytes": 486,
+        "sha256": "a741059e3fff51111408b155bdc0412e2666c599e24c256499c295d6bc83c2fa"
+      }
+    }
+  },
+  "on": {
+    "lvgl_source_objects": 139,
+    "identical_text": true,
+    "differing_objects": [],
+    "objects": {
+      "src/core/lv_group.c.obj": {
+        "bytes": 2288,
+        "sha256": "7753b6b44410a06241fddd32f22b680580c4f79ec5297f7dcec56ab42919eb0c"
+      },
+      "src/core/lv_obj.c.obj": {
+        "bytes": 10586,
+        "sha256": "b4cac76036955c14579513377014f07268a9486d7e599a2e93ce2f2abc05e350"
+      },
+      "src/core/lv_obj_class.c.obj": {
+        "bytes": 854,
+        "sha256": "db263f810bf084b6e4cb295e32f21409f66b9d0b471bd060191251fb26c8b6f8"
+      },
+      "src/core/lv_obj_draw.c.obj": {
+        "bytes": 4408,
+        "sha256": "c8b82745539b7eca22632029428c0d388b208db19d6b172ef48d0ecb1aa01b35"
+      },
+      "src/core/lv_obj_event.c.obj": {
+        "bytes": 1544,
+        "sha256": "29a3add04f9a51ae01d269ea4a1c63b34e3911aa52d52e684a138931c5f8a209"
+      },
+      "src/core/lv_obj_pos.c.obj": {
+        "bytes": 12034,
+        "sha256": "8639b63ec38a6bb6cd50b21f5d1e4c341e8418b872ff13109bfb813f6f14dcdc"
+      },
+      "src/core/lv_obj_scroll.c.obj": {
+        "bytes": 7440,
+        "sha256": "33bed470a6abc622296d7eb1056bd7f8d194e08312f573d9a8355b5253b62baf"
+      },
+      "src/core/lv_obj_style.c.obj": {
+        "bytes": 12842,
+        "sha256": "f3dce721d07596f18fbfe9798eb3ad99e7d370cb538458b3765f1ad09ae0b14b"
+      },
+      "src/core/lv_obj_style_gen.c.obj": {
+        "bytes": 7800,
+        "sha256": "7dfa5a50f5f8d6437809439128fe8503f80f46994f419a0f44b096f0f2adea45"
+      },
+      "src/core/lv_obj_tree.c.obj": {
+        "bytes": 3118,
+        "sha256": "91afb00b48642ba1366d968975442f03aea52f55b5f624ec8a0c2d4386a2129e"
+      },
+      "src/core/lv_observer.c.obj": {
+        "bytes": 6560,
+        "sha256": "dc3b0c5a4bbecaac8d9ea8dd7816365c2c280dc3b74fb9861d87733c7d32ec7e"
+      },
+      "src/core/lv_refr.c.obj": {
+        "bytes": 6806,
+        "sha256": "194d70e7766f295470d08761874a044be245ec647c86b40b3b0ffca5d2a0773e"
+      },
+      "src/debugging/sysmon/lv_sysmon.c.obj": {
+        "bytes": 1436,
+        "sha256": "302bffab3786aa2d8ba100483b4b19d2a8eaf82251312cc52376efd84bc803e6"
+      },
+      "src/display/lv_display.c.obj": {
+        "bytes": 6922,
+        "sha256": "b9e5821f7a59d7255e26b789bf295f8df27e7b1b38eedf2c1a93599d7831eab9"
+      },
+      "src/draw/convert/lv_draw_buf_convert.c.obj": {
+        "bytes": 460,
+        "sha256": "463c6e968f0fef2dc52beb0143c12deb84139509d7fd5c749a647717e739e1d9"
+      },
+      "src/draw/lv_draw.c.obj": {
+        "bytes": 2874,
+        "sha256": "dca93f0dd46890c9998c555a4afb21cd50398a0661c52a88cbf1ad5c938a4d26"
+      },
+      "src/draw/lv_draw_arc.c.obj": {
+        "bytes": 1818,
+        "sha256": "27b5c33432dced930b6348841adc3485957737edec1f5d872edff72c0acc6f78"
+      },
+      "src/draw/lv_draw_blur.c.obj": {
+        "bytes": 144,
+        "sha256": "0edf1193df6edb936b37994366d866c523e05f61cbeffd796595009098346d2e"
+      },
+      "src/draw/lv_draw_buf.c.obj": {
+        "bytes": 3374,
+        "sha256": "6d510836701aed7f7022b7d691888819556bf68a0e74249d4e67ea52ea823643"
+      },
+      "src/draw/lv_draw_image.c.obj": {
+        "bytes": 2382,
+        "sha256": "3c3a6fa985504d024a96101b81c80933687439081de853e7c4ddf0c7148f6f96"
+      },
+      "src/draw/lv_draw_label.c.obj": {
+        "bytes": 4284,
+        "sha256": "879991cb564161d89589cdd44be6e8b7b85c33781b054aeec05c4a889cfceb34"
+      },
+      "src/draw/lv_draw_line.c.obj": {
+        "bytes": 754,
+        "sha256": "a3b79401cfcdb24d5571fc5025daf638cc4bcb79f1cc70ca7d3574530a19f407"
+      },
+      "src/draw/lv_draw_mask.c.obj": {
+        "bytes": 222,
+        "sha256": "acf20f636baf787d46af1934c92dbc1a26edb8423bc179e04ac39a8b9f16def1"
+      },
+      "src/draw/lv_draw_rect.c.obj": {
+        "bytes": 2920,
+        "sha256": "8adec5a9aff69b2f4bfc8512fd6eafacd55392ef1b2e7d62695d2f411747f850"
+      },
+      "src/draw/lv_draw_triangle.c.obj": {
+        "bytes": 404,
+        "sha256": "0efd75f025ebb669d07a50113c21ed097b4ce86624397f1078f9424d8378f2de"
+      },
+      "src/draw/lv_draw_utils.c.obj": {
+        "bytes": 1582,
+        "sha256": "89a0325cedf0d3001228b37ed0d961e0dea89367e23d1e7f7c5af5d29dc29518"
+      },
+      "src/draw/sw/blend/lv_draw_sw_blend.c.obj": {
+        "bytes": 1064,
+        "sha256": "b2ba3a87ce30c52f066e178f14991277cc0d64e3a0dc629574ef95e538e46cec"
+      },
+      "src/draw/sw/blend/lv_draw_sw_blend_to_a8.c.obj": {
+        "bytes": 1998,
+        "sha256": "77f459984dea9ba2e1447943f8b2d1116582e3ff33be02cd4a9b1d62b2e919bd"
+      },
+      "src/draw/sw/blend/lv_draw_sw_blend_to_al88.c.obj": {
+        "bytes": 10722,
+        "sha256": "b49029eea6bf6afd9e69dd6aa645cf58da33a735ba63cec65037e10fca2565be"
+      },
+      "src/draw/sw/blend/lv_draw_sw_blend_to_argb8888.c.obj": {
+        "bytes": 19278,
+        "sha256": "49c8f5088f7ff1dfb4b8d8542d672a2082f0808a0b23388e56da745c5178f5fd"
+      },
+      "src/draw/sw/blend/lv_draw_sw_blend_to_argb8888_premultiplied.c.obj": {
+        "bytes": 11796,
+        "sha256": "2254ab1958ac6207fb8f2085375ea7ce6e0a42817da5b9ab671cda57acd7be5c"
+      },
+      "src/draw/sw/blend/lv_draw_sw_blend_to_i1.c.obj": {
+        "bytes": 9972,
+        "sha256": "086b845dde7c27965b782e0013dd3c55b3fa5a8adeea204e8d525a2041fab63c"
+      },
+      "src/draw/sw/blend/lv_draw_sw_blend_to_l8.c.obj": {
+        "bytes": 7922,
+        "sha256": "44d28fd68a37a3d9a9a05f2ab9c6877b73c05872ce471d25ffa0906703194eff"
+      },
+      "src/draw/sw/blend/lv_draw_sw_blend_to_rgb565.c.obj": {
+        "bytes": 13976,
+        "sha256": "fddb9269b3b7b6a58acec3bedb8e5dd6b75ea704aae4d946c1a5f0345bf3c97d"
+      },
+      "src/draw/sw/blend/lv_draw_sw_blend_to_rgb565_swapped.c.obj": {
+        "bytes": 14678,
+        "sha256": "0edb5a598c887ed15b7acf79d91827197b5bd8589c618ece3f7a42d4b3c3ef81"
+      },
+      "src/draw/sw/blend/lv_draw_sw_blend_to_rgb888.c.obj": {
+        "bytes": 10270,
+        "sha256": "5551c61b2076f9038bcd808abda4ad50e027990d42665f79fceace5ec41472ab"
+      },
+      "src/draw/sw/lv_draw_sw.c.obj": {
+        "bytes": 1312,
+        "sha256": "611d243111630c0380161f8eedad5307aa1c591b8ee65771f828c73ad0b8e8d2"
+      },
+      "src/draw/sw/lv_draw_sw_arc.c.obj": {
+        "bytes": 1936,
+        "sha256": "fe60f46072d8d5d9c26888814afa2dddf7a54c1e5563cf243d0dbe1cc4a21199"
+      },
+      "src/draw/sw/lv_draw_sw_blur.c.obj": {
+        "bytes": 3556,
+        "sha256": "ecf590eb211869ccd361c2e4840e9143d0e3777ffc0bf6fcfff3f83673c78418"
+      },
+      "src/draw/sw/lv_draw_sw_border.c.obj": {
+        "bytes": 1860,
+        "sha256": "f816646b675514b2503502aa357d222536b8b028880d3fa6a60f1461a547134f"
+      },
+      "src/draw/sw/lv_draw_sw_box_shadow.c.obj": {
+        "bytes": 4264,
+        "sha256": "306d2d9e6b4baf87ba3dbf3936993b69064a49ee98b9da2f931d6f5e70adffb8"
+      },
+      "src/draw/sw/lv_draw_sw_fill.c.obj": {
+        "bytes": 1192,
+        "sha256": "92b302b96d448e1516bf6271ab15e1e98ff9edca7c849af202004b6a01e1ae72"
+      },
+      "src/draw/sw/lv_draw_sw_grad.c.obj": {
+        "bytes": 576,
+        "sha256": "a42f86a0ab63abc4420ad9fcdf1597121da7bed70bc4eea85557b76d0e0f40fb"
+      },
+      "src/draw/sw/lv_draw_sw_img.c.obj": {
+        "bytes": 5640,
+        "sha256": "a1418813b70b565611cc0698437925bf68477c50145a6cad29721580b0a35d28"
+      },
+      "src/draw/sw/lv_draw_sw_letter.c.obj": {
+        "bytes": 764,
+        "sha256": "ca7b2973aed11c40f08712e2544ff045435e976459c68f929332544b0448282a"
+      },
+      "src/draw/sw/lv_draw_sw_line.c.obj": {
+        "bytes": 2108,
+        "sha256": "42dfcbaf068821a3e851ed9fbe4d179e69e948d68d4356caddb1f0a72772cfa0"
+      },
+      "src/draw/sw/lv_draw_sw_mask.c.obj": {
+        "bytes": 6088,
+        "sha256": "fc918d12720ce3e0cf8e20f63f143ca458da8cb51530f68f3a3b23bedc5304aa"
+      },
+      "src/draw/sw/lv_draw_sw_mask_rect.c.obj": {
+        "bytes": 590,
+        "sha256": "cce63a983ba33ecc1789817a6ec47b2844c3a211a782aec83a4d1fd80589e22c"
+      },
+      "src/draw/sw/lv_draw_sw_transform.c.obj": {
+        "bytes": 11920,
+        "sha256": "db03d52d0de7d085574bd593f803d0dde0bdc300895cb390721f101e67aa2e2a"
+      },
+      "src/draw/sw/lv_draw_sw_triangle.c.obj": {
+        "bytes": 1178,
+        "sha256": "0777bb80c7443be964e9c5cb356b0ad2ad03e75fc57b2a83c668303f18eedd6d"
+      },
+      "src/font/binfont_loader/lv_binfont_loader.c.obj": {
+        "bytes": 4500,
+        "sha256": "f6167a9a89a42780f4659fd3fea8ba04608725f200ae650484b7053a8050ba25"
+      },
+      "src/font/fmt_txt/lv_font_fmt_txt.c.obj": {
+        "bytes": 1880,
+        "sha256": "01334f2789cbb71ef5490b834f98a9de36efcbe9e3ae73737f36e184071c2955"
+      },
+      "src/font/lv_font.c.obj": {
+        "bytes": 1014,
+        "sha256": "4fe091871781e5256f5ae07e1372e4f7ebf9b31c691af71232cdea2f9558bf90"
+      },
+      "src/fs/lv_fs.c.obj": {
+        "bytes": 3676,
+        "sha256": "58be9b8ccb89997ece9cd4995b28c30893ebce2a86b91ea0bc7e87862597ea4a"
+      },
+      "src/image/lv_bin_decoder.c.obj": {
+        "bytes": 3804,
+        "sha256": "3bb41f8843573bc0c31e7c055aedce224fb533cd59d4ff17edc6124e1ec32e73"
+      },
+      "src/image/lv_image_decoder.c.obj": {
+        "bytes": 1850,
+        "sha256": "3e2e1c1605cf136a82eac68029ac4ce7d6c3cd4144df49cc61c239731fe1d107"
+      },
+      "src/indev/lv_indev.c.obj": {
+        "bytes": 9124,
+        "sha256": "b88eab7545d2d62e44213001fcb6a7380958f30c0813f61e859e8883ac27551d"
+      },
+      "src/indev/lv_indev_scroll.c.obj": {
+        "bytes": 5050,
+        "sha256": "26d1fc4cbab706174aa5a8e373feb37d78e76f5742d8dc6b746a3cbd06abb4ad"
+      },
+      "src/layouts/flex/lv_flex.c.obj": {
+        "bytes": 4768,
+        "sha256": "016fb749ac5ecf47c51bc3e687a5b173f3123784e6dea1f09cdaaa344812dd0a"
+      },
+      "src/layouts/grid/lv_grid.c.obj": {
+        "bytes": 4414,
+        "sha256": "e75dd400c4b78f47d5a641588bbf90c982aba808c2fc7844fee2b1c0a1516c98"
+      },
+      "src/layouts/lv_layout.c.obj": {
+        "bytes": 416,
+        "sha256": "61c4146f5d1bd1659404e72c956a5726778bdf9f41fd9f468b03273ec4f1a300"
+      },
+      "src/libs/frogfs/src/decomp_raw.c.obj": {
+        "bytes": 176,
+        "sha256": "77e38a5db2afc73717e1e37155a24d2f832010e023c9f8338b4c4231793cc70c"
+      },
+      "src/lv_init.c.obj": {
+        "bytes": 544,
+        "sha256": "73fb75a77b26ee8d3bffad1197ba17e20977d1afbcefa8d0e111dd882c0d3260"
+      },
+      "src/misc/cache/class/lv_cache_lru_ll.c.obj": {
+        "bytes": 1092,
+        "sha256": "7471f72b6f4820e8fbea1303589bccf5e7feb77b723aa0141ec86d192e377e47"
+      },
+      "src/misc/cache/class/lv_cache_lru_rb.c.obj": {
+        "bytes": 1426,
+        "sha256": "0f8c76038631b750d1022abc723fc60ee31cbaa2b315c77bea4922fb55541e8b"
+      },
+      "src/misc/cache/class/lv_cache_sc_da.c.obj": {
+        "bytes": 1170,
+        "sha256": "fd179cff4ac39a67ba6c0fe0188a49eff3c6f74f23ec79965660796783445f6d"
+      },
+      "src/misc/cache/instance/lv_image_cache.c.obj": {
+        "bytes": 580,
+        "sha256": "00b22a3a65e1b11cb0057466b1b19f61fcbf8a97f191c1f94ded932d07dbac40"
+      },
+      "src/misc/cache/instance/lv_image_header_cache.c.obj": {
+        "bytes": 480,
+        "sha256": "f3179b66e2a23ec11f42ad5f59470a40f16dedeae79782d9f92909965b70579c"
+      },
+      "src/misc/cache/lv_cache.c.obj": {
+        "bytes": 1318,
+        "sha256": "7abf93b7ce988db662a411574f04568a478844cb9faeba27c3ee7b7d8ff8a168"
+      },
+      "src/misc/cache/lv_cache_entry.c.obj": {
+        "bytes": 248,
+        "sha256": "5a153440f6994d54fe2d40cfe41d434ae14c296737caa50ec071be136b501842"
+      },
+      "src/misc/lv_anim.c.obj": {
+        "bytes": 3814,
+        "sha256": "536649782c6dc1c9e4f6bccf2a1b639948b3ec9df37cab7c5dd8bae00607711d"
+      },
+      "src/misc/lv_anim_timeline.c.obj": {
+        "bytes": 1918,
+        "sha256": "3a3e71b67bff13f51957eb36a5340be1d14757817d43d40be64c7916036ee8e4"
+      },
+      "src/misc/lv_area.c.obj": {
+        "bytes": 3152,
+        "sha256": "f07c9ea0d4a2b3ae3c8065dda2eea4bf4e333977ddf3e9bfe4ebcff3fe6f3c09"
+      },
+      "src/misc/lv_array.c.obj": {
+        "bytes": 1184,
+        "sha256": "0e325151b7fc97b8168cb0943661abc1aa8c45b48d6f590fcb87851fa58eb7f9"
+      },
+      "src/misc/lv_async.c.obj": {
+        "bytes": 296,
+        "sha256": "acd0c385a8a00d613d330c1042fd342de427fd8ee77574cb7a437ccf7353be7a"
+      },
+      "src/misc/lv_bidi_common.c.obj": {
+        "bytes": 24,
+        "sha256": "b41975cbb9e96a77c805e085c62aab9ceac86a385b6e4d1c1e22559e7a2f0aec"
+      },
+      "src/misc/lv_circle_buf.c.obj": {
+        "bytes": 952,
+        "sha256": "a68be554576ca42e2955082dcfe0f6cb744034fcf314f9a59566dd931f9bac90"
+      },
+      "src/misc/lv_color.c.obj": {
+        "bytes": 1706,
+        "sha256": "d8557d5f7ad8e8e048d54677acd94c725f22a3958760c22e46578761845f09ec"
+      },
+      "src/misc/lv_color_op.c.obj": {
+        "bytes": 566,
+        "sha256": "ed978e40a10f4fae65b7993701f708910f104c0ab0cbe8a49bcf915048474389"
+      },
+      "src/misc/lv_event.c.obj": {
+        "bytes": 2638,
+        "sha256": "0708bb229822000fafadefcb2d0f1e739b870116c5ace4bcaa6617ccae0097c4"
+      },
+      "src/misc/lv_grad.c.obj": {
+        "bytes": 282,
+        "sha256": "9081b998dd8b10d326f050d92cc25e467db1ce32215ca161ac549bec10a312bb"
+      },
+      "src/misc/lv_iter.c.obj": {
+        "bytes": 672,
+        "sha256": "f686ecc093b58b2cee47b4fbaaebfadf82664bf0eeea8bafa778977d46dd61c4"
+      },
+      "src/misc/lv_ll.c.obj": {
+        "bytes": 876,
+        "sha256": "2bcee1be6e0e02de3411cfdc45c17a1ebb8755571feaa3432d552af2f4023c84"
+      },
+      "src/misc/lv_lru.c.obj": {
+        "bytes": 1254,
+        "sha256": "1f9d783cc5fee78157994def9933c830fe45f5c53f5288fa94666d435d6c4139"
+      },
+      "src/misc/lv_math.c.obj": {
+        "bytes": 1612,
+        "sha256": "4ba8fbc391c779d906d668877925a183b9dd99b7ce1f302eeed1b75923ca7207"
+      },
+      "src/misc/lv_palette.c.obj": {
+        "bytes": 170,
+        "sha256": "8d064f0487697017deb4f8fb4d3e9ec053441329699fa383f05f38465f116f98"
+      },
+      "src/misc/lv_pending.c.obj": {
+        "bytes": 458,
+        "sha256": "0a29a0b317e3b4fdb9cb55236dcef665f67f7620390f1af0a083df70005a6540"
+      },
+      "src/misc/lv_rb.c.obj": {
+        "bytes": 1668,
+        "sha256": "4ce12952240d77b4e3d07c27aa3de7edd9cd98cf4e4f22fc135f8f6bf9bbf6a9"
+      },
+      "src/misc/lv_style.c.obj": {
+        "bytes": 1818,
+        "sha256": "4b83267fd5109c7a8e2810873e23b51a862f74ffda2b56eea817425a5cfeb663"
+      },
+      "src/misc/lv_style_gen.c.obj": {
+        "bytes": 3340,
+        "sha256": "a5599e85afd41f9ce4f5daaf51affafe3dfb00680b37afa3e63f2b5b83dcd555"
+      },
+      "src/misc/lv_text.c.obj": {
+        "bytes": 3496,
+        "sha256": "e02fd09f78e5176059be43c22dcdc256e94457dfaf69b8ccdd5c67c94da75c3c"
+      },
+      "src/misc/lv_timer.c.obj": {
+        "bytes": 1584,
+        "sha256": "b4d46e5315c1153897b5a52714568175dd74bac759865ebc19e475f4066c5325"
+      },
+      "src/misc/lv_tree.c.obj": {
+        "bytes": 808,
+        "sha256": "d0eee68c80e2c4d4b48e5f697120b7604d725daab79b0d8fc3a5c2042d121a2b"
+      },
+      "src/misc/lv_utils.c.obj": {
+        "bytes": 262,
+        "sha256": "98f11aa4d4647c65756754ed4f1886d8237d59c7c53cb7302f85c37b3ee916ba"
+      },
+      "src/osal/lv_freertos.c.obj": {
+        "bytes": 1364,
+        "sha256": "ddd77658e5c3b78cdba35a5c3e6b186b3af36d1ac03ad1ff444aefbe3d57ae7f"
+      },
+      "src/osal/lv_os.c.obj": {
+        "bytes": 64,
+        "sha256": "f4b9b504cdebab173dedf87badc7fc2fd1a6132a1a907039de81778f1ba4be3b"
+      },
+      "src/stdlib/clib/lv_mem_core_clib.c.obj": {
+        "bytes": 40,
+        "sha256": "2f978479a22dd95362ef740614e2309137f6c2935c0ef274117ae3cf2d36931e"
+      },
+      "src/stdlib/clib/lv_sprintf_clib.c.obj": {
+        "bytes": 44,
+        "sha256": "6b865c98b5ff1a709aedb995a3cce4a6f1ee288ae63642096a1f842af1dced70"
+      },
+      "src/stdlib/clib/lv_string_clib.c.obj": {
+        "bytes": 312,
+        "sha256": "3aef06f9ff2abddef60c208269b5906ffcce2f5e006d3e45cf11ba1e0334ac55"
+      },
+      "src/stdlib/lv_mem.c.obj": {
+        "bytes": 472,
+        "sha256": "544b6994af2fc58270adf0834c7856dfb54d8cf69b032dd91a15ed83983d757b"
+      },
+      "src/themes/default/lv_theme_default.c.obj": {
+        "bytes": 17026,
+        "sha256": "98d97ef9686ccd2c0c716033f2962bac9fe314d31506f1ed338fdc614c2d6981"
+      },
+      "src/themes/lv_theme.c.obj": {
+        "bytes": 886,
+        "sha256": "80a709fe7c565cb37a719d6ca8fe195f3d4a30c617f0fc5c75aa2a308f530eba"
+      },
+      "src/themes/mono/lv_theme_mono.c.obj": {
+        "bytes": 5558,
+        "sha256": "319b5265ef3ef05160ffaa6007ce4c470ffd3206816ad14f0b133ce1bf9d2643"
+      },
+      "src/themes/simple/lv_theme_simple.c.obj": {
+        "bytes": 3222,
+        "sha256": "a2830c4b0a6b8fc30ed6111ef1f47ffd240732e205a751ede932ab066839458e"
+      },
+      "src/tick/lv_tick.c.obj": {
+        "bytes": 330,
+        "sha256": "8d549c7e1e43e7582e5fd1e11f55ac7a3ae1f870a522c47576db7592048c6153"
+      },
+      "src/widgets/animimage/lv_animimage.c.obj": {
+        "bytes": 452,
+        "sha256": "8b1ff8d361840abac7e51765008ec615986707f5bfa7d8b35bfb529d2ba49da7"
+      },
+      "src/widgets/arc/lv_arc.c.obj": {
+        "bytes": 6144,
+        "sha256": "c3c77299ad6490e3e4dbdfcfc4617ee5b8794deb1e8ddcbb59b32ea6b96ce9b1"
+      },
+      "src/widgets/arclabel/lv_arclabel.c.obj": {
+        "bytes": 3146,
+        "sha256": "f0f7014cbc1f769aec1cd898af9b371cad8789e3b8586e8a530d8928974d8902"
+      },
+      "src/widgets/bar/lv_bar.c.obj": {
+        "bytes": 3884,
+        "sha256": "79990e75b48b4d3dc23f5332b04dc48f68566f24d9a5148bfe4227c1c2095a4f"
+      },
+      "src/widgets/button/lv_button.c.obj": {
+        "bytes": 74,
+        "sha256": "bb27a28f9acbab6c876bc5cb2b7d769feaf92e248188c33bc8feda79a7bde8fc"
+      },
+      "src/widgets/buttonmatrix/lv_buttonmatrix.c.obj": {
+        "bytes": 6160,
+        "sha256": "a2de9757bf643e24c3865abc4a4ac4e808dc0fc2faff3be70f1446b7f45d0d96"
+      },
+      "src/widgets/calendar/lv_calendar.c.obj": {
+        "bytes": 2286,
+        "sha256": "079d047872095d375c59ba99a7101df5ddb5d84a739f48503a45fa15da97bed5"
+      },
+      "src/widgets/calendar/lv_calendar_header_arrow.c.obj": {
+        "bytes": 696,
+        "sha256": "b6cfbf28a30b777d5c24c9b0d811a72a812a3e14b80420474434612876ff3bd1"
+      },
+      "src/widgets/calendar/lv_calendar_header_dropdown.c.obj": {
+        "bytes": 810,
+        "sha256": "465a11b1cb9b2fa5027af1229c258d5adc7ba973715f01e3f374de1251d534ad"
+      },
+      "src/widgets/canvas/lv_canvas.c.obj": {
+        "bytes": 1984,
+        "sha256": "d2aa0a2e6a53127f59e9e5b25ce62fa212b5f6e398311238d3a895bb99ba0920"
+      },
+      "src/widgets/chart/lv_chart.c.obj": {
+        "bytes": 10398,
+        "sha256": "86b4ad19d0696935ac037fc8c68fc1d359cb2ba95940abaa3a630085762194b3"
+      },
+      "src/widgets/checkbox/lv_checkbox.c.obj": {
+        "bytes": 1514,
+        "sha256": "f54d70789a7540058f7ba3922b1382ed0899e386afdb1193871f9d02d5712fdb"
+      },
+      "src/widgets/dropdown/lv_dropdown.c.obj": {
+        "bytes": 7172,
+        "sha256": "1ff2487236fea0e45e1c1b084a53095ec632045147e2e23cdf28113a9eaa8ee4"
+      },
+      "src/widgets/image/lv_image.c.obj": {
+        "bytes": 5236,
+        "sha256": "8a647306b3a6f65209bef723c1c0d40cc806c4bc514be79e4dac7b4073106d7d"
+      },
+      "src/widgets/imagebutton/lv_imagebutton.c.obj": {
+        "bytes": 1944,
+        "sha256": "ada83af40c4744178c2f8889b4244027335d455183799922b9785bebbd064e94"
+      },
+      "src/widgets/keyboard/lv_keyboard.c.obj": {
+        "bytes": 1364,
+        "sha256": "9bb23e9a44c200518458c43ed25574ceff055121041f87d9e4c0aa4ceaa2e896"
+      },
+      "src/widgets/label/lv_label.c.obj": {
+        "bytes": 7362,
+        "sha256": "28231f67b7828dfd91ea59687f0b564e82e0b956cdeb698fda5643a205a941d5"
+      },
+      "src/widgets/led/lv_led.c.obj": {
+        "bytes": 1428,
+        "sha256": "b7b01c65a75a2652f5d0cc61f5ed8ad7ea84795198261d4b069d12a358b9e63c"
+      },
+      "src/widgets/line/lv_line.c.obj": {
+        "bytes": 1070,
+        "sha256": "eb174783c2cff06811eda4d62f712036c01ff40c01c20e83f74e8d3119b26601"
+      },
+      "src/widgets/list/lv_list.c.obj": {
+        "bytes": 546,
+        "sha256": "989d0b44395f47c628b185aeadc273511295b9df8da2e648a25c2128f0033963"
+      },
+      "src/widgets/menu/lv_menu.c.obj": {
+        "bytes": 3610,
+        "sha256": "473a9cabbacb1e5ace4901bd6522563c23f88d040ebb5dae3998a83426c05612"
+      },
+      "src/widgets/msgbox/lv_msgbox.c.obj": {
+        "bytes": 1340,
+        "sha256": "6acf386cd29b86252bf5e2f1c3e5328730b690e4530d922758a8461e9aeaf06a"
+      },
+      "src/widgets/roller/lv_roller.c.obj": {
+        "bytes": 5400,
+        "sha256": "0a9ecd402c62d72cfc3742cb7cc25ddd0e858aea0b6bb1e208de9eb4b1ab05fa"
+      },
+      "src/widgets/scale/lv_scale.c.obj": {
+        "bytes": 10708,
+        "sha256": "2c42b9ca839725274cb0594a645a78bc5b148daff4e339fb2814c3ce3d6b7d8b"
+      },
+      "src/widgets/slider/lv_slider.c.obj": {
+        "bytes": 4108,
+        "sha256": "5d803f0446394dda0902cb534b7db485e9e92939934fbbef3c9d6c86475e55d8"
+      },
+      "src/widgets/span/lv_span.c.obj": {
+        "bytes": 8082,
+        "sha256": "7f735c67deca043b1f77fe1550b09ee36dd8b51bf000c44fdc99f541e9ca65a6"
+      },
+      "src/widgets/spinbox/lv_spinbox.c.obj": {
+        "bytes": 2370,
+        "sha256": "52ac0249330aec3be2eeee9ebf657f6009d22f343cf07441424d0165db1db3ab"
+      },
+      "src/widgets/spinner/lv_spinner.c.obj": {
+        "bytes": 364,
+        "sha256": "3bd2390b3f8a6971ba7e30b05fe7510a7ee526d98be2cd36719f475117b32243"
+      },
+      "src/widgets/switch/lv_switch.c.obj": {
+        "bytes": 1356,
+        "sha256": "0121c4fa2b7e51c93c507e7c638b3060a4660ee57379ba493cf5d407b4060967"
+      },
+      "src/widgets/table/lv_table.c.obj": {
+        "bytes": 6382,
+        "sha256": "ffde553a335faf715da1f18b4929d2d7d922e25fcae9646196e3f2641667b4ce"
+      },
+      "src/widgets/tabview/lv_tabview.c.obj": {
+        "bytes": 2262,
+        "sha256": "bf1e54ad3ef865b0d5617894e5eb9dd81161bc3ac4bc463a4f5d19683459d5c9"
+      },
+      "src/widgets/textarea/lv_textarea.c.obj": {
+        "bytes": 7690,
+        "sha256": "53efaa609a016b30ab280872b423129296c8a6c1d7f2ce5f93271960d945dbdb"
+      },
+      "src/widgets/tileview/lv_tileview.c.obj": {
+        "bytes": 894,
+        "sha256": "4259dbee367553bff511c3576a68af994ba89257ca47626f66ac77d6efc18457"
+      },
+      "src/widgets/win/lv_win.c.obj": {
+        "bytes": 486,
+        "sha256": "a741059e3fff51111408b155bdc0412e2666c599e24c256499c295d6bc83c2fa"
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "/tmp/present-s31-layout-20261109",
+  "sampler": "Constructor, callback and logging strings in internal RAM; original probe unchanged; measuring address generated and checked from each final ELF, exact pc_address.h archived per image",
+  "pad24": "Unexecuted 24 bytes in main archive before LVGL; separately verify actual address shift",
+  "sampler_dump": "Low priority task after44seconds, capture continues toPC_DONE",
+  "idf_patched": false
+}

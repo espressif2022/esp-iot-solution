@@ -1,0 +1,42 @@
+{
+  "proof": [
+    {
+      "implementation": "present",
+      "lvgl_source_objects": 139,
+      "relocatable_text_identical": true,
+      "before": {
+        "iram": 62120,
+        "flash": 552398,
+        "function_bytes": 978,
+        "function_section": ".flash.text"
+      },
+      "after": {
+        "iram": 63132,
+        "flash": 551420,
+        "function_bytes": 1006,
+        "function_section": ".iram0.text"
+      },
+      "iram_delta": 1012
+    },
+    {
+      "implementation": "adapter",
+      "lvgl_source_objects": 139,
+      "relocatable_text_identical": true,
+      "before": {
+        "iram": 61464,
+        "flash": 518692,
+        "function_bytes": 978,
+        "function_section": ".flash.text"
+      },
+      "after": {
+        "iram": 62476,
+        "flash": 517714,
+        "function_bytes": 1006,
+        "function_section": ".iram0.text"
+      },
+      "iram_delta": 1012
+    }
+  ],
+  "idf_tracked_changes": false,
+  "idf_commit": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe"
+}

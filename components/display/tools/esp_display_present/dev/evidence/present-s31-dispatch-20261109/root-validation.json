@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "targeted_cases": 30,
+  "pc_images": 4,
+  "source_images": 11,
+  "counter_and_input_verified": true,
+  "pc_sampling_and_bounds_verified": true,
+  "same_idf_and_comparable_configuration": true,
+  "original_flash_restored": true,
+  "no_build_or_firmware": true
+}

@@ -1,0 +1,31 @@
+{
+  "revision": "afab70d85c60b62d07a86fd099aba26acca98252",
+  "board": "s31-rgb",
+  "mac": "30:ed:a0:f3:f7:b8",
+  "usb_serial": "9ebcd36ef471f0119543029f1045c30f",
+  "port": "/dev/ttyUSB0",
+  "profiles": [
+    "DOUBLE_PARTIAL"
+  ],
+  "angles": [
+    0,
+    90
+  ],
+  "input_tiles": 1,
+  "capacity_bytes": {
+    "0": 80000,
+    "90": 48000
+  },
+  "xip": [
+    "off",
+    "on"
+  ],
+  "present_order": "per angle: worker,inline,inline,worker; same binary and retained worker resources",
+  "adapter_order": "per angle: adapter,adapter",
+  "idf_patched": false,
+  "production_checkout_modified": true,
+  "diagnostic_dispatch_patch": true,
+  "rgb_bounce_lines": 10,
+  "rgb_bounce_buffer_bytes_each": 16000,
+  "rgb_bounce_buffer_count": 2
+}

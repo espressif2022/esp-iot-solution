@@ -1,0 +1,28 @@
+{
+  "ready": true,
+  "font_object_addresses_equal": true,
+  "hot_function_addresses_equal": true,
+  "watch_address": "0x2f0152a5",
+  "functions": {
+    "lv_draw_sw_blend_color_to_rgb565": [
+      1074162430,
+      1524
+    ],
+    "lv_draw_sw_blend": [
+      1074098200,
+      916
+    ],
+    "lv_font_get_glyph_dsc_fmt_txt": [
+      1074077984,
+      454
+    ],
+    "lv_text_get_next_line": [
+      1073938826,
+      20
+    ],
+    "lv_text_get_next_line.part.0": [
+      1073937488,
+      1268
+    ]
+  }
+}

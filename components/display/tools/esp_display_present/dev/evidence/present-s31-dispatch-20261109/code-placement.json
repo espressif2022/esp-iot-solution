@@ -1,0 +1,254 @@
+[
+  {
+    "xip": "off",
+    "implementation": "present",
+    "function": "lv_draw_sw_blend_color_to_rgb565",
+    "address": "0x4006c718",
+    "bytes": 1524,
+    "section": ".flash.text",
+    "line_offset_64": 24
+  },
+  {
+    "xip": "off",
+    "implementation": "present",
+    "function": "lv_draw_sw_blend_image_to_rgb565",
+    "address": "0x4006cd0c",
+    "bytes": 9728,
+    "section": ".flash.text",
+    "line_offset_64": 12
+  },
+  {
+    "xip": "off",
+    "implementation": "present",
+    "function": "lv_draw_sw_blend",
+    "address": "0x4005cc32",
+    "bytes": 916,
+    "section": ".flash.text",
+    "line_offset_64": 50
+  },
+  {
+    "xip": "off",
+    "implementation": "present",
+    "function": "lv_draw_sw_letter",
+    "address": "0x4004fc6a",
+    "bytes": 128,
+    "section": ".flash.text",
+    "line_offset_64": 42
+  },
+  {
+    "xip": "off",
+    "implementation": "present",
+    "function": "lv_draw_sw_fill",
+    "address": "0x4004df52",
+    "bytes": 1112,
+    "section": ".flash.text",
+    "line_offset_64": 18
+  },
+  {
+    "xip": "off",
+    "implementation": "present",
+    "function": "esp_display_present_engine_acquire_buffer",
+    "address": "0x400113ca",
+    "bytes": 504,
+    "section": ".flash.text",
+    "line_offset_64": 10
+  },
+  {
+    "xip": "off",
+    "implementation": "present",
+    "function": "esp_display_present_executor_run",
+    "address": "0x40012730",
+    "bytes": 148,
+    "section": ".flash.text",
+    "line_offset_64": 48
+  },
+  {
+    "xip": "off",
+    "implementation": "present",
+    "function": "bench_diag_inline",
+    "address": "0x2f002556",
+    "bytes": 10,
+    "section": ".iram0.text",
+    "line_offset_64": 22
+  },
+  {
+    "xip": "off",
+    "implementation": "adapter",
+    "function": "lv_draw_sw_blend_color_to_rgb565",
+    "address": "0x4002346a",
+    "bytes": 1524,
+    "section": ".flash.text",
+    "line_offset_64": 42
+  },
+  {
+    "xip": "off",
+    "implementation": "adapter",
+    "function": "lv_draw_sw_blend_image_to_rgb565",
+    "address": "0x40023a5e",
+    "bytes": 9728,
+    "section": ".flash.text",
+    "line_offset_64": 30
+  },
+  {
+    "xip": "off",
+    "implementation": "adapter",
+    "function": "lv_draw_sw_blend",
+    "address": "0x40051c4e",
+    "bytes": 916,
+    "section": ".flash.text",
+    "line_offset_64": 14
+  },
+  {
+    "xip": "off",
+    "implementation": "adapter",
+    "function": "lv_draw_sw_letter",
+    "address": "0x4002d2f6",
+    "bytes": 128,
+    "section": ".flash.text",
+    "line_offset_64": 54
+  },
+  {
+    "xip": "off",
+    "implementation": "adapter",
+    "function": "lv_draw_sw_fill",
+    "address": "0x4002b5de",
+    "bytes": 1112,
+    "section": ".flash.text",
+    "line_offset_64": 30
+  },
+  {
+    "xip": "off",
+    "implementation": "adapter",
+    "function": "rotate_copy_strided_region",
+    "address": "0x2f002ddc",
+    "bytes": 552,
+    "section": ".iram0.text",
+    "line_offset_64": 28
+  },
+  {
+    "xip": "on",
+    "implementation": "present",
+    "function": "lv_draw_sw_blend_color_to_rgb565",
+    "address": "0x5006b47c",
+    "bytes": 1524,
+    "section": ".flash.text",
+    "line_offset_64": 60
+  },
+  {
+    "xip": "on",
+    "implementation": "present",
+    "function": "lv_draw_sw_blend_image_to_rgb565",
+    "address": "0x5006ba70",
+    "bytes": 9728,
+    "section": ".flash.text",
+    "line_offset_64": 48
+  },
+  {
+    "xip": "on",
+    "implementation": "present",
+    "function": "lv_draw_sw_blend",
+    "address": "0x5005b996",
+    "bytes": 916,
+    "section": ".flash.text",
+    "line_offset_64": 22
+  },
+  {
+    "xip": "on",
+    "implementation": "present",
+    "function": "lv_draw_sw_letter",
+    "address": "0x5004e9ce",
+    "bytes": 128,
+    "section": ".flash.text",
+    "line_offset_64": 14
+  },
+  {
+    "xip": "on",
+    "implementation": "present",
+    "function": "lv_draw_sw_fill",
+    "address": "0x5004ccb6",
+    "bytes": 1112,
+    "section": ".flash.text",
+    "line_offset_64": 54
+  },
+  {
+    "xip": "on",
+    "implementation": "present",
+    "function": "esp_display_present_engine_acquire_buffer",
+    "address": "0x5001012e",
+    "bytes": 504,
+    "section": ".flash.text",
+    "line_offset_64": 46
+  },
+  {
+    "xip": "on",
+    "implementation": "present",
+    "function": "esp_display_present_executor_run",
+    "address": "0x50011494",
+    "bytes": 148,
+    "section": ".flash.text",
+    "line_offset_64": 20
+  },
+  {
+    "xip": "on",
+    "implementation": "present",
+    "function": "bench_diag_inline",
+    "address": "0x2f0025b6",
+    "bytes": 10,
+    "section": ".iram0.text",
+    "line_offset_64": 54
+  },
+  {
+    "xip": "on",
+    "implementation": "adapter",
+    "function": "lv_draw_sw_blend_color_to_rgb565",
+    "address": "0x500221ce",
+    "bytes": 1524,
+    "section": ".flash.text",
+    "line_offset_64": 14
+  },
+  {
+    "xip": "on",
+    "implementation": "adapter",
+    "function": "lv_draw_sw_blend_image_to_rgb565",
+    "address": "0x500227c2",
+    "bytes": 9728,
+    "section": ".flash.text",
+    "line_offset_64": 2
+  },
+  {
+    "xip": "on",
+    "implementation": "adapter",
+    "function": "lv_draw_sw_blend",
+    "address": "0x500509b2",
+    "bytes": 916,
+    "section": ".flash.text",
+    "line_offset_64": 50
+  },
+  {
+    "xip": "on",
+    "implementation": "adapter",
+    "function": "lv_draw_sw_letter",
+    "address": "0x5002c05a",
+    "bytes": 128,
+    "section": ".flash.text",
+    "line_offset_64": 26
+  },
+  {
+    "xip": "on",
+    "implementation": "adapter",
+    "function": "lv_draw_sw_fill",
+    "address": "0x5002a342",
+    "bytes": 1112,
+    "section": ".flash.text",
+    "line_offset_64": 2
+  },
+  {
+    "xip": "on",
+    "implementation": "adapter",
+    "function": "rotate_copy_strided_region",
+    "address": "0x2f002e4c",
+    "bytes": 552,
+    "section": ".iram0.text",
+    "line_offset_64": 12
+  }
+]

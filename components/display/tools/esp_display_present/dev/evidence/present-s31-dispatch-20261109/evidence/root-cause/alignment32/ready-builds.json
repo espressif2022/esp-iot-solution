@@ -1,0 +1,45 @@
+{
+  "ready": true,
+  "compiler_flag": "-fmin-function-alignment=32",
+  "proof": [
+    {
+      "variant": "baseline",
+      "implementation": "present",
+      "hot_functions_aligned32": true,
+      "addresses": {
+        "lv_draw_sw_blend_color_to_rgb565": "0x4006fcc0",
+        "lv_draw_sw_blend": "0x4005fe20",
+        "lv_font_get_glyph_dsc_fmt_txt": "0x4005a680",
+        "lv_font_get_bitmap_fmt_txt": "0x4005a280",
+        "lv_text_get_next_line.part.0": "0x400344a0"
+      },
+      "flash_text_bytes": 590064
+    },
+    {
+      "variant": "baseline",
+      "implementation": "adapter",
+      "hot_functions_aligned32": true,
+      "addresses": {
+        "lv_draw_sw_blend_color_to_rgb565": "0x40025620",
+        "lv_draw_sw_blend": "0x40058880",
+        "lv_font_get_glyph_dsc_fmt_txt": "0x4006bba0",
+        "lv_font_get_bitmap_fmt_txt": "0x4006b7a0",
+        "lv_text_get_next_line.part.0": "0x4003b5e0"
+      },
+      "flash_text_bytes": 557036
+    },
+    {
+      "variant": "pad24",
+      "implementation": "present",
+      "hot_functions_aligned32": true,
+      "addresses": {
+        "lv_draw_sw_blend_color_to_rgb565": "0x4006fce0",
+        "lv_draw_sw_blend": "0x4005fe40",
+        "lv_font_get_glyph_dsc_fmt_txt": "0x4005a6a0",
+        "lv_font_get_bitmap_fmt_txt": "0x4005a2a0",
+        "lv_text_get_next_line.part.0": "0x400344c0"
+      },
+      "flash_text_bytes": 590096
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "parent": "/tmp/present-s31-layout-20261109",
+  "experiment": "LVGL unconditional function entry minimum alignment32 (-fmin-function-alignment=32); identical compile flag applied to present and adapter",
+  "pad24": "24 bytes before LVGL; source macro paths normalized",
+  "tiles": 1,
+  "bounce_lines": 10,
+  "xip": "off",
+  "scene": "Screen sized text",
+  "seconds": 18
+}
