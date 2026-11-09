@@ -170,7 +170,7 @@ class RunnerTest(unittest.TestCase):
             (root / 'manifest.json').write_text(json.dumps(manifest))
             tail = 'PASS mode=DOUBLE_PARTIAL rotation=90 lvgl_fps=20 scenes=16\nSUITE_PASS board=x'
             for capacity in [None, 80000, 48000]:
-                audit = '' if capacity is None else f'BUFFER_AUDIT: mode=DOUBLE_PARTIAL rotation=90 min_bytes={capacity} max_bytes={capacity} flushes=20 rendered=4\n'
+                audit = '' if capacity is None else f'BUFFER_AUDIT: mode=DOUBLE_PARTIAL rotation=90 active_bytes={capacity} min_bytes={capacity} max_bytes={capacity} flushes=20 rendered=4\n'
                 (root / 'live.log').write_text(audit + tail)
                 if capacity == 48000:
                     runner.report(args)
@@ -178,6 +178,31 @@ class RunnerTest(unittest.TestCase):
                 else:
                     with self.assertRaises(ValueError):
                         runner.report(args)
+
+    def test_compare_rejects_different_buffer_capacity_or_memory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args = SimpleNamespace(work_root=Path(tmp), board='s31-rgb')
+            base = Path(tmp) / args.board / 'benchmark'
+            cases = runner.cases_for('s31-rgb', [90], ['DOUBLE_PARTIAL'])
+            manifest = dict(board=args.board, cases=cases, idf_commit='x', lvgl_benchmark_sha256='x',
+                            comparable_sdkconfig_sha256='x', defaults_sha256={}, test_sources_sha256={},
+                            buffer_schema=1, buffer_policy='logical-50')
+            for capacity, internal in [(80000, 1), (48000, 0), (48000, 1)]:
+                for impl in ['present', 'adapter']:
+                    root = base / impl
+                    root.mkdir(parents=True, exist_ok=True)
+                    (root / 'manifest.json').write_text(json.dumps(manifest))
+                    value = capacity if impl == 'adapter' else 48000
+                    memory = internal if impl == 'adapter' else 1
+                    audit = dict(active_bytes=value, min_bytes=value, max_bytes=value, internal=memory, psram=1-memory)
+                    row = dict(mode='DOUBLE_PARTIAL', rotation=90, status='PASS', lvgl_fps=20, buffer_audit=audit)
+                    result = dict(complete=True, matrix_complete=True, buffers_verified=True, errors=[], rows=[row])
+                    (root / 'results.json').write_text(json.dumps(result))
+                if capacity == 48000 and internal == 1:
+                    runner.compare(args)
+                else:
+                    with self.assertRaises(ValueError):
+                        runner.compare(args)
 
     def test_partial_report_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:

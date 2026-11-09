@@ -322,7 +322,7 @@ def report(args):
             expected = manifest['expected_input_bytes'][f"{row['mode']}/{row['rotation']}"]
             valid = audit.get('flushes', 0) > 0 and audit.get('rendered', 0) > 0
             if expected is not None:
-                valid &= audit.get('min_bytes') == expected == audit.get('max_bytes')
+                valid &= audit.get('active_bytes') == audit.get('min_bytes') == expected == audit.get('max_bytes')
             if not valid:
                 result['buffers_verified'] = False
                 result['errors'].append(f"Missing or mismatched buffer audit: {row['mode']}/{row['rotation']}")
@@ -349,6 +349,19 @@ def compare(args):
     if manifests['present'].get('memory_schema') != manifests['adapter'].get('memory_schema'):
         raise ValueError('Comparison memory schemas differ')
     lookup = {impl: {(r['mode'], r['rotation']): r for r in result['rows']} for impl, result in results.items()}
+    if manifests['present'].get('buffer_schema') != manifests['adapter'].get('buffer_schema'):
+        raise ValueError('Comparison buffer schemas differ')
+    if manifests['present'].get('buffer_schema') == 1:
+        for impl in ('present', 'adapter'):
+            if not results[impl].get('buffers_verified'):
+                raise ValueError('Comparison requires verified buffer audits')
+        for key in lookup['present'].keys() & lookup['adapter'].keys():
+            left, right = lookup['present'][key], lookup['adapter'][key]
+            if left['status'] != 'PASS' or right['status'] != 'PASS':
+                continue
+            for field in ('active_bytes', 'min_bytes', 'max_bytes', 'internal', 'psram'):
+                if left.get('buffer_audit', {}).get(field) != right.get('buffer_audit', {}).get(field):
+                    raise ValueError(f'Comparison input buffers differ: {key}/{field}')
     rows = []
     for c in manifests['present']['cases']:
         row = dict(board=args.board, mode=c['name'], rotation=c['rotation'])
