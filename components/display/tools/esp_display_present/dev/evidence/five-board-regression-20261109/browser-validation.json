@@ -32,5 +32,12 @@
     "expected": "258.52",
     "actual": "258.52"
   },
+  "memoryDeltaChecks": {
+    "positive": 326,
+    "negative": 184,
+    "equal": 2,
+    "missing": 448
+  },
+  "moreRemainingIsBetter": true,
   "runtimeErrors": []
 }
