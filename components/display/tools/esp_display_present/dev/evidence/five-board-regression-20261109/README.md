@@ -35,3 +35,7 @@ comparison-current.html：所有板卡默认并列，FPS和剩余内存差值都
 ## S3 FB_IRAM 开关分表对比
 
 S3 RGB 在同一张总网页按同级板卡区块展示：S3 RGB · 480×480 · R16 (iram on) 和 S3 RGB · 480×480 · R16 (iram off)，各含present/adapter四角度帧率及四时点RAM/PSRAM，导航同名。两组present箭头均相对adapter，剩余越多越好。关闭组24项为本次补测，每项完整16场景；与开启组唯一SDK配置差异为该开关，生产源码与测试输入一致。关闭后内部堆增加21.36KiB；32KiB指令缓存＋PSRAM XIP配置下FULL/DIRECT持平或低1FPS，PARTIAL/AUTO低1～3FPS。单轮数据不代表统计显著差异。原固件已恢复校验，组件默认仍开启。其他板卡无此变体；不新增NONE模式。JSON/CSV增加present_off字段，Excel拆成s3-rgb-iram-on和s3-rgb-iram-off两个独立工作表；原始证据位于相邻present-s3-fb-iram-on-off-20261109目录。
+
+## S31单tile性能定位
+
+本总表S31双方XIP关闭。新专项的XIP开关、burst/缓存维护及相同容量对照单独归档：[上板分析](../present-s31-rgb-analysis-20261109/comparison.html)，不替换本表分数。公共sdkconfig及同填50行不代表实际旋转缓冲容量相同：S31 RGB PARTIAL 90°/270°为present48000B、adapter80000B；P4 DSI对应为60000B、102400B。专项相同容量复核固定双方单tile、同开XIP。

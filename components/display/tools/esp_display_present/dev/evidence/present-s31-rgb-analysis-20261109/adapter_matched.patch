@@ -1,0 +1,22 @@
+diff -ru /tmp/present-s31-rgb-analysis-20261109/xip/source/components/display/tools/esp_display_present/dev/boards/configs/s31-rgb.defaults /tmp/present-s31-rgb-analysis-20261109/adapter_matched/source/components/display/tools/esp_display_present/dev/boards/configs/s31-rgb.defaults
+--- /tmp/present-s31-rgb-analysis-20261109/xip/source/components/display/tools/esp_display_present/dev/boards/configs/s31-rgb.defaults	2026-11-09 15:49:33.812702359 +0800
++++ /tmp/present-s31-rgb-analysis-20261109/adapter_matched/source/components/display/tools/esp_display_present/dev/boards/configs/s31-rgb.defaults	2026-11-09 16:23:27.060594399 +0800
+@@ -5,5 +5,5 @@
+ # board_s31_rgb.c configures ten bounce lines; IDF stays unchanged.
+ CONFIG_PV2_LEGACY_RGB_BOUNCE_CONFIRMED=y
+ 
+-# Isolated diagnostic: same XIP setting for both implementations.
++# Match the XIP-on pair; only rotated capacity differs from that reference.
+ CONFIG_SPIRAM_XIP_FROM_PSRAM=y
+diff -ru /tmp/present-s31-rgb-analysis-20261109/xip/source/components/display/tools/esp_display_present/dev/test_apps/benchmark/main/bridge_adapter.c /tmp/present-s31-rgb-analysis-20261109/adapter_matched/source/components/display/tools/esp_display_present/dev/test_apps/benchmark/main/bridge_adapter.c
+--- /tmp/present-s31-rgb-analysis-20261109/xip/source/components/display/tools/esp_display_present/dev/test_apps/benchmark/main/bridge_adapter.c	2026-11-09 14:26:16.000000000 +0800
++++ /tmp/present-s31-rgb-analysis-20261109/adapter_matched/source/components/display/tools/esp_display_present/dev/test_apps/benchmark/main/bridge_adapter.c	2026-11-09 15:53:40.240797885 +0800
+@@ -36,7 +36,7 @@
+         };
+     }
+ #endif
+-    cfg.tear_avoid_mode = modes[c->mode]; cfg.profile.buffer_height = 50; cfg.profile.use_psram = c->psram; cfg.profile.require_double_buffer = c->tiles == 2;
++    cfg.tear_avoid_mode = modes[c->mode]; cfg.profile.buffer_height = (c->rotation == 90 || c->rotation == 270) ? 30 : 50; cfg.profile.use_psram = c->psram; cfg.profile.require_double_buffer = c->tiles == 2;
+     esp_err_t e = esp_lv_adapter_lock(-1); if (e != ESP_OK)return e;
+     display = esp_lv_adapter_register_display(&cfg); esp_lv_adapter_unlock(); *disp = display;
+     return display ? ESP_OK : ESP_FAIL;

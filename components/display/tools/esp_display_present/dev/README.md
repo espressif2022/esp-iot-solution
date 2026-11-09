@@ -4,6 +4,10 @@
 
 生产源码的职责划分与新增文件规则见[SOURCE_LAYOUT.md](SOURCE_LAYOUT.md)。
 
+## S31 RGB 单tile性能定位（2026-11-09）
+
+[专项数据与证据](evidence/present-s31-rgb-analysis-20261109/comparison.html)：双方单tile，PARTIAL 0°/90°；40项完整16场景对照。双方同开XIP后四项均为37/36/40/40 FPS，相同旋转缓冲容量复核相同；burst与缓存维护精简未带来综合提升。只验证本专项，不替换五板全矩阵成绩；默认配置、生产源码和IDF未修改，原固件已恢复并整片校验。此前双tile尝试停止并从对比中排除。
+
 ## S3 FB_IRAM 开关对照（2026-11-09）
 
 [完整24项帧率／内存对照](evidence/present-s3-fb-iram-on-off-20261109/comparison.html)：同版本源码，SDK唯一差别为FB_IRAM y/n。关闭增加内部堆21.36KiB；当前32KiB指令缓存/XIP配置下，FULL/DIRECT基本接近，PARTIAL/AUTO低1～3FPS。关闭只用于隔离补测，组件默认仍开启；原固件整片恢复校验通过。

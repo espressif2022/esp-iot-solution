@@ -4,6 +4,7 @@
 
 | 范围 | 记录 | 状态 / 适用范围 |
 |---|---|---|
+| S31 RGB 单tile XIP性能定位 | [present-s31-rgb-analysis-20261109](present-s31-rgb-analysis-20261109/README.md) | 双方单tile；40项完整16场景；PARTIAL 0°/90°同开XIP后均37/36/40/40 FPS，同容量复核相同；burst/缓存精简无综合收益；双tile排除；默认配置未改，原固件整片恢复校验；未新增目视验收 |
 | S3 FB_IRAM 当前配置开关A/B | [present-s3-fb-iram-on-off-20261109](present-s3-fb-iram-on-off-20261109/README.md) | SDK唯一差别为FB_IRAM；OFF完整24项、ON引用同日完整24项；内部堆+21.36KiB、PARTIAL/AUTO低1～3FPS；恢复原固件并整片校验；默认仍开启 |
 | 最新五板防撕裂/GRAM完整对照 | [five-board-regression-20261109](five-board-regression-20261109/README.md) | 生产源码b607bb9a1；present108、adapter73项通过，31项跳过；RGB/DSI排除NONE、mosaico仅TE、BOX-3 GRAM；四角度/四时点内存；五板原固件整片恢复校验；无新增目视验收 |
 | 测试工程统一整理 | [unified-tests-20261106](unified-tests-20261106/README.md) | 40/40 Host、8个benchmark构建、3个专项构建；仅编译，未板测 |

@@ -1,0 +1,58 @@
+{
+  "board": "s31-rgb",
+  "expected_mac": "30:ed:a0:f3:f7:b8",
+  "port": "/dev/ttyUSB0",
+  "resolution": [
+    800,
+    480
+  ],
+  "source_commit": "b3722b581",
+  "idf_commit": "7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe",
+  "xip": false,
+  "profiles": [
+    "DOUBLE_PARTIAL",
+    "TRIPLE_PARTIAL"
+  ],
+  "angles": [
+    0,
+    90
+  ],
+  "scenes_per_case": 16,
+  "variants": [
+    "baseline",
+    "burst128",
+    "cache_contract",
+    "burst_cache",
+    "tile2"
+  ],
+  "profile_controls": [
+    "baseline",
+    "burst_cache"
+  ],
+  "adapter_reference": "fresh same-board same-case uninstrumented",
+  "restore": "fresh full-flash backup before writes; restore and independently verify at end",
+  "scope_note": "isolated experiments; no production or IDF changes; no optical acceptance",
+  "additional_controls": {
+    "xip": "present and adapter both XIP=y; default results remain XIP=n",
+    "adapter_matched": "XIP-on reference pair: adapter rotation90 physical800*30rows*2 equals present480*50rows*2; rotation0 unchanged; single tile for both."
+  },
+  "warning": "Independent four-case diagnostic order; not a rerun of complete24-case matrix; not an equal-capacity baseline at90 until matched test.",
+  "tile2_exception": {
+    "completed_cases": 2,
+    "failed_case": "TRIPLE_PARTIAL 0",
+    "error": "ESP_ERR_NO_MEM",
+    "unrun_case": "TRIPLE_PARTIAL 90",
+    "matrix_pass": false
+  },
+  "user_constraint": "Both implementations fixed to one tile; prior tile2 experiment excluded from comparison and conclusions.",
+  "expected_comparison_pass_cases": 40,
+  "prior_excluded_tile2_pass_cases": 2,
+  "comparison_variants": [
+    "baseline",
+    "burst128",
+    "cache_contract",
+    "burst_cache",
+    "xip",
+    "adapter_matched"
+  ]
+}

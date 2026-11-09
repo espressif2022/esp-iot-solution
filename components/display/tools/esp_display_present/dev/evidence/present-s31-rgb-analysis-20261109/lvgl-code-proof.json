@@ -1,0 +1,6 @@
+{
+  "objects_compared": 897,
+  "text_sections_identical": true,
+  "different_objects": {},
+  "note": "Relocatable .text bytes only, not final linked addresses or runtime memory/dispatch behavior."
+}

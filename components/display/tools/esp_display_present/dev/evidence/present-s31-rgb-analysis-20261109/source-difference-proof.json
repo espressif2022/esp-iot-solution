@@ -1,0 +1,31 @@
+{
+  "passed": true,
+  "differences": {
+    "burst128": [
+      "components/display/tools/esp_display_present/src/pixel/executor/present_executor_dma2d.c"
+    ],
+    "cache_contract": [
+      "components/display/tools/esp_display_present/src/pixel/executor/present_executor_dma2d.c",
+      "components/display/tools/esp_display_present/src/pixel/executor/present_executor_ppa.c"
+    ],
+    "burst_cache": [
+      "components/display/tools/esp_display_present/src/pixel/executor/present_executor_dma2d.c",
+      "components/display/tools/esp_display_present/src/pixel/executor/present_executor_ppa.c"
+    ],
+    "tile2": [
+      "components/display/tools/esp_display_present/dev/tools/run.py"
+    ],
+    "xip": [
+      "components/display/tools/esp_display_present/dev/boards/configs/s31-rgb.defaults"
+    ],
+    "adapter_matched": {
+      "reference": "xip/source",
+      "files": [
+        "components/display/tools/esp_display_present/dev/test_apps/benchmark/main/bridge_adapter.c",
+        "components/display/tools/esp_display_present/dev/boards/configs/s31-rgb.defaults"
+      ],
+      "effective_sdkconfig_identical": true,
+      "only_runtime_difference": "quarter-turn adapter drawbuf capacity80000 ->48000B; one tile"
+    }
+  }
+}

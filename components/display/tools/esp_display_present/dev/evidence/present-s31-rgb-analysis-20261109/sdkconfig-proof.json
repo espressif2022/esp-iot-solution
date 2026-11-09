@@ -1,0 +1,48 @@
+{
+  "passed": true,
+  "full_present_variant_differences": {
+    "burst128": {},
+    "cache_contract": {},
+    "burst_cache": {},
+    "tile2": {}
+  },
+  "adapter_common_differences": {},
+  "xip": "n",
+  "xip_present_common_changes": {
+    "CONFIG_SPIRAM_FETCH_INSTRUCTIONS": [
+      null,
+      "y"
+    ],
+    "CONFIG_SPIRAM_FLASH_LOAD_TO_PSRAM": [
+      null,
+      "y"
+    ],
+    "CONFIG_SPIRAM_RODATA": [
+      null,
+      "y"
+    ],
+    "CONFIG_SPIRAM_XIP_FROM_PSRAM": [
+      "n",
+      "y"
+    ]
+  },
+  "xip_adapter_common_changes": {
+    "CONFIG_SPIRAM_FETCH_INSTRUCTIONS": [
+      null,
+      "y"
+    ],
+    "CONFIG_SPIRAM_FLASH_LOAD_TO_PSRAM": [
+      null,
+      "y"
+    ],
+    "CONFIG_SPIRAM_RODATA": [
+      null,
+      "y"
+    ],
+    "CONFIG_SPIRAM_XIP_FROM_PSRAM": [
+      "n",
+      "y"
+    ]
+  },
+  "adapter_matched_vs_xip_adapter_full_differences": {}
+}

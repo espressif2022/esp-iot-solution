@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "runs": {
+    "baseline/present": {
+      "runtime_xip_text_and_rodata": false
+    },
+    "baseline/adapter": {
+      "runtime_xip_text_and_rodata": false
+    },
+    "xip/present": {
+      "runtime_xip_text_and_rodata": true
+    },
+    "xip/adapter": {
+      "runtime_xip_text_and_rodata": true
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "time": "2026-11-09T08:37:59.182809+00:00",
+  "action": "done",
+  "tests_succeeded": true,
+  "firmware_changed": true,
+  "restored": true,
+  "xip_complete": true,
+  "adapter_matched_complete": true,
+  "tile2_matrix_failed": true
+}

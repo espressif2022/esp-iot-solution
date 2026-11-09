@@ -1,0 +1,12 @@
+diff -ru /tmp/present-s31-rgb-analysis-20261109/baseline/source/components/display/tools/esp_display_present/src/pixel/executor/present_executor_dma2d.c /tmp/present-s31-rgb-analysis-20261109/burst128/source/components/display/tools/esp_display_present/src/pixel/executor/present_executor_dma2d.c
+--- /tmp/present-s31-rgb-analysis-20261109/baseline/source/components/display/tools/esp_display_present/src/pixel/executor/present_executor_dma2d.c	2026-11-09 14:26:16.000000000 +0800
++++ /tmp/present-s31-rgb-analysis-20261109/burst128/source/components/display/tools/esp_display_present/src/pixel/executor/present_executor_dma2d.c	2026-11-09 15:29:59.202654130 +0800
+@@ -165,7 +165,7 @@
+         return ESP_ERR_NO_MEM;
+     }
+     esp_err_t error;
+-    async_memcpy_dma2d_config_t cfg = {.backlog = 1};
++    async_memcpy_dma2d_config_t cfg = {.backlog = 1, .dma_burst_size = 128};
+     error = esp_async_memcpy_install_dma2d(&cfg, &plugin->dma);
+     if (error != ESP_OK) {
+         present_event_destroy(plugin->done);

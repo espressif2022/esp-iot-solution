@@ -1,0 +1,10 @@
+{
+  "present": {
+    "internal_heap_reduction_bytes": 10688,
+    "psram_heap_reduction_bytes": 947712
+  },
+  "adapter": {
+    "internal_heap_reduction_bytes": 10672,
+    "psram_heap_reduction_bytes": 925056
+  }
+}

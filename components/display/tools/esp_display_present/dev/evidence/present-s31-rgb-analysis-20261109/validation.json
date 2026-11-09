@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "comparison_cases": 40,
+  "scenes_per_case": 16,
+  "single_tile_all_comparison_cases": true,
+  "excluded_tile2_not_in_comparison": true,
+  "full_firmware_restored": true,
+  "scope": "S31 RGB PARTIAL 0/90 only; single run; optical acceptance not performed"
+}

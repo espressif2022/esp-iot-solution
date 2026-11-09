@@ -1,0 +1,12 @@
+diff -ru /tmp/present-s31-rgb-analysis-20261109/baseline/source/components/display/tools/esp_display_present/dev/tools/run.py /tmp/present-s31-rgb-analysis-20261109/tile2/source/components/display/tools/esp_display_present/dev/tools/run.py
+--- /tmp/present-s31-rgb-analysis-20261109/baseline/source/components/display/tools/esp_display_present/dev/tools/run.py	2026-11-09 14:26:16.000000000 +0800
++++ /tmp/present-s31-rgb-analysis-20261109/tile2/source/components/display/tools/esp_display_present/dev/tools/run.py	2026-11-09 15:29:59.288654495 +0800
+@@ -30,7 +30,7 @@
+     """One case table for both implementations; unsupported cases remain explicit."""
+     scanout = BOARDS[board]['interface'] in ('rgb', 'dsi')
+     if scanout:
+-        profiles_all = [(n, 'B_' + n, 1, False, 0) for n in
++        profiles_all = [(n, 'B_' + n, 2, False, 0) for n in
+                         ('NONE', 'DOUBLE_FULL', 'TRIPLE_FULL', 'DOUBLE_DIRECT', 'DOUBLE_PARTIAL', 'TRIPLE_PARTIAL', 'AUTO')]
+     elif board == 's31-qspi':
+         profiles_all = [(f'TE_C{c}_T{t}', 'B_TE', t, False, c) for c in (1, 2) for t in (1, 2)]

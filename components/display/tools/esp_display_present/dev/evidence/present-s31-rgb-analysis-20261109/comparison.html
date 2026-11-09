@@ -1,0 +1,184 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>S31 RGB 性能定位</title><style>body{font:15px/1.6 system-ui,sans-serif;margin:0;background:#f5f7fa;color:#172b45}main{max-width:1450px;margin:auto;padding:24px}section{background:white;padding:20px;margin:20px 0;border:1px solid #dbe3ec;border-radius:12px}.wrap{overflow:auto}table{border-collapse:collapse;width:100%}th,td{padding:9px 12px;border-bottom:1px solid #dbe3ec;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{background:#edf2f8}.delta{font-size:12px;color:#357455;margin-left:5px}.down{color:#ad4c3e}a{color:#22629d}.muted{color:#64748b}summary{cursor:pointer;font-weight:600}h1{font-size:26px}h2{font-size:21px}</style><main><h1>S31 RGB · 800×480 · 性能定位</h1><p>2026-11-09 · MAC 30:ed:a0:f3:f7:b8 · 干净 IDF 7b9cc1ac79f8 · 默认XIP关闭，专项同开另列 · 每项完整16场景</p><p>隔离实验，生产代码未修改。相同四项顺序；只列 PARTIAL 0°/90°，不能替代原五板完整矩阵。按用户要求，所有正式对照固定双方单tile；此前双tile尝试已停止，仅保留原始调试记录，不进入对比和结论。带计时和不带计时分表，箭头仅相对各表原始present。单轮整数均值；小差异不代表统计显著变化。</p><p><a href="comparison.csv">FPS CSV</a> · <a href="metrics.csv">分段计时CSV</a> · <a href="README.md">口径与证据</a> · <a href="../present-adapter-five-board-20261109/comparison-current.html">五板原总表</a></p>
+<section id="findings"><h2>上板结论</h2><p>所有正式对照固定单tile。按双0°、双90°、三0°、三90°顺序：XIP关时present为[17, 17, 24, 23]，adapter为[19, 24, 27, 29]；双方XIP开时present为[37, 36, 40, 40]，adapter为[37, 36, 40, 40]。</p><p>不开XIP时，burst128＋缓存精简的无计时复核为[17, 17, 24, 23]，与原始present对照。仅修改这些拷贝参数未追回原差距。</p><p>同开XIP后，adapter再把90°容量改为与present相同的48000B，成绩为[37, 36, 40, 40]。原始adapter的90°容量为80000B；因此原表同样50行不代表旋转后同容量。</p><p>XIP开关同时改变.text和.rodata访问位置；此次没有分别隔离取指、只读数据、I-cache冲突或任务调度成本，不能把现象进一步确定为某一种。897个LVGL对象的可重定位.text字节一致，也不代表最终链接地址和运行缓存行为一致。</p><p>本板实际为80MHz DIO Flash、200MHz Octal PSRAM、16KiB指令缓存；XIP开关同时移动代码和只读数据。数据确认了访问路径对成绩的影响，尚未单独量化取指与只读数据的贡献。</p><p>XIP开并非无内存代价：启动前PSRAM可用堆总量减少present 925.50KiB、adapter 903.38KiB；内部堆总量各少约10.44/10.42KiB。默认配置未改。</p><p>本结论限于这块S31 RGB的PARTIAL 0°/90°四项。未重测FULL/DIRECT及180°/270°，不把专项结果替换原五板总表。</p></section>
+<section><h2>隔离实验 · 均带相同计时</h2><div class="wrap"><table id="profile"><thead><tr><th>模式／角度</th><th>原始 present</th><th>仅 burst128</th><th>仅缓存维护精简</th><th>burst128＋缓存精简</th></tr></thead><tbody>
+<tr><td>DOUBLE_PARTIAL / 0°</td><td><span class="grade">16</span></td><td><span class="grade">16</span><span class="delta ">＝ 0</span></td><td><span class="grade">16</span><span class="delta ">＝ 0</span></td><td><span class="grade">17</span><span class="delta ">⬆️ +1</span></td></tr>
+<tr><td>DOUBLE_PARTIAL / 90°</td><td><span class="grade">18</span></td><td><span class="grade">17</span><span class="delta down">⬇️ -1</span></td><td><span class="grade">17</span><span class="delta down">⬇️ -1</span></td><td><span class="grade">17</span><span class="delta down">⬇️ -1</span></td></tr>
+<tr><td>TRIPLE_PARTIAL / 0°</td><td><span class="grade">23</span></td><td><span class="grade">24</span><span class="delta ">⬆️ +1</span></td><td><span class="grade">23</span><span class="delta ">＝ 0</span></td><td><span class="grade">24</span><span class="delta ">⬆️ +1</span></td></tr>
+<tr><td>TRIPLE_PARTIAL / 90°</td><td><span class="grade">23</span></td><td><span class="grade">22</span><span class="delta down">⬇️ -1</span></td><td><span class="grade">22</span><span class="delta down">⬇️ -1</span></td><td><span class="grade">22</span><span class="delta down">⬇️ -1</span></td></tr>
+</tbody></table></div></section><section><h2>不带计时复核 · 同板adapter参考</h2><div class="wrap"><table id="control"><thead><tr><th>模式／角度</th><th>原始present</th><th>burst128＋缓存精简</th><th>原始adapter</th></tr></thead><tbody>
+<tr><td>DOUBLE_PARTIAL / 0°</td><td><span class="grade">17</span></td><td><span class="grade">17</span><span class="delta ">＝ 0</span></td><td><span class="grade">19</span></td></tr>
+<tr><td>DOUBLE_PARTIAL / 90°</td><td><span class="grade">17</span></td><td><span class="grade">17</span><span class="delta ">＝ 0</span></td><td><span class="grade">24</span></td></tr>
+<tr><td>TRIPLE_PARTIAL / 0°</td><td><span class="grade">24</span></td><td><span class="grade">24</span><span class="delta ">＝ 0</span></td><td><span class="grade">27</span></td></tr>
+<tr><td>TRIPLE_PARTIAL / 90°</td><td><span class="grade">23</span></td><td><span class="grade">23</span><span class="delta ">＝ 0</span></td><td><span class="grade">29</span></td></tr>
+</tbody></table></div></section><section><h2>XIP 同开对照 · 不带计时</h2><div class="wrap"><table id="xip"><thead><tr><th>模式／角度</th><th>present XIP关</th><th>adapter XIP关</th><th>present XIP开</th><th>adapter XIP开</th></tr></thead><tbody>
+<tr><td>DOUBLE_PARTIAL / 0°</td><td><span class="grade">17</span></td><td><span class="grade">19</span></td><td><span class="grade">37</span></td><td><span class="grade">37</span></td></tr>
+<tr><td>DOUBLE_PARTIAL / 90°</td><td><span class="grade">17</span></td><td><span class="grade">24</span></td><td><span class="grade">36</span></td><td><span class="grade">36</span></td></tr>
+<tr><td>TRIPLE_PARTIAL / 0°</td><td><span class="grade">24</span></td><td><span class="grade">27</span></td><td><span class="grade">40</span></td><td><span class="grade">40</span></td></tr>
+<tr><td>TRIPLE_PARTIAL / 90°</td><td><span class="grade">23</span></td><td><span class="grade">29</span></td><td><span class="grade">40</span></td><td><span class="grade">40</span></td></tr>
+</tbody></table></div></section><section><h2>旋转缓冲容量对齐 · 双方XIP开、单tile、无计时</h2><p>本表双方均开XIP并使用单tile。原始adapter按物理宽800×50行分配80000B；present在90°按逻辑宽480×50行分配48000B。本组adapter仅在90°将物理行数改30，使容量同为48000B；0°保持80000B。测试顺序相同。</p><div class="wrap"><table id="matched"><thead><tr><th>模式／角度</th><th>present</th><th>adapter原容量</th><th>adapter同容量</th></tr></thead><tbody>
+<tr><td>DOUBLE_PARTIAL / 0°</td><td><span class="grade">37</span></td><td><span class="grade">37</span></td><td><span class="grade">37</span></td></tr>
+<tr><td>DOUBLE_PARTIAL / 90°</td><td><span class="grade">36</span></td><td><span class="grade">36</span></td><td><span class="grade">36</span></td></tr>
+<tr><td>TRIPLE_PARTIAL / 0°</td><td><span class="grade">40</span></td><td><span class="grade">40</span></td><td><span class="grade">40</span></td></tr>
+<tr><td>TRIPLE_PARTIAL / 90°</td><td><span class="grade">40</span></td><td><span class="grade">40</span></td><td><span class="grade">40</span></td></tr>
+</tbody></table></div></section><section><h2>分段计时</h2><p>各阶段会嵌套、重叠，不能相加作为整帧耗时。缓存bytes是累计维护地址范围，包含重复及非外部地址，不是DDR实际流量。硬件执行包含驱动及等待，acquire包含等tile；begin包含等framebuffer。</p><details><summary>展开每帧平均耗时／维护范围</summary><div class="wrap"><table id="metrics"><thead><tr><th>版本</th><th>模式／角度</th><th>阶段</th><th>调用次数</th><th>累计秒</th><th>每帧ms</th><th>每帧范围MiB</th></tr></thead><tbody>
+<tr><td>原始 present</td><td>DOUBLE_PARTIAL / 0°</td><td>begin</td><td>977</td><td>11.641</td><td>11.915</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>DOUBLE_PARTIAL / 0°</td><td>acquire</td><td>6946</td><td>5.716</td><td>5.851</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>DOUBLE_PARTIAL / 0°</td><td>submit</td><td>6946</td><td>1.483</td><td>1.518</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>DOUBLE_PARTIAL / 0°</td><td>commit</td><td>977</td><td>0.149</td><td>0.153</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>DOUBLE_PARTIAL / 0°</td><td>cpu_exec</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>DOUBLE_PARTIAL / 0°</td><td>hw_exec</td><td>9719</td><td>8.232</td><td>8.426</td><td>0.372</td></tr>
+<tr><td>原始 present</td><td>DOUBLE_PARTIAL / 0°</td><td>fallback</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>DOUBLE_PARTIAL / 0°</td><td>cache_out</td><td>33884</td><td>0.862</td><td>0.882</td><td>3.707</td></tr>
+<tr><td>原始 present</td><td>DOUBLE_PARTIAL / 0°</td><td>cache_in</td><td>9719</td><td>0.261</td><td>0.267</td><td>0.832</td></tr>
+<tr><td>原始 present</td><td>DOUBLE_PARTIAL / 0°</td><td>panel_submit</td><td>977</td><td>0.073</td><td>0.075</td><td>0.732</td></tr>
+<tr><td>原始 present</td><td>DOUBLE_PARTIAL / 90°</td><td>begin</td><td>887</td><td>11.860</td><td>13.370</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>DOUBLE_PARTIAL / 90°</td><td>acquire</td><td>7520</td><td>7.302</td><td>8.232</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>DOUBLE_PARTIAL / 90°</td><td>submit</td><td>7520</td><td>1.806</td><td>2.036</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>DOUBLE_PARTIAL / 90°</td><td>commit</td><td>887</td><td>0.143</td><td>0.161</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>DOUBLE_PARTIAL / 90°</td><td>cpu_exec</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>DOUBLE_PARTIAL / 90°</td><td>hw_exec</td><td>10227</td><td>10.325</td><td>11.640</td><td>0.307</td></tr>
+<tr><td>原始 present</td><td>DOUBLE_PARTIAL / 90°</td><td>fallback</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>DOUBLE_PARTIAL / 90°</td><td>cache_out</td><td>45389</td><td>0.436</td><td>0.492</td><td>7.385</td></tr>
+<tr><td>原始 present</td><td>DOUBLE_PARTIAL / 90°</td><td>cache_in</td><td>20454</td><td>0.628</td><td>0.708</td><td>9.023</td></tr>
+<tr><td>原始 present</td><td>DOUBLE_PARTIAL / 90°</td><td>panel_submit</td><td>887</td><td>0.054</td><td>0.060</td><td>0.732</td></tr>
+<tr><td>原始 present</td><td>TRIPLE_PARTIAL / 0°</td><td>begin</td><td>1259</td><td>4.175</td><td>3.316</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>TRIPLE_PARTIAL / 0°</td><td>acquire</td><td>8596</td><td>5.745</td><td>4.563</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>TRIPLE_PARTIAL / 0°</td><td>submit</td><td>8596</td><td>2.092</td><td>1.662</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>TRIPLE_PARTIAL / 0°</td><td>commit</td><td>1259</td><td>0.194</td><td>0.154</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>TRIPLE_PARTIAL / 0°</td><td>cpu_exec</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>TRIPLE_PARTIAL / 0°</td><td>hw_exec</td><td>14047</td><td>9.421</td><td>7.483</td><td>0.371</td></tr>
+<tr><td>原始 present</td><td>TRIPLE_PARTIAL / 0°</td><td>fallback</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>TRIPLE_PARTIAL / 0°</td><td>cache_out</td><td>50110</td><td>1.063</td><td>0.844</td><td>3.943</td></tr>
+<tr><td>原始 present</td><td>TRIPLE_PARTIAL / 0°</td><td>cache_in</td><td>14047</td><td>0.389</td><td>0.309</td><td>0.879</td></tr>
+<tr><td>原始 present</td><td>TRIPLE_PARTIAL / 0°</td><td>panel_submit</td><td>1259</td><td>0.072</td><td>0.057</td><td>0.732</td></tr>
+<tr><td>原始 present</td><td>TRIPLE_PARTIAL / 90°</td><td>begin</td><td>1107</td><td>4.976</td><td>4.495</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>TRIPLE_PARTIAL / 90°</td><td>acquire</td><td>8826</td><td>8.445</td><td>7.629</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>TRIPLE_PARTIAL / 90°</td><td>submit</td><td>8826</td><td>2.094</td><td>1.891</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>TRIPLE_PARTIAL / 90°</td><td>commit</td><td>1107</td><td>0.178</td><td>0.161</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>TRIPLE_PARTIAL / 90°</td><td>cpu_exec</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>TRIPLE_PARTIAL / 90°</td><td>hw_exec</td><td>13505</td><td>13.043</td><td>11.783</td><td>0.309</td></tr>
+<tr><td>原始 present</td><td>TRIPLE_PARTIAL / 90°</td><td>fallback</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>原始 present</td><td>TRIPLE_PARTIAL / 90°</td><td>cache_out</td><td>60913</td><td>0.561</td><td>0.507</td><td>7.466</td></tr>
+<tr><td>原始 present</td><td>TRIPLE_PARTIAL / 90°</td><td>cache_in</td><td>27010</td><td>0.788</td><td>0.712</td><td>8.648</td></tr>
+<tr><td>原始 present</td><td>TRIPLE_PARTIAL / 90°</td><td>panel_submit</td><td>1107</td><td>0.068</td><td>0.061</td><td>0.732</td></tr>
+<tr><td>仅 burst128</td><td>DOUBLE_PARTIAL / 0°</td><td>begin</td><td>969</td><td>11.599</td><td>11.970</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>DOUBLE_PARTIAL / 0°</td><td>acquire</td><td>6904</td><td>5.382</td><td>5.554</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>DOUBLE_PARTIAL / 0°</td><td>submit</td><td>6904</td><td>1.480</td><td>1.527</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>DOUBLE_PARTIAL / 0°</td><td>commit</td><td>969</td><td>0.156</td><td>0.161</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>DOUBLE_PARTIAL / 0°</td><td>cpu_exec</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>DOUBLE_PARTIAL / 0°</td><td>hw_exec</td><td>9699</td><td>7.751</td><td>7.999</td><td>0.373</td></tr>
+<tr><td>仅 burst128</td><td>DOUBLE_PARTIAL / 0°</td><td>fallback</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>DOUBLE_PARTIAL / 0°</td><td>cache_out</td><td>33830</td><td>0.890</td><td>0.918</td><td>3.686</td></tr>
+<tr><td>仅 burst128</td><td>DOUBLE_PARTIAL / 0°</td><td>cache_in</td><td>9699</td><td>0.310</td><td>0.320</td><td>0.825</td></tr>
+<tr><td>仅 burst128</td><td>DOUBLE_PARTIAL / 0°</td><td>panel_submit</td><td>969</td><td>0.071</td><td>0.073</td><td>0.732</td></tr>
+<tr><td>仅 burst128</td><td>DOUBLE_PARTIAL / 90°</td><td>begin</td><td>888</td><td>11.624</td><td>13.090</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>DOUBLE_PARTIAL / 90°</td><td>acquire</td><td>7560</td><td>7.205</td><td>8.114</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>DOUBLE_PARTIAL / 90°</td><td>submit</td><td>7560</td><td>1.782</td><td>2.007</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>DOUBLE_PARTIAL / 90°</td><td>commit</td><td>888</td><td>0.152</td><td>0.171</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>DOUBLE_PARTIAL / 90°</td><td>cpu_exec</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>DOUBLE_PARTIAL / 90°</td><td>hw_exec</td><td>10238</td><td>10.269</td><td>11.564</td><td>0.308</td></tr>
+<tr><td>仅 burst128</td><td>DOUBLE_PARTIAL / 90°</td><td>fallback</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>DOUBLE_PARTIAL / 90°</td><td>cache_out</td><td>45406</td><td>0.446</td><td>0.502</td><td>7.379</td></tr>
+<tr><td>仅 burst128</td><td>DOUBLE_PARTIAL / 90°</td><td>cache_in</td><td>20476</td><td>0.616</td><td>0.694</td><td>9.042</td></tr>
+<tr><td>仅 burst128</td><td>DOUBLE_PARTIAL / 90°</td><td>panel_submit</td><td>888</td><td>0.053</td><td>0.060</td><td>0.732</td></tr>
+<tr><td>仅 burst128</td><td>TRIPLE_PARTIAL / 0°</td><td>begin</td><td>1276</td><td>3.814</td><td>2.989</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>TRIPLE_PARTIAL / 0°</td><td>acquire</td><td>8708</td><td>5.237</td><td>4.104</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>TRIPLE_PARTIAL / 0°</td><td>submit</td><td>8708</td><td>2.068</td><td>1.620</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>TRIPLE_PARTIAL / 0°</td><td>commit</td><td>1276</td><td>0.213</td><td>0.167</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>TRIPLE_PARTIAL / 0°</td><td>cpu_exec</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>TRIPLE_PARTIAL / 0°</td><td>hw_exec</td><td>14228</td><td>8.693</td><td>6.812</td><td>0.370</td></tr>
+<tr><td>仅 burst128</td><td>TRIPLE_PARTIAL / 0°</td><td>fallback</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>TRIPLE_PARTIAL / 0°</td><td>cache_out</td><td>50756</td><td>1.017</td><td>0.797</td><td>3.939</td></tr>
+<tr><td>仅 burst128</td><td>TRIPLE_PARTIAL / 0°</td><td>cache_in</td><td>14228</td><td>0.421</td><td>0.330</td><td>0.878</td></tr>
+<tr><td>仅 burst128</td><td>TRIPLE_PARTIAL / 0°</td><td>panel_submit</td><td>1276</td><td>0.078</td><td>0.061</td><td>0.732</td></tr>
+<tr><td>仅 burst128</td><td>TRIPLE_PARTIAL / 90°</td><td>begin</td><td>1110</td><td>4.926</td><td>4.438</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>TRIPLE_PARTIAL / 90°</td><td>acquire</td><td>8821</td><td>8.305</td><td>7.482</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>TRIPLE_PARTIAL / 90°</td><td>submit</td><td>8821</td><td>2.056</td><td>1.852</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>TRIPLE_PARTIAL / 90°</td><td>commit</td><td>1110</td><td>0.188</td><td>0.170</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>TRIPLE_PARTIAL / 90°</td><td>cpu_exec</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>TRIPLE_PARTIAL / 90°</td><td>hw_exec</td><td>13560</td><td>12.947</td><td>11.664</td><td>0.308</td></tr>
+<tr><td>仅 burst128</td><td>TRIPLE_PARTIAL / 90°</td><td>fallback</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>仅 burst128</td><td>TRIPLE_PARTIAL / 90°</td><td>cache_out</td><td>61199</td><td>0.560</td><td>0.504</td><td>7.441</td></tr>
+<tr><td>仅 burst128</td><td>TRIPLE_PARTIAL / 90°</td><td>cache_in</td><td>27120</td><td>0.783</td><td>0.706</td><td>8.617</td></tr>
+<tr><td>仅 burst128</td><td>TRIPLE_PARTIAL / 90°</td><td>panel_submit</td><td>1110</td><td>0.069</td><td>0.062</td><td>0.732</td></tr>
+<tr><td>仅缓存维护精简</td><td>DOUBLE_PARTIAL / 0°</td><td>begin</td><td>964</td><td>10.455</td><td>10.845</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>DOUBLE_PARTIAL / 0°</td><td>acquire</td><td>6874</td><td>5.295</td><td>5.493</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>DOUBLE_PARTIAL / 0°</td><td>submit</td><td>6874</td><td>1.437</td><td>1.491</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>DOUBLE_PARTIAL / 0°</td><td>commit</td><td>964</td><td>0.148</td><td>0.154</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>DOUBLE_PARTIAL / 0°</td><td>cpu_exec</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>DOUBLE_PARTIAL / 0°</td><td>hw_exec</td><td>9665</td><td>7.761</td><td>8.051</td><td>0.373</td></tr>
+<tr><td>仅缓存维护精简</td><td>DOUBLE_PARTIAL / 0°</td><td>fallback</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>DOUBLE_PARTIAL / 0°</td><td>cache_out</td><td>14384</td><td>0.576</td><td>0.598</td><td>2.409</td></tr>
+<tr><td>仅缓存维护精简</td><td>DOUBLE_PARTIAL / 0°</td><td>cache_in</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>DOUBLE_PARTIAL / 0°</td><td>panel_submit</td><td>964</td><td>0.075</td><td>0.078</td><td>0.732</td></tr>
+<tr><td>仅缓存维护精简</td><td>DOUBLE_PARTIAL / 90°</td><td>begin</td><td>865</td><td>11.480</td><td>13.271</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>DOUBLE_PARTIAL / 90°</td><td>acquire</td><td>7319</td><td>6.966</td><td>8.053</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>DOUBLE_PARTIAL / 90°</td><td>submit</td><td>7319</td><td>1.720</td><td>1.989</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>DOUBLE_PARTIAL / 90°</td><td>commit</td><td>865</td><td>0.145</td><td>0.167</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>DOUBLE_PARTIAL / 90°</td><td>cpu_exec</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>DOUBLE_PARTIAL / 90°</td><td>hw_exec</td><td>10019</td><td>10.142</td><td>11.725</td><td>0.306</td></tr>
+<tr><td>仅缓存维护精简</td><td>DOUBLE_PARTIAL / 90°</td><td>fallback</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>DOUBLE_PARTIAL / 90°</td><td>cache_out</td><td>34487</td><td>0.420</td><td>0.486</td><td>6.549</td></tr>
+<tr><td>仅缓存维护精简</td><td>DOUBLE_PARTIAL / 90°</td><td>cache_in</td><td>10019</td><td>0.378</td><td>0.437</td><td>4.511</td></tr>
+<tr><td>仅缓存维护精简</td><td>DOUBLE_PARTIAL / 90°</td><td>panel_submit</td><td>865</td><td>0.049</td><td>0.056</td><td>0.732</td></tr>
+<tr><td>仅缓存维护精简</td><td>TRIPLE_PARTIAL / 0°</td><td>begin</td><td>1236</td><td>3.725</td><td>3.014</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>TRIPLE_PARTIAL / 0°</td><td>acquire</td><td>8508</td><td>4.944</td><td>4.000</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>TRIPLE_PARTIAL / 0°</td><td>submit</td><td>8508</td><td>2.000</td><td>1.618</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>TRIPLE_PARTIAL / 0°</td><td>commit</td><td>1236</td><td>0.211</td><td>0.171</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>TRIPLE_PARTIAL / 0°</td><td>cpu_exec</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>TRIPLE_PARTIAL / 0°</td><td>hw_exec</td><td>14037</td><td>8.438</td><td>6.827</td><td>0.366</td></tr>
+<tr><td>仅缓存维护精简</td><td>TRIPLE_PARTIAL / 0°</td><td>fallback</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>TRIPLE_PARTIAL / 0°</td><td>cache_out</td><td>22038</td><td>0.719</td><td>0.582</td><td>2.534</td></tr>
+<tr><td>仅缓存维护精简</td><td>TRIPLE_PARTIAL / 0°</td><td>cache_in</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>TRIPLE_PARTIAL / 0°</td><td>panel_submit</td><td>1236</td><td>0.082</td><td>0.066</td><td>0.732</td></tr>
+<tr><td>仅缓存维护精简</td><td>TRIPLE_PARTIAL / 90°</td><td>begin</td><td>1074</td><td>4.566</td><td>4.252</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>TRIPLE_PARTIAL / 90°</td><td>acquire</td><td>8565</td><td>8.057</td><td>7.502</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>TRIPLE_PARTIAL / 90°</td><td>submit</td><td>8565</td><td>1.982</td><td>1.845</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>TRIPLE_PARTIAL / 90°</td><td>commit</td><td>1074</td><td>0.180</td><td>0.168</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>TRIPLE_PARTIAL / 90°</td><td>cpu_exec</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>TRIPLE_PARTIAL / 90°</td><td>hw_exec</td><td>13166</td><td>12.797</td><td>11.916</td><td>0.308</td></tr>
+<tr><td>仅缓存维护精简</td><td>TRIPLE_PARTIAL / 90°</td><td>fallback</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>仅缓存维护精简</td><td>TRIPLE_PARTIAL / 90°</td><td>cache_out</td><td>46247</td><td>0.535</td><td>0.498</td><td>6.472</td></tr>
+<tr><td>仅缓存维护精简</td><td>TRIPLE_PARTIAL / 90°</td><td>cache_in</td><td>13166</td><td>0.465</td><td>0.433</td><td>4.304</td></tr>
+<tr><td>仅缓存维护精简</td><td>TRIPLE_PARTIAL / 90°</td><td>panel_submit</td><td>1074</td><td>0.065</td><td>0.060</td><td>0.732</td></tr>
+<tr><td>burst128＋缓存精简</td><td>DOUBLE_PARTIAL / 0°</td><td>begin</td><td>995</td><td>10.957</td><td>11.012</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>DOUBLE_PARTIAL / 0°</td><td>acquire</td><td>7058</td><td>5.039</td><td>5.064</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>DOUBLE_PARTIAL / 0°</td><td>submit</td><td>7058</td><td>1.514</td><td>1.522</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>DOUBLE_PARTIAL / 0°</td><td>commit</td><td>995</td><td>0.165</td><td>0.166</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>DOUBLE_PARTIAL / 0°</td><td>cpu_exec</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>DOUBLE_PARTIAL / 0°</td><td>hw_exec</td><td>9919</td><td>7.461</td><td>7.499</td><td>0.372</td></tr>
+<tr><td>burst128＋缓存精简</td><td>DOUBLE_PARTIAL / 0°</td><td>fallback</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>DOUBLE_PARTIAL / 0°</td><td>cache_out</td><td>14770</td><td>0.649</td><td>0.653</td><td>2.414</td></tr>
+<tr><td>burst128＋缓存精简</td><td>DOUBLE_PARTIAL / 0°</td><td>cache_in</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>DOUBLE_PARTIAL / 0°</td><td>panel_submit</td><td>995</td><td>0.080</td><td>0.080</td><td>0.732</td></tr>
+<tr><td>burst128＋缓存精简</td><td>DOUBLE_PARTIAL / 90°</td><td>begin</td><td>891</td><td>10.948</td><td>12.287</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>DOUBLE_PARTIAL / 90°</td><td>acquire</td><td>7771</td><td>7.208</td><td>8.089</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>DOUBLE_PARTIAL / 90°</td><td>submit</td><td>7771</td><td>1.801</td><td>2.021</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>DOUBLE_PARTIAL / 90°</td><td>commit</td><td>891</td><td>0.158</td><td>0.178</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>DOUBLE_PARTIAL / 90°</td><td>cpu_exec</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>DOUBLE_PARTIAL / 90°</td><td>hw_exec</td><td>10445</td><td>10.341</td><td>11.606</td><td>0.316</td></tr>
+<tr><td>burst128＋缓存精简</td><td>DOUBLE_PARTIAL / 90°</td><td>fallback</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>DOUBLE_PARTIAL / 90°</td><td>cache_out</td><td>35791</td><td>0.432</td><td>0.485</td><td>6.715</td></tr>
+<tr><td>burst128＋缓存精简</td><td>DOUBLE_PARTIAL / 90°</td><td>cache_in</td><td>10445</td><td>0.408</td><td>0.458</td><td>4.694</td></tr>
+<tr><td>burst128＋缓存精简</td><td>DOUBLE_PARTIAL / 90°</td><td>panel_submit</td><td>891</td><td>0.053</td><td>0.060</td><td>0.732</td></tr>
+<tr><td>burst128＋缓存精简</td><td>TRIPLE_PARTIAL / 0°</td><td>begin</td><td>1295</td><td>3.718</td><td>2.871</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>TRIPLE_PARTIAL / 0°</td><td>acquire</td><td>8891</td><td>4.670</td><td>3.606</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>TRIPLE_PARTIAL / 0°</td><td>submit</td><td>8891</td><td>2.082</td><td>1.607</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>TRIPLE_PARTIAL / 0°</td><td>commit</td><td>1295</td><td>0.232</td><td>0.179</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>TRIPLE_PARTIAL / 0°</td><td>cpu_exec</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>TRIPLE_PARTIAL / 0°</td><td>hw_exec</td><td>14648</td><td>7.940</td><td>6.131</td><td>0.369</td></tr>
+<tr><td>burst128＋缓存精简</td><td>TRIPLE_PARTIAL / 0°</td><td>fallback</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>TRIPLE_PARTIAL / 0°</td><td>cache_out</td><td>22995</td><td>0.789</td><td>0.609</td><td>2.530</td></tr>
+<tr><td>burst128＋缓存精简</td><td>TRIPLE_PARTIAL / 0°</td><td>cache_in</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>TRIPLE_PARTIAL / 0°</td><td>panel_submit</td><td>1295</td><td>0.087</td><td>0.068</td><td>0.732</td></tr>
+<tr><td>burst128＋缓存精简</td><td>TRIPLE_PARTIAL / 90°</td><td>begin</td><td>1110</td><td>4.635</td><td>4.175</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>TRIPLE_PARTIAL / 90°</td><td>acquire</td><td>8846</td><td>8.083</td><td>7.282</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>TRIPLE_PARTIAL / 90°</td><td>submit</td><td>8846</td><td>2.032</td><td>1.831</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>TRIPLE_PARTIAL / 90°</td><td>commit</td><td>1110</td><td>0.198</td><td>0.178</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>TRIPLE_PARTIAL / 90°</td><td>cpu_exec</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>TRIPLE_PARTIAL / 90°</td><td>hw_exec</td><td>13591</td><td>12.881</td><td>11.604</td><td>0.310</td></tr>
+<tr><td>burst128＋缓存精简</td><td>TRIPLE_PARTIAL / 90°</td><td>fallback</td><td>0</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+<tr><td>burst128＋缓存精简</td><td>TRIPLE_PARTIAL / 90°</td><td>cache_out</td><td>47738</td><td>0.516</td><td>0.465</td><td>6.485</td></tr>
+<tr><td>burst128＋缓存精简</td><td>TRIPLE_PARTIAL / 90°</td><td>cache_in</td><td>13591</td><td>0.500</td><td>0.450</td><td>4.321</td></tr>
+<tr><td>burst128＋缓存精简</td><td>TRIPLE_PARTIAL / 90°</td><td>panel_submit</td><td>1110</td><td>0.070</td><td>0.063</td><td>0.732</td></tr>
+</tbody></table></div></details></section><p>原固件已恢复并整片校验。未用串口完成替代目视防撕裂验收。</p></main></html>
