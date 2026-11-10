@@ -4,9 +4,9 @@
  */
 #include "backend/present_backend_config.h"
 #include "backend/present_backend.h"
-#include "platform/present_lcd_spi.h"
+#include "platform/lcd/present_lcd_io.h"
 #include "core/present_engine.h"
-#include "platform/present_lcd_scanout.h"
+#include "platform/lcd/present_lcd_fb_scanout.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_timer.h"
@@ -100,14 +100,14 @@ static void async_fb_smoke(void)
 void app_main(void)
 {
     /* Force real esp_lcd adapter compilation/linkage without touching hardware. */
-    esp_display_present_lcd_scanout_t *scanout = NULL;
-    assert(esp_display_present_lcd_scanout_create(NULL, &scanout) == ESP_ERR_INVALID_ARG);
+    esp_display_present_lcd_fb_scanout_t *scanout = NULL;
+    assert(esp_display_present_lcd_fb_scanout_create(NULL, &scanout) == ESP_ERR_INVALID_ARG);
     esp_display_present_panel_adapter_t scanout_api;
-    assert(esp_display_present_lcd_scanout_get_interface(NULL, &scanout_api) == ESP_ERR_INVALID_ARG);
-    esp_display_present_lcd_spi_t *spi = NULL;
-    assert(esp_display_present_lcd_spi_create(NULL, &spi) == ESP_ERR_INVALID_ARG && spi == NULL);
+    assert(esp_display_present_lcd_fb_scanout_get_interface(NULL, &scanout_api) == ESP_ERR_INVALID_ARG);
+    esp_display_present_lcd_io_t *spi = NULL;
+    assert(esp_display_present_lcd_io_create(NULL, &spi) == ESP_ERR_INVALID_ARG && spi == NULL);
     esp_display_present_panel_adapter_t spi_api;
-    assert(esp_display_present_lcd_spi_get_interface(NULL, &spi_api) == ESP_ERR_INVALID_ARG);
+    assert(esp_display_present_lcd_io_get_interface(NULL, &spi_api) == ESP_ERR_INVALID_ARG);
     present_backend_t *te = NULL;
     assert(present_te_backend.create(NULL, &te) == ESP_ERR_INVALID_ARG && te == NULL);
     esp_display_present_engine_t *presenter;

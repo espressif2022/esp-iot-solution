@@ -4,7 +4,7 @@
  */
 #pragma once
 #include "backend/present_backend_types.h"
-#include "platform/present_te_timing.h"
+#include "platform/te/present_te_timing.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -2,9 +2,9 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "platform/present_lcd_scanout.h"
+#include "platform/lcd/present_lcd_fb_scanout.h"
 #include "platform/present_os.h"
-#include "platform/present_lcd_rgb_info.h"
+#include "platform/lcd/present_lcd_rgb_info.h"
 #include "esp_cache.h"
 #include <limits.h>
 #ifdef PRESENT_HOST
@@ -25,9 +25,9 @@ typedef enum {
     SCANOUT_PERIODIC,
     SCANOUT_REQUESTED,
 } scanout_protocol_t;
-struct esp_display_present_lcd_scanout {
+struct esp_display_present_lcd_fb_scanout {
     present_lock_t lock;
-    esp_display_present_lcd_scanout_config_t config;
+    esp_display_present_lcd_fb_scanout_config_t config;
     scanout_protocol_t protocol;
     void *buffers[3];
     esp_display_present_panel_event_fn callback;
@@ -51,7 +51,7 @@ typedef struct {
 } scanout_completion_t;
 
 /* Caller holds the lock. Claim once before making it visible to the backend. */
-static scanout_completion_t PRESENT_ISR_ATTR claim_completion(esp_display_present_lcd_scanout_t *scanout)
+static scanout_completion_t PRESENT_ISR_ATTR claim_completion(esp_display_present_lcd_fb_scanout_t *scanout)
 {
     scanout_completion_t completion = {scanout->callback, scanout->callback_user, scanout->pending.cookie};
     scanout->pending.cookie = 0;
@@ -61,7 +61,7 @@ static scanout_completion_t PRESENT_ISR_ATTR claim_completion(esp_display_presen
     return completion;
 }
 
-static bool PRESENT_ISR_ATTR dispatch_completion(esp_display_present_lcd_scanout_t *scanout,
+static bool PRESENT_ISR_ATTR dispatch_completion(esp_display_present_lcd_fb_scanout_t *scanout,
                                                  const scanout_completion_t *completion, bool from_isr)
 {
     if (!completion->callback) {
@@ -78,7 +78,7 @@ static bool PRESENT_ISR_ATTR dispatch_completion(esp_display_present_lcd_scanout
     return need_yield;
 }
 
-static bool PRESENT_ISR_ATTR frame_boundary(esp_display_present_lcd_scanout_t *scanout, bool from_isr)
+static bool PRESENT_ISR_ATTR frame_boundary(esp_display_present_lcd_fb_scanout_t *scanout, bool from_isr)
 {
     /* IDF unregister updates callback and user_ctx separately. An ISR that
      * loaded the old function may already observe the cleared context. */
@@ -102,7 +102,7 @@ static bool PRESENT_ISR_ATTR frame_boundary(esp_display_present_lcd_scanout_t *s
     present_lock_exit(&scanout->lock, from_isr);
     return dispatch_completion(scanout, &completion, from_isr);
 }
-static bool PRESENT_ISR_ATTR vsync(esp_display_present_lcd_scanout_t *scanout)
+static bool PRESENT_ISR_ATTR vsync(esp_display_present_lcd_fb_scanout_t *scanout)
 {
     /* IDF unregister updates callback and user_ctx separately. An ISR that
      * loaded the old function may already observe the cleared context. */
@@ -143,7 +143,7 @@ static bool PRESENT_ISR_ATTR rgb_vsync(esp_lcd_panel_handle_t panel, const esp_l
 {
     (void)panel;
     (void)data;
-    esp_display_present_lcd_scanout_t *scanout = user;
+    esp_display_present_lcd_fb_scanout_t *scanout = user;
     bool yield = vsync(scanout);
     /* A sole driver buffer never switches allocations. Explicit active-write
      * mode confirms exposure at VSYNC, without claiming old-FB retirement. */
@@ -161,7 +161,7 @@ static bool PRESENT_ISR_ATTR rgb_done(esp_lcd_panel_handle_t panel, const esp_lc
 #endif
 static esp_err_t scanout_attach(void *context, esp_display_present_panel_event_fn callback, void *user)
 {
-    esp_display_present_lcd_scanout_t *scanout = context;
+    esp_display_present_lcd_fb_scanout_t *scanout = context;
     if (!scanout || !callback) {
         return ESP_ERR_INVALID_ARG;
     }
@@ -172,7 +172,7 @@ static esp_err_t scanout_attach(void *context, esp_display_present_panel_event_f
     scanout->callback_user = user;
     esp_err_t error = ESP_ERR_NOT_SUPPORTED;
 #if PRESENT_DSI_SUPPORTED
-    if (scanout->config.kind == ESP_DISPLAY_PRESENT_LCD_DSI) {
+    if (scanout->config.kind == ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_DSI) {
         esp_lcd_dpi_panel_event_callbacks_t callbacks = {
             .on_frame_buf_complete = dsi_done,
             .on_vsync = scanout->config.on_vsync ? dsi_vsync : NULL,
@@ -181,7 +181,7 @@ static esp_err_t scanout_attach(void *context, esp_display_present_panel_event_f
     }
 #endif
 #if PRESENT_RGB_SUPPORTED
-    if (scanout->config.kind == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE) {
+    if (scanout->config.kind == ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_RGB) {
         esp_lcd_rgb_panel_event_callbacks_t callbacks = {
             .on_frame_buf_complete = scanout->single_vsync ? NULL : rgb_done,
             .on_vsync = (scanout->config.on_vsync || scanout->single_vsync) ? rgb_vsync : NULL,
@@ -199,7 +199,7 @@ static esp_err_t scanout_attach(void *context, esp_display_present_panel_event_f
 
 static esp_display_present_tx_result_t scanout_submit(void *context, const esp_display_present_surface_t *surface, const esp_display_present_rect_t *area, uint64_t cookie)
 {
-    esp_display_present_lcd_scanout_t *scanout = context;
+    esp_display_present_lcd_fb_scanout_t *scanout = context;
     if (!scanout || !surface || !area || !cookie || area->x || area->y || area->width != scanout->config.width ||
             area->height != scanout->config.height || surface->layout.width != area->width ||
             surface->layout.height != area->height || surface->layout.format != scanout->config.format ||
@@ -303,7 +303,7 @@ static esp_display_present_tx_result_t scanout_submit(void *context, const esp_d
     };
 }
 
-static esp_err_t detach_retained(esp_display_present_lcd_scanout_t *scanout, uint32_t timeout)
+static esp_err_t detach_retained(esp_display_present_lcd_fb_scanout_t *scanout, uint32_t timeout)
 {
     uint64_t start = present_now_ms();
     for (;;) {
@@ -321,13 +321,13 @@ static esp_err_t detach_retained(esp_display_present_lcd_scanout_t *scanout, uin
     if (!scanout->callbacks_removed) {
         esp_err_t error = ESP_ERR_NOT_SUPPORTED;
 #if PRESENT_DSI_SUPPORTED
-        if (scanout->config.kind == ESP_DISPLAY_PRESENT_LCD_DSI) {
+        if (scanout->config.kind == ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_DSI) {
             esp_lcd_dpi_panel_event_callbacks_t empty = {0};
             error = esp_lcd_dpi_panel_register_event_callbacks(scanout->config.panel, &empty, NULL);
         }
 #endif
 #if PRESENT_RGB_SUPPORTED
-        if (scanout->config.kind == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE) {
+        if (scanout->config.kind == ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_RGB) {
             esp_lcd_rgb_panel_event_callbacks_t empty = {0};
             error = esp_lcd_rgb_panel_register_event_callbacks(scanout->config.panel, &empty, NULL);
         }
@@ -351,7 +351,7 @@ static esp_err_t detach_retained(esp_display_present_lcd_scanout_t *scanout, uin
 
 static esp_err_t scanout_quiesce(void *context, uint32_t timeout)
 {
-    esp_display_present_lcd_scanout_t *scanout = context;
+    esp_display_present_lcd_fb_scanout_t *scanout = context;
     if (!scanout) {
         return ESP_ERR_INVALID_ARG;
     }
@@ -390,7 +390,7 @@ static esp_err_t scanout_quiesce(void *context, uint32_t timeout)
     }
 }
 
-esp_err_t esp_display_present_lcd_scanout_create(const esp_display_present_lcd_scanout_config_t *config, esp_display_present_lcd_scanout_t **out)
+esp_err_t esp_display_present_lcd_fb_scanout_create(const esp_display_present_lcd_fb_scanout_config_t *config, esp_display_present_lcd_fb_scanout_t **out)
 {
     if (!out) {
         return ESP_ERR_INVALID_ARG;
@@ -399,7 +399,7 @@ esp_err_t esp_display_present_lcd_scanout_create(const esp_display_present_lcd_s
     if (!config || !config->panel || (!config->stop_scanout && !config->delete_panel && !config->retain_scanout) || !config->width ||
             !config->height || config->width > INT_MAX || config->height > INT_MAX || config->buffer_count < 1 ||
             config->buffer_count > 3 || (config->format != ESP_DISPLAY_PRESENT_FORMAT_RGB565 && config->format != ESP_DISPLAY_PRESENT_FORMAT_RGB888) ||
-            config->kind < ESP_DISPLAY_PRESENT_LCD_DSI || config->kind > ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE) {
+            config->kind < ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_DSI || config->kind > ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_RGB) {
         return ESP_ERR_INVALID_ARG;
     }
     if (config->byte_order < ESP_DISPLAY_PRESENT_ORDER_NATIVE || config->byte_order > ESP_DISPLAY_PRESENT_ORDER_SWAPPED ||
@@ -416,7 +416,7 @@ esp_err_t esp_display_present_lcd_scanout_create(const esp_display_present_lcd_s
     }
     bool single_vsync = false;
     scanout_protocol_t protocol = SCANOUT_PERIODIC;
-    if (config->kind == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE) {
+    if (config->kind == ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_RGB) {
         present_lcd_rgb_facts_t facts;
         esp_err_t error = present_lcd_rgb_get_facts(config->panel, &facts);
         if (error == ESP_OK) {
@@ -448,7 +448,7 @@ esp_err_t esp_display_present_lcd_scanout_create(const esp_display_present_lcd_s
     if (config->width > SIZE_MAX / config->height / bpp) {
         return ESP_ERR_INVALID_SIZE;
     }
-    esp_display_present_lcd_scanout_t *scanout = present_alloc(sizeof(*scanout));
+    esp_display_present_lcd_fb_scanout_t *scanout = present_alloc(sizeof(*scanout));
     if (!scanout) {
         return ESP_ERR_NO_MEM;
     }
@@ -461,12 +461,12 @@ esp_err_t esp_display_present_lcd_scanout_create(const esp_display_present_lcd_s
     scanout->single_vsync = single_vsync;
     esp_err_t error = ESP_ERR_NOT_SUPPORTED;
 #if PRESENT_DSI_SUPPORTED
-    if (config->kind == ESP_DISPLAY_PRESENT_LCD_DSI)
+    if (config->kind == ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_DSI)
         error = esp_lcd_dpi_panel_get_frame_buffer(config->panel, config->buffer_count, &scanout->buffers[0], &scanout->buffers[1],
                                                    &scanout->buffers[2]);
 #endif
 #if PRESENT_RGB_SUPPORTED
-    if (config->kind == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE)
+    if (config->kind == ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_RGB)
         error = esp_lcd_rgb_panel_get_frame_buffer(config->panel, config->buffer_count, &scanout->buffers[0], &scanout->buffers[1],
                                                    &scanout->buffers[2]);
 #endif
@@ -492,7 +492,7 @@ esp_err_t esp_display_present_lcd_scanout_create(const esp_display_present_lcd_s
  * presenter may borrow a panel still scanning a previous presenter's last FB.
  * Establish FB0 explicitly instead of guessing which buffer is initially safe.
  * Timeout retains this adapter/presenter for retry; create never submits pixels. */
-esp_err_t present_lcd_scanout_initialize(esp_display_present_lcd_scanout_t *scanout, uint32_t timeout)
+esp_err_t present_lcd_fb_scanout_initialize(esp_display_present_lcd_fb_scanout_t *scanout, uint32_t timeout)
 {
     if (!scanout || !scanout->attached || scanout->closing) {
         return ESP_ERR_INVALID_STATE;
@@ -537,7 +537,7 @@ esp_err_t present_lcd_scanout_initialize(esp_display_present_lcd_scanout_t *scan
     }
 }
 
-esp_err_t esp_display_present_lcd_scanout_get_buffers(esp_display_present_lcd_scanout_t *scanout, void **buffers, size_t capacity, size_t *count)
+esp_err_t esp_display_present_lcd_fb_scanout_get_buffers(esp_display_present_lcd_fb_scanout_t *scanout, void **buffers, size_t capacity, size_t *count)
 {
     if (!scanout || !count || (capacity && !buffers)) {
         return ESP_ERR_INVALID_ARG;
@@ -555,7 +555,7 @@ esp_err_t esp_display_present_lcd_scanout_get_buffers(esp_display_present_lcd_sc
     return ESP_OK;
 }
 
-esp_err_t esp_display_present_lcd_scanout_get_interface(esp_display_present_lcd_scanout_t *scanout, esp_display_present_panel_adapter_t *out)
+esp_err_t esp_display_present_lcd_fb_scanout_get_interface(esp_display_present_lcd_fb_scanout_t *scanout, esp_display_present_panel_adapter_t *out)
 {
     if (!scanout || !out) {
         return ESP_ERR_INVALID_ARG;
@@ -566,7 +566,7 @@ esp_err_t esp_display_present_lcd_scanout_get_interface(esp_display_present_lcd_
     return ESP_OK;
 }
 
-esp_err_t esp_display_present_lcd_scanout_destroy(esp_display_present_lcd_scanout_t *scanout)
+esp_err_t esp_display_present_lcd_fb_scanout_destroy(esp_display_present_lcd_fb_scanout_t *scanout)
 {
     if (!scanout) {
         return ESP_ERR_INVALID_ARG;
@@ -579,7 +579,7 @@ esp_err_t esp_display_present_lcd_scanout_destroy(esp_display_present_lcd_scanou
     return ESP_OK;
 }
 
-esp_err_t esp_display_present_lcd_scanout_get_output_caps(esp_display_present_lcd_scanout_t *scanout, esp_display_present_output_caps_t *out)
+esp_err_t esp_display_present_lcd_fb_scanout_get_output_caps(esp_display_present_lcd_fb_scanout_t *scanout, esp_display_present_output_caps_t *out)
 {
     if (!scanout || !out) {
         return ESP_ERR_INVALID_ARG;

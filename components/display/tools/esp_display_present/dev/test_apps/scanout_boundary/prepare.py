@@ -49,7 +49,7 @@ def prepare(template, idf, output):
     rgb = overlay / 'esp_lcd/rgb/esp_lcd_panel_rgb.c'
     dpi = overlay / 'esp_lcd/dsi/esp_lcd_panel_dpi.c'
     fb = v2 / 'src/backend/present_backend_fb.c'
-    adapter = v2 / 'src/platform/present_lcd_scanout.c'
+    adapter = v2 / 'src/platform/lcd/present_lcd_fb_scanout.c'
     originals = {str(p.relative_to(output)): hashlib.sha256(p.read_bytes()).hexdigest() for p in (rgb, dpi, fb, adapter)}
     for path in (rgb, dpi, fb, adapter):
         source = path.read_text()

@@ -7,7 +7,7 @@
 #include "board.h"
 #include "esp_display_present.h"
 #include "core/present_engine.h"
-#include "platform/present_lcd_scanout.h"
+#include "platform/lcd/present_lcd_fb_scanout.h"
 #include "config/present_plan.h"
 #include "pixel/present_executor.h"
 #include "esp_log.h"
@@ -150,17 +150,17 @@ static void run_case(unsigned cycle, unsigned test)
     ESP_LOGI(TAG, "BEGIN cycle=%u mode=%s buffers=%u", cycle, cases[test].name, (unsigned)cases[test].buffers);
     esp_lcd_panel_handle_t panel;
     check(board_panel_create(&panel, cases[test].buffers), "board panel create");
-    esp_display_present_lcd_scanout_t *adapter;
-    esp_display_present_lcd_scanout_config_t scan = {.panel = panel, .kind = SCANOUT_KIND,
-                                                     .width = WIDTH, .height = HEIGHT, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = cases[test].buffers,
-                                                     .bounce = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, .delete_panel = true
-                                                    };
-    check(esp_display_present_lcd_scanout_create(&scan, &adapter), "scanout create");
+    esp_display_present_lcd_fb_scanout_t *adapter;
+    esp_display_present_lcd_fb_scanout_config_t scan = {.panel = panel, .kind = SCANOUT_KIND,
+                                                        .width = WIDTH, .height = HEIGHT, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = cases[test].buffers,
+                                                        .bounce = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_RGB, .delete_panel = true
+                                                       };
+    check(esp_display_present_lcd_fb_scanout_create(&scan, &adapter), "scanout create");
     void *buffers[3];
     size_t count;
-    check(esp_display_present_lcd_scanout_get_buffers(adapter, buffers, 3, &count), "get buffers");
+    check(esp_display_present_lcd_fb_scanout_get_buffers(adapter, buffers, 3, &count), "get buffers");
     tap_t tap = {0};
-    check(esp_display_present_lcd_scanout_get_interface(adapter, &tap.real), "interface");
+    check(esp_display_present_lcd_fb_scanout_get_interface(adapter, &tap.real), "interface");
     esp_display_present_engine_config_t cfg = {.backend_kind = ESP_DISPLAY_PRESENT_ENGINE_FB, .mode = cases[test].mode,
                                                .timeout_ms = 2000, .backend = {.width = WIDTH, .height = HEIGHT, .tile_rows = TILE_ROWS,
                                                                                .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = count, .max_frames = 3,
@@ -174,7 +174,7 @@ static void run_case(unsigned cycle, unsigned test)
                                                                .image_memory = ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL
                                                               }
                                                 };
-    check(esp_display_present_lcd_scanout_get_output_caps(adapter, &planned.output), "output caps");
+    check(esp_display_present_lcd_fb_scanout_get_output_caps(adapter, &planned.output), "output caps");
     esp_display_present_resolved_plan_t resolved;
     check(esp_display_present_plan_resolve(&planned, &resolved), "resolve plan");
     ESP_LOGI(TAG, "PLAN images=%u tiles=%u logical=%u pixel_bytes=%u coverage=%u pending=%u",
@@ -220,7 +220,7 @@ static void run_case(unsigned cycle, unsigned test)
              cycle, cases[test].name, FRAME_COUNT, max_wait);
     check(esp_display_present_engine_stop(presenter, 2000), "stop");
     check(esp_display_present_engine_destroy(presenter), "presenter destroy");
-    check(esp_display_present_lcd_scanout_destroy(adapter), "adapter destroy");
+    check(esp_display_present_lcd_fb_scanout_destroy(adapter), "adapter destroy");
     check(board_resources_destroy(), "board resources destroy");
     check(heap_caps_check_integrity_all(true) ? ESP_OK : ESP_FAIL, "heap integrity");
     ESP_LOGI(TAG, "CLEAN cycle=%u mode=%s internal=%u psram=%u", cycle, cases[test].name,
@@ -303,19 +303,19 @@ static void run_combo_case(unsigned cycle, unsigned test, bool async_copy, unsig
     ESP_LOGI(TAG, "COMBO_BEGIN cycle=%u mode=%s exec=%s", cycle, cases[test].name, exec_name);
     esp_lcd_panel_handle_t panel;
     check(board_panel_create(&panel, cases[test].buffers), "board panel create");
-    esp_display_present_lcd_scanout_t *adapter;
-    esp_display_present_lcd_scanout_config_t scan = {.panel = panel, .kind = SCANOUT_KIND,
-                                                     .width = WIDTH, .height = HEIGHT, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = cases[test].buffers,
-                                                     .bounce = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, .delete_panel = true
-                                                    };
-    check(esp_display_present_lcd_scanout_create(&scan, &adapter), "scanout create");
+    esp_display_present_lcd_fb_scanout_t *adapter;
+    esp_display_present_lcd_fb_scanout_config_t scan = {.panel = panel, .kind = SCANOUT_KIND,
+                                                        .width = WIDTH, .height = HEIGHT, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = cases[test].buffers,
+                                                        .bounce = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_RGB, .delete_panel = true
+                                                       };
+    check(esp_display_present_lcd_fb_scanout_create(&scan, &adapter), "scanout create");
     void *buffers[3];
     size_t count;
-    check(esp_display_present_lcd_scanout_get_buffers(adapter, buffers, 3, &count), "get buffers");
+    check(esp_display_present_lcd_fb_scanout_get_buffers(adapter, buffers, 3, &count), "get buffers");
     tap_t tap = {0};
     tap.known_count = count;
     memcpy(tap.known, buffers, count * sizeof(*buffers));
-    check(esp_display_present_lcd_scanout_get_interface(adapter, &tap.real), "interface");
+    check(esp_display_present_lcd_fb_scanout_get_interface(adapter, &tap.real), "interface");
     esp_display_present_executor_t *cpu = NULL, *hw = NULL;
     esp_display_present_executor_dispatch_t dispatch = {0};
     if (async_copy) {
@@ -346,7 +346,7 @@ static void run_combo_case(unsigned cycle, unsigned test, bool async_copy, unsig
                                                                .logical_memory = ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL
                                                               }
                                                 };
-    check(esp_display_present_lcd_scanout_get_output_caps(adapter, &planned.output), "output caps");
+    check(esp_display_present_lcd_fb_scanout_get_output_caps(adapter, &planned.output), "output caps");
     esp_display_present_resolved_plan_t resolved;
     check(esp_display_present_plan_resolve(&planned, &resolved), "resolve combo plan");
     esp_display_present_engine_t *presenter;
@@ -406,7 +406,7 @@ static void run_combo_case(unsigned cycle, unsigned test, bool async_copy, unsig
     if (cpu) {
         check(esp_display_present_executor_destroy(cpu), "cpu executor destroy");
     }
-    check(esp_display_present_lcd_scanout_destroy(adapter), "combo adapter destroy");
+    check(esp_display_present_lcd_fb_scanout_destroy(adapter), "combo adapter destroy");
     check(board_resources_destroy(), "combo board destroy");
     check(heap_caps_check_integrity_all(true) ? ESP_OK : ESP_FAIL, "combo heap integrity");
     ESP_LOGI(TAG, "COMBO_CLEAN cycle=%u mode=%s exec=%s internal=%u psram=%u",
@@ -419,17 +419,17 @@ static void run_fb_handoff_profile(unsigned cycle, unsigned test)
 {
     esp_lcd_panel_handle_t panel;
     check(board_panel_create(&panel, cases[test].buffers), "handoff panel create");
-    esp_display_present_lcd_scanout_t *adapter;
-    esp_display_present_lcd_scanout_config_t scan = {.panel = panel, .kind = SCANOUT_KIND,
-                                                     .width = WIDTH, .height = HEIGHT, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = cases[test].buffers,
-                                                     .bounce = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE, .delete_panel = true
-                                                    };
-    check(esp_display_present_lcd_scanout_create(&scan, &adapter), "handoff scanout create");
+    esp_display_present_lcd_fb_scanout_t *adapter;
+    esp_display_present_lcd_fb_scanout_config_t scan = {.panel = panel, .kind = SCANOUT_KIND,
+                                                        .width = WIDTH, .height = HEIGHT, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = cases[test].buffers,
+                                                        .bounce = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_RGB, .delete_panel = true
+                                                       };
+    check(esp_display_present_lcd_fb_scanout_create(&scan, &adapter), "handoff scanout create");
     void *buffers[3] = {0};
     size_t count = 0;
-    check(esp_display_present_lcd_scanout_get_buffers(adapter, buffers, 3, &count), "handoff get buffers");
+    check(esp_display_present_lcd_fb_scanout_get_buffers(adapter, buffers, 3, &count), "handoff get buffers");
     tap_t tap = {.known = {buffers[0], buffers[1], buffers[2]}, .known_count = count, .used_mask = 1u /* buffers[0] is initial scanout */};
-    check(esp_display_present_lcd_scanout_get_interface(adapter, &tap.real), "handoff interface");
+    check(esp_display_present_lcd_fb_scanout_get_interface(adapter, &tap.real), "handoff interface");
 
     /* For FULL modes, set draw_order = SWAPPED and panel_order = NATIVE so FB_SLOT_CONVERT runs through async_copy on every frame! */
     esp_display_present_engine_config_t cfg = {.backend_kind = ESP_DISPLAY_PRESENT_ENGINE_FB, .mode = cases[test].mode,
@@ -450,7 +450,7 @@ static void run_fb_handoff_profile(unsigned cycle, unsigned test)
                                                                .logical_memory = ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL
                                                               }
                                                 };
-    check(esp_display_present_lcd_scanout_get_output_caps(adapter, &planned.output), "handoff output caps");
+    check(esp_display_present_lcd_fb_scanout_get_output_caps(adapter, &planned.output), "handoff output caps");
     esp_display_present_engine_t *p;
     check(esp_display_present_engine_create_planned(&planned, &p), "handoff create planned");
 
@@ -599,7 +599,7 @@ static void run_fb_handoff_profile(unsigned cycle, unsigned test)
 
     check(esp_display_present_engine_stop(p, 2000), "handoff stop");
     check(esp_display_present_engine_destroy(p), "handoff destroy");
-    check(esp_display_present_lcd_scanout_destroy(adapter), "handoff adapter destroy");
+    check(esp_display_present_lcd_fb_scanout_destroy(adapter), "handoff adapter destroy");
     check(board_resources_destroy(), "handoff board destroy");
     check(heap_caps_check_integrity_all(true) ? ESP_OK : ESP_FAIL, "handoff heap integrity");
 }
@@ -645,7 +645,7 @@ static void run_v1_vs_v2_benchmark(unsigned cycle)
             .target = {
                 .hw = {
                     .panel = panel_v1,
-                    .panel_type = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_DSI ? ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI : ESP_DISPLAY_PRESENT_PANEL_RGB,
+                    .panel_type = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_DSI ? ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI : ESP_DISPLAY_PRESENT_PANEL_RGB,
                     .input_pixel_format = ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565,
                     .rotation = bench_cases[i].rotated ? ESP_DISPLAY_PRESENT_ROTATE_90 : ESP_DISPLAY_PRESENT_ROTATE_0,
                     .te_sync = ESP_DISPLAY_PRESENT_TE_SYNC_DISABLED(),
@@ -738,18 +738,18 @@ static void run_v1_vs_v2_benchmark(unsigned cycle)
         /* --- 2. Run V2 with identical workload --- */
         esp_lcd_panel_handle_t panel_v2;
         check(board_panel_create(&panel_v2, bench_cases[i].buffers), "bench v2 panel create");
-        esp_display_present_lcd_scanout_t *adapter;
-        esp_display_present_lcd_scanout_config_t scan = {.panel = panel_v2, .kind = SCANOUT_KIND,
-                                                         .width = WIDTH, .height = HEIGHT, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = bench_cases[i].buffers,
-                                                         .bounce = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE,
-                                                         .delete_panel = true
-                                                        };
-        check(esp_display_present_lcd_scanout_create(&scan, &adapter), "bench v2 scanout create");
+        esp_display_present_lcd_fb_scanout_t *adapter;
+        esp_display_present_lcd_fb_scanout_config_t scan = {.panel = panel_v2, .kind = SCANOUT_KIND,
+                                                            .width = WIDTH, .height = HEIGHT, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = bench_cases[i].buffers,
+                                                            .bounce = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_RGB,
+                                                            .delete_panel = true
+                                                           };
+        check(esp_display_present_lcd_fb_scanout_create(&scan, &adapter), "bench v2 scanout create");
         void *buffers[3] = {0};
         size_t count = 0;
-        check(esp_display_present_lcd_scanout_get_buffers(adapter, buffers, 3, &count), "bench v2 get buffers");
+        check(esp_display_present_lcd_fb_scanout_get_buffers(adapter, buffers, 3, &count), "bench v2 get buffers");
         esp_display_present_panel_adapter_t iface;
-        check(esp_display_present_lcd_scanout_get_interface(adapter, &iface), "bench v2 iface");
+        check(esp_display_present_lcd_fb_scanout_get_interface(adapter, &iface), "bench v2 iface");
         esp_display_present_executor_t *cpu_exec = NULL, *ppa_exec = NULL;
         esp_display_present_executor_dispatch_t disp = {0};
 #ifdef PRESENT_BOARD_EXECUTOR_CHECK
@@ -786,7 +786,7 @@ static void run_v1_vs_v2_benchmark(unsigned cycle)
                 .logical_memory = ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL,
             },
         };
-        check(esp_display_present_lcd_scanout_get_output_caps(adapter, &planned.output), "v2 caps");
+        check(esp_display_present_lcd_fb_scanout_get_output_caps(adapter, &planned.output), "v2 caps");
         esp_display_present_engine_t *v2 = NULL;
         check(esp_display_present_engine_create_planned(&planned, &v2), "bench v2 create");
         size_t v2_int_free = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
@@ -861,7 +861,7 @@ static void run_v1_vs_v2_benchmark(unsigned cycle)
         if (cpu_exec) {
             check(esp_display_present_executor_destroy(cpu_exec), "cpu destroy");
         }
-        check(esp_display_present_lcd_scanout_destroy(adapter), "v2 scanout destroy");
+        check(esp_display_present_lcd_fb_scanout_destroy(adapter), "v2 scanout destroy");
         check(board_resources_destroy(), "v2 board destroy");
 
         v1_us_res[i] = v1_elapsed_us / bench_frames;

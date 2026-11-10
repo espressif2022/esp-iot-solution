@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "platform/present_lcd_spi.h"
+#include "platform/lcd/present_lcd_io.h"
 #include "platform/present_os.h"
 #include "esp_cache.h"
 #include "esp_memory_utils.h"
@@ -20,9 +20,9 @@ enum {
     PRESENT_SPI_EXTERNAL_LENGTH_ALIGNMENT = 64,
 };
 
-struct esp_display_present_lcd_spi {
+struct esp_display_present_lcd_io {
     present_lock_t lock;
-    esp_display_present_lcd_spi_config_t config;
+    esp_display_present_lcd_io_config_t config;
     esp_display_present_panel_event_fn callback;
     void *user;
     uint64_t cookies[16];
@@ -34,7 +34,7 @@ struct esp_display_present_lcd_spi {
     esp_err_t staging_result;
 };
 
-static bool PRESENT_ISR_ATTR finish_color(esp_display_present_lcd_spi_t *spi, bool isr)
+static bool PRESENT_ISR_ATTR finish_color(esp_display_present_lcd_io_t *spi, bool isr)
 {
     present_lock_enter(&spi->lock, isr);
     if (!spi->attached || !spi->count) {
@@ -89,7 +89,7 @@ static bool PRESENT_ISR_ATTR color_done(esp_lcd_panel_io_handle_t io,
 
 static esp_err_t spi_attach(void *context, esp_display_present_panel_event_fn callback, void *user)
 {
-    esp_display_present_lcd_spi_t *spi = context;
+    esp_display_present_lcd_io_t *spi = context;
     if (!spi || !callback) {
         return ESP_ERR_INVALID_ARG;
     }
@@ -114,7 +114,7 @@ static esp_err_t spi_attach(void *context, esp_display_present_panel_event_fn ca
     return ret;
 }
 
-static esp_err_t validate_tx(esp_display_present_lcd_spi_t *spi, const esp_display_present_surface_t *surface,
+static esp_err_t validate_tx(esp_display_present_lcd_io_t *spi, const esp_display_present_surface_t *surface,
                              const esp_display_present_rect_t *area, uint64_t cookie, size_t *bytes)
 {
     if (!surface || !area || !surface->pixels || !cookie || !area->width || !area->height ||
@@ -158,7 +158,7 @@ static esp_err_t validate_tx(esp_display_present_lcd_spi_t *spi, const esp_displ
 /* One logical transaction, bounded scratch. Only the last real DMA completion
  * publishes success. Aborting between bands retires reads with an error; an
  * uncertain current band stays pinned until its real completion callback. */
-static esp_err_t stage_transfer(esp_display_present_lcd_spi_t *spi, const esp_display_present_surface_t *surface, const esp_display_present_rect_t *area)
+static esp_err_t stage_transfer(esp_display_present_lcd_io_t *spi, const esp_display_present_surface_t *surface, const esp_display_present_rect_t *area)
 {
     size_t row = surface->layout.stride_bytes;
     size_t rows = spi->config.staging_bytes / row;
@@ -224,7 +224,7 @@ static esp_err_t stage_transfer(esp_display_present_lcd_spi_t *spi, const esp_di
 static esp_display_present_tx_result_t spi_submit(void *context, const esp_display_present_surface_t *surface,
                                                   const esp_display_present_rect_t *area, uint64_t cookie)
 {
-    esp_display_present_lcd_spi_t *spi = context;
+    esp_display_present_lcd_io_t *spi = context;
     if (!spi) {
         return (esp_display_present_tx_result_t) {
             ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_ARG
@@ -287,7 +287,7 @@ static esp_display_present_tx_result_t spi_submit(void *context, const esp_displ
 
 static esp_err_t spi_quiesce(void *context, uint32_t timeout)
 {
-    esp_display_present_lcd_spi_t *spi = context;
+    esp_display_present_lcd_io_t *spi = context;
     if (!spi) {
         return ESP_ERR_INVALID_ARG;
     }
@@ -324,7 +324,7 @@ static esp_err_t spi_quiesce(void *context, uint32_t timeout)
     return ESP_OK;
 }
 
-esp_err_t esp_display_present_lcd_spi_create(const esp_display_present_lcd_spi_config_t *config, esp_display_present_lcd_spi_t **out)
+esp_err_t esp_display_present_lcd_io_create(const esp_display_present_lcd_io_config_t *config, esp_display_present_lcd_io_t **out)
 {
     if (!out) {
         return ESP_ERR_INVALID_ARG;
@@ -341,7 +341,7 @@ esp_err_t esp_display_present_lcd_spi_create(const esp_display_present_lcd_spi_c
         return ESP_ERR_NOT_SUPPORTED;
     }
 #endif
-    esp_display_present_lcd_spi_t *spi = present_alloc(sizeof(*spi));
+    esp_display_present_lcd_io_t *spi = present_alloc(sizeof(*spi));
     if (!spi) {
         return ESP_ERR_NO_MEM;
     }
@@ -366,7 +366,7 @@ esp_err_t esp_display_present_lcd_spi_create(const esp_display_present_lcd_spi_c
     return ESP_OK;
 }
 
-esp_err_t esp_display_present_lcd_spi_get_interface(esp_display_present_lcd_spi_t *spi, esp_display_present_panel_adapter_t *out)
+esp_err_t esp_display_present_lcd_io_get_interface(esp_display_present_lcd_io_t *spi, esp_display_present_panel_adapter_t *out)
 {
     if (!spi || !out) {
         return ESP_ERR_INVALID_ARG;
@@ -377,7 +377,7 @@ esp_err_t esp_display_present_lcd_spi_get_interface(esp_display_present_lcd_spi_
     return ESP_OK;
 }
 
-esp_err_t esp_display_present_lcd_spi_destroy(esp_display_present_lcd_spi_t *spi)
+esp_err_t esp_display_present_lcd_io_destroy(esp_display_present_lcd_io_t *spi)
 {
     if (!spi) {
         return ESP_ERR_INVALID_ARG;
@@ -392,7 +392,7 @@ esp_err_t esp_display_present_lcd_spi_destroy(esp_display_present_lcd_spi_t *spi
     return ESP_OK;
 }
 
-esp_err_t esp_display_present_lcd_spi_get_output_caps(esp_display_present_lcd_spi_t *spi, esp_display_present_output_caps_t *out)
+esp_err_t esp_display_present_lcd_io_get_output_caps(esp_display_present_lcd_io_t *spi, esp_display_present_output_caps_t *out)
 {
     if (!spi || !out) {
         return ESP_ERR_INVALID_ARG;

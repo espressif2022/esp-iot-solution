@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "platform/present_te_timing.h"
+#include "platform/te/present_te_timing.h"
 #include <stddef.h>
 esp_display_present_te_window_t esp_display_present_te_window(const esp_display_present_te_timing_t *timing, uint64_t w, uint64_t edge, uint64_t now, bool measured)
 {

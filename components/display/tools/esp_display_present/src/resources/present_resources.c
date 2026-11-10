@@ -9,11 +9,11 @@
 #include "backend/present_records.h"
 #include "resources/present_memory.h"
 #include "core/present_engine.h"
-#include "platform/present_lcd_spi.h"
+#include "platform/lcd/present_lcd_io.h"
 #include "esp_lcd_io_spi.h"
-#include "platform/present_te_sync.h"
-#include "platform/present_lcd_scanout.h"
-#include "platform/present_lcd_blit.h"
+#include "platform/te/present_te_sync.h"
+#include "platform/lcd/present_lcd_fb_scanout.h"
+#include "platform/lcd/present_lcd_fb_update.h"
 #include <string.h>
 #ifndef PRESENT_HOST
 #include "esp_heap_caps.h"
@@ -23,9 +23,9 @@
 
 struct present_resources {
     esp_display_present_engine_t *presenter;
-    esp_display_present_lcd_scanout_t *scanout;
-    esp_display_present_lcd_spi_t *spi;
-    esp_display_present_lcd_blit_t *lcd_blit;
+    esp_display_present_lcd_fb_scanout_t *scanout;
+    esp_display_present_lcd_io_t *spi;
+    esp_display_present_lcd_fb_update_t *lcd_fb_update;
     esp_display_present_te_sync_context_t *te;
     esp_display_present_te_sync_config_t te_config;
     bool te_required, te_armed;
@@ -317,25 +317,25 @@ esp_err_t present_resources_select_executor(present_resources_t *resources, esp_
 static esp_err_t free_resources(present_resources_t *resources)
 {
     if (resources->scanout) {
-        esp_err_t error = esp_display_present_lcd_scanout_destroy(resources->scanout);
+        esp_err_t error = esp_display_present_lcd_fb_scanout_destroy(resources->scanout);
         if (error != ESP_OK) {
             return error;
         }
         resources->scanout = NULL;
     }
     if (resources->spi) {
-        esp_err_t error = esp_display_present_lcd_spi_destroy(resources->spi);
+        esp_err_t error = esp_display_present_lcd_io_destroy(resources->spi);
         if (error != ESP_OK) {
             return error;
         }
         resources->spi = NULL;
     }
-    if (resources->lcd_blit) {
-        esp_err_t error = esp_display_present_lcd_blit_destroy(resources->lcd_blit);
+    if (resources->lcd_fb_update) {
+        esp_err_t error = esp_display_present_lcd_fb_update_destroy(resources->lcd_fb_update);
         if (error != ESP_OK) {
             return error;
         }
-        resources->lcd_blit = NULL;
+        resources->lcd_fb_update = NULL;
     }
     esp_display_present_executor_t **executors[] = {&resources->ppa, &resources->dma2d, &resources->cpu};
     for (size_t i = 0; i < 3; ++i) {
@@ -359,9 +359,9 @@ static esp_err_t create_scanout_adapter(present_resources_t *resources, const es
 {
     esp_err_t error;
     bool quarter = config->presenter.backend.rotation & 1;
-    esp_display_present_lcd_scanout_config_t scan = {
+    esp_display_present_lcd_fb_scanout_config_t scan = {
         .panel = input->target.hw.panel,
-        .kind = input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB ? ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE : ESP_DISPLAY_PRESENT_LCD_DSI,
+        .kind = input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB ? ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_RGB : ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_DSI,
         .width = quarter ? input->height : input->width,
         .height = quarter ? input->width : input->height,
         .format = config->presenter.backend.format,
@@ -372,12 +372,12 @@ static esp_err_t create_scanout_adapter(present_resources_t *resources, const es
         .on_vsync = on_vsync,
         .vsync_user = vsync_user,
     };
-    error = esp_display_present_lcd_scanout_create(&scan, &resources->scanout);
+    error = esp_display_present_lcd_fb_scanout_create(&scan, &resources->scanout);
     if (error != ESP_OK) {
         return error;
     }
     size_t count;
-    error = esp_display_present_lcd_scanout_get_buffers(resources->scanout, resources->buffers, 3, &count);
+    error = esp_display_present_lcd_fb_scanout_get_buffers(resources->scanout, resources->buffers, 3, &count);
     if (error != ESP_OK) {
         return error;
     }
@@ -392,13 +392,13 @@ static esp_err_t create_scanout_adapter(present_resources_t *resources, const es
     config->presenter.backend.ext_bufs = resources->buffers;
     config->presenter.backend.ext_bytes = (size_t)input->width * input->height * bpp;
     config->presenter.backend.scan_buf = resources->buffers[0];
-    error = esp_display_present_lcd_scanout_get_interface(resources->scanout, &config->presenter.backend.panel);
-    return error != ESP_OK ? error : esp_display_present_lcd_scanout_get_output_caps(resources->scanout, &config->output);
+    error = esp_display_present_lcd_fb_scanout_get_interface(resources->scanout, &config->presenter.backend.panel);
+    return error != ESP_OK ? error : esp_display_present_lcd_fb_scanout_get_output_caps(resources->scanout, &config->output);
 }
 
 /* Direct DMA requires driver facts or an explicit matching IO declaration. */
-static esp_err_t create_spi_adapter(present_resources_t *resources, const esp_display_presenter_config_t *input,
-                                    esp_display_present_plan_config_t *config)
+static esp_err_t create_lcd_io_adapter(present_resources_t *resources, const esp_display_presenter_config_t *input,
+                                       esp_display_present_plan_config_t *config)
 {
     esp_err_t error;
     size_t bpp = input->pixel_format == ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 ? 2 : 3;
@@ -425,7 +425,7 @@ static esp_err_t create_spi_adapter(present_resources_t *resources, const esp_di
             return ESP_ERR_NOT_SUPPORTED;
         }
     }
-    esp_display_present_lcd_spi_config_t spi = {
+    esp_display_present_lcd_io_config_t spi = {
         .panel = input->target.hw.panel,
         .io = input->target.hw.io,
         .psram_dma_direct = direct_psram,
@@ -435,39 +435,39 @@ static esp_err_t create_spi_adapter(present_resources_t *resources, const esp_di
         .byte_order = config->presenter.backend.panel_order,
         .max_inflight = config->resources.tile_count,
     };
-    error = esp_display_present_lcd_spi_create(&spi, &resources->spi);
+    error = esp_display_present_lcd_io_create(&spi, &resources->spi);
     if (error != ESP_OK) {
         return error;
     }
-    error = esp_display_present_lcd_spi_get_interface(resources->spi, &config->presenter.backend.panel);
+    error = esp_display_present_lcd_io_get_interface(resources->spi, &config->presenter.backend.panel);
     if (error != ESP_OK) {
         return error;
     }
-    return esp_display_present_lcd_spi_get_output_caps(resources->spi, &config->output);
+    return esp_display_present_lcd_io_get_output_caps(resources->spi, &config->output);
 }
 
-static esp_err_t create_lcd_blit_adapter(present_resources_t *resources,
-                                         const esp_display_presenter_config_t *input,
-                                         esp_display_present_plan_config_t *config)
+static esp_err_t create_lcd_fb_update_adapter(present_resources_t *resources,
+                                              const esp_display_presenter_config_t *input,
+                                              esp_display_present_plan_config_t *config)
 {
     bool quarter = config->presenter.backend.rotation & 1;
-    esp_display_present_lcd_blit_config_t blit = {
+    esp_display_present_lcd_fb_update_config_t blit = {
         .panel = input->target.hw.panel,
         .kind = input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB ?
-        ESP_DISPLAY_PRESENT_LCD_BLIT_RGB : ESP_DISPLAY_PRESENT_LCD_BLIT_DSI,
+        ESP_DISPLAY_PRESENT_LCD_FB_UPDATE_RGB : ESP_DISPLAY_PRESENT_LCD_FB_UPDATE_DSI,
         .width = quarter ? input->height : input->width,
         .height = quarter ? input->width : input->height,
         .format = config->presenter.backend.format,
         .byte_order = config->presenter.backend.panel_order,
     };
-    esp_err_t error = esp_display_present_lcd_blit_create(&blit, &resources->lcd_blit);
+    esp_err_t error = esp_display_present_lcd_fb_update_create(&blit, &resources->lcd_fb_update);
     if (error != ESP_OK) {
         return error;
     }
-    error = esp_display_present_lcd_blit_get_interface(resources->lcd_blit,
-                                                       &config->presenter.backend.panel);
+    error = esp_display_present_lcd_fb_update_get_interface(resources->lcd_fb_update,
+                                                            &config->presenter.backend.panel);
     return error != ESP_OK ? error :
-           esp_display_present_lcd_blit_get_output_caps(resources->lcd_blit, &config->output);
+           esp_display_present_lcd_fb_update_get_output_caps(resources->lcd_fb_update, &config->output);
 }
 
 static esp_err_t create_planned_engine(present_resources_t *resources, const esp_display_presenter_config_t *input,
@@ -509,11 +509,11 @@ esp_err_t present_resources_create(const esp_display_presenter_config_t *input, 
     if (error != ESP_OK) {
         return error;
     }
-    bool lcd_blit = config.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION &&
-                    (input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB ||
-                     input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI);
+    bool lcd_fb_update = config.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION &&
+                         (input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB ||
+                          input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI);
     if (!input->target.hw.panel || (config.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION &&
-                                    !lcd_blit && !input->target.hw.io)) {
+                                    !lcd_fb_update && !input->target.hw.io)) {
         return ESP_ERR_INVALID_ARG;
     }
     present_resources_t *resources = present_alloc(sizeof(*resources));
@@ -534,10 +534,10 @@ esp_err_t present_resources_create(const esp_display_presenter_config_t *input, 
     resources->te_config = input->target.hw.te_sync;
     if (config.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB) {
         error = create_scanout_adapter(resources, input, bounce, on_vsync, vsync_user, &config);
-    } else if (lcd_blit) {
-        error = create_lcd_blit_adapter(resources, input, &config);
+    } else if (lcd_fb_update) {
+        error = create_lcd_fb_update_adapter(resources, input, &config);
     } else {
-        error = create_spi_adapter(resources, input, &config);
+        error = create_lcd_io_adapter(resources, input, &config);
     }
     config.presenter.backend.copy_execute = config.presenter.backend.async_copy ? copy_execute : NULL;
     config.presenter.backend.copy_user = resources;
@@ -588,7 +588,7 @@ esp_err_t present_resources_prepare(present_resources_t *resources, uint32_t tim
         }
     }
     if (error == ESP_OK && resources->scanout) {
-        error = present_lcd_scanout_initialize(resources->scanout, timeout);
+        error = present_lcd_fb_scanout_initialize(resources->scanout, timeout);
     }
     if (error == ESP_OK) {
         resources->status.ready = true;

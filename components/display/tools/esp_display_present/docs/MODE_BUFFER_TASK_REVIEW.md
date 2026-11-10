@@ -229,7 +229,7 @@ N=1 和 N>1 各自哪一格变 `FREE`、哪一格保持 `SCANNING`，见第 3.2 
 
 只有一个待确认的扫描切换；三 FB 增加准备/排队空间，没有增加发送任务，也不是让三张 FB 同时扫描。
 
-依据：[提交和 arm 边界](../src/platform/present_lcd_scanout.c#L156)、[N=1 不 join](../src/platform/present_lcd_scanout.c#L203)、[确认后退休](../src/backend/present_backend_fb.c#L546)、[begin 只接受 FREE 槽](../src/backend/present_backend_fb.c#L858)、[ISR join 验证记录](../dev/FB_ISR_JOIN_RESULTS_20261103.md)。
+依据：[提交和 arm 边界](../src/platform/lcd/present_lcd_fb_scanout.c#L156)、[N=1 不 join](../src/platform/lcd/present_lcd_fb_scanout.c#L203)、[确认后退休](../src/backend/present_backend_fb.c#L546)、[begin 只接受 FREE 槽](../src/backend/present_backend_fb.c#L858)、[ISR join 验证记录](../dev/FB_ISR_JOIN_RESULTS_20261103.md)。
 
 ## 5. GRAM：直接发送、转换发送与实验后台发送
 
@@ -304,7 +304,7 @@ flowchart LR
 - TE 边沿负责周期/相位信息，phase timer 负责尚未到窗口时再唤醒。ESP 版本使用系统 `ESP_TIMER_TASK`，只新增 timer 对象，**不新增一个专用 TE 等待任务**。Host timer 实现用 pthread，不用于本表实板任务计数。
 - 公开配置 C=0 表示 C=1；私有 composer 直接传 0 的兼容语义却是“两张图像、非 pipelined”，不能拿后者解释公开默认值。
 
-依据：[TE 创建](../src/backend/present_backend_te.c#L441)、[tile 回收](../src/backend/present_backend_te.c#L173)、[窗口准入与发送](../src/backend/present_backend_te.c#L197)、[composer 写入](../src/backend/present_te_composer.c#L173)、[timer 实板实现](../src/platform/present_te_timer.c#L131)。
+依据：[TE 创建](../src/backend/present_backend_te.c#L441)、[tile 回收](../src/backend/present_backend_te.c#L173)、[窗口准入与发送](../src/backend/present_backend_te.c#L197)、[composer 写入](../src/backend/present_te_composer.c#L173)、[timer 实板实现](../src/platform/te/present_te_timer.c#L131)。
 
 ## 7. 两种 work、硬件执行器与真实传输数量
 
@@ -379,7 +379,7 @@ TE 创建时根据驱动只读事实判断 `psram_dma_direct`。支持时 SPI st
 
 adapter 的 staging 实现会 copy→cache 同步→draw→等该段完成后再复用同一块 staging，强制 max_inflight=1。只有最终段完成才发布逻辑完成。TE 的创建校验避免走多段 panel 窗口发送；这与驱动在一次窗口内部拆 SPI 包不同。
 
-依据：[SPI 资源创建与 TE 校验](../src/resources/present_resources.c#L414)、[stage_transfer](../src/platform/present_lcd_spi.c#L154)、[staging 分配与容量](../src/platform/present_lcd_spi.c#L320)。
+依据：[SPI 资源创建与 TE 校验](../src/resources/present_resources.c#L414)、[stage_transfer](../src/platform/lcd/present_lcd_io.c#L154)、[staging 分配与容量](../src/platform/lcd/present_lcd_io.c#L320)。
 
 ## 9. 像素内存账本
 

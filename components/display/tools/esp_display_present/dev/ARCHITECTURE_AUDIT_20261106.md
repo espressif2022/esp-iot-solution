@@ -44,4 +44,4 @@
 - 运行时原地 swap 的 GRAM 无转换目标时仍可拒绝旋转；不为扩展能力偷偷更换资源策略。
 - 真实 cache/DMA、跨核 ISR、TE 时间窗和光学效果须上板；本轮修复需 P4 非方形屏幕复测。
 
-相关代码主要是 src/present_resources.c、src/platform/present_lcd_scanout.c、src/esp_display_presenter.c；测试在 dev/tests/test_legacy_facade.c。分层检查没有发现需要重写整个 engine 的依据，本轮只收敛有反例的尺寸权威冲突并补齐生命周期验证。
+相关代码主要是 src/present_resources.c、src/platform/lcd/present_lcd_fb_scanout.c、src/esp_display_presenter.c；测试在 dev/tests/test_legacy_facade.c。分层检查没有发现需要重写整个 engine 的依据，本轮只收敛有反例的尺寸权威冲突并补齐生命周期验证。

@@ -263,7 +263,7 @@ static esp_display_presenter_config_t config(struct fake_lcd *panel, bool rgb)
     };
 }
 
-#include "../../../src/platform/present_te_sync.h"
+#include "../../../src/platform/te/present_te_sync.h"
 struct esp_display_present_te_sync_context {
     esp_display_present_te_wakeup_fn wakeup;
     void *user;

@@ -6,7 +6,7 @@
 #include "backend/present_backend.h"
 #include "../../src/platform/present_os.h"
 #include "test_panel.h"
-#include "platform/present_te_timer.h"
+#include "platform/te/present_te_timer.h"
 #include "backend/present_te_composer.h"
 #include <pthread.h>
 #include <time.h>

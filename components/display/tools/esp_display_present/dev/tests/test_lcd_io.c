@@ -4,7 +4,7 @@
  */
 #include "backend/present_backend_config.h"
 #include "backend/present_backend.h"
-#include "platform/present_lcd_spi.h"
+#include "platform/lcd/present_lcd_io.h"
 #include "esp_cache.h"
 #include "esp_memory_utils.h"
 #include <assert.h>
@@ -149,14 +149,14 @@ static bool sink_event(void *context, const esp_display_present_backend_event_t 
     return true;
 }
 
-static esp_display_present_lcd_spi_t *make(struct fake_lcd *lcd, size_t depth, esp_display_present_panel_adapter_t *interface)
+static esp_display_present_lcd_io_t *make(struct fake_lcd *lcd, size_t depth, esp_display_present_panel_adapter_t *interface)
 {
-    esp_display_present_lcd_spi_config_t config = { .panel = lcd, .io = lcd, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
-                                                    .byte_order = ESP_DISPLAY_PRESENT_ORDER_NATIVE, .max_inflight = depth
-                                                  };
-    esp_display_present_lcd_spi_t *adapter;
-    assert(esp_display_present_lcd_spi_create(&config, &adapter) == ESP_OK);
-    assert(esp_display_present_lcd_spi_get_interface(adapter, interface) == ESP_OK);
+    esp_display_present_lcd_io_config_t config = { .panel = lcd, .io = lcd, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+                                                   .byte_order = ESP_DISPLAY_PRESENT_ORDER_NATIVE, .max_inflight = depth
+                                                 };
+    esp_display_present_lcd_io_t *adapter;
+    assert(esp_display_present_lcd_io_create(&config, &adapter) == ESP_OK);
+    assert(esp_display_present_lcd_io_get_interface(adapter, interface) == ESP_OK);
     return adapter;
 }
 
@@ -164,7 +164,7 @@ static void fifo_and_validation(void)
 {
     struct fake_lcd lcd = {0};
     esp_display_present_panel_adapter_t api;
-    esp_display_present_lcd_spi_t *adapter = make(&lcd, 2, &api);
+    esp_display_present_lcd_io_t *adapter = make(&lcd, 2, &api);
     sink_t sink = {0};
     assert(api.attach(api.context, sink_event, &sink) == ESP_OK);
     _Alignas(64) uint8_t data[64] = {0x12, 0x34};
@@ -201,7 +201,7 @@ static void fifo_and_validation(void)
     assert(lcd.x0 == 3 && lcd.y0 == 5 && lcd.x1 == 5 && lcd.y1 == 7);
     assert(api.submit(api.context, &surface, &area, 12).result == ESP_ERR_NO_MEM);
     assert(api.quiesce(api.context, 0) == ESP_ERR_TIMEOUT);
-    assert(esp_display_present_lcd_spi_destroy(adapter) == ESP_ERR_INVALID_STATE);
+    assert(esp_display_present_lcd_io_destroy(adapter) == ESP_ERR_INVALID_STATE);
     complete(&lcd);
     assert(api.quiesce(api.context, 0) == ESP_ERR_TIMEOUT);
     complete(&lcd);
@@ -210,7 +210,7 @@ static void fifo_and_validation(void)
     assert(api.quiesce(api.context, 0) == ESP_FAIL && lcd.done);
     lcd.detach_fail = false;
     assert(api.quiesce(api.context, 0) == ESP_OK && !lcd.done);
-    assert(esp_display_present_lcd_spi_destroy(adapter) == ESP_OK);
+    assert(esp_display_present_lcd_io_destroy(adapter) == ESP_OK);
 }
 
 static void early_and_uncertain(void)
@@ -218,7 +218,7 @@ static void early_and_uncertain(void)
     for (int early = 0; early < 2; ++early) {
         struct fake_lcd lcd = { .early = early, .draw_result = ESP_FAIL };
         esp_display_present_panel_adapter_t api;
-        esp_display_present_lcd_spi_t *adapter = make(&lcd, 1, &api);
+        esp_display_present_lcd_io_t *adapter = make(&lcd, 1, &api);
         sink_t sink = {0};
         assert(api.attach(api.context, sink_event, &sink) == ESP_OK);
         _Alignas(64) uint8_t data[64] = {0};
@@ -228,19 +228,19 @@ static void early_and_uncertain(void)
         assert(api.submit(api.context, &s, &a, 100).acceptance == ESP_DISPLAY_PRESENT_TX_REJECTED);
         if (!early) {
             assert(api.quiesce(api.context, 1) == ESP_ERR_TIMEOUT);
-            assert(esp_display_present_lcd_spi_destroy(adapter) == ESP_ERR_INVALID_STATE);
+            assert(esp_display_present_lcd_io_destroy(adapter) == ESP_ERR_INVALID_STATE);
             complete(&lcd); /* A late final chunk eventually establishes safety. */
         }
         assert(sink.count == 1 && sink.cookies[0] == 99);
         assert(api.quiesce(api.context, 0) == ESP_OK);
-        assert(esp_display_present_lcd_spi_destroy(adapter) == ESP_OK);
+        assert(esp_display_present_lcd_io_destroy(adapter) == ESP_OK);
     }
     struct fake_lcd lcd = {.attach_fail = true};
     esp_display_present_panel_adapter_t api;
-    esp_display_present_lcd_spi_t *adapter = make(&lcd, 1, &api);
+    esp_display_present_lcd_io_t *adapter = make(&lcd, 1, &api);
     sink_t sink = {0};
     assert(api.attach(api.context, sink_event, &sink) == ESP_FAIL && !lcd.done);
-    assert(esp_display_present_lcd_spi_destroy(adapter) == ESP_OK);
+    assert(esp_display_present_lcd_io_destroy(adapter) == ESP_OK);
 }
 
 static void *completion_thread(void *user)
@@ -253,7 +253,7 @@ static void callback_exit_barrier(void)
 {
     struct fake_lcd lcd = {0};
     esp_display_present_panel_adapter_t api;
-    esp_display_present_lcd_spi_t *adapter = make(&lcd, 1, &api);
+    esp_display_present_lcd_io_t *adapter = make(&lcd, 1, &api);
     sink_t sink = { .lock = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER, .block = true };
     assert(api.attach(api.context, sink_event, &sink) == ESP_OK);
     _Alignas(64) uint8_t data[64] = {0};
@@ -275,7 +275,7 @@ static void callback_exit_barrier(void)
     pthread_mutex_unlock(&sink.lock);
     assert(pthread_join(worker, NULL) == 0);
     assert(api.quiesce(api.context, 0) == ESP_OK);
-    assert(esp_display_present_lcd_spi_destroy(adapter) == ESP_OK);
+    assert(esp_display_present_lcd_io_destroy(adapter) == ESP_OK);
     pthread_cond_destroy(&sink.changed);
     pthread_mutex_destroy(&sink.lock);
 }
@@ -284,7 +284,7 @@ static void gram_integration(void)
 {
     struct fake_lcd lcd = {0};
     esp_display_present_panel_adapter_t api;
-    esp_display_present_lcd_spi_t *adapter = make(&lcd, 2, &api);
+    esp_display_present_lcd_io_t *adapter = make(&lcd, 2, &api);
     esp_display_present_backend_config_t c = { .width = 4, .height = 4, .tile_rows = 2,
                                                .buffer_count = 2, .max_frames = 2, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = api
                                              };
@@ -318,17 +318,17 @@ static void gram_integration(void)
     assert(ops->get_fault(g, &fault) == ESP_OK && fault.result == ESP_FAIL && fault.frame.value == f.value);
     assert(ops->stop(g, 0) == ESP_OK);
     assert(ops->destroy(g) == ESP_OK);
-    assert(esp_display_present_lcd_spi_destroy(adapter) == ESP_OK);
+    assert(esp_display_present_lcd_io_destroy(adapter) == ESP_OK);
 }
 
 static void external_dma(void)
 {
     struct fake_lcd lcd = {0};
-    esp_display_present_lcd_spi_config_t cfg = {.panel = &lcd, .io = &lcd, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .max_inflight = 1, .psram_dma_direct = true};
-    esp_display_present_lcd_spi_t *adapter;
-    assert(esp_display_present_lcd_spi_create(&cfg, &adapter) == ESP_OK);
+    esp_display_present_lcd_io_config_t cfg = {.panel = &lcd, .io = &lcd, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .max_inflight = 1, .psram_dma_direct = true};
+    esp_display_present_lcd_io_t *adapter;
+    assert(esp_display_present_lcd_io_create(&cfg, &adapter) == ESP_OK);
     esp_display_present_panel_adapter_t api;
-    assert(esp_display_present_lcd_spi_get_interface(adapter, &api) == ESP_OK);
+    assert(esp_display_present_lcd_io_get_interface(adapter, &api) == ESP_OK);
     sink_t sink = {0};
     assert(api.attach(api.context, sink_event, &sink) == ESP_OK);
     _Alignas(64) uint8_t pixels[64] = {0};
@@ -341,7 +341,7 @@ static void external_dma(void)
     assert(api.submit(api.context, &surface, &area, 124).acceptance == ESP_DISPLAY_PRESENT_TX_REJECTED);
     internal = dma_capable = true;
     assert(api.quiesce(api.context, 0) == ESP_OK);
-    assert(esp_display_present_lcd_spi_destroy(adapter) == ESP_OK);
+    assert(esp_display_present_lcd_io_destroy(adapter) == ESP_OK);
 }
 
 typedef struct {
@@ -371,14 +371,14 @@ static void staged_transfer(void)
 {
     for (unsigned path = 0; path < 3; ++path) {
         struct fake_lcd lcd = {.staged = true, .early = path == 0};
-        esp_display_present_lcd_spi_config_t config = {.panel = &lcd, .io = &lcd,
-                                                       .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .max_inflight = 2, .staging_bytes = 64,
-                                                       .staging_timeout_ms = path == 2 ? 1 : 1000
-                                                      };
-        esp_display_present_lcd_spi_t *adapter;
-        assert(esp_display_present_lcd_spi_create(&config, &adapter) == ESP_OK);
+        esp_display_present_lcd_io_config_t config = {.panel = &lcd, .io = &lcd,
+                                                      .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .max_inflight = 2, .staging_bytes = 64,
+                                                      .staging_timeout_ms = path == 2 ? 1 : 1000
+                                                     };
+        esp_display_present_lcd_io_t *adapter;
+        assert(esp_display_present_lcd_io_create(&config, &adapter) == ESP_OK);
         staged_test_t test = {0};
-        assert(esp_display_present_lcd_spi_get_interface(adapter, &test.api) == ESP_OK);
+        assert(esp_display_present_lcd_io_get_interface(adapter, &test.api) == ESP_OK);
         assert(test.api.attach(test.api.context, staged_event, &test) == ESP_OK);
         _Alignas(64) uint8_t source[192];
         for (unsigned i = 0; i < 192; ++i) {
@@ -410,7 +410,7 @@ static void staged_transfer(void)
             assert(test.result.acceptance == ESP_DISPLAY_PRESENT_TX_UNCERTAIN && test.result.result == ESP_ERR_TIMEOUT);
             assert(test.completions == 0 && lcd.pending == 1);
             assert(test.api.quiesce(test.api.context, 0) == ESP_ERR_TIMEOUT);
-            assert(esp_display_present_lcd_spi_destroy(adapter) == ESP_ERR_INVALID_STATE);
+            assert(esp_display_present_lcd_io_destroy(adapter) == ESP_ERR_INVALID_STATE);
             assert(!memcmp(lcd.pending_source, source, 64));
             complete(&lcd);
             assert(test.completions == 1 && test.completion_result == ESP_ERR_TIMEOUT);
@@ -422,7 +422,7 @@ static void staged_transfer(void)
             assert(!memcmp(lcd.history, source, sizeof(source)));
         }
         assert(test.api.quiesce(test.api.context, 100) == ESP_OK);
-        assert(esp_display_present_lcd_spi_destroy(adapter) == ESP_OK);
+        assert(esp_display_present_lcd_io_destroy(adapter) == ESP_OK);
         internal = dma_capable = true;
     }
 }

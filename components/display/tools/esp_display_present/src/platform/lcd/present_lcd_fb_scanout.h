@@ -9,17 +9,17 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-typedef struct esp_display_present_lcd_scanout esp_display_present_lcd_scanout_t;
+typedef struct esp_display_present_lcd_fb_scanout esp_display_present_lcd_fb_scanout_t;
 typedef enum {
-    ESP_DISPLAY_PRESENT_LCD_DSI,
-    ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE,
-} esp_display_present_lcd_scanout_kind_t;
+    ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_DSI,
+    ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_RGB,
+} esp_display_present_lcd_fb_scanout_kind_t;
 typedef bool (*esp_display_present_scanout_vsync_fn)(void *user, uint64_t timestamp_us, bool from_isr);
 typedef esp_err_t (*esp_display_present_stop_scanout_fn)(void *user, uint32_t timeout_ms);
 
 typedef struct {
     esp_lcd_panel_handle_t panel;
-    esp_display_present_lcd_scanout_kind_t kind;
+    esp_display_present_lcd_fb_scanout_kind_t kind;
     uint32_t width, height;
     esp_display_present_engine_pixel_format_t format;
     size_t buffer_count; /* 1..3 driver-owned framebuffers; one permits active writes. */
@@ -46,7 +46,7 @@ typedef struct {
     bool retain_scanout;
     esp_display_present_scanout_vsync_fn on_vsync; /* Raw observation only; ISR-safe, nonblocking; never retirement. */
     void *vsync_user;
-} esp_display_present_lcd_scanout_config_t;
+} esp_display_present_lcd_fb_scanout_config_t;
 
 /**
  * @brief Exclusive initialized panel; no previous submissions or callback owner.
@@ -65,7 +65,7 @@ typedef struct {
  * @param out_adapter Output adapter.
  * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
  */
-esp_err_t esp_display_present_lcd_scanout_create(const esp_display_present_lcd_scanout_config_t *config, esp_display_present_lcd_scanout_t **out_adapter);
+esp_err_t esp_display_present_lcd_fb_scanout_create(const esp_display_present_lcd_fb_scanout_config_t *config, esp_display_present_lcd_fb_scanout_t **out_adapter);
 
 /**
  * @brief Lcd scanout get buffers.
@@ -76,7 +76,7 @@ esp_err_t esp_display_present_lcd_scanout_create(const esp_display_present_lcd_s
  * @param count Receives the buffer count.
  * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
  */
-esp_err_t esp_display_present_lcd_scanout_get_buffers(esp_display_present_lcd_scanout_t *adapter, void **out_buffers, size_t capacity, size_t *count);
+esp_err_t esp_display_present_lcd_fb_scanout_get_buffers(esp_display_present_lcd_fb_scanout_t *adapter, void **out_buffers, size_t capacity, size_t *count);
 
 /**
  * @brief Lcd scanout get interface.
@@ -85,7 +85,7 @@ esp_err_t esp_display_present_lcd_scanout_get_buffers(esp_display_present_lcd_sc
  * @param interface interface.
  * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
  */
-esp_err_t esp_display_present_lcd_scanout_get_interface(esp_display_present_lcd_scanout_t *adapter, esp_display_present_panel_adapter_t *interface);
+esp_err_t esp_display_present_lcd_fb_scanout_get_interface(esp_display_present_lcd_fb_scanout_t *adapter, esp_display_present_panel_adapter_t *interface);
 
 /**
  * @brief Backend must first stop/destroy. Caller destroys bus; panel only if not
@@ -94,13 +94,13 @@ esp_err_t esp_display_present_lcd_scanout_get_interface(esp_display_present_lcd_
  * @param adapter Panel adapter instance.
  * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
  */
-esp_err_t esp_display_present_lcd_scanout_destroy(esp_display_present_lcd_scanout_t *adapter);
+esp_err_t esp_display_present_lcd_fb_scanout_destroy(esp_display_present_lcd_fb_scanout_t *adapter);
 /* Transport constraints only; panel command alignment may be stricter. */
-esp_err_t esp_display_present_lcd_scanout_get_output_caps(esp_display_present_lcd_scanout_t *adapter, esp_display_present_output_caps_t *caps);
+esp_err_t esp_display_present_lcd_fb_scanout_get_output_caps(esp_display_present_lcd_fb_scanout_t *adapter, esp_display_present_output_caps_t *caps);
 
 /* Before any producer frame; attaches through the existing presenter and
  * fences FB0 selection. Only the factory may submit while this is pending. */
-esp_err_t present_lcd_scanout_initialize(esp_display_present_lcd_scanout_t *, uint32_t timeout_ms);
+esp_err_t present_lcd_fb_scanout_initialize(esp_display_present_lcd_fb_scanout_t *, uint32_t timeout_ms);
 
 #ifdef __cplusplus
 }

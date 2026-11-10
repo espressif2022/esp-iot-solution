@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include "board_rgb_info.h"
-#include "platform/present_lcd_rgb_info.h"
+#include "platform/lcd/present_lcd_rgb_info.h"
 static struct {
     esp_lcd_panel_handle_t panel;
     present_lcd_rgb_info_t info;

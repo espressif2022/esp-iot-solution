@@ -12,8 +12,8 @@
 #include "backend/present_frame_core.h"
 #include "backend/present_transaction.h"
 #include "backend/present_te_composer.h"
-#include "platform/present_te_timer.h"
-#include "platform/present_te_timing.h"
+#include "platform/te/present_te_timer.h"
+#include "platform/te/present_te_timing.h"
 
 enum {
     TE_MAX_BUFFERS = PRESENT_MAX_TILE_BUFFERS,

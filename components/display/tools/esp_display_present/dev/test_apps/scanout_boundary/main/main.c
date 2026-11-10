@@ -5,7 +5,7 @@
 #include "board.h"
 #include "boundary_trace.h"
 #include "core/present_engine.h"
-#include "platform/present_lcd_scanout.h"
+#include "platform/lcd/present_lcd_fb_scanout.h"
 #include "esp_check.h"
 #include "esp_heap_caps.h"
 #include "esp_lcd_panel_ops.h"
@@ -71,17 +71,17 @@ static void run_v2(unsigned count, bool full, unsigned rotation)
     boundary_reset();
     esp_lcd_panel_handle_t panel;
     ESP_ERROR_CHECK(board_panel_create(&panel, count));
-    esp_display_present_lcd_scanout_t *adapter;
-    esp_display_present_lcd_scanout_config_t scan = {
+    esp_display_present_lcd_fb_scanout_t *adapter;
+    esp_display_present_lcd_fb_scanout_config_t scan = {
         .panel = panel, .kind = SCANOUT_KIND, .width = WIDTH, .height = HEIGHT,
         .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = count,
-        .bounce = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE,
+        .bounce = SCANOUT_KIND == ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_RGB,
         .delete_panel = true,
     };
-    ESP_ERROR_CHECK(esp_display_present_lcd_scanout_create(&scan, &adapter));
+    ESP_ERROR_CHECK(esp_display_present_lcd_fb_scanout_create(&scan, &adapter));
     void *buffers[3];
     size_t actual;
-    ESP_ERROR_CHECK(esp_display_present_lcd_scanout_get_buffers(adapter, buffers, 3, &actual));
+    ESP_ERROR_CHECK(esp_display_present_lcd_fb_scanout_get_buffers(adapter, buffers, 3, &actual));
     for (size_t i = 0; i < actual; ++i) {
         boundary_emit(BT_REGISTER, (uintptr_t)buffers[i], i);
     }
@@ -102,7 +102,7 @@ static void run_v2(unsigned count, bool full, unsigned rotation)
             .scan_buf = buffers[0],
         },
     };
-    ESP_ERROR_CHECK(esp_display_present_lcd_scanout_get_interface(adapter, &config.backend.panel));
+    ESP_ERROR_CHECK(esp_display_present_lcd_fb_scanout_get_interface(adapter, &config.backend.panel));
     esp_display_present_engine_t *presenter;
     ESP_ERROR_CHECK(esp_display_present_engine_create(&config, &presenter));
     atomic_store(&pressure_active, true);
@@ -132,7 +132,7 @@ static void run_v2(unsigned count, bool full, unsigned rotation)
     atomic_store(&pressure_active, false);
     ESP_ERROR_CHECK(esp_display_present_engine_stop(presenter, 3000));
     ESP_ERROR_CHECK(esp_display_present_engine_destroy(presenter));
-    ESP_ERROR_CHECK(esp_display_present_lcd_scanout_destroy(adapter));
+    ESP_ERROR_CHECK(esp_display_present_lcd_fb_scanout_destroy(adapter));
     ESP_ERROR_CHECK(board_resources_destroy());
     boundary_emit(BT_STOP, 0, 0);
     boundary_freeze();

@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-typedef struct esp_display_present_lcd_spi esp_display_present_lcd_spi_t;
+typedef struct esp_display_present_lcd_io esp_display_present_lcd_io_t;
 
 typedef struct {
     esp_lcd_panel_handle_t panel;
@@ -24,7 +24,7 @@ typedef struct {
     size_t staging_bytes; /* Optional bounded internal DMA staging; serializes whole transactions. */
     uint32_t staging_timeout_ms; /* Per transaction; 0 uses 1000 ms. Failure retains in-flight storage. */
     bool psram_dma_direct; /* Opt-in: underlying LCD SPI IO must enable the same flag on a capable SPI host. */
-} esp_display_present_lcd_spi_config_t;
+} esp_display_present_lcd_io_config_t;
 
 /**
  * @brief SPI/QSPI IO adapter. Caller retains panel/IO ownership and guarantees:
@@ -52,7 +52,7 @@ typedef struct {
  * @param out_adapter Output adapter.
  * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
  */
-esp_err_t esp_display_present_lcd_spi_create(const esp_display_present_lcd_spi_config_t *config, esp_display_present_lcd_spi_t **out_adapter);
+esp_err_t esp_display_present_lcd_io_create(const esp_display_present_lcd_io_config_t *config, esp_display_present_lcd_io_t **out_adapter);
 
 /**
  * @brief Lcd spi get interface.
@@ -61,7 +61,7 @@ esp_err_t esp_display_present_lcd_spi_create(const esp_display_present_lcd_spi_c
  * @param out_interface Output interface.
  * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
  */
-esp_err_t esp_display_present_lcd_spi_get_interface(esp_display_present_lcd_spi_t *adapter, esp_display_present_panel_adapter_t *out_interface);
+esp_err_t esp_display_present_lcd_io_get_interface(esp_display_present_lcd_io_t *adapter, esp_display_present_panel_adapter_t *out_interface);
 
 /**
  * @brief Only before attachment or after successful backend.stop; destroy backend
@@ -70,10 +70,10 @@ esp_err_t esp_display_present_lcd_spi_get_interface(esp_display_present_lcd_spi_
  * @param adapter Panel adapter instance.
  * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
  */
-esp_err_t esp_display_present_lcd_spi_destroy(esp_display_present_lcd_spi_t *adapter);
+esp_err_t esp_display_present_lcd_io_destroy(esp_display_present_lcd_io_t *adapter);
 
 /* Transport constraints only; panel command alignment may be stricter. */
-esp_err_t esp_display_present_lcd_spi_get_output_caps(esp_display_present_lcd_spi_t *adapter, esp_display_present_output_caps_t *caps);
+esp_err_t esp_display_present_lcd_io_get_output_caps(esp_display_present_lcd_io_t *adapter, esp_display_present_output_caps_t *caps);
 
 #ifdef __cplusplus
 }

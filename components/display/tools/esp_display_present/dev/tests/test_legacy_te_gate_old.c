@@ -1,7 +1,7 @@
 /* SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0 */
 /* Compile the actual adapter with an IDF 6.1 capability shim. */
-#include "../../src/platform/present_te_sync.c"
+#include "../../src/platform/te/present_te_sync.c"
 int main(void)
 {
     esp_display_present_te_sync_config_t cfg = {.gpio_num = 1, .bus_freq_hz = 8000000, .data_lines = 1};

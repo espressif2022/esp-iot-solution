@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "platform/present_te_timing.h"
+#include "platform/te/present_te_timing.h"
 #include <assert.h>
 int main(void)
 {

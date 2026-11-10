@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "platform/present_lcd_rgb_info.h"
+#include "platform/lcd/present_lcd_rgb_info.h"
 #ifdef PRESENT_HOST
 #define PRESENT_RGB_SUPPORTED 1
 #define PRESENT_RGB_LINK_SWITCH_SUPPORTED 1

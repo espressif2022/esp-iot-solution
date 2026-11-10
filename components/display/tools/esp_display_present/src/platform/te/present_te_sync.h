@@ -6,6 +6,9 @@
 
 #pragma once
 
+/* GPIO TE measurement and admission coordinator; composes timing and timer.
+ * This service does not submit LCD pixels. */
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>

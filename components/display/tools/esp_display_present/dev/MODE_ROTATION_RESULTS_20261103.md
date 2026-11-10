@@ -1,11 +1,11 @@
 # 三板模式和旋转矩阵（2026-11-03）
 
-测试组件基于 `8c69118a6182a83a22450710b06bc5a4563030b9`，使用当时工作区内容；`src/platform/present_lcd_spi.c` 有未提交的写法调整，生产源码 diff 的 SHA256 为 `cad4ff898f3e9229ec9b08507972ce5d82d3960f47a7dab510bdf1cf3685750b`。ESP-IDF 是本机 `7b9cc1ac79f8` dirty 工作区，带只读 LCD 能力查询补丁；这不是未修改上游 IDF 的验证。板子按 chip/MAC 核对，备份和校验 16 MiB 原 Flash；完成后全量恢复及独立摘要校验。
+测试组件基于 `8c69118a6182a83a22450710b06bc5a4563030b9`，使用当时工作区内容；`src/platform/lcd/present_lcd_io.c` 有未提交的写法调整，生产源码 diff 的 SHA256 为 `cad4ff898f3e9229ec9b08507972ce5d82d3960f47a7dab510bdf1cf3685750b`。ESP-IDF 是本机 `7b9cc1ac79f8` dirty 工作区，带只读 LCD 能力查询补丁；这不是未修改上游 IDF 的验证。板子按 chip/MAC 核对，备份和校验 16 MiB 原 Flash；完成后全量恢复及独立摘要校验。
 
 ## 结论和问题
 
 - **创建时角度：88/88 组合通过。** P4 MIPI 和 S3 RGB bounce 各 28 项；S31 QSPI 32 项。每项独立创建 Presenter，按 0°／90°／180°／270° 画 4 帧，检查实际交给面板驱动的区域、最终完成水位及每个输出像素。P4 的 90°／270° 使用 600×1024 逻辑尺寸，输出仍为 1024×600。`AUTO` 是自动选择的配置，不是新增后端。P4／S3 的公开接口矩阵中，驱动实际创建了 3 块 FB；NONE 只使用其中 1 块、双缓冲模式使用其中 2 块，未覆盖驱动自身只分配 1 块 FB 的硬件配置。
-- **P4 门面运行时跨轴旋转失败：56/84 项。** 七种公开配置分别从 0°／90°／180°／270° 切到其余三个角度；28 个同轴 180° 切换通过逐像素验证，56 个跨轴切换中 `esp_display_presenter_set_rotation()` 均返回 `ESP_OK`，但随后对实际 1024×600 面板提交了 600×1024 区域，DPI 驱动会裁剪。涵盖 NONE、双／三 FULL、双 DIRECT、双／三 PARTIAL 和 AUTO；[逐项结果](evidence/rotation-matrix-20261103/p4-transitions.csv)。native 引擎动态旋转和创建时直接设 90° 通过，不能替代这条公开接口。当前 [资源旋转路径](../src/present_resources.c#L571)根据逻辑尺寸改写 scanout 视图，[scanout 布局更新](../src/platform/present_lcd_scanout.c#L486)只检查像素总数，未验证面板物理宽高。需要先统一这两者契约，再补 Host 回归与实板验证。
+- **P4 门面运行时跨轴旋转失败：56/84 项。** 七种公开配置分别从 0°／90°／180°／270° 切到其余三个角度；28 个同轴 180° 切换通过逐像素验证，56 个跨轴切换中 `esp_display_presenter_set_rotation()` 均返回 `ESP_OK`，但随后对实际 1024×600 面板提交了 600×1024 区域，DPI 驱动会裁剪。涵盖 NONE、双／三 FULL、双 DIRECT、双／三 PARTIAL 和 AUTO；[逐项结果](evidence/rotation-matrix-20261103/p4-transitions.csv)。native 引擎动态旋转和创建时直接设 90° 通过，不能替代这条公开接口。当前 [资源旋转路径](../src/present_resources.c#L571)根据逻辑尺寸改写 scanout 视图，[scanout 布局更新](../src/platform/lcd/present_lcd_fb_scanout.c#L486)只检查像素总数，未验证面板物理宽高。需要先统一这两者契约，再补 Host 回归与实板验证。
 - **S31 GRAM 从 0° 运行时旋转有限制。** `GRAM_T1`、`GRAM_T2` 和 `AUTO_GRAM` 的 `0° → 180°` 返回 `ESP_ERR_NOT_SUPPORTED`：初始的同步原地字节序转换不支持旋转。创建时选择 180° 已通过；初始为非零角度的同轴切换通过。TE 的四组同轴切换均通过。
 - **S31 TE 是物理整屏。** 单／双 compose × 单／双 tile 的四个角度，以及 `AUTO_TE`：每帧均为一次 480×480 面板提交。另针对全部 32 个 S31 组合，将 72×48 的对齐脏区作为上游输入进行修补；TE 仍是一次整屏输出，GRAM 的实发窗口起点及宽度满足本轮 4 像素对齐。该测试自行给出对齐区域；SPI 适配器当前并未自动宣告此板的 4 像素约束，不能据此认定任意未对齐脏区安全。
 - **P4／S3 native 动态轮转：各 5 种 FB 模式通过。** 每种顺序切换 `0 → 90 → 180 → 270 → 0`，每方向做全屏加局部帧，并用独立坐标公式逐像素核对。另在 0° 保持多帧在途，双缓冲 `used_mask=0x3`、三缓冲 `used_mask=0x7`；该缓冲压力检查不是四个角度都做了一遍。

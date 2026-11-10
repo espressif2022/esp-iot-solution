@@ -4,7 +4,7 @@
  */
 #include "core/present_engine.h"
 #include "sync_panel.h"
-#include "../../src/platform/present_te_timer.h"
+#include "../../src/platform/te/present_te_timer.h"
 #include <stdio.h>
 #define OK(x) assert((x) == ESP_OK)
 static bool unavailable_timer;

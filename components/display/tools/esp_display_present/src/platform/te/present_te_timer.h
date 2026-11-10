@@ -1,6 +1,9 @@
 /* SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0 */
 #pragma once
+
+/* Platform timer lifecycle: arm a deadline and join callbacks on destruction.
+ * Used by both TE backend and GPIO synchronization; no TE window arithmetic. */
 #include "esp_err.h"
 #include <stdint.h>
 #include <stddef.h>

@@ -19,7 +19,7 @@ static void test_log(const char *tag, const char *fmt, ...)
 #define ESP_LOGI test_log
 #define ESP_LOGW test_log
 #include "support/te_platform/platform.h"
-#include "../../src/platform/present_te_timer.h"
+#include "../../src/platform/te/present_te_timer.h"
 /* Virtual clock fixture for the same private timer interface used on target. */
 typedef struct {
     present_te_timer_callback_t callback;
@@ -65,7 +65,7 @@ static esp_err_t fake_phase_destroy(present_te_timer_t *timer, uint32_t timeout)
 #define present_te_timer_create fake_phase_create
 #define present_te_timer_arm fake_phase_arm
 #define present_te_timer_destroy fake_phase_destroy
-#include "../../src/platform/present_te_sync.c"
+#include "../../src/platform/te/present_te_sync.c"
 #undef present_te_timer_create
 #undef present_te_timer_arm
 #undef present_te_timer_destroy

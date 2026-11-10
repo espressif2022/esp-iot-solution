@@ -5,7 +5,7 @@
 #include "board_qspi.h"
 #include "esp_display_present.h"
 #include "core/present_engine.h"
-#include "platform/present_lcd_spi.h"
+#include "platform/lcd/present_lcd_io.h"
 #include "driver/gpio.h"
 #include "esp_timer.h"
 #include "esp_log.h"
@@ -127,11 +127,11 @@ static uint64_t run(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_handle_t io,
 {
     unsigned w = roi ? 64 : 480, h = roi ? 16 : 480, tile = 16;
     check(esp_lcd_panel_set_gap(panel, roi ? 208 : 0, roi ? 232 : 0), "gap");
-    esp_display_present_lcd_spi_t *adapter;
-    esp_display_present_lcd_spi_config_t spi = {.panel = panel, .io = io, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .byte_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED, .max_inflight = 1, .psram_dma_direct = true};
-    check(esp_display_present_lcd_spi_create(&spi, &adapter), "adapter create");
+    esp_display_present_lcd_io_t *adapter;
+    esp_display_present_lcd_io_config_t spi = {.panel = panel, .io = io, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .byte_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED, .max_inflight = 1, .psram_dma_direct = true};
+    check(esp_display_present_lcd_io_create(&spi, &adapter), "adapter create");
     meter_t meter = {.window = te ? window : 0};
-    check(esp_display_present_lcd_spi_get_interface(adapter, &meter.real), "adapter interface");
+    check(esp_display_present_lcd_io_get_interface(adapter, &meter.real), "adapter interface");
     esp_display_present_engine_config_t cfg = {.backend_kind = te ? ESP_DISPLAY_PRESENT_ENGINE_TE : ESP_DISPLAY_PRESENT_ENGINE_REGION, .timeout_ms = 2000,
                                                .backend = {.image_in_psram = te && !roi, .compose_count = te ? 2 : 0, .width = w, .height = h, .tile_rows = tile, .buffer_count = 2, .max_frames = 3,
                                                            .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED,
@@ -192,7 +192,7 @@ static uint64_t run(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_handle_t io,
     portEXIT_CRITICAL(&mux);
     check(esp_display_present_engine_stop(p, 2000), "stop");
     check(esp_display_present_engine_destroy(p), "destroy");
-    check(esp_display_present_lcd_spi_destroy(adapter), "adapter destroy");
+    check(esp_display_present_lcd_io_destroy(adapter), "adapter destroy");
     check(meter.done == meter.offered ? ESP_OK : ESP_FAIL, "callbacks balanced");
     ESP_LOGI(TAG, "window_overruns=%u", meter.overruns);
     check(meter.overruns == 0 ? ESP_OK : ESP_FAIL, "TE pulse overrun");
@@ -208,11 +208,11 @@ static void run_rotation_async(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_ha
 {
     unsigned w = 480, h = 480, tile = 16;
     check(esp_lcd_panel_set_gap(panel, 0, 0), "gap");
-    esp_display_present_lcd_spi_t *adapter;
-    esp_display_present_lcd_spi_config_t spi = {.panel = panel, .io = io, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .byte_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED, .max_inflight = 1, .psram_dma_direct = true};
-    check(esp_display_present_lcd_spi_create(&spi, &adapter), "adapter create");
+    esp_display_present_lcd_io_t *adapter;
+    esp_display_present_lcd_io_config_t spi = {.panel = panel, .io = io, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .byte_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED, .max_inflight = 1, .psram_dma_direct = true};
+    check(esp_display_present_lcd_io_create(&spi, &adapter), "adapter create");
     meter_t meter = {.window = te ? window : 0};
-    check(esp_display_present_lcd_spi_get_interface(adapter, &meter.real), "adapter interface");
+    check(esp_display_present_lcd_io_get_interface(adapter, &meter.real), "adapter interface");
     esp_display_present_engine_config_t cfg = {.backend_kind = te ? ESP_DISPLAY_PRESENT_ENGINE_TE : ESP_DISPLAY_PRESENT_ENGINE_REGION,
                                                .timeout_ms = 2000, .background_service = true,
                                                .backend = {.image_in_psram = te, .compose_count = te ? compose_count : 0,
@@ -265,7 +265,7 @@ static void run_rotation_async(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_ha
     portEXIT_CRITICAL(&mux);
     check(esp_display_present_engine_stop(p, 2000), "stop");
     check(esp_display_present_engine_destroy(p), "destroy");
-    check(esp_display_present_lcd_spi_destroy(adapter), "adapter destroy");
+    check(esp_display_present_lcd_io_destroy(adapter), "adapter destroy");
     check(meter.done == meter.offered ? ESP_OK : ESP_FAIL, "callbacks balanced");
     check(heap_caps_check_integrity_all(true) ? ESP_OK : ESP_FAIL, "heap integrity");
     ESP_LOGI(TAG, "COMBO_PASS kind=%s compose=%u rots=5 tx=%u max_tx_us=%"PRIu64" min_int=%u min_psram=%u free_int=%u free_psram=%u",
@@ -301,11 +301,11 @@ static void run_dynamic_phase_te(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_
              budget_us, win.earliest_phase_us, win.latest_phase_us, (int)win.admission);
     check(win.admission == ESP_DISPLAY_PRESENT_TE_ALLOW ? ESP_OK : ESP_ERR_NOT_SUPPORTED, "dynamic TE window admission");
 
-    esp_display_present_lcd_spi_t *adapter;
-    esp_display_present_lcd_spi_config_t spi = {.panel = panel, .io = io, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .byte_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED, .max_inflight = 1, .psram_dma_direct = true};
-    check(esp_display_present_lcd_spi_create(&spi, &adapter), "adapter create");
+    esp_display_present_lcd_io_t *adapter;
+    esp_display_present_lcd_io_config_t spi = {.panel = panel, .io = io, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .byte_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED, .max_inflight = 1, .psram_dma_direct = true};
+    check(esp_display_present_lcd_io_create(&spi, &adapter), "adapter create");
     meter_t meter = {0};
-    check(esp_display_present_lcd_spi_get_interface(adapter, &meter.real), "adapter interface");
+    check(esp_display_present_lcd_io_get_interface(adapter, &meter.real), "adapter interface");
     esp_display_present_engine_config_t cfg = {.backend_kind = ESP_DISPLAY_PRESENT_ENGINE_TE, .timeout_ms = 2000, .background_service = true,
                                                .backend = {.image_in_psram = true, .compose_count = 2,
                                                            .width = w, .height = h, .tile_rows = tile, .buffer_count = 2, .max_frames = 3,
@@ -357,7 +357,7 @@ static void run_dynamic_phase_te(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_
     portEXIT_CRITICAL(&mux);
     check(esp_display_present_engine_stop(p, 2000), "stop");
     check(esp_display_present_engine_destroy(p), "destroy");
-    check(esp_display_present_lcd_spi_destroy(adapter), "adapter destroy");
+    check(esp_display_present_lcd_io_destroy(adapter), "adapter destroy");
     check(meter.done == frames && meter.offered == frames ? ESP_OK : ESP_FAIL, "dynamic TE callbacks");
     check(meter.max_tx <= budget_us ? ESP_OK : ESP_FAIL, "dynamic TE transfer within budget");
     uint64_t min_phase = meter.min_edge_age >= timing.edge_to_scan_us ? meter.min_edge_age - timing.edge_to_scan_us : 0;
@@ -387,13 +387,13 @@ static void run_te_matrix_and_cancel_profile(esp_lcd_panel_handle_t panel, esp_l
 
     for (size_t compose_count = 1; compose_count <= 2; ++compose_count) {
         for (size_t tile_count = 1; tile_count <= 2; ++tile_count) {
-            esp_display_present_lcd_spi_t *adapter;
-            esp_display_present_lcd_spi_config_t spi = {.panel = panel, .io = io, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
-                                                        .byte_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED, .max_inflight = 1, .psram_dma_direct = true
-                                                       };
-            check(esp_display_present_lcd_spi_create(&spi, &adapter), "matrix adapter create");
+            esp_display_present_lcd_io_t *adapter;
+            esp_display_present_lcd_io_config_t spi = {.panel = panel, .io = io, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+                                                       .byte_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED, .max_inflight = 1, .psram_dma_direct = true
+                                                      };
+            check(esp_display_present_lcd_io_create(&spi, &adapter), "matrix adapter create");
             meter_t meter = {0};
-            check(esp_display_present_lcd_spi_get_interface(adapter, &meter.real), "matrix adapter interface");
+            check(esp_display_present_lcd_io_get_interface(adapter, &meter.real), "matrix adapter interface");
             esp_display_present_engine_config_t cfg = {.backend_kind = ESP_DISPLAY_PRESENT_ENGINE_TE, .timeout_ms = 2000, .background_service = true,
                                                        .backend = {.image_in_psram = true, .compose_count = compose_count,
                                                                    .width = w, .height = h, .tile_rows = tile, .buffer_count = tile_count,
@@ -526,7 +526,7 @@ static void run_te_matrix_and_cancel_profile(esp_lcd_panel_handle_t panel, esp_l
             portEXIT_CRITICAL(&mux);
             check(esp_display_present_engine_stop(p, 2000), "matrix stop");
             check(esp_display_present_engine_destroy(p), "matrix destroy");
-            check(esp_display_present_lcd_spi_destroy(adapter), "matrix adapter destroy");
+            check(esp_display_present_lcd_io_destroy(adapter), "matrix adapter destroy");
 
             ESP_LOGI(TAG, "TE_MATRIX_PASS compose=%u tiles=%u avg_tile_wait_us=%"PRIu64" max_tile_wait_us=%"PRIu64" avg_draw_sub_us=%"PRIu64" max_draw_sub_us=%"PRIu64" te_idle_wait_us=[%"PRIu64", avg=%"PRIu64", %"PRIu64"] avg_dma_tx_us=%"PRIu64" max_dma_tx_us=%"PRIu64" cancel_drain_us=%"PRIu64,
                      (unsigned)compose_count, (unsigned)tile_count,
@@ -665,13 +665,13 @@ static void run_v1_vs_v2_qspi_bench(esp_lcd_panel_handle_t panel, esp_lcd_panel_
         }
 
         /* --- Run V2 with identical workload --- */
-        esp_display_present_lcd_spi_t *adapter;
-        esp_display_present_lcd_spi_config_t spi = {.panel = panel, .io = io, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
-                                                    .byte_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED, .max_inflight = qcases[i].te ? 1 : 2, .psram_dma_direct = true
-                                                   };
-        check(esp_display_present_lcd_spi_create(&spi, &adapter), "qspi v2 adapter");
+        esp_display_present_lcd_io_t *adapter;
+        esp_display_present_lcd_io_config_t spi = {.panel = panel, .io = io, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+                                                   .byte_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED, .max_inflight = qcases[i].te ? 1 : 2, .psram_dma_direct = true
+                                                  };
+        check(esp_display_present_lcd_io_create(&spi, &adapter), "qspi v2 adapter");
         meter_t meter = {0};
-        check(esp_display_present_lcd_spi_get_interface(adapter, &meter.real), "qspi v2 iface");
+        check(esp_display_present_lcd_io_get_interface(adapter, &meter.real), "qspi v2 iface");
         esp_display_present_engine_config_t v2_cfg = {
             .backend_kind = qcases[i].te ? ESP_DISPLAY_PRESENT_ENGINE_TE : ESP_DISPLAY_PRESENT_ENGINE_REGION,
             .timeout_ms = 2000, .background_service = qcases[i].te,
@@ -732,7 +732,7 @@ static void run_v1_vs_v2_qspi_bench(esp_lcd_panel_handle_t panel, esp_lcd_panel_
         portEXIT_CRITICAL(&mux);
         check(esp_display_present_engine_stop(v2, 2000), "qspi v2 stop");
         check(esp_display_present_engine_destroy(v2), "qspi v2 destroy");
-        check(esp_display_present_lcd_spi_destroy(adapter), "qspi v2 adapter destroy");
+        check(esp_display_present_lcd_io_destroy(adapter), "qspi v2 adapter destroy");
 
         uint32_t v1_fps_x10 = (uint32_t)((uint64_t)bench_frames * 10000000ULL / v1_elapsed_us);
         uint32_t v2_fps_x10 = (uint32_t)((uint64_t)bench_frames * 10000000ULL / v2_elapsed_us);

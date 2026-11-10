@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #pragma once
+
+/* Pure window calculation: no GPIO, OS timer, allocation or worker lifecycle. */
 #include <stdint.h>
 #include <stdbool.h>
 #ifdef __cplusplus

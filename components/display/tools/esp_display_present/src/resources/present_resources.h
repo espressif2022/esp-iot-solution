@@ -5,7 +5,7 @@
 #pragma once
 #include "esp_display_present.h"
 #include "config/present_plan.h"
-#include "platform/present_lcd_scanout.h"
+#include "platform/lcd/present_lcd_fb_scanout.h"
 /* Private hardware resource aggregate for esp_display_presenter_t.
  * Resource task APIs are caller-serialized, including control/handoff calls.
  * Stop/destroy require the producer to be paused; callbacks may run concurrently. */
