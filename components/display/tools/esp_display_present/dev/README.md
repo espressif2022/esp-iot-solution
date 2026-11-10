@@ -4,11 +4,15 @@
 
 生产源码的职责划分与新增文件规则见[SOURCE_LAYOUT.md](SOURCE_LAYOUT.md)。
 
-## RGB / MIPI XIP ON 完整对比（2026-11-10，当前数据）
+## RGB / MIPI XIP ON 四角度正式对比（2026-11-10，当前数据）
 
-[当前对比网页](evidence/five-board-regression-20261109/comparison-current.html) · [本轮证据与口径](evidence/rgb-mipi-xip-on-20261110/README.md) · [地址样本与解释](evidence/rgb-mipi-xip-on-20261110/findings.md)。S3 RGB、S31 RGB、P4 MIPI DSI，双方仅XIP开启、0°，不含NONE；S3十行bounce，S31不使用bounce。33项干净驱动帧率/四时点剩余内存与33项独立轻量诊断分别完整运行16场景，共1056场景；6个adapter AUTO条目不支持。两轮数据不混用，当前网页不再纳入XIP OFF或历史角度成绩。
+[当前对比网页](evidence/five-board-regression-20261109/comparison-current.html) · [本轮证据与口径](evidence/rgb-mipi-xip-on-four-angle-20261110/README.md) · [地址样本与解释](evidence/rgb-mipi-xip-on-four-angle-20261110/findings.md)。S3 RGB、S31 RGB、P4 MIPI DSI，双方仅XIP开启；0°、90°、180°、270°全部重新完整运行，不复用上一轮0°成绩。S3十行bounce，S31不使用bounce；NONE排除，adapter AUTO为−。
 
-本轮S3 adapter DOUBLE_FULL有两笔提前交接、4条检查点命中；P4 adapter TRIPLE_FULL首次提交前有1条可写目标与已装载DMA帧地址重合，按装载地址口径复核，未宣称物理像素撕裂。present及S31本轮已覆盖检查点未命中，未知地址为零；未命中不等于所有写入都安全。只检测记录，生产交接源码、基础IDF均未修改，未加assert或控制修正。结束保留各板XIP ON诊断固件，按用户要求不恢复原固件。
+132项干净驱动帧率/四时点剩余内存与132项独立轻量诊断，每项完整16场景，共4224场景；另24个不支持条目。两轮成绩分开，网页直接展示四角度对比。帧率、剩余内存均越多越好，箭头在present列相对adapter显示。
+
+交接观察只检测记录，生产源码和基础IDF未修改；各板观察口径及本轮命中见检测结果，不将零命中当作全部写入安全。结束保留最后XIP ON诊断固件，按用户要求不恢复原固件。
+
+[此前0°独立轮（历史）](evidence/rgb-mipi-xip-on-20261110/README.md)保留原始结论与证据，未混入本轮成绩。
 
 ## S31 取指停顿与pixel派发对照（2026-11-09）
 

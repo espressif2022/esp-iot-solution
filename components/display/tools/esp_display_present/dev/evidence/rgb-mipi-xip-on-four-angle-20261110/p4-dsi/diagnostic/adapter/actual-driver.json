@@ -1,0 +1,6 @@
+{
+  "idf": "/home/xuxin/esp_work/esp-idf-qspi",
+  "esp_lcd_dir": "/tmp/present-xip-on-four-angle-20261110/driver-overlay/esp_lcd",
+  "cohort": "diagnostic",
+  "firmware_sha256": "a488eb0b35c2cc5918beaffcf8af2b10e43e91dc1329657896e5aa9ea11f7afa"
+}

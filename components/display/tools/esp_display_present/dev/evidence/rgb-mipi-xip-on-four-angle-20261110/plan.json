@@ -1,0 +1,34 @@
+{
+  "boards": {
+    "s3-rgb": "/dev/ttyUSB1",
+    "s31-rgb": "/dev/ttyUSB0",
+    "p4-dsi": "/dev/ttyACM0"
+  },
+  "xip": "on",
+  "angles": [
+    0,
+    90,
+    180,
+    270
+  ],
+  "modes": [
+    "DOUBLE_FULL",
+    "TRIPLE_FULL",
+    "DOUBLE_DIRECT",
+    "DOUBLE_PARTIAL",
+    "TRIPLE_PARTIAL",
+    "AUTO"
+  ],
+  "cohorts": [
+    "clean performance/memory",
+    "lightweight address diagnostics"
+  ],
+  "expected_supported": 264,
+  "expected_skips": 24,
+  "expected_scenes": 4224,
+  "restore_original": false,
+  "timestamp": 1794308135.0487065,
+  "clean_source": "/tmp/present-xip-on-clean-source-20261110/components/display/tools/esp_display_present",
+  "source_commit": "c71871f433e34dc456970fb99702362b9a34f213",
+  "fresh_full_run": true
+}

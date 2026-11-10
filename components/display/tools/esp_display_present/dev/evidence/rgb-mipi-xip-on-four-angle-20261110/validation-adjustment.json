@@ -1,0 +1,12 @@
+{
+  "scope": "host report validation only, no firmware or driver changes",
+  "initial_failure": "A validation rule copied from the prior 0-degree round required native double-wait confirmation for rotated adapter FULL/DIRECT too.",
+  "source_evidence": [
+    "lvgl_bridge_v9.c: bridge_mode_uses_rotated_nonpartial_pipeline_release returns true for nonzero rotation FULL/DIRECT",
+    "lvgl_bridge_v9.c: pipeline_release uses display_bridge_pipeline_release_buf_isr for rotated modes",
+    "display_bridge_common.c: pipeline release and writable hooks"
+  ],
+  "corrected_requirement": "Native adapter DOUBLE_FULL/DOUBLE_DIRECT at 0 degrees must have >100 confirms and zero pipeline release count; rotated modes must have >100 pipeline releases, >100 writes, zero native-double-wait confirms. All still require >1000 run boundaries. Report marks inapplicable hooks explicitly.",
+  "hardware_rerun": false,
+  "original_results_modified": false
+}

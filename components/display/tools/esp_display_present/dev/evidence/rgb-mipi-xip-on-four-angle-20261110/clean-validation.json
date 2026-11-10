@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "cases": 132,
+  "scenes": 2112,
+  "skips": 12,
+  "angles": [
+    0,
+    90,
+    180,
+    270
+  ],
+  "xip": "on",
+  "scope": "clean formal cohort only; diagnostic still running",
+  "complete_close": true,
+  "buffers_verified": true,
+  "common_manifest_configs_equal": true
+}

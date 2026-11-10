@@ -1,0 +1,51 @@
+{
+  "board": "s3-rgb",
+  "port": "/dev/ttyUSB1",
+  "xip": "on",
+  "angles": [
+    0,
+    90,
+    180,
+    270
+  ],
+  "runs": [
+    {
+      "implementation": "present",
+      "diagnostic": false,
+      "variant": "present-xip-on",
+      "success": true,
+      "passed": 24,
+      "skipped": 0
+    },
+    {
+      "implementation": "adapter",
+      "diagnostic": false,
+      "variant": "adapter-xip-on",
+      "success": true,
+      "passed": 20,
+      "skipped": 4
+    },
+    {
+      "implementation": "present",
+      "diagnostic": true,
+      "variant": "present-xip-on-driver-trace",
+      "success": true,
+      "passed": 24,
+      "skipped": 0
+    },
+    {
+      "implementation": "adapter",
+      "diagnostic": true,
+      "variant": "adapter-xip-on-driver-trace",
+      "success": true,
+      "passed": 20,
+      "skipped": 4
+    }
+  ],
+  "restore_original": false,
+  "success": true,
+  "stage": "done",
+  "updated": 1794314492.3859982,
+  "variant": "adapter-xip-on-driver-trace",
+  "retained_firmware": "last flashed XIP ON test firmware; original firmware not restored"
+}

@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "exit_code": 0,
+  "sanitizers": [
+    "address",
+    "undefined"
+  ],
+  "command": "cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -DPRESENT_TRACE_HOST -I driver-overlay/esp_lcd/include -I driver-overlay/esp_lcd/src test_address.c -o test_address; ./test_address",
+  "test_sha256": "c2db517e66ebb6c6979394355392e5383d81acd3f700218be12569d6a41f54cd",
+  "observer_sha256": "5e399b376cd2ca4dbd09f28138e0d9ac7a57433e4c1198161523a3a93195302f",
+  "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "note": "Executed successfully outside ptrace sandbox after sandboxed LeakSanitizer could not inspect threads. No board asserts or fault injection."
+}
