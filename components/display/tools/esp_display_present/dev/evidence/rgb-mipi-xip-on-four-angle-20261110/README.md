@@ -2,7 +2,7 @@
 
 ## 抽屉式网页展示（2026-11-10）
 
-当前 comparison.html 已改为板卡及数据面板的可折叠抽屉。帧率展示所有模式与四个角度；内存选择模式，内部 RAM / PSRAM 分表同时显示四角度；逐场景分数也按模式选择。诊断默认筛选有地址命中、unknown、供数不足、既有重启或 underrun 的组合，可取消筛选查看全部。
+当前 comparison.html 使用顶部 Tab 切换板卡，每次只显示一块板；帧率、内存、诊断及逐场景面板使用可折叠抽屉。帧率展示所有模式与四个角度；内存选择模式，内部 RAM / PSRAM 分表同时显示四角度；逐场景分数也按模式选择。诊断默认筛选有地址命中、unknown、供数不足、既有重启或 underrun 的组合，可取消筛选查看全部。
 
 本次仅调整展示。matrix-data.json、comparison.csv、硬件结果、SDK 配置、原始日志和源码快照字节不变。此前静态页面见 comparison-before-drawers.html；根目录的原始 browser-validation.json、check_page.mjs、desktop.png/mobile.png 和 validation.json 仍记录采集结束时的静态页面验证，不能用于宣称新版没有模式选择器。当前交互验证及截图见 presentation/validation.json、presentation/desktop.png、presentation/mobile.png。
 

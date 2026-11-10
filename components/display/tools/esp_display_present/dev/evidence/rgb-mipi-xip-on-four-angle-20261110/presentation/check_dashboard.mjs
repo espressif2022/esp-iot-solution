@@ -5,19 +5,28 @@ const pagePath=process.argv[2]||root+'/comparison.html';const {createHash}=await
 const errors=[];const original=ws.onmessage;ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);original(e)};
 await call('Page.enable');await call('Runtime.enable');await call('Emulation.setDeviceMetricsOverride',{width:1440,height:1050,deviceScaleFactor:1,mobile:false});
 await call('Page.navigate',{url:'data:text/html;base64,'+Buffer.from(fs.readFileSync(pagePath)).toString('base64')});
-for(let i=0;i<50;i++){if(await ev("document.readyState==='complete'&&document.querySelectorAll('details.board').length===3"))break;await new Promise(r=>setTimeout(r,100))}
-assert.equal(errors.length,0,JSON.stringify(errors));assert.equal(await ev("document.querySelectorAll('details.board').length"),3);
+for(let i=0;i<50;i++){if(await ev("document.readyState==='complete'&&document.querySelectorAll('[role=tabpanel]').length===3"))break;await new Promise(r=>setTimeout(r,100))}
+assert.equal(errors.length,0,JSON.stringify(errors));assert.equal(await ev("document.querySelectorAll('[role=tabpanel]').length"),3);
 const data=JSON.parse(fs.readFileSync('/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/dev/evidence/rgb-mipi-xip-on-four-angle-20261110/matrix-data.json','utf8'));
 const modes=['DOUBLE_FULL','TRIPLE_FULL','DOUBLE_DIRECT','DOUBLE_PARTIAL','TRIPLE_PARTIAL','AUTO'],angles=[0,90,180,270],impls=['present','adapter'],phases=['before_open','after_open','after_run','after_close'];let scores=0,memory=0,arrows=0,scenes=0,diag=0,modeChanges=0;
 const hit=x=>x?.address?x.address.release_active+x.address.write_active+x.address.confirm_wrong:0;
 const marked=x=>hit(x)>0||(x?.address?.raced||0)>0||(x?.supply?.measured_short||0)>0||(x?.supply?.measured_restarts||0)>0||(x?.address?.underruns||0)>0;
 function checkValue(cell,n,other,precision=0){assert.equal(cell.text.trim()==='−',false);assert(Math.abs(Number(cell.value)-n)<=0.5*10**(-precision)+1e-8,JSON.stringify({cell,n}));if(other===null){assert.equal(cell.delta,null)}else{const d=n-other;assert(cell.cls.includes(d>0?'up':d<0?'down':'same'));assert(cell.delta.startsWith(d>0?'⬆️ +':d<0?'⬇️ −':'＝ '));const shown=Number(cell.delta.match(/[0-9]+(?:\.[0-9]+)?/)[0]);assert(Math.abs(shown-Math.abs(d))<=0.5*10**(-precision)+1e-8)}}
 const cellScript="({text:t.textContent,value:t.querySelector('.value')?.textContent,delta:t.querySelector('.delta')?.textContent??null,cls:t.querySelector('.delta')?.className})";
-assert.deepEqual(await ev("Array.from(document.querySelectorAll('details.board')).map(d=>d.open)"),[true,false,false]);
-await ev("document.getElementById('collapse-all').click()");assert(await ev("Array.from(document.querySelectorAll('details.board,details.panel')).every(d=>!d.open)"));
-await ev("document.querySelector('#board-nav a[href=\"#s31-rgb\"]').click()");assert(await ev("document.getElementById('s31-rgb').open"));
-await ev("document.getElementById('expand-all').click()");assert(await ev("Array.from(document.querySelectorAll('details.board,details.panel')).every(d=>d.open)"));
+async function visibleBoard(expected){
+ assert.deepEqual(await ev("Array.from(document.querySelectorAll('[role=tabpanel]')).filter(p=>!p.hidden&&getComputedStyle(p).display!=='none').map(p=>p.id)"),[expected]);
+ assert.deepEqual(await ev("Array.from(document.querySelectorAll('[role=tab]')).filter(t=>t.getAttribute('aria-selected')==='true'&&t.tabIndex===0).map(t=>t.getAttribute('aria-controls'))"),[expected]);
+}
+await visibleBoard('s3-rgb');
+await ev("document.getElementById('collapse-all').click()");assert(await ev("Array.from(document.querySelectorAll('#s3-rgb details.panel')).every(d=>!d.open)"));assert(await ev("document.querySelector('#s31-rgb .memory-panel').open"));
+await ev("document.getElementById('tab-s31-rgb').click()");await visibleBoard('s31-rgb');
+await ev("document.getElementById('expand-all').click()");assert(await ev("Array.from(document.querySelectorAll('#s31-rgb details.panel')).every(d=>d.open)"));assert(!(await ev("document.querySelector('#s3-rgb .memory-panel').open")));
+await ev("document.getElementById('tab-s3-rgb').focus()");
+for(const [key,code,expected] of [['ArrowRight',39,'s31-rgb'],['ArrowRight',39,'p4-dsi'],['ArrowRight',39,'s3-rgb'],['End',35,'p4-dsi'],['Home',36,'s3-rgb'],['ArrowLeft',37,'p4-dsi']]){
+ await call('Input.dispatchKeyEvent',{type:'keyDown',key,code:key,windowsVirtualKeyCode:code});await call('Input.dispatchKeyEvent',{type:'keyUp',key,code:key,windowsVirtualKeyCode:code});await visibleBoard(expected);assert.equal(await ev('document.activeElement.id'),'tab-'+expected);
+}
 for(const [id,b] of Object.entries(data.boards)){
+ await ev(`document.getElementById('tab-${id}').click()`);await visibleBoard(id);await ev("document.getElementById('expand-all').click()");
  const get=(co,i,m,a)=>b.cohorts[co][i].rows.find(x=>x.mode===m&&x.rotation===a);
  const fps=await ev(`Array.from(document.querySelectorAll('#${id} .fps tbody tr')).map(r=>Array.from(r.querySelectorAll('td.p,td.a')).map(t=>${cellScript}))`);assert.equal(fps.length,6);
  for(let m=0;m<6;m++)for(let a=0;a<4;a++)for(let j=0;j<2;j++){const x=get('clean',impls[j],modes[m],angles[a]),other=get('clean','adapter',modes[m],angles[a]),cell=fps[m][a*2+j];if(x.status==='SKIP')assert.equal(cell.text,'−');else{checkValue(cell,x.lvgl_fps,j===0&&other.status==='PASS'?other.lvgl_fps:null);scores++}}
@@ -38,9 +47,10 @@ for(const [id,b] of Object.entries(data.boards)){
  await ev(`document.querySelector('#${id} .anomalies-only').click()`);
 }
 assert.equal(scores,132);assert.equal(memory,1056);assert.equal(arrows,480);assert.equal(scenes,2112);assert.equal(diag,132);assert.equal(modeChanges,36);
-await ev("document.querySelector('#s3-rgb > summary').click()");assert(!(await ev("document.getElementById('s3-rgb').open")));await ev("document.querySelector('#s3-rgb > summary').click()");assert(await ev("document.getElementById('s3-rgb').open"));
-await ev("Array.from(document.querySelectorAll('details.board')).forEach((d,i)=>{d.open=i===0;d.querySelectorAll('details.panel').forEach(p=>p.open=p.classList.contains('fps-panel')||p.classList.contains('memory-panel'));d.querySelectorAll('select').forEach(s=>{s.value='DOUBLE_FULL';s.dispatchEvent(new Event('change',{bubbles:true}))})});document.getElementById('method').open=false;scrollTo(0,0)");
+await ev("document.getElementById('tab-s3-rgb').click()");assert.equal(await ev("document.querySelector('#s3-rgb .memory-mode').value"),'AUTO');
+await ev("document.querySelector('#s3-rgb .memory-panel > summary').click()");assert(!(await ev("document.querySelector('#s3-rgb .memory-panel').open")));await ev("document.getElementById('tab-p4-dsi').click()");await visibleBoard('p4-dsi');await ev("document.getElementById('tab-s3-rgb').click()");await visibleBoard('s3-rgb');assert.equal(await ev("document.querySelector('#s3-rgb .memory-mode').value"),'AUTO');assert(!(await ev("document.querySelector('#s3-rgb .memory-panel').open")));
+await ev("Array.from(document.querySelectorAll('[role=tabpanel]')).forEach(d=>{d.querySelectorAll('details.panel').forEach(p=>p.open=p.classList.contains('fps-panel')||p.classList.contains('memory-panel'));d.querySelectorAll('select').forEach(s=>{s.value='DOUBLE_FULL';s.dispatchEvent(new Event('change',{bubbles:true}))})});document.getElementById('method').open=false;document.activeElement.blur();scrollTo(0,0)");
 assert(await ev('document.documentElement.scrollWidth<=document.documentElement.clientWidth'));let shot=await call('Page.captureScreenshot',{format:'png'});fs.writeFileSync(root+'/desktop.png',Buffer.from(shot.data,'base64'));
 await call('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});await new Promise(r=>setTimeout(r,100));assert(await ev('document.documentElement.scrollWidth<=document.documentElement.clientWidth'));shot=await call('Page.captureScreenshot',{format:'png'});fs.writeFileSync(root+'/mobile.png',Buffer.from(shot.data,'base64'));
 assert.equal(await ev('innerWidth'),390);const evidenceLinks=await ev("Array.from(document.querySelectorAll('#evidence-links a')).map(a=>a.getAttribute('href'))");for(const href of evidenceLinks)assert(fs.existsSync(new URL(href,'file://'+pagePath)),href);
-assert.equal(errors.length,0,JSON.stringify(errors));const result={passed:true,pageSha256:createHash('sha256').update(fs.readFileSync(pagePath)).digest('hex'),evidenceLinksExist:true,mobileViewportWidth:390,boardDrawers:3,allModeAndAngleData:true,fpsValues:scores,memoryValues:memory,memoryArrows:arrows,sceneValues:scenes,diagnosticCases:diag,modeChanges,foldControls:true,anomalyFilter:true,applicabilityAndUnknown:true,noPageOverflow:true,javascriptErrors:errors};fs.writeFileSync(root+'/validation.json',JSON.stringify(result,null,2)+'\n');console.log(result);ws.close();
+assert.equal(errors.length,0,JSON.stringify(errors));const result={passed:true,pageSha256:createHash('sha256').update(fs.readFileSync(pagePath)).digest('hex'),evidenceLinksExist:true,mobileViewportWidth:390,boardTabs:3,onlyOneBoardVisible:true,keyboardTabNavigation:true,selectionAndFoldStateRetained:true,currentBoardFoldControls:true,allModeAndAngleData:true,fpsValues:scores,memoryValues:memory,memoryArrows:arrows,sceneValues:scenes,diagnosticCases:diag,modeChanges,foldControls:true,anomalyFilter:true,applicabilityAndUnknown:true,noPageOverflow:true,javascriptErrors:errors};fs.writeFileSync(root+'/validation.json',JSON.stringify(result,null,2)+'\n');console.log(result);ws.close();
