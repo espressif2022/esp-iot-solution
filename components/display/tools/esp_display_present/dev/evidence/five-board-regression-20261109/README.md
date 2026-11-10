@@ -1,3 +1,5 @@
+> comparison-current.html 是动态入口，现指向移除 S3 FB_IRAM 后的 RGB/MIPI XIP ON 对比。本目录其余 CSV/JSON/XLSX 和下文均为 2026-11-09 历史记录；当前导出请用网页内链接。
+
 # present / adapter 五板对比（2026-11-09 更新）
 
 [同网页对照](comparison-current.html)：S3 IRAM开／关独立表，帧率、容量、四时点剩余内存均并排。

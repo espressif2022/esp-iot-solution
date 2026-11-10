@@ -36,6 +36,7 @@ def render(data_path, output_path):
         board = {'id': key, 'name': name, 'resolution': resolution, 'config': original.get('config', config),
                  'method': source['methods'][key], 'cohorts': {},
                  'originNote': original.get('origin_note', ''),
+                 'frameBytes': {'s3-rgb': 480 * 480 * 2, 's31-rgb': 800 * 480 * 2, 'p4-dsi': 1024 * 600 * 2}[key],
                  'memoryAccounting': source.get('memory_accounting', {}).get('boards', {}).get(key)}
         for cohort in ('clean', 'diagnostic'):
             board['cohorts'][cohort] = {}

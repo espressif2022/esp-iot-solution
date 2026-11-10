@@ -1,0 +1,12 @@
+{
+  "commit": "08377b2b4",
+  "change": "Remove FB_IRAM Kconfig and whole-object linker mapping; runtime C sources unchanged",
+  "adapter_reference": "/tmp/present-xip-on-four-angle-20261110/s3-rgb/benchmark/adapter-xip-on",
+  "angles": [
+    0,
+    90,
+    180,
+    270
+  ],
+  "xip": "on"
+}

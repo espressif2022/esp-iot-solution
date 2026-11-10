@@ -1,0 +1,497 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -10,7 +10,7 @@
+          "src/esp_lcd_panel_st7789.c"
+          "src/esp_lcd_panel_ops.c")
+ set(includes "include" "interface")
+-set(priv_requires "esp_mm" "esp_psram" "esp_pm" "esp_driver_i2s" "esp_driver_dma")
++set(priv_requires "esp_timer" "esp_mm" "esp_psram" "esp_pm" "esp_driver_i2s" "esp_driver_dma")
+ set(public_requires "esp_driver_gpio" "esp_driver_i2c" "esp_driver_spi" "esp_driver_parlio" "esp_hal_lcd")
+ 
+ if(CONFIG_SOC_I2C_SUPPORTED)
+@@ -46,6 +46,8 @@
+     list(APPEND srcs "dsi/esp_lcd_mipi_dsi_bus.c" "dsi/esp_lcd_panel_io_dbi.c" "dsi/esp_lcd_panel_dpi.c")
+ endif()
+ 
++list(APPEND srcs "src/esp_lcd_present_trace.c")
++
+ idf_component_register(SRCS ${srcs}
+                        INCLUDE_DIRS ${includes}
+                        PRIV_INCLUDE_DIRS "priv_include" "i80"
+--- a/rgb/esp_lcd_panel_rgb.c
++++ b/rgb/esp_lcd_panel_rgb.c
+@@ -10,6 +10,11 @@
+ #include <sys/param.h>
+ #include <string.h>
+ #include "sdkconfig.h"
++#include "esp_lcd_present_trace.h"
++#if CONFIG_IDF_TARGET_ESP32S31
++#include "hal/axi_dma_ll.h"
++#include "hal/gdma_ll.h"
++#endif
+ #if CONFIG_LCD_ENABLE_DEBUG_LOG
+ // The local log level must be defined before including esp_log.h
+ // Set the maximum log level for rgb lcd driver
+@@ -52,6 +57,7 @@
+ 
+ #if SOC_HAS(AXI_GDMA)
+ #include "hal/axi_dma_ll.h"
++#include "hal/gdma_ll.h"
+ #if AXI_DMA_LL_SUPPORT(TX_LINK_SWITCH)
+ #define RGB_LCD_USE_GDMA_LINK_SWITCH_EVENT 1
+ #endif
+@@ -138,6 +144,7 @@
+     uint8_t *bounce_buffer[RGB_LCD_PANEL_BOUNCE_BUF_NUM]; // Pointer to the bounce buffers
+     size_t fb_size;        // Size of frame buffer, in bytes
+     size_t bb_size;        // Size of the bounce buffer, in bytes. If not-zero, the driver uses two bounce buffers allocated from internal memory
++    int trace_dma_group, trace_dma_channel; /* Diagnostic only. */
+     uint8_t cur_fb_index;  // Current frame buffer index
+     uint8_t bb_fb_index;  // Current frame buffer index which used by bounce buffer
+     size_t int_mem_align;  // DMA buffer alignment for internal memory
+@@ -482,6 +489,8 @@
+     rgb_panel->base.swap_xy = rgb_panel_swap_xy;
+     rgb_panel->base.set_gap = rgb_panel_set_gap;
+     // return base class
++    gdma_get_group_channel_id(rgb_panel->dma_chan, &rgb_panel->trace_dma_group, &rgb_panel->trace_dma_channel);
++    esp_lcd_present_trace_bind(&rgb_panel->base, (void *const *)rgb_panel->fbs, rgb_panel->num_fbs, rgb_panel->bb_size, 1);
+     *ret_panel = &(rgb_panel->base);
+     ESP_LOGD(TAG, "new rgb panel(%d) @%p, num_fbs=%zu, fb_size=%zu, bb0 @%p, bb1 @%p, bb_size=%zu",
+              rgb_panel->panel_id, rgb_panel, rgb_panel->num_fbs, rgb_panel->fb_size,
+@@ -895,6 +904,7 @@
+     } else { // no copy, just do cache memory write back
+         ESP_LOGV(TAG, "draw buffer is in frame buffer memory range, do cache write back only");
+         // only write back the LCD lines that updated by the draw buffer
++        esp_lcd_present_trace_request(&rgb_panel->base, draw_buf_fb_index);
+         rgb_panel->cur_fb_index = draw_buf_fb_index;
+         uint8_t *cache_sync_start = rgb_panel->fbs[draw_buf_fb_index] + (y_start * h_res) * bytes_per_pixel;
+         size_t cache_sync_size = (y_end - y_start) * h_res * bytes_per_pixel;
+@@ -1176,6 +1186,7 @@
+     if (panel->bounce_pos_px >= panel->fb_size / bytes_per_pixel) {
+         panel->bounce_pos_px = 0;
+         panel->bb_fb_index = panel->cur_fb_index;
++        esp_lcd_present_trace_event(&panel->base, 2, panel->cur_fb_index, panel->bb_fb_index, 0);
+         esp_lcd_rgb_panel_frame_buf_complete_cb_t cb = panel->on_frame_buf_complete;
+         if (cb) {
+             if (cb(&panel->base, NULL, panel->user_ctx)) {
+@@ -1224,6 +1235,21 @@
+     (void)event_data;
+     bool need_yield = false;
+     esp_rgb_panel_t *rgb_panel = (esp_rgb_panel_t *)user_data;
++
++    uintptr_t raw = 0;
++    int observed = -1;
++#if CONFIG_IDF_TARGET_ESP32S31
++    int group = 0, channel = 0;
++    if (gdma_get_group_channel_id(dma_chan, &group, &channel) == ESP_OK && group == GDMA_LL_AXI_GROUP_START_ID) {
++        raw = axi_dma_ll_tx_get_prefetched_desc_addr(AXI_DMA_LL_GET_HW(group - GDMA_LL_AXI_GROUP_START_ID), channel);
++        for (unsigned i = 0; i < rgb_panel->num_fbs; ++i) {
++            uintptr_t head = gdma_link_get_head_addr(rgb_panel->dma_fb_links[i]);
++            uintptr_t last = gdma_link_get_item_addr(rgb_panel->dma_fb_links[i], -1);
++            if (raw >= head && raw <= last) { observed = i; break; }
++        }
++    }
++#endif
++    esp_lcd_present_trace_event(&rgb_panel->base, 3, rgb_panel->cur_fb_index, observed, raw);
+ 
+     if (rgb_panel->on_frame_buf_complete) {
+         if (rgb_panel->on_frame_buf_complete(&rgb_panel->base, NULL, rgb_panel->user_ctx)) {
+@@ -1403,6 +1429,7 @@
+ {
+     int bb_size_px = panel->bb_size / (panel->fb_bits_per_pixel / 8);
+     bool do_restart = false;
++    unsigned trace_eofs = panel->bb_eof_count;
+ #if CONFIG_LCD_RGB_RESTART_IN_VSYNC
+     do_restart = true;
+ #else
+@@ -1414,10 +1441,12 @@
+     if (panel->bb_eof_count < panel->expect_eof_count) {
+         do_restart = true;
+     }
++    trace_eofs = panel->bb_eof_count;
+     panel->bb_eof_count = 0;
+     portEXIT_CRITICAL_ISR(&panel->spinlock);
+ #endif // CONFIG_LCD_RGB_RESTART_IN_VSYNC
+ 
++    esp_lcd_present_trace_rgb_supply(&panel->base, trace_eofs, panel->expect_eof_count, do_restart);
+     if (!do_restart) {
+         return;
+     }
+@@ -1509,6 +1538,7 @@
+ 
+ #if LCD_LL_EVENT_UNDERRUN
+     if (intr_status & LCD_LL_EVENT_UNDERRUN) {
++        esp_lcd_present_trace_underrun(&rgb_panel->base);
+         ESP_EARLY_LOGE(TAG, "LCD underrun");
+     }
+ #endif
+@@ -1531,6 +1561,7 @@
+             lcd_rgb_panel_try_restart_transmission(rgb_panel);
+         }
+ #endif
++        esp_lcd_present_trace_boundary(&rgb_panel->base);
+ 
+     }
+     // yield if needed
+@@ -1643,3 +1674,28 @@
+     esp_log_level_set(TAG, ESP_LOG_VERBOSE);
+ }
+ #endif
++
++/* Actual driver source, independently read at the consumer ownership boundary.
++ * Source/target are byte-index atomic loads; samples record races separately. */
++
++uintptr_t IRAM_ATTR esp_lcd_present_trace_rgb_source(void *panel, uintptr_t *target, unsigned *position, uintptr_t *raw)
++{
++    esp_rgb_panel_t *rgb=__containerof((esp_lcd_panel_t*)panel,esp_rgb_panel_t,base);
++    *target=(uintptr_t)rgb->fbs[rgb->cur_fb_index];*position=rgb->bounce_pos_px;*raw=0;
++    if(rgb->bb_size){
++        volatile uint8_t *source_index=&rgb->bb_fb_index;
++        unsigned first=*source_index;unsigned last=*source_index;
++        return first==last && first<rgb->num_fbs ? (uintptr_t)rgb->fbs[first] : 0;
++    }
++#if RGB_LCD_USE_GDMA_LINK_SWITCH_EVENT
++    int group=rgb->trace_dma_group-GDMA_LL_AXI_GROUP_START_ID,channel=rgb->trace_dma_channel;
++    if(group!=0)return 0;
++    uintptr_t first=axi_dma_ll_tx_get_prefetched_desc_addr(AXI_DMA_LL_GET_HW(group),channel);
++    uintptr_t last=axi_dma_ll_tx_get_prefetched_desc_addr(AXI_DMA_LL_GET_HW(group),channel);*raw=last;
++    for(unsigned i=0;i<rgb->num_fbs;i++){
++        uintptr_t head=gdma_link_get_head_addr(rgb->dma_fb_links[i]),end=gdma_link_get_item_addr(rgb->dma_fb_links[i],-1);
++        if(first>=head && first<=end && last>=head && last<=end){*position=(unsigned)(last-head);return (uintptr_t)rgb->fbs[i];}
++    }
++#endif
++    return 0;
++}
+--- a/dsi/esp_lcd_panel_dpi.c
++++ b/dsi/esp_lcd_panel_dpi.c
+@@ -4,6 +4,8 @@
+  * SPDX-License-Identifier: Apache-2.0
+  */
+ #include <sys/param.h>
++#include "esp_lcd_present_trace.h"
++#include "hal/dw_gdma_ll.h"
+ #include "esp_lcd_panel_interface.h"
+ #include "esp_lcd_mipi_dsi.h"
+ #include "esp_intr_alloc.h"
+@@ -28,6 +30,8 @@
+     esp_lcd_panel_t base;         // Base class of generic lcd panel
+     esp_lcd_dsi_bus_handle_t bus; // DSI bus handle
+     uint8_t virtual_channel;      // Virtual channel ID, index from 0
++    volatile uint8_t trace_latched_index; /* Real DMA-programming snapshot, not producer target. */
++    int trace_dma_channel;
+     uint8_t cur_fb_index;         // Current frame buffer index
+     uint8_t num_fbs;              // Number of frame buffers
+     uint8_t *fbs[DPI_PANEL_MAX_FB_NUM]; // Frame buffers
+@@ -95,7 +99,10 @@
+     };
+     dw_gdma_lli_set_block_markers(dw_gdma_link_list_get_item(link_list, 0), markers);
+     dw_gdma_channel_use_link_list(chan, link_list);
++    dpi_panel->trace_latched_index = fb_index;
+     dw_gdma_channel_enable_ctrl(chan, true);
++    esp_lcd_present_trace_event(&dpi_panel->base, 4, dpi_panel->cur_fb_index, fb_index, (uintptr_t)link_list);
++    esp_lcd_present_trace_boundary(&dpi_panel->base);
+ 
+     if (dpi_panel->on_frame_buf_complete) {
+         if (dpi_panel->on_frame_buf_complete(&dpi_panel->base, NULL, dpi_panel->user_ctx)) {
+@@ -126,6 +133,7 @@
+         // when an underrun happens, the LCD display may already becomes blue
+         // it's too late to recover the display, so we just print an error message
+         // as a hint to the user that he should optimize the memory bandwidth (with AXI-ICM)
++        esp_lcd_present_trace_underrun(&dpi_panel->base);
+         ESP_DRAM_LOGE(TAG, "can't fetch data from external memory fast enough, underrun happens");
+     }
+     if (intr_status & MIPI_DSI_BRG_LL_EVENT_VSYNC) {
+@@ -345,6 +353,8 @@
+     dpi_panel->base.init = dpi_panel_init;
+     dpi_panel->base.draw_bitmap = dpi_panel_draw_bitmap;
+     dpi_panel->base.draw_bitmap_2d = dpi_panel_draw_bitmap_2d;
++    dw_gdma_channel_get_id(dpi_panel->dma_chan, &dpi_panel->trace_dma_channel);
++    esp_lcd_present_trace_bind(&dpi_panel->base, (void *const *)dpi_panel->fbs, dpi_panel->num_fbs, 0, 4);
+     *ret_panel = &dpi_panel->base;
+     ESP_LOGD(TAG, "dpi panel created @%p", dpi_panel);
+     return ESP_OK;
+@@ -656,6 +666,7 @@
+         // the buffer to be flushed is still within the frame buffer, so even an unaligned address is OK
+         esp_cache_msync(cache_sync_start, cache_sync_size, ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_UNALIGNED);
+ 
++        esp_lcd_present_trace_request(&dpi_panel->base, draw_buf_fb_index);
+         dpi_panel->cur_fb_index = draw_buf_fb_index;
+         // invoke the trans done callback
+         if (dpi_panel->on_color_trans_done) {
+@@ -778,3 +789,13 @@
+ 
+     return ESP_OK;
+ }
++
++uintptr_t IRAM_ATTR esp_lcd_present_trace_dpi_source(void *panel, uintptr_t *target, unsigned *position, uintptr_t *raw)
++{
++    esp_lcd_dpi_panel_t *dpi=__containerof((esp_lcd_panel_t*)panel,esp_lcd_dpi_panel_t,base);
++    unsigned first=dpi->trace_latched_index;
++    *target=(uintptr_t)dpi->fbs[dpi->cur_fb_index];*position=0;
++    *raw=dw_gdma_ll_channel_get_current_link_list_item_addr(DW_GDMA_LL_GET_HW(0),dpi->trace_dma_channel);
++    unsigned last=dpi->trace_latched_index;
++    return first==last && first<dpi->num_fbs ? (uintptr_t)dpi->fbs[first] : 0;
++}
+--- /dev/null
++++ b/src/esp_lcd_present_trace.c
+@@ -0,0 +1,223 @@
++/* SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
++ * SPDX-License-Identifier: Apache-2.0 */
++#include "esp_lcd_present_trace.h"
++#include <string.h>
++#include <stdbool.h>
++#include <stdbool.h>
++#include <stdio.h>
++#include <inttypes.h>
++#ifndef PRESENT_TRACE_HOST
++#include "esp_attr.h"
++#include "soc/soc_caps.h"
++#include "esp_timer.h"
++#include "freertos/FreeRTOS.h"
++#include "freertos/task.h"
++#define TRACE_IRAM IRAM_ATTR
++static portMUX_TYPE lock = portMUX_INITIALIZER_UNLOCKED;
++#define ENTER() portENTER_CRITICAL_SAFE(&lock)
++#define EXIT() portEXIT_CRITICAL_SAFE(&lock)
++#define NOW() ((uint64_t)esp_timer_get_time())
++#else
++#define TRACE_IRAM
++#define ENTER() ((void)0)
++#define EXIT() ((void)0)
++#define NOW() ((uint64_t)0)
++#endif
++#define SAVED_EVENTS 16
++static struct {
++    esp_lcd_present_trace_snapshot_t view;
++    unsigned count;
++    struct sample {
++        uint64_t time_us;
++        uint32_t request_seq, event_seq, kind;
++        uintptr_t expected, observed, previous, raw;
++    } samples[SAVED_EVENTS];
++} trace;
++
++void esp_lcd_present_trace_bind(void *panel, void *const *fbs, unsigned count, unsigned bounce_bytes, unsigned kind)
++{
++    ENTER();
++    memset(&trace, 0, sizeof(trace));
++    trace.view.panel = (uintptr_t)panel;
++    trace.count = count > 3 ? 3 : count;
++    for (unsigned i = 0; i < trace.count; ++i) {
++        trace.view.fbs[i] = (uintptr_t)fbs[i];
++    }
++    trace.view.requested = trace.view.observed = trace.view.fbs[0];
++    trace.view.bounce_bytes = bounce_bytes;
++    trace.view.kind = kind;
++    EXIT();
++}
++
++void TRACE_IRAM esp_lcd_present_trace_request(void *panel, unsigned index)
++{
++    ENTER();
++    if ((uintptr_t)panel == trace.view.panel) {
++        ++trace.view.requests;
++        if (index >= trace.count) {
++            ++trace.view.outside_pool;
++        } else {
++            if (trace.view.pending) {
++                ++trace.view.superseded;
++            }
++            uintptr_t requested = trace.view.fbs[index];
++            if (requested == trace.view.observed) {
++                ++trace.view.active_submits;
++                if (trace.view.saved < SAVED_EVENTS) {
++                    trace.samples[trace.view.saved++] = (struct sample) {
++                        NOW(), trace.view.requests, trace.view.events, 1, requested, trace.view.observed, trace.view.observed, 0
++                    };
++                }
++            }
++            trace.view.requested = requested;
++            trace.view.pending = 1;
++        }
++    }
++    EXIT();
++}
++
++void TRACE_IRAM esp_lcd_present_trace_event(void *panel, unsigned kind, unsigned expected, int observed, uintptr_t raw)
++{
++    uint64_t now = NOW();
++    ENTER();
++    if ((uintptr_t)panel == trace.view.panel) {
++        ++trace.view.events;
++        uintptr_t before = trace.view.observed;
++        uintptr_t wanted = expected < trace.count ? trace.view.fbs[expected] : 0;
++        uintptr_t actual = observed >= 0 && (unsigned)observed < trace.count ? trace.view.fbs[observed] : 0;
++        bool suspicious = false;
++        if (!actual) {
++            ++trace.view.unresolved;
++            suspicious = true;
++        } else {
++            if (wanted != actual) {
++                ++trace.view.target_diffs;
++                suspicious = true;
++            }
++            trace.view.observed = actual;
++            if (actual == trace.view.requested) {
++                trace.view.pending = 0;
++            }
++        }
++        if (suspicious && trace.view.saved < SAVED_EVENTS) {
++            trace.samples[trace.view.saved++] = (struct sample) {
++                now, trace.view.requests, trace.view.events, kind, wanted, actual, before, raw
++            };
++        }
++    }
++    EXIT();
++}
++
++void TRACE_IRAM esp_lcd_present_trace_rgb_supply(void *panel, unsigned got, unsigned expected, unsigned restart)
++{
++    ENTER();
++    if ((uintptr_t)panel == trace.view.panel) {
++        if (!trace.view.supply_frames || got < trace.view.supply_min_eofs) trace.view.supply_min_eofs = got;
++        ++trace.view.supply_frames;
++        trace.view.supply_short += got < expected;
++        trace.view.supply_restarts += restart != 0;
++        trace.view.supply_expected = expected;
++        if (trace.view.measuring == 2) {
++            ++trace.view.measured_frames;
++            trace.view.measured_short += got < expected;
++            trace.view.measured_restarts += restart != 0;
++        }
++    }
++    EXIT();
++}
++
++void esp_lcd_present_trace_mark_running(unsigned running)
++{
++    ENTER(); trace.view.measuring = running != 0; EXIT();
++}
++
++void esp_lcd_present_trace_reset(void)
++{
++    esp_lcd_present_trace_audit_reset();
++    ENTER();
++    esp_lcd_present_trace_snapshot_t old = trace.view;
++    memset(&trace.view, 0, sizeof(trace.view));
++    trace.view.panel = old.panel;
++    for (unsigned i = 0; i < 3; ++i) {
++        trace.view.fbs[i] = old.fbs[i];
++    }
++    trace.view.requested = old.requested;
++    trace.view.observed = old.observed;
++    trace.view.pending = old.pending;
++    trace.view.bounce_bytes = old.bounce_bytes;
++    trace.view.kind = old.kind;
++    EXIT();
++}
++void esp_lcd_present_trace_snapshot(esp_lcd_present_trace_snapshot_t *out)
++{
++    ENTER(); *out = trace.view; EXIT();
++}
++void esp_lcd_present_trace_report(const char *mode, unsigned rotation)
++{
++    esp_lcd_present_trace_snapshot_t s;
++    struct sample samples[SAVED_EVENTS];
++    ENTER(); s = trace.view; memcpy(samples, trace.samples, sizeof(samples)); EXIT();
++    printf("DRIVER_TRACE mode=%s rotation=%u kind=%u bounce_bytes=%u requests=%u events=%u superseded=%u active_submits=%u target_diffs=%u unresolved=%u outside_pool=%u pending=%u saved=%u fb0=0x%"PRIxPTR" fb1=0x%"PRIxPTR" fb2=0x%"PRIxPTR" requested=0x%"PRIxPTR" observed=0x%"PRIxPTR"\n", mode, rotation, (unsigned)s.kind, (unsigned)s.bounce_bytes, (unsigned)s.requests, (unsigned)s.events, (unsigned)s.superseded, (unsigned)s.active_submits, (unsigned)s.target_diffs, (unsigned)s.unresolved, (unsigned)s.outside_pool, (unsigned)s.pending, (unsigned)s.saved, s.fbs[0], s.fbs[1], s.fbs[2], s.requested, s.observed);
++    printf("RGB_SUPPLY mode=%s rotation=%u frames=%u short_frames=%u restarts=%u min_eofs=%u expected_eofs=%u measured_frames=%u measured_short=%u measured_restarts=%u\n", mode, rotation, (unsigned)s.supply_frames, (unsigned)s.supply_short, (unsigned)s.supply_restarts, (unsigned)s.supply_min_eofs, (unsigned)s.supply_expected, (unsigned)s.measured_frames, (unsigned)s.measured_short, (unsigned)s.measured_restarts);
++    esp_lcd_present_trace_audit_report(mode, rotation);
++    for (unsigned i = 0; i < s.saved; ++i) {
++        struct sample *p = &samples[i];
++        printf("DRIVER_TRACE_EVENT mode=%s rotation=%u us=%"PRIu64" request_seq=%u event_seq=%u kind=%u expected=0x%"PRIxPTR" observed=0x%"PRIxPTR" previous=0x%"PRIxPTR" raw=0x%"PRIxPTR"\n", mode, rotation, p->time_us, (unsigned)p->request_seq, (unsigned)p->event_seq, (unsigned)p->kind, p->expected, p->observed, p->previous, p->raw);
++    }
++}
++
++#define AUDIT_SAVED 16
++static struct {
++    unsigned releases,writes,confirms,not_pool,raced,release_active,write_active,confirm_wrong,saved;
++    struct {uint64_t us;uintptr_t given,source,target,raw;unsigned kind,position,request_seq,event_seq;} samples[AUDIT_SAVED];
++} audit;
++void esp_lcd_present_trace_audit_reset(void){ENTER();memset(&audit,0,sizeof(audit));EXIT();}
++void TRACE_IRAM esp_lcd_present_trace_audit(const void *pixels,unsigned kind)
++{
++    ENTER();
++    if(trace.view.measuring==2 && trace.view.panel && (trace.view.kind==1 || trace.view.kind==4)){
++        unsigned index;
++        for(index=0;index<trace.count;index++)if((uintptr_t)pixels==trace.view.fbs[index])break;
++        if(index==trace.count)++audit.not_pool;
++        else {
++            uintptr_t target=0, raw=0, source=0;unsigned position=0;
++            if(trace.view.kind==1) source=esp_lcd_present_trace_rgb_source((void*)trace.view.panel,&target,&position,&raw);
++#if defined(PRESENT_TRACE_HOST) || SOC_MIPI_DSI_SUPPORTED
++            if(trace.view.kind==4) source=esp_lcd_present_trace_dpi_source((void*)trace.view.panel,&target,&position,&raw);
++#endif
++            if(!source)++audit.raced;
++            else {
++                if(kind==1)++audit.releases;
++                if(kind==2)++audit.writes;
++                if(kind==3)++audit.confirms;
++                bool bad=(kind==3)?((uintptr_t)pixels!=source):((uintptr_t)pixels==source);
++                if(bad){
++                    if(kind==1)++audit.release_active;
++                    if(kind==2)++audit.write_active;
++                    if(kind==3)++audit.confirm_wrong;
++                    if(audit.saved<AUDIT_SAVED){unsigned i=audit.saved++;audit.samples[i].us=NOW();audit.samples[i].given=(uintptr_t)pixels;audit.samples[i].source=source;audit.samples[i].target=target;audit.samples[i].position=position;audit.samples[i].raw=raw;audit.samples[i].kind=kind;audit.samples[i].request_seq=trace.view.requests;audit.samples[i].event_seq=trace.view.events;}
++                }
++            }
++        }
++    }
++    EXIT();
++}
++void esp_lcd_present_trace_audit_report(const char *mode,unsigned rotation)
++{
++    printf("RGB_ADDRESS mode=%s rotation=%u releases=%u writes=%u confirms=%u not_pool=%u raced=%u release_active=%u write_active=%u confirm_wrong=%u saved=%u boundaries=%u underruns=%u\n",mode,rotation,audit.releases,audit.writes,audit.confirms,audit.not_pool,audit.raced,audit.release_active,audit.write_active,audit.confirm_wrong,audit.saved,(unsigned)trace.view.run_boundaries,(unsigned)trace.view.underruns);
++    for(unsigned i=0;i<audit.saved;i++)printf("RGB_ADDRESS_EVENT mode=%s rotation=%u us=%"PRIu64" kind=%u given=0x%"PRIxPTR" actual_source=0x%"PRIxPTR" driver_target=0x%"PRIxPTR" position=%u request_seq=%u event_seq=%u probe_raw=0x%"PRIxPTR"\n",mode,rotation,audit.samples[i].us,audit.samples[i].kind,audit.samples[i].given,audit.samples[i].source,audit.samples[i].target,audit.samples[i].position,audit.samples[i].request_seq,audit.samples[i].event_seq,audit.samples[i].raw);
++}
++
++void TRACE_IRAM esp_lcd_present_trace_boundary(void *panel)
++{
++    ENTER();
++    if((uintptr_t)panel==trace.view.panel){
++        if(trace.view.measuring==1)trace.view.measuring=2;
++        else if(trace.view.measuring==2)++trace.view.run_boundaries;
++    }
++    EXIT();
++}
++void TRACE_IRAM esp_lcd_present_trace_underrun(void *panel)
++{
++    ENTER();if((uintptr_t)panel==trace.view.panel && trace.view.measuring==2)++trace.view.underruns;EXIT();
++}
+--- /dev/null
++++ b/include/esp_lcd_present_trace.h
+@@ -0,0 +1,35 @@
++/* SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
++ * SPDX-License-Identifier: Apache-2.0 */
++#pragma once
++#include <stdint.h>
++#include <stddef.h>
++typedef struct {
++    uint32_t requests, events, superseded, active_submits;
++    uint32_t target_diffs, unresolved, outside_pool, saved;
++    uintptr_t panel, fbs[3], requested, observed;
++    uint32_t pending, bounce_bytes, kind;
++    uint32_t run_boundaries, underruns;
++    uint32_t measured_frames, measured_short, measured_restarts, measuring;
++    uint32_t supply_frames, supply_short, supply_restarts, supply_min_eofs, supply_expected;
++} esp_lcd_present_trace_snapshot_t;
++/* Test observer only: no driver control, ownership decisions or error returns. */
++void esp_lcd_present_trace_bind(void *panel, void *const *fbs, unsigned count, unsigned bounce_bytes, unsigned kind);
++void esp_lcd_present_trace_request(void *panel, unsigned index);
++void esp_lcd_present_trace_event(void *panel, unsigned kind, unsigned expected, int observed, uintptr_t raw_descriptor);
++void esp_lcd_present_trace_reset(void);
++void esp_lcd_present_trace_snapshot(esp_lcd_present_trace_snapshot_t *out);
++void esp_lcd_present_trace_report(const char *mode, unsigned rotation);
++
++void esp_lcd_present_trace_rgb_supply(void *panel, unsigned got, unsigned expected, unsigned restart);
++
++void esp_lcd_present_trace_mark_running(unsigned running);
++
++/* Temporary diagnostic hooks only, no ownership or control changes. */
++uintptr_t esp_lcd_present_trace_rgb_source(void *panel, uintptr_t *target, unsigned *position, uintptr_t *raw);
++void esp_lcd_present_trace_audit(const void *pixels, unsigned kind);
++void esp_lcd_present_trace_audit_reset(void);
++void esp_lcd_present_trace_audit_report(const char *mode, unsigned rotation);
++
++uintptr_t esp_lcd_present_trace_dpi_source(void *panel, uintptr_t *target, unsigned *position, uintptr_t *raw);
++void esp_lcd_present_trace_boundary(void *panel);
++void esp_lcd_present_trace_underrun(void *panel);

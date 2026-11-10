@@ -1,0 +1,6 @@
+[
+  "dev/test_apps/benchmark/main/buffer_audit.c",
+  "dev/test_apps/boards/main/board_s3.c",
+  "dev/boards/configs/s3-rgb.defaults",
+  "src/backend/present_backend_fb.c"
+]

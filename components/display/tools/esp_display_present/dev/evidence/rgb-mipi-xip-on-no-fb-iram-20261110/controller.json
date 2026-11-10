@@ -1,0 +1,17 @@
+{
+  "success": true,
+  "runs": [
+    {
+      "variant": "present-xip-on",
+      "success": true
+    },
+    {
+      "variant": "present-xip-on-driver-trace",
+      "success": true
+    }
+  ],
+  "restore_original": false,
+  "stage": "done",
+  "updated": 1794320993.5305207,
+  "variant": "present-xip-on-driver-trace"
+}

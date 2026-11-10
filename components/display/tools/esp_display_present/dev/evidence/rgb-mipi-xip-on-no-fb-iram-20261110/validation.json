@@ -1,0 +1,43 @@
+{
+  "passed": true,
+  "new_clean": 24,
+  "new_diagnostic": 24,
+  "new_scenes": 768,
+  "reused_clean": 108,
+  "reused_diagnostic": 108,
+  "angles": [
+    0,
+    90,
+    180,
+    270
+  ],
+  "xip": "on",
+  "host_checks": 48,
+  "no_firmware_restore": true,
+  "internal_heap_capacity_recovered_bytes": 21904,
+  "browser": {
+    "passed": true,
+    "pageSha256": "86b4cfad29840b0a3fb94c4f6e977cfae57bc20fcc69ef4f952507b74dc553da",
+    "evidenceLinksExist": true,
+    "mobileViewportWidth": 390,
+    "boardTabs": 3,
+    "onlyOneBoardVisible": true,
+    "keyboardTabNavigation": true,
+    "selectionAndFoldStateRetained": true,
+    "currentBoardFoldControls": true,
+    "allModeAndAngleData": true,
+    "heapUsedValues": 1056,
+    "staticValues": 36,
+    "fpsValues": 132,
+    "memoryValues": 1056,
+    "memoryArrows": 480,
+    "sceneValues": 2112,
+    "diagnosticCases": 132,
+    "modeChanges": 36,
+    "foldControls": true,
+    "anomalyFilter": true,
+    "applicabilityAndUnknown": true,
+    "noPageOverflow": true,
+    "javascriptErrors": []
+  }
+}

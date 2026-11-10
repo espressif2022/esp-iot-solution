@@ -1,0 +1,6 @@
+{
+  "passed": true,
+  "tests": 48,
+  "sanitize": "ASan/UBSan",
+  "log": "host-validation.log.gz"
+}

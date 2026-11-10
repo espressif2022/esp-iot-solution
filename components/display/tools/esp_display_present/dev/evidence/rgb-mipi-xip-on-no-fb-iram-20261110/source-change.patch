@@ -1,0 +1,62 @@
+diff --git a/components/display/tools/esp_display_present/CMakeLists.txt b/components/display/tools/esp_display_present/CMakeLists.txt
+index 59abc5a3c..b2b45aee1 100644
+--- a/components/display/tools/esp_display_present/CMakeLists.txt
++++ b/components/display/tools/esp_display_present/CMakeLists.txt
+@@ -4,7 +4,6 @@ include(${CMAKE_CURRENT_LIST_DIR}/src/sources.cmake)
+ idf_component_register(SRCS ${PRESENT_FACADE_SOURCES} ${PRESENT_RESOURCE_SOURCES} ${PRESENT_TE_SYNC_SOURCES} ${PRESENT_ENGINE_SOURCES}
+     INCLUDE_DIRS include
+     PRIV_INCLUDE_DIRS src
+-    LDFRAGMENTS linker.lf
+     REQUIRES esp_common esp_lcd
+     PRIV_REQUIRES freertos esp_timer heap esp_mm esp_hw_support esp_driver_ppa esp_driver_dma esp_system esp_driver_gpio)
+ target_compile_features(${COMPONENT_LIB} PRIVATE c_std_11)
+diff --git a/components/display/tools/esp_display_present/Kconfig b/components/display/tools/esp_display_present/Kconfig
+index afe8226f5..ef124b7ce 100644
+--- a/components/display/tools/esp_display_present/Kconfig
++++ b/components/display/tools/esp_display_present/Kconfig
+@@ -19,23 +19,6 @@ config ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY
+         command refill gaps while rendering continues. The board comparison
+         uses producer priority 6 and backend worker priority 7.
+ 
+-config ESP_DISPLAY_PRESENT_FB_IRAM
+-    bool "Place framebuffer task hot paths in IRAM"
+-    depends on IDF_TARGET_ESP32S3
+-    default y
+-    help
+-        Keep framebuffer engine and pixel-copy task code in internal RAM.
+-        On ESP32-S3 RGB bounce displays, this reduces external Flash access
+-        during PSRAM framebuffer preparation. With a 16 KiB instruction cache,
+-        the default Flash placement can miss the next scanout boundary even
+-        after single-boundary retirement is enabled.
+-
+-        This costs approximately 19 KiB of additional IRAM in the measured
+-        build; the exact size depends on compiler and application reachability.
+-        Disable to prioritize internal memory over framebuffer throughput.
+-        This option does not make task APIs safe to call from an ISR or while
+-        the external-memory cache is disabled.
+-
+ config PV2_LEGACY_CALLBACK_JOIN
+     bool
+     default y
+diff --git a/components/display/tools/esp_display_present/linker.lf b/components/display/tools/esp_display_present/linker.lf
+deleted file mode 100644
+index 717b70e20..000000000
+--- a/components/display/tools/esp_display_present/linker.lf
++++ /dev/null
+@@ -1,16 +0,0 @@
+-# SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
+-# SPDX-License-Identifier: Apache-2.0
+-
+-[mapping:esp_display_present_fb_hot_paths]
+-archive: libesp_display_present.a
+-entries:
+-    if ESP_DISPLAY_PRESENT_FB_IRAM = y:
+-        present_engine (noflash)
+-        present_transfer_tracker (noflash)
+-        present_completion_tracker (noflash)
+-        present_backend_fb (noflash)
+-        present_pixel_engine (noflash)
+-        present_pixel_ops (noflash)
+-        present_resources:copy_execute (noflash)
+-        present_executor (noflash)
+-        present_executor_cpu (noflash)

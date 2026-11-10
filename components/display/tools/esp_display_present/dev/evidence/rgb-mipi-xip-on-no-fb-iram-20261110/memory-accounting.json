@@ -1,0 +1,240 @@
+{
+  "schema": 1,
+  "scope": "whole benchmark firmware; not component-exclusive",
+  "boards": {
+    "s3-rgb": {
+      "present": {
+        "elf_sha256": "241c12b0f7facac0ffacd52d5c3e9f9376e4aeec4546f10a645d6e23bfc7b27b",
+        "iram_bytes": 63744,
+        "dram_static_bytes": 19436,
+        "sram_sections_bytes": 83180,
+        "sections": {
+          ".iram0.vectors": 1028,
+          ".iram0.text": 62615,
+          ".dram0.dummy": 63744,
+          ".dram0.data": 15828,
+          ".noinit": 0,
+          ".dram0.bss": 3608,
+          ".iram0.text_end": 101,
+          ".iram0.data": 0,
+          ".iram0.bss": 0,
+          ".dram0.heap_start": 0
+        },
+        "suite_baselines": {
+          "before_init": {
+            "internal_total": 379179,
+            "internal_free": 297855,
+            "psram_total": 15869092,
+            "psram_free": 15866244,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_init": {
+            "internal_total": 379179,
+            "internal_free": 286467,
+            "psram_total": 15869092,
+            "psram_free": 14482276,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "jpeg_components": [],
+        "jpeg_symbols": []
+      },
+      "adapter": {
+        "elf_sha256": "1fb5c015055893e866a245e28089d0ca4e91d3414bf2e68b6bc4bfe8c6beafee",
+        "iram_bytes": 62208,
+        "dram_static_bytes": 19612,
+        "sram_sections_bytes": 81820,
+        "sections": {
+          ".iram0.vectors": 1028,
+          ".iram0.text": 61119,
+          ".dram0.dummy": 62208,
+          ".dram0.data": 15812,
+          ".noinit": 0,
+          ".dram0.bss": 3800,
+          ".iram0.text_end": 61,
+          ".iram0.data": 0,
+          ".iram0.bss": 0,
+          ".dram0.heap_start": 0
+        },
+        "suite_baselines": {
+          "before_init": {
+            "internal_total": 380539,
+            "internal_free": 299215,
+            "psram_total": 15861940,
+            "psram_free": 15859164,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_init": {
+            "internal_total": 380539,
+            "internal_free": 243483,
+            "psram_total": 15861940,
+            "psram_free": 14475196,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "jpeg_components": [],
+        "jpeg_symbols": []
+      }
+    },
+    "s31-rgb": {
+      "present": {
+        "elf_sha256": "6e9e0645bf1787ab4f9cfb4d905a9b9722ab2314901e73797b4786ae984c7f13",
+        "iram_bytes": 69248,
+        "dram_static_bytes": 25324,
+        "sram_sections_bytes": 94572,
+        "sections": {
+          ".iram0.text": 69222,
+          ".iram0.text_end": 26,
+          ".iram0.data": 0,
+          ".iram0.bss": 0,
+          ".iram0.end": 0,
+          ".dram0.dummy": 0,
+          ".dram0.data": 17881,
+          ".noinit": 3,
+          ".dram0.bss": 7440,
+          ".dram0.heap_start": 0
+        },
+        "suite_baselines": {
+          "before_init": {
+            "internal_total": 491495,
+            "internal_free": 410183,
+            "psram_total": 15826432,
+            "psram_free": 15822848,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_init": {
+            "internal_total": 491495,
+            "internal_free": 409539,
+            "psram_total": 15826432,
+            "psram_free": 13518416,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "jpeg_components": [],
+        "jpeg_symbols": []
+      },
+      "adapter": {
+        "elf_sha256": "dce74a415f3e797058716341a3377b70478bad4d2fa990ed0f0cdd0c6aa0b9c1",
+        "iram_bytes": 68608,
+        "dram_static_bytes": 25584,
+        "sram_sections_bytes": 94192,
+        "sections": {
+          ".iram0.text": 68542,
+          ".iram0.text_end": 66,
+          ".iram0.data": 0,
+          ".iram0.bss": 0,
+          ".iram0.end": 0,
+          ".dram0.dummy": 0,
+          ".dram0.data": 17901,
+          ".noinit": 3,
+          ".dram0.bss": 7672,
+          ".dram0.heap_start": 8
+        },
+        "suite_baselines": {
+          "before_init": {
+            "internal_total": 491879,
+            "internal_free": 410567,
+            "psram_total": 15849856,
+            "psram_free": 15846384,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_init": {
+            "internal_total": 491879,
+            "internal_free": 365547,
+            "psram_total": 15849856,
+            "psram_free": 13541968,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "jpeg_components": [],
+        "jpeg_symbols": []
+      }
+    },
+    "p4-dsi": {
+      "present": {
+        "elf_sha256": "76f17eb8270da5402483c312167f269a9e3852444e1291fc4905735f879b8184",
+        "iram_bytes": 75648,
+        "dram_static_bytes": 25412,
+        "sram_sections_bytes": 101060,
+        "sections": {
+          ".iram0.text": 75574,
+          ".iram0.text_end": 74,
+          ".iram0.data": 0,
+          ".iram0.bss": 0,
+          ".iram0.end": 0,
+          ".dram0.dummy": 0,
+          ".dram0.data": 18132,
+          ".noinit": 0,
+          ".dram0.bss": 7280,
+          ".dram0.heap_start": 0
+        },
+        "suite_baselines": {
+          "before_init": {
+            "internal_total": 626135,
+            "internal_free": 542739,
+            "psram_total": 32603904,
+            "psram_free": 32600188,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_init": {
+            "internal_total": 626135,
+            "internal_free": 550855,
+            "psram_total": 32603904,
+            "psram_free": 28913640,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "jpeg_components": [],
+        "jpeg_symbols": []
+      },
+      "adapter": {
+        "elf_sha256": "b2d343c89248ada44790c253dca9d7672ccde7e2faf606b07a42e601f2696c9c",
+        "iram_bytes": 75008,
+        "dram_static_bytes": 25660,
+        "sram_sections_bytes": 100668,
+        "sections": {
+          ".iram0.text": 74908,
+          ".iram0.text_end": 100,
+          ".iram0.data": 0,
+          ".iram0.bss": 0,
+          ".iram0.end": 0,
+          ".dram0.dummy": 0,
+          ".dram0.data": 18140,
+          ".noinit": 0,
+          ".dram0.bss": 7520,
+          ".dram0.heap_start": 0
+        },
+        "suite_baselines": {
+          "before_init": {
+            "internal_total": 626535,
+            "internal_free": 543139,
+            "psram_total": 32627200,
+            "psram_free": 32623560,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          },
+          "after_init": {
+            "internal_total": 626535,
+            "internal_free": 506879,
+            "psram_total": 32627200,
+            "psram_free": 28937012,
+            "internal_min_free": 0,
+            "psram_min_free": 0
+          }
+        },
+        "jpeg_components": [],
+        "jpeg_symbols": []
+      }
+    }
+  }
+}
