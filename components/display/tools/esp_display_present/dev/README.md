@@ -24,6 +24,10 @@
 
 首轮生产源码为b607bb9a1，present108项、adapter73项通过，31项跳过；原始口径保留在[首轮说明](evidence/five-board-regression-20261109/README-before-alignment.md)。目前合并网页中的FULL/PARTIAL已经由上面的同容量重测替换，其他项保留历史，不能再将整页称为同一轮数据。五板首轮恢复记录仍保留。
 
+## RGB 请求式切链修复（2026-11-10）
+
+新增 `rgb-handoff` 专项（[说明](test_apps/rgb_handoff/README.md)，[本轮结果](evidence/rgb-link-switch-20261110/README.md)）：真实present六模式、四角度、同/异核提交，提交返回延迟0/50ms，每板96项。S31 Korvo关闭bounce并明确声明LINK_SWITCH；S3保持十行bounce。测试回调早到、初始FB0交接、关闭重开及全部输出像素，不替代目视防撕裂验收，也不混入benchmark成绩。原生周期事件与切链事件使用不同提交协议，无IDF补丁。
+
 ## 目录
 
 ```text

@@ -1,0 +1,37 @@
+{
+  "s31-rgb": {
+    "cases": 96,
+    "frames": 384,
+    "delay_cases": 48,
+    "delayed_early_events": 240,
+    "driver_events_per_case": [
+      5
+    ],
+    "restored_sha256": "5f07493de62e062ad2ffd3b49dd38a2dc66146e67e78257dc0e2500decc36ebd"
+  },
+  "s3-rgb": {
+    "cases": 96,
+    "frames": 384,
+    "delay_cases": 48,
+    "delayed_early_events": 718,
+    "driver_events_per_case": [
+      24,
+      25,
+      28,
+      29,
+      32,
+      33,
+      35,
+      36,
+      40,
+      41,
+      43,
+      44,
+      47,
+      48,
+      50,
+      51
+    ],
+    "restored_sha256": "a1fb70defbe454c7a5d8fc233929fd9d9d39751910336c7baa96b905b60730fc"
+  }
+}

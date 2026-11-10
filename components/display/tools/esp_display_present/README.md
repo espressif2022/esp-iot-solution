@@ -16,4 +16,21 @@ See [current board benchmarks and host validation](dev/VALIDATION.md) for the te
 
 The [mode and rotation matrix](dev/MODE_ROTATION_RESULTS_20261103.md) records an unsafe runtime cross-axis rotation through the public API on the non-square P4 panel, and a runtime rotation limitation in S31 GRAM. These issues remain open.
 
+RGB framebuffer modes distinguish periodic bounce completion from requested
+link-switch completion. The zero-initialized `target.hw.rgb.scanout` retains
+existing driver-query / confirmed-bounce behavior. For an ESP32-S31 panel created
+with `bounce_buffer_size_px = 0`, explicitly declare:
+
+```c
+config.target.hw.rgb.scanout = ESP_DISPLAY_PRESENT_RGB_SCANOUT_LINK_SWITCH;
+```
+
+This declaration does not change panel settings. It requires continuous refresh,
+exclusive panel/callback ownership, driver-owned framebuffers, no driver
+rotation/mirror or custom bounce fill, and the audited S31 AXI link-switch driver
+in clean IDF 6.2. Only one switch may be outstanding. Early completion is retained
+until the driver call succeeds; periodic completion keeps its ISR-join fence.
+S3 non-bounce EOF is not accepted as a retirement guarantee. No IDF patch is
+required. See [RGB handoff regression](dev/test_apps/rgb_handoff/README.md).
+
 Test projects, board profiles, LVGL benchmark and adapter comparison: [dev/README.md](dev/README.md).

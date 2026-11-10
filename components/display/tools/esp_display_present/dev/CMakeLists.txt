@@ -31,6 +31,15 @@ target_link_options(test_pixel PRIVATE -Wl,--wrap=present_task_priority -Wl,--wr
 target_link_options(test_te PRIVATE -Wl,--wrap=present_te_composer_pin)
 target_link_options(test_presenter_te PRIVATE -Wl,--wrap=present_te_timer_create)
 target_link_options(test_scanout PRIVATE -Wl,--wrap=present_isr_barrier)
+# Compile the actual scanout TU without the optional driver query API too.
+# Its direct object definitions satisfy symbols before present_engine's archive.
+add_executable(test_scanout_no_query tests/test_scanout.c ../src/platform/present_lcd_scanout.c)
+target_link_libraries(test_scanout_no_query PRIVATE present_engine)
+target_compile_definitions(test_scanout_no_query PRIVATE PRESENT_HOST=1 PRESENT_HOST_RGB_NO_FRAME_BUFFER_INFO=1)
+target_compile_options(test_scanout_no_query PRIVATE -Wall -Wextra -Werror -UNDEBUG)
+target_link_options(test_scanout_no_query PRIVATE -Wl,--wrap=present_isr_barrier)
+add_test(NAME scanout_no_query COMMAND test_scanout_no_query)
+set_tests_properties(scanout_no_query PROPERTIES TIMEOUT 15)
 target_link_options(test_rotation PRIVATE -Wl,--wrap=present_alloc_pixels -Wl,--wrap=present_alloc_pixels_in -Wl,--wrap=present_free)
 add_executable(header_smoke tests/header_smoke.cpp)
 target_link_libraries(header_smoke PRIVATE present_engine)

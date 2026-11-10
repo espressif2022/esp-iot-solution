@@ -4,6 +4,7 @@
  */
 #pragma once
 #include "backend/present_backend_types.h"
+#include "esp_display_present_config.h"
 #include "backend/present_output_caps.h"
 #include "esp_lcd_panel_ops.h"
 #ifdef __cplusplus
@@ -24,10 +25,11 @@ typedef struct {
     esp_display_present_engine_pixel_format_t format;
     size_t buffer_count; /* 1..3 driver-owned framebuffers; one permits active writes. */
     esp_display_present_byte_order_t byte_order; /* Driver-visible representation; no conversion here. */
-    /** RGB requires an actual bounce-buffer panel with no application bounce
-     * callback, no driver rotation/mirror, and continuous refresh. Non-bounce
-     * EOF is not a reliable retirement event on every IDF/SoC. */
+    /** Legacy bounce confirmation when no driver query exists. Explicit
+     * rgb_scanout declarations must match panel creation; non-bounce EOF is
+     * never sufficient. LINK_SWITCH is restricted to the audited S31 path. */
     bool bounce;
+    esp_display_present_rgb_scanout_t rgb_scanout; /* AUTO resolves from driver facts or confirmed bounce. */
     bool single_retire; /* Single-FB exposure only; unsupported for multiple FBs. */
     bool delete_panel; /* Alternative safe stop: transfers panel ownership on attach. */
     /** Unless delete_panel or retain_scanout: required board-owned safe stop: successful return guarantees scanning
@@ -53,9 +55,11 @@ typedef struct {
  * @brief Exclusive initialized panel; no previous submissions or callback owner.
  * Driver FB0 is initially scanning. Bind get_buffers output as backend external
  * buffers and set scan_buf=FB0. Bus ownership stays with the caller; panel ownership follows
- * delete_panel. Driver must use periodic frame_buf_complete events. A task-context ISR join after submit
- * drains an already-running ISR that sampled the old FB; the next event then confirms the switch. If the join is
- * unavailable or fails, two events remain the fallback. Source is a whole exact driver FB, tight/native layout; no copy
+ * delete_panel. Periodic completion uses an ISR join after submit (two events if
+ * joining fails). Requested RGB link-switch completion instead preserves an
+ * event received during submission and publishes it only after draw succeeds.
+ * One outstanding transaction and exclusive panel ownership are mandatory;
+ * local cookies do not add framebuffer identity to IDF's untagged callbacks. Source is a whole exact driver FB, tight/native layout; no copy
  * fallback. COLOR_DONE/raw VSYNC never confirms a frame. Hardware timing still requires board validation; compatibility
  * is with the audited local IDF 6.2 APIs. The private compatibility factory
  * explicitly fences FB0 before any producer lease when reusing a borrowed panel.

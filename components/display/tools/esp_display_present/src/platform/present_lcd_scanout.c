@@ -14,6 +14,16 @@
 #define PRESENT_DSI_SUPPORTED SOC_MIPI_DSI_SUPPORTED
 #define PRESENT_RGB_SUPPORTED SOC_LCD_RGB_SUPPORTED
 #endif
+/* Hardware EOF alone cannot prove retirement on S3. Only the audited S31
+ * AXI driver requests a distinct link-switch notification for non-bounce RGB. */
+#ifdef PRESENT_HOST
+#define PRESENT_RGB_LINK_SWITCH_SUPPORTED 1
+#elif CONFIG_IDF_TARGET_ESP32S31
+#include "hal/axi_dma_ll.h"
+#define PRESENT_RGB_LINK_SWITCH_SUPPORTED AXI_DMA_LL_SUPPORT(TX_LINK_SWITCH)
+#else
+#define PRESENT_RGB_LINK_SWITCH_SUPPORTED 0
+#endif
 #if PRESENT_DSI_SUPPORTED
 #include "esp_lcd_mipi_dsi.h"
 #endif
@@ -26,46 +36,75 @@ struct esp_display_present_lcd_scanout {
     void *buffers[3];
     esp_display_present_panel_event_fn callback;
     void *callback_user;
-    uint64_t cookie;
-    unsigned boundaries;
-    unsigned required_boundaries;
+    struct {
+        uint64_t cookie;
+        unsigned boundaries, required_boundaries;
+        bool armed;
+        struct {
+            bool submitting, early_complete;
+        } link;
+    } pending;
     size_t active_callbacks;
-    bool attached, armed, closing, src_stopped, stopped, callbacks_removed;
+    bool attached, closing, src_stopped, stopped, callbacks_removed;
     bool initial_started, initial_ready, single_vsync;
 };
-static bool PRESENT_ISR_ATTR frame_boundary(esp_display_present_lcd_scanout_t *scanout)
+typedef struct {
+    esp_display_present_panel_event_fn callback;
+    void *user;
+    uint64_t cookie;
+} scanout_completion_t;
+
+/* Caller holds the lock. Claim once before making it visible to the backend. */
+static scanout_completion_t PRESENT_ISR_ATTR claim_completion(esp_display_present_lcd_scanout_t *scanout)
+{
+    scanout_completion_t completion = {scanout->callback, scanout->callback_user, scanout->pending.cookie};
+    scanout->pending.cookie = 0;
+    scanout->pending.armed = false;
+    scanout->pending.link.early_complete = false;
+    ++scanout->active_callbacks;
+    return completion;
+}
+
+static bool PRESENT_ISR_ATTR dispatch_completion(esp_display_present_lcd_scanout_t *scanout,
+                                                 const scanout_completion_t *completion, bool from_isr)
+{
+    if (!completion->callback) {
+        return false;
+    }
+    esp_display_present_backend_event_t event = {
+        .kind = ESP_DISPLAY_PRESENT_EVENT_SCANOUT_CONFIRMED,
+        .transaction_cookie = completion->cookie,
+    };
+    bool need_yield = completion->callback(completion->user, &event, from_isr);
+    present_lock_enter(&scanout->lock, from_isr);
+    --scanout->active_callbacks;
+    present_lock_exit(&scanout->lock, from_isr);
+    return need_yield;
+}
+
+static bool PRESENT_ISR_ATTR frame_boundary(esp_display_present_lcd_scanout_t *scanout, bool from_isr)
 {
     /* IDF unregister updates callback and user_ctx separately. An ISR that
      * loaded the old function may already observe the cleared context. */
     if (!scanout) {
         return false;
     }
-    present_lock_enter(&scanout->lock, true);
-    esp_display_present_panel_event_fn callback = NULL;
-    void *user = NULL;
-    uint64_t cookie = 0;
-    unsigned needed = scanout->required_boundaries;
-    if (scanout->attached && scanout->armed && (!scanout->closing || scanout->config.retain_scanout) && ++scanout->boundaries == needed) {
-        cookie = scanout->cookie;
-        scanout->cookie = 0;
-        scanout->armed = false;
-        callback = scanout->callback;
-        user = scanout->callback_user;
-        ++scanout->active_callbacks;
-    }
-    present_lock_exit(&scanout->lock, true);
-    if (!callback) {
+    present_lock_enter(&scanout->lock, from_isr);
+    if (scanout->attached && scanout->pending.cookie && scanout->pending.link.submitting) {
+        /* draw_bitmap has not resolved yet. Retain exactly one completion;
+         * publishing it now could release buffers on an uncertain submit. */
+        scanout->pending.link.early_complete = true;
+        present_lock_exit(&scanout->lock, from_isr);
         return false;
     }
-    esp_display_present_backend_event_t event = {
-        .kind = ESP_DISPLAY_PRESENT_EVENT_SCANOUT_CONFIRMED,
-        .transaction_cookie = cookie,
-    };
-    bool need_yield = callback(user, &event, true);
-    present_lock_enter(&scanout->lock, true);
-    --scanout->active_callbacks;
-    present_lock_exit(&scanout->lock, true);
-    return need_yield;
+    scanout_completion_t completion = {0};
+    unsigned needed = scanout->pending.required_boundaries;
+    if (scanout->attached && scanout->pending.armed && (!scanout->closing || scanout->config.retain_scanout) &&
+            ++scanout->pending.boundaries == needed) {
+        completion = claim_completion(scanout);
+    }
+    present_lock_exit(&scanout->lock, from_isr);
+    return dispatch_completion(scanout, &completion, from_isr);
 }
 static bool PRESENT_ISR_ATTR vsync(esp_display_present_lcd_scanout_t *scanout)
 {
@@ -100,7 +139,7 @@ static bool PRESENT_ISR_ATTR dsi_done(esp_lcd_panel_handle_t panel, esp_lcd_dpi_
 {
     (void)panel;
     (void)data;
-    return frame_boundary(user);
+    return frame_boundary(user, true);
 }
 #endif
 #if PRESENT_RGB_SUPPORTED
@@ -113,7 +152,7 @@ static bool PRESENT_ISR_ATTR rgb_vsync(esp_lcd_panel_handle_t panel, const esp_l
     /* A sole driver buffer never switches allocations. Explicit active-write
      * mode confirms exposure at VSYNC, without claiming old-FB retirement. */
     if (scanout && scanout->single_vsync) {
-        yield |= frame_boundary(scanout);
+        yield |= frame_boundary(scanout, true);
     }
     return yield;
 }
@@ -121,7 +160,7 @@ static bool PRESENT_ISR_ATTR rgb_done(esp_lcd_panel_handle_t panel, const esp_lc
 {
     (void)panel;
     (void)data;
-    return frame_boundary(user);
+    return frame_boundary(user, true);
 }
 #endif
 static esp_err_t scanout_attach(void *context, esp_display_present_panel_event_fn callback, void *user)
@@ -186,7 +225,7 @@ static esp_display_present_tx_result_t scanout_submit(void *context, const esp_d
         ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_ARG
     };
     present_lock_enter(&scanout->lock, false);
-    bool busy = !scanout->attached || scanout->closing || scanout->cookie;
+    bool busy = !scanout->attached || scanout->closing || scanout->pending.cookie;
     present_lock_exit(&scanout->lock, false);
     if (busy)
         return (esp_display_present_tx_result_t) {
@@ -199,10 +238,42 @@ static esp_display_present_tx_result_t scanout_submit(void *context, const esp_d
         ESP_DISPLAY_PRESENT_TX_REJECTED, error
     };
     present_lock_enter(&scanout->lock, false);
-    scanout->cookie = cookie;
-    scanout->armed = false;
+    /* Reserve atomically after cache maintenance as well: another caller must
+     * not overwrite an outstanding transaction. */
+    if (!scanout->attached || scanout->closing || scanout->pending.cookie) {
+        present_lock_exit(&scanout->lock, false);
+        return (esp_display_present_tx_result_t) {
+            ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_STATE
+        };
+    }
+    bool link_switch = scanout->config.rgb_scanout == ESP_DISPLAY_PRESENT_RGB_SCANOUT_LINK_SWITCH;
+    scanout->pending.cookie = cookie;
+    scanout->pending.armed = false;
+    scanout->pending.link.submitting = link_switch;
+    scanout->pending.link.early_complete = false;
+    scanout->pending.boundaries = 0;
+    scanout->pending.required_boundaries = 1;
     present_lock_exit(&scanout->lock, false);
     error = esp_lcd_panel_draw_bitmap(scanout->config.panel, 0, 0, area->width, area->height, surface->pixels);
+    if (link_switch) {
+        scanout_completion_t completion = {0};
+        present_lock_enter(&scanout->lock, false);
+        scanout->pending.link.submitting = false;
+        scanout->pending.armed = error == ESP_OK;
+        if (error == ESP_OK && scanout->pending.link.early_complete) {
+            /* Consume under the same lock that resolves submission. A later
+             * ISR must not consume this cookie (or the next submit) instead. */
+            completion = claim_completion(scanout);
+        }
+        if (error != ESP_OK) {
+            scanout->closing = true;
+        }
+        present_lock_exit(&scanout->lock, false);
+        (void)dispatch_completion(scanout, &completion, false);
+        return (esp_display_present_tx_result_t) {
+            error == ESP_OK ? ESP_DISPLAY_PRESENT_TX_ACCEPTED : ESP_DISPLAY_PRESENT_TX_UNCERTAIN, error
+        };
+    }
     /* Keep the gate closed through submission and the ISR join. RGB bounce
      * finishes copying the old FB before selecting cur_fb_index; DPI finishes
      * the old DMA source before installing the selected FB's descriptor list.
@@ -224,9 +295,9 @@ static esp_display_present_tx_result_t scanout_submit(void *context, const esp_d
         joined = present_isr_barrier(1000);
     }
     present_lock_enter(&scanout->lock, false);
-    scanout->boundaries = 0;
-    scanout->required_boundaries = (joined == ESP_OK || scanout->config.single_retire) ? 1u : 2u;
-    scanout->armed = error == ESP_OK;
+    scanout->pending.boundaries = 0;
+    scanout->pending.required_boundaries = (joined == ESP_OK || scanout->config.single_retire) ? 1u : 2u;
+    scanout->pending.armed = error == ESP_OK;
     if (error != ESP_OK) {
         scanout->closing = true;
     }
@@ -241,7 +312,7 @@ static esp_err_t detach_retained(esp_display_present_lcd_scanout_t *scanout, uin
     uint64_t start = present_now_ms();
     for (;;) {
         present_lock_enter(&scanout->lock, false);
-        bool busy = (scanout->cookie && scanout->armed) || scanout->active_callbacks;
+        bool busy = (scanout->pending.cookie && (scanout->pending.armed || scanout->pending.link.submitting)) || scanout->active_callbacks;
         present_lock_exit(&scanout->lock, false);
         if (!busy) {
             break;
@@ -310,7 +381,7 @@ static esp_err_t scanout_quiesce(void *context, uint32_t timeout)
         if (!busy) {
             scanout->attached = false;
             scanout->stopped = true;
-            scanout->cookie = 0;
+            scanout->pending.cookie = 0;
         }
         present_lock_exit(&scanout->lock, false);
         if (!busy) {
@@ -347,7 +418,16 @@ esp_err_t esp_display_present_lcd_scanout_create(const esp_display_present_lcd_s
     if (config->single_retire && config->buffer_count > 1) {
         return ESP_ERR_NOT_SUPPORTED;
     }
+    if (config->rgb_scanout < ESP_DISPLAY_PRESENT_RGB_SCANOUT_AUTO ||
+            config->rgb_scanout > ESP_DISPLAY_PRESENT_RGB_SCANOUT_LINK_SWITCH ||
+            (config->kind == ESP_DISPLAY_PRESENT_LCD_DSI && config->rgb_scanout != ESP_DISPLAY_PRESENT_RGB_SCANOUT_AUTO)) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (config->rgb_scanout == ESP_DISPLAY_PRESENT_RGB_SCANOUT_LINK_SWITCH && config->buffer_count < 2) {
+        return ESP_ERR_NOT_SUPPORTED;
+    }
     bool single_vsync = false;
+    esp_display_present_rgb_scanout_t rgb_scanout = config->rgb_scanout;
 #if PRESENT_RGB_SUPPORTED && defined(ESP_LCD_RGB_PANEL_HAS_FRAME_BUFFER_INFO)
     if (config->kind == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE) {
         esp_lcd_rgb_panel_frame_buffer_info_t info;
@@ -362,16 +442,34 @@ esp_err_t esp_display_present_lcd_scanout_create(const esp_display_present_lcd_s
                 info.frame_buffer_bytes != (uint64_t)config->width * config->height * bpp) {
             return ESP_ERR_NOT_SUPPORTED;
         }
+        bool queried_bounce = info.bounce_buffer_bytes != 0;
+        if ((rgb_scanout == ESP_DISPLAY_PRESENT_RGB_SCANOUT_BOUNCE && !queried_bounce) ||
+                (rgb_scanout == ESP_DISPLAY_PRESENT_RGB_SCANOUT_LINK_SWITCH && queried_bounce)) {
+            return ESP_ERR_NOT_SUPPORTED;
+        }
+        rgb_scanout = queried_bounce ? ESP_DISPLAY_PRESENT_RGB_SCANOUT_BOUNCE : ESP_DISPLAY_PRESENT_RGB_SCANOUT_LINK_SWITCH;
         single_vsync = config->buffer_count == 1 && info.frame_buffer_count == 1 && !info.frame_buffer_retirement;
         if (!info.frame_buffer_retirement && !single_vsync) {
             return ESP_ERR_NOT_SUPPORTED;
         }
     }
 #else
-    if (config->kind == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE && !config->bounce) {
-        return ESP_ERR_NOT_SUPPORTED;
+    if (config->kind == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE && rgb_scanout == ESP_DISPLAY_PRESENT_RGB_SCANOUT_AUTO) {
+        if (!config->bounce) {
+            return ESP_ERR_NOT_SUPPORTED;
+        }
+        rgb_scanout = ESP_DISPLAY_PRESENT_RGB_SCANOUT_BOUNCE;
     }
 #endif
+    if (config->kind == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE) {
+        if (single_vsync) {
+            /* Exposure of one allocation is periodic VSYNC, not retirement. */
+            rgb_scanout = ESP_DISPLAY_PRESENT_RGB_SCANOUT_AUTO;
+        } else if (rgb_scanout == ESP_DISPLAY_PRESENT_RGB_SCANOUT_LINK_SWITCH &&
+                   (!PRESENT_RGB_LINK_SWITCH_SUPPORTED || config->buffer_count < 2)) {
+            return ESP_ERR_NOT_SUPPORTED;
+        }
+    }
     size_t bpp = config->format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
     if (config->width > SIZE_MAX / config->height / bpp) {
         return ESP_ERR_INVALID_SIZE;
@@ -385,6 +483,7 @@ esp_err_t esp_display_present_lcd_scanout_create(const esp_display_present_lcd_s
         return ESP_ERR_NO_MEM;
     }
     scanout->config = *config;
+    scanout->config.rgb_scanout = rgb_scanout;
     scanout->single_vsync = single_vsync;
     esp_err_t error = ESP_ERR_NOT_SUPPORTED;
 #if PRESENT_DSI_SUPPORTED
@@ -451,7 +550,7 @@ esp_err_t present_lcd_scanout_initialize(esp_display_present_lcd_scanout_t *scan
     }
     for (;;) {
         present_lock_enter(&scanout->lock, false);
-        bool busy = scanout->cookie || scanout->active_callbacks;
+        bool busy = scanout->pending.cookie || scanout->active_callbacks;
         present_lock_exit(&scanout->lock, false);
         if (!busy) {
             scanout->initial_ready = true;

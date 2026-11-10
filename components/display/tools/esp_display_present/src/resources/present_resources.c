@@ -130,6 +130,11 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
     }
     (void)bounce; /* Adapter queries authoritative RGB facts at creation. */
     const esp_display_present_hw_config_t *hw = &input->target.hw;
+    if (hw->rgb.scanout < ESP_DISPLAY_PRESENT_RGB_SCANOUT_AUTO ||
+            hw->rgb.scanout > ESP_DISPLAY_PRESENT_RGB_SCANOUT_LINK_SWITCH ||
+            (hw->rgb.scanout != ESP_DISPLAY_PRESENT_RGB_SCANOUT_AUTO && hw->panel_type != ESP_DISPLAY_PRESENT_PANEL_RGB)) {
+        return ESP_ERR_INVALID_ARG;
+    }
     if (hw->rotation != 0 && hw->rotation != 90 && hw->rotation != 180 && hw->rotation != 270) {
         return ESP_ERR_INVALID_ARG;
     }
@@ -367,7 +372,9 @@ static esp_err_t create_scanout_adapter(present_resources_t *resources, const es
         .format = config->presenter.backend.format,
         .buffer_count = config->resources.image_count,
         .byte_order = config->presenter.backend.panel_order,
-        .bounce = bounce,
+        .bounce = input->target.hw.rgb.scanout == ESP_DISPLAY_PRESENT_RGB_SCANOUT_AUTO ? bounce :
+        input->target.hw.rgb.scanout == ESP_DISPLAY_PRESENT_RGB_SCANOUT_BOUNCE,
+        .rgb_scanout = input->target.hw.rgb.scanout,
         .retain_scanout = true,
         .on_vsync = on_vsync,
         .vsync_user = vsync_user,
@@ -454,7 +461,7 @@ static esp_err_t create_lcd_partition_adapter(present_resources_t *resources,
     esp_display_present_lcd_rgb_partition_config_t rgb = {
         .panel = input->target.hw.panel,
         .kind = input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB ?
-                ESP_DISPLAY_PRESENT_LCD_PARTITION_RGB : ESP_DISPLAY_PRESENT_LCD_PARTITION_DSI,
+        ESP_DISPLAY_PRESENT_LCD_PARTITION_RGB : ESP_DISPLAY_PRESENT_LCD_PARTITION_DSI,
         .width = quarter ? input->height : input->width,
         .height = quarter ? input->width : input->height,
         .format = config->presenter.backend.format,
@@ -465,7 +472,7 @@ static esp_err_t create_lcd_partition_adapter(present_resources_t *resources,
         return error;
     }
     error = esp_display_present_lcd_rgb_partition_get_interface(resources->lcd_partition,
-                                                                 &config->presenter.backend.panel);
+                                                                &config->presenter.backend.panel);
     return error != ESP_OK ? error :
            esp_display_present_lcd_rgb_partition_get_output_caps(resources->lcd_partition, &config->output);
 }

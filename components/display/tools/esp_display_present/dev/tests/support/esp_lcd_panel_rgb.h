@@ -18,6 +18,7 @@ esp_err_t esp_lcd_rgb_panel_register_event_callbacks(esp_lcd_panel_handle_t, con
 esp_err_t esp_lcd_rgb_panel_get_frame_buffer(esp_lcd_panel_handle_t, uint32_t, void **, ...);
 
 #include <stddef.h>
+#ifndef PRESENT_HOST_RGB_NO_FRAME_BUFFER_INFO
 #define ESP_LCD_RGB_PANEL_HAS_FRAME_BUFFER_INFO 1
 typedef struct {
     uint32_t width, height;
@@ -28,3 +29,5 @@ typedef struct {
 } esp_lcd_rgb_panel_frame_buffer_info_t;
 esp_err_t esp_lcd_rgb_panel_get_frame_buffer_info(esp_lcd_panel_handle_t panel,
                                                   esp_lcd_rgb_panel_frame_buffer_info_t *info);
+
+#endif /* PRESENT_HOST_RGB_NO_FRAME_BUFFER_INFO */

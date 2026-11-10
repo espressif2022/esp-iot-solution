@@ -100,6 +100,26 @@ class RunnerTest(unittest.TestCase):
             self.assertEqual(result['rows'][0]['wait_avg_us'], 1000)
             self.assertNotIn('memory_complete', result)
 
+    def test_rgb_handoff_requires_every_case_and_early_event_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args = SimpleNamespace(work_root=Path(tmp), board='s31-rgb', suite='rgb-handoff', implementation='present')
+            root = runner.location(args)
+            root.mkdir(parents=True)
+            (root / 'manifest.json').write_text(json.dumps(dict(memory_schema=0)))
+            names = ('DOUBLE_FULL', 'TRIPLE_FULL', 'DOUBLE_DIRECT', 'DOUBLE_PARTIAL', 'TRIPLE_PARTIAL', 'AUTO')
+            rows = [f'PASS mode={name}_C{core}_D{delay} rotation={angle} frames=4 driver_events=5 early_events={int(delay != 0)}'
+                    for name in names for core in (0, 1) for delay in (0, 50) for angle in (0, 90, 180, 270)]
+            marker = 'RGB_HANDOFF_SUITE_PASS board=x cases=96'
+            for invalid in (rows[:-1], rows + [rows[0]], [row.replace('early_events=1', 'early_events=0') for row in rows]):
+                (root / 'live.log').write_text('\n'.join(invalid + [marker]))
+                with self.assertRaises(ValueError):
+                    runner.report(args)
+            (root / 'live.log').write_text('\n'.join(rows + [marker]))
+            runner.report(args)
+            result = json.loads((root / 'results.json').read_text())
+            self.assertTrue(result['matrix_complete'])
+            self.assertFalse(result['errors'])
+
     def test_error_is_not_pass(self):
         self.assertTrue(runner.parse_log('E (14) worker: error\nSUITE_PASS board=x')['errors'])
         self.assertFalse(runner.parse_log('E (14) gpio: GPIO isr service already installed')['errors'])

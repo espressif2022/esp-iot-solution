@@ -17,7 +17,7 @@ from benchmark_buffers import POLICIES, align_adapter_allocation, expected_input
 
 DEV = Path(__file__).resolve().parents[1]
 BOARDS = json.loads((DEV / 'boards/boards.json').read_text())
-SUITES = ('benchmark', 'pixels', 'native', 'te-lifecycle', 'rgb-events', 'smoke')
+SUITES = ('benchmark', 'pixels', 'native', 'te-lifecycle', 'rgb-events', 'rgb-handoff', 'smoke')
 
 
 def sha(path):
@@ -120,14 +120,16 @@ def build(args):
         raise ValueError('adapter comparison applies to benchmark only')
     if args.board == 'box3-spi' and args.suite in ('pixels', 'native'):
         raise ValueError('BOX-3 pixel matrix is not implemented; use benchmark (not a pass)')
-    if args.board == 's31-rgb' and args.suite not in ('benchmark', 'pixels', 'rgb-events', 'smoke'):
-        raise ValueError('S31 RGB currently supports benchmark, pixels, rgb-events, and smoke')
+    if args.board == 's31-rgb' and args.suite not in ('benchmark', 'pixels', 'rgb-events', 'rgb-handoff', 'smoke'):
+        raise ValueError('S31 RGB currently supports benchmark, pixels, rgb-events, rgb-handoff, and smoke')
     if args.suite == 'native' and args.board not in ('s3-rgb', 'p4-dsi'):
         raise ValueError('Native scanout matrix requires RGB or DSI')
     if args.suite == 'te-lifecycle' and args.board != 's31-qspi':
         raise ValueError('TE lifecycle requires S31 mosaico')
     if args.suite == 'rgb-events' and args.board != 's31-rgb':
         raise ValueError('RGB event probe requires S31 Korvo RGB')
+    if args.suite == 'rgb-handoff' and args.board not in ('s3-rgb', 's31-rgb'):
+        raise ValueError('RGB handoff requires confirmed S3 or S31 RGB')
     dirty_idf = subprocess.check_output(['git', '-C', str(idf()), 'status', '--porcelain', '--untracked-files=no'], text=True)
     if dirty_idf.strip():
         raise ValueError('Clean IDF required; tracked IDF modifications detected')
@@ -139,7 +141,7 @@ def build(args):
     board = BOARDS[args.board]
     defaults = [DEV / 'boards/configs/base.defaults', DEV / f'boards/configs/{args.board}.defaults']
     app = DEV / 'test_apps' / {'benchmark': 'benchmark', 'pixels': 'boards', 'native': 'boards',
-                               'te-lifecycle': 'te_lifecycle', 'rgb-events': 'rgb_events', 'smoke': 'smoke'}[args.suite]
+                               'te-lifecycle': 'te_lifecycle', 'rgb-events': 'rgb_events', 'rgb-handoff': 'rgb_handoff', 'smoke': 'smoke'}[args.suite]
     flags = [f'-DPRESENT_BOARD={args.board}']
     planned = []
     buffer_policy = getattr(args, 'buffer_policy', 'logical-50')
@@ -273,7 +275,7 @@ def parse_log(text):
         if m:
             row = dict(status=m[1], mode=m[2], rotation=int(m[3]))
             row.update({k: float(v) if '.' in v else int(v) for k, v in re.findall(
-                r'(frames|transport_fps|lvgl_fps|cpu|render|flush|scenes|wait_avg_us|wait_max_us|idle_frame_events|idle_vsync|active_write)=([\d.]+)', line)})
+                r'(frames|transport_fps|lvgl_fps|cpu|render|flush|scenes|early_events|driver_events|wait_avg_us|wait_max_us|idle_frame_events|idle_vsync|active_write)=([\d.]+)', line)})
             row.update(meters.get((m[2], int(m[3])), {}))
             if (m[2], int(m[3])) in buffers:
                 row['buffer_audit'] = buffers[m[2], int(m[3])]
@@ -299,6 +301,15 @@ def report(args):
         expected = {(c['name'], c['rotation']) for c in manifest['cases']}
         found = {(c['mode'], c['rotation']) for c in result['rows']}
         result['matrix_complete'] = expected == found and len(found) == len(result['rows'])
+    elif args.suite == 'rgb-handoff':
+        profiles = ('DOUBLE_FULL', 'TRIPLE_FULL', 'DOUBLE_DIRECT', 'DOUBLE_PARTIAL', 'TRIPLE_PARTIAL', 'AUTO')
+        expected = {(f'{name}_C{core}_D{delay}', angle) for name in profiles
+                    for core in (0, 1) for delay in (0, 50) for angle in (0, 90, 180, 270)}
+        found = {(r['mode'], r['rotation']) for r in result['rows']}
+        result['matrix_complete'] = (expected == found and len(result['rows']) == 96 and
+                                     all(r.get('frames') == 4 and r.get('driver_events', 0) >= 4 and
+                                         ('_D50' not in r['mode'] or r.get('early_events', 0) > 0)
+                                         for r in result['rows']))
     elif args.suite == 'rgb-events':
         expected = {(f'RGB_{kind}_FB{n}_CORE{core}', 0) for kind in ('BOUNCE', 'DIRECT') for n in (1, 2, 3) for core in (0, 1)}
         found = {(r['mode'], r['rotation']) for r in result['rows']}
