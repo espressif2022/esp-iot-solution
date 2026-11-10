@@ -48,7 +48,7 @@ esp_err_t esp_display_present_engine_get_draw_buffers(esp_display_present_engine
 
 /**
  * @brief Owner-task pump (optional when background_service is enabled).
- * TE/FB send/retire frames; GRAM reaps receipts. A definite
+ * TE/FB send/retire frames; region reaps receipts. A definite
  * rejection is retryable on a later TE edge and is not a sticky fault.
  *
  * @param presenter Presenter owned by the calling task.
@@ -58,7 +58,7 @@ esp_err_t esp_display_present_engine_service(esp_display_present_engine_t *prese
 
 /**
  * @brief Edge-only ingress, allowed from independent event tasks / ISRs respectively.
- * timestamp_us uses the backend monotonic clock domain. GRAM ignores edges.
+ * timestamp_us uses the backend monotonic clock domain. region ignores edges.
  * These calls never send. Before destroy, detach the external event source AND
  * join all its callbacks. Neither function reads mutable owner-task state.
  *

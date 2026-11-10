@@ -124,14 +124,14 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
     if (kind != ESP_DISPLAY_PRESENT_ENGINE_FB && !partial) {
         return ESP_ERR_NOT_SUPPORTED;
     }
-    if (backend_config->in_place && (kind != ESP_DISPLAY_PRESENT_ENGINE_GRAM || backend_config->async_copy || backend_config->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0)) {
+    if (backend_config->in_place && (kind != ESP_DISPLAY_PRESENT_ENGINE_REGION || backend_config->async_copy || backend_config->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0)) {
         return ESP_ERR_INVALID_ARG;
     }
     if (backend_config->copy_execute && !backend_config->async_copy) {
         return ESP_ERR_INVALID_ARG;
     }
-    if ((backend_config->deferred_submit && (kind != ESP_DISPLAY_PRESENT_ENGINE_GRAM || !plan->normalized.background_service)) ||
-            (plan->normalized.background_service && kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM && !backend_config->async_copy && !backend_config->deferred_submit)) {
+    if ((backend_config->deferred_submit && (kind != ESP_DISPLAY_PRESENT_ENGINE_REGION || !plan->normalized.background_service)) ||
+            (plan->normalized.background_service && kind == ESP_DISPLAY_PRESENT_ENGINE_REGION && !backend_config->async_copy && !backend_config->deferred_submit)) {
         return ESP_ERR_INVALID_ARG;
     }
     if (kind != ESP_DISPLAY_PRESENT_ENGINE_FB && (backend_config->ext_bufs || backend_config->ext_bytes || backend_config->scan_buf)) {
@@ -144,7 +144,7 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
     size_t images = kind == ESP_DISPLAY_PRESENT_ENGINE_FB ? backend_config->buffer_count : kind == ESP_DISPLAY_PRESENT_ENGINE_TE ?
                     (config->defaults == ESP_DISPLAY_PRESENT_PLAN_LEGACY_DEFAULTS ? 1 : 2) : 0;
     if (config->resources.image_count) {
-        if (kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM || (kind == ESP_DISPLAY_PRESENT_ENGINE_FB && plan->normalized.mode != ESP_DISPLAY_PRESENT_MODE_DEFAULT && config->resources.image_count != images)) {
+        if (kind == ESP_DISPLAY_PRESENT_ENGINE_REGION || (kind == ESP_DISPLAY_PRESENT_ENGINE_FB && plan->normalized.mode != ESP_DISPLAY_PRESENT_MODE_DEFAULT && config->resources.image_count != images)) {
             return ESP_ERR_INVALID_ARG;
         }
         images = config->resources.image_count;
@@ -198,17 +198,17 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
     if (!plan->output.internal_dma && !plan->output.ext_mem) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (plan->output.full_only && kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM) {
+    if (plan->output.full_only && kind == ESP_DISPLAY_PRESENT_ENGINE_REGION) {
         return ESP_ERR_NOT_SUPPORTED;
     }
-    if (backend_config->tx_staging && (kind != ESP_DISPLAY_PRESENT_ENGINE_GRAM || !backend_config->async_copy)) {
+    if (backend_config->tx_staging && (kind != ESP_DISPLAY_PRESENT_ENGINE_REGION || !backend_config->async_copy)) {
         return ESP_ERR_INVALID_ARG;
     }
     esp_display_present_plan_memory_t transport_memory = images ? config->resources.image_memory :
                                                          backend_config->tx_staging ? ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA : config->resources.tile_memory;
     bool external_tx = transport_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL;
     size_t length_alignment = plan->output.ext_len_align ? plan->output.ext_len_align : 1;
-    if (external_tx && kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM) {
+    if (external_tx && kind == ESP_DISPLAY_PRESENT_ENGINE_REGION) {
         /* Tight rows with this width make every rendered band DMA-legal,
          * including the last short band. Negotiate before rasterization. */
         size_t w_align;
@@ -217,7 +217,7 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
         }
         plan->output.w_align = w_align;
     }
-    if (kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM) {
+    if (kind == ESP_DISPLAY_PRESENT_ENGINE_REGION) {
         size_t wa, ha;
         if (!lcm(plan->output.x_alignment, plan->output.w_align, &wa) ||
                 !lcm(plan->output.y_alignment, plan->output.h_align, &ha) || wa > UINT32_MAX || ha > UINT32_MAX) {
@@ -298,7 +298,7 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
         return ESP_ERR_NOT_SUPPORTED;
     }
     size_t logical = 0;
-    if (kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM) {
+    if (kind == ESP_DISPLAY_PRESENT_ENGINE_REGION) {
         plan->topology = ESP_DISPLAY_PRESENT_TOPOLOGY_REGION;
     } else if (partial) {
         plan->topology = ESP_DISPLAY_PRESENT_TOPOLOGY_TILE_TO_PHYSICAL;
@@ -314,7 +314,7 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
     if (logical > 1) {
         return ESP_ERR_NOT_SUPPORTED;
     }
-    if (kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM && backend_config->tile_rows < (quarter ? plan->output.w_align : plan->output.h_align)) {
+    if (kind == ESP_DISPLAY_PRESENT_ENGINE_REGION && backend_config->tile_rows < (quarter ? plan->output.w_align : plan->output.h_align)) {
         return ESP_ERR_NOT_SUPPORTED;
     }
     esp_display_present_layout_t tile = plan->logical_layout;
@@ -324,7 +324,7 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
             !pool(&plan->logical, logical, plan->logical_layout, alignment, config->resources.logical_memory, false)) {
         return ESP_ERR_INVALID_SIZE;
     }
-    bool convert = kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM && (backend_config->async_copy || backend_config->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || (backend_config->draw_order != backend_config->panel_order && !backend_config->in_place));
+    bool convert = kind == ESP_DISPLAY_PRESENT_ENGINE_REGION && (backend_config->async_copy || backend_config->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || (backend_config->draw_order != backend_config->panel_order && !backend_config->in_place));
     esp_display_present_layout_t converted = tile;
     converted.byte_order = backend_config->panel_order;
     if (quarter) {
@@ -339,11 +339,11 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
     if ((tx_memory == ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA && !plan->output.internal_dma) || (tx_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL && !plan->output.ext_mem)) {
         return ESP_ERR_NOT_SUPPORTED;
     }
-    plan->tx_capacity = config->resources.tx_capacity ? config->resources.tx_capacity : kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM ? tiles : 1;
+    plan->tx_capacity = config->resources.tx_capacity ? config->resources.tx_capacity : kind == ESP_DISPLAY_PRESENT_ENGINE_REGION ? tiles : 1;
     if (!config->resources.tx_capacity && plan->output.max_inflight && plan->tx_capacity > plan->output.max_inflight) {
         plan->tx_capacity = plan->output.max_inflight;
     }
-    if (!plan->tx_capacity || plan->tx_capacity > PRESENT_MAX_TILE_BUFFERS || (kind != ESP_DISPLAY_PRESENT_ENGINE_GRAM && plan->tx_capacity != 1) ||
+    if (!plan->tx_capacity || plan->tx_capacity > PRESENT_MAX_TILE_BUFFERS || (kind != ESP_DISPLAY_PRESENT_ENGINE_REGION && plan->tx_capacity != 1) ||
             (plan->output.max_inflight && plan->tx_capacity > plan->output.max_inflight)) {
         return ESP_ERR_NOT_SUPPORTED;
     }
@@ -420,7 +420,7 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
     backend_config->transfer_capacity = plan->tx_capacity;
     plan->normalized.output_caps = plan->output;
     plan->metadata_bytes = present_presenter_memory(&plan->normalized) +
-                           (kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM ? present_gram_memory(backend_config) : kind == ESP_DISPLAY_PRESENT_ENGINE_TE ? present_te_memory(backend_config) : present_fb_memory(backend_config));
+                           (kind == ESP_DISPLAY_PRESENT_ENGINE_REGION ? present_region_memory(backend_config) : kind == ESP_DISPLAY_PRESENT_ENGINE_TE ? present_te_memory(backend_config) : present_fb_memory(backend_config));
     plan->stack_bytes = backend_config->async_copy ? 4096 : 0;
     if (plan->normalized.background_service && !add(plan->stack_bytes,
                                                     plan->normalized.worker_stack_bytes ? plan->normalized.worker_stack_bytes : 4096, &plan->stack_bytes)) {

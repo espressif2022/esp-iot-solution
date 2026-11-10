@@ -289,7 +289,7 @@ static void gram_integration(void)
                                                .buffer_count = 2, .max_frames = 2, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = api
                                              };
     present_backend_t *g;
-    const present_backend_ops_t *ops = &present_gram_backend;
+    const present_backend_ops_t *ops = &present_region_backend;
     assert(ops->create(&c, &g) == ESP_OK);
     esp_display_present_frame_request_t request = {0};
     esp_display_present_frame_t f;

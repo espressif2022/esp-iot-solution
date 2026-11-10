@@ -1,5 +1,7 @@
 # 当前模式、缓冲、任务与像素处理审查
 
+> 本文保留 2026-11-04 的审查基线，内部名称和路径已随重构更新。最新公开模式路由及 region / lcd_blit 的职责见 [模式架构说明](MODE_ARCHITECTURE.md)。
+
 审查日期：2026-11-04。对象为当前 `esp_display_present` 目录里的新引擎实现，保留 V1 公共入口；不是旧归档目录的实现。
 
 代码基线：`c260e7eb7`，加其后的 GRAM 后台提交原型。原型开关 `CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND` 默认关闭。本文区分默认行为和打开实验开关后的行为，不将原型当成默认功能。
@@ -100,7 +102,7 @@ FULL/DIRECT 的“输入”是完整画布视图；PARTIAL/GRAM/TE 的“输入�
 
 FULL/DIRECT 的 N 个 FB 是池总数，包含正在扫描的那一个，不代表 N 个都可写；需转换时 N 个 FB 也不对应 N 张独立逻辑画布。转换条件为旋转非 0°，或者输入/输出字节序不一致。
 
-依据：[模式映射和 async 决策](../src/resources/present_resources.c#L149)、[模式合同归一化](../src/present_plan.c#L12)、[FB 物理/逻辑存储](../src/backend/present_backend_fb.c#L730)、[GRAM 存储](../src/backend/present_backend_gram.c#L289)。
+依据：[模式映射和 async 决策](../src/resources/present_resources.c#L149)、[模式合同归一化](../src/present_plan.c#L12)、[FB 物理/逻辑存储](../src/backend/present_backend_fb.c#L730)、[GRAM 存储](../src/backend/present_backend_region.c#L289)。
 
 ### 3.1 下一帧什么时候可以开始
 
@@ -169,7 +171,7 @@ compose 图像的状态是 `IDLE`、`BUILDING`、`REPAIR`、`READY`、`INFLIGHT`
 
 公开配置的 C=0 在工厂里改成 C=1，走上面第一行。私有 composer 直接传 0 时是两张图且 `pipelined=false`：只要还有 job 不是 `IDLE`，begin 就返回 `ESP_ERR_INVALID_STATE`。
 
-依据：[FB 确认后退休](../src/backend/present_backend_fb.c#L553)、[FB begin 选槽](../src/backend/present_backend_fb.c#L858)、[FB tile 再租条件](../src/backend/present_backend_fb.c#L982)、[GRAM 整槽退休](../src/backend/present_backend_gram.c#L69)、[GRAM 完成回调](../src/backend/present_backend_gram.c#L193)、[TE tile 再租条件](../src/backend/present_backend_te.c#L663)、[TE compose 完成](../src/backend/present_te_composer.c#L365)、[TE 选下一张图](../src/backend/present_te_composer.c#L141)。
+依据：[FB 确认后退休](../src/backend/present_backend_fb.c#L553)、[FB begin 选槽](../src/backend/present_backend_fb.c#L858)、[FB tile 再租条件](../src/backend/present_backend_fb.c#L982)、[GRAM 整槽退休](../src/backend/present_backend_region.c#L69)、[GRAM 完成回调](../src/backend/present_backend_region.c#L193)、[TE tile 再租条件](../src/backend/present_backend_te.c#L663)、[TE compose 完成](../src/backend/present_te_composer.c#L365)、[TE 选下一张图](../src/backend/present_te_composer.c#L141)。
 
 ## 4. FB 模式：扫描池与绘制池
 
@@ -252,7 +254,7 @@ swap 在提交驱动之前原地处理当前租用的 tile；输入 tile 会改�
 
 打开实验开关后，只给这一类 `async_copy=false` 的 GRAM 增加 **1 个 backend_worker**：像素准备仍在前台，之后发布 READY；真正 driver call 在后台。当前 prototype 在 driver call 期间暂时释放 engine gate，让生产者可操作另一空闲 tile；只有 backend_worker 被允许真正提交驱动。没有增加第二套发送任务或复制池。
 
-依据：[像素准备](../src/backend/present_backend_gram.c#L439)、[区域提交](../src/backend/present_backend_gram.c#L548)、[后台 driver 包装](../src/core/present_engine.c#L187)、[实验配置](../Kconfig)。
+依据：[像素准备](../src/backend/present_backend_region.c#L439)、[区域提交](../src/backend/present_backend_region.c#L548)、[后台 driver 包装](../src/core/present_engine.c#L187)、[实验配置](../Kconfig)。
 
 ### 5.2 旋转或 PSRAM tile
 
@@ -276,7 +278,7 @@ flowchart LR
 
 这条路径原本就有 1 个 pixel_worker + 1 个 backend_worker。实验开关没有把它改成新的 deferred 策略；普通内部路径的实测结果不能套到这里。默认 service 也可能由前台操作触发，不保证每次真实 driver call 都发生在 backend_worker 线程中。
 
-依据：[成对分配](../src/backend/present_backend_gram.c#L289)、[service 与 slot 回收](../src/backend/present_backend_gram.c#L69)、[PSRAM 策略](../src/resources/present_resources.c#L201)。
+依据：[成对分配](../src/backend/present_backend_region.c#L289)、[service 与 slot 回收](../src/backend/present_backend_region.c#L69)、[PSRAM 策略](../src/resources/present_resources.c#L201)。
 
 ## 6. TE：输入 tile 与整屏合成池独立
 
@@ -355,7 +357,7 @@ sequenceDiagram
     E->>D: draw_bitmap(tile 1)
 ```
 
-依据：[FB pixel 配置](../src/backend/present_backend_fb.c#L788)、[GRAM pixel 配置](../src/backend/present_backend_gram.c#L306)、[TE pixel 配置](../src/backend/present_backend_te.c#L485)。
+依据：[FB pixel 配置](../src/backend/present_backend_fb.c#L788)、[GRAM pixel 配置](../src/backend/present_backend_region.c#L306)、[TE pixel 配置](../src/backend/present_backend_te.c#L485)。
 
 ### 7.2 驱动调用与总线分包
 

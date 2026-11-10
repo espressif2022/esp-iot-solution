@@ -37,7 +37,7 @@ submit 累计耗时下降约 82.8%，但大部分等待迁移到 buffer 背压�
 ## 实现
 
 1. [资源策略](../src/present_resources.c)：后台推进独立于 `async_copy`，实验 factory 使用 `deferred = !async && experiment_enabled`。自动 tile 数量按是否需要后台重叠选择，显式 tile 数量仍优先。
-2. [GRAM backend](../src/backend/present_backend_gram.c)：同步像素准备完成后，将原有 slot 发布为 READY，持有 transfer 引用并唤醒 sender。没有增加第二份输出队列或 SPI adapter 任务。
+2. [GRAM backend](../src/backend/present_backend_region.c)：同步像素准备完成后，将原有 slot 发布为 READY，持有 transfer 引用并唤醒 sender。没有增加第二份输出队列或 SPI adapter 任务。
 3. [引擎提交包装](../src/present_engine.c)：仅该实验策略允许实际 driver call 期间释放 engine gate。调用前原有 slot 已进入 SUBMITTING；调用返回后先重新取得 gate，再由已有 transaction 机制合并早到回调与返回结果。
 4. 只有 sender 能真正调用 driver，前台 acquire／query 引起的 service 只触发重试通知；这保证 gate 释放期间仍只有一个提交者。进入 closing 后不再发出排队的新 tile。
 5. stop 先 join sender，再 quiesce adapter。超时保留上下文和像素；`TX_UNCERTAIN`、超时故障本身都不构成 DMA 已结束的证据。

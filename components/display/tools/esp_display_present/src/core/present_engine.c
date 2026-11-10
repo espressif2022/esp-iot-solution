@@ -27,7 +27,7 @@ struct esp_display_present_engine {
         present_task_t task;
         bool ready;
     } backend_worker;
-    bool background_gram;
+    bool background_region;
     present_lock_t control;
     present_transfer_tracker_t transfer;
     bool exit_requested;
@@ -132,18 +132,18 @@ static esp_err_t panel_attach(void *context, esp_display_present_panel_event_fn 
     return presenter->panel.attach(presenter->panel.context, panel_event, presenter);
 }
 
-/* GRAM SUBMITTING slots stay pinned while the backend_worker lends the task gate.
+/* region SUBMITTING slots stay pinned while the backend_worker lends the task gate.
  * Backend task state is resolved only after reacquiring it. Stop joins backend_worker
  * before quiesce/destruction, so the adapter and callback context remain live. */
 static esp_display_present_tx_result_t execute_panel_submit(esp_display_present_engine_t *presenter,
                                                             const esp_display_present_surface_t *surface,
                                                             const esp_display_present_rect_t *area, uint64_t cookie)
 {
-    if (presenter->background_gram) {
+    if (presenter->background_region) {
         present_mutex_give(presenter->gate);
     }
     esp_display_present_tx_result_t result = presenter->panel.submit(presenter->panel.context, surface, area, cookie);
-    if (presenter->background_gram) {
+    if (presenter->background_region) {
         (void)present_mutex_take(presenter->gate, UINT32_MAX);
     }
     return result;
@@ -155,13 +155,13 @@ static esp_display_present_tx_result_t panel_submit(void *context, const esp_dis
     esp_display_present_engine_t *presenter = context;
     /* Foreground query/acquire may service READY slots. Only the backend_worker can
      * enter the driver; this also serializes submissions while its gate is lent. */
-    if (presenter->background_gram && presenter->state != ESP_DISPLAY_PRESENT_ENGINE_RUNNING) {
+    if (presenter->background_region && presenter->state != ESP_DISPLAY_PRESENT_ENGINE_RUNNING) {
         return (esp_display_present_tx_result_t) {
             ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_STATE
         };
     }
-    if (presenter->background_gram && (!presenter->backend_worker.ready ||
-                                       !present_same_task(presenter->backend_worker.task, present_current_task()))) {
+    if (presenter->background_region && (!presenter->backend_worker.ready ||
+                                         !present_same_task(presenter->backend_worker.task, present_current_task()))) {
         (void)present_event_signal(presenter->work, false);
         return (esp_display_present_tx_result_t) {
             ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_NO_MEM
@@ -237,7 +237,7 @@ static esp_err_t pump_backend(esp_display_present_engine_t *presenter)
 static void backend_worker(void *context)
 {
     esp_display_present_engine_t *presenter = context;
-    if (presenter->background_gram) {
+    if (presenter->background_region) {
         (void)present_mutex_take(presenter->gate, UINT32_MAX);
         presenter->backend_worker.task = present_current_task();
         presenter->backend_worker.ready = true;
@@ -417,7 +417,7 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
         return ESP_ERR_NO_MEM;
     }
     presenter->kind = config->backend_kind;
-    presenter->background_gram = config->background_service && config->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM && config->backend.deferred_submit;
+    presenter->background_region = config->background_service && config->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION && config->backend.deferred_submit;
     presenter->output = config->output_caps;
     if (!presenter->output.x_alignment) {
         presenter->output.x_alignment = 1;
@@ -433,7 +433,7 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
     }
     presenter->rotation = config->backend.rotation;
     presenter->ops = presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_TE ? &present_te_backend :
-                     presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_FB ? &present_fb_backend : &present_gram_backend;
+                     presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_FB ? &present_fb_backend : &present_region_backend;
     presenter->event_isr = presenter->ops->on_event_isr;
     presenter->owner = present_current_task();
     presenter->timeout = config->timeout_ms;
@@ -456,7 +456,7 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
         }
     }
     esp_display_present_backend_config_t backend = config->backend;
-    backend.deferred_submit = presenter->background_gram;
+    backend.deferred_submit = presenter->background_region;
     backend.panel = (esp_display_present_panel_adapter_t) {
         presenter, panel_attach, panel_submit, panel_quiesce
     };
@@ -633,7 +633,7 @@ static esp_err_t resolve_rows_impl(esp_display_present_engine_t *presenter, cons
     }
     size_t rows = presenter->held.surface.capacity_bytes / stride;
     *out = rows < requested ? (uint32_t)rows : requested;
-    if (presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM && *out < requested) {
+    if (presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_REGION && *out < requested) {
         bool quarter = presenter->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90 || presenter->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270;
         uint32_t a = quarter ? presenter->output.x_alignment : presenter->output.y_alignment;
         uint32_t extent = quarter ? presenter->output.w_align : presenter->output.h_align;
@@ -1290,7 +1290,7 @@ esp_err_t esp_display_present_engine_resolve_render_area(esp_display_present_eng
     };
     plan.normalized.backend.rotation = presenter->rotation;
     plan.normalized.backend.render_contract = presenter->caps.contract;
-    plan.images.count = presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM ? 0 : 1;
+    plan.images.count = presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_REGION ? 0 : 1;
     plan.physical_layout = plan.logical_layout;
     if (presenter->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90 || presenter->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270) {
         plan.physical_layout.width = plan.logical_layout.height;

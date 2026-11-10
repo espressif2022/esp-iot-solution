@@ -122,7 +122,7 @@ void app_main(void)
         .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .draw_order = ESP_DISPLAY_PRESENT_ORDER_NATIVE, .panel_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED,
         .panel = { &loop, attach, submit, quiesce },
     };
-    const present_backend_ops_t *ops = &present_gram_backend;
+    const present_backend_ops_t *ops = &present_region_backend;
     present_backend_t *backend;
     ESP_ERROR_CHECK(ops->create(&config, &backend));
     esp_display_present_frame_request_t request = { .full_redraw = true };

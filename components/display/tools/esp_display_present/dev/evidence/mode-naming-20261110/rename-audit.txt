@@ -1,0 +1,1 @@
+PASS: 26 C/H files match the previous commit after explicit identifier/diagnostic-name substitutions and repository formatting; public headers unchanged.

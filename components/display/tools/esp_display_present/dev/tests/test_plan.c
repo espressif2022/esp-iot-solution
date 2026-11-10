@@ -67,12 +67,12 @@ static void modes(void)
         assert(esp_display_present_plan_resolve(&c, &p) == ESP_ERR_INVALID_ARG);
     }
     esp_display_present_resolved_plan_t p;
-    esp_display_present_plan_config_t c = config(ESP_DISPLAY_PRESENT_ENGINE_GRAM);
+    esp_display_present_plan_config_t c = config(ESP_DISPLAY_PRESENT_ENGINE_REGION);
     c.presenter.mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && !p.images.count && p.tiles.count == 2);
     c.presenter.mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_AUTO;
     c.presenter.backend.te_window_us = 0;
-    assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.normalized.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM);
+    assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.normalized.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION);
     c.defaults = ESP_DISPLAY_PRESENT_PLAN_LEGACY_DEFAULTS;
     c.te_enabled = true;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_ERR_NOT_SUPPORTED);
@@ -86,7 +86,7 @@ static void modes(void)
     c.presenter.backend.rotation = ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90;
     c.presenter.mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.logical.count == 1);
-    c = config(ESP_DISPLAY_PRESENT_ENGINE_GRAM);
+    c = config(ESP_DISPLAY_PRESENT_ENGINE_REGION);
     c.defaults = ESP_DISPLAY_PRESENT_PLAN_LEGACY_DEFAULTS;
     c.presenter.backend.rotation = ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.conversion.count == p.tiles.count);
@@ -118,7 +118,7 @@ static void topology_and_budget(void)
     c.presenter.backend.draw_order = ESP_DISPLAY_PRESENT_ORDER_NATIVE;
     c.presenter.backend.panel_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.topology == ESP_DISPLAY_PRESENT_TOPOLOGY_LOGICAL_TO_PHYSICAL && p.logical.count == 1 && !p.pending_runtime);
-    c = config(ESP_DISPLAY_PRESENT_ENGINE_GRAM);
+    c = config(ESP_DISPLAY_PRESENT_ENGINE_REGION);
     c.presenter.backend.width = INT_MAX;
     c.presenter.backend.height = INT_MAX;
     c.presenter.backend.tile_rows = INT_MAX;
@@ -149,7 +149,7 @@ static void map(unsigned x, unsigned y, unsigned w, unsigned h, unsigned rot, un
 static void alignment(void)
 {
     for (unsigned rot = 0; rot < 4; rot++) {
-        esp_display_present_plan_config_t c = config(ESP_DISPLAY_PRESENT_ENGINE_GRAM);
+        esp_display_present_plan_config_t c = config(ESP_DISPLAY_PRESENT_ENGINE_REGION);
         c.presenter.backend.width = 12;
         c.presenter.backend.height = 8;
         c.presenter.backend.tile_rows = 4;
@@ -174,12 +174,12 @@ static void alignment(void)
                 assert(x >= r.x && x < r.x + r.width && y >= r.y && y < r.y + r.height);
             }
     }
-    esp_display_present_plan_config_t c = config(ESP_DISPLAY_PRESENT_ENGINE_GRAM);
+    esp_display_present_plan_config_t c = config(ESP_DISPLAY_PRESENT_ENGINE_REGION);
     esp_display_present_resolved_plan_t p;
     c.presenter.backend.width = 7;
     c.output.w_align = 4;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_ERR_NOT_SUPPORTED);
-    c = config(ESP_DISPLAY_PRESENT_ENGINE_GRAM);
+    c = config(ESP_DISPLAY_PRESENT_ENGINE_REGION);
     c.presenter.backend.format = ESP_DISPLAY_PRESENT_FORMAT_RGB888;
     c.presenter.backend.width = 5;
     c.output.stride_align = 64;
@@ -213,7 +213,7 @@ static void creation(void)
     assert(esp_display_present_engine_create_planned(&c, &presenter) == ESP_OK && attachments == before + 1);
     assert(esp_display_present_engine_stop(presenter, 0) == ESP_OK);
     assert(esp_display_present_engine_destroy(presenter) == ESP_OK);
-    c = config(ESP_DISPLAY_PRESENT_ENGINE_GRAM);
+    c = config(ESP_DISPLAY_PRESENT_ENGINE_REGION);
     assert(esp_display_present_engine_create_planned(&c, &presenter) == ESP_OK);
     assert(esp_display_present_engine_stop(presenter, 0) == ESP_OK);
     assert(esp_display_present_engine_destroy(presenter) == ESP_OK);
@@ -221,7 +221,7 @@ static void creation(void)
 static void reverse_band_alignment(void)
 {
     for (unsigned rotation = 0; rotation < 4; ++rotation) {
-        esp_display_present_plan_config_t c = config(ESP_DISPLAY_PRESENT_ENGINE_GRAM);
+        esp_display_present_plan_config_t c = config(ESP_DISPLAY_PRESENT_ENGINE_REGION);
         c.presenter.backend.rotation = rotation;
         c.output.x_alignment = c.output.y_alignment = 4;
         c.output.w_align = c.output.h_align = 2;
@@ -237,7 +237,7 @@ static void reverse_band_alignment(void)
 }
 static void external_dma_alignment(void)
 {
-    esp_display_present_plan_config_t c = config(ESP_DISPLAY_PRESENT_ENGINE_GRAM);
+    esp_display_present_plan_config_t c = config(ESP_DISPLAY_PRESENT_ENGINE_REGION);
     c.resources.tile_memory = ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL;
     c.output.ext_mem = true;
     c.output.ext_len_align = 64;

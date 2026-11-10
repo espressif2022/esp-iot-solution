@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "platform/present_lcd_rgb_partition.h"
+#include "platform/present_lcd_blit.h"
 #include "esp_lcd_mipi_dsi.h"
 #include "esp_lcd_panel_rgb.h"
 #include <assert.h>
@@ -22,8 +22,8 @@ struct fake_lcd {
 };
 
 esp_err_t esp_lcd_rgb_panel_register_event_callbacks(esp_lcd_panel_handle_t panel,
-                                                      const esp_lcd_rgb_panel_event_callbacks_t *callbacks,
-                                                      void *user)
+                                                     const esp_lcd_rgb_panel_event_callbacks_t *callbacks,
+                                                     void *user)
 {
     if (!user && panel->detach_fail) {
         return ESP_FAIL;
@@ -35,8 +35,8 @@ esp_err_t esp_lcd_rgb_panel_register_event_callbacks(esp_lcd_panel_handle_t pane
 }
 
 esp_err_t esp_lcd_dpi_panel_register_event_callbacks(esp_lcd_panel_handle_t panel,
-                                                      const esp_lcd_dpi_panel_event_callbacks_t *callbacks,
-                                                      void *user)
+                                                     const esp_lcd_dpi_panel_event_callbacks_t *callbacks,
+                                                     void *user)
 {
     if (!user && panel->detach_fail) {
         return ESP_FAIL;
@@ -82,21 +82,21 @@ static bool on_event(void *user, const esp_display_present_backend_event_t *even
     return false;
 }
 
-static void exercise(esp_display_present_lcd_partition_kind_t kind)
+static void exercise(esp_display_present_lcd_blit_kind_t kind)
 {
     struct fake_lcd panel = {0};
-    esp_display_present_lcd_rgb_partition_config_t config = {
+    esp_display_present_lcd_blit_config_t config = {
         .panel = &panel, .kind = kind, .width = 4, .height = 3,
         .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
         .byte_order = ESP_DISPLAY_PRESENT_ORDER_NATIVE,
     };
-    esp_display_present_lcd_rgb_partition_t *adapter = NULL;
-    OK(esp_display_present_lcd_rgb_partition_create(&config, &adapter));
+    esp_display_present_lcd_blit_t *adapter = NULL;
+    OK(esp_display_present_lcd_blit_create(&config, &adapter));
     esp_display_present_output_caps_t caps;
-    OK(esp_display_present_lcd_rgb_partition_get_output_caps(adapter, &caps));
+    OK(esp_display_present_lcd_blit_get_output_caps(adapter, &caps));
     assert(caps.internal_dma && caps.ext_mem && caps.max_inflight == 1 && caps.tight_stride);
     esp_display_present_panel_adapter_t api;
-    OK(esp_display_present_lcd_rgb_partition_get_interface(adapter, &api));
+    OK(esp_display_present_lcd_blit_get_interface(adapter, &api));
     completion_t completion = {0};
     OK(api.attach(api.context, on_event, &completion));
     assert(api.attach(api.context, on_event, &completion) == ESP_ERR_INVALID_STATE);
@@ -125,29 +125,29 @@ static void exercise(esp_display_present_lcd_partition_kind_t kind)
 
     panel.detach_fail = true;
     assert(api.quiesce(api.context, 0) == ESP_FAIL);
-    assert(esp_display_present_lcd_rgb_partition_destroy(adapter) == ESP_ERR_INVALID_STATE);
+    assert(esp_display_present_lcd_blit_destroy(adapter) == ESP_ERR_INVALID_STATE);
     panel.detach_fail = false;
     OK(api.quiesce(api.context, 0));
     assert(!panel.rgb && !panel.dsi);
-    OK(esp_display_present_lcd_rgb_partition_destroy(adapter));
+    OK(esp_display_present_lcd_blit_destroy(adapter));
 }
 
 int main(void)
 {
-    assert(esp_display_present_lcd_rgb_partition_create(NULL, NULL) == ESP_ERR_INVALID_ARG);
+    assert(esp_display_present_lcd_blit_create(NULL, NULL) == ESP_ERR_INVALID_ARG);
     struct fake_lcd panel = {0};
-    esp_display_present_lcd_rgb_partition_config_t invalid = {
-        .panel = &panel, .kind = ESP_DISPLAY_PRESENT_LCD_PARTITION_RGB,
+    esp_display_present_lcd_blit_config_t invalid = {
+        .panel = &panel, .kind = ESP_DISPLAY_PRESENT_LCD_BLIT_RGB,
         .width = 4, .height = 3, .format = (esp_display_present_engine_pixel_format_t)99,
         .byte_order = ESP_DISPLAY_PRESENT_ORDER_NATIVE,
     };
-    esp_display_present_lcd_rgb_partition_t *adapter = (void *)1;
-    assert(esp_display_present_lcd_rgb_partition_create(&invalid, &adapter) == ESP_ERR_INVALID_ARG && adapter == (void *)1);
+    esp_display_present_lcd_blit_t *adapter = (void *)1;
+    assert(esp_display_present_lcd_blit_create(&invalid, &adapter) == ESP_ERR_INVALID_ARG && adapter == (void *)1);
     invalid.format = ESP_DISPLAY_PRESENT_FORMAT_RGB888;
     invalid.byte_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED;
-    assert(esp_display_present_lcd_rgb_partition_create(&invalid, &adapter) == ESP_ERR_INVALID_ARG && adapter == (void *)1);
-    exercise(ESP_DISPLAY_PRESENT_LCD_PARTITION_RGB);
-    exercise(ESP_DISPLAY_PRESENT_LCD_PARTITION_DSI);
+    assert(esp_display_present_lcd_blit_create(&invalid, &adapter) == ESP_ERR_INVALID_ARG && adapter == (void *)1);
+    exercise(ESP_DISPLAY_PRESENT_LCD_BLIT_RGB);
+    exercise(ESP_DISPLAY_PRESENT_LCD_BLIT_DSI);
     puts("lcd partition: RGB/DSI attach, early completion, validation and detach retry passed");
     return 0;
 }

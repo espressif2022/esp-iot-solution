@@ -132,7 +132,7 @@ static uint64_t run(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_handle_t io,
     check(esp_display_present_lcd_spi_create(&spi, &adapter), "adapter create");
     meter_t meter = {.window = te ? window : 0};
     check(esp_display_present_lcd_spi_get_interface(adapter, &meter.real), "adapter interface");
-    esp_display_present_engine_config_t cfg = {.backend_kind = te ? ESP_DISPLAY_PRESENT_ENGINE_TE : ESP_DISPLAY_PRESENT_ENGINE_GRAM, .timeout_ms = 2000,
+    esp_display_present_engine_config_t cfg = {.backend_kind = te ? ESP_DISPLAY_PRESENT_ENGINE_TE : ESP_DISPLAY_PRESENT_ENGINE_REGION, .timeout_ms = 2000,
                                                .backend = {.image_in_psram = te && !roi, .compose_count = te ? 2 : 0, .width = w, .height = h, .tile_rows = tile, .buffer_count = 2, .max_frames = 3,
                                                            .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED,
                                                            .panel = {&meter, metered_attach, metered_submit, metered_stop},
@@ -213,7 +213,7 @@ static void run_rotation_async(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_ha
     check(esp_display_present_lcd_spi_create(&spi, &adapter), "adapter create");
     meter_t meter = {.window = te ? window : 0};
     check(esp_display_present_lcd_spi_get_interface(adapter, &meter.real), "adapter interface");
-    esp_display_present_engine_config_t cfg = {.backend_kind = te ? ESP_DISPLAY_PRESENT_ENGINE_TE : ESP_DISPLAY_PRESENT_ENGINE_GRAM,
+    esp_display_present_engine_config_t cfg = {.backend_kind = te ? ESP_DISPLAY_PRESENT_ENGINE_TE : ESP_DISPLAY_PRESENT_ENGINE_REGION,
                                                .timeout_ms = 2000, .background_service = true,
                                                .backend = {.image_in_psram = te, .compose_count = te ? compose_count : 0,
                                                            .width = w, .height = h, .tile_rows = tile, .buffer_count = 2, .max_frames = 3,
@@ -673,7 +673,7 @@ static void run_v1_vs_v2_qspi_bench(esp_lcd_panel_handle_t panel, esp_lcd_panel_
         meter_t meter = {0};
         check(esp_display_present_lcd_spi_get_interface(adapter, &meter.real), "qspi v2 iface");
         esp_display_present_engine_config_t v2_cfg = {
-            .backend_kind = qcases[i].te ? ESP_DISPLAY_PRESENT_ENGINE_TE : ESP_DISPLAY_PRESENT_ENGINE_GRAM,
+            .backend_kind = qcases[i].te ? ESP_DISPLAY_PRESENT_ENGINE_TE : ESP_DISPLAY_PRESENT_ENGINE_REGION,
             .timeout_ms = 2000, .background_service = qcases[i].te,
             .backend = {
                 .image_in_psram = qcases[i].te, .compose_count = qcases[i].compose_buffers,

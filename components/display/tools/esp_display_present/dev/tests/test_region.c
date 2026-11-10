@@ -22,7 +22,7 @@ typedef struct {
     size_t last_size;
 } panel_t;
 
-static const present_backend_ops_t *ops = &present_gram_backend;
+static const present_backend_ops_t *ops = &present_region_backend;
 static const esp_display_present_rect_t area = { 0, 0, 4, 4 };
 
 static esp_err_t attach(void *ctx, esp_display_present_panel_event_fn callback, void *user)
@@ -547,7 +547,7 @@ static bool copied(void *arg, bool isr)
     return false;
 }
 
-static void queued_gram(unsigned mode)
+static void queued_region(unsigned mode)
 {
     copy_gate_t gate = {.mutex = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER, .fail = mode == 5};
     panel_t panel = {.response = {ESP_DISPLAY_PRESENT_TX_ACCEPTED, ESP_OK}};
@@ -571,7 +571,7 @@ static void queued_gram(unsigned mode)
     }
     pthread_mutex_unlock(&gate.mutex);
     assert(ops->acquire(g, f, NULL, 0, &lease) == ESP_ERR_TIMEOUT);
-    assert(present_gram_backend.service(g) == ESP_OK && panel.submits == 0);
+    assert(present_region_backend.service(g) == ESP_OK && panel.submits == 0);
     esp_display_present_receipt_t receipt = {0};
     if (mode == 3) {
         assert(ops->cancel_frame(g, f, 0) == ESP_ERR_TIMEOUT);
@@ -597,14 +597,14 @@ static void queued_gram(unsigned mode)
         panel.response = (esp_display_present_tx_result_t) {
         ESP_DISPLAY_PRESENT_TX_UNCERTAIN, ESP_FAIL
     };
-    assert(present_gram_backend.service(g) == (mode == 1 ? ESP_FAIL : ESP_OK));
+    assert(present_region_backend.service(g) == (mode == 1 ? ESP_FAIL : ESP_OK));
     if (mode == 1) {
         esp_display_present_backend_fault_t fault;
         assert(ops->get_fault(g, &fault) == ESP_OK && fault.result == ESP_OK);
         panel.response = (esp_display_present_tx_result_t) {
             ESP_DISPLAY_PRESENT_TX_ACCEPTED, ESP_OK
         };
-        assert(present_gram_backend.service(g) == ESP_OK);
+        assert(present_region_backend.service(g) == ESP_OK);
     }
     if (mode < 3) {
         assert(panel.count == 1);
@@ -685,12 +685,12 @@ static void queued_fifo(void)
         pthread_cond_wait(&gate.changed, &gate.mutex);
     }
     pthread_mutex_unlock(&gate.mutex);
-    assert(present_gram_backend.service(g) == ESP_FAIL);
+    assert(present_region_backend.service(g) == ESP_FAIL);
     assert(panel.submits == 1 && panel.last_pixels[0] == 0x20);
     panel.response = (esp_display_present_tx_result_t) {
         ESP_DISPLAY_PRESENT_TX_ACCEPTED, ESP_OK
     };
-    assert(present_gram_backend.service(g) == ESP_OK);
+    assert(present_region_backend.service(g) == ESP_OK);
     assert(panel.submits == 3 && panel.count == 2 && panel.last_pixels[0] == 0x21);
     complete(&panel);
     complete(&panel);
@@ -770,7 +770,7 @@ static void draw_reused_while_tx_inflight(void)
         pthread_cond_wait(&gate.changed, &gate.mutex);
     }
     pthread_mutex_unlock(&gate.mutex);
-    assert(present_gram_backend.service(g) == ESP_OK);
+    assert(present_region_backend.service(g) == ESP_OK);
     assert(panel.submits == 1);
     for (size_t i = 0; i < 16; ++i) {
         assert(panel.last_pixels[i] == 0x11);
@@ -798,7 +798,7 @@ static void draw_reused_while_tx_inflight(void)
 int main(void)
 {
     for (unsigned mode = 0; mode < 6; ++mode) {
-        queued_gram(mode);
+        queued_region(mode);
     }
     queued_packing();
     queued_fifo();
@@ -813,6 +813,6 @@ int main(void)
     multi_tile_frame();
     extended_contracts();
     retained_fault_and_packing();
-    puts("PASS GRAM: early/late callbacks, retry, stale events, bounded records, faults, cancel/stop, cross-instance ownership");
+    puts("PASS REGION: early/late callbacks, retry, stale events, bounded records, faults, cancel/stop, cross-instance ownership");
     return 0;
 }

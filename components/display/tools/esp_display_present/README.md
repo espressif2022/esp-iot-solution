@@ -10,6 +10,8 @@ ESP32-S3 enables `CONFIG_ESP_DISPLAY_PRESENT_FB_IRAM` by default to place frameb
 
 `CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND` optionally moves synchronous internal-tile GRAM submissions to the existing engine backend worker, releasing the engine gate during driver calls without forcing a pixel copy. It is disabled by default; rotated and PSRAM tile paths keep their existing scheduling. `CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY` sets the experimental backend worker priority, defaulting to 7. See [conditions, RAM cost, and measured results](dev/GRAM_BACKGROUND_RESULTS_20261104.md).
 
+See [mode contracts, backend strategies and LCD adapters](docs/MODE_ARCHITECTURE.md) for the RGB/DSI NONE versus FB PARTIAL paths and completion semantics.
+
 See [TE timing and scheduling](docs/TE_TIMING.md) for automatic measurement, the shared window model, and compatibility boundaries.
 
 See [current board benchmarks and host validation](dev/VALIDATION.md) for the tested commit, configurations, scene results, and limits.

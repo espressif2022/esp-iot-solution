@@ -42,7 +42,7 @@ typedef struct {
     esp_err_t (*set_rotation)(present_backend_t *backend, esp_display_present_engine_rotation_t rotation);
 } present_backend_ops_t;
 
-extern const present_backend_ops_t present_gram_backend;
+extern const present_backend_ops_t present_region_backend;
 extern const present_backend_ops_t present_te_backend;
 extern const present_backend_ops_t present_fb_backend;
 

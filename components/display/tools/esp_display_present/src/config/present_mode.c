@@ -45,15 +45,17 @@ esp_err_t present_mode_resolve_target(const esp_display_present_target_config_t 
     };
     esp_display_present_present_mode_t mode = public_modes[target->fb.mode];
     if (mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_AUTO) {
-        mode = legacy_auto(fb ? ESP_DISPLAY_PRESENT_ENGINE_FB : ESP_DISPLAY_PRESENT_ENGINE_GRAM, te);
+        mode = legacy_auto(fb ? ESP_DISPLAY_PRESENT_ENGINE_FB : ESP_DISPLAY_PRESENT_ENGINE_REGION, te);
     }
     if ((mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC && (fb || !te)) ||
             (!fb && mode != ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE && mode != ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC)) {
         return ESP_ERR_NOT_SUPPORTED;
     }
+    /* NONE updates driver-owned framebuffer regions; FB PARTIAL modes instead
+     * assemble a complete candidate and wait for scanout retirement. */
     bool driver_partition = fb && mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE;
     *out = (present_mode_resolution_t) {
-        .kind = fb && !driver_partition ? ESP_DISPLAY_PRESENT_ENGINE_FB : mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC ? ESP_DISPLAY_PRESENT_ENGINE_TE : ESP_DISPLAY_PRESENT_ENGINE_GRAM,
+        .kind = fb && !driver_partition ? ESP_DISPLAY_PRESENT_ENGINE_FB : mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC ? ESP_DISPLAY_PRESENT_ENGINE_TE : ESP_DISPLAY_PRESENT_ENGINE_REGION,
         .engine_mode = mode,
         .contract = profiles[mode].contract,
         /* RGB/DSI NONE still requires one driver-owned framebuffer, but does
@@ -67,7 +69,7 @@ esp_err_t present_mode_resolve_target(const esp_display_present_target_config_t 
 esp_err_t present_mode_resolve_engine(const esp_display_present_engine_config_t *input, esp_display_present_plan_defaults_t defaults,
                                       bool te_enabled, esp_display_present_engine_config_t *out)
 {
-    if (!input || !out || input->backend_kind < ESP_DISPLAY_PRESENT_ENGINE_GRAM || input->backend_kind > ESP_DISPLAY_PRESENT_ENGINE_FB ||
+    if (!input || !out || input->backend_kind < ESP_DISPLAY_PRESENT_ENGINE_REGION || input->backend_kind > ESP_DISPLAY_PRESENT_ENGINE_FB ||
             input->mode < ESP_DISPLAY_PRESENT_MODE_DEFAULT || input->mode > ESP_DISPLAY_PRESENT_ENGINE_MODE_AUTO ||
             defaults < ESP_DISPLAY_PRESENT_PLAN_CURRENT_DEFAULTS || defaults > ESP_DISPLAY_PRESENT_PLAN_LEGACY_DEFAULTS) {
         return ESP_ERR_INVALID_ARG;
@@ -100,7 +102,7 @@ esp_err_t present_mode_resolve_engine(const esp_display_present_engine_config_t 
             }
             out->backend.buffer_count = profiles[mode].frame_buffers;
         } else {
-            out->backend_kind = ESP_DISPLAY_PRESENT_ENGINE_GRAM;
+            out->backend_kind = ESP_DISPLAY_PRESENT_ENGINE_REGION;
         }
         return ESP_OK;
     }

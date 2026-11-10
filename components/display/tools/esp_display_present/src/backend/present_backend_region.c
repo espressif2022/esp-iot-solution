@@ -13,14 +13,17 @@
 #include "backend/present_transaction.h"
 #include "platform/present_allocation.h"
 
-/* Draw tiles and transfer tiles have independent lifetimes. A finished copy
+/* Region submission strategy, independent of panel GRAM vs driver framebuffer.
+ * The panel adapter defines source-read completion, not scanout retirement.
+ *
+ * Draw tiles and transfer tiles have independent lifetimes. A finished copy
  * returns the draw tile while the transfer tile stays owned until the panel
  * transaction really completes. Direct DMA keeps the draw tile instead. */
 typedef enum {
     DRAW_FREE = 0, /* present_alloc is calloc; zero means available. */
     DRAW_LEASED,
     DRAW_HELD,
-} gram_draw_state_t;
+} region_draw_state_t;
 
 typedef enum {
     TX_FREE = 0,
@@ -29,7 +32,7 @@ typedef enum {
     TX_READY,
     TX_SUBMITTING,
     TX_INFLIGHT,
-} gram_tx_state_t;
+} region_tx_state_t;
 
 typedef present_core_frame_t frame_record_t;
 
@@ -38,8 +41,8 @@ typedef struct {
     present_allocation_t storage;
     esp_display_present_lease_t lease;
     size_t frame;
-    gram_draw_state_t state;
-} gram_draw_t;
+    region_draw_state_t state;
+} region_draw_t;
 
 typedef struct {
     void *converted; /* Owned; NULL until eager or lazy allocation. */
@@ -49,19 +52,19 @@ typedef struct {
     bool direct;
     bool draw_held;
     uint64_t cookie;
-    gram_tx_state_t state;
+    region_tx_state_t state;
     present_transaction_t transaction;
     esp_display_present_copy_ticket_t copy;
     esp_display_present_surface_t surface;
     esp_display_present_rect_t area;
-} gram_tx_t;
+} region_tx_t;
 
 struct present_backend {
     present_lock_t lock;
     esp_display_present_backend_config_t config;
     esp_display_present_pixel_engine_t *pixel;
-    gram_draw_t *draws;
-    gram_tx_t *txs;
+    region_draw_t *draws;
+    region_tx_t *txs;
     present_frame_core_t core;
     size_t tile_bytes, next_draw;
 };
@@ -81,13 +84,13 @@ static frame_record_t *find_frame(present_backend_t *backend, uint64_t token)
     return present_frame_core_find(&backend->core, token);
 }
 
-static gram_draw_t *find_lease(present_backend_t *backend, uint64_t token, size_t frame)
+static region_draw_t *find_lease(present_backend_t *backend, uint64_t token, size_t frame)
 {
     if (!token) {
         return NULL;
     }
     for (size_t i = 0; i < backend->config.buffer_count; ++i) {
-        gram_draw_t *draw = &backend->draws[i];
+        region_draw_t *draw = &backend->draws[i];
         if (draw->state == DRAW_LEASED && draw->lease.id.value == token && draw->frame == frame) {
             return draw;
         }
@@ -103,10 +106,10 @@ static void PRESENT_ISR_ATTR record_fault(present_backend_t *backend, frame_reco
 }
 
 /* Reservation only. converted and its allocation must survive reuse. */
-static gram_tx_t *claim_tx(present_backend_t *backend, size_t draw_index, size_t frame)
+static region_tx_t *claim_tx(present_backend_t *backend, size_t draw_index, size_t frame)
 {
     for (size_t i = 0; i < backend->config.buffer_count; ++i) {
-        gram_tx_t *tx = &backend->txs[i];
+        region_tx_t *tx = &backend->txs[i];
         if (tx->state != TX_FREE) {
             continue;
         }
@@ -122,7 +125,7 @@ static gram_tx_t *claim_tx(present_backend_t *backend, size_t draw_index, size_t
     return NULL;
 }
 
-static void abandon_tx(gram_tx_t *tx)
+static void abandon_tx(region_tx_t *tx)
 {
     tx->state = TX_FREE;
     tx->cookie = 0;
@@ -131,11 +134,11 @@ static void abandon_tx(gram_tx_t *tx)
     tx->copy.value = 0;
 }
 
-static void PRESENT_ISR_ATTR complete_tx(present_backend_t *backend, gram_tx_t *tx)
+static void PRESENT_ISR_ATTR complete_tx(present_backend_t *backend, region_tx_t *tx)
 {
     frame_record_t *record = &backend->core.frames[tx->frame];
     if (tx->draw_held) {
-        gram_draw_t *draw = &backend->draws[tx->draw];
+        region_draw_t *draw = &backend->draws[tx->draw];
         if (draw->storage.readers[PRESENT_REF_COPY]) {
             present_allocation_drop(&draw->storage, PRESENT_REF_COPY);
         }
@@ -155,7 +158,7 @@ static void PRESENT_ISR_ATTR complete_tx(present_backend_t *backend, gram_tx_t *
     present_frame_core_complete(&backend->core, record);
 }
 
-static void settle_submit(present_backend_t *backend, gram_tx_t *tx, frame_record_t *record,
+static void settle_submit(present_backend_t *backend, region_tx_t *tx, frame_record_t *record,
                           present_transaction_resolution_t resolved)
 {
     record_fault(backend, record, tx->cookie, resolved.result);
@@ -188,16 +191,16 @@ static bool channel_full(const present_backend_t *backend)
     return used >= limit;
 }
 
-static esp_err_t present_gram_service(present_backend_t *backend)
+static esp_err_t present_region_service(present_backend_t *backend)
 {
     if (!backend) {
         return ESP_ERR_INVALID_ARG;
     }
     for (;;) {
         present_lock_enter(&backend->lock, false);
-        gram_tx_t *tx = NULL;
+        region_tx_t *tx = NULL;
         for (size_t i = 0; i < backend->config.buffer_count; ++i) {
-            gram_tx_t *candidate = &backend->txs[i];
+            region_tx_t *candidate = &backend->txs[i];
             if ((candidate->state == TX_COPYING || candidate->state == TX_READY) &&
                     (!tx || candidate->cookie < tx->cookie)) {
                 tx = candidate;
@@ -226,7 +229,7 @@ static esp_err_t present_gram_service(present_backend_t *backend)
         present_lock_enter(&backend->lock, false);
         frame_record_t *record = &backend->core.frames[tx->frame];
         if (copying) {
-            gram_draw_t *draw = &backend->draws[tx->draw];
+            region_draw_t *draw = &backend->draws[tx->draw];
             if (draw->storage.readers[PRESENT_REF_COPY]) {
                 present_allocation_drop(&draw->storage, PRESENT_REF_COPY);
             }
@@ -277,7 +280,7 @@ static bool PRESENT_ISR_ATTR event_dispatch(void *user, const esp_display_presen
     present_lock_enter(&backend->lock, isr);
     if (backend->core.life != PRESENT_CORE_QUIESCENT) {
         for (size_t i = 0; i < backend->config.buffer_count; ++i) {
-            gram_tx_t *tx = &backend->txs[i];
+            region_tx_t *tx = &backend->txs[i];
             if (!tx->cookie || tx->cookie != event->transaction_cookie ||
                     (tx->state != TX_SUBMITTING && tx->state != TX_INFLIGHT)) {
                 continue;
@@ -307,12 +310,12 @@ static bool PRESENT_ISR_ATTR event_dispatch(void *user, const esp_display_presen
     return backend->config.on_progress ? backend->config.on_progress(backend->config.progress_user, isr) : false;
 }
 
-static bool PRESENT_ISR_ATTR gram_on_event_isr(present_backend_t *backend, const esp_display_present_backend_event_t *event)
+static bool PRESENT_ISR_ATTR region_on_event_isr(present_backend_t *backend, const esp_display_present_backend_event_t *event)
 {
     return event_dispatch(backend, event, true);
 }
 
-static void gram_on_event(present_backend_t *backend, const esp_display_present_backend_event_t *event)
+static void region_on_event(present_backend_t *backend, const esp_display_present_backend_event_t *event)
 {
     (void)event_dispatch(backend, event, false);
 }
@@ -340,7 +343,7 @@ static void free_backend(present_backend_t *backend)
     present_free(backend);
 }
 
-static esp_err_t gram_create(const esp_display_present_backend_config_t *config, present_backend_t **out)
+static esp_err_t region_create(const esp_display_present_backend_config_t *config, present_backend_t **out)
 {
     if (!out) {
         return ESP_ERR_INVALID_ARG;
@@ -426,7 +429,7 @@ static esp_err_t gram_create(const esp_display_present_backend_config_t *config,
     return ESP_OK;
 }
 
-static esp_err_t gram_get_caps(present_backend_t *backend, esp_display_present_backend_caps_t *out)
+static esp_err_t region_get_caps(present_backend_t *backend, esp_display_present_backend_caps_t *out)
 {
     if (!backend || !out) {
         return ESP_ERR_INVALID_ARG;
@@ -445,7 +448,7 @@ static esp_err_t gram_get_caps(present_backend_t *backend, esp_display_present_b
     return ESP_OK;
 }
 
-static esp_err_t gram_begin(present_backend_t *backend, const esp_display_present_frame_request_t *request, esp_display_present_frame_t *out)
+static esp_err_t region_begin(present_backend_t *backend, const esp_display_present_frame_request_t *request, esp_display_present_frame_t *out)
 {
     if (!backend) {
         if (out) {
@@ -463,8 +466,8 @@ static esp_err_t gram_begin(present_backend_t *backend, const esp_display_presen
     return ret;
 }
 
-static esp_err_t gram_acquire(present_backend_t *backend, esp_display_present_frame_t frame, const esp_display_present_rect_t *area,
-                              uint32_t timeout, esp_display_present_lease_t *out)
+static esp_err_t region_acquire(present_backend_t *backend, esp_display_present_frame_t frame, const esp_display_present_rect_t *area,
+                                uint32_t timeout, esp_display_present_lease_t *out)
 {
     if (!out) {
         return ESP_ERR_INVALID_ARG;
@@ -482,7 +485,7 @@ static esp_err_t gram_acquire(present_backend_t *backend, esp_display_present_fr
     }
     uint64_t start = present_now_ms();
     for (;;) {
-        (void)present_gram_service(backend);
+        (void)present_region_service(backend);
         present_lock_enter(&backend->lock, false);
         frame_record_t *record = find_frame(backend, frame.value);
         if (backend->core.life != PRESENT_CORE_RUNNING || !record || record->sealed || record->common.result != ESP_OK) {
@@ -490,7 +493,7 @@ static esp_err_t gram_acquire(present_backend_t *backend, esp_display_present_fr
             return ESP_ERR_INVALID_STATE;
         }
         for (size_t i = 0; i < backend->config.buffer_count; ++i) {
-            gram_draw_t *draw = &backend->draws[(backend->next_draw + i) % backend->config.buffer_count];
+            region_draw_t *draw = &backend->draws[(backend->next_draw + i) % backend->config.buffer_count];
             if (draw->state != DRAW_FREE) {
                 continue;
             }
@@ -549,7 +552,7 @@ static void revert_in_place_swap(void *pixels, size_t byte_count)
     }
 }
 
-static esp_err_t ensure_converted(present_backend_t *backend, gram_tx_t *tx)
+static esp_err_t ensure_converted(present_backend_t *backend, region_tx_t *tx)
 {
     if (tx->converted) {
         return ESP_OK;
@@ -558,7 +561,7 @@ static esp_err_t ensure_converted(present_backend_t *backend, gram_tx_t *tx)
     return tx->converted ? ESP_OK : ESP_ERR_NO_MEM;
 }
 
-static esp_err_t prepare_pixels(present_backend_t *backend, gram_draw_t *draw, gram_tx_t *tx,
+static esp_err_t prepare_pixels(present_backend_t *backend, region_draw_t *draw, region_tx_t *tx,
                                 const esp_display_present_rect_t *area, size_t src_stride,
                                 esp_display_present_surface_t *out, bool *out_swapped_in_place)
 {
@@ -625,7 +628,7 @@ static esp_err_t prepare_pixels(present_backend_t *backend, gram_draw_t *draw, g
 
 typedef struct {
     frame_record_t *record;
-    gram_draw_t *draw;
+    region_draw_t *draw;
     size_t draw_index;
     size_t frame;
     esp_display_present_rect_t submit_area;
@@ -633,15 +636,15 @@ typedef struct {
     size_t bytes;
     size_t src_stride;
     size_t row_bytes;
-} gram_submit_context_t;
+} region_submit_context_t;
 
-static bool gram_direct_dma(const present_backend_t *backend, size_t src_stride, size_t row_bytes)
+static bool region_direct_dma(const present_backend_t *backend, size_t src_stride, size_t row_bytes)
 {
     return !backend->config.tx_staging && backend->config.rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 &&
            backend->config.draw_order == backend->config.panel_order && src_stride == row_bytes;
 }
 
-static void revert_uncommitted(present_backend_t *backend, gram_draw_t *draw, gram_tx_t *tx, bool swapped, size_t bytes)
+static void revert_uncommitted(present_backend_t *backend, region_draw_t *draw, region_tx_t *tx, bool swapped, size_t bytes)
 {
     present_lock_enter(&backend->lock, false);
     bool revert = swapped && draw->state == DRAW_LEASED;
@@ -654,13 +657,13 @@ static void revert_uncommitted(present_backend_t *backend, gram_draw_t *draw, gr
 
 /* Lock is not held on return. The direct-sync channel check stays here, before
  * unlock, so a full channel never reaches pixel preparation. */
-static esp_err_t gram_prepare_submit_context(present_backend_t *backend, esp_display_present_frame_t frame,
-                                             esp_display_present_lease_id_t lease, const esp_display_present_region_submit_t *sub,
-                                             gram_submit_context_t *ctx)
+static esp_err_t region_prepare_submit_context(present_backend_t *backend, esp_display_present_frame_t frame,
+                                               esp_display_present_lease_id_t lease, const esp_display_present_region_submit_t *sub,
+                                               region_submit_context_t *ctx)
 {
     present_lock_enter(&backend->lock, false);
     frame_record_t *record = find_frame(backend, frame.value);
-    gram_draw_t *draw = record ? find_lease(backend, lease.value, (size_t)(record - backend->core.frames)) : NULL;
+    region_draw_t *draw = record ? find_lease(backend, lease.value, (size_t)(record - backend->core.frames)) : NULL;
     if (backend->core.life != PRESENT_CORE_RUNNING || !record || record->sealed || record->common.result != ESP_OK || !draw) {
         present_lock_exit(&backend->lock, false);
         return ESP_ERR_INVALID_STATE;
@@ -696,7 +699,7 @@ static esp_err_t gram_prepare_submit_context(present_backend_t *backend, esp_dis
     if (geometry != ESP_OK) {
         return geometry;
     }
-    *ctx = (gram_submit_context_t) {
+    *ctx = (region_submit_context_t) {
         .record = record,
         .draw = draw,
         .draw_index = (size_t)(draw - backend->draws),
@@ -710,12 +713,12 @@ static esp_err_t gram_prepare_submit_context(present_backend_t *backend, esp_dis
     return ESP_OK;
 }
 
-static bool submit_source_live(const present_backend_t *backend, const gram_submit_context_t *ctx)
+static bool submit_source_live(const present_backend_t *backend, const region_submit_context_t *ctx)
 {
     return backend->core.life == PRESENT_CORE_RUNNING && ctx->draw->state == DRAW_LEASED && ctx->record->common.result == ESP_OK;
 }
 
-static esp_err_t gram_submit_async_copy(present_backend_t *backend, const gram_submit_context_t *ctx)
+static esp_err_t region_submit_async_copy(present_backend_t *backend, const region_submit_context_t *ctx)
 {
     uint64_t cookie = present_new_token();
     if (!cookie) {
@@ -726,7 +729,7 @@ static esp_err_t gram_submit_async_copy(present_backend_t *backend, const gram_s
         present_lock_exit(&backend->lock, false);
         return ESP_ERR_INVALID_STATE;
     }
-    gram_tx_t *tx = claim_tx(backend, ctx->draw_index, ctx->frame);
+    region_tx_t *tx = claim_tx(backend, ctx->draw_index, ctx->frame);
     if (!tx) {
         present_lock_exit(&backend->lock, false);
         return ESP_ERR_NO_MEM;
@@ -799,12 +802,12 @@ static esp_err_t gram_submit_async_copy(present_backend_t *backend, const gram_s
 
 /* TX is SUBMITTING and the lock is released. Driver rejection restores the
  * lease. An early callback is acceptance, not a retryable rejection. */
-static esp_err_t gram_submit_panel(present_backend_t *backend, gram_submit_context_t *ctx, gram_tx_t *tx, bool swapped)
+static esp_err_t region_submit_panel(present_backend_t *backend, region_submit_context_t *ctx, region_tx_t *tx, bool swapped)
 {
     esp_display_present_tx_result_t result = backend->config.panel.submit(backend->config.panel.context, &tx->surface, &tx->area, tx->cookie);
     present_lock_enter(&backend->lock, false);
     frame_record_t *record = &backend->core.frames[tx->frame];
-    gram_draw_t *draw = &backend->draws[tx->draw];
+    region_draw_t *draw = &backend->draws[tx->draw];
     present_transaction_resolution_t resolved = present_transaction_resolve(&tx->transaction, result);
     if (resolved.rejected) {
         --record->pending;
@@ -828,14 +831,14 @@ static esp_err_t gram_submit_panel(present_backend_t *backend, gram_submit_conte
     return ESP_OK;
 }
 
-static esp_err_t gram_submit_sync_pixels(present_backend_t *backend, gram_submit_context_t *ctx)
+static esp_err_t region_submit_sync_pixels(present_backend_t *backend, region_submit_context_t *ctx)
 {
     present_lock_enter(&backend->lock, false);
     if (!submit_source_live(backend, ctx)) {
         present_lock_exit(&backend->lock, false);
         return ESP_ERR_INVALID_STATE;
     }
-    gram_tx_t *tx = claim_tx(backend, ctx->draw_index, ctx->frame);
+    region_tx_t *tx = claim_tx(backend, ctx->draw_index, ctx->frame);
     if (!tx) {
         present_lock_exit(&backend->lock, false);
         return ESP_ERR_NO_MEM;
@@ -903,42 +906,42 @@ static esp_err_t gram_submit_sync_pixels(present_backend_t *backend, gram_submit
     }
     tx->state = TX_SUBMITTING;
     present_lock_exit(&backend->lock, false);
-    return gram_submit_panel(backend, ctx, tx, swapped);
+    return region_submit_panel(backend, ctx, tx, swapped);
 }
 
-static esp_err_t gram_submit_region_ex(present_backend_t *backend, esp_display_present_frame_t frame,
-                                       esp_display_present_lease_id_t lease,
-                                       const esp_display_present_region_submit_t *sub)
+static esp_err_t region_submit_region_ex(present_backend_t *backend, esp_display_present_frame_t frame,
+                                         esp_display_present_lease_id_t lease,
+                                         const esp_display_present_region_submit_t *sub)
 {
     if (!backend) {
         return ESP_ERR_INVALID_ARG;
     }
-    gram_submit_context_t ctx;
-    esp_err_t error = gram_prepare_submit_context(backend, frame, lease, sub, &ctx);
+    region_submit_context_t ctx;
+    esp_err_t error = region_prepare_submit_context(backend, frame, lease, sub, &ctx);
     if (error != ESP_OK) {
         return error;
     }
     /* Async identity stays on the sync path and does not call copy_execute.
      * tx_staging still forces a copy into the internal transfer tile. */
-    if (backend->config.async_copy && !gram_direct_dma(backend, ctx.src_stride, ctx.row_bytes)) {
-        return gram_submit_async_copy(backend, &ctx);
+    if (backend->config.async_copy && !region_direct_dma(backend, ctx.src_stride, ctx.row_bytes)) {
+        return region_submit_async_copy(backend, &ctx);
     }
-    return gram_submit_sync_pixels(backend, &ctx);
+    return region_submit_sync_pixels(backend, &ctx);
 }
 
-static esp_err_t gram_submit_region(present_backend_t *backend, esp_display_present_frame_t frame, esp_display_present_lease_id_t lease)
+static esp_err_t region_submit_region(present_backend_t *backend, esp_display_present_frame_t frame, esp_display_present_lease_id_t lease)
 {
-    return gram_submit_region_ex(backend, frame, lease, NULL);
+    return region_submit_region_ex(backend, frame, lease, NULL);
 }
 
-static esp_err_t gram_cancel_region(present_backend_t *backend, esp_display_present_frame_t frame, esp_display_present_lease_id_t lease)
+static esp_err_t region_cancel_region(present_backend_t *backend, esp_display_present_frame_t frame, esp_display_present_lease_id_t lease)
 {
     if (!backend) {
         return ESP_ERR_INVALID_ARG;
     }
     present_lock_enter(&backend->lock, false);
     frame_record_t *record = find_frame(backend, frame.value);
-    gram_draw_t *draw = record ? find_lease(backend, lease.value, (size_t)(record - backend->core.frames)) : NULL;
+    region_draw_t *draw = record ? find_lease(backend, lease.value, (size_t)(record - backend->core.frames)) : NULL;
     if (!record || record->sealed || !draw) {
         present_lock_exit(&backend->lock, false);
         return ESP_ERR_INVALID_STATE;
@@ -950,9 +953,9 @@ static esp_err_t gram_cancel_region(present_backend_t *backend, esp_display_pres
     return ESP_OK;
 }
 
-static esp_err_t gram_get_draw_buffers(present_backend_t *backend, void **out_buffers,
-                                       size_t max_buffers, size_t *out_count,
-                                       size_t *out_buffer_bytes)
+static esp_err_t region_get_draw_buffers(present_backend_t *backend, void **out_buffers,
+                                         size_t max_buffers, size_t *out_count,
+                                         size_t *out_buffer_bytes)
 {
     if (!backend || !out_count || (max_buffers && !out_buffers)) {
         return ESP_ERR_INVALID_ARG;
@@ -970,9 +973,9 @@ static esp_err_t gram_get_draw_buffers(present_backend_t *backend, void **out_bu
     return ESP_OK;
 }
 
-static esp_err_t gram_end_ex(present_backend_t *backend, esp_display_present_frame_t frame,
-                             const esp_display_present_frame_coverage_t *coverage,
-                             esp_display_present_receipt_t *out)
+static esp_err_t region_end_ex(present_backend_t *backend, esp_display_present_frame_t frame,
+                               const esp_display_present_frame_coverage_t *coverage,
+                               esp_display_present_receipt_t *out)
 {
     if (out) {
         out->value = 0;
@@ -991,9 +994,9 @@ static esp_err_t gram_end_ex(present_backend_t *backend, esp_display_present_fra
     return ret;
 }
 
-static esp_err_t gram_end(present_backend_t *backend, esp_display_present_frame_t frame, esp_display_present_receipt_t *out)
+static esp_err_t region_end(present_backend_t *backend, esp_display_present_frame_t frame, esp_display_present_receipt_t *out)
 {
-    return gram_end_ex(backend, frame, NULL, out);
+    return region_end_ex(backend, frame, NULL, out);
 }
 
 static void cancel_build(present_backend_t *backend, size_t index)
@@ -1002,7 +1005,7 @@ static void cancel_build(present_backend_t *backend, size_t index)
     record->sealed = true;
     record->canceled = true;
     for (size_t i = 0; i < backend->config.buffer_count; ++i) {
-        gram_draw_t *draw = &backend->draws[i];
+        region_draw_t *draw = &backend->draws[i];
         if (draw->state == DRAW_LEASED && draw->frame == index) {
             present_allocation_written(&draw->storage);
             draw->state = DRAW_FREE;
@@ -1011,7 +1014,7 @@ static void cancel_build(present_backend_t *backend, size_t index)
     }
 }
 
-static esp_err_t gram_cancel_frame(present_backend_t *backend, esp_display_present_frame_t frame, uint32_t timeout)
+static esp_err_t region_cancel_frame(present_backend_t *backend, esp_display_present_frame_t frame, uint32_t timeout)
 {
     if (!backend || !frame.value) {
         return ESP_ERR_INVALID_ARG;
@@ -1039,7 +1042,7 @@ static esp_err_t gram_cancel_frame(present_backend_t *backend, esp_display_prese
             return ESP_OK;
         }
         present_lock_exit(&backend->lock, false);
-        (void)present_gram_service(backend);
+        (void)present_region_service(backend);
         present_lock_enter(&backend->lock, false);
         bool canceled = present_cancel_matches(&backend->core.canceled, frame.value);
         present_lock_exit(&backend->lock, false);
@@ -1053,27 +1056,27 @@ static esp_err_t gram_cancel_frame(present_backend_t *backend, esp_display_prese
     }
 }
 
-static esp_err_t gram_query(present_backend_t *backend, esp_display_present_receipt_t receipt, esp_display_present_frame_status_t *out)
+static esp_err_t region_query(present_backend_t *backend, esp_display_present_receipt_t receipt, esp_display_present_frame_status_t *out)
 {
     if (!backend || !out) {
         return ESP_ERR_INVALID_ARG;
     }
-    (void)present_gram_service(backend);
+    (void)present_region_service(backend);
     return present_frame_core_query(&backend->core, &backend->lock, receipt, false, out);
 }
 
-static esp_err_t gram_get_fault(present_backend_t *backend, esp_display_present_backend_fault_t *out)
+static esp_err_t region_get_fault(present_backend_t *backend, esp_display_present_backend_fault_t *out)
 {
     return backend ? present_frame_core_get_fault(&backend->core, &backend->lock, out) : ESP_ERR_INVALID_ARG;
 }
 
-static esp_err_t gram_wait(present_backend_t *backend, esp_display_present_receipt_t receipt, esp_display_present_completion_point_t point,
-                           uint32_t timeout, esp_display_present_frame_status_t *out)
+static esp_err_t region_wait(present_backend_t *backend, esp_display_present_receipt_t receipt, esp_display_present_completion_point_t point,
+                             uint32_t timeout, esp_display_present_frame_status_t *out)
 {
-    return present_frame_core_wait(backend, gram_query, receipt, point, false, timeout, out);
+    return present_frame_core_wait(backend, region_query, receipt, point, false, timeout, out);
 }
 
-static esp_err_t gram_release_receipt(present_backend_t *backend, esp_display_present_receipt_t receipt)
+static esp_err_t region_release_receipt(present_backend_t *backend, esp_display_present_receipt_t receipt)
 {
     if (!backend) {
         return ESP_ERR_INVALID_ARG;
@@ -1081,7 +1084,7 @@ static esp_err_t gram_release_receipt(present_backend_t *backend, esp_display_pr
     return present_frame_core_release_receipt(&backend->core, &backend->lock, receipt);
 }
 
-static esp_err_t gram_stop(present_backend_t *backend, uint32_t timeout)
+static esp_err_t region_stop(present_backend_t *backend, uint32_t timeout)
 {
     if (!backend) {
         return ESP_ERR_INVALID_ARG;
@@ -1101,7 +1104,7 @@ static esp_err_t gram_stop(present_backend_t *backend, uint32_t timeout)
     if (ret != ESP_OK) {
         return ret;
     }
-    (void)present_gram_service(backend); /* Closing: only retire copies, never submit. */
+    (void)present_region_service(backend); /* Closing: only retire copies, never submit. */
     uint32_t left = present_remaining_ms(start, timeout);
     ret = backend->config.panel.quiesce(backend->config.panel.context, left);
     if (ret != ESP_OK) {
@@ -1111,7 +1114,7 @@ static esp_err_t gram_stop(present_backend_t *backend, uint32_t timeout)
      * been safely aborted; do not falsely report their frames successful. */
     present_lock_enter(&backend->lock, false);
     for (size_t i = 0; i < backend->config.buffer_count; ++i) {
-        gram_tx_t *tx = &backend->txs[i];
+        region_tx_t *tx = &backend->txs[i];
         if (tx->state == TX_INFLIGHT) {
             frame_record_t *record = &backend->core.frames[tx->frame];
             record_fault(backend, record, tx->cookie, ESP_ERR_INVALID_STATE);
@@ -1123,7 +1126,7 @@ static esp_err_t gram_stop(present_backend_t *backend, uint32_t timeout)
     return ret;
 }
 
-static esp_err_t gram_destroy(present_backend_t *backend)
+static esp_err_t region_destroy(present_backend_t *backend)
 {
     if (!backend) {
         return ESP_ERR_INVALID_ARG;
@@ -1136,7 +1139,7 @@ static esp_err_t gram_destroy(present_backend_t *backend)
     return ESP_OK;
 }
 
-static esp_err_t gram_set_rotation(present_backend_t *backend, esp_display_present_engine_rotation_t rotation)
+static esp_err_t region_set_rotation(present_backend_t *backend, esp_display_present_engine_rotation_t rotation)
 {
     if (!backend || rotation < ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || rotation > ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270) {
         return ESP_ERR_INVALID_ARG;
@@ -1166,33 +1169,33 @@ static esp_err_t gram_set_rotation(present_backend_t *backend, esp_display_prese
     return ESP_OK;
 }
 
-const present_backend_ops_t present_gram_backend = {
-    .name = "gram",
-    .service = present_gram_service,
-    .create = gram_create,
-    .get_caps = gram_get_caps,
-    .begin = gram_begin,
-    .acquire = gram_acquire,
-    .get_draw_buffers = gram_get_draw_buffers,
-    .submit_region = gram_submit_region,
-    .submit_region_ex = gram_submit_region_ex,
-    .cancel_region = gram_cancel_region,
-    .end = gram_end,
-    .end_ex = gram_end_ex,
-    .cancel_frame = gram_cancel_frame,
-    .query = gram_query,
-    .get_fault = gram_get_fault,
-    .wait = gram_wait,
-    .release_receipt = gram_release_receipt,
-    .on_event_isr = gram_on_event_isr,
-    .on_event = gram_on_event,
-    .stop = gram_stop,
-    .destroy = gram_destroy,
-    .set_rotation = gram_set_rotation,
+const present_backend_ops_t present_region_backend = {
+    .name = "region",
+    .service = present_region_service,
+    .create = region_create,
+    .get_caps = region_get_caps,
+    .begin = region_begin,
+    .acquire = region_acquire,
+    .get_draw_buffers = region_get_draw_buffers,
+    .submit_region = region_submit_region,
+    .submit_region_ex = region_submit_region_ex,
+    .cancel_region = region_cancel_region,
+    .end = region_end,
+    .end_ex = region_end_ex,
+    .cancel_frame = region_cancel_frame,
+    .query = region_query,
+    .get_fault = region_get_fault,
+    .wait = region_wait,
+    .release_receipt = region_release_receipt,
+    .on_event_isr = region_on_event_isr,
+    .on_event = region_on_event,
+    .stop = region_stop,
+    .destroy = region_destroy,
+    .set_rotation = region_set_rotation,
 };
 
-size_t present_gram_memory(const esp_display_present_backend_config_t *config)
+size_t present_region_memory(const esp_display_present_backend_config_t *config)
 {
-    return sizeof(present_backend_t) + config->buffer_count * (sizeof(gram_draw_t) + sizeof(gram_tx_t)) +
+    return sizeof(present_backend_t) + config->buffer_count * (sizeof(region_draw_t) + sizeof(region_tx_t)) +
            config->max_frames * sizeof(present_core_frame_t) + present_pixel_memory(config->buffer_count, config->async_copy);
 }

@@ -74,7 +74,7 @@ typedef struct {
 } esp_display_present_region_submit_t;
 
 /** Optional explicit dirty coverage when sealing a FULL/DIRECT frame.
- * Ignored by GRAM (which tracks each submitted partition region directly). */
+ * Ignored by region (which tracks each submitted partition region directly). */
 typedef struct {
     const esp_display_present_rect_t *areas;
     size_t area_count;
@@ -150,9 +150,9 @@ typedef struct {
      */
     esp_err_t (*attach)(void *context, esp_display_present_panel_event_fn callback, void *user);
     /**
-     * @brief Descriptor valid during call. GRAM/TE pixels until completion; FB pixels
+     * @brief Descriptor valid during call. region/TE pixels until completion; FB pixels
      * through continuous scanout until confirmed replacement or quiesce.
-     * Contract for GRAM/IO panels: surface must be tightly packed
+     * Contract for region/IO panels: surface must be tightly packed
      * (surface->layout.stride_bytes == area->width *bpp).
      * Adapter performs peripheral DMA cache writeback on the tx buffer,
      * associates cookies in strict FIFO/ID order, and may invoke completion

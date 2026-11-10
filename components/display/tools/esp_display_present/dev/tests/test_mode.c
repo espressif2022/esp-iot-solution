@@ -24,7 +24,7 @@ static void public_profiles(void)
             present_mode_resolution_t mode;
             assert(present_mode_resolve_target(&target, &mode) == ESP_OK);
             bool partition_none = cases[i].mode == ESP_DISPLAY_PRESENT_MODE_NONE;
-            assert(mode.kind == (partition_none ? ESP_DISPLAY_PRESENT_ENGINE_GRAM : ESP_DISPLAY_PRESENT_ENGINE_FB));
+            assert(mode.kind == (partition_none ? ESP_DISPLAY_PRESENT_ENGINE_REGION : ESP_DISPLAY_PRESENT_ENGINE_FB));
             assert(mode.frame_buffers == cases[i].count);
             assert(mode.contract == cases[i].contract);
             assert(!mode.active_writes);
@@ -37,14 +37,14 @@ static void public_profiles(void)
     present_mode_resolution_t mode;
     assert(present_mode_resolve_target(&target, &mode) == ESP_OK && mode.kind == ESP_DISPLAY_PRESENT_ENGINE_TE && !mode.frame_buffers);
     target.hw.te_sync.gpio_num = -1;
-    assert(present_mode_resolve_target(&target, &mode) == ESP_OK && mode.kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM);
+    assert(present_mode_resolve_target(&target, &mode) == ESP_OK && mode.kind == ESP_DISPLAY_PRESENT_ENGINE_REGION);
     target.fb.mode = ESP_DISPLAY_PRESENT_MODE_TE_SYNC;
     assert(present_mode_resolve_target(&target, &mode) == ESP_ERR_NOT_SUPPORTED);
     target.fb.mode = ESP_DISPLAY_PRESENT_MODE_NONE;
     target.hw.panel_type = ESP_DISPLAY_PRESENT_PANEL_AUTO;
     assert(present_mode_resolve_target(&target, &mode) == ESP_ERR_NOT_SUPPORTED);
     target.hw.io = (esp_lcd_panel_io_handle_t)&target;
-    assert(present_mode_resolve_target(&target, &mode) == ESP_OK && mode.kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM);
+    assert(present_mode_resolve_target(&target, &mode) == ESP_OK && mode.kind == ESP_DISPLAY_PRESENT_ENGINE_REGION);
     target.hw.rotation = (esp_display_present_rotation_t)45;
     assert(present_mode_resolve_target(&target, &mode) == ESP_ERR_INVALID_ARG);
     assert(present_mode_resolve_target(NULL, &mode) == ESP_ERR_INVALID_ARG);
@@ -63,9 +63,9 @@ static void engine_policies(void)
     assert(out.backend.buffer_count == 2 && out.mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_AUTO);
     assert(present_mode_resolve_engine(&input, ESP_DISPLAY_PRESENT_PLAN_LEGACY_DEFAULTS, false, &out) == ESP_OK);
     assert(out.backend.buffer_count == 3 && out.mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_PARTIAL);
-    input.backend_kind = ESP_DISPLAY_PRESENT_ENGINE_GRAM;
+    input.backend_kind = ESP_DISPLAY_PRESENT_ENGINE_REGION;
     assert(present_mode_resolve_engine(&input, ESP_DISPLAY_PRESENT_PLAN_CURRENT_DEFAULTS, true, &out) == ESP_OK);
-    assert(out.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM); /* GPIO capability does not invent timing in current policy. */
+    assert(out.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION); /* GPIO capability does not invent timing in current policy. */
     assert(present_mode_resolve_engine(&input, ESP_DISPLAY_PRESENT_PLAN_LEGACY_DEFAULTS, true, &out) == ESP_OK);
     assert(out.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_TE);
     input.backend.te_window_us = 1000;

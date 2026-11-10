@@ -247,7 +247,7 @@ static void rejection(void)
 static esp_display_present_engine_t *create_gram(panel_t *panel, uint32_t transfer_timeout)
 {
     esp_display_present_engine_config_t config = {
-        .backend_kind = ESP_DISPLAY_PRESENT_ENGINE_GRAM,
+        .backend_kind = ESP_DISPLAY_PRESENT_ENGINE_REGION,
         .backend = {
             .width = 4, .height = 4, .tile_rows = 2, .buffer_count = 2,
             .max_frames = 4, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,

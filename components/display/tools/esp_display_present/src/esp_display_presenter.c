@@ -125,7 +125,7 @@ static esp_err_t observe_core_timeline(esp_display_presenter_t *presenter)
               ESP_DISPLAY_PRESENT_FAULT_PRODUCER_PROTOCOL : ESP_DISPLAY_PRESENT_FAULT_TRANSFER_TIMEOUT);
     } else {
         presenter->timeline.completed_transfer_frame = status.completed_frames;
-        /* GRAM present follows transfer; only tracked confirmation uses VSYNC. */
+        /* region present follows transfer; only tracked confirmation uses VSYNC. */
         presenter->timeline.completed_present_frame = status.completed_frames;
     }
     return error;

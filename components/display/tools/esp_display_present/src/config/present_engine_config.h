@@ -11,7 +11,7 @@ extern "C" {
 #endif
 
 typedef enum {
-    ESP_DISPLAY_PRESENT_ENGINE_GRAM = 0,
+    ESP_DISPLAY_PRESENT_ENGINE_REGION = 0,
     ESP_DISPLAY_PRESENT_ENGINE_TE = 1,
     ESP_DISPLAY_PRESENT_ENGINE_FB = 2,
 } esp_display_present_engine_backend_t;
@@ -27,20 +27,20 @@ typedef enum {
     ESP_DISPLAY_PRESENT_ENGINE_MODE_AUTO,
 } esp_display_present_present_mode_t;
 typedef struct esp_display_present_engine_config {
-    esp_display_present_backend_config_t backend; /* GRAM/TE PARTITION or FB PARTITION/FULL/DIRECT. */
+    esp_display_present_backend_config_t backend; /* region/TE PARTITION or FB PARTITION/FULL/DIRECT. */
     uint32_t timeout_ms; /* 0 polls; UINT32_MAX waits indefinitely. */
-    esp_display_present_engine_backend_t backend_kind; /* Zero preserves GRAM default. */
+    esp_display_present_engine_backend_t backend_kind; /* Zero preserves region default. */
     esp_display_present_present_mode_t mode;
     /** Optional backend worker; default false retains cooperative service.
-     * With GRAM deferred_submit, only this worker enters panel submission.
+     * With region deferred_submit, only this worker enters panel submission.
      * Host uses pthread; IDF defaults: 4096-byte stack, priority 5. */
     bool background_service;
     uint32_t worker_stack_bytes; /* 0 selects default; ignored by Host. */
     unsigned worker_priority; /* 0 selects default; ignored by Host. */
     /** FB named modes require backend_kind FB. NONE selects a single FB and
-     * requires backend.active_writes; IO NONE selects GRAM.
+     * requires backend.active_writes; IO NONE selects region.
      * AUTO uses explicit backend kind (no hardware detection): FB 2/3 buffers
-     * -> PARTITION, FB 1 -> NONE; IO with both TE budgets -> TE, otherwise GRAM.
+     * -> PARTITION, FB 1 -> NONE; IO with both TE budgets -> TE, otherwise region.
      * Named FB modes set buffer_count; external array must have that many entries. */
     esp_display_present_output_caps_t output_caps; /* Zero region alignments mean 1. */
     /** Per physical panel.submit completion deadline, including driver call

@@ -208,7 +208,7 @@ static void multiple_instances(void)
     sync_panel_init(&b);
     a.panel.immediate = b.panel.immediate = true;
     esp_display_present_engine_t *pa = create(&a, ESP_DISPLAY_PRESENT_ENGINE_TE, 0);
-    esp_display_present_engine_t *pb = create(&b, ESP_DISPLAY_PRESENT_ENGINE_GRAM, 0);
+    esp_display_present_engine_t *pb = create(&b, ESP_DISPLAY_PRESENT_ENGINE_REGION, 0);
     esp_lv_present_native_t *ba, *bb;
     OK(esp_lv_present_native_create(pa, 2, &ba));
     OK(esp_lv_present_native_create(pb, 2, &bb));
@@ -319,7 +319,7 @@ static void background_backend_worker(bool async, esp_display_present_engine_bac
                source_begin + source->capacity_bytes <= draw_begin);
     }
     pthread_mutex_unlock(&panel.mutex);
-    if (kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM) {
+    if (kind == ESP_DISPLAY_PRESENT_ENGINE_REGION) {
         /* Identity output must retain the original presenter tiles until DMA
          * completes, rather than allocate converted copies just to notify us. */
         void *pool[2];
@@ -356,11 +356,11 @@ static void background_backend_worker(bool async, esp_display_present_engine_bac
 int main(void)
 {
     lv_init();
-    images(ESP_DISPLAY_PRESENT_ENGINE_GRAM, 2, false);
+    images(ESP_DISPLAY_PRESENT_ENGINE_REGION, 2, false);
     images(ESP_DISPLAY_PRESENT_ENGINE_TE, 2, false);
-    images(ESP_DISPLAY_PRESENT_ENGINE_GRAM, 3, false);
+    images(ESP_DISPLAY_PRESENT_ENGINE_REGION, 3, false);
     images(ESP_DISPLAY_PRESENT_ENGINE_TE, 3, false);
-    images(ESP_DISPLAY_PRESENT_ENGINE_GRAM, 2, true);
+    images(ESP_DISPLAY_PRESENT_ENGINE_REGION, 2, true);
     images(ESP_DISPLAY_PRESENT_ENGINE_TE, 2, true);
     backpressure(0, false, false);
     backpressure(0, false, true);
@@ -370,9 +370,9 @@ int main(void)
     multiple_instances();
     background_backend_worker(false, ESP_DISPLAY_PRESENT_ENGINE_TE, false);
     background_backend_worker(true, ESP_DISPLAY_PRESENT_ENGINE_TE, false);
-    background_backend_worker(true, ESP_DISPLAY_PRESENT_ENGINE_GRAM, false);
+    background_backend_worker(true, ESP_DISPLAY_PRESENT_ENGINE_REGION, false);
     background_backend_worker(true, ESP_DISPLAY_PRESENT_ENGINE_TE, true);
-    background_backend_worker(true, ESP_DISPLAY_PRESENT_ENGINE_GRAM, true);
+    background_backend_worker(true, ESP_DISPLAY_PRESENT_ENGINE_REGION, true);
     lv_deinit();
     puts("LVGL GRAM/TE: reference images, padding, source lifetime, wait/pause and isolation passed");
     return 0;

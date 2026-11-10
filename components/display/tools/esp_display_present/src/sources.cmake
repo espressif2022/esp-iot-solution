@@ -25,9 +25,9 @@ set(PRESENT_ENGINE_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/core/present_transfer_tracker.c
     ${CMAKE_CURRENT_LIST_DIR}/core/present_completion_tracker.c
     ${PRESENT_PIXEL_SOURCES}
-    ${CMAKE_CURRENT_LIST_DIR}/backend/present_backend_gram.c
+    ${CMAKE_CURRENT_LIST_DIR}/backend/present_backend_region.c
     ${CMAKE_CURRENT_LIST_DIR}/platform/present_lcd_spi.c
-    ${CMAKE_CURRENT_LIST_DIR}/platform/present_lcd_rgb_partition.c
+    ${CMAKE_CURRENT_LIST_DIR}/platform/present_lcd_blit.c
     ${CMAKE_CURRENT_LIST_DIR}/platform/present_lcd_rgb_info.c
     ${CMAKE_CURRENT_LIST_DIR}/platform/present_lcd_scanout.c
     ${CMAKE_CURRENT_LIST_DIR}/backend/present_te_composer.c

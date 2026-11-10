@@ -98,13 +98,13 @@ static void wait_changed(notifications_t *n, unsigned seen)
 
 static void pump(unsigned kind, present_backend_t *b)
 {
-    OK(kind == 0 ? present_gram_backend.service(b) : kind == 1 ? present_te_backend.service(b) : present_fb_backend.service(b));
+    OK(kind == 0 ? present_region_backend.service(b) : kind == 1 ? present_te_backend.service(b) : present_fb_backend.service(b));
 }
 
 static void exercise(unsigned kind, esp_display_present_render_contract_t contract, bool async, size_t bpp, bool external, unsigned initial)
 {
     const uint8_t expected[4][6] = {{1, 2, 3, 4, 5, 6}, {5, 3, 1, 6, 4, 2}, {6, 5, 4, 3, 2, 1}, {2, 4, 6, 1, 3, 5}};
-    const present_backend_ops_t *ops = kind == 0 ? &present_gram_backend : kind == 1 ? &present_te_backend : &present_fb_backend;
+    const present_backend_ops_t *ops = kind == 0 ? &present_region_backend : kind == 1 ? &present_te_backend : &present_fb_backend;
     test_panel_t io = {.width = 3, .height = 2, .bpp = bpp};
     scan_panel_t scan = {0};
     notifications_t n = {.lock = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER};

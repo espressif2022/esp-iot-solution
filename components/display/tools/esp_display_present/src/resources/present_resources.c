@@ -13,7 +13,7 @@
 #include "esp_lcd_io_spi.h"
 #include "platform/present_te_sync.h"
 #include "platform/present_lcd_scanout.h"
-#include "platform/present_lcd_rgb_partition.h"
+#include "platform/present_lcd_blit.h"
 #include <string.h>
 #ifndef PRESENT_HOST
 #include "esp_heap_caps.h"
@@ -25,7 +25,7 @@ struct present_resources {
     esp_display_present_engine_t *presenter;
     esp_display_present_lcd_scanout_t *scanout;
     esp_display_present_lcd_spi_t *spi;
-    esp_display_present_lcd_rgb_partition_t *lcd_partition;
+    esp_display_present_lcd_blit_t *lcd_blit;
     esp_display_present_te_sync_context_t *te;
     esp_display_present_te_sync_config_t te_config;
     bool te_required, te_armed;
@@ -104,7 +104,7 @@ static size_t default_tiles(bool overlap, esp_display_present_plan_memory_t memo
     return 2;
 #else
     if (!overlap) {
-        return 2;    /* V1 plain GRAM default. */
+        return 2;    /* V1 plain region default. */
     }
     if (portNUM_PROCESSORS < 2) {
         return 1;
@@ -191,7 +191,7 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
         }
         reserved += image_bytes * images;
     }
-    /* Pixel copying and backend progress are separate decisions. The GRAM
+    /* Pixel copying and backend progress are separate decisions. The region
      * experiment adds a backend worker to the synchronous pixel path without adding
      * a copy worker or changing the existing async-copy paths. */
     bool async = framebuffer || te || hw->rotation != 0 || input->target.drawbuf.in_psram;
@@ -330,12 +330,12 @@ static esp_err_t free_resources(present_resources_t *resources)
         }
         resources->spi = NULL;
     }
-    if (resources->lcd_partition) {
-        esp_err_t error = esp_display_present_lcd_rgb_partition_destroy(resources->lcd_partition);
+    if (resources->lcd_blit) {
+        esp_err_t error = esp_display_present_lcd_blit_destroy(resources->lcd_blit);
         if (error != ESP_OK) {
             return error;
         }
-        resources->lcd_partition = NULL;
+        resources->lcd_blit = NULL;
     }
     esp_display_present_executor_t **executors[] = {&resources->ppa, &resources->dma2d, &resources->cpu};
     for (size_t i = 0; i < 3; ++i) {
@@ -446,28 +446,28 @@ static esp_err_t create_spi_adapter(present_resources_t *resources, const esp_di
     return esp_display_present_lcd_spi_get_output_caps(resources->spi, &config->output);
 }
 
-static esp_err_t create_lcd_partition_adapter(present_resources_t *resources,
-                                              const esp_display_presenter_config_t *input,
-                                              esp_display_present_plan_config_t *config)
+static esp_err_t create_lcd_blit_adapter(present_resources_t *resources,
+                                         const esp_display_presenter_config_t *input,
+                                         esp_display_present_plan_config_t *config)
 {
     bool quarter = config->presenter.backend.rotation & 1;
-    esp_display_present_lcd_rgb_partition_config_t rgb = {
+    esp_display_present_lcd_blit_config_t blit = {
         .panel = input->target.hw.panel,
         .kind = input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB ?
-        ESP_DISPLAY_PRESENT_LCD_PARTITION_RGB : ESP_DISPLAY_PRESENT_LCD_PARTITION_DSI,
+        ESP_DISPLAY_PRESENT_LCD_BLIT_RGB : ESP_DISPLAY_PRESENT_LCD_BLIT_DSI,
         .width = quarter ? input->height : input->width,
         .height = quarter ? input->width : input->height,
         .format = config->presenter.backend.format,
         .byte_order = config->presenter.backend.panel_order,
     };
-    esp_err_t error = esp_display_present_lcd_rgb_partition_create(&rgb, &resources->lcd_partition);
+    esp_err_t error = esp_display_present_lcd_blit_create(&blit, &resources->lcd_blit);
     if (error != ESP_OK) {
         return error;
     }
-    error = esp_display_present_lcd_rgb_partition_get_interface(resources->lcd_partition,
-                                                                &config->presenter.backend.panel);
+    error = esp_display_present_lcd_blit_get_interface(resources->lcd_blit,
+                                                       &config->presenter.backend.panel);
     return error != ESP_OK ? error :
-           esp_display_present_lcd_rgb_partition_get_output_caps(resources->lcd_partition, &config->output);
+           esp_display_present_lcd_blit_get_output_caps(resources->lcd_blit, &config->output);
 }
 
 static esp_err_t create_planned_engine(present_resources_t *resources, const esp_display_presenter_config_t *input,
@@ -509,11 +509,11 @@ esp_err_t present_resources_create(const esp_display_presenter_config_t *input, 
     if (error != ESP_OK) {
         return error;
     }
-    bool lcd_partition = config.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM &&
-                         (input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB ||
-                          input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI);
-    if (!input->target.hw.panel || (config.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM &&
-                                    !lcd_partition && !input->target.hw.io)) {
+    bool lcd_blit = config.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION &&
+                    (input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB ||
+                     input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI);
+    if (!input->target.hw.panel || (config.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION &&
+                                    !lcd_blit && !input->target.hw.io)) {
         return ESP_ERR_INVALID_ARG;
     }
     present_resources_t *resources = present_alloc(sizeof(*resources));
@@ -534,8 +534,8 @@ esp_err_t present_resources_create(const esp_display_presenter_config_t *input, 
     resources->te_config = input->target.hw.te_sync;
     if (config.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB) {
         error = create_scanout_adapter(resources, input, bounce, on_vsync, vsync_user, &config);
-    } else if (lcd_partition) {
-        error = create_lcd_partition_adapter(resources, input, &config);
+    } else if (lcd_blit) {
+        error = create_lcd_blit_adapter(resources, input, &config);
     } else {
         error = create_spi_adapter(resources, input, &config);
     }

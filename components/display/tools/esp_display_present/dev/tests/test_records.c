@@ -34,7 +34,7 @@ static esp_err_t stop(void *ctx, uint32_t timeout)
 }
 static void backend_contracts(void)
 {
-    const present_backend_ops_t *all[] = {&present_gram_backend, &present_te_backend, &present_fb_backend};
+    const present_backend_ops_t *all[] = {&present_region_backend, &present_te_backend, &present_fb_backend};
     for (size_t i = 0; i < 3; ++i) {
         const present_backend_ops_t *ops = all[i];
         esp_display_present_backend_config_t cfg = {.width = 4, .height = 4, .tile_rows = 2,

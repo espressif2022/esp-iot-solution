@@ -227,8 +227,8 @@ static void platform_matrix(void)
                 esp_display_present_frame_status_t status;
                 bool partition_none = modes[mode] == ESP_DISPLAY_PRESENT_MODE_NONE;
                 OK(esp_display_present_engine_wait_frame(presenter, receipt,
-                   partition_none ? ESP_DISPLAY_PRESENT_COMPLETION_SOURCE_RELEASED : ESP_DISPLAY_PRESENT_COMPLETION_PRESENT_CONFIRMED,
-                   1000, &status));
+                                                         partition_none ? ESP_DISPLAY_PRESENT_COMPLETION_SOURCE_RELEASED : ESP_DISPLAY_PRESENT_COMPLETION_PRESENT_CONFIRMED,
+                                                         1000, &status));
                 for (unsigned i = 0; i < 24; ++i) {
                     uint16_t expected = 0x1200 + i;
                     if (swap) {
@@ -257,7 +257,7 @@ static void plans(void)
     io.target.hw.te_sync.gpio_num = -1;
     esp_display_present_plan_config_t io_plan;
     OK(present_resources_plan(&io, false, &io_plan));
-    assert(io_plan.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM && io_plan.presenter.mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE);
+    assert(io_plan.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION && io_plan.presenter.mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE);
     io.target.hw.te_sync.gpio_num = 0; /* GPIO0 is valid: AUTO really requests TE. */
     OK(present_resources_plan(&io, false, &io_plan));
     assert(io_plan.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_TE && io_plan.resources.image_count == 1);
@@ -282,7 +282,7 @@ static void plans(void)
     }
     input.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_NONE;
     OK(present_resources_plan(&input, false, &plan));
-    assert(plan.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_GRAM);
+    assert(plan.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION);
     assert(plan.resources.image_count == 0 && plan.resources.tile_count == 2 && !plan.presenter.backend.active_writes);
     input.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL;
     input.width = 4;
