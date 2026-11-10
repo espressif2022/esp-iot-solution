@@ -33,7 +33,7 @@ target_link_options(test_presenter_te PRIVATE -Wl,--wrap=present_te_timer_create
 target_link_options(test_scanout PRIVATE -Wl,--wrap=present_isr_barrier)
 # Compile the actual scanout TU without the optional driver query API too.
 # Its direct object definitions satisfy symbols before present_engine's archive.
-add_executable(test_scanout_no_query tests/test_scanout.c ../src/platform/present_lcd_scanout.c)
+add_executable(test_scanout_no_query tests/test_scanout.c ../src/platform/present_lcd_scanout.c ../src/platform/present_lcd_rgb_info.c)
 target_link_libraries(test_scanout_no_query PRIVATE present_engine)
 target_compile_definitions(test_scanout_no_query PRIVATE PRESENT_HOST=1 PRESENT_HOST_RGB_NO_FRAME_BUFFER_INFO=1)
 target_compile_options(test_scanout_no_query PRIVATE -Wall -Wextra -Werror -UNDEBUG)

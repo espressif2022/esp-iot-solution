@@ -4,7 +4,6 @@
  */
 #pragma once
 #include "backend/present_backend_types.h"
-#include "esp_display_present_config.h"
 #include "backend/present_output_caps.h"
 #include "esp_lcd_panel_ops.h"
 #ifdef __cplusplus
@@ -25,11 +24,9 @@ typedef struct {
     esp_display_present_engine_pixel_format_t format;
     size_t buffer_count; /* 1..3 driver-owned framebuffers; one permits active writes. */
     esp_display_present_byte_order_t byte_order; /* Driver-visible representation; no conversion here. */
-    /** Legacy bounce confirmation when no driver query exists. Explicit
-     * rgb_scanout declarations must match panel creation; non-bounce EOF is
-     * never sufficient. LINK_SWITCH is restricted to the audited S31 path. */
+    /* Legacy confirmed-bounce fallback only when driver/BSP facts are absent.
+     * Protocol selection is private and follows actual panel facts. */
     bool bounce;
-    esp_display_present_rgb_scanout_t rgb_scanout; /* AUTO resolves from driver facts or confirmed bounce. */
     bool single_retire; /* Single-FB exposure only; unsupported for multiple FBs. */
     bool delete_panel; /* Alternative safe stop: transfers panel ownership on attach. */
     /** Unless delete_panel or retain_scanout: required board-owned safe stop: successful return guarantees scanning

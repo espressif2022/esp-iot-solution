@@ -130,11 +130,6 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
     }
     (void)bounce; /* Adapter queries authoritative RGB facts at creation. */
     const esp_display_present_hw_config_t *hw = &input->target.hw;
-    if (hw->rgb.scanout < ESP_DISPLAY_PRESENT_RGB_SCANOUT_AUTO ||
-            hw->rgb.scanout > ESP_DISPLAY_PRESENT_RGB_SCANOUT_LINK_SWITCH ||
-            (hw->rgb.scanout != ESP_DISPLAY_PRESENT_RGB_SCANOUT_AUTO && hw->panel_type != ESP_DISPLAY_PRESENT_PANEL_RGB)) {
-        return ESP_ERR_INVALID_ARG;
-    }
     if (hw->rotation != 0 && hw->rotation != 90 && hw->rotation != 180 && hw->rotation != 270) {
         return ESP_ERR_INVALID_ARG;
     }
@@ -197,7 +192,7 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
         reserved += image_bytes * images;
     }
     /* Pixel copying and backend progress are separate decisions. The GRAM
-     * experiment adds a sender to the synchronous pixel path without adding
+     * experiment adds a backend worker to the synchronous pixel path without adding
      * a copy worker or changing the existing async-copy paths. */
     bool async = framebuffer || te || hw->rotation != 0 || input->target.drawbuf.in_psram;
     bool deferred = false;
@@ -205,10 +200,10 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
     deferred = !async && CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND;
 #endif
     bool background = async || deferred;
-    unsigned sender_priority = 0;
+    unsigned backend_priority = 0;
 #ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY
     if (deferred) {
-        sender_priority = CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY;
+        backend_priority = CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY;
     }
 #endif
     size_t slot_bytes = tile_bytes;
@@ -234,7 +229,7 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
             .transfer_timeout_ms = input->transfer_timeout_ms ? input->transfer_timeout_ms : 1000,
             .timeout_ms = input->pipeline_acquire_timeout_ms ? input->pipeline_acquire_timeout_ms : 1000,
             .background_service = background,
-            .worker_priority = sender_priority,
+            .worker_priority = backend_priority,
             .backend = {
                 .width = input->width,
                 .height = input->height,
@@ -372,9 +367,7 @@ static esp_err_t create_scanout_adapter(present_resources_t *resources, const es
         .format = config->presenter.backend.format,
         .buffer_count = config->resources.image_count,
         .byte_order = config->presenter.backend.panel_order,
-        .bounce = input->target.hw.rgb.scanout == ESP_DISPLAY_PRESENT_RGB_SCANOUT_AUTO ? bounce :
-        input->target.hw.rgb.scanout == ESP_DISPLAY_PRESENT_RGB_SCANOUT_BOUNCE,
-        .rgb_scanout = input->target.hw.rgb.scanout,
+        .bounce = bounce,
         .retain_scanout = true,
         .on_vsync = on_vsync,
         .vsync_user = vsync_user,

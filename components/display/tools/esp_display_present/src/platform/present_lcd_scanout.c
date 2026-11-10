@@ -4,6 +4,7 @@
  */
 #include "platform/present_lcd_scanout.h"
 #include "platform/present_os.h"
+#include "platform/present_lcd_rgb_info.h"
 #include "esp_cache.h"
 #include <limits.h>
 #ifdef PRESENT_HOST
@@ -14,25 +15,20 @@
 #define PRESENT_DSI_SUPPORTED SOC_MIPI_DSI_SUPPORTED
 #define PRESENT_RGB_SUPPORTED SOC_LCD_RGB_SUPPORTED
 #endif
-/* Hardware EOF alone cannot prove retirement on S3. Only the audited S31
- * AXI driver requests a distinct link-switch notification for non-bounce RGB. */
-#ifdef PRESENT_HOST
-#define PRESENT_RGB_LINK_SWITCH_SUPPORTED 1
-#elif CONFIG_IDF_TARGET_ESP32S31
-#include "hal/axi_dma_ll.h"
-#define PRESENT_RGB_LINK_SWITCH_SUPPORTED AXI_DMA_LL_SUPPORT(TX_LINK_SWITCH)
-#else
-#define PRESENT_RGB_LINK_SWITCH_SUPPORTED 0
-#endif
 #if PRESENT_DSI_SUPPORTED
 #include "esp_lcd_mipi_dsi.h"
 #endif
 #if PRESENT_RGB_SUPPORTED
 #include "esp_lcd_panel_rgb.h"
 #endif
+typedef enum {
+    SCANOUT_PERIODIC,
+    SCANOUT_REQUESTED,
+} scanout_protocol_t;
 struct esp_display_present_lcd_scanout {
     present_lock_t lock;
     esp_display_present_lcd_scanout_config_t config;
+    scanout_protocol_t protocol;
     void *buffers[3];
     esp_display_present_panel_event_fn callback;
     void *callback_user;
@@ -246,7 +242,7 @@ static esp_display_present_tx_result_t scanout_submit(void *context, const esp_d
             ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_STATE
         };
     }
-    bool link_switch = scanout->config.rgb_scanout == ESP_DISPLAY_PRESENT_RGB_SCANOUT_LINK_SWITCH;
+    bool link_switch = scanout->protocol == SCANOUT_REQUESTED;
     scanout->pending.cookie = cookie;
     scanout->pending.armed = false;
     scanout->pending.link.submitting = link_switch;
@@ -418,55 +414,33 @@ esp_err_t esp_display_present_lcd_scanout_create(const esp_display_present_lcd_s
     if (config->single_retire && config->buffer_count > 1) {
         return ESP_ERR_NOT_SUPPORTED;
     }
-    if (config->rgb_scanout < ESP_DISPLAY_PRESENT_RGB_SCANOUT_AUTO ||
-            config->rgb_scanout > ESP_DISPLAY_PRESENT_RGB_SCANOUT_LINK_SWITCH ||
-            (config->kind == ESP_DISPLAY_PRESENT_LCD_DSI && config->rgb_scanout != ESP_DISPLAY_PRESENT_RGB_SCANOUT_AUTO)) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    if (config->rgb_scanout == ESP_DISPLAY_PRESENT_RGB_SCANOUT_LINK_SWITCH && config->buffer_count < 2) {
-        return ESP_ERR_NOT_SUPPORTED;
-    }
     bool single_vsync = false;
-    esp_display_present_rgb_scanout_t rgb_scanout = config->rgb_scanout;
-#if PRESENT_RGB_SUPPORTED && defined(ESP_LCD_RGB_PANEL_HAS_FRAME_BUFFER_INFO)
+    scanout_protocol_t protocol = SCANOUT_PERIODIC;
     if (config->kind == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE) {
-        esp_lcd_rgb_panel_frame_buffer_info_t info;
-        esp_err_t error = esp_lcd_rgb_panel_get_frame_buffer_info(config->panel, &info);
-        if (error != ESP_OK) {
-            return error;
-        }
-        size_t bpp = config->format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
-        if (info.width != config->width || info.height != config->height ||
-                !info.continuous_refresh || info.custom_bounce_callback || info.transformed ||
-                info.bits_per_pixel != bpp * 8 || info.frame_buffer_count < config->buffer_count ||
-                info.frame_buffer_bytes != (uint64_t)config->width * config->height * bpp) {
-            return ESP_ERR_NOT_SUPPORTED;
-        }
-        bool queried_bounce = info.bounce_buffer_bytes != 0;
-        if ((rgb_scanout == ESP_DISPLAY_PRESENT_RGB_SCANOUT_BOUNCE && !queried_bounce) ||
-                (rgb_scanout == ESP_DISPLAY_PRESENT_RGB_SCANOUT_LINK_SWITCH && queried_bounce)) {
-            return ESP_ERR_NOT_SUPPORTED;
-        }
-        rgb_scanout = queried_bounce ? ESP_DISPLAY_PRESENT_RGB_SCANOUT_BOUNCE : ESP_DISPLAY_PRESENT_RGB_SCANOUT_LINK_SWITCH;
-        single_vsync = config->buffer_count == 1 && info.frame_buffer_count == 1 && !info.frame_buffer_retirement;
-        if (!info.frame_buffer_retirement && !single_vsync) {
-            return ESP_ERR_NOT_SUPPORTED;
-        }
-    }
-#else
-    if (config->kind == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE && rgb_scanout == ESP_DISPLAY_PRESENT_RGB_SCANOUT_AUTO) {
-        if (!config->bounce) {
-            return ESP_ERR_NOT_SUPPORTED;
-        }
-        rgb_scanout = ESP_DISPLAY_PRESENT_RGB_SCANOUT_BOUNCE;
-    }
-#endif
-    if (config->kind == ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE) {
-        if (single_vsync) {
-            /* Exposure of one allocation is periodic VSYNC, not retirement. */
-            rgb_scanout = ESP_DISPLAY_PRESENT_RGB_SCANOUT_AUTO;
-        } else if (rgb_scanout == ESP_DISPLAY_PRESENT_RGB_SCANOUT_LINK_SWITCH &&
-                   (!PRESENT_RGB_LINK_SWITCH_SUPPORTED || config->buffer_count < 2)) {
+        present_lcd_rgb_facts_t facts;
+        esp_err_t error = present_lcd_rgb_get_facts(config->panel, &facts);
+        if (error == ESP_OK) {
+            const present_lcd_rgb_info_t *info = &facts.panel;
+            size_t bpp = config->format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
+            if (info->width != config->width || info->height != config->height ||
+                    !info->continuous_refresh || info->custom_bounce_callback || info->transformed ||
+                    info->bits_per_pixel != bpp * 8 || info->frame_buffer_count < config->buffer_count ||
+                    info->frame_buffer_bytes != (uint64_t)config->width * config->height * bpp) {
+                return ESP_ERR_NOT_SUPPORTED;
+            }
+            single_vsync = config->buffer_count == 1 && info->frame_buffer_count == 1 && !facts.retirement;
+            if (!facts.retirement && !single_vsync) {
+                return ESP_ERR_NOT_SUPPORTED;
+            }
+            if (!info->bounce_buffer_bytes && !single_vsync) {
+                if (config->buffer_count < 2) {
+                    return ESP_ERR_NOT_SUPPORTED;
+                }
+                protocol = SCANOUT_REQUESTED;
+            }
+        } else if (error != ESP_ERR_NOT_FOUND) {
+            return error; /* Known conflicting/unsupported facts cannot fall back. */
+        } else if (!config->bounce) {
             return ESP_ERR_NOT_SUPPORTED;
         }
     }
@@ -483,7 +457,7 @@ esp_err_t esp_display_present_lcd_scanout_create(const esp_display_present_lcd_s
         return ESP_ERR_NO_MEM;
     }
     scanout->config = *config;
-    scanout->config.rgb_scanout = rgb_scanout;
+    scanout->protocol = protocol;
     scanout->single_vsync = single_vsync;
     esp_err_t error = ESP_ERR_NOT_SUPPORTED;
 #if PRESENT_DSI_SUPPORTED

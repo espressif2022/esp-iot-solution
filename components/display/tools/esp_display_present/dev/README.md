@@ -26,7 +26,7 @@
 
 ## RGB 请求式切链修复（2026-11-10）
 
-新增 `rgb-handoff` 专项（[说明](test_apps/rgb_handoff/README.md)，[本轮结果](evidence/rgb-link-switch-20261110/README.md)）：真实present六模式、四角度、同/异核提交，提交返回延迟0/50ms，每板96项。S31 Korvo关闭bounce并明确声明LINK_SWITCH；S3保持十行bounce。测试回调早到、初始FB0交接、关闭重开及全部输出像素，不替代目视防撕裂验收，也不混入benchmark成绩。原生周期事件与切链事件使用不同提交协议，无IDF补丁。
+新增 `rgb-handoff` 专项（[说明](test_apps/rgb_handoff/README.md)，[本轮结果](evidence/rgb-link-switch-20261110/README.md)）：真实present六模式、四角度、同/异核提交，提交返回延迟0/50ms，每板96项。S31 Korvo关闭bounce，S3保持十行bounce；现由BSP绑定提供真实创建信息，应用不再声明交接协议。测试回调早到、初始FB0交接、关闭重开及全部输出像素，不替代目视防撕裂验收，也不混入benchmark成绩。原生周期事件与切链事件使用不同提交协议，无IDF补丁。
 
 ## 目录
 

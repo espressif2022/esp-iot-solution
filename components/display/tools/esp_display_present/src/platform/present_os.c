@@ -454,9 +454,9 @@ void present_task_set_priority(unsigned priority)
 #endif
 }
 
-present_worker_t *present_worker_create(present_worker_entry_fn entry, void *user, uint32_t stack_bytes, unsigned priority)
+present_worker_t *present_worker_create(const char *name, present_worker_entry_fn entry, void *user, uint32_t stack_bytes, unsigned priority)
 {
-    if (!entry) {
+    if (!name || !*name || !entry) {
         return NULL;
     }
     present_worker_t *worker = present_alloc(sizeof(*worker));
@@ -471,12 +471,13 @@ present_worker_t *present_worker_create(present_worker_entry_fn entry, void *use
         return NULL;
     }
 #ifdef PRESENT_HOST
+    (void)name;
     (void)stack_bytes;
     (void)priority;
     bool created = pthread_create(&worker->thread, NULL, worker_entry, worker) == 0;
 #else
     bool created = priority < configMAX_PRIORITIES &&
-                   xTaskCreate(worker_entry, "present_service", stack_bytes, worker, priority, &worker->task) == pdPASS;
+                   xTaskCreate(worker_entry, name, stack_bytes, worker, priority, &worker->task) == pdPASS;
 #endif
     if (!created) {
         present_event_destroy(worker->exited);

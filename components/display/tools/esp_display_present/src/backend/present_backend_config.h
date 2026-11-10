@@ -66,7 +66,7 @@ struct esp_display_present_backend_config {
     bool fixed_rotation; /* Runtime rotation preserves producer dimensions; physical view may transpose. */
     bool tx_staging; /* GRAM async copies from external tiles to internal DMA conversion slots. */
     size_t transfer_capacity; /* GRAM: 0 uses tile count. */
-    bool deferred_submit; /* Engine-owned GRAM sender; READY slots retain pixels. */
+    bool deferred_submit; /* Engine-owned GRAM backend worker; READY slots retain pixels. */
     esp_display_present_te_gate_t te_gate; /* Explicit injection; default retains native timing model. */
     esp_display_present_te_timing_t te_timing; /* period_us=0 retains the explicit fixed edge window. */
     size_t tile_count; /* FB PARTIAL input tiles; 0 retains the legacy default of one. */

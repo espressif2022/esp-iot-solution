@@ -336,7 +336,7 @@ static esp_err_t automatic_stop(void *user, uint32_t timeout)
     pthread_mutex_unlock(&panel->lock);
     return error;
 }
-static void automatic_sender(void)
+static void automatic_backend_worker(void)
 {
     fake_clock = false;
     automatic_panel_t panel = {.lock = PTHREAD_MUTEX_INITIALIZER, .condition = PTHREAD_COND_INITIALIZER};
@@ -395,6 +395,6 @@ int main(void)
     late_scanout_confirmation(false);
     late_scanout_confirmation(true);
     te_wait_is_not_transfer_time();
-    automatic_sender();
-    puts("transfer deadlines: physical-submit origin, retained DMA, per-push isolation, retry, early/late completion and sender wake passed");
+    automatic_backend_worker();
+    puts("transfer deadlines: physical-submit origin, retained DMA, per-push isolation, retry, early/late completion and backend worker wake passed");
 }

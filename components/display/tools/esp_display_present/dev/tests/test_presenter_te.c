@@ -150,7 +150,7 @@ static void io_modes(void)
     }
 }
 /* Older SDK without safe timer join: explicit service remains usable; an
- * autonomous sender must fail creation rather than park forever. */
+ * autonomous backend worker must fail creation rather than park forever. */
 static void manual_without_phase_timer(void)
 {
     sync_panel_t panel;

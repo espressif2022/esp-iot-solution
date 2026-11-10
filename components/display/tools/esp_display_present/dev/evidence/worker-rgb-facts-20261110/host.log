@@ -1,0 +1,187 @@
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /tmp/present-worker-converge-20261110/host
+Consolidate compiler generated dependencies of target test_pixel_ops
+Consolidate compiler generated dependencies of target test_executor_cpu
+Consolidate compiler generated dependencies of target test_executor_ppa
+Consolidate compiler generated dependencies of target test_executor_dma2d
+Consolidate compiler generated dependencies of target test_executor_both
+Consolidate compiler generated dependencies of target present_engine
+[  3%] Built target test_pixel_ops
+[  9%] Built target test_executor_cpu
+[ 16%] Built target test_executor_ppa
+[ 25%] Built target test_executor_dma2d
+[ 28%] Built target test_executor_both
+[ 45%] Built target present_engine
+Consolidate compiler generated dependencies of target test_mode
+Consolidate compiler generated dependencies of target test_completion_tracker
+Consolidate compiler generated dependencies of target test_te_timing
+Consolidate compiler generated dependencies of target test_transfer_tracker
+Consolidate compiler generated dependencies of target test_lease_identity
+Consolidate compiler generated dependencies of target test_image
+Consolidate compiler generated dependencies of target test_frame_core
+Consolidate compiler generated dependencies of target test_plan
+[ 48%] Built target test_completion_tracker
+[ 48%] Built target test_frame_core
+[ 49%] Built target test_te_timing
+[ 51%] Built target test_mode
+[ 52%] Built target test_transfer_tracker
+[ 53%] Built target test_lease_identity
+[ 54%] Built target test_image
+[ 55%] Built target test_plan
+Consolidate compiler generated dependencies of target test_lcd_partition
+Consolidate compiler generated dependencies of target test_gram
+Consolidate compiler generated dependencies of target test_rotation
+Consolidate compiler generated dependencies of target test_records
+Consolidate compiler generated dependencies of target test_coverage
+Consolidate compiler generated dependencies of target test_scanout
+Consolidate compiler generated dependencies of target test_repair
+Consolidate compiler generated dependencies of target test_pixel
+[ 57%] Built target test_lcd_partition
+[ 58%] Built target test_rotation
+[ 60%] Built target test_repair
+[ 60%] Built target test_records
+[ 62%] Building C object CMakeFiles/test_scanout.dir/tests/test_scanout.c.o
+[ 63%] Built target test_coverage
+[ 65%] Built target test_gram
+[ 66%] Built target test_pixel
+Consolidate compiler generated dependencies of target test_presenter_te
+Consolidate compiler generated dependencies of target test_te
+Consolidate compiler generated dependencies of target test_lcd_spi
+Consolidate compiler generated dependencies of target test_presenter
+Consolidate compiler generated dependencies of target test_direct_resolved
+Consolidate compiler generated dependencies of target test_fb
+Consolidate compiler generated dependencies of target test_te_composer
+[ 70%] Built target test_te
+[ 70%] Built target test_fb
+[ 70%] Built target test_presenter
+[ 72%] Built target test_lcd_spi
+[ 73%] Built target test_direct_resolved
+[ 74%] Built target test_te_composer
+[ 76%] Built target test_presenter_te
+Consolidate compiler generated dependencies of target test_event
+Consolidate compiler generated dependencies of target header_smoke
+Consolidate compiler generated dependencies of target test_scheduler
+Consolidate compiler generated dependencies of target test_boundary_trace
+Consolidate compiler generated dependencies of target test_scanout_no_query
+Consolidate compiler generated dependencies of target test_transfer_timeout
+[ 77%] Built target test_scheduler
+[ 78%] Built target header_smoke
+[ 79%] Built target test_event
+[ 80%] Building C object CMakeFiles/test_scanout_no_query.dir/tests/test_scanout.c.o
+Consolidate compiler generated dependencies of target present_legacy_resources
+[ 82%] Built target test_boundary_trace
+[ 83%] Built target test_transfer_timeout
+Consolidate compiler generated dependencies of target test_legacy_te_gate
+Consolidate compiler generated dependencies of target test_legacy_te_gate_old
+[ 85%] Built target present_legacy_resources
+Consolidate compiler generated dependencies of target test_spi_facts_query
+Consolidate compiler generated dependencies of target test_spi_facts_no_query
+[ 86%] Built target test_legacy_te_gate
+Consolidate compiler generated dependencies of target test_legacy_resources
+Consolidate compiler generated dependencies of target present_legacy
+[ 88%] Built target test_legacy_te_gate_old
+[ 91%] Built target test_spi_facts_query
+[ 93%] Built target test_spi_facts_no_query
+[ 97%] Built target present_legacy
+[ 97%] Built target test_legacy_resources
+Consolidate compiler generated dependencies of target test_legacy_facade
+[ 98%] Built target test_legacy_facade
+[ 99%] Linking C executable test_scanout_no_query
+[ 99%] Linking C executable test_scanout
+[100%] Built target test_scanout_no_query
+[100%] Built target test_scanout
+Internal ctest changing into directory: /tmp/present-worker-converge-20261110/host
+Test project /tmp/present-worker-converge-20261110/host
+      Start  1: lease_identity
+ 1/44 Test  #1: lease_identity ...................   Passed    0.01 sec
+      Start  2: mode
+ 2/44 Test  #2: mode .............................   Passed    0.01 sec
+      Start  3: transfer_tracker
+ 3/44 Test  #3: transfer_tracker .................   Passed    0.01 sec
+      Start  4: completion_tracker
+ 4/44 Test  #4: completion_tracker ...............   Passed    0.01 sec
+      Start  5: te_timing
+ 5/44 Test  #5: te_timing ........................   Passed    0.01 sec
+      Start  6: image
+ 6/44 Test  #6: image ............................   Passed    0.03 sec
+      Start  7: frame_core
+ 7/44 Test  #7: frame_core .......................   Passed    0.01 sec
+      Start  8: plan
+ 8/44 Test  #8: plan .............................   Passed    0.01 sec
+      Start  9: records
+ 9/44 Test  #9: records ..........................   Passed    0.01 sec
+      Start 10: coverage
+10/44 Test #10: coverage .........................   Passed    0.11 sec
+      Start 11: repair
+11/44 Test #11: repair ...........................   Passed    0.01 sec
+      Start 12: scanout
+12/44 Test #12: scanout ..........................   Passed    0.01 sec
+      Start 13: lcd_partition
+13/44 Test #13: lcd_partition ....................   Passed    0.01 sec
+      Start 14: rotation
+14/44 Test #14: rotation .........................   Passed    0.02 sec
+      Start 15: pixel
+15/44 Test #15: pixel ............................   Passed    0.01 sec
+      Start 16: gram
+16/44 Test #16: gram .............................   Passed    0.02 sec
+      Start 17: lcd_spi
+17/44 Test #17: lcd_spi ..........................   Passed    0.01 sec
+      Start 18: presenter
+18/44 Test #18: presenter ........................   Passed    0.01 sec
+      Start 19: te_composer
+19/44 Test #19: te_composer ......................   Passed    0.01 sec
+      Start 20: te
+20/44 Test #20: te ...............................   Passed    0.65 sec
+      Start 21: presenter_te
+21/44 Test #21: presenter_te .....................   Passed    0.01 sec
+      Start 22: fb
+22/44 Test #22: fb ...............................   Passed    0.04 sec
+      Start 23: direct_resolved
+23/44 Test #23: direct_resolved ..................   Passed    2.79 sec
+      Start 24: event
+24/44 Test #24: event ............................   Passed    0.02 sec
+      Start 25: scheduler
+25/44 Test #25: scheduler ........................   Passed    0.05 sec
+      Start 26: scanout_no_query
+26/44 Test #26: scanout_no_query .................   Passed    0.01 sec
+      Start 27: headers_cpp
+27/44 Test #27: headers_cpp ......................   Passed    0.01 sec
+      Start 28: boundary_trace
+28/44 Test #28: boundary_trace ...................   Passed    0.01 sec
+      Start 29: scanout_retirement_contract
+29/44 Test #29: scanout_retirement_contract ......   Passed    0.07 sec
+      Start 30: boundary_analyze
+30/44 Test #30: boundary_analyze .................   Passed    0.07 sec
+      Start 31: executor_cpu
+31/44 Test #31: executor_cpu .....................   Passed    0.01 sec
+      Start 32: executor_ppa
+32/44 Test #32: executor_ppa .....................   Passed    0.01 sec
+      Start 33: executor_dma2d
+33/44 Test #33: executor_dma2d ...................   Passed    0.01 sec
+      Start 34: executor_both
+34/44 Test #34: executor_both ....................   Passed    0.01 sec
+      Start 35: legacy_resources
+35/44 Test #35: legacy_resources .................   Passed    0.02 sec
+      Start 36: legacy_facade
+36/44 Test #36: legacy_facade ....................   Passed    0.38 sec
+      Start 37: transfer_timeout
+37/44 Test #37: transfer_timeout .................   Passed    0.02 sec
+      Start 38: legacy_te_gate
+38/44 Test #38: legacy_te_gate ...................   Passed    0.01 sec
+      Start 39: legacy_te_gate_old
+39/44 Test #39: legacy_te_gate_old ...............   Passed    0.01 sec
+      Start 40: spi_facts_query
+40/44 Test #40: spi_facts_query ..................   Passed    0.01 sec
+      Start 41: spi_facts_no_query
+41/44 Test #41: spi_facts_no_query ...............   Passed    0.01 sec
+      Start 42: test_runner
+42/44 Test #42: test_runner ......................   Passed    0.10 sec
+      Start 43: header_contracts
+43/44 Test #43: header_contracts .................   Passed    0.72 sec
+      Start 44: pixel_ops_standalone
+44/44 Test #44: pixel_ops_standalone .............   Passed    0.01 sec
+
+100% tests passed, 0 tests failed out of 44
+
+Total Test time (real) =   5.35 sec

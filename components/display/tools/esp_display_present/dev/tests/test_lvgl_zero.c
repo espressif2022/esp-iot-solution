@@ -170,7 +170,7 @@ static void exercise_direct(unsigned rotation, bool async, bool swap)
         lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, 0);
         lv_refr_now(d);
         OK(esp_lv_present_native_get_error(b));
-        /* Async conversion and sender require pumping before confirmation. */
+        /* Async conversion and backend worker require pumping before confirmation. */
         for (unsigned i = 0; !panel.cookie && !panel.immediate && i < 10000; ++i) {
             OK(esp_display_present_engine_service(p));
             pause_copy();

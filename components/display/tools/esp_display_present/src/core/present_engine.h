@@ -228,7 +228,7 @@ esp_err_t esp_display_present_engine_drain(esp_display_present_engine_t *present
 esp_err_t esp_display_present_engine_get_status(esp_display_present_engine_t *presenter, esp_display_present_engine_status_t *status);
 
 /**
- * @brief Stops/joins sender before backend quiesce, using one timeout budget.
+ * @brief Stops/joins backend worker before backend quiesce, using one timeout budget.
  * Timeout preserves the closing object, worker and backend for retry.
  * Success establishes resource safety even when first_error remains nonzero.
  *

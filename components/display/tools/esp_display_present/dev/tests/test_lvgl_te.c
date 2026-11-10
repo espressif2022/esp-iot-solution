@@ -250,7 +250,7 @@ static bool copy_notification(void *user, bool isr)
     return false;
 }
 
-static void background_sender(bool async, esp_display_present_engine_backend_t kind, bool pooled)
+static void background_backend_worker(bool async, esp_display_present_engine_backend_t kind, bool pooled)
 {
     copy_notifications_t n = {.lock = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER};
     sync_panel_t panel;
@@ -368,11 +368,11 @@ int main(void)
     backpressure(1000, true, false);
     backpressure(1000, true, true);
     multiple_instances();
-    background_sender(false, ESP_DISPLAY_PRESENT_ENGINE_TE, false);
-    background_sender(true, ESP_DISPLAY_PRESENT_ENGINE_TE, false);
-    background_sender(true, ESP_DISPLAY_PRESENT_ENGINE_GRAM, false);
-    background_sender(true, ESP_DISPLAY_PRESENT_ENGINE_TE, true);
-    background_sender(true, ESP_DISPLAY_PRESENT_ENGINE_GRAM, true);
+    background_backend_worker(false, ESP_DISPLAY_PRESENT_ENGINE_TE, false);
+    background_backend_worker(true, ESP_DISPLAY_PRESENT_ENGINE_TE, false);
+    background_backend_worker(true, ESP_DISPLAY_PRESENT_ENGINE_GRAM, false);
+    background_backend_worker(true, ESP_DISPLAY_PRESENT_ENGINE_TE, true);
+    background_backend_worker(true, ESP_DISPLAY_PRESENT_ENGINE_GRAM, true);
     lv_deinit();
     puts("LVGL GRAM/TE: reference images, padding, source lifetime, wait/pause and isolation passed");
     return 0;

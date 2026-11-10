@@ -18,6 +18,7 @@ HEADERS = (
     'backend/present_backend.h',
     'platform/present_lcd_spi.h',
     'platform/present_lcd_scanout.h',
+    'platform/present_lcd_rgb_info.h',
     'core/present_transfer_tracker.h',
     'core/present_engine_types.h',
     'config/present_engine_config.h',

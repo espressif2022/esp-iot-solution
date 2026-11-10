@@ -49,7 +49,7 @@ void esp_display_present_te_sync_set_wakeup(esp_display_present_te_sync_context_
 esp_err_t esp_display_present_te_sync_destroy_budget(esp_display_present_te_sync_context_t *, uint32_t timeout_ms);
 esp_err_t esp_display_present_te_sync_destroy_checked(esp_display_present_te_sync_context_t *);
 /* Nonblocking: accepts only the current measured window and an edge > after.
- * TIMEOUT leaves the job pending; GPIO and phase timer wake the sender again. */
+ * TIMEOUT leaves the job pending; GPIO and phase timer wake the backend worker again. */
 esp_err_t esp_display_present_te_sync_admit(esp_display_present_te_sync_context_t *, size_t, uint64_t, uint64_t *);
 void esp_display_present_te_sync_abort_tx(esp_display_present_te_sync_context_t *);
 

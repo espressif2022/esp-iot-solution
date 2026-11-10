@@ -6,6 +6,9 @@
  * This is not the GC9503 SUB2 panel, which requires command initialization.
  */
 #include "board.h"
+#ifdef PRESENT_BOARD_RGB_INFO
+#include "board_rgb_info.h"
+#endif
 #include "esp_lcd_panel_rgb.h"
 #include "esp_check.h"
 #include "esp_log.h"
@@ -36,11 +39,18 @@ esp_err_t board_s31_rgb_create(esp_lcd_panel_handle_t *panel, size_t buffer_coun
              (unsigned)buffer_count, bounce_lines);
     ESP_RETURN_ON_ERROR(esp_lcd_new_rgb_panel(&cfg, panel), "s31_rgb", "create");
     ESP_RETURN_ON_ERROR(esp_lcd_panel_reset(*panel), "s31_rgb", "reset");
-    return esp_lcd_panel_init(*panel);
+    ESP_RETURN_ON_ERROR(esp_lcd_panel_init(*panel), "board", "panel init");
+#ifdef PRESENT_BOARD_RGB_INFO
+    board_rgb_created(*panel, &cfg);
+#endif
+    return ESP_OK;
 }
 
 esp_err_t board_resources_destroy(void)
 {
+#ifdef PRESENT_BOARD_RGB_INFO
+    board_rgb_forget();
+#endif
     return ESP_OK; /* No command bus, expander, or backlight GPIO on stock panel. */
 }
 

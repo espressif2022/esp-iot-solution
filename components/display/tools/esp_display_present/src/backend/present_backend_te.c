@@ -65,7 +65,7 @@ struct present_backend {
     bool measured;
 };
 
-/* Timer fires in task context and only wakes the owner/sender. It neither
+/* Timer fires in task context and only wakes the owner/backend worker. It neither
  * manufactures a TE edge nor sends hardware; service rechecks the phase. */
 static void phase_wakeup(void *user)
 {

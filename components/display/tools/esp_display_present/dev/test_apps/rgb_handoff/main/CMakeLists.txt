@@ -10,8 +10,12 @@ elseif(PRESENT_BOARD STREQUAL "s3-rgb" AND IDF_TARGET STREQUAL "esp32s3")
 else()
     message(FATAL_ERROR "RGB handoff test requires confirmed S31 Korvo or S3 R16")
 endif()
-idf_component_register(SRCS main.c ${BOARD_SOURCE} PRIV_INCLUDE_DIRS ../../boards/main
+idf_component_register(SRCS main.c ../../boards/main/board_rgb_info.c ${BOARD_SOURCE} PRIV_INCLUDE_DIRS ../../boards/main
     REQUIRES esp_display_present esp_lcd esp_timer esp_psram esp_driver_gpio ${BOARD_DEPS})
 if(PRESENT_BOARD STREQUAL "s31-rgb")
     target_compile_definitions(${COMPONENT_LIB} PRIVATE PRESENT_BOARD_S31_RGB=1 PRESENT_RGB_BOUNCE_LINES=0)
 endif()
+
+idf_component_get_property(_present_dir esp_display_present COMPONENT_DIR)
+target_include_directories(${COMPONENT_LIB} PRIVATE "${_present_dir}/src")
+target_compile_definitions(${COMPONENT_LIB} PRIVATE PRESENT_BOARD_RGB_INFO=1)

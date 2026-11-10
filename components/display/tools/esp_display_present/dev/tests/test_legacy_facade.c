@@ -50,13 +50,14 @@ present_os_event_t *__wrap_present_event_create(void)
     }
     return __real_present_event_create();
 }
-present_worker_t *__real_present_worker_create(present_worker_entry_fn, void *, uint32_t, unsigned);
-present_worker_t *__wrap_present_worker_create(present_worker_entry_fn entry, void *user, uint32_t stack_bytes, unsigned priority)
+present_worker_t *__real_present_worker_create(const char *, present_worker_entry_fn, void *, uint32_t, unsigned);
+present_worker_t *__wrap_present_worker_create(const char *name, present_worker_entry_fn entry, void *user, uint32_t stack_bytes, unsigned priority)
 {
     if (allocation_target && allocation_kind == 4 && ++allocation_index == allocation_target) {
         return NULL;
     }
-    return __real_present_worker_create(entry, user, stack_bytes, priority);
+    assert(strcmp(name, "present_pixel") == 0 || strcmp(name, "present_backend") == 0);
+    return __real_present_worker_create(name, entry, user, stack_bytes, priority);
 }
 
 static unsigned injected_snapshot_failures, successful_receipt_releases;

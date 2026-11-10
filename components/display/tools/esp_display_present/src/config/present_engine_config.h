@@ -31,8 +31,8 @@ typedef struct esp_display_present_engine_config {
     uint32_t timeout_ms; /* 0 polls; UINT32_MAX waits indefinitely. */
     esp_display_present_engine_backend_t backend_kind; /* Zero preserves GRAM default. */
     esp_display_present_present_mode_t mode;
-    /** Optional sender worker; default false retains cooperative service.
-     * GRAM requires backend.async_copy=true for background_service.
+    /** Optional backend worker; default false retains cooperative service.
+     * With GRAM deferred_submit, only this worker enters panel submission.
      * Host uses pthread; IDF defaults: 4096-byte stack, priority 5. */
     bool background_service;
     uint32_t worker_stack_bytes; /* 0 selects default; ignored by Host. */
@@ -46,7 +46,7 @@ typedef struct esp_display_present_engine_config {
     /** Per physical panel.submit completion deadline, including driver call
      * and callback dispatch. Zero disables (legacy V2 behavior). Timeout is a
      * sticky fault, never synthetic completion or permission to free pixels.
-     * Checked by service/task APIs and completion ingress; an existing sender
+     * Checked by service/task APIs and completion ingress; an existing backend worker
      * wakes at the next deadline. No extra task; a blocking driver call cannot
      * be interrupted. Not a deadline for drawing, copy, repair or waiting TE. */
     uint32_t transfer_timeout_ms;

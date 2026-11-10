@@ -6,6 +6,8 @@
  * window and observe pixels/events; no production or IDF instrumentation. */
 #include <inttypes.h>
 #include <string.h>
+#include <stdlib.h>
+#include "platform/present_os.h"
 #include "board.h"
 #include "esp_display_present.h"
 #include "esp_lcd_panel_rgb.h"
@@ -17,11 +19,43 @@ static const char *TAG = "rgb_handoff";
 static portMUX_TYPE meter_lock = portMUX_INITIALIZER_UNLOCKED;
 static struct {
     esp_lcd_rgb_panel_frame_buf_complete_cb_t original;
-    uint32_t events, early;
+    uint32_t events, early, worker_names;
     bool drawing;
     unsigned delay_ms, core;
     const uint16_t *pixels;
 } meter;
+typedef struct {
+    const char *name;
+    present_worker_entry_fn entry;
+    void *user;
+} worker_probe_t;
+static void observed_worker(void *user)
+{
+    worker_probe_t *probe = user;
+    ESP_ERROR_CHECK(strcmp(pcTaskGetName(NULL), probe->name) == 0 ? ESP_OK : ESP_FAIL);
+    portENTER_CRITICAL(&meter_lock);
+    ++meter.worker_names;
+    portEXIT_CRITICAL(&meter_lock);
+    probe->entry(probe->user);
+    free(probe);
+}
+present_worker_t *__real_present_worker_create(const char *, present_worker_entry_fn, void *, uint32_t, unsigned);
+present_worker_t *__wrap_present_worker_create(const char *name, present_worker_entry_fn entry, void *user, uint32_t stack_bytes, unsigned priority)
+{
+    ESP_ERROR_CHECK(strcmp(name, "present_pixel") == 0 || strcmp(name, "present_backend") == 0 ? ESP_OK : ESP_FAIL);
+    worker_probe_t *probe = malloc(sizeof(*probe));
+    if (!probe) {
+        return NULL;
+    }
+    *probe = (worker_probe_t) {
+        name, entry, user
+    };
+    present_worker_t *worker = __real_present_worker_create(name, observed_worker, probe, stack_bytes, priority);
+    if (!worker) {
+        free(probe);
+    }
+    return worker;
+}
 static esp_lcd_panel_handle_t panel;
 static TaskHandle_t controller;
 static const struct {
@@ -95,14 +129,6 @@ static void run_case(unsigned index, unsigned rotation)
         .target = {
             .hw = {
                 .panel = panel, .panel_type = ESP_DISPLAY_PRESENT_PANEL_RGB, .rotation = rotation,
-                .rgb = {
-                    .scanout =
-#ifdef PRESENT_BOARD_S31_RGB
-                    ESP_DISPLAY_PRESENT_RGB_SCANOUT_LINK_SWITCH
-#else
-                    ESP_DISPLAY_PRESENT_RGB_SCANOUT_BOUNCE
-#endif
-                }
             },
             .fb = {.mode = profiles[index].mode},
             .drawbuf = {.lines = 50, .buffers = 1},
@@ -110,7 +136,7 @@ static void run_case(unsigned index, unsigned rotation)
     };
     ESP_LOGI(TAG, "BEGIN mode=%s_C%u_D%u rotation=%u", profiles[index].name, meter.core, meter.delay_ms, rotation);
     portENTER_CRITICAL(&meter_lock);
-    uint32_t events = meter.events, early = meter.early;
+    uint32_t events = meter.events, early = meter.early, worker_names = meter.worker_names;
     portEXIT_CRITICAL(&meter_lock);
     esp_display_presenter_t *presenter = NULL;
     ESP_ERROR_CHECK(esp_display_presenter_create(&config, &presenter));
@@ -160,10 +186,11 @@ static void run_case(unsigned index, unsigned rotation)
     portENTER_CRITICAL(&meter_lock);
     events = meter.events - events;
     early = meter.early - early;
+    worker_names = meter.worker_names - worker_names;
     portEXIT_CRITICAL(&meter_lock);
-    ESP_ERROR_CHECK(events >= FRAMES && (!meter.delay_ms || early) ? ESP_OK : ESP_FAIL);
-    ESP_LOGI(TAG, "PASS mode=%s_C%u_D%u rotation=%u frames=%u driver_events=%"PRIu32" early_events=%"PRIu32" pixels=ALL",
-             profiles[index].name, meter.core, meter.delay_ms, rotation, FRAMES, events, early);
+    ESP_ERROR_CHECK(events >= FRAMES && worker_names == 2 && (!meter.delay_ms || early) ? ESP_OK : ESP_FAIL);
+    ESP_LOGI(TAG, "PASS mode=%s_C%u_D%u rotation=%u frames=%u driver_events=%"PRIu32" early_events=%"PRIu32" worker_names=%u pixels=ALL",
+             profiles[index].name, meter.core, meter.delay_ms, rotation, FRAMES, events, early, (unsigned)worker_names);
 }
 static void worker(void *unused)
 {

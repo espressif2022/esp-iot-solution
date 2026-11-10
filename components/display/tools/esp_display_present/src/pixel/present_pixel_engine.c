@@ -87,7 +87,7 @@ static void finish_copy(esp_display_present_pixel_engine_t *engine, copy_record_
     (void)present_event_signal(engine->sync.idle, false);
 }
 
-static void copy_worker(void *context)
+static void pixel_worker(void *context)
 {
     esp_display_present_pixel_engine_t *engine = context;
     for (;;) {
@@ -184,7 +184,7 @@ esp_err_t esp_display_present_pixel_create(const esp_display_present_pixel_confi
         }
     }
     if (engine->worker.asynchronous) {
-        engine->worker.task = present_worker_create(copy_worker, engine, 4096, 5);
+        engine->worker.task = present_worker_create("present_pixel", pixel_worker, engine, 4096, 5);
         if (!engine->worker.task) {
             free_engine(engine);
             return ESP_ERR_NO_MEM;

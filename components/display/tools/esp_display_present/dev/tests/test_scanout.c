@@ -5,6 +5,7 @@
 #include "backend/present_backend_config.h"
 #include "backend/present_backend.h"
 #include "platform/present_lcd_scanout.h"
+#include "platform/present_lcd_rgb_info.h"
 #include "esp_lcd_mipi_dsi.h"
 #include "esp_lcd_panel_rgb.h"
 #include "esp_cache.h"
@@ -56,13 +57,35 @@ struct fake_lcd {
     rgb_cb_t rgb, rgb_vsync;
     void *user;
     bool early, fail, stop_timeout, deleted, detach_fail;
-    bool link_early;
+    bool link_early, board_info;
+    unsigned board_queries;
     unsigned *link_published;
     size_t calls, buffer_count;
     bool no_bounce, no_retirement, link_retirement, one_shot, transformed, custom_bounce, one_fb;
     bool info_error, wrong_dimensions, wrong_format, wrong_size;
     const void *source;
 };
+esp_err_t present_lcd_rgb_get_board_info(esp_lcd_panel_handle_t panel, present_lcd_rgb_info_t *info)
+{
+    ++panel->board_queries;
+    if (!panel->board_info) {
+        return ESP_ERR_NOT_FOUND;
+    }
+    if (panel->info_error) {
+        return ESP_FAIL;
+    }
+    *info = (present_lcd_rgb_info_t) {
+        .width = panel->wrong_dimensions ? 2 : 3, .height = panel->wrong_dimensions ? 3 : 2,
+        .frame_buffer_count = panel->one_fb ? 1 : (panel->buffer_count ? panel->buffer_count : 2),
+        .frame_buffer_bytes = panel->wrong_size ? 10 : 12,
+        .bits_per_pixel = panel->wrong_format ? 24 : 16,
+        .bounce_buffer_bytes = panel->no_bounce ? 0 : 6,
+        .continuous_refresh = !panel->one_shot,
+        .custom_bounce_callback = panel->custom_bounce,
+        .transformed = panel->transformed,
+    };
+    return ESP_OK;
+}
 #ifdef ESP_LCD_RGB_PANEL_HAS_FRAME_BUFFER_INFO
 esp_err_t esp_lcd_rgb_panel_get_frame_buffer_info(esp_lcd_panel_handle_t panel, esp_lcd_rgb_panel_frame_buffer_info_t *info)
 {
@@ -545,7 +568,7 @@ static void test_rgb_link_switch(void)
             for (unsigned fail = 0; fail < 2; ++fail) {
                 link_receipt_t receipt = {0};
                 struct fake_lcd panel = {.no_bounce = true, .link_retirement = true, .buffer_count = count,
-                           .link_early = early, .fail = fail, .link_published = &receipt.count
+                           .link_early = early, .board_info = true, .fail = fail, .link_published = &receipt.count
                 };
                 for (size_t i = 0; i < count; ++i) {
                     panel.buffers[i] = aligned_alloc(64, 64);
@@ -554,7 +577,6 @@ static void test_rgb_link_switch(void)
                     .panel = &panel, .kind = ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE,
                     .width = 3, .height = 2, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
                     .buffer_count = count, .retain_scanout = true,
-                    .rgb_scanout = ESP_DISPLAY_PRESENT_RGB_SCANOUT_LINK_SWITCH,
                 };
                 esp_display_present_lcd_scanout_t *adapter;
                 OK(esp_display_present_lcd_scanout_create(&config, &adapter));
@@ -596,8 +618,48 @@ static void test_rgb_link_switch(void)
         }
     }
 }
+static void test_board_facts(void)
+{
+    struct fake_lcd panel = {.board_info = true};
+    panel.buffers[0] = aligned_alloc(64, 64);
+    panel.buffers[1] = aligned_alloc(64, 64);
+    esp_display_present_lcd_scanout_config_t config = {
+        .panel = &panel, .kind = ESP_DISPLAY_PRESENT_LCD_RGB_BOUNCE,
+        .width = 3, .height = 2, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+        .buffer_count = 2, .retain_scanout = true, .bounce = true,
+    };
+    esp_display_present_lcd_scanout_t *adapter;
+    OK(esp_display_present_lcd_scanout_create(&config, &adapter));
+    OK(esp_display_present_lcd_scanout_destroy(adapter));
+#ifdef ESP_LCD_RGB_PANEL_HAS_FRAME_BUFFER_INFO
+    assert(!panel.board_queries); /* Standard driver facts take precedence. */
+#else
+    assert(panel.board_queries);
+#endif
+    /* A stale confirmed-bounce fallback cannot hide known invalid facts. */
+    panel.wrong_dimensions = true;
+    assert(esp_display_present_lcd_scanout_create(&config, &adapter) == ESP_ERR_NOT_SUPPORTED);
+    panel.wrong_dimensions = false;
+    panel.transformed = true;
+    assert(esp_display_present_lcd_scanout_create(&config, &adapter) == ESP_ERR_NOT_SUPPORTED);
+    panel.transformed = false;
+    panel.info_error = true;
+    assert(esp_display_present_lcd_scanout_create(&config, &adapter) == ESP_FAIL);
+    panel.info_error = false;
+#ifndef ESP_LCD_RGB_PANEL_HAS_FRAME_BUFFER_INFO
+    panel.board_info = false;
+    config.bounce = false;
+    assert(esp_display_present_lcd_scanout_create(&config, &adapter) == ESP_ERR_NOT_SUPPORTED);
+    config.bounce = true;
+    OK(esp_display_present_lcd_scanout_create(&config, &adapter));
+    OK(esp_display_present_lcd_scanout_destroy(adapter));
+#endif
+    free(panel.buffers[0]);
+    free(panel.buffers[1]);
+}
 int main(void)
 {
+    test_board_facts();
     single_buffer_join();
     /* Callers cannot force single-event retirement without the ISR join. */
     struct fake_lcd one_boundary_panel = {0};

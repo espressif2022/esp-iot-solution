@@ -36,9 +36,9 @@ flowchart TD
 - **策略层**决定 FB 轮转、GRAM 区域发送、TE 整屏合成与发送时机。
 - **pixel engine**处理拷贝、旋转和字节序，可以同步执行，也可以排入一个工作任务。
 - **adapter**负责调用驱动、转换完成回调、维护硬件借用；SPI/scanout adapter 自己不创建发送任务。
-- **engine sender**推进 backend；名字叫 sender，但在 FB 中主要推进修复、转换、切换等状态，不是额外复制整屏的任务。
+- **backend_worker**推进 backend；在 FB 中主要推进修复、转换、切换等状态，不是额外复制整屏的任务。
 
-依据：[公共入口](../src/esp_display_presenter.c#L575)、[资源策略](../src/present_resources.c#L117)、[engine 创建](../src/present_engine.c#L518)、[pixel worker 创建](../src/pixel/present_pixel_engine.c#L378)。
+依据：[公共入口](../src/esp_display_presenter.c#L575)、[资源策略](../src/resources/present_resources.c#L117)、[engine 创建](../src/core/present_engine.c#L518)、[pixel_worker 创建](../src/pixel/present_pixel_engine.c#L378)。
 
 ## 2. 数量符号与输入约束
 
@@ -58,7 +58,7 @@ flowchart TD
 
 FULL/DIRECT 的“输入”是完整画布视图；PARTIAL/GRAM/TE 的“输入”是 tile。把 `R` 设成 H 只是把 tile 放大到整屏，并不会自动变成 FB 扫描模式。
 
-依据：[公开配置](../include/esp_display_present_config.h#L88)、[公开 draw-buffer 视图](../include/esp_display_present.h#L221)、[lease 与地址校验](../src/esp_display_presenter.c#L575)、[行数和格式校验](../src/present_resources.c#L117)。
+依据：[公开配置](../include/esp_display_present_config.h#L88)、[公开 draw-buffer 视图](../include/esp_display_present.h#L221)、[lease 与地址校验](../src/esp_display_presenter.c#L575)、[行数和格式校验](../src/resources/present_resources.c#L117)。
 
 ### 2.1 自动数量不等于固定双 tile
 
@@ -72,7 +72,7 @@ FULL/DIRECT 的“输入”是完整画布视图；PARTIAL/GRAM/TE 的“输入�
 
 私有 plan 的 tile 上限为 16，copy ticket 上限为 64；**公开门面仍限制 T≤2**。不要把私有容量上限当成公开 API 已支持的输入数量。公开策略 `max_frames=8` 是帧记录容量，也不是 8 个像素缓冲。
 
-依据：[默认数量](../src/present_resources.c#L94)、[自动降级](../src/present_resources.c#L460)、[plan 池规划](../src/present_plan.c#L209)、[内部上限](../src/present_limits.h#L11)。
+依据：[默认数量](../src/resources/present_resources.c#L94)、[自动降级](../src/resources/present_resources.c#L460)、[plan 池规划](../src/present_plan.c#L209)、[内部上限](../src/present_limits.h#L11)。
 
 ## 3. 所有公开模式总表
 
@@ -82,7 +82,7 @@ FULL/DIRECT 的“输入”是完整画布视图；PARTIAL/GRAM/TE 的“输入�
 - **SPI / IO** 支持 `NONE` 和 `TE_SYNC`。不支持任何 FB 模式。
 - **`AUTO` 不是新模式**。RGB/DSI 选 `TRIPLE_PARTIAL`；IO 有有效 TE 配置选 `TE_SYNC`，否则选 `NONE`。
 
-表中任务数按当前公开 factory 计算；P 为拷贝任务，E 为 engine sender。默认情况下 FB 和 TE 都设置 `async_copy=true`、`background_service=true`，即使某条具体路径不需要拷贝，也会创建这两个任务。T 从 1 变 2 只多一块 tile，不多一条 worker。
+表中任务数按当前公开 factory 计算；P 为拷贝任务，E 为 backend_worker。默认情况下 FB 和 TE 都设置 `async_copy=true`、`background_service=true`，即使某条具体路径不需要拷贝，也会创建这两个任务。T 从 1 变 2 只多一块 tile，不多一条 worker。
 
 | 面板 / 模式 | 应用输入池 | 输出像素池 | 独立 converted 池 | P / E / 合计 | 主要处理 |
 | --- | --- | --- | --- | --- | --- |
@@ -100,7 +100,7 @@ FULL/DIRECT 的“输入”是完整画布视图；PARTIAL/GRAM/TE 的“输入�
 
 FULL/DIRECT 的 N 个 FB 是池总数，包含正在扫描的那一个，不代表 N 个都可写；需转换时 N 个 FB 也不对应 N 张独立逻辑画布。转换条件为旋转非 0°，或者输入/输出字节序不一致。
 
-依据：[模式映射和 async 决策](../src/present_resources.c#L149)、[模式合同归一化](../src/present_plan.c#L12)、[FB 物理/逻辑存储](../src/backend/present_backend_fb.c#L730)、[GRAM 存储](../src/backend/present_backend_gram.c#L289)。
+依据：[模式映射和 async 决策](../src/resources/present_resources.c#L149)、[模式合同归一化](../src/present_plan.c#L12)、[FB 物理/逻辑存储](../src/backend/present_backend_fb.c#L730)、[GRAM 存储](../src/backend/present_backend_gram.c#L289)。
 
 ### 3.1 下一帧什么时候可以开始
 
@@ -109,11 +109,11 @@ FULL/DIRECT 的 N 个 FB 是池总数，包含正在扫描的那一个，不代�
 | 模式 | begin | 下一次驱动提交 | 实际能重叠的事 |
 | --- | --- | --- | --- |
 | RGB/DSI `NONE` | 可以写正在扫描的那一张 | 公开工厂不设置 `single_boundary_retire`，且 N=1 不做 ISR join，因此固定等 2 个边界。cookie 还在时提交被拒绝 | 可以边扫边画同一张。没有双缓冲隔离 |
-| `DOUBLE_FULL` / `DOUBLE_DIRECT` / `DOUBLE_PARTIAL` | 必须还有一张 `FREE`。一张 `SCANNING`、另一张 `FREE` 时可以开始下一帧；两张都离开 `FREE` 时再下一帧等待 | N>1 时先做 ISR join：成功则后续 1 个边界，join 不可用则 2 个。同时只有一个待确认切换 | 绘制可以和当前扫描重叠一帧。旧扫描槽退休后才有下一张 `FREE`。copy worker 和 sender 不改变这个槽位规则 |
+| `DOUBLE_FULL` / `DOUBLE_DIRECT` / `DOUBLE_PARTIAL` | 必须还有一张 `FREE`。一张 `SCANNING`、另一张 `FREE` 时可以开始下一帧；两张都离开 `FREE` 时再下一帧等待 | N>1 时先做 ISR join：成功则后续 1 个边界，join 不可用则 2 个。同时只有一个待确认切换 | 绘制可以和当前扫描重叠一帧。旧扫描槽退休后才有下一张 `FREE`。pixel_worker 和 backend_worker 不改变这个槽位规则 |
 | `TRIPLE_FULL` / `TRIPLE_PARTIAL` | 三张里有一张 `FREE` 即可 | 边界规则与双缓冲相同 | 可以一张在画、一张已提交待确认、一张在扫描 |
-| `DOUBLE_DIRECT` 的像素 | 目标槽换成另一张基线，且本帧不是 full redraw 时，begin 先预填旧内容 | 同该缓冲数的 FB 规则 | 预填使用已有 copy worker，不新增任务。公开门面在首帧、无损伤、损伤超过 32 块、整屏脏、滚动，以及取消、旋转或重新绑定之后，把本帧标成 full redraw，这些情况跳过预填 |
+| `DOUBLE_DIRECT` 的像素 | 目标槽换成另一张基线，且本帧不是 full redraw 时，begin 先预填旧内容 | 同该缓冲数的 FB 规则 | 预填使用已有 pixel_worker，不新增任务。公开门面在首帧、无损伤、损伤超过 32 块、整屏脏、滚动，以及取消、旋转或重新绑定之后，把本帧标成 full redraw，这些情况跳过预填 |
 | IO `NONE`，0°、内部 tile，实验关 | 有空闲 slot 即可 | 调用方线程里 `draw_bitmap`。返回后 DMA 仍可能继续读这块 tile | 没有组件任务。T=2 时另一块 tile 可以画，驱动调用仍可能堵住调用方 |
-| IO `NONE`，0°、内部 tile，实验开 | 有空闲 slot 即可 | 只有 sender 调用驱动，调用期间放开 engine gate | 多出来的是这一条 sender，不是第二块缓冲 |
+| IO `NONE`，0°、内部 tile，实验开 | 有空闲 slot 即可 | 只有 backend_worker 调用驱动，调用期间放开 engine gate | 多出来的是这一条 backend_worker，不是第二块缓冲 |
 | IO `NONE`，旋转或 PSRAM | source 和 converted 整个 slot 都空闲才能再租 | 传输结束才归还整槽 | T=2 的两槽都在发送时，下一次 acquire 等待 |
 | IO `TE_SYNC`，C=1 | 正在发送的那张 compose 不能同时写 | 一次只提交一个整屏，并且要等 TE 窗口 | 两个输入 tile 不能变成两张整屏流水线 |
 | IO `TE_SYNC`，C=2 | 另一张 compose 可以建下一帧；正在被修复引用的 baseline 仍不可改 | 仍一次只发送一张 | 下一帧合成可以和上一帧传输重叠 |
@@ -152,7 +152,7 @@ DIRECT 的预填发生在被选中的那一格内部：`PREFILL` 完成后进入
 | 1 | 这一格离开 `FREE` 之后，acquire 没有另一格 | 同上，等这一格的 `TRANSFER_DONE` |
 | 2 | 另一格仍是 `FREE` 时可以 `LEASED`，并在异步路径上进入 `COPYING` | 各自等自己的 `TRANSFER_DONE`。`SUBMITTING` 加 `INFLIGHT` 的格数达到 `transfer_capacity`（默认等于 T）时，新的 `READY` 先不提交 |
 
-0° 内部 tile 没有 `COPYING`。`draw_bitmap` 返回后，DMA 仍可能在读这格，状态停在 `INFLIGHT`，直到完成回调。实验后台只是改成由 sender 调用驱动，退休条件仍是这个回调。
+0° 内部 tile 没有 `COPYING`。`draw_bitmap` 返回后，DMA 仍可能在读这格，状态停在 `INFLIGHT`，直到完成回调。实验后台只是改成由 backend_worker 调用驱动，退休条件仍是这个回调。
 
 #### TE
 
@@ -180,7 +180,7 @@ flowchart LR
     APP[绘制任务] --> CHOICE{需要旋转或 swap?}
     CHOICE -->|否| FB[直接租用 FB 池中的可写画布]
     CHOICE -->|是| LOGICAL[共享逻辑整屏画布 1 张]
-    LOGICAL --> PIX[pixel worker 整屏转换]
+    LOGICAL --> PIX[pixel_worker 整屏转换]
     PIX --> FB
     FB --> READY[READY 不可再写]
     READY --> SCAN[scanout adapter 请求切换]
@@ -195,14 +195,14 @@ flowchart LR
 - **NONE** 不再属于这条扫描池路径。RGB/MIPI DSI均使用PARTITION tile，通过`draw_bitmap()`复制脏区到驱动内部 framebuffer；允许撕裂，但present不借用当前扫描FB作为持久画布。
 - RGB/DSI FB 由面板驱动提供，组件借用，不再为每个 slot 新分配同等大小的扫描 FB。用户提供地址时必须与驱动查询到的池一致。
 
-依据：[状态机说明](../src/backend/present_backend_fb.c#L17)、[创建与逻辑画布共享](../src/backend/present_backend_fb.c#L730)、[begin/预填](../src/backend/present_backend_fb.c#L836)、[借用驱动 FB](../src/present_resources.c#L380)。
+依据：[状态机说明](../src/backend/present_backend_fb.c#L17)、[创建与逻辑画布共享](../src/backend/present_backend_fb.c#L730)、[begin/预填](../src/backend/present_backend_fb.c#L836)、[借用驱动 FB](../src/resources/present_resources.c#L380)。
 
 ### 4.2 PARTIAL
 
 ```mermaid
 flowchart LR
     APP[应用画 tile] --> TILE[输入 tile 池 T]
-    TILE --> COPY[pixel worker 拷贝 + 旋转 + swap]
+    TILE --> COPY[pixel_worker 拷贝 + 旋转 + swap]
     COPY --> FB[候选物理 FB]
     COPY --> RELEASE[copy 完成后归还源 tile]
     FB --> REPAIR[封帧后补齐历史未更新区域]
@@ -240,7 +240,7 @@ flowchart LR
     SWAP --> MODE{实验后台开关}
     MODE -->|关闭| CALL[调用方执行 draw_bitmap]
     MODE -->|打开| READY[READY 队列]
-    READY --> SEND[engine sender 执行 draw_bitmap]
+    READY --> SEND[backend_worker 执行 draw_bitmap]
     CALL --> DMA[SPI 硬件读取原 tile]
     SEND --> DMA
     DMA --> DONE[真实完成后 slot FREE]
@@ -250,19 +250,19 @@ flowchart LR
 
 swap 在提交驱动之前原地处理当前租用的 tile；输入 tile 会改变字节内容。下一次取得它时应按新提交所需内容重新绘制，不能假定旧字节仍是原始顺序。0°原地 swap 可以安全做；旋转不能沿用这条原地策略。
 
-打开实验开关后，只给这一类 `async_copy=false` 的 GRAM 增加 **1 个 engine sender**：像素准备仍在前台，之后发布 READY；真正 driver call 在后台。当前 prototype 在 driver call 期间暂时释放 engine gate，让生产者可操作另一空闲 tile；只有 sender 被允许真正提交驱动。没有增加第二套发送任务或复制池。
+打开实验开关后，只给这一类 `async_copy=false` 的 GRAM 增加 **1 个 backend_worker**：像素准备仍在前台，之后发布 READY；真正 driver call 在后台。当前 prototype 在 driver call 期间暂时释放 engine gate，让生产者可操作另一空闲 tile；只有 backend_worker 被允许真正提交驱动。没有增加第二套发送任务或复制池。
 
-依据：[像素准备](../src/backend/present_backend_gram.c#L439)、[区域提交](../src/backend/present_backend_gram.c#L548)、[后台 driver 包装](../src/present_engine.c#L187)、[实验配置](../Kconfig)。
+依据：[像素准备](../src/backend/present_backend_gram.c#L439)、[区域提交](../src/backend/present_backend_gram.c#L548)、[后台 driver 包装](../src/core/present_engine.c#L187)、[实验配置](../Kconfig)。
 
 ### 5.2 旋转或 PSRAM tile
 
 ```mermaid
 flowchart LR
     APP[应用] --> SRC[输入 tile 池 T]
-    SRC --> PIX[pixel worker]
+    SRC --> PIX[pixel_worker]
     PIX --> DST[converted tile 池 T]
     DST --> READY[READY 按顺序等待]
-    READY --> SEND[backend service / engine sender]
+    READY --> SEND[backend service / backend_worker]
     SEND --> SPI[SPI adapter]
     SPI --> DMA[DMA]
     DMA --> FREE[真实完成后整个 slot FREE]
@@ -274,16 +274,16 @@ flowchart LR
 
 **当前 source/converted 成对占用一个 slot。** copy 完成后进入 READY，并不会把 source 单独提前归还给绘制方；直到传输结束才使整个 slot 可再租用。这与 FB/TE 的 tile 在 copy 后即可归还不同，是后续池解耦的候选点。
 
-这条路径原本就有 1 个 copy worker + 1 个 sender。实验开关没有把它改成新的 deferred 策略；普通内部路径的实测结果不能套到这里。默认 service 也可能由前台操作触发，不保证每次真实 driver call 都发生在 sender 线程中。
+这条路径原本就有 1 个 pixel_worker + 1 个 backend_worker。实验开关没有把它改成新的 deferred 策略；普通内部路径的实测结果不能套到这里。默认 service 也可能由前台操作触发，不保证每次真实 driver call 都发生在 backend_worker 线程中。
 
-依据：[成对分配](../src/backend/present_backend_gram.c#L289)、[service 与 slot 回收](../src/backend/present_backend_gram.c#L69)、[PSRAM 策略](../src/present_resources.c#L201)。
+依据：[成对分配](../src/backend/present_backend_gram.c#L289)、[service 与 slot 回收](../src/backend/present_backend_gram.c#L69)、[PSRAM 策略](../src/resources/present_resources.c#L201)。
 
 ## 6. TE：输入 tile 与整屏合成池独立
 
 ```mermaid
 flowchart LR
     APP[应用画 tile] --> TILE[输入 tile 池 T]
-    TILE --> PIX[pixel worker 旋转 + swap]
+    TILE --> PIX[pixel_worker 旋转 + swap]
     PIX --> COMPOSE[整屏 compose 池 C]
     PIX --> RELEASE[copy 完成归还输入 tile]
     COMPOSE --> REPAIR[封帧 / 修复 / READY]
@@ -308,24 +308,24 @@ flowchart LR
 
 | 对象 | 每 presenter 数量 | 做什么 | 不应混淆的数量 |
 | --- | --- | --- | --- |
-| copy worker | async_copy=true 时 1，否则 0 | 从 ticket 队列串行取工作，执行 CPU 或硬件像素请求 | T 个 ticket 容量不等于 T 个 worker |
-| engine sender | background_service=true 时 1，否则 0 | 处理进度唤醒，推进 backend 状态与发送 | 不因双/三 FB 或 C2 而增加 |
+| pixel_worker | async_copy=true 时 1，否则 0 | 从 ticket 队列串行取工作，执行 CPU 或硬件像素请求 | T 个 ticket 容量不等于 T 个 worker |
+| backend_worker | background_service=true 时 1，否则 0 | 处理进度唤醒，推进 backend 状态与发送 | 不因双/三 FB 或 C2 而增加 |
 | CPU/DMA2D/PPA executor | CPU 必建；异步路径尝试创建两种硬件插件 | 能力探测与执行 | 插件自身不各创建一条组件 worker |
 | SPI adapter | 1 个对象、0 个任务 | draw_bitmap、cookie、完成 ISR、可选 staging | max_inflight 是 buffer/事务容量 |
-| scanout adapter | 1 个对象、0 个任务 | 请求切换、回调关联、退休边界 | 连续扫描不是 sender 不断复制整屏 |
+| scanout adapter | 1 个对象、0 个任务 | 请求切换、回调关联、退休边界 | 连续扫描不是 backend_worker 不断复制整屏 |
 | TE timer | TE 有 1 个 phase timer 对象 | 相位到时通知推进 | 不是额外专属 FreeRTOS 任务 |
 
-当前任务默认栈分别为 4096 B。sender 默认优先级 5；实验普通 GRAM 使用独立配置，默认 7。copy worker 初始优先级 5，首次成功提交时记录生产者优先级，由活着的 worker 自行应用。这里的“生产者”是对该 pixel engine 提交请求的任务，不应一概理解成应用主任务。
+当前任务默认栈分别为 4096 B。backend_worker 默认优先级 5；实验普通 GRAM 使用独立配置，默认 7。pixel_worker 初始优先级 5，首次成功提交时记录生产者优先级，由活着的 worker 自行应用。这里的“生产者”是对该 pixel engine 提交请求的任务，不应一概理解成应用主任务。
 
 0°优先 DMA2D；旋转优先 PPA。首选不存在时尝试 PPA/CPU；请求不满足硬件能力时，执行前 probe 可选 CPU fallback。硬件已接受后发生错误，不再次用 CPU 覆写目标。支持与否取决于 SoC、IDF、格式、地址、步幅、对齐及旋转组合，不保证每次都用硬件。
 
 pixel engine 主要是像素搬运/坐标旋转/字节序处理，不提供 alpha 混合、缩放、任意格式转换等通用图形流水线。
 
-依据：[pixel worker 与优先级](../src/pixel/present_pixel_engine.c#L318)、[sender 创建](../src/present_engine.c#L550)、[执行器选择](../src/present_resources.c#L294)、[probe/fallback](../src/pixel/executor/present_executor.c#L43)。
+依据：[pixel_worker 与优先级](../src/pixel/present_pixel_engine.c#L318)、[backend_worker 创建](../src/core/present_engine.c#L550)、[执行器选择](../src/resources/present_resources.c#L294)、[probe/fallback](../src/pixel/executor/present_executor.c#L43)。
 
 ### 7.1 池容量与实际并发
 
-| 路径 | copy ticket 配置容量 | pixel worker 数 | 待确认输出容量 |
+| 路径 | copy ticket 配置容量 | pixel_worker 数 | 待确认输出容量 |
 | --- | --- | --- | --- |
 | FB FULL/DIRECT | 1 | 1 | 1 |
 | RGB/DSI NONE PARTITION | T | 1 | 1 |
@@ -343,7 +343,7 @@ ticket 容量是正在使用的像素请求记录上限，并非每个请求都�
 sequenceDiagram
     participant A as 应用绘制任务
     participant P as GRAM slot 池
-    participant E as engine sender
+    participant E as backend_worker
     participant D as SPI 驱动与 DMA
     A->>P: acquire tile 0，绘制，submit
     P->>E: tile 0 READY
@@ -377,7 +377,7 @@ TE 创建时根据驱动只读事实判断 `psram_dma_direct`。支持时 SPI st
 
 adapter 的 staging 实现会 copy→cache 同步→draw→等该段完成后再复用同一块 staging，强制 max_inflight=1。只有最终段完成才发布逻辑完成。TE 的创建校验避免走多段 panel 窗口发送；这与驱动在一次窗口内部拆 SPI 包不同。
 
-依据：[SPI 资源创建与 TE 校验](../src/present_resources.c#L414)、[stage_transfer](../src/platform/present_lcd_spi.c#L154)、[staging 分配与容量](../src/platform/present_lcd_spi.c#L320)。
+依据：[SPI 资源创建与 TE 校验](../src/resources/present_resources.c#L414)、[stage_transfer](../src/platform/present_lcd_spi.c#L154)、[staging 分配与容量](../src/platform/present_lcd_spi.c#L320)。
 
 ## 9. 像素内存账本
 
@@ -417,9 +417,9 @@ FB/TE 共用 image repair 实现：矩形集合能表示覆盖时不分配每像
 
 ## 11. 本次 review 建议重点看什么
 
-1. **任务创建是否按实际工作收敛**：当前 FB 0° FULL/DIRECT 也建 copy worker；T1/T2 变化不会使任务数从 1 变 2。`esp_display_present_drawbuf_config_t.buffers` 的注释仍写“多一个 buffer 和 4 KiB worker 栈”，与创建代码不符：FB/TE 的 worker 本来就在，T=2 只多一块 tile。
+1. **任务创建是否按实际工作收敛**：当前 FB 0° FULL/DIRECT 也建 pixel_worker；T1/T2 变化不会使任务数从 1 变 2。`esp_display_present_drawbuf_config_t.buffers` 的注释仍写“多一个 buffer 和 4 KiB worker 栈”，与创建代码不符：FB/TE 的 worker 本来就在，T=2 只多一块 tile。
 2. **GRAM source/converted 池耦合是否值得解开**：现在 T 个 source 都可能因 converted 正在发送而被整体占用；解耦能改善复用，但需新增独立配额和所有权，不是提前 FREE 原 slot 即可。
-3. **sender 能否统一**：FB/GRAM/TE 已共用 engine sender 实现；普通 GRAM 原型新增的是调度策略，没有新增 adapter 线程。TE 的窗口准入和 FB 的退休确认仍是各自的策略，不能合并成同一个完成条件。
+3. **backend_worker 能否统一**：FB/GRAM/TE 已共用 backend_worker 实现；普通 GRAM 原型新增的是调度策略，没有新增 adapter 线程。TE 的窗口准入和 FB 的退休确认仍是各自的策略，不能合并成同一个完成条件。
 4. **整屏 GRAM 的内存与收益**：R=H 可减少上层 tile 提交次数，却可能放大内部 converted 占用；PSRAM 整屏目前不会自动变成直连零复制。至少两个独立可写源才有绘制/发送重叠空间，单源主要是把等待从 submit 移到 acquire。
 5. **模式准入和实测口径**：每种模式下一帧能重叠什么，以第 3.1 节为准。逐帧 `quiesce` 会把扫描确认算进每一帧，双缓冲因此接近面板帧周期，不能把这个数当成连续提交帧率。三缓冲可以藏住一帧。GRAM 后台原型另有一组 S31 16 行 tile 实测：普通 T2 合成吞吐 37.13→37.59 次/秒，submit 累计 23.51→4.04 ms/帧，acquire 1.30→20.78 ms/帧。等待从 submit 挪到了 acquire，不能据此证明整屏、TE、FB 或 LVGL 提帧。详见[原型实测](../dev/GRAM_BACKGROUND_RESULTS_20261104.md)。
 

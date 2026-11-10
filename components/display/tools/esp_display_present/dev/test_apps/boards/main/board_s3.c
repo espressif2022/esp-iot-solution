@@ -4,6 +4,9 @@
  */
 /* Pin mapping and panel setup: esp32_s3_lcd_ev_board R8/R16 modules. */
 #include "board.h"
+#ifdef PRESENT_BOARD_RGB_INFO
+#include "board_rgb_info.h"
+#endif
 #include "driver/gpio.h"
 #include "driver/i2c_master.h"
 #include "esp_psram.h"
@@ -50,11 +53,18 @@ esp_err_t board_panel_create(esp_lcd_panel_handle_t *panel, size_t buffer_count)
                                       .bits_per_pixel = 18, .vendor_config = &vendor
                                      };
     ESP_RETURN_ON_ERROR(esp_lcd_new_panel_gc9503(io, &dev, panel), "board", "GC9503");
-    return esp_lcd_panel_init(*panel);
+    ESP_RETURN_ON_ERROR(esp_lcd_panel_init(*panel), "board", "panel init");
+#ifdef PRESENT_BOARD_RGB_INFO
+    board_rgb_created(*panel, &rgb);
+#endif
+    return ESP_OK;
 }
 
 esp_err_t board_resources_destroy(void)
 {
+#ifdef PRESENT_BOARD_RGB_INFO
+    board_rgb_forget();
+#endif
     ESP_RETURN_ON_ERROR(esp_io_expander_del(expander), "board", "delete expander");
     expander = NULL;
     ESP_RETURN_ON_ERROR(i2c_del_master_bus(bus), "board", "delete I2C");

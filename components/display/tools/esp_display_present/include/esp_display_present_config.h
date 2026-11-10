@@ -61,20 +61,6 @@ typedef struct {
 #define ESP_DISPLAY_PRESENT_TE_SYNC_DISABLED() \
     (esp_display_present_te_sync_config_t) { .gpio_num = -1 }
 
-/** RGB framebuffer completion protocol. Declarations must match panel creation:
- * continuous refresh, driver-owned framebuffers, no custom bounce fill or
- * driver rotation/mirror. A driver capability query takes precedence.
- */
-typedef enum {
-    ESP_DISPLAY_PRESENT_RGB_SCANOUT_AUTO = 0, /**< Query driver facts; otherwise retain the legacy confirmed-bounce setting. */
-    ESP_DISPLAY_PRESENT_RGB_SCANOUT_BOUNCE, /**< Panel was created with bounce buffers. Periodic retirement protocol. */
-    ESP_DISPLAY_PRESENT_RGB_SCANOUT_LINK_SWITCH, /**< No bounce buffers; requested link-switch completion. Audited S31 AXI path only. */
-} esp_display_present_rgb_scanout_t;
-
-typedef struct {
-    esp_display_present_rgb_scanout_t scanout; /**< RGB framebuffer modes only; zero preserves existing configuration. */
-} esp_display_present_rgb_config_t;
-
 /**
  * Panel / bus hardware fact. Borrowed handles stay valid until presenter
  * deletion.
@@ -95,7 +81,6 @@ typedef struct {
     bool te_enabled; /**< Whether TE synchronization is enabled. */
     esp_display_present_te_sync_config_t te_sync; /**< TE synchronization settings. */
     bool spi_psram_dma_direct; /**< Must match the SPI IO creation flag. Fallback when driver memory query is unavailable; a successful query takes precedence. */
-    esp_display_present_rgb_config_t rgb; /**< RGB-specific driver declarations; not a request to reconfigure the panel. */
 } esp_display_present_hw_config_t;
 
 /**

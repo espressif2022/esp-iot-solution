@@ -3,8 +3,8 @@
 This suite runs the real public presenter and scanout adapter against clean IDF.
 It is separate from driver-only `rgb-events` and from LVGL performance scoring.
 
-- S31 Korvo stock RGB: no bounce, explicit `RGB_SCANOUT_LINK_SWITCH` declaration.
-- S3 R16 RGB: ten-line bounce, explicit `RGB_SCANOUT_BOUNCE` declaration.
+- S31 Korvo stock RGB: no bounce; protocol resolved from BSP creation facts.
+- S3 R16 RGB: ten-line bounce; the same public presenter configuration.
 - Six framebuffer modes × four angles × producer core 0/1 × submit-return delay
   0/50 ms = 96 cases per board, four full-coverage frames per case. NONE is excluded.
 - Each presenter closes and reopens against the same three-buffer panel. The
@@ -39,3 +39,10 @@ python dev/tools/run.py restore --board s31-rgb --port /dev/ttyUSB0 --work-root 
 Ports are examples: verify the board MAC first. Use `--board s3-rgb` with the S3
 port for the bounce regression. Restore uses independent full-flash verification;
 allow at least ten minutes for the outer automation deadline on large UART images.
+
+The test BSP calls `board_rgb_created()` with the actual successful LCD creation
+configuration and forgets it on destruction. Its private
+`present_lcd_rgb_get_board_info()` binding serves only the owned live panel;
+the application does not choose a protocol. Standard driver queries, if present,
+still take precedence. This binding is specific to the maintained single-panel
+BSPs; no universal auto-detection from arbitrary opaque handles is claimed.

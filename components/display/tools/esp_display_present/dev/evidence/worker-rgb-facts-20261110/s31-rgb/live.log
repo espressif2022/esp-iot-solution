@@ -1,0 +1,453 @@
+ESP-ROM:esp32s31-20251218
+Build:Dec 18 2025
+rst:0x1 (POWERON),boot:0x78 (SPI_FAST_FLASH_BOOT)
+SPI mode:DIO, clock div:1
+load:0x2f0740c0,len:0x156c
+load:0x2f06a2b0,len:0xc08
+load:0x2f06cfb0,len:0x2fe4
+entry 0x2f06a2ba
+I (25) boot: ESP-IDF v6.2-dev-2221-g7b9cc1ac79f8 2nd stage bootloader
+I (26) boot: compile time Nov 10 2026 11:28:42
+I (28) boot: chip revision: v0.0
+I (28) boot.esp32s31: SPI Speed      : 80MHz
+I (31) boot.esp32s31: SPI Mode       : DIO
+I (35) boot.esp32s31: SPI Flash Size : 16MB
+I (39) boot: Partition Table:
+I (42) boot: ## Label            Usage          Type ST Offset   Length
+I (48) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (55) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (61) boot:  2 factory          factory app      00 00 00010000 00177000
+I (69) esp_image: segment 0: paddr=00010020 vaddr=40040020 size=0c9e8h ( 51688) map
+I (85) esp_image: segment 1: paddr=0001ca10 vaddr=2f000000 size=03608h ( 13832) load
+I (90) esp_image: segment 2: paddr=00020020 vaddr=40000020 size=344e4h (214244) map
+I (126) esp_image: segment 3: paddr=0005450c vaddr=2f003608 size=0bb38h ( 47928) load
+I (137) esp_image: segment 4: paddr=0006004c vaddr=2f00f180 size=032c0h ( 12992) load
+I (145) boot: Loaded app from partition at offset 0x10000
+I (151) oct_psram: vendor id    : 0x1a (UNKNOWN)
+I (152) oct_psram: Latency      : 0x01 (Fixed)
+I (152) oct_psram: DriveStr.    : 0x00 (25 Ohm)
+I (153) oct_psram: dev id       : 0x00 (generation 1)
+I (158) oct_psram: density      : 0x05 (128 Mbit)
+I (162) oct_psram: good-die     : 0x06 (Pass)
+I (166) oct_psram: SRF          : 0x02 (Slow Refresh)
+I (171) oct_psram: BurstType    : 0x00 ( Wrap)
+I (175) oct_psram: BurstLen     : 0x03 (2048 Byte)
+I (180) oct_psram: BitMode      : 0x00 (X8 Mode)
+I (184) oct_psram: Readlatency  : 0x04 (14 cycles@Fixed)
+I (189) oct_psram: DriveStrength: 0x00 (1/1)
+I (193) MSPI Timing: Enter psram timing tuning
+I (343) esp_psram: Found 16MB PSRAM device
+I (344) esp_psram: Speed: 200MHz
+I (344) cpu_start: Multicore app
+I (664) esp_psram: SPI SRAM memory test OK
+I (673) cpu_start: GPIO 59 and 58 are used as console UART I/O pins
+I (673) cpu_start: Pro cpu start user code
+I (674) cpu_start: cpu freq: 320000000 Hz
+I (675) app_init: Application information:
+I (679) app_init: Project name:     present_rgb_handoff
+I (684) app_init: App version:      76d7b8d9e-dirty
+I (689) app_init: Compile time:     Nov 10 2026 11:28:42
+I (694) app_init: ELF file SHA256:  34cf75f02...
+I (698) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8
+I (704) efuse_init: Min chip rev:     v0.0
+I (707) efuse_init: Max chip rev:     v0.99 
+I (711) efuse_init: Chip rev:         v0.0
+I (715) heap_init: Initializing. RAM available for dynamic allocation:
+I (722) heap_init: At 2F013D80 len 00067230 (412 KiB): RAM
+I (727) heap_init: At 2F07AFB0 len 000041C0 (16 KiB): RAM
+I (732) heap_init: At 2E000000 len 00007FE8 (31 KiB): RTCRAM
+I (737) esp_psram: Adding pool of 16384K of PSRAM memory to heap allocator
+I (744) spi_flash: detected chip: generic
+I (748) spi_flash: flash io: dio
+I (751) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (757) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (764) main_task: Started on CPU0
+I (767) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (775) main_task: Calling app_main()
+I (778) s31_rgb: stock panel 800x480 pclk=18000000 fbs=3 bounce_lines=0
+I (808) rgb_handoff: BEGIN mode=DOUBLE_FULL_C0_D0 rotation=0
+I (1212) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (1218) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (1226) rgb_handoff: PASS mode=DOUBLE_FULL_C0_D0 rotation=0 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (1236) rgb_handoff: BEGIN mode=DOUBLE_FULL_C0_D0 rotation=90
+I (1640) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (1641) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (1648) rgb_handoff: PASS mode=DOUBLE_FULL_C0_D0 rotation=90 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (1659) rgb_handoff: BEGIN mode=DOUBLE_FULL_C0_D0 rotation=180
+I (2064) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (2065) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (2072) rgb_handoff: PASS mode=DOUBLE_FULL_C0_D0 rotation=180 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (2083) rgb_handoff: BEGIN mode=DOUBLE_FULL_C0_D0 rotation=270
+I (2493) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (2493) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (2501) rgb_handoff: PASS mode=DOUBLE_FULL_C0_D0 rotation=270 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (2512) rgb_handoff: BEGIN mode=TRIPLE_FULL_C0_D0 rotation=0
+I (2920) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (2921) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (2929) rgb_handoff: PASS mode=TRIPLE_FULL_C0_D0 rotation=0 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (2939) rgb_handoff: BEGIN mode=TRIPLE_FULL_C0_D0 rotation=90
+I (3348) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (3348) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (3356) rgb_handoff: PASS mode=TRIPLE_FULL_C0_D0 rotation=90 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (3367) rgb_handoff: BEGIN mode=TRIPLE_FULL_C0_D0 rotation=180
+I (3772) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (3773) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (3780) rgb_handoff: PASS mode=TRIPLE_FULL_C0_D0 rotation=180 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (3791) rgb_handoff: BEGIN mode=TRIPLE_FULL_C0_D0 rotation=270
+I (4201) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (4201) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (4209) rgb_handoff: PASS mode=TRIPLE_FULL_C0_D0 rotation=270 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (4220) rgb_handoff: BEGIN mode=DOUBLE_DIRECT_C0_D0 rotation=0
+I (4628) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (4629) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (4637) rgb_handoff: PASS mode=DOUBLE_DIRECT_C0_D0 rotation=0 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (4647) rgb_handoff: BEGIN mode=DOUBLE_DIRECT_C0_D0 rotation=90
+I (5056) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (5056) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (5064) rgb_handoff: PASS mode=DOUBLE_DIRECT_C0_D0 rotation=90 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (5075) rgb_handoff: BEGIN mode=DOUBLE_DIRECT_C0_D0 rotation=180
+I (5480) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (5481) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (5488) rgb_handoff: PASS mode=DOUBLE_DIRECT_C0_D0 rotation=180 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (5499) rgb_handoff: BEGIN mode=DOUBLE_DIRECT_C0_D0 rotation=270
+I (5909) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (5909) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (5917) rgb_handoff: PASS mode=DOUBLE_DIRECT_C0_D0 rotation=270 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (5928) rgb_handoff: BEGIN mode=DOUBLE_PARTIAL_C0_D0 rotation=0
+I (6336) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (6337) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (6345) rgb_handoff: PASS mode=DOUBLE_PARTIAL_C0_D0 rotation=0 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (6356) rgb_handoff: BEGIN mode=DOUBLE_PARTIAL_C0_D0 rotation=90
+I (6764) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (6765) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (6772) rgb_handoff: PASS mode=DOUBLE_PARTIAL_C0_D0 rotation=90 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (6783) rgb_handoff: BEGIN mode=DOUBLE_PARTIAL_C0_D0 rotation=180
+I (7188) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (7189) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (7196) rgb_handoff: PASS mode=DOUBLE_PARTIAL_C0_D0 rotation=180 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (7208) rgb_handoff: BEGIN mode=DOUBLE_PARTIAL_C0_D0 rotation=270
+I (7617) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (7617) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (7625) rgb_handoff: PASS mode=DOUBLE_PARTIAL_C0_D0 rotation=270 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (7636) rgb_handoff: BEGIN mode=TRIPLE_PARTIAL_C0_D0 rotation=0
+I (8045) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (8046) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (8054) rgb_handoff: PASS mode=TRIPLE_PARTIAL_C0_D0 rotation=0 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (8065) rgb_handoff: BEGIN mode=TRIPLE_PARTIAL_C0_D0 rotation=90
+I (8473) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (8473) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (8481) rgb_handoff: PASS mode=TRIPLE_PARTIAL_C0_D0 rotation=90 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (8492) rgb_handoff: BEGIN mode=TRIPLE_PARTIAL_C0_D0 rotation=180
+I (8897) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (8898) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (8905) rgb_handoff: PASS mode=TRIPLE_PARTIAL_C0_D0 rotation=180 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (8917) rgb_handoff: BEGIN mode=TRIPLE_PARTIAL_C0_D0 rotation=270
+I (9326) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (9326) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (9334) rgb_handoff: PASS mode=TRIPLE_PARTIAL_C0_D0 rotation=270 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (9345) rgb_handoff: BEGIN mode=AUTO_C0_D0 rotation=0
+I (9753) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (9754) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (9762) rgb_handoff: PASS mode=AUTO_C0_D0 rotation=0 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (9772) rgb_handoff: BEGIN mode=AUTO_C0_D0 rotation=90
+I (10181) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (10181) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (10189) rgb_handoff: PASS mode=AUTO_C0_D0 rotation=90 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (10200) rgb_handoff: BEGIN mode=AUTO_C0_D0 rotation=180
+I (10605) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (10606) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (10614) rgb_handoff: PASS mode=AUTO_C0_D0 rotation=180 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (10624) rgb_handoff: BEGIN mode=AUTO_C0_D0 rotation=270
+I (11034) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (11034) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (11042) rgb_handoff: PASS mode=AUTO_C0_D0 rotation=270 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (11052) rgb_handoff: BEGIN mode=DOUBLE_FULL_C0_D50 rotation=0
+I (11624) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (11625) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (11633) rgb_handoff: PASS mode=DOUBLE_FULL_C0_D50 rotation=0 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (11644) rgb_handoff: BEGIN mode=DOUBLE_FULL_C0_D50 rotation=90
+I (12261) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (12262) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (12269) rgb_handoff: PASS mode=DOUBLE_FULL_C0_D50 rotation=90 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (12280) rgb_handoff: BEGIN mode=DOUBLE_FULL_C0_D50 rotation=180
+I (12886) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (12887) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (12894) rgb_handoff: PASS mode=DOUBLE_FULL_C0_D50 rotation=180 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (12905) rgb_handoff: BEGIN mode=DOUBLE_FULL_C0_D50 rotation=270
+I (13516) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (13516) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (13524) rgb_handoff: PASS mode=DOUBLE_FULL_C0_D50 rotation=270 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (13535) rgb_handoff: BEGIN mode=TRIPLE_FULL_C0_D50 rotation=0
+I (14107) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (14108) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (14116) rgb_handoff: PASS mode=TRIPLE_FULL_C0_D50 rotation=0 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (14127) rgb_handoff: BEGIN mode=TRIPLE_FULL_C0_D50 rotation=90
+I (14743) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (14744) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (14751) rgb_handoff: PASS mode=TRIPLE_FULL_C0_D50 rotation=90 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (14762) rgb_handoff: BEGIN mode=TRIPLE_FULL_C0_D50 rotation=180
+I (15368) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (15369) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (15376) rgb_handoff: PASS mode=TRIPLE_FULL_C0_D50 rotation=180 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (15387) rgb_handoff: BEGIN mode=TRIPLE_FULL_C0_D50 rotation=270
+I (15998) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (15998) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (16006) rgb_handoff: PASS mode=TRIPLE_FULL_C0_D50 rotation=270 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (16017) rgb_handoff: BEGIN mode=DOUBLE_DIRECT_C0_D50 rotation=0
+I (16589) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (16590) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (16598) rgb_handoff: PASS mode=DOUBLE_DIRECT_C0_D50 rotation=0 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (16609) rgb_handoff: BEGIN mode=DOUBLE_DIRECT_C0_D50 rotation=90
+I (17227) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (17228) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (17235) rgb_handoff: PASS mode=DOUBLE_DIRECT_C0_D50 rotation=90 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (17246) rgb_handoff: BEGIN mode=DOUBLE_DIRECT_C0_D50 rotation=180
+I (17853) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (17854) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (17861) rgb_handoff: PASS mode=DOUBLE_DIRECT_C0_D50 rotation=180 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (17873) rgb_handoff: BEGIN mode=DOUBLE_DIRECT_C0_D50 rotation=270
+I (18484) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (18484) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (18492) rgb_handoff: PASS mode=DOUBLE_DIRECT_C0_D50 rotation=270 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (18503) rgb_handoff: BEGIN mode=DOUBLE_PARTIAL_C0_D50 rotation=0
+I (19077) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (19078) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (19086) rgb_handoff: PASS mode=DOUBLE_PARTIAL_C0_D50 rotation=0 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (19097) rgb_handoff: BEGIN mode=DOUBLE_PARTIAL_C0_D50 rotation=90
+I (19705) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (19706) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (19713) rgb_handoff: PASS mode=DOUBLE_PARTIAL_C0_D50 rotation=90 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (19725) rgb_handoff: BEGIN mode=DOUBLE_PARTIAL_C0_D50 rotation=180
+I (20312) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (20313) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (20321) rgb_handoff: PASS mode=DOUBLE_PARTIAL_C0_D50 rotation=180 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (20332) rgb_handoff: BEGIN mode=DOUBLE_PARTIAL_C0_D50 rotation=270
+I (20934) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (20934) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (20942) rgb_handoff: PASS mode=DOUBLE_PARTIAL_C0_D50 rotation=270 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (20953) rgb_handoff: BEGIN mode=TRIPLE_PARTIAL_C0_D50 rotation=0
+I (21527) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (21528) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (21536) rgb_handoff: PASS mode=TRIPLE_PARTIAL_C0_D50 rotation=0 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (21547) rgb_handoff: BEGIN mode=TRIPLE_PARTIAL_C0_D50 rotation=90
+I (22157) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (22158) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (22165) rgb_handoff: PASS mode=TRIPLE_PARTIAL_C0_D50 rotation=90 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (22177) rgb_handoff: BEGIN mode=TRIPLE_PARTIAL_C0_D50 rotation=180
+I (22765) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (22766) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (22774) rgb_handoff: PASS mode=TRIPLE_PARTIAL_C0_D50 rotation=180 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (22785) rgb_handoff: BEGIN mode=TRIPLE_PARTIAL_C0_D50 rotation=270
+I (23390) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (23390) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (23398) rgb_handoff: PASS mode=TRIPLE_PARTIAL_C0_D50 rotation=270 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (23409) rgb_handoff: BEGIN mode=AUTO_C0_D50 rotation=0
+I (23982) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (23983) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (23991) rgb_handoff: PASS mode=AUTO_C0_D50 rotation=0 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (24001) rgb_handoff: BEGIN mode=AUTO_C0_D50 rotation=90
+I (24609) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (24610) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (24617) rgb_handoff: PASS mode=AUTO_C0_D50 rotation=90 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (24628) rgb_handoff: BEGIN mode=AUTO_C0_D50 rotation=180
+I (25213) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (25214) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (25222) rgb_handoff: PASS mode=AUTO_C0_D50 rotation=180 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (25232) rgb_handoff: BEGIN mode=AUTO_C0_D50 rotation=270
+I (25834) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (25834) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (25842) rgb_handoff: PASS mode=AUTO_C0_D50 rotation=270 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (25853) rgb_handoff: BEGIN mode=DOUBLE_FULL_C1_D0 rotation=0
+I (26242) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (26242) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (26250) rgb_handoff: PASS mode=DOUBLE_FULL_C1_D0 rotation=0 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (26261) rgb_handoff: BEGIN mode=DOUBLE_FULL_C1_D0 rotation=90
+I (26669) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (26670) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (26678) rgb_handoff: PASS mode=DOUBLE_FULL_C1_D0 rotation=90 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (26688) rgb_handoff: BEGIN mode=DOUBLE_FULL_C1_D0 rotation=180
+I (27093) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (27094) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (27102) rgb_handoff: PASS mode=DOUBLE_FULL_C1_D0 rotation=180 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (27113) rgb_handoff: BEGIN mode=DOUBLE_FULL_C1_D0 rotation=270
+I (27523) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (27524) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (27531) rgb_handoff: PASS mode=DOUBLE_FULL_C1_D0 rotation=270 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (27542) rgb_handoff: BEGIN mode=TRIPLE_FULL_C1_D0 rotation=0
+I (27950) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (27951) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (27959) rgb_handoff: PASS mode=TRIPLE_FULL_C1_D0 rotation=0 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (27970) rgb_handoff: BEGIN mode=TRIPLE_FULL_C1_D0 rotation=90
+I (28378) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (28379) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (28387) rgb_handoff: PASS mode=TRIPLE_FULL_C1_D0 rotation=90 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (28398) rgb_handoff: BEGIN mode=TRIPLE_FULL_C1_D0 rotation=180
+I (28802) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (28803) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (28811) rgb_handoff: PASS mode=TRIPLE_FULL_C1_D0 rotation=180 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (28822) rgb_handoff: BEGIN mode=TRIPLE_FULL_C1_D0 rotation=270
+I (29231) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (29232) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (29239) rgb_handoff: PASS mode=TRIPLE_FULL_C1_D0 rotation=270 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (29250) rgb_handoff: BEGIN mode=DOUBLE_DIRECT_C1_D0 rotation=0
+I (29658) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (29659) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (29667) rgb_handoff: PASS mode=DOUBLE_DIRECT_C1_D0 rotation=0 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (29678) rgb_handoff: BEGIN mode=DOUBLE_DIRECT_C1_D0 rotation=90
+I (30086) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (30087) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (30095) rgb_handoff: PASS mode=DOUBLE_DIRECT_C1_D0 rotation=90 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (30106) rgb_handoff: BEGIN mode=DOUBLE_DIRECT_C1_D0 rotation=180
+I (30510) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (30511) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (30519) rgb_handoff: PASS mode=DOUBLE_DIRECT_C1_D0 rotation=180 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (30530) rgb_handoff: BEGIN mode=DOUBLE_DIRECT_C1_D0 rotation=270
+I (30939) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (30940) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (30947) rgb_handoff: PASS mode=DOUBLE_DIRECT_C1_D0 rotation=270 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (30958) rgb_handoff: BEGIN mode=DOUBLE_PARTIAL_C1_D0 rotation=0
+I (31367) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (31367) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (31375) rgb_handoff: PASS mode=DOUBLE_PARTIAL_C1_D0 rotation=0 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (31386) rgb_handoff: BEGIN mode=DOUBLE_PARTIAL_C1_D0 rotation=90
+I (31794) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (31795) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (31803) rgb_handoff: PASS mode=DOUBLE_PARTIAL_C1_D0 rotation=90 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (31814) rgb_handoff: BEGIN mode=DOUBLE_PARTIAL_C1_D0 rotation=180
+I (32218) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (32219) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (32227) rgb_handoff: PASS mode=DOUBLE_PARTIAL_C1_D0 rotation=180 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (32238) rgb_handoff: BEGIN mode=DOUBLE_PARTIAL_C1_D0 rotation=270
+I (32647) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (32648) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (32655) rgb_handoff: PASS mode=DOUBLE_PARTIAL_C1_D0 rotation=270 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (32667) rgb_handoff: BEGIN mode=TRIPLE_PARTIAL_C1_D0 rotation=0
+I (33075) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (33075) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (33083) rgb_handoff: PASS mode=TRIPLE_PARTIAL_C1_D0 rotation=0 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (33094) rgb_handoff: BEGIN mode=TRIPLE_PARTIAL_C1_D0 rotation=90
+I (33502) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (33503) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (33511) rgb_handoff: PASS mode=TRIPLE_PARTIAL_C1_D0 rotation=90 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (33522) rgb_handoff: BEGIN mode=TRIPLE_PARTIAL_C1_D0 rotation=180
+I (33926) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (33927) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (33935) rgb_handoff: PASS mode=TRIPLE_PARTIAL_C1_D0 rotation=180 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (33946) rgb_handoff: BEGIN mode=TRIPLE_PARTIAL_C1_D0 rotation=270
+I (34355) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (34356) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (34363) rgb_handoff: PASS mode=TRIPLE_PARTIAL_C1_D0 rotation=270 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (34375) rgb_handoff: BEGIN mode=AUTO_C1_D0 rotation=0
+I (34783) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (34783) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (34791) rgb_handoff: PASS mode=AUTO_C1_D0 rotation=0 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (34802) rgb_handoff: BEGIN mode=AUTO_C1_D0 rotation=90
+I (35211) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (35212) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (35220) rgb_handoff: PASS mode=AUTO_C1_D0 rotation=90 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (35230) rgb_handoff: BEGIN mode=AUTO_C1_D0 rotation=180
+I (35635) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (35636) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (35644) rgb_handoff: PASS mode=AUTO_C1_D0 rotation=180 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (35654) rgb_handoff: BEGIN mode=AUTO_C1_D0 rotation=270
+I (36064) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (36065) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (36073) rgb_handoff: PASS mode=AUTO_C1_D0 rotation=270 frames=4 driver_events=5 early_events=0 worker_names=2 pixels=ALL
+I (36083) rgb_handoff: BEGIN mode=DOUBLE_FULL_C1_D50 rotation=0
+I (36657) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (36657) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (36665) rgb_handoff: PASS mode=DOUBLE_FULL_C1_D50 rotation=0 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (36676) rgb_handoff: BEGIN mode=DOUBLE_FULL_C1_D50 rotation=90
+I (37294) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (37294) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (37302) rgb_handoff: PASS mode=DOUBLE_FULL_C1_D50 rotation=90 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (37313) rgb_handoff: BEGIN mode=DOUBLE_FULL_C1_D50 rotation=180
+I (37919) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (37920) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (37927) rgb_handoff: PASS mode=DOUBLE_FULL_C1_D50 rotation=180 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (37938) rgb_handoff: BEGIN mode=DOUBLE_FULL_C1_D50 rotation=270
+I (38549) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (38549) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (38557) rgb_handoff: PASS mode=DOUBLE_FULL_C1_D50 rotation=270 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (38568) rgb_handoff: BEGIN mode=TRIPLE_FULL_C1_D50 rotation=0
+I (39140) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (39141) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (39149) rgb_handoff: PASS mode=TRIPLE_FULL_C1_D50 rotation=0 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (39160) rgb_handoff: BEGIN mode=TRIPLE_FULL_C1_D50 rotation=90
+I (39775) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (39775) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (39783) rgb_handoff: PASS mode=TRIPLE_FULL_C1_D50 rotation=90 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (39794) rgb_handoff: BEGIN mode=TRIPLE_FULL_C1_D50 rotation=180
+I (40399) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (40400) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (40407) rgb_handoff: PASS mode=TRIPLE_FULL_C1_D50 rotation=180 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (40418) rgb_handoff: BEGIN mode=TRIPLE_FULL_C1_D50 rotation=270
+I (41029) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (41029) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (41037) rgb_handoff: PASS mode=TRIPLE_FULL_C1_D50 rotation=270 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (41048) rgb_handoff: BEGIN mode=DOUBLE_DIRECT_C1_D50 rotation=0
+I (41622) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (41622) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (41630) rgb_handoff: PASS mode=DOUBLE_DIRECT_C1_D50 rotation=0 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (41641) rgb_handoff: BEGIN mode=DOUBLE_DIRECT_C1_D50 rotation=90
+I (42260) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (42260) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (42268) rgb_handoff: PASS mode=DOUBLE_DIRECT_C1_D50 rotation=90 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (42279) rgb_handoff: BEGIN mode=DOUBLE_DIRECT_C1_D50 rotation=180
+I (42886) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (42887) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (42894) rgb_handoff: PASS mode=DOUBLE_DIRECT_C1_D50 rotation=180 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (42906) rgb_handoff: BEGIN mode=DOUBLE_DIRECT_C1_D50 rotation=270
+I (43516) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (43516) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=4 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (43524) rgb_handoff: PASS mode=DOUBLE_DIRECT_C1_D50 rotation=270 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (43535) rgb_handoff: BEGIN mode=DOUBLE_PARTIAL_C1_D50 rotation=0
+I (44110) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (44111) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (44119) rgb_handoff: PASS mode=DOUBLE_PARTIAL_C1_D50 rotation=0 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (44130) rgb_handoff: BEGIN mode=DOUBLE_PARTIAL_C1_D50 rotation=90
+I (44742) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (44743) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (44751) rgb_handoff: PASS mode=DOUBLE_PARTIAL_C1_D50 rotation=90 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (44762) rgb_handoff: BEGIN mode=DOUBLE_PARTIAL_C1_D50 rotation=180
+I (45353) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (45354) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (45362) rgb_handoff: PASS mode=DOUBLE_PARTIAL_C1_D50 rotation=180 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (45373) rgb_handoff: BEGIN mode=DOUBLE_PARTIAL_C1_D50 rotation=270
+I (45978) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (45978) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (45986) rgb_handoff: PASS mode=DOUBLE_PARTIAL_C1_D50 rotation=270 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (45997) rgb_handoff: BEGIN mode=TRIPLE_PARTIAL_C1_D50 rotation=0
+I (46572) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (46573) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (46581) rgb_handoff: PASS mode=TRIPLE_PARTIAL_C1_D50 rotation=0 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (46592) rgb_handoff: BEGIN mode=TRIPLE_PARTIAL_C1_D50 rotation=90
+I (47202) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (47203) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (47210) rgb_handoff: PASS mode=TRIPLE_PARTIAL_C1_D50 rotation=90 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (47222) rgb_handoff: BEGIN mode=TRIPLE_PARTIAL_C1_D50 rotation=180
+I (47813) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (47814) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (47822) rgb_handoff: PASS mode=TRIPLE_PARTIAL_C1_D50 rotation=180 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (47833) rgb_handoff: BEGIN mode=TRIPLE_PARTIAL_C1_D50 rotation=270
+I (48438) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (48438) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (48446) rgb_handoff: PASS mode=TRIPLE_PARTIAL_C1_D50 rotation=270 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (48457) rgb_handoff: BEGIN mode=AUTO_C1_D50 rotation=0
+I (49031) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (49032) present_v2: executor=dma2d cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (49040) rgb_handoff: PASS mode=AUTO_C1_D50 rotation=0 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (49050) rgb_handoff: BEGIN mode=AUTO_C1_D50 rotation=90
+I (49659) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (49659) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (49667) rgb_handoff: PASS mode=AUTO_C1_D50 rotation=90 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (49678) rgb_handoff: BEGIN mode=AUTO_C1_D50 rotation=180
+I (50266) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (50267) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=40 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (50275) rgb_handoff: PASS mode=AUTO_C1_D50 rotation=180 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (50285) rgb_handoff: BEGIN mode=AUTO_C1_D50 rotation=270
+I (50889) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (50889) present_v2: executor=ppa cpu_attempts=0 hardware_attempts=64 dma2d_create=ESP_OK ppa_create=ESP_OK
+I (50897) rgb_handoff: PASS mode=AUTO_C1_D50 rotation=270 frames=4 driver_events=5 early_events=5 worker_names=2 pixels=ALL
+I (50910) rgb_handoff: RGB_HANDOFF_SUITE_PASS board=S31-Korvo stock RGB 800x480 cases=96 frames_per_case=4
+I (50917) main_task: Returned from app_main()

@@ -22,9 +22,12 @@ struct esp_display_present_engine {
     present_mutex_t *gate;
     present_os_event_t *changed;
     present_os_event_t *work;
-    present_worker_t *worker;
-    present_task_t sender_task;
-    bool sender_ready, background_gram;
+    struct {
+        present_worker_t *handle;
+        present_task_t task;
+        bool ready;
+    } backend_worker;
+    bool background_gram;
     present_lock_t control;
     present_transfer_tracker_t transfer;
     bool exit_requested;
@@ -102,7 +105,7 @@ static uint32_t transfer_wait_ms(esp_display_present_engine_t *presenter)
     return present_transfer_wait_ms(&presenter->transfer, &presenter->control);
 }
 
-static bool copy_progress(void *user, bool isr)
+static bool pixel_progress(void *user, bool isr)
 {
     esp_display_present_engine_t *presenter = user;
     bool yield = notify(presenter, isr);
@@ -129,8 +132,8 @@ static esp_err_t panel_attach(void *context, esp_display_present_panel_event_fn 
     return presenter->panel.attach(presenter->panel.context, panel_event, presenter);
 }
 
-/* GRAM SUBMITTING slots stay pinned while the sender lends the task gate.
- * Backend task state is resolved only after reacquiring it. Stop joins sender
+/* GRAM SUBMITTING slots stay pinned while the backend_worker lends the task gate.
+ * Backend task state is resolved only after reacquiring it. Stop joins backend_worker
  * before quiesce/destruction, so the adapter and callback context remain live. */
 static esp_display_present_tx_result_t execute_panel_submit(esp_display_present_engine_t *presenter,
                                                             const esp_display_present_surface_t *surface,
@@ -150,15 +153,15 @@ static esp_display_present_tx_result_t panel_submit(void *context, const esp_dis
                                                     const esp_display_present_rect_t *area, uint64_t cookie)
 {
     esp_display_present_engine_t *presenter = context;
-    /* Foreground query/acquire may service READY slots. Only the sender can
+    /* Foreground query/acquire may service READY slots. Only the backend_worker can
      * enter the driver; this also serializes submissions while its gate is lent. */
     if (presenter->background_gram && presenter->state != ESP_DISPLAY_PRESENT_ENGINE_RUNNING) {
         return (esp_display_present_tx_result_t) {
             ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_STATE
         };
     }
-    if (presenter->background_gram && (!presenter->sender_ready ||
-                                       !present_same_task(presenter->sender_task, present_current_task()))) {
+    if (presenter->background_gram && (!presenter->backend_worker.ready ||
+                                       !present_same_task(presenter->backend_worker.task, present_current_task()))) {
         (void)present_event_signal(presenter->work, false);
         return (esp_display_present_tx_result_t) {
             ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_NO_MEM
@@ -230,13 +233,14 @@ static esp_err_t pump_backend(esp_display_present_engine_t *presenter)
     return presenter->ops->service(presenter->backend);
 }
 
-static void sender(void *context)
+/* Advances backend state and transfer deadlines; not limited to sending. */
+static void backend_worker(void *context)
 {
     esp_display_present_engine_t *presenter = context;
     if (presenter->background_gram) {
         (void)present_mutex_take(presenter->gate, UINT32_MAX);
-        presenter->sender_task = present_current_task();
-        presenter->sender_ready = true;
+        presenter->backend_worker.task = present_current_task();
+        presenter->backend_worker.ready = true;
         present_mutex_give(presenter->gate);
     }
     for (;;) {
@@ -258,7 +262,7 @@ static void sender(void *context)
 
 static void free_presenter(esp_display_present_engine_t *presenter)
 {
-    present_worker_destroy(presenter->worker);
+    present_worker_destroy(presenter->backend_worker.handle);
     present_event_destroy(presenter->work);
     present_event_destroy(presenter->changed);
     present_mutex_destroy(presenter->gate);
@@ -443,9 +447,9 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
     presenter->progress_user = config->backend.progress_user;
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
     if (config->background_service) {
-        presenter->worker = present_worker_create(sender, presenter, config->worker_stack_bytes ? config->worker_stack_bytes : 4096,
-                                                  config->worker_priority ? config->worker_priority : 5);
-        if (!presenter->worker) {
+        presenter->backend_worker.handle = present_worker_create("present_backend", backend_worker, presenter, config->worker_stack_bytes ? config->worker_stack_bytes : 4096,
+                                                                 config->worker_priority ? config->worker_priority : 5);
+        if (!presenter->backend_worker.handle) {
             present_mutex_give(presenter->gate);
             free_presenter(presenter);
             return ESP_ERR_NO_MEM;
@@ -456,7 +460,7 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
     backend.panel = (esp_display_present_panel_adapter_t) {
         presenter, panel_attach, panel_submit, panel_quiesce
     };
-    backend.on_progress = copy_progress;
+    backend.on_progress = pixel_progress;
     backend.progress_user = presenter;
     esp_err_t ret = presenter->ops->create_scheduled ?
                     presenter->ops->create_scheduled(&backend, &presenter->backend, config->background_service) :
@@ -464,8 +468,8 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
     if (ret != ESP_OK) {
         request_exit(presenter);
         present_mutex_give(presenter->gate);
-        if (presenter->worker) {
-            (void)present_worker_join(presenter->worker, UINT32_MAX);
+        if (presenter->backend_worker.handle) {
+            (void)present_worker_join(presenter->backend_worker.handle, UINT32_MAX);
         }
         free_presenter(presenter);
         return ret;
@@ -1062,11 +1066,11 @@ esp_err_t present_presenter_control_stop(esp_display_present_engine_t *presenter
         return ret;
     }
     uint64_t start = present_now_ms();
-    /* Publish closing before joining sender. Private control callers have
+    /* Publish closing before joining backend_worker. Private control callers have
      * stopped the producer; task-neutral observation reads this atomically. */
     presenter->state = ESP_DISPLAY_PRESENT_ENGINE_CLOSING;
     request_exit(presenter);
-    if (presenter->worker && !present_worker_join(presenter->worker, remaining(start, timeout))) {
+    if (presenter->backend_worker.handle && !present_worker_join(presenter->backend_worker.handle, remaining(start, timeout))) {
         return ESP_ERR_TIMEOUT;
     }
     if (!present_mutex_take(presenter->gate, remaining(start, timeout))) {
