@@ -1,3 +1,5 @@
+> Historical measurements: the FB_IRAM Kconfig option and whole-object linker mapping were removed on 2026-11-10. These results describe the older configuration, not the current default.
+
 # S3 双 FB 剩余吞吐修复：热路径内部 RAM 放置
 
 ## 结果

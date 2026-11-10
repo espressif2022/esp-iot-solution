@@ -21,7 +21,7 @@ src/
 - 私有头文件与所属模块一起放置。引用使用相对src根目录的模块路径，例如`core/present_engine.h`、`platform/present_os.h`。构建只添加src根目录，不把所有模块目录加入搜索路径。
 - include目录继续只承载公共API。esp_lv_present及维护中的测试依赖私有接口时，显式引用模块路径；这些私有路径不承诺对外兼容。
 - 新生产C文件加入src/sources.cmake相应组。IDF与Host使用相同engine清单；Host的独立executor测试使用相同pixel/OS组，fake资源测试复用resources组。实际TE GPIO同步由IDF使用，Host依旧使用原有shim和专项测试。
-- 本次保留文件基名、函数名和linker.lf映射。移动热路径后仍须检查目标ELF的IRAM放置，不能仅根据文件名推断映射生效。
+- 文件分层不改变函数职责。已移除 S3 的 FB_IRAM Kconfig 和整组对象 noflash 映射；ISR 及源文件显式 IRAM_ATTR 保留。目标代码位置以实际 ELF 为准。
 - dev/evidence内历史快照和日志保持原样；它们记录历史路径，不作为维护源码入口。
 
 ## 私有接口职责

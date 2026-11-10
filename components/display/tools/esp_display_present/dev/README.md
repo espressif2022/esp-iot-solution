@@ -28,7 +28,7 @@
 
 ## S3 FB_IRAM 开关对照（2026-11-09）
 
-[完整24项帧率／内存对照](evidence/present-s3-fb-iram-on-off-20261109/comparison.html)：同版本源码，SDK唯一差别为FB_IRAM y/n。关闭增加内部堆21.36KiB；当前32KiB指令缓存/XIP配置下，FULL/DIRECT基本接近，PARTIAL/AUTO低1～3FPS。关闭只用于隔离补测，组件默认仍开启；原固件整片恢复校验通过。
+[完整24项帧率／内存对照](evidence/present-s3-fb-iram-on-off-20261109/comparison.html)：同版本源码，SDK唯一差别为FB_IRAM y/n。关闭增加内部堆21.36KiB；当前32KiB指令缓存/XIP配置下，FULL/DIRECT基本接近，PARTIAL/AUTO低1～3FPS。该历史轮关闭只用于隔离补测，当时组件默认开启，原固件整片恢复校验通过。2026-11-10 已移除该 Kconfig 和整组对象 IRAM 映射，历史数据仍按当时配置保留。
 
 ## 首轮五板基线（历史记录，2026-11-09）
 

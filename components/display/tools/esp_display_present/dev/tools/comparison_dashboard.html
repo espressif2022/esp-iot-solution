@@ -13,24 +13,26 @@
 </style>
 </head>
 <body><main>
-<header><div class="eyebrow">DISPLAY BENCHMARK · XIP ON</div><h1>显示性能，按板卡切换对比</h1><p class="lede">S3 RGB、S31 RGB、P4 MIPI DSI · 0° / 90° / 180° / 270° · present 与 adapter。顶部 Tab 切换板卡，内存按模式查看，诊断与逐场景分数按需展开。</p></header>
+<header><div class="eyebrow">DISPLAY BENCHMARK · XIP ON</div><h1>显示性能，按板卡切换对比</h1><p class="lede">S3 RGB、S31 RGB、P4 MIPI DSI · 0° / 90° / 180° / 270° · present 与 adapter。顶部 Tab 切换板卡，内存按模式查看，诊断与逐场景分数按需展开。</p><p class="help" id="round-origin"></p></header>
 <div class="metrics" id="metrics"></div>
 <div class="caution" id="caution"></div>
 <div class="toolbar"><div class="board-tabs" role="tablist" aria-label="选择测试板卡" id="board-nav"></div><div class="actions"><button type="button" id="expand-all">展开当前板</button><button type="button" id="collapse-all">收起当前板</button></div></div>
 <div id="boards"></div>
 <details class="panel" id="method"><summary><span class="summary-name"><span class="chevron"></span>数据口径与检测边界</span><span class="hint">干净驱动成绩 / 独立诊断</span></summary><div class="panel-body">
-<p>正式帧率和内存取干净 IDF 轮，交接检测取独立轻量诊断轮，不混用成绩。每项完整 16 场景并成功关闭；仅 XIP ON，排除 NONE，adapter 不支持的 AUTO 记“−”。本轮全部四角度重新完整运行，未用历史 0° 或 XIP OFF 成绩补表。</p>
-<p>内存仅展示四个剩余值：打开前、打开后、运行最小、关闭后。单位 KiB，剩余越多越好；present 的箭头表示相对 adapter 的差值。运行最小取该项局部低水位，内部 RAM 与 PSRAM 的最低点不一定同时发生。它不是“已用内存”，也不是 ELF 静态段统计。</p>
+<p>正式帧率和内存取干净 IDF 轮，交接检测取独立轻量诊断轮，不混用成绩。每项完整 16 场景并成功关闭；仅 XIP ON，排除 NONE，adapter 不支持的 AUTO 记“−”。<span id="round-note"></span></p>
+<p>内存默认展示四个剩余值，可切换“堆已用”（堆容量−剩余，运行期取局部峰值）。剩余越多越好，已用与静态占用越少越好；箭头始终显示 present−adapter，颜色按当前指标判断。ELF 静态段与堆分开列出，dummy 别名不重复计算，RTC / P4 SPM 不计入普通 SRAM 段。内部 RAM 与 PSRAM 的最低点不一定同时发生。</p>
 <p>S3 使用实际 bounce 源；S31 使用 AXI 预取描述符所属 FB；P4 使用实际装载 DMA 帧的独立快照。后两者不等于逐像素扫描证据。地址命中按检查点累计，同次提前交接可产生多条记录，不等于多次独立撕裂；零命中只描述已覆盖检查点。unknown 单列，不算正常。</p>
 <p>adapter 的 0° 双缓冲 FULL/DIRECT 检查独立确认等待；旋转及其他模式检查 pipeline 交还，不适用项明确标出。诊断窗口不含 open/close，丢弃入口首半帧，但包含结束统计日志。S3 供数不足/既有重启与其他板硬件 underrun 分别计数。只检测、记录，没有修复、assert 或故障注入。</p>
 <div class="evidence-links" id="evidence-links"></div></div></details>
-<footer><p id="provenance"></p><p>绿色箭头：present 帧率或剩余内存更高；红色箭头：更低。供数不足、地址交接命中和 unknown 独立解释，详见各板诊断及原始证据。</p></footer>
+<footer><p id="provenance"></p><p>绿色：present 指标更优（帧率、剩余越高越好；已用、静态占用越低越好）。箭头方向仅表示数值差值正负。供数不足、地址交接命中和 unknown 独立解释，详见各板诊断及原始证据。</p></footer>
 <noscript><p class="noscript">本页需要 JavaScript 才能切换模式；可直接查看同目录的 comparison.csv 和 matrix-data.json。</p></noscript>
 </main>
 <script type="application/json" id="report-data">__REPORT_DATA__</script>
 <script>
 'use strict';
 const D=JSON.parse(document.getElementById('report-data').textContent);
+document.getElementById('round-note').textContent=D.roundNote;
+document.getElementById('round-origin').textContent=D.roundNote;
 const MODES=D.modes,ANGLES=D.angles,IMPL=['present','adapter'];
 const PHASES=[['before_open','打开前剩余'],['after_open','打开后剩余'],['after_run','运行最小剩余'],['after_close','关闭后剩余']];
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
@@ -38,23 +40,29 @@ const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const row=(b,cohort,impl,mode,angle)=>b.cohorts[cohort][impl].find(r=>r.mode===mode&&r.rotation===angle);
 const hits=r=>r?.address? r.address.release_active+r.address.write_active+r.address.confirm_wrong:0;
 const interesting=r=>hits(r)>0||(r?.address?.raced||0)>0||(r?.supply?.measured_short||0)>0||(r?.supply?.measured_restarts||0)>0||(r?.address?.underruns||0)>0;
-function value(n,other,precision=0){
+function value(n,other,precision=0,higherBetter=true){
  let text=`<span class="value">${n.toFixed(precision)}</span>`;
- if(other!==null&&other!==undefined){const diff=n-other,digits=precision===2&&Math.abs(diff)>0&&Math.abs(diff)<0.01?3:precision;const cls=diff>0?'up':diff<0?'down':'same';text+=`<span class="delta ${cls}">${diff>0?'⬆️ +':diff<0?'⬇️ −':'＝ '}${Math.abs(diff).toFixed(digits)}</span>`}return text;
+ if(other!==null&&other!==undefined){const diff=n-other,digits=precision===2&&Math.abs(diff)>0&&Math.abs(diff)<0.01?3:precision;const cls=diff===0?'same':((diff>0)===higherBetter?'up':'down');text+=`<span class="delta ${cls}">${diff>0?'⬆️ +':diff<0?'⬇️ −':'＝ '}${Math.abs(diff).toFixed(digits)}</span>`}return text;
 }
-function pairedCells(b,cohort,mode,angle,getter,precision=0){
+function pairedCells(b,cohort,mode,angle,getter,precision=0,higherBetter=true){
  const p=row(b,cohort,'present',mode,angle),a=row(b,cohort,'adapter',mode,angle);
- return IMPL.map(i=>{const r=i==='present'?p:a;let text='−';if(r.status==='PASS'){const n=getter(r);text=n===undefined?'−':value(n,i==='present'&&a.status==='PASS'?getter(a):null,precision)}return `<td class="${i==='present'?'p':'a'}" data-impl="${i}" data-angle="${angle}">${text}</td>`}).join('');
+ return IMPL.map(i=>{const r=i==='present'?p:a;let text='−';if(r.status==='PASS'){const n=getter(r);text=n===undefined?'−':value(n,i==='present'&&a.status==='PASS'?getter(a):null,precision,higherBetter)}return `<td class="${i==='present'?'p':'a'}" data-impl="${i}" data-angle="${angle}">${text}</td>`}).join('');
 }
 function header(label){return `<thead><tr><th rowspan="2" scope="col">${label}</th>${ANGLES.map(a=>`<th colspan="2" scope="colgroup">${a}°</th>`).join('')}</tr><tr>${ANGLES.map(()=>'<th scope="col">present</th><th scope="col">adapter</th>').join('')}</tr></thead>`}
 function select(id,cls,label){return `<label class="control" for="${id}">${label}<select id="${id}" class="${cls}">${MODES.map(m=>`<option value="${m}">${m}</option>`).join('')}</select></label>`}
 function legend(){return '<span class="legend"><span class="p-dot"></span>present<span class="a-dot"></span>adapter · 差值在 present 一侧</span>'}
 function panel(cls,title,hint,content,open=false){return `<details class="panel ${cls}" ${open?'open':''}><summary><span class="summary-name"><span class="chevron"></span>${title}</span><span class="hint">${hint}</span></summary><div class="panel-body">${content}</div></details>`}
+function renderAccounting(b,root){
+ const accounts=b.memoryAccounting;if(!accounts){$('.accounting',root).textContent='该历史记录未归档 ELF 静态统计；不从剩余堆反推静态占用。';return}
+ const jpegLinked=Object.values(accounts).some(a=>a.jpeg_components.length||a.jpeg_symbols.length);
+ const fields=[['ELF IRAM（含对齐）',x=>x.iram_bytes,false],['ELF DRAM 静态 data / bss / noinit',x=>x.dram_static_bytes,false],['普通 SRAM 段小计',x=>x.sram_sections_bytes,false],['内部 8-bit 堆容量',x=>x.suite_baselines.before_init.internal_total,true],['显示初始化前堆已用',x=>x.suite_baselines.before_init.internal_total-x.suite_baselines.before_init.internal_free,false],['显示初始化后堆已用',x=>x.suite_baselines.after_init.internal_total-x.suite_baselines.after_init.internal_free,false]];
+ $('.accounting',root).innerHTML='<div class="unit-title"><strong>整套固件 SRAM 账目</strong><span class="hint">KiB · 静态占用 / 堆容量分开</span></div><div class="scroll"><table class="static-memory"><thead><tr><th>指标</th><th>present</th><th>adapter</th></tr></thead><tbody>'+fields.map(([label,get,high])=>`<tr><td>${label}</td><td class="p">${value(get(accounts.present)/1024,get(accounts.adapter)/1024,2,high)}</td><td class="a">${value(get(accounts.adapter)/1024,null,2,high)}</td></tr>`).join('')+`</tbody></table></div><p class="help">这是整套测试固件的账目，包含驱动、LVGL、任务与应用，不是组件独占内存。静态段小计不等于芯片物理总量；缓存、保留区及地址对齐还会影响堆容量。adapter 的 LVGL 任务在显示初始化阶段创建，present 在首次打开时初始化 LVGL；不能直接用每项打开增量判断组件总开销。${jpegLinked?'JPEG 链接情况以归档 ELF 及 memory-accounting.json 为准，不作假定扣除。':'本批最终 ELF 未链接 JPEG 解码库，不扣除假定的 JPEG 占用。'}</p>`;
+}
 function renderMemory(b,root){
- const mode=$('.memory-mode',root).value;let html='';
+ const mode=$('.memory-mode',root).value,used=$('.memory-metric',root).value==='used';let html='';
  for(const [heap,label] of [['internal','内部 RAM'],['psram','PSRAM']]){
-  html+=`<div class="unit-title"><strong>${label}</strong><span class="hint">剩余 · KiB · 越多越好</span></div><div class="scroll" tabindex="0" role="region" aria-label="横向滚动对比表"><table class="memory" data-heap="${heap}">${header('时点')}<tbody>`;
-  for(const [phase,label] of PHASES){const key=heap+(phase==='after_run'?'_min_free':'_free');html+=`<tr data-phase="${phase}"><td>${label}</td>${ANGLES.map(a=>pairedCells(b,'clean',mode,a,r=>r.memory[phase][key]/1024,2)).join('')}</tr>`}
+  html+=`<div class="unit-title"><strong>${label}</strong><span class="hint">${used?'堆已用 · KiB · 越少越好':'剩余 · KiB · 越多越好'}</span></div><div class="scroll" tabindex="0" role="region" aria-label="横向滚动对比表"><table class="memory" data-heap="${heap}">${header('时点')}<tbody>`;
+  for(const [phase,label] of PHASES){const key=heap+(phase==='after_run'?'_min_free':'_free'),title=used?(phase==='after_run'?'运行峰值堆已用':label.replace('剩余','堆已用')):label;html+=`<tr data-phase="${phase}"><td>${title}</td>${ANGLES.map(a=>pairedCells(b,'clean',mode,a,r=>(used?r.memory[phase][heap+'_total']-r.memory[phase][key]:r.memory[phase][key])/1024,2,!used)).join('')}</tr>`}
   html+='</tbody></table></div>';
  }
  $('.memory-tables',root).innerHTML=html;
@@ -85,16 +93,16 @@ function buildBoard(b,index){
  const badges=`<span class="badge">XIP ON · 正式 44 项</span>${affected.size?`<span class="badge risk">${affected.size} 个组合有地址命中</span>`:'<span class="badge">已覆盖点未检出地址命中</span>'}${unknown?`<span class="badge warn">unknown ${unknown}</span>`:''}${supply?'<span class="badge warn">有供数不足记录</span>':''}`;
  const el=document.createElement('section');el.className='board';el.id=b.id;el.hidden=index!==0;el.setAttribute('role','tabpanel');el.setAttribute('aria-labelledby','tab-'+b.id);
  const fpsTable=`<div class="scroll" tabindex="0" role="region" aria-label="横向滚动对比表"><table class="fps">${header('模式')}<tbody>${MODES.map(m=>`<tr data-mode="${m}"><td>${m}</td>${ANGLES.map(a=>pairedCells(b,'clean',m,a,r=>r.lvgl_fps)).join('')}</tr>`).join('')}</tbody></table></div><p class="help">LVGL 16 场景综合分 · 越高越好 · 每项完整结束。综合分不等于屏幕扫描 Hz；adapter AUTO 不支持，记“−”。</p>`;
- const memory=`<div class="controls">${select(b.id+'-memory-mode','memory-mode','选择模式')}<span class="hint memory-selection"></span></div><div class="memory-tables"></div><p class="help">四个时点均为剩余量。运行最小为该项局部低水位，RAM 与 PSRAM 最低点不一定同时出现。小于 0.01 KiB 的非零差值显示三位小数。</p>`;
+ const memory=`<div class="accounting"></div><div class="controls">${select(b.id+'-memory-mode','memory-mode','选择模式')}<label class="control">指标<select class="memory-metric"><option value="free">剩余（越多越好）</option><option value="used">堆已用（越少越好）</option></select></label><span class="hint memory-selection"></span></div><div class="memory-tables"></div><p class="help">剩余与堆已用都不含 ELF 静态段；已用 = 该固件实际堆容量 − 剩余。运行期取该项局部低水位 / 峰值，RAM 与 PSRAM 最低点不一定同时出现。小于 0.01 KiB 的非零差值显示三位小数。</p>`;
  const diag=`<div class="controls"><label class="check-label"><input class="anomalies-only" type="checkbox" checked>仅看有记录的组合</label><span class="hint diag-count"></span></div><div class="scroll" tabindex="0" role="region" aria-label="横向滚动对比表"><table class="diagnostics"><thead><tr><th scope="col">模式 · 角度</th><th scope="col">present</th><th scope="col">adapter</th></tr></thead><tbody></tbody></table></div><div class="empty diag-empty" hidden>已覆盖检查点没有相关记录，可取消筛选查看全部组合。</div><p class="help">筛选包含地址命中、unknown、供数不足、既有重启和硬件 underrun；累计计数不截断，地址样本每项最多保存前 16 条。“不适用”代表该路径无此 hook，不表示零异常。</p><p class="help method">${esc(b.method)}</p>`;
  const scenes=`<div class="controls">${select(b.id+'-scene-mode','scene-mode','选择模式')}<span class="hint">完整 16 场景 · FPS</span></div><div class="scroll" tabindex="0" role="region" aria-label="横向滚动对比表"><table class="scenes"></table></div>`;
- el.innerHTML=`<header class="board-header"><div class="board-title"><div><h2>${b.name}<span class="hint"> · ${b.resolution}</span></h2><small>${b.config}</small></div></div><div class="badges">${badges}</div></header><div class="board-content"><div class="controls" style="margin:14px 0 0"><span class="hint">四角度并排 · 每个模式均使用同一轮正式成绩</span>${legend()}</div>${panel('fps-panel','帧率总览','全部模式 · 四角度',fpsTable,true)}${panel('memory-panel','内存对比','选择模式 · RAM / PSRAM',memory,true)}${panel('diagnostics-panel','交接与供数诊断',`${affected.size} 个组合有地址命中 · unknown ${unknown}`,diag)}${panel('scenes-panel','逐场景分数','选择模式 · 完整 16 场景',scenes)}</div>`;
- $('#boards').append(el);renderMemory(b,el);renderDiagnostics(b,el);renderScenes(b,el);
- $('.memory-mode',el).addEventListener('change',()=>renderMemory(b,el));$('.scene-mode',el).addEventListener('change',()=>renderScenes(b,el));$('.anomalies-only',el).addEventListener('change',()=>renderDiagnostics(b,el));
+ el.innerHTML=`<header class="board-header"><div class="board-title"><div><h2>${b.name}<span class="hint"> · ${b.resolution}</span></h2><small>${b.config}${b.originNote?` · ${esc(b.originNote)}`:''}</small></div></div><div class="badges">${badges}</div></header><div class="board-content"><div class="controls" style="margin:14px 0 0"><span class="hint">四角度并排 · 正式成绩取干净 IDF，来源见上方说明</span>${legend()}</div>${panel('fps-panel','帧率总览','全部模式 · 四角度',fpsTable,true)}${panel('memory-panel','内存对比','选择模式 · RAM / PSRAM',memory,true)}${panel('diagnostics-panel','交接与供数诊断',`${affected.size} 个组合有地址命中 · unknown ${unknown}`,diag)}${panel('scenes-panel','逐场景分数','选择模式 · 完整 16 场景',scenes)}</div>`;
+ $('#boards').append(el);renderAccounting(b,el);renderMemory(b,el);renderDiagnostics(b,el);renderScenes(b,el);
+ $('.memory-mode',el).addEventListener('change',()=>renderMemory(b,el));$('.memory-metric',el).addEventListener('change',()=>renderMemory(b,el));$('.scene-mode',el).addEventListener('change',()=>renderScenes(b,el));$('.anomalies-only',el).addEventListener('change',()=>renderDiagnostics(b,el));
 }
 const affectedCount=D.boards.reduce((total,b)=>total+new Set(IMPL.flatMap(i=>b.cohorts.diagnostic[i]).filter(r=>hits(r)>0).map(r=>r.mode+'/'+r.rotation)).size,0);
 $('#metrics').innerHTML=[[D.totals.clean,'正式性能 / 内存项目'],[D.totals.diagnostic,'独立诊断项目'],[D.totals.scenes,'完整 benchmark 场景'],[affectedCount,'模式与角度组合有地址命中']].map(([n,label])=>`<div class="metric"><strong>${n}</strong><span>${label}</span></div>`).join('');
-$('#caution').textContent='本轮已记录交接风险、供数不足及 unknown。正式成绩和诊断分开采集；地址检查点数量不等于独立撕裂次数，具体记录见各板诊断抽屉。';
+$('#caution').textContent='汇总已记录交接风险、供数不足及 unknown。正式成绩和诊断分开采集；地址检查点数量不等于独立撕裂次数，具体记录见各板诊断抽屉。';
 D.boards.forEach(buildBoard);
 $('#board-nav').innerHTML=D.boards.map(b=>`<button type="button" role="tab" id="tab-${b.id}" aria-controls="${b.id}" aria-selected="false" tabindex="-1">${b.name}</button>`).join('');
 function activateBoard(id,focus=false){

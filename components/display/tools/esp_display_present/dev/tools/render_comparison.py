@@ -11,7 +11,7 @@ MODES = ['DOUBLE_FULL', 'TRIPLE_FULL', 'DOUBLE_DIRECT',
          'DOUBLE_PARTIAL', 'TRIPLE_PARTIAL', 'AUTO']
 ANGLES = [0, 90, 180, 270]
 BOARDS = {
-    's3-rgb': ('S3 RGB', '480 × 480 · R16', '10 行 bounce · FB_IRAM 开启'),
+    's3-rgb': ('S3 RGB', '480 × 480 · R16', '10 行 bounce · FB_IRAM 状态见测试来源'),
     's31-rgb': ('S31 Korvo RGB', '800 × 480', '非 bounce · AXI link-switch'),
     'p4-dsi': ('P4 MIPI DSI', '1024 × 600', 'DW GDMA'),
 }
@@ -28,12 +28,15 @@ def render(data_path, output_path):
         'boards': [], 'totals': {'clean': 0, 'diagnostic': 0, 'scenes': 0, 'skip': 0},
         'linksPrefix': os.path.relpath(data_path.parent, output_path.parent).replace(os.sep, '/') + '/',
         'dataFilename': data_path.name,
+        'roundNote': source.get('round_note', '全部四角度重新完整运行，未用历史 0° 或 XIP OFF 成绩补表。'),
     }
     expected = {(mode, angle) for mode in MODES for angle in ANGLES}
     for key, (name, resolution, config) in BOARDS.items():
         original = source['boards'][key]
-        board = {'id': key, 'name': name, 'resolution': resolution, 'config': config,
-                 'method': source['methods'][key], 'cohorts': {}}
+        board = {'id': key, 'name': name, 'resolution': resolution, 'config': original.get('config', config),
+                 'method': source['methods'][key], 'cohorts': {},
+                 'originNote': original.get('origin_note', ''),
+                 'memoryAccounting': source.get('memory_accounting', {}).get('boards', {}).get(key)}
         for cohort in ('clean', 'diagnostic'):
             board['cohorts'][cohort] = {}
             for implementation in ('present', 'adapter'):
