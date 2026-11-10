@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "pageSha256": "43d12bc4c3a73b8fdcfff3a7f4823612934fe4901890834803402d2582c33c94",
+  "evidenceLinksExist": true,
+  "mobileViewportWidth": 390,
+  "boardDrawers": 3,
+  "allModeAndAngleData": true,
+  "fpsValues": 132,
+  "memoryValues": 1056,
+  "memoryArrows": 480,
+  "sceneValues": 2112,
+  "diagnosticCases": 132,
+  "modeChanges": 36,
+  "foldControls": true,
+  "anomalyFilter": true,
+  "applicabilityAndUnknown": true,
+  "noPageOverflow": true,
+  "javascriptErrors": []
+}

@@ -8,7 +8,7 @@
 
 [当前对比网页](evidence/five-board-regression-20261109/comparison-current.html) · [本轮证据与口径](evidence/rgb-mipi-xip-on-four-angle-20261110/README.md) · [地址样本与解释](evidence/rgb-mipi-xip-on-four-angle-20261110/findings.md)。S3 RGB、S31 RGB、P4 MIPI DSI，双方仅XIP开启；0°、90°、180°、270°全部重新完整运行，不复用上一轮0°成绩。S3十行bounce，S31不使用bounce；NONE排除，adapter AUTO为−。
 
-132项干净驱动帧率/四时点剩余内存与132项独立轻量诊断，每项完整16场景，共4224场景；另24个不支持条目。两轮成绩分开，网页直接展示四角度对比。帧率、剩余内存均越多越好，箭头在present列相对adapter显示。
+132项干净驱动帧率/四时点剩余内存与132项独立轻量诊断，每项完整16场景，共4224场景；另24个不支持条目。两轮成绩分开，网页直接展示四角度对比。帧率、剩余内存均越多越好，箭头在present列相对adapter显示。 网页按板卡和数据类型折叠，内存及逐场景分数按模式选择；选定模式后四角度仍并排展示，诊断可筛选有记录的组合。
 
 交接观察只检测记录，生产源码和基础IDF未修改；各板观察口径及本轮命中见检测结果，不将零命中当作全部写入安全。结束保留最后XIP ON诊断固件，按用户要求不恢复原固件。
 
@@ -204,3 +204,7 @@ benchmark 的 present 收尾会检查LVGL绑定保存的错误码，防止绘制
 Benchmark builds default to `--buffer-policy logical-50`: both implementations use logical width × 50 rows × RGB565 for each PARTIAL input tile. The adapter public API measures rows against physical width, which cannot express the exact rotated P4 capacity; the runner therefore changes only its PARTIAL allocation expression in an isolated build overlay. The checkout and framebuffer handoff code are unchanged. `legacy-physical-50` reproduces the previous adapter allocation. Manifests record the policy, expected byte capacities and actual overlay source hashes.
 
 Every successful benchmark must report `BUFFER_AUDIT`. The runner rejects missing audits or incorrect capacities. FULL verifies each active whole-frame buffer, independently of rotation; configured tile count does not describe FULL descriptor/framebuffer counts. Native TE layouts stay separate rather than being labelled equivalent. RGB/DSI NONE remains outside the default comparison.
+
+## 只更新比较页展示
+
+使用 `python dev/tools/render_comparison.py --data dev/evidence/rgb-mipi-xip-on-four-angle-20261110/matrix-data.json --output dev/evidence/rgb-mipi-xip-on-four-angle-20261110/comparison.html` 重新生成抽屉式页面。模板为 `dev/tools/comparison_dashboard.html`，不依赖编译目录、串口或网络，原始 JSON 只读；输出到其他目录时会自动调整证据链接。旧采集脚本保留历史，不用于生成当前展示。当前交互与原始证据不变性验证见该证据目录的 `presentation/`。

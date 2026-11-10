@@ -1,5 +1,14 @@
 # RGB / MIPI · XIP ON · 四角度正式对比
 
+## 抽屉式网页展示（2026-11-10）
+
+当前 comparison.html 已改为板卡及数据面板的可折叠抽屉。帧率展示所有模式与四个角度；内存选择模式，内部 RAM / PSRAM 分表同时显示四角度；逐场景分数也按模式选择。诊断默认筛选有地址命中、unknown、供数不足、既有重启或 underrun 的组合，可取消筛选查看全部。
+
+本次仅调整展示。matrix-data.json、comparison.csv、硬件结果、SDK 配置、原始日志和源码快照字节不变。此前静态页面见 comparison-before-drawers.html；根目录的原始 browser-validation.json、check_page.mjs、desktop.png/mobile.png 和 validation.json 仍记录采集结束时的静态页面验证，不能用于宣称新版没有模式选择器。当前交互验证及截图见 presentation/validation.json、presentation/desktop.png、presentation/mobile.png。
+
+当前页面生成入口为 dev/tools/render_comparison.py（输入原始 JSON，无需编译或操作板卡），模板为同目录 comparison_dashboard.html；旧 report.py/archive.py 保留原采集流程，不作为新版展示生成入口。所有剩余内存仍按越多越好标色，差值在 present 列，不增加独立差值列。
+
+
 [网页](comparison.html) · [CSV](comparison.csv) · [完整来源](matrix-data.json) · [交接结果](findings.md)
 
 ## 执行范围
