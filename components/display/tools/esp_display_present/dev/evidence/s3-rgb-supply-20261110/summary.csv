@@ -1,0 +1,15 @@
+experiment,mode,rotation,xip,pclk_mhz,bounce_lines,deadline_us,frames,short_frames,restarts,min_eofs,expected_eofs,lvgl_fps,scenes,max_refill_us,max_memcpy_us,slow_refills
+original-present,DOUBLE_FULL,0,off,16,10,325.0,4207,886,886,32,48,21,16,,,
+original-present,TRIPLE_PARTIAL,0,off,16,10,325.0,4209,377,377,37,48,33,16,,,
+original-adapter,DOUBLE_FULL,0,off,16,10,325.0,4197,738,738,32,48,21,16,,,
+original-adapter,TRIPLE_PARTIAL,0,off,16,10,325.0,4199,391,391,36,48,34,16,,,
+remove-duplicate-sync,DOUBLE_FULL,0,off,16,10,325.0,4206,914,914,32,48,21,16,,,
+remove-duplicate-sync,TRIPLE_PARTIAL,0,off,16,10,325.0,4207,376,376,37,48,33,16,,,
+chunk4k-present,DOUBLE_FULL,0,off,16,10,325.0,4211,865,865,32,48,21,16,,,
+chunk4k-present,TRIPLE_PARTIAL,0,off,16,10,325.0,4196,355,355,36,48,32,16,,,
+chunk4k-adapter,DOUBLE_FULL,0,off,16,10,325.0,4200,782,782,33,48,21,16,,,
+chunk4k-adapter,TRIPLE_PARTIAL,0,off,16,10,325.0,4195,394,394,36,48,33,16,,,
+refill-timing,DOUBLE_FULL,0,off,16,10,325.0,4212,895,895,32,48,21,16,693.6333333333333,682.8708333333333,11695
+bounce40,DOUBLE_FULL,0,off,16,40,1300.0,4181,238,238,0,12,21,16,2461.7916666666665,2445.2875,2738
+pclk8,DOUBLE_FULL,0,off,8,10,650.0,2103,0,0,48,48,24,16,643.3875,639.7333333333333,0
+xip-on,DOUBLE_FULL,0,on,16,10,325.0,4200,1,1,47,48,26,16,,,

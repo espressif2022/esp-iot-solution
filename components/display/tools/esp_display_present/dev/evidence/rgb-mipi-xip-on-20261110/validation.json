@@ -1,0 +1,146 @@
+{
+  "passed": true,
+  "counts": {
+    "clean": 33,
+    "diagnostic": 33
+  },
+  "skip": 6,
+  "scenes": 1056,
+  "angles": [
+    0
+  ],
+  "xip": "on",
+  "source_unchanged": true,
+  "base_idf_clean": true,
+  "no_control_statements_removed": true,
+  "common_config_identical": true,
+  "correct_driver_paths": true,
+  "nonzero_observer_coverage": true,
+  "unknown_per_case": {
+    "s3-rgb/present/DOUBLE_FULL": 0,
+    "s3-rgb/present/TRIPLE_FULL": 0,
+    "s3-rgb/present/DOUBLE_DIRECT": 0,
+    "s3-rgb/present/DOUBLE_PARTIAL": 0,
+    "s3-rgb/present/TRIPLE_PARTIAL": 0,
+    "s3-rgb/present/AUTO": 0,
+    "s3-rgb/adapter/DOUBLE_FULL": 0,
+    "s3-rgb/adapter/TRIPLE_FULL": 0,
+    "s3-rgb/adapter/DOUBLE_DIRECT": 0,
+    "s3-rgb/adapter/DOUBLE_PARTIAL": 0,
+    "s3-rgb/adapter/TRIPLE_PARTIAL": 0,
+    "s31-rgb/present/DOUBLE_FULL": 0,
+    "s31-rgb/present/TRIPLE_FULL": 0,
+    "s31-rgb/present/DOUBLE_DIRECT": 0,
+    "s31-rgb/present/DOUBLE_PARTIAL": 0,
+    "s31-rgb/present/TRIPLE_PARTIAL": 0,
+    "s31-rgb/present/AUTO": 0,
+    "s31-rgb/adapter/DOUBLE_FULL": 0,
+    "s31-rgb/adapter/TRIPLE_FULL": 0,
+    "s31-rgb/adapter/DOUBLE_DIRECT": 0,
+    "s31-rgb/adapter/DOUBLE_PARTIAL": 0,
+    "s31-rgb/adapter/TRIPLE_PARTIAL": 0,
+    "p4-dsi/present/DOUBLE_FULL": 0,
+    "p4-dsi/present/TRIPLE_FULL": 0,
+    "p4-dsi/present/DOUBLE_DIRECT": 0,
+    "p4-dsi/present/DOUBLE_PARTIAL": 0,
+    "p4-dsi/present/TRIPLE_PARTIAL": 0,
+    "p4-dsi/present/AUTO": 0,
+    "p4-dsi/adapter/DOUBLE_FULL": 0,
+    "p4-dsi/adapter/TRIPLE_FULL": 0,
+    "p4-dsi/adapter/DOUBLE_DIRECT": 0,
+    "p4-dsi/adapter/DOUBLE_PARTIAL": 0,
+    "p4-dsi/adapter/TRIPLE_PARTIAL": 0
+  },
+  "address_hits": [
+    {
+      "board": "s3-rgb",
+      "implementation": "adapter",
+      "mode": "DOUBLE_FULL",
+      "hits": 4,
+      "events": [
+        {
+          "mode": "DOUBLE_FULL",
+          "rotation": 0,
+          "us": 26908832,
+          "kind": 3,
+          "given": "0x3c151200",
+          "actual_source": "0x3c0e09c0",
+          "driver_target": "0x3c151200",
+          "position": 0,
+          "request_seq": 715,
+          "event_seq": 1506,
+          "probe_raw": "0x0"
+        },
+        {
+          "mode": "DOUBLE_FULL",
+          "rotation": 0,
+          "us": 26910001,
+          "kind": 2,
+          "given": "0x3c0e09c0",
+          "actual_source": "0x3c0e09c0",
+          "driver_target": "0x3c151200",
+          "position": 9600,
+          "request_seq": 715,
+          "event_seq": 1506,
+          "probe_raw": "0x0"
+        },
+        {
+          "mode": "DOUBLE_FULL",
+          "rotation": 0,
+          "us": 48108358,
+          "kind": 3,
+          "given": "0x3c0e09c0",
+          "actual_source": "0x3c151200",
+          "driver_target": "0x3c0e09c0",
+          "position": 4800,
+          "request_seq": 1206,
+          "event_seq": 2785,
+          "probe_raw": "0x0"
+        },
+        {
+          "mode": "DOUBLE_FULL",
+          "rotation": 0,
+          "us": 48109009,
+          "kind": 2,
+          "given": "0x3c151200",
+          "actual_source": "0x3c151200",
+          "driver_target": "0x3c0e09c0",
+          "position": 9600,
+          "request_seq": 1206,
+          "event_seq": 2785,
+          "probe_raw": "0x0"
+        }
+      ]
+    },
+    {
+      "board": "p4-dsi",
+      "implementation": "adapter",
+      "mode": "TRIPLE_FULL",
+      "hits": 1,
+      "events": [
+        {
+          "mode": "TRIPLE_FULL",
+          "rotation": 0,
+          "us": 69644463,
+          "kind": 2,
+          "given": "0x4821ca80",
+          "actual_source": "0x4821ca80",
+          "driver_target": "0x4821ca80",
+          "position": 0,
+          "request_seq": 0,
+          "event_seq": 1,
+          "probe_raw": "0x0"
+        }
+      ]
+    }
+  ],
+  "browser": {
+    "passed": true,
+    "sections": 3,
+    "noDropdown": true,
+    "noPageOverflow": true,
+    "checkedCells": 330,
+    "memoryArrowsChecked": 120,
+    "final": true
+  }
+}

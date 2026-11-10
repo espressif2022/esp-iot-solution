@@ -1,0 +1,14 @@
+{
+  "stage": "done",
+  "success": true,
+  "requested_angles": [
+    0
+  ],
+  "new_cases": 4,
+  "reused_present_cases": 6,
+  "reused_adapter_cases": 1,
+  "restore_original": false,
+  "archive_complete": true,
+  "updated": 1794300922.679911,
+  "retained_firmware": "Previously measured present XIP ON / 16MHz / ten-line bounce diagnostic reference"
+}

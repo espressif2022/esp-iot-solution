@@ -1,0 +1,23 @@
+{
+  "stage": "adapter-capture",
+  "board": "s3-rgb",
+  "xip": "off",
+  "pclk_hz": 16000000,
+  "bounce_lines": 10,
+  "runs": [
+    {
+      "implementation": "present",
+      "success": true,
+      "passed": 24,
+      "skipped": 0
+    },
+    {
+      "implementation": "adapter",
+      "success": false
+    }
+  ],
+  "restore_original": false,
+  "success": false,
+  "archive_complete": false,
+  "updated": 1794300386.365665
+}

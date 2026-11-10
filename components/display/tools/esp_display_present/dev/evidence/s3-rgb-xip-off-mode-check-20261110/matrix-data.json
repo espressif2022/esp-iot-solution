@@ -1,0 +1,291 @@
+{
+  "complete": true,
+  "passed": 11,
+  "skipped": 1,
+  "selected_scenes": 176,
+  "affected": 11,
+  "angle": 0,
+  "conditions": {
+    "requested_angles": [
+      0
+    ],
+    "reason": "用户要求仅单角度验证，不继续多角度",
+    "pclk_hz": 16000000,
+    "bounce_lines": 10,
+    "xip": "off",
+    "reuse_present_modes": [
+      "DOUBLE_FULL",
+      "TRIPLE_FULL",
+      "DOUBLE_DIRECT",
+      "DOUBLE_PARTIAL",
+      "TRIPLE_PARTIAL",
+      "AUTO"
+    ],
+    "reuse_adapter_modes": [
+      "DOUBLE_FULL"
+    ],
+    "remaining_adapter_modes": [
+      "TRIPLE_FULL",
+      "DOUBLE_DIRECT",
+      "DOUBLE_PARTIAL",
+      "TRIPLE_PARTIAL"
+    ],
+    "expected_supported_rows": 11,
+    "unsupported_adapter_AUTO": true,
+    "source": "既有完整PASS0结果复用，补测每项完整16场景"
+  },
+  "rows": [
+    {
+      "implementation": "present",
+      "mode": "DOUBLE_FULL",
+      "angle": 0,
+      "status": "PASS",
+      "verdict": "运行期触发供数异常",
+      "source": "present-existing",
+      "reused": true,
+      "scenes": 16,
+      "measured_frames": 4198,
+      "measured_short": 809,
+      "measured_restarts": 809,
+      "window_outside_short": 0,
+      "window_outside_restarts": 0,
+      "total_short": 809,
+      "total_restarts": 809
+    },
+    {
+      "implementation": "present",
+      "mode": "TRIPLE_FULL",
+      "angle": 0,
+      "status": "PASS",
+      "verdict": "运行期触发供数异常",
+      "source": "present-existing",
+      "reused": true,
+      "scenes": 16,
+      "measured_frames": 4194,
+      "measured_short": 969,
+      "measured_restarts": 969,
+      "window_outside_short": 0,
+      "window_outside_restarts": 0,
+      "total_short": 969,
+      "total_restarts": 969
+    },
+    {
+      "implementation": "present",
+      "mode": "DOUBLE_DIRECT",
+      "angle": 0,
+      "status": "PASS",
+      "verdict": "运行期触发供数异常",
+      "source": "present-existing",
+      "reused": true,
+      "scenes": 16,
+      "measured_frames": 4192,
+      "measured_short": 857,
+      "measured_restarts": 857,
+      "window_outside_short": 0,
+      "window_outside_restarts": 0,
+      "total_short": 857,
+      "total_restarts": 857
+    },
+    {
+      "implementation": "present",
+      "mode": "DOUBLE_PARTIAL",
+      "angle": 0,
+      "status": "PASS",
+      "verdict": "运行期触发供数异常",
+      "source": "present-existing",
+      "reused": true,
+      "scenes": 16,
+      "measured_frames": 4207,
+      "measured_short": 393,
+      "measured_restarts": 393,
+      "window_outside_short": 0,
+      "window_outside_restarts": 0,
+      "total_short": 393,
+      "total_restarts": 393
+    },
+    {
+      "implementation": "present",
+      "mode": "TRIPLE_PARTIAL",
+      "angle": 0,
+      "status": "PASS",
+      "verdict": "运行期触发供数异常",
+      "source": "present-existing",
+      "reused": true,
+      "scenes": 16,
+      "measured_frames": 4202,
+      "measured_short": 386,
+      "measured_restarts": 386,
+      "window_outside_short": 0,
+      "window_outside_restarts": 0,
+      "total_short": 386,
+      "total_restarts": 386
+    },
+    {
+      "implementation": "present",
+      "mode": "AUTO",
+      "angle": 0,
+      "status": "PASS",
+      "verdict": "运行期触发供数异常",
+      "source": "present-existing",
+      "reused": true,
+      "scenes": 16,
+      "measured_frames": 4201,
+      "measured_short": 388,
+      "measured_restarts": 388,
+      "window_outside_short": 0,
+      "window_outside_restarts": 0,
+      "total_short": 388,
+      "total_restarts": 388
+    },
+    {
+      "implementation": "adapter",
+      "mode": "DOUBLE_FULL",
+      "angle": 0,
+      "status": "PASS",
+      "verdict": "运行期触发供数异常",
+      "source": "adapter-existing",
+      "reused": true,
+      "scenes": 16,
+      "measured_frames": 4194,
+      "measured_short": 805,
+      "measured_restarts": 805,
+      "window_outside_short": 0,
+      "window_outside_restarts": 0,
+      "total_short": 805,
+      "total_restarts": 805
+    },
+    {
+      "implementation": "adapter",
+      "mode": "TRIPLE_FULL",
+      "angle": 0,
+      "status": "PASS",
+      "verdict": "运行期触发供数异常",
+      "source": "adapter-new",
+      "reused": false,
+      "scenes": 16,
+      "measured_frames": 4194,
+      "measured_short": 998,
+      "measured_restarts": 998,
+      "window_outside_short": 0,
+      "window_outside_restarts": 0,
+      "total_short": 998,
+      "total_restarts": 998
+    },
+    {
+      "implementation": "adapter",
+      "mode": "DOUBLE_DIRECT",
+      "angle": 0,
+      "status": "PASS",
+      "verdict": "运行期触发供数异常",
+      "source": "adapter-new",
+      "reused": false,
+      "scenes": 16,
+      "measured_frames": 4182,
+      "measured_short": 855,
+      "measured_restarts": 855,
+      "window_outside_short": 0,
+      "window_outside_restarts": 0,
+      "total_short": 855,
+      "total_restarts": 855
+    },
+    {
+      "implementation": "adapter",
+      "mode": "DOUBLE_PARTIAL",
+      "angle": 0,
+      "status": "PASS",
+      "verdict": "运行期触发供数异常",
+      "source": "adapter-new",
+      "reused": false,
+      "scenes": 16,
+      "measured_frames": 4183,
+      "measured_short": 427,
+      "measured_restarts": 427,
+      "window_outside_short": 0,
+      "window_outside_restarts": 0,
+      "total_short": 427,
+      "total_restarts": 427
+    },
+    {
+      "implementation": "adapter",
+      "mode": "TRIPLE_PARTIAL",
+      "angle": 0,
+      "status": "PASS",
+      "verdict": "运行期触发供数异常",
+      "source": "adapter-new",
+      "reused": false,
+      "scenes": 16,
+      "measured_frames": 4190,
+      "measured_short": 380,
+      "measured_restarts": 380,
+      "window_outside_short": 0,
+      "window_outside_restarts": 0,
+      "total_short": 380,
+      "total_restarts": 380
+    },
+    {
+      "implementation": "adapter",
+      "mode": "AUTO",
+      "angle": 0,
+      "status": "SKIP",
+      "verdict": "不支持",
+      "source": "adapter-new"
+    }
+  ],
+  "sources": {
+    "present-existing": {
+      "path": "/tmp/present-s3-xip-off-all-modes-20261110/s3-rgb/benchmark/present-xip-off-driver-trace",
+      "whole_sequence_complete": true,
+      "reused": true
+    },
+    "adapter-existing": {
+      "path": "/tmp/present-s3-xip-off-all-modes-20261110/adapter-prior-angle-data",
+      "whole_sequence_complete": false,
+      "reused": true
+    },
+    "adapter-new": {
+      "path": "/tmp/present-s3-xip-off-all-modes-20261110/s3-rgb/benchmark/adapter-xip-off-driver-trace",
+      "whole_sequence_complete": true,
+      "reused": false
+    }
+  },
+  "summaries": {
+    "present": {
+      "tested": 6,
+      "affected": 6,
+      "affected_modes": [
+        "DOUBLE_FULL",
+        "TRIPLE_FULL",
+        "DOUBLE_DIRECT",
+        "DOUBLE_PARTIAL",
+        "TRIPLE_PARTIAL",
+        "AUTO"
+      ]
+    },
+    "adapter": {
+      "tested": 5,
+      "affected": 5,
+      "affected_modes": [
+        "DOUBLE_FULL",
+        "TRIPLE_FULL",
+        "DOUBLE_DIRECT",
+        "DOUBLE_PARTIAL",
+        "TRIPLE_PARTIAL"
+      ]
+    }
+  },
+  "controller": {
+    "stage": "done",
+    "success": true,
+    "requested_angles": [
+      0
+    ],
+    "new_cases": 4,
+    "reused_present_cases": 6,
+    "reused_adapter_cases": 1,
+    "restore_original": false,
+    "archive_complete": true,
+    "updated": 1794300922.679911,
+    "retained_firmware": "Previously measured present XIP ON / 16MHz / ten-line bounce diagnostic reference"
+  },
+  "updated": "2026-11-10T16:55:55.448510+08:00"
+}

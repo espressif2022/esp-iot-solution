@@ -1,0 +1,6 @@
+{
+  "idf": "/home/xuxin/esp_work/esp-idf-qspi",
+  "esp_lcd_dir": "/home/xuxin/esp_work/esp-idf-qspi/components/esp_lcd",
+  "cohort": "clean",
+  "firmware_sha256": "d19f7228dfc4fa95f9557dedbfe01154b0d84544de5caaa5b1ba608fa43c3a88"
+}

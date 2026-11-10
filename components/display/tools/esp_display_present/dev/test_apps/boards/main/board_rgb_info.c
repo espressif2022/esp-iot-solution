@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include "board_rgb_info.h"
+#include "esp_log.h"
 #include "platform/lcd/present_lcd_rgb_info.h"
 static struct {
     esp_lcd_panel_handle_t panel;
@@ -26,6 +27,10 @@ void board_rgb_created(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_con
         .transformed = false,
     };
     binding.panel = panel;
+    ESP_LOGI("rgb_facts", "RGB_FACTS width=%u height=%u fbs=%u bounce_bytes=%u continuous=%u bpp=%u",
+             (unsigned)binding.info.width, (unsigned)binding.info.height,
+             (unsigned)buffers, (unsigned)binding.info.bounce_buffer_bytes,
+             (unsigned)binding.info.continuous_refresh, bpp);
 }
 void board_rgb_forget(void)
 {

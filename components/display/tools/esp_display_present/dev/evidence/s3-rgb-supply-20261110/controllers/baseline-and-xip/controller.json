@@ -1,0 +1,16 @@
+{
+  "stage": "done",
+  "runs": [
+    {
+      "implementation": "present",
+      "success": true
+    },
+    {
+      "implementation": "adapter",
+      "success": true
+    }
+  ],
+  "restore_original": false,
+  "updated": 1794295759.801461,
+  "success": true
+}

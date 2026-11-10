@@ -1,0 +1,23 @@
+{
+  "cases": 14,
+  "scenes": 224,
+  "original_runtime_unchanged": true,
+  "base_idf_clean": true,
+  "xip_sdk_differences": {
+    "CONFIG_SPIRAM_FETCH_INSTRUCTIONS": [
+      "n",
+      "y"
+    ],
+    "CONFIG_SPIRAM_RODATA": [
+      "n",
+      "y"
+    ],
+    "CONFIG_SPIRAM_XIP_FROM_PSRAM": [
+      "n",
+      "y"
+    ]
+  },
+  "visual_acceptance": "not_passed",
+  "residual_xip_on_restarts": 1,
+  "original_firmware_restored": false
+}

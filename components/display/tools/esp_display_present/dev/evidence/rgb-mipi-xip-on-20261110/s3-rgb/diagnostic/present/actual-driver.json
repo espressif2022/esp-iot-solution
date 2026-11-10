@@ -1,0 +1,6 @@
+{
+  "idf": "/home/xuxin/esp_work/esp-idf-qspi",
+  "esp_lcd_dir": "/tmp/present-xip-on-comparison-20261110/driver-overlay/esp_lcd",
+  "cohort": "diagnostic",
+  "firmware_sha256": "e8fefe43a01edeffe13b89c02f97c176743fb5500df75d34c804d9f327350342"
+}

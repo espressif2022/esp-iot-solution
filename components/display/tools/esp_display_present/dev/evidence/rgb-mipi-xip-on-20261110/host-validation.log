@@ -1,0 +1,2 @@
+PASS: cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -DPRESENT_TRACE_HOST test_address.c
+Actual observer is included by test source; no board fault injection or board asserts.

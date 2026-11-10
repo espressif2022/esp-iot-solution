@@ -1,0 +1,11 @@
+{
+  "stage": "done",
+  "success": true,
+  "xip": "on",
+  "angles": [
+    0
+  ],
+  "restore_original": false,
+  "updated": 1794303496.234525,
+  "retained_firmware": "adapter XIP ON address diagnostic firmware; no original restore"
+}

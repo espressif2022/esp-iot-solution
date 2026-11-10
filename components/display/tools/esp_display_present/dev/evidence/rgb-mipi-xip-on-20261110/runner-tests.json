@@ -1,0 +1,6 @@
+{
+  "command": "python -m unittest discover -s dev/tests -p test_runner.py",
+  "exit_code": 0,
+  "test_cases": 22,
+  "raw_stdout": "Tool output was truncated because mocked negative cases print fixture JSON; no raw log file retained."
+}

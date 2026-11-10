@@ -1,0 +1,19 @@
+{
+  "board": "s3-rgb",
+  "xip": "on",
+  "angles": [
+    0
+  ],
+  "pclk_hz": 16000000,
+  "bounce_lines": 10,
+  "shadow": "/tmp/present-s3-on-address-source-20261110/components/display/tools/esp_display_present",
+  "modes": [
+    "DOUBLE_FULL",
+    "TRIPLE_FULL",
+    "DOUBLE_DIRECT",
+    "DOUBLE_PARTIAL",
+    "TRIPLE_PARTIAL",
+    "AUTO"
+  ],
+  "original_firmware_restore": false
+}

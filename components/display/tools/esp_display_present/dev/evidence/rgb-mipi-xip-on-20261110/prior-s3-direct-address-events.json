@@ -1,0 +1,58 @@
+{
+  "cohort": "prior independent XIP ON diagnostic, not current counters",
+  "events": [
+    {
+      "implementation": "adapter",
+      "mode": "DOUBLE_DIRECT",
+      "rotation": 0,
+      "us": 188532754,
+      "kind": 3,
+      "given": "0x3c0e09c0",
+      "actual_source": "0x3c151200",
+      "driver_target": "0x3c0e09c0",
+      "position_px": 4800,
+      "request_seq": 1818,
+      "event_seq": 2851
+    },
+    {
+      "implementation": "adapter",
+      "mode": "DOUBLE_DIRECT",
+      "rotation": 0,
+      "us": 188534026,
+      "kind": 2,
+      "given": "0x3c151200",
+      "actual_source": "0x3c151200",
+      "driver_target": "0x3c0e09c0",
+      "position_px": 9600,
+      "request_seq": 1818,
+      "event_seq": 2851
+    },
+    {
+      "implementation": "adapter",
+      "mode": "DOUBLE_DIRECT",
+      "rotation": 0,
+      "us": 189560357,
+      "kind": 3,
+      "given": "0x3c0e09c0",
+      "actual_source": "0x3c151200",
+      "driver_target": "0x3c0e09c0",
+      "position_px": 0,
+      "request_seq": 1846,
+      "event_seq": 2913
+    },
+    {
+      "implementation": "adapter",
+      "mode": "DOUBLE_DIRECT",
+      "rotation": 0,
+      "us": 189561030,
+      "kind": 2,
+      "given": "0x3c151200",
+      "actual_source": "0x3c151200",
+      "driver_target": "0x3c0e09c0",
+      "position_px": 9600,
+      "request_seq": 1846,
+      "event_seq": 2913
+    }
+  ],
+  "prior_matrix_sha256": "6a1e2ee697a837dd0459fcdb693640166048924c52626a34bfb4150863b26235"
+}

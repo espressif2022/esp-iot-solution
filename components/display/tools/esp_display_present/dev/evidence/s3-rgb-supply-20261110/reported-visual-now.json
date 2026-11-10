@@ -1,0 +1,25 @@
+{
+  "at": "2026-11-10T15:25:25.648952+08:00",
+  "observation": "用户实时反馈：现在就抖得厉害",
+  "controller": {
+    "stage": "present-capture",
+    "runs": [
+      {
+        "implementation": "present",
+        "success": false
+      }
+    ],
+    "restore_original": false,
+    "updated": 1794295458.5947804
+  },
+  "current_case": [
+    "DOUBLE_FULL",
+    "0"
+  ],
+  "recent_serial": " Enter psram timing tuning\nI (321) esp_psram: Found 16MB PSRAM device\nI (324) esp_psram: Speed: 80MHz\nI (327) cpu_start: Multicore app\nI (894) esp_psram: SPI SRAM memory test OK\nI (902) cpu_start: GPIO 44 and 43 are used as console UART I/O pins\nI (903) cpu_start: Pro cpu start user code\nI (903) cpu_start: cpu freq: 240000000 Hz\nI (904) app_init: Application information:\nI (908) app_init: Project name:     present_benchmark\nI (913) app_init: App version:      1\nI (916) app_init: Compile time:     Nov 10 2026 15:22:03\nI (921) app_init: ELF file SHA256:  927919725...\nI (926) app_init: ESP-IDF:          v6.2-dev-2221-g7b9cc1ac79f8\nI (931) efuse_init: Min chip rev:     v0.0\nI (935) efuse_init: Max chip rev:     v0.99 \nI (939) efuse_init: Chip rev:         v0.2\nI (943) heap_init: Initializing. RAM available for dynamic allocation:\nI (949) heap_init: At 3FCA1B20 len 00047BF0 (286 KiB): RAM\nI (954) heap_init: At 3FCE9710 len 00005724 (21 KiB): RAM\nI (960) heap_init: At 600FE000 len 00001FE8 (7 KiB): RTCRAM\nI (965) esp_psram: Adding pool of 16384K of PSRAM memory to heap allocator\nI (972) spi_flash: detected chip: gd\nI (975) spi_flash: flash io: dio\nI (978) sleep_gpio: Configure to isolate all GPIO pins in sleep state\nI (984) sleep_gpio: Enable automatic switching of GPIO sleep configuration\nI (991) main_task: Started on CPU0\nI (994) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations\nI (1002) main_task: Calling app_main()\nI (1005) present_bench: MEMORY mode=SUITE rotation=0 phase=before_init internal_total=357115 internal_free=275831 psram_total=16777216 psram_free=16774784 internal_min_free=0 psram_min_free=0\nI (1023) main_task: Returned from app_main()\nI (1023) lcd_panel.io.3wire_spi: Panel IO create success, version: 1.0.1\nW (2816) lcd_panel.io.3wire_spi: Delete but keep CS line inactive\nW (2845) lcd.rgb: GPIO 3 is not usable, maybe is reserved by others\nI (2846) gc9503: LCD panel create success, version: 3.0.1\nI (2846) rgb_facts: RGB_FACTS width=480 height=480 fbs=3 bounce_bytes=9600 continuous=1 bpp=16\nI (2874) present_bench: MEMORY mode=SUITE rotation=0 phase=after_init internal_total=357115 internal_free=264443 psram_total=16777216 psram_free=15390860 internal_min_free=0 psram_min_free=0\nI (2879) present_bench: SUITE_BEGIN board=s3-rgb implementation=present cases=2\nI (2886) present_bench: MEMORY mode=DOUBLE_FULL rotation=0 phase=before_open internal_total=357115 internal_free=264443 psram_total=16777216 psram_free=15390860 internal_min_free=0 psram_min_free=0\nI (2917) present_bench: MEMORY mode=DOUBLE_FULL rotation=0 phase=after_open internal_total=357115 internal_free=219455 psram_total=16777216 psram_free=14923888 internal_min_free=0 psram_min_free=0\nI (2926) present_bench: RUN mode=DOUBLE_FULL te_buffers=0 rotation=0\n",
+  "user_timing_clarification": "已经过了，前面一点：报告时间为上界，不当作异常发生瞬间",
+  "associated_implementation": "present",
+  "associated_xip": "off",
+  "associated_mode": "DOUBLE_FULL",
+  "associated_rotation": 0
+}

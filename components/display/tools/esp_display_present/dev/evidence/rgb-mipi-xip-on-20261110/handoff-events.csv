@@ -1,0 +1,6 @@
+board,implementation,mode,rotation,us,kind,given,actual_source,driver_target,position,request_seq,event_seq,probe_raw
+s3-rgb,adapter,DOUBLE_FULL,0,26908832,3,0x3c151200,0x3c0e09c0,0x3c151200,0,715,1506,0x0
+s3-rgb,adapter,DOUBLE_FULL,0,26910001,2,0x3c0e09c0,0x3c0e09c0,0x3c151200,9600,715,1506,0x0
+s3-rgb,adapter,DOUBLE_FULL,0,48108358,3,0x3c0e09c0,0x3c151200,0x3c0e09c0,4800,1206,2785,0x0
+s3-rgb,adapter,DOUBLE_FULL,0,48109009,2,0x3c151200,0x3c151200,0x3c0e09c0,9600,1206,2785,0x0
+p4-dsi,adapter,TRIPLE_FULL,0,69644463,2,0x4821ca80,0x4821ca80,0x4821ca80,0,0,1,0x0

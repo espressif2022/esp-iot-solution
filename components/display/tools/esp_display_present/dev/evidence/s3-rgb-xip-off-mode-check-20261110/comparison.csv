@@ -1,0 +1,13 @@
+implementation,mode,angle,status,verdict,source,reused,scenes,measured_frames,measured_short,measured_restarts,window_outside_short,window_outside_restarts,total_short,total_restarts
+present,DOUBLE_FULL,0,PASS,运行期触发供数异常,present-existing,True,16,4198,809,809,0,0,809,809
+present,TRIPLE_FULL,0,PASS,运行期触发供数异常,present-existing,True,16,4194,969,969,0,0,969,969
+present,DOUBLE_DIRECT,0,PASS,运行期触发供数异常,present-existing,True,16,4192,857,857,0,0,857,857
+present,DOUBLE_PARTIAL,0,PASS,运行期触发供数异常,present-existing,True,16,4207,393,393,0,0,393,393
+present,TRIPLE_PARTIAL,0,PASS,运行期触发供数异常,present-existing,True,16,4202,386,386,0,0,386,386
+present,AUTO,0,PASS,运行期触发供数异常,present-existing,True,16,4201,388,388,0,0,388,388
+adapter,DOUBLE_FULL,0,PASS,运行期触发供数异常,adapter-existing,True,16,4194,805,805,0,0,805,805
+adapter,TRIPLE_FULL,0,PASS,运行期触发供数异常,adapter-new,False,16,4194,998,998,0,0,998,998
+adapter,DOUBLE_DIRECT,0,PASS,运行期触发供数异常,adapter-new,False,16,4182,855,855,0,0,855,855
+adapter,DOUBLE_PARTIAL,0,PASS,运行期触发供数异常,adapter-new,False,16,4183,427,427,0,0,427,427
+adapter,TRIPLE_PARTIAL,0,PASS,运行期触发供数异常,adapter-new,False,16,4190,380,380,0,0,380,380
+adapter,AUTO,0,SKIP,不支持,adapter-new,,,,,,,,,

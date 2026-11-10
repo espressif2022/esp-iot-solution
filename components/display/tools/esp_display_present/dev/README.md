@@ -4,13 +4,19 @@
 
 生产源码的职责划分与新增文件规则见[SOURCE_LAYOUT.md](SOURCE_LAYOUT.md)。
 
+## RGB / MIPI XIP ON 完整对比（2026-11-10，当前数据）
+
+[当前对比网页](evidence/five-board-regression-20261109/comparison-current.html) · [本轮证据与口径](evidence/rgb-mipi-xip-on-20261110/README.md) · [地址样本与解释](evidence/rgb-mipi-xip-on-20261110/findings.md)。S3 RGB、S31 RGB、P4 MIPI DSI，双方仅XIP开启、0°，不含NONE；S3十行bounce，S31不使用bounce。33项干净驱动帧率/四时点剩余内存与33项独立轻量诊断分别完整运行16场景，共1056场景；6个adapter AUTO条目不支持。两轮数据不混用，当前网页不再纳入XIP OFF或历史角度成绩。
+
+本轮S3 adapter DOUBLE_FULL有两笔提前交接、4条检查点命中；P4 adapter TRIPLE_FULL首次提交前有1条可写目标与已装载DMA帧地址重合，按装载地址口径复核，未宣称物理像素撕裂。present及S31本轮已覆盖检查点未命中，未知地址为零；未命中不等于所有写入都安全。只检测记录，生产交接源码、基础IDF均未修改，未加assert或控制修正。结束保留各板XIP ON诊断固件，按用户要求不恢复原固件。
+
 ## S31 取指停顿与pixel派发对照（2026-11-09）
 
 [根因定位与证据](evidence/present-s31-dispatch-20261109/root-cause.html)：24项完整16场景与38项定点运行，固定单tile及同容量。用真实补入、停顿、PC热点和24字节代码平移，定位LVGL字形解包的缓存布局敏感性；约1KiB单函数IRAM对照收敛本轮排列波动。pixel worker绕过未追回文字吞吐，全局32B对齐被反例否决。具体cache set替换序列未直接trace。原固件已恢复并整片校验，生产源码和IDF未修改；正式帧率与内存数据未替换。
 
 ## FULL/PARTIAL 同容量重测（2026-11-09）
 
-[最新合并网页](evidence/five-board-regression-20261109/comparison-current.html) · [新测证据与口径](evidence/present-aligned-fill-20261109/README.md) · [分析](evidence/present-aligned-fill-20261109/ANALYSIS.md)。122项有效成绩、6项跳过，每项完整16场景。S3 IRAM开／关、S31 RGB、P4 DSI的FULL/PARTIAL四角度及BOX-3单tile更新；固定单输入tile，PARTIAL双方按逻辑宽×50行分配，运行时核对实际bytes。DIRECT/AUTO、mosaico TE、GRAM双tile保留历史并在网页标注。四块板原固件全部恢复并独立整片校验；生产交接代码及IDF未修改。测试工具默认使用隔离adapter分配overlay，不更改其checkout。
+[当时合并网页（历史）](evidence/five-board-regression-20261109/comparison-before-xip-on-20261110.html) · [新测证据与口径](evidence/present-aligned-fill-20261109/README.md) · [分析](evidence/present-aligned-fill-20261109/ANALYSIS.md)。122项有效成绩、6项跳过，每项完整16场景。S3 IRAM开／关、S31 RGB、P4 DSI的FULL/PARTIAL四角度及BOX-3单tile更新；固定单输入tile，PARTIAL双方按逻辑宽×50行分配，运行时核对实际bytes。DIRECT/AUTO、mosaico TE、GRAM双tile保留历史并在网页标注。四块板原固件全部恢复并独立整片校验；生产交接代码及IDF未修改。测试工具默认使用隔离adapter分配overlay，不更改其checkout。
 
 ## S31 RGB 单tile性能定位（2026-11-09）
 
@@ -22,7 +28,7 @@
 
 ## 首轮五板基线（历史记录，2026-11-09）
 
-首轮生产源码为b607bb9a1，present108项、adapter73项通过，31项跳过；原始口径保留在[首轮说明](evidence/five-board-regression-20261109/README-before-alignment.md)。目前合并网页中的FULL/PARTIAL已经由上面的同容量重测替换，其他项保留历史，不能再将整页称为同一轮数据。五板首轮恢复记录仍保留。
+首轮生产源码为b607bb9a1，present108项、adapter73项通过，31项跳过；原始口径保留在[首轮说明](evidence/five-board-regression-20261109/README-before-alignment.md)。当时合并网页中的FULL/PARTIAL由同容量重测替换，其他项保留历史；当前入口已经切换到上面的XIP ON独立完整轮，旧页仅作历史记录。五板首轮恢复记录仍保留。
 
 ## RGB 请求式切链修复（2026-11-10）
 
@@ -63,7 +69,7 @@ P4 `pixels` 套件同时运行 PPA/DMA2D executor 检查：internal/PSRAM source
 | s3-rgb | S3 LCD EV R16 / GC9503 RGB bounce | 480×480 | benchmark、pixels、native、smoke |
 | p4-dsi | P4 Function EV rev3 / EK79007 MIPI DSI | 1024×600 | benchmark、pixels、native、smoke |
 | box3-spi | ESP-BOX-3 / ILI9341 SPI GRAM | 320×240 | benchmark、smoke |
-| s31-rgb | S31 Korvo-1 原配 RGB，10 行 bounce | 800×480 | benchmark、pixels、rgb-events、smoke；像素/事件已验；当前防撕裂benchmark六模式×四角度24项通过，adapter20项通过、4项AUTO跳过；旧28项见历史记录 |
+| s31-rgb | S31 Korvo-1 原配 RGB | 800×480 | benchmark 固定无 bounce，双方共用真实 BSP 配置事实；pixels/rgb-events 等专项使用各自明确配置，历史成绩见证据索引 |
 | s31-qspi | S31 mosaico / CO5300 QSPI，TE43 | 480×480 | benchmark、pixels、te-lifecycle、smoke |
 
 以 `boards/boards.json` 的 MAC 识别设备，不绑定 USB0/ACM0。增加新板子需要增加明确配置，不能只改端口号。
@@ -86,7 +92,21 @@ RGB / MIPI DSI 默认 benchmark 矩阵只含防撕裂模式，不含 NONE。NONE
 
 benchmark 默认四个角度，`--angles 0,90` 可选子集；`--profiles DOUBLE_DIRECT` 或 `--profiles TE_C2_T1,TE_C2_T2` 可选模式。同一次对比双方必须使用完全相同的 profiles 和 angles。pixels/native 使用各自固件内的固定矩阵，`--angles/--profiles` 只作用于 benchmark。
 
-原始 adapter 的运行源码不修改。离线构建在工作目录创建 symlink overlay，只将 CMake 依赖名称 `lvgl__lvgl`/`espressif__esp_lcd_touch` 映射到同版离线组件。运行源码仍指向仓库原始 adapter，测试不会写入它的 src/include 或 IDF。
+原始 adapter checkout 不修改。离线构建在工作目录创建 overlay，将 CMake 依赖名称 `lvgl__lvgl`/`espressif__esp_lcd_touch` 映射到同版离线组件。默认 logical-50 策略复制 src，仅对齐 PARTIAL 的分配表达式并记录补丁后哈希；交接、同步和复制逻辑不改。legacy-physical-50 策略直接链接原始运行源码。正式成绩不写入或修改原始 adapter 的 src/include 或 IDF。
+
+## XIP ON 对比与独立驱动观察
+
+当前维护的RGB / MIPI对比只运行 `--xip on`。工具保留 `--xip off` 供明确要求的历史复现，当前矩阵不再运行OFF；输出分别隔离到 `present-xip-on`、`adapter-xip-on`、`present-xip-off`、`adapter-xip-off`，不会覆盖默认成绩。构建会核对最终 SDKCONFIG 的 XIP、取指与 rodata 三项，避免仅改默认值却残留旧配置。CPU、PSRAM 频率、缓存和输入 tile 容量保持同一口径。
+
+```sh
+python dev/tools/run.py build --board s31-rgb --implementation present --xip on --work-root /tmp/present-xip
+python dev/tools/run.py build --board s31-rgb --implementation adapter --xip on --work-root /tmp/present-xip
+python dev/tools/run.py compare --board s31-rgb --xip on --work-root /tmp/present-xip
+```
+
+上述比较前需先按普通工作流完成双方 flash/capture/report；这些步骤携带相同 `--xip`。本轮不运行XIP OFF，也不执行原固件恢复；工作目录的 `hardware-policy.json` 明确记录 `restore_original=false`。通用backup/restore仍使用每块板独立的共同原固件备份。S31 RGB benchmark 的实际 bounce 为零；S3 RGB 固定十行（9600字节）。FULL/DIRECT 保持其 FB 语义，PARTIAL 双方单输入 tile、逻辑宽×50行。
+
+本轮临时驱动观察使用[归档中的完整隔离源码和说明](evidence/rgb-mipi-xip-on-20261110/README.md)，`diagnostic-source.tar.gz` 包含实际测试源码与esp_lcd副本，`driver-observer/observer.patch`对应干净IDF；`--driver-trace PATH` 验证副本哈希及实际链接路径，并使用额外的 `-driver-trace` 输出目录。可疑地址、重复提交和未解析描述符只作为记录，不触发 assert、不纠正交换。真正的构建/运行错误仍按既有验收处理。观察器的内存和时间成本不混入干净驱动的正式成绩。完整复现地址交接检测需要使用归档中 `diag` 的临时消费方观察源码；只给生产组件传入driver overlay只能记录驱动事件，不能把没有消费方检查次数的零值当成无异常。RUN起止标记只在观察构建启用，丢弃第一段跨阶段帧。
 
 ## 板上运行与原固件恢复
 

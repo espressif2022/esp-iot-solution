@@ -1,0 +1,25 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';
+const root='/tmp/present-xip-on-comparison-20261110';const browserlog=fs.readFileSync('/tmp/present-xip-matrix-20261110/browser.log','utf8');const address=browserlog.match(/DevTools listening on (ws:\/\/[^\s]+)/)?.[1];assert(address);
+const targets=await(await fetch(`http://127.0.0.1:${new URL(address).port}/json/list`)).json();const ws=new WebSocket(targets.find(x=>x.type==='page').webSocketDebuggerUrl);await new Promise((ok,no)=>{ws.onopen=ok;ws.onerror=no});let id=0;const pending=new Map();ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(m.error):p.resolve(m.result)}};const call=(method,params={})=>new Promise((resolve,reject)=>{const n=++id;pending.set(n,{resolve,reject});ws.send(JSON.stringify({id:n,method,params}))});async function ev(expression){const r=await call('Runtime.evaluate',{expression,returnByValue:true});if(r.exceptionDetails)throw r.exceptionDetails;return r.result.value;}
+await call('Page.enable');await call('Runtime.enable');await call('Emulation.setDeviceMetricsOverride',{width:1440,height:1050,deviceScaleFactor:1,mobile:false});await call('Page.navigate',{url:'data:text/html;base64,'+Buffer.from(fs.readFileSync(root+'/comparison.html')).toString('base64')});for(let i=0;i<40;i++){if(await ev("document.readyState==='complete'&&document.querySelectorAll('section.board').length===3"))break;await new Promise(r=>setTimeout(r,100));}
+assert.equal(await ev("document.querySelectorAll('select').length"),0);const data=JSON.parse(fs.readFileSync(root+'/matrix-data.json','utf8'));
+const rendered=await ev(`Array.from(document.querySelectorAll('section.board')).map(s=>({id:s.id,fps:Array.from(s.querySelectorAll('.fps tr')).slice(1).map(r=>Array.from(r.querySelectorAll('td')).map(t=>t.textContent)),memory:Array.from(s.querySelectorAll('.memory tr')).slice(1).map(r=>Array.from(r.querySelectorAll('td.p,td.a')).map(t=>({value:t.querySelector('.memory-value')?.textContent,text:t.textContent,delta:t.querySelector('.delta')?.textContent,cls:t.querySelector('.delta')?.className}))),diag:Array.from(s.querySelectorAll('.diag tr')).slice(1).map(r=>Array.from(r.querySelectorAll('td.p,td.a')).map(t=>t.textContent))}))`);
+const modes=['DOUBLE_FULL','TRIPLE_FULL','DOUBLE_DIRECT','DOUBLE_PARTIAL','TRIPLE_PARTIAL','AUTO'];let checked=0,arrows=0;
+for(const section of rendered){assert.equal(section.fps.length,6);assert.equal(section.memory.length,24);assert.equal(section.diag.length,6);const cohort=data.boards[section.id].cohorts;
+ for(let i=0;i<6;i++)for(let j=0;j<2;j++){const impl=['present','adapter'][j],row=cohort.clean[impl].rows[i];assert.equal(row.mode,modes[i]);if(row.status==='PASS'){assert.equal(parseInt(section.fps[i][j+1],10),row.lvgl_fps);checked++;}else assert.match(section.fps[i][j+1],row.status==='SKIP'||row.status==='planned_skip'?/−/:/待完成/);}
+ for(let i=0;i<24;i++)for(let h=0;h<2;h++)for(let j=0;j<2;j++){
+  const impl=['present','adapter'][j],mode=Math.floor(i/4),phase=['before_open','after_open','after_run','after_close'][i%4],heap=['internal','psram'][h],key=heap+(phase==='after_run'?'_min_free':'_free'),row=cohort.clean[impl].rows[mode],cell=section.memory[i][h*2+j];
+  if(row.status!=='PASS'){assert.match(cell.text,row.status==='SKIP'||row.status==='planned_skip'?/−/:/待完成/);continue;}
+  const value=row.memory[phase][key];assert(Math.abs(Number(cell.value)-value/1024)<=0.005000001);checked++;
+  const other=cohort.clean.adapter.rows[mode];if(j===0 && other.status==='PASS'){
+   const diff=value-other.memory[phase][key];assert(cell.cls.includes(diff>0?'up':diff<0?'down':'same'));assert(cell.delta.startsWith(diff>0?'⬆️ +':diff<0?'⬇️ −':'＝ 0'));const shown=Number(cell.delta.match(/[0-9]+(?:\.[0-9]+)?/)[0]);assert(Math.abs(shown-Math.abs(diff)/1024)<=0.005000001);arrows++;
+  }
+ }
+ for(let i=0;i<6;i++)for(let j=0;j<2;j++){
+  const x=cohort.diagnostic[['present','adapter'][j]].rows[i],a=x.address;if(!a)continue;
+  const hits=a.release_active+a.write_active+a.confirm_wrong,checks=a.releases+a.writes+a.confirms;assert(section.diag[i][j].includes(`${hits} 次地址命中 / ${checks} 次检查`));assert(section.diag[i][j].includes(`未知 ${a.raced}`));checked++;
+ }
+}
+assert(await ev('document.documentElement.scrollWidth <= innerWidth'));let shot=await call('Page.captureScreenshot',{format:'png'});fs.writeFileSync(root+'/desktop.png',Buffer.from(shot.data,'base64'));
+await call('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});await new Promise(r=>setTimeout(r,200));assert(await ev('document.documentElement.scrollWidth <= innerWidth'));shot=await call('Page.captureScreenshot',{format:'png'});fs.writeFileSync(root+'/mobile.png',Buffer.from(shot.data,'base64'));
+const result={passed:true,sections:3,noDropdown:true,noPageOverflow:true,checkedCells:checked,memoryArrowsChecked:arrows,final:data.complete};fs.writeFileSync(root+'/browser-validation.json',JSON.stringify(result,null,2)+'\n');console.log(result);ws.close();

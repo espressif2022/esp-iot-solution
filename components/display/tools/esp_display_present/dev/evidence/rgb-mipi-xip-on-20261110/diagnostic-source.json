@@ -1,0 +1,8 @@
+{
+  "path": "/tmp/present-xip-on-diag-source-20261110/components/display/tools/esp_display_present",
+  "methods": {
+    "s3-rgb": "检查实际用于bounce取数的PSRAM framebuffer地址。",
+    "s31-rgb": "检查AXI预取描述符所属framebuffer；属于保守的DMA借用地址核对，不等于逐像素扫描位置。",
+    "p4-dsi": "检查驱动实际装载到DMA的帧地址独立快照；记录LLP作上下文，不等于逐像素扫描位置。"
+  }
+}

@@ -1,0 +1,11 @@
+[
+  {
+    "at": "2026-11-10T15:33:30.474505+08:00",
+    "board": "s3-rgb",
+    "implementation": "present",
+    "xip": "off",
+    "experiment": "IDF chunked writeback 4KiB, original submit code",
+    "observation": "仍然明显抖动",
+    "visual_acceptance": "not_passed"
+  }
+]

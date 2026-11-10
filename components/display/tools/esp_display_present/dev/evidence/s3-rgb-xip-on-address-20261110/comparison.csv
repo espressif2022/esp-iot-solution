@@ -1,0 +1,13 @@
+implementation,mode,status,scenes,lvgl_fps,releases,writes,confirms,not_pool,raced,release_active,write_active,confirm_wrong,measured_frames,measured_short,measured_restarts
+present,DOUBLE_FULL,PASS,16,26,1635,4908,1635,0,0,0,0,0,4195,2,2
+present,TRIPLE_FULL,PASS,16,35,2104,6315,2104,0,0,0,0,0,4185,3,3
+present,DOUBLE_DIRECT,PASS,16,43,2228,6684,2228,0,0,0,0,0,4189,2,2
+present,DOUBLE_PARTIAL,PASS,16,44,2092,14266,2092,2093,0,0,0,0,4185,6,6
+present,TRIPLE_PARTIAL,PASS,16,47,2252,15704,2252,2253,0,0,0,0,4189,5,5
+present,AUTO,PASS,16,47,2259,15716,2259,2259,0,0,0,0,4184,8,8
+adapter,DOUBLE_FULL,PASS,16,26,0,1595,1595,0,0,0,0,0,4193,0,0
+adapter,TRIPLE_FULL,PASS,16,36,2109,4218,0,0,0,0,0,0,4184,8,8
+adapter,DOUBLE_DIRECT,PASS,16,42,0,2256,2256,0,0,0,2,2,4184,1,1
+adapter,DOUBLE_PARTIAL,PASS,16,42,2103,2103,0,2102,0,0,0,0,4185,27,27
+adapter,TRIPLE_PARTIAL,PASS,16,46,2265,2265,0,2265,0,0,0,0,4187,22,22
+adapter,AUTO,SKIP,,,,,,,,,,,,,

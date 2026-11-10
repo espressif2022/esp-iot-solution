@@ -1,0 +1,475 @@
+{
+  "address_events": [
+    {
+      "implementation": "adapter",
+      "mode": "DOUBLE_DIRECT",
+      "rotation": 0,
+      "us": 188532754,
+      "kind": 3,
+      "given": "0x3c0e09c0",
+      "actual_source": "0x3c151200",
+      "driver_target": "0x3c0e09c0",
+      "position_px": 4800,
+      "request_seq": 1818,
+      "event_seq": 2851
+    },
+    {
+      "implementation": "adapter",
+      "mode": "DOUBLE_DIRECT",
+      "rotation": 0,
+      "us": 188534026,
+      "kind": 2,
+      "given": "0x3c151200",
+      "actual_source": "0x3c151200",
+      "driver_target": "0x3c0e09c0",
+      "position_px": 9600,
+      "request_seq": 1818,
+      "event_seq": 2851
+    },
+    {
+      "implementation": "adapter",
+      "mode": "DOUBLE_DIRECT",
+      "rotation": 0,
+      "us": 189560357,
+      "kind": 3,
+      "given": "0x3c0e09c0",
+      "actual_source": "0x3c151200",
+      "driver_target": "0x3c0e09c0",
+      "position_px": 0,
+      "request_seq": 1846,
+      "event_seq": 2913
+    },
+    {
+      "implementation": "adapter",
+      "mode": "DOUBLE_DIRECT",
+      "rotation": 0,
+      "us": 189561030,
+      "kind": 2,
+      "given": "0x3c151200",
+      "actual_source": "0x3c151200",
+      "driver_target": "0x3c0e09c0",
+      "position_px": 9600,
+      "request_seq": 1846,
+      "event_seq": 2913
+    }
+  ],
+  "complete": true,
+  "controller": {
+    "stage": "done",
+    "success": true,
+    "xip": "on",
+    "angles": [
+      0
+    ],
+    "restore_original": false,
+    "updated": 1794303496.234525,
+    "retained_firmware": "adapter XIP ON address diagnostic firmware; no original restore"
+  },
+  "conditions": {
+    "board": "s3-rgb",
+    "xip": "on",
+    "angles": [
+      0
+    ],
+    "pclk_hz": 16000000,
+    "bounce_lines": 10,
+    "shadow": "/tmp/present-s3-on-address-source-20261110/components/display/tools/esp_display_present",
+    "modes": [
+      "DOUBLE_FULL",
+      "TRIPLE_FULL",
+      "DOUBLE_DIRECT",
+      "DOUBLE_PARTIAL",
+      "TRIPLE_PARTIAL",
+      "AUTO"
+    ],
+    "original_firmware_restore": false
+  },
+  "rows": [
+    {
+      "implementation": "present",
+      "mode": "DOUBLE_FULL",
+      "status": "PASS",
+      "frames": 1636,
+      "transport_fps": 23.5,
+      "lvgl_fps": 26,
+      "scenes": 16,
+      "address": {
+        "mode": "DOUBLE_FULL",
+        "rotation": 0,
+        "releases": 1635,
+        "writes": 4908,
+        "confirms": 1635,
+        "not_pool": 0,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0
+      },
+      "supply": {
+        "mode": "DOUBLE_FULL",
+        "rotation": 0,
+        "frames": 4203,
+        "short_frames": 2,
+        "restarts": 2,
+        "min_eofs": 47,
+        "expected_eofs": 48,
+        "measured_frames": 4195,
+        "measured_short": 2,
+        "measured_restarts": 2
+      }
+    },
+    {
+      "implementation": "present",
+      "mode": "TRIPLE_FULL",
+      "status": "PASS",
+      "frames": 2105,
+      "transport_fps": 30.3,
+      "lvgl_fps": 35,
+      "scenes": 16,
+      "address": {
+        "mode": "TRIPLE_FULL",
+        "rotation": 0,
+        "releases": 2104,
+        "writes": 6315,
+        "confirms": 2104,
+        "not_pool": 0,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0
+      },
+      "supply": {
+        "mode": "TRIPLE_FULL",
+        "rotation": 0,
+        "frames": 4193,
+        "short_frames": 3,
+        "restarts": 3,
+        "min_eofs": 47,
+        "expected_eofs": 48,
+        "measured_frames": 4185,
+        "measured_short": 3,
+        "measured_restarts": 3
+      }
+    },
+    {
+      "implementation": "present",
+      "mode": "DOUBLE_DIRECT",
+      "status": "PASS",
+      "frames": 2229,
+      "transport_fps": 32.1,
+      "lvgl_fps": 43,
+      "scenes": 16,
+      "address": {
+        "mode": "DOUBLE_DIRECT",
+        "rotation": 0,
+        "releases": 2228,
+        "writes": 6684,
+        "confirms": 2228,
+        "not_pool": 0,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0
+      },
+      "supply": {
+        "mode": "DOUBLE_DIRECT",
+        "rotation": 0,
+        "frames": 4198,
+        "short_frames": 2,
+        "restarts": 2,
+        "min_eofs": 47,
+        "expected_eofs": 48,
+        "measured_frames": 4189,
+        "measured_short": 2,
+        "measured_restarts": 2
+      }
+    },
+    {
+      "implementation": "present",
+      "mode": "DOUBLE_PARTIAL",
+      "status": "PASS",
+      "frames": 2093,
+      "transport_fps": 30.2,
+      "lvgl_fps": 44,
+      "scenes": 16,
+      "address": {
+        "mode": "DOUBLE_PARTIAL",
+        "rotation": 0,
+        "releases": 2092,
+        "writes": 14266,
+        "confirms": 2092,
+        "not_pool": 2093,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0
+      },
+      "supply": {
+        "mode": "DOUBLE_PARTIAL",
+        "rotation": 0,
+        "frames": 4193,
+        "short_frames": 6,
+        "restarts": 6,
+        "min_eofs": 47,
+        "expected_eofs": 48,
+        "measured_frames": 4185,
+        "measured_short": 6,
+        "measured_restarts": 6
+      }
+    },
+    {
+      "implementation": "present",
+      "mode": "TRIPLE_PARTIAL",
+      "status": "PASS",
+      "frames": 2253,
+      "transport_fps": 32.4,
+      "lvgl_fps": 47,
+      "scenes": 16,
+      "address": {
+        "mode": "TRIPLE_PARTIAL",
+        "rotation": 0,
+        "releases": 2252,
+        "writes": 15704,
+        "confirms": 2252,
+        "not_pool": 2253,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0
+      },
+      "supply": {
+        "mode": "TRIPLE_PARTIAL",
+        "rotation": 0,
+        "frames": 4197,
+        "short_frames": 5,
+        "restarts": 5,
+        "min_eofs": 47,
+        "expected_eofs": 48,
+        "measured_frames": 4189,
+        "measured_short": 5,
+        "measured_restarts": 5
+      }
+    },
+    {
+      "implementation": "present",
+      "mode": "AUTO",
+      "status": "PASS",
+      "frames": 2260,
+      "transport_fps": 32.6,
+      "lvgl_fps": 47,
+      "scenes": 16,
+      "address": {
+        "mode": "AUTO",
+        "rotation": 0,
+        "releases": 2259,
+        "writes": 15716,
+        "confirms": 2259,
+        "not_pool": 2259,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0
+      },
+      "supply": {
+        "mode": "AUTO",
+        "rotation": 0,
+        "frames": 4192,
+        "short_frames": 8,
+        "restarts": 8,
+        "min_eofs": 47,
+        "expected_eofs": 48,
+        "measured_frames": 4184,
+        "measured_short": 8,
+        "measured_restarts": 8
+      }
+    },
+    {
+      "implementation": "adapter",
+      "mode": "DOUBLE_FULL",
+      "status": "PASS",
+      "frames": 0,
+      "transport_fps": 0.0,
+      "lvgl_fps": 26,
+      "scenes": 16,
+      "address": {
+        "mode": "DOUBLE_FULL",
+        "rotation": 0,
+        "releases": 0,
+        "writes": 1595,
+        "confirms": 1595,
+        "not_pool": 0,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0
+      },
+      "supply": {
+        "mode": "DOUBLE_FULL",
+        "rotation": 0,
+        "frames": 4204,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 48,
+        "expected_eofs": 48,
+        "measured_frames": 4193,
+        "measured_short": 0,
+        "measured_restarts": 0
+      }
+    },
+    {
+      "implementation": "adapter",
+      "mode": "TRIPLE_FULL",
+      "status": "PASS",
+      "frames": 0,
+      "transport_fps": 0.0,
+      "lvgl_fps": 36,
+      "scenes": 16,
+      "address": {
+        "mode": "TRIPLE_FULL",
+        "rotation": 0,
+        "releases": 2109,
+        "writes": 4218,
+        "confirms": 0,
+        "not_pool": 0,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0
+      },
+      "supply": {
+        "mode": "TRIPLE_FULL",
+        "rotation": 0,
+        "frames": 4193,
+        "short_frames": 8,
+        "restarts": 8,
+        "min_eofs": 47,
+        "expected_eofs": 48,
+        "measured_frames": 4184,
+        "measured_short": 8,
+        "measured_restarts": 8
+      }
+    },
+    {
+      "implementation": "adapter",
+      "mode": "DOUBLE_DIRECT",
+      "status": "PASS",
+      "frames": 0,
+      "transport_fps": 0.0,
+      "lvgl_fps": 42,
+      "scenes": 16,
+      "address": {
+        "mode": "DOUBLE_DIRECT",
+        "rotation": 0,
+        "releases": 0,
+        "writes": 2256,
+        "confirms": 2256,
+        "not_pool": 0,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 2,
+        "confirm_wrong": 2,
+        "saved": 4
+      },
+      "supply": {
+        "mode": "DOUBLE_DIRECT",
+        "rotation": 0,
+        "frames": 4198,
+        "short_frames": 2,
+        "restarts": 2,
+        "min_eofs": 47,
+        "expected_eofs": 48,
+        "measured_frames": 4184,
+        "measured_short": 1,
+        "measured_restarts": 1
+      }
+    },
+    {
+      "implementation": "adapter",
+      "mode": "DOUBLE_PARTIAL",
+      "status": "PASS",
+      "frames": 0,
+      "transport_fps": 0.0,
+      "lvgl_fps": 42,
+      "scenes": 16,
+      "address": {
+        "mode": "DOUBLE_PARTIAL",
+        "rotation": 0,
+        "releases": 2103,
+        "writes": 2103,
+        "confirms": 0,
+        "not_pool": 2102,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0
+      },
+      "supply": {
+        "mode": "DOUBLE_PARTIAL",
+        "rotation": 0,
+        "frames": 4196,
+        "short_frames": 27,
+        "restarts": 27,
+        "min_eofs": 47,
+        "expected_eofs": 48,
+        "measured_frames": 4185,
+        "measured_short": 27,
+        "measured_restarts": 27
+      }
+    },
+    {
+      "implementation": "adapter",
+      "mode": "TRIPLE_PARTIAL",
+      "status": "PASS",
+      "frames": 0,
+      "transport_fps": 0.0,
+      "lvgl_fps": 46,
+      "scenes": 16,
+      "address": {
+        "mode": "TRIPLE_PARTIAL",
+        "rotation": 0,
+        "releases": 2265,
+        "writes": 2265,
+        "confirms": 0,
+        "not_pool": 2265,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0
+      },
+      "supply": {
+        "mode": "TRIPLE_PARTIAL",
+        "rotation": 0,
+        "frames": 4197,
+        "short_frames": 22,
+        "restarts": 22,
+        "min_eofs": 47,
+        "expected_eofs": 48,
+        "measured_frames": 4187,
+        "measured_short": 22,
+        "measured_restarts": 22
+      }
+    },
+    {
+      "implementation": "adapter",
+      "mode": "AUTO",
+      "status": "SKIP"
+    }
+  ],
+  "limits": [
+    "Live driver bb_fb_index is independently read at software ownership transitions, not compared after assignment.",
+    "Only explicit release/acquire/confirm and LVGL render-start boundaries covered; zero is not proof against arbitrary CPU/DMA writes or every visible fault.",
+    "Pool-external input tiles are counted but not errors. Cross-switch source read is separate. Source/target/position are not a fully atomic struct snapshot; target is context only.",
+    "Observer takes short critical sections, changes scheduling slightly; no pixel hashes, asserts, corrections, callback replacement or delays. Diagnostic FPS/memory not formal performance data.",
+    "RUN begins on next VSYNC, leading partial frame and close excluded; benchmark summary logging included."
+  ]
+}

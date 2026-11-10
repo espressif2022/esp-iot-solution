@@ -8,6 +8,9 @@
 #include "esp_log.h"
 #include "esp_heap_caps.h"
 #include "esp_timer.h"
+#ifdef BENCH_DRIVER_TRACE
+#include "esp_lcd_present_trace.h"
+#endif
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 static const char *TAG = "present_bench";
@@ -57,6 +60,9 @@ static void run(void *unused)
             continue;
         }
 #endif
+#ifdef BENCH_DRIVER_TRACE
+        esp_lcd_present_trace_reset();
+#endif
         memory_report("before_open", false);
         ESP_ERROR_CHECK(heap_caps_monitor_local_minimum_free_size_start());
         lv_display_t *disp = NULL;
@@ -72,10 +78,16 @@ static void run(void *unused)
         lv_obj_invalidate(lv_display_get_screen_active(disp));
         bench_unlock();
         ESP_LOGI(TAG, "RUN mode=%s te_buffers=%u rotation=%u", active->name, active->compose, active->rotation);
+#ifdef BENCH_DRIVER_TRACE
+        esp_lcd_present_trace_mark_running(1);
+#endif
         int64_t start = esp_timer_get_time();
         while (!atomic_load_explicit(&finished, memory_order_acquire) && esp_timer_get_time() - start < 150000000) {
             bench_pump();
         }
+#ifdef BENCH_DRIVER_TRACE
+        esp_lcd_present_trace_mark_running(0);
+#endif
         bool complete = atomic_load_explicit(&finished, memory_order_acquire);
         int64_t elapsed = esp_timer_get_time() - start;
         uint32_t frames = bench_frame_count();
@@ -88,6 +100,9 @@ static void run(void *unused)
         vTaskDelay(pdMS_TO_TICKS(20));
         memory_report("after_close", false);
         bench_buffer_audit_report();
+#ifdef BENCH_DRIVER_TRACE
+        esp_lcd_present_trace_report(active->name, active->rotation);
+#endif
         bench_meter_report(active->name);
         bench_profile_report(active->name);
         ESP_ERROR_CHECK(complete && scenes > 0 ? ESP_OK : ESP_ERR_TIMEOUT);

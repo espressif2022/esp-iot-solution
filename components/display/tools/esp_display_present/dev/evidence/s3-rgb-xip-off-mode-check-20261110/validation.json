@@ -1,0 +1,42 @@
+{
+  "verified": true,
+  "angle": 0,
+  "supported_cases": 11,
+  "unsupported_cases": 1,
+  "selected_scenes": 176,
+  "affected_cases": 11,
+  "summaries": {
+    "present": {
+      "tested": 6,
+      "affected": 6,
+      "affected_modes": [
+        "DOUBLE_FULL",
+        "TRIPLE_FULL",
+        "DOUBLE_DIRECT",
+        "DOUBLE_PARTIAL",
+        "TRIPLE_PARTIAL",
+        "AUTO"
+      ]
+    },
+    "adapter": {
+      "tested": 5,
+      "affected": 5,
+      "affected_modes": [
+        "DOUBLE_FULL",
+        "TRIPLE_FULL",
+        "DOUBLE_DIRECT",
+        "DOUBLE_PARTIAL",
+        "TRIPLE_PARTIAL"
+      ]
+    }
+  },
+  "common_config_equal": true,
+  "reused_and_new_adapter_runtime_equal": true,
+  "test_source_equal_across_cohorts": true,
+  "driver_overlay_hashes_verified": true,
+  "leading_partial_frame_excluded": true,
+  "production_runtime_unchanged": true,
+  "idf_clean": true,
+  "original_firmware_restored": false,
+  "retained_firmware": "Previously measured present XIP ON / 16MHz / ten-line bounce diagnostic reference"
+}

@@ -1,0 +1,29 @@
+{
+  "requested_angles": [
+    0
+  ],
+  "reason": "用户要求仅单角度验证，不继续多角度",
+  "pclk_hz": 16000000,
+  "bounce_lines": 10,
+  "xip": "off",
+  "reuse_present_modes": [
+    "DOUBLE_FULL",
+    "TRIPLE_FULL",
+    "DOUBLE_DIRECT",
+    "DOUBLE_PARTIAL",
+    "TRIPLE_PARTIAL",
+    "AUTO"
+  ],
+  "reuse_adapter_modes": [
+    "DOUBLE_FULL"
+  ],
+  "remaining_adapter_modes": [
+    "TRIPLE_FULL",
+    "DOUBLE_DIRECT",
+    "DOUBLE_PARTIAL",
+    "TRIPLE_PARTIAL"
+  ],
+  "expected_supported_rows": 11,
+  "unsupported_adapter_AUTO": true,
+  "source": "既有完整PASS0结果复用，补测每项完整16场景"
+}

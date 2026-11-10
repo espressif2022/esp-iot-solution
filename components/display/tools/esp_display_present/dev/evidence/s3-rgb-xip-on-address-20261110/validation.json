@@ -1,0 +1,9 @@
+{
+  "supported_cases": 11,
+  "scenes": 176,
+  "angle": 0,
+  "host_asan_ubsan": "PASS",
+  "common_sdkconfig_identical": true,
+  "xip_all_three_flags": true,
+  "no_original_restore": true
+}

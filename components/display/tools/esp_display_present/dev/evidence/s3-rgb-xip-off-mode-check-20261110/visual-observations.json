@@ -1,0 +1,30 @@
+[
+  {
+    "at": "2026-11-10T16:19:24.473590+08:00",
+    "board": "s3-rgb",
+    "observation": "double full multiple image 和 container 抖得厉害",
+    "controller": {
+      "stage": "present-capture",
+      "board": "s3-rgb",
+      "xip": "off",
+      "pclk_hz": 16000000,
+      "bounce_lines": 10,
+      "runs": [
+        {
+          "implementation": "present",
+          "success": false
+        }
+      ],
+      "restore_original": false,
+      "success": false,
+      "archive_complete": false,
+      "updated": 1794298691.5674353
+    },
+    "last_logged_case": [
+      "DOUBLE_FULL",
+      "0"
+    ],
+    "active_firmware": "present XIP OFF matrix",
+    "tail": "wire_spi: Delete but keep CS line inactive\nW (2850) lcd.rgb: GPIO 3 is not usable, maybe is reserved by others\nI (2851) gc9503: LCD panel create success, version: 3.0.1\nI (2851) rgb_facts: RGB_FACTS width=480 height=480 fbs=3 bounce_bytes=9600 continuous=1 bpp=16\nI (2879) present_bench: MEMORY mode=SUITE rotation=0 phase=after_init internal_total=357099 internal_free=264427 psram_total=16777216 psram_free=15390860 internal_min_free=0 psram_min_free=0\nI (2884) present_bench: SUITE_BEGIN board=s3-rgb implementation=present cases=24\nI (2891) present_bench: MEMORY mode=DOUBLE_FULL rotation=0 phase=before_open internal_total=357099 internal_free=264427 psram_total=16777216 psram_free=15390860 internal_min_free=0 psram_min_free=0\nI (2922) present_bench: MEMORY mode=DOUBLE_FULL rotation=0 phase=after_open internal_total=357099 internal_free=219439 psram_total=16777216 psram_free=14923888 internal_min_free=0 psram_min_free=0\nI (2931) present_bench: RUN mode=DOUBLE_FULL te_buffers=0 rotation=0\n"
+  }
+]

@@ -15,6 +15,42 @@ spec.loader.exec_module(runner)
 
 
 class RunnerTest(unittest.TestCase):
+    def test_cancel_restore_never_identifies_or_accesses_serial(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / 'hardware-policy.json').write_text(json.dumps({'restore_original': False, 'reason': 'User cancelled restore'}))
+            args = SimpleNamespace(work_root=root, board='s3-rgb', suite='benchmark', implementation='present', action='restore', port='/dev/invalid')
+            with patch.object(runner, 'identify', side_effect=AssertionError('Must not access serial')), patch.object(runner, 'run', side_effect=AssertionError('Must not run esptool')):
+                runner.hardware(args)
+            record = json.loads((root / 's3-rgb/backup/restored.json').read_text())
+            self.assertTrue(record['skipped_by_user'])
+            self.assertFalse(record['verified_full_flash'])
+
+    def test_xip_variants_are_isolated_and_effective(self):
+        args = SimpleNamespace(work_root=Path('/tmp/test-xip'), board='s31-rgb', suite='benchmark', implementation='present', xip='on')
+        enabled = runner.location(args)
+        args.xip = 'off'
+        self.assertNotEqual(enabled, runner.location(args))
+        clean = runner.location(args)
+        args.driver_trace = Path('/tmp/observer')
+        self.assertNotEqual(clean, runner.location(args))
+        for mode in ('on', 'off'):
+            sdk = runner.xip_defaults(mode)
+            runner.validate_xip(sdk, mode)
+            with self.assertRaises(ValueError):
+                runner.validate_xip(sdk, 'off' if mode == 'on' else 'on')
+        with self.assertRaises(ValueError):
+            runner.validate_xip('CONFIG_SPIRAM_XIP_FROM_PSRAM=y\n', 'on')
+
+    def test_driver_trace_is_data_not_error_handling(self):
+        log = ('DRIVER_TRACE mode=DOUBLE_DIRECT rotation=90 requests=4 events=5 target_diffs=2 outside_pool=1 raw=0x1234\n'
+               'PASS mode=DOUBLE_DIRECT rotation=90 lvgl_fps=20 scenes=16\nSUITE_PASS board=s31-rgb implementation=present\n')
+        result = runner.parse_log(log)
+        self.assertFalse(result['errors'])
+        self.assertEqual(result['rows'][0]['driver_trace']['target_diffs'], 2)
+        self.assertEqual(result['rows'][0]['driver_trace']['outside_pool'], 1)
+        self.assertNotIn('raw', result['rows'][0]['driver_trace'])
+
     def test_board_matrix(self):
         self.assertEqual(len(runner.cases_for('s3-rgb', [0, 90, 180, 270])), 24)
         for board in ('s3-rgb', 's31-rgb', 'p4-dsi'):

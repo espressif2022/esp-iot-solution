@@ -1,0 +1,5 @@
+# CSV exports use the standard CRLF dialect; patch context keeps significant spaces.
+*.csv whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+*.patch -whitespace
+# SDK defaults are verbatim source snapshots, including their final blank line.
+*.defaults whitespace=-blank-at-eof

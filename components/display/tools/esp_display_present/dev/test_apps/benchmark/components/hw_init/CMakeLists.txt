@@ -28,3 +28,13 @@ else()
 endif()
 idf_component_register(SRCS ${SOURCES} INCLUDE_DIRS . PRIV_INCLUDE_DIRS "${BOARD_DIR}" REQUIRES esp_lcd esp_driver_gpio ${DEPS})
 target_compile_definitions(${COMPONENT_LIB} PUBLIC ${DEFINES})
+
+# Benchmark RGB uses real creation facts, including S31 without bounce.
+if(PRESENT_BOARD STREQUAL "s3-rgb" OR PRESENT_BOARD STREQUAL "s31-rgb")
+    target_sources(${COMPONENT_LIB} PRIVATE "${BOARD_DIR}/board_rgb_info.c")
+    target_include_directories(${COMPONENT_LIB} PRIVATE "${PRESENT_ROOT}/src")
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE PRESENT_BOARD_RGB_INFO=1)
+endif()
+if(PRESENT_BOARD STREQUAL "s31-rgb")
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE PRESENT_RGB_BOUNCE_LINES=0)
+endif()

@@ -93,8 +93,36 @@ def idf():
     return Path(value).resolve()
 
 
+def variant_name(args, implementation=None):
+    name = implementation or args.implementation
+    if getattr(args, 'profile', False):
+        name += '-profile'
+    if getattr(args, 'xip', 'default') != 'default':
+        name += '-xip-' + args.xip
+    if getattr(args, 'driver_trace', None):
+        name += '-driver-trace'
+    return name
+
+
 def location(args):
-    return args.work_root.resolve() / args.board / args.suite / (args.implementation + ('-profile' if getattr(args, 'profile', False) else ''))
+    return args.work_root.resolve() / args.board / args.suite / variant_name(args)
+
+
+def xip_defaults(mode):
+    if mode not in ('on', 'off'):
+        raise ValueError('Explicit XIP mode required')
+    value = 'y' if mode == 'on' else 'n'
+    return ''.join(f'CONFIG_{name}={value}\n' for name in
+                   ('SPIRAM_XIP_FROM_PSRAM', 'SPIRAM_FETCH_INSTRUCTIONS', 'SPIRAM_RODATA'))
+
+
+def validate_xip(sdk, mode):
+    if mode == 'default':
+        return
+    for key in ('SPIRAM_XIP_FROM_PSRAM', 'SPIRAM_FETCH_INSTRUCTIONS', 'SPIRAM_RODATA'):
+        if (f'CONFIG_{key}=y' in sdk.splitlines()) != (mode == 'on'):
+            raise ValueError('Effective SDKCONFIG disagrees with --xip: ' + key)
+
 
 
 def prepare(args):
@@ -114,6 +142,10 @@ def comparable_sdkconfig(sdk):
 
 
 def build(args):
+    xip_mode = getattr(args, 'xip', 'default')
+    driver_trace = getattr(args, 'driver_trace', None)
+    if (xip_mode != 'default' or driver_trace) and (args.suite != 'benchmark' or args.board not in ('s3-rgb', 's31-rgb', 'p4-dsi')):
+        raise ValueError('XIP/driver trace variants require RGB/DSI benchmark')
     if args.profile and (args.implementation != 'present' or args.suite != 'benchmark'):
         raise ValueError('--profile requires present benchmark')
     if args.implementation == 'adapter' and args.suite != 'benchmark':
@@ -167,12 +199,35 @@ def build(args):
     if args.suite in ('pixels', 'native'):
         flags += [f'-DPRESENT_MODE_ROTATION_MATRIX={"ON" if args.suite == "pixels" else "OFF"}',
                   f'-DPRESENT_NATIVE_ROTATION_MATRIX={"ON" if args.suite == "native" else "OFF"}']
+    variant_defaults = []
+    if xip_mode != 'default':
+        variant_defaults.append(xip_defaults(xip_mode))
+    if args.suite == 'benchmark' and args.board == 's31-rgb':
+        variant_defaults.append('CONFIG_PV2_LEGACY_RGB_BOUNCE_CONFIRMED=n\n')
+    if variant_defaults:
+        config_overlay = root / 'variant.defaults'
+        config_overlay.write_text(''.join(variant_defaults))
+        defaults.append(config_overlay)
     flags += [f'-DPRESENT_DEPS_DIR={deps}']
     command = [sys.executable, idf() / 'tools/idf.py', '--preview', '-C', app, '-B', root / 'build',
                f'-DIDF_TARGET={board["target"]}', f'-DSDKCONFIG={root / "sdkconfig"}',
                '-DSDKCONFIG_DEFAULTS=' + ';'.join(map(str, defaults)), *flags, 'build']
     env = os.environ.copy()
     env['IDF_COMPONENT_MANAGER'] = '0'
+    env['PRESENT_TEST_LCD_DRIVER_DIR'] = ''
+    env['PRESENT_TEST_DRIVER_TRACE'] = 'OFF'
+    trace_manifest = None
+    if driver_trace:
+        driver_trace = driver_trace.resolve()
+        trace_manifest = json.loads((driver_trace / 'trace-manifest.json').read_text())
+        if trace_manifest['idf_commit'] != subprocess.check_output(['git', '-C', str(idf()), 'rev-parse', 'HEAD'], text=True).strip():
+            raise ValueError('Trace overlay IDF revision mismatch')
+        for relative, expected in trace_manifest['files_sha256'].items():
+            if sha(driver_trace / relative) != expected:
+                raise ValueError('Driver trace overlay changed: ' + relative)
+        env['PRESENT_TEST_LCD_DRIVER_DIR'] = str(driver_trace / 'esp_lcd')
+        env['PRESENT_TEST_DRIVER_TRACE'] = 'ON'
+
     env['LVGL_VERSION'] = '9.6.0'
     env['PRESENT_TEST_BUFFER_POLICY'] = buffer_policy
     env['PRESENT_TEST_PROFILE'] = 'ON' if args.profile else 'OFF'
@@ -214,10 +269,18 @@ def build(args):
         except subprocess.CalledProcessError:
             print('\n'.join((root / 'build.log').read_text(errors='replace').splitlines()[-35:]))
             raise
+    project = json.loads((root / 'build/project_description.json').read_text())
+    lcd_component = Path(project['build_component_info']['esp_lcd']['dir']).resolve()
+    expected_lcd = driver_trace / 'esp_lcd' if driver_trace else idf() / 'components/esp_lcd'
+    if lcd_component != expected_lcd.resolve():
+        raise ValueError('Unexpected LCD driver component: ' + str(lcd_component))
     sdk = (root / 'sdkconfig').read_text()
+    validate_xip(sdk, xip_mode)
     comparable = comparable_sdkconfig(sdk)
     state = dict(buffer_schema=1 if args.suite == 'benchmark' else 0, buffer_policy=buffer_policy, memory_schema=1 if args.suite == 'benchmark' else 0, profile=args.profile, board=args.board, suite=args.suite, implementation=args.implementation, cases=planned,
                  idf_commit=subprocess.check_output(['git', '-C', str(idf()), 'rev-parse', 'HEAD'], text=True).strip(),
+                 xip_mode=xip_mode, driver_trace=trace_manifest,
+                 rgb_bounce_lines=(0 if args.board == 's31-rgb' else 10) if args.suite == 'benchmark' and args.board in ('s31-rgb', 's3-rgb') else None,
                  lvgl_version='9.6.0' if lvgl else None,
                  lvgl_benchmark_sha256=sha(lvgl / 'demos/benchmark/lv_demo_benchmark.c') if lvgl else None,
                  comparable_sdkconfig_sha256=hashlib.sha256(comparable.encode()).hexdigest(),
@@ -243,6 +306,7 @@ def build(args):
 def parse_log(text):
     rows = []
     meters = {}
+    driver_observations = {}
     stages = {}
     memory = {}
     suite_memory = {}
@@ -261,6 +325,10 @@ def parse_log(text):
         m = re.search(r'RUN mode=(\S+).*rotation=(\d+)', line)
         if m:
             active = (m[1], int(m[2]))
+        observation = re.search(r'DRIVER_TRACE mode=(\S+) rotation=(\d+)', line)
+        if observation:
+            driver_observations[observation[1], int(observation[2])] = {k: int(v) for k, v in re.findall(
+                r'\b(kind|bounce_bytes|requests|events|superseded|active_submits|target_diffs|unresolved|outside_pool|pending|saved)=(\d+)', line)}
         if 'BUFFER_AUDIT:' in line:
             identity = re.search(r'mode=(\S+) rotation=(\d+)', line)
             if identity:
@@ -277,6 +345,8 @@ def parse_log(text):
             row.update({k: float(v) if '.' in v else int(v) for k, v in re.findall(
                 r'(frames|transport_fps|lvgl_fps|cpu|render|flush|scenes|early_events|driver_events|wait_avg_us|wait_max_us|idle_frame_events|idle_vsync|active_write)=([\d.]+)', line)})
             row.update(meters.get((m[2], int(m[3])), {}))
+            if (m[2], int(m[3])) in driver_observations:
+                row['driver_trace'] = driver_observations[m[2], int(m[3])]
             if (m[2], int(m[3])) in buffers:
                 row['buffer_audit'] = buffers[m[2], int(m[3])]
             if (m[2], int(m[3])) in memory:
@@ -337,6 +407,12 @@ def report(args):
             if not valid:
                 result['buffers_verified'] = False
                 result['errors'].append(f"Missing or mismatched buffer audit: {row['mode']}/{row['rotation']}")
+    if manifest.get('driver_trace'):
+        passed = [row for row in result['rows'] if row['status'] == 'PASS']
+        result['diagnostics_complete'] = bool(passed) and all(row.get('driver_trace', {}).get('requests', 0) > 0 and row.get('driver_trace', {}).get('events', 0) > 0 for row in passed)
+        if not result['diagnostics_complete']:
+            result['errors'].append('Missing active driver observation; diagnostic not verified')
+        # Observations remain data, never corrective actions or hardware errors.
     (root / 'results.json').write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps(result, indent=2))
     if not result['complete'] or result['errors'] or not result['matrix_complete']:
@@ -347,13 +423,13 @@ def compare(args):
     base = args.work_root.resolve() / args.board / 'benchmark'
     results, manifests = {}, {}
     for impl in ('present', 'adapter'):
-        root = base / impl
+        root = base / variant_name(args, impl)
         results[impl] = json.loads((root / 'results.json').read_text())
         manifests[impl] = json.loads((root / 'manifest.json').read_text())
         if not results[impl]['complete'] or results[impl]['errors'] or not results[impl]['matrix_complete']:
             raise ValueError('Cannot compare incomplete/failed suites')
-    for key in ('board', 'cases', 'idf_commit', 'lvgl_benchmark_sha256', 'comparable_sdkconfig_sha256', 'defaults_sha256', 'test_sources_sha256'):
-        if manifests['present'][key] != manifests['adapter'][key]:
+    for key in ('xip_mode', 'driver_trace', 'rgb_bounce_lines', 'board', 'cases', 'idf_commit', 'lvgl_benchmark_sha256', 'comparable_sdkconfig_sha256', 'defaults_sha256', 'test_sources_sha256'):
+        if manifests['present'].get(key) != manifests['adapter'].get(key):
             raise ValueError('Comparison configurations differ: ' + key)
     if manifests['present'].get('buffer_policy', 'legacy-physical-50') != manifests['adapter'].get('buffer_policy', 'legacy-physical-50'):
         raise ValueError('Comparison allocation policies differ')
@@ -390,13 +466,14 @@ def compare(args):
                 row[prefix + '_open_delta_bytes'] = '-' if skipped else before[heap + '_free'] - opened[heap + '_free'] if before and opened else '未测'
                 row[prefix + '_min_free_bytes'] = '-' if skipped else run.get(heap + '_min_free', '未测')
         rows.append(row)
-    with (base / 'comparison.csv').open('w') as f:
+    output_name = 'comparison' + ('-xip-' + args.xip if getattr(args, 'xip', 'default') != 'default' else '') + ('-driver-trace' if getattr(args, 'driver_trace', None) else '')
+    with (base / (output_name + '.csv')).open('w') as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0]), lineterminator='\n')
         writer.writeheader()
         writer.writerows(rows)
     lines = ['| Board | Mode | Angle | present FPS | adapter FPS |', '|---|---|---:|---:|---:|']
     lines += [f"| {r['board']} | {r['mode']} | {r['rotation']} | {r['present_fps']} | {r['adapter_fps']} |" for r in rows]
-    (base / 'comparison.md').write_text('\n'.join(lines) + '\n')
+    (base / (output_name + '.md')).write_text('\n'.join(lines) + '\n')
     print('\n'.join(lines))
 
 
@@ -422,6 +499,17 @@ def hardware(args):
     backup = args.work_root.resolve() / args.board / 'backup'
     backup.mkdir(parents=True, exist_ok=True)
     image, record = backup / 'original.bin', backup / 'manifest.json'
+    policy_path = args.work_root.resolve() / 'hardware-policy.json'
+    if args.action == 'restore' and policy_path.exists():
+        policy = json.loads(policy_path.read_text())
+        if policy.get('restore_original') is False:
+            (backup / 'restored.json').write_text(json.dumps(dict(
+                verified_full_flash=False, skipped_by_user=True,
+                reason=policy.get('reason', 'Restore disabled by work-root policy'),
+                retained_firmware=str(root),
+            ), ensure_ascii=False, indent=2) + '\n')
+            print('Original firmware restore skipped by user policy; no serial access')
+            return
     identify(args)
     before = 'no-reset' if args.port.startswith('/dev/ttyACM') else 'default-reset'
     if args.action == 'backup':
@@ -500,6 +588,8 @@ def main():
     p.add_argument('--angles', type=lambda v: [int(x) for x in v.split(',')], default=[0, 90, 180, 270])
     p.add_argument('--profiles', type=lambda v: v.split(','))
     p.add_argument('--buffer-policy', choices=POLICIES, default='logical-50', help='PARTIAL byte-capacity alignment; legacy policy reproduces old allocation')
+    p.add_argument('--xip', choices=('default', 'on', 'off'), default='default', help='Isolated RGB/DSI benchmark XIP configuration')
+    p.add_argument('--driver-trace', type=Path, help='Verified read-only driver observer overlay; separate diagnostic output')
     p.add_argument('--profile', action='store_true', help='Benchmark-only stage counters; isolated present-profile output')
     p.add_argument('--sanitize', action='store_true')
     p.add_argument('--check', action='store_true')

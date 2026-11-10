@@ -1,0 +1,5 @@
+{
+  "esp_display_present/src/backend/present_backend_fb.c": "Only observer include/calls added; underlying control statements unchanged",
+  "esp_lvgl_adapter/src/display/bridge/common/display_bridge_common.c": "Only observer include/calls added; underlying control statements unchanged",
+  "esp_lvgl_adapter/src/display/bridge/v9/lvgl_bridge_v9.c": "Only observer include/calls added; underlying control statements unchanged"
+}

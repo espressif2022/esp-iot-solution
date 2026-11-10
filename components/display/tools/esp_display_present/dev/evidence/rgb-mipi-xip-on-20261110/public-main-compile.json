@@ -1,0 +1,14 @@
+[
+  {
+    "variant": "present-xip-on",
+    "result": "PASS",
+    "compiler": "/home/xuxin/.espressif/tools/xtensa-esp-elf/esp-16.1.0_20260609/xtensa-esp-elf/bin/xtensa-esp32s3-elf-gcc",
+    "scope": "Compile public benchmark main with actual clean/diagnostic build flags; no new firmware or board run"
+  },
+  {
+    "variant": "present-xip-on-driver-trace",
+    "result": "PASS",
+    "compiler": "/home/xuxin/.espressif/tools/xtensa-esp-elf/esp-16.1.0_20260609/xtensa-esp-elf/bin/xtensa-esp32s3-elf-gcc",
+    "scope": "Compile public benchmark main with actual clean/diagnostic build flags; no new firmware or board run"
+  }
+]
