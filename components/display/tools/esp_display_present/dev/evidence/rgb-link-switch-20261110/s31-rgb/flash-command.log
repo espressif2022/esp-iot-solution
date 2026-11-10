@@ -1,0 +1,74 @@
+esptool v5.4.0
+Serial port /dev/ttyUSB0:
+Connecting....
+Connected to ESP32-S31 on /dev/ttyUSB0:
+Chip type:          ESP32-S31 (revision v0.0)
+Features:           Wi-Fi 6, BT 5.4 (LE), IEEE802.15.4, Dual Core + LP Core, 300MHz
+Crystal frequency:  40MHz
+MAC:                30:ed:a0:f3:f7:b8
+
+Uploading stub flasher...
+Running stub flasher...
+Stub flasher running.
+
+MAC:                30:ed:a0:f3:f7:b8
+
+Staying in bootloader.
+
++ /home/xuxin/.espressif/python_env/idf6.2_py3.10_env/bin/python -m esptool --chip esp32s31 -p /dev/ttyUSB0 -b 921600 --before default-reset --after hard-reset write-flash @flash_args
+esptool --chip esp32s31 -p /dev/ttyUSB0 -b 921600 --before default-reset --after hard-reset write-flash --flash-mode dio --flash-freq 80m --flash-size 16MB 0x2000 bootloader/bootloader.bin 0x8000 partition_table/partition-table.bin 0x10000 present_rgb_handoff.bin
+esptool v5.4.0
+Serial port /dev/ttyUSB0:
+Connecting....
+Connected to ESP32-S31 on /dev/ttyUSB0:
+Chip type:          ESP32-S31 (revision v0.0)
+Features:           Wi-Fi 6, BT 5.4 (LE), IEEE802.15.4, Dual Core + LP Core, 300MHz
+Crystal frequency:  40MHz
+MAC:                30:ed:a0:f3:f7:b8
+
+Uploading stub flasher...
+Running stub flasher...
+Stub flasher running.
+Changing baud rate to 921600...
+Changed.
+
+Configuring flash size...
+
+Writing 'bootloader/bootloader.bin' at 0x00002000...
+SHA digest in image updated.
+Flash will be erased from 0x00002000 to 0x00007fff...
+Compressed 20912 bytes to 13300...
+Writing at 0x000071b0 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100.0% 12.99kB/12.99kB [0s] 
+Wrote 20912 bytes (13300 compressed) at 0x00002000 in 0.3 seconds (550.9 kbit/s).
+Verifying written data...
+Hash of data verified.
+
+Writing 'partition_table/partition-table.bin' at 0x00008000...
+Flash will be erased from 0x00008000 to 0x00008fff...
+Compressed 3072 bytes to 105...
+Writing at 0x00008c00 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100.0% 105B/105B [0s] 
+Wrote 3072 bytes (105 compressed) at 0x00008000 in 0.0 seconds (2534.8 kbit/s).
+Verifying written data...
+Hash of data verified.
+
+Writing 'present_rgb_handoff.bin' at 0x00010000...
+Flash will be erased from 0x00010000 to 0x00062fff...
+Compressed 339632 bytes to 207311...
+Writing at 0x0001be34 ━━                               7.9% 16.00kB/202.45kB [0s] 
+Writing at 0x000219a6 ━━━━╸                           15.8% 32.00kB/202.45kB [0s] 
+Writing at 0x00027b9c ━━━━━━━                         23.7% 48.00kB/202.45kB [0s] 
+Writing at 0x0002d4c8 ━━━━━━━━━                       31.6% 64.00kB/202.45kB [0s] 
+Writing at 0x00032b97 ━━━━━━━━━━━╸                    39.5% 80.00kB/202.45kB [1s] 
+Writing at 0x000384a9 ━━━━━━━━━━━━━━                  47.4% 96.00kB/202.45kB [1s] 
+Writing at 0x0003d9f7 ━━━━━━━━━━━━━━━━╸               55.3% 112.00kB/202.45kB [1s] 
+Writing at 0x00043dd4 ━━━━━━━━━━━━━━━━━━╸             63.2% 128.00kB/202.45kB [1s] 
+Writing at 0x0004a8f1 ━━━━━━━━━━━━━━━━━━━━━           71.1% 144.00kB/202.45kB [1s] 
+Writing at 0x000510a6 ━━━━━━━━━━━━━━━━━━━━━━━╸        79.0% 160.00kB/202.45kB [2s] 
+Writing at 0x00056f0c ━━━━━━━━━━━━━━━━━━━━━━━━━━      86.9% 176.00kB/202.45kB [2s] 
+Writing at 0x0005d043 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━    94.8% 192.00kB/202.45kB [2s] 
+Writing at 0x00062eb0 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100.0% 202.45kB/202.45kB [2s] 
+Wrote 339632 bytes (207311 compressed) at 0x00010000 in 2.7 seconds (999.7 kbit/s).
+Verifying written data...
+Hash of data verified.
+
+Hard resetting via RTS pin...

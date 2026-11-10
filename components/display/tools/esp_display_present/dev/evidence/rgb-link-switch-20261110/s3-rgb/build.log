@@ -1,0 +1,150 @@
+[0/1] Re-running CMake...
+-- Minimal build - OFF
+-- esp-idf-configdep will be used for faster recompilation
+-- Compiler launcher chain: esp-idf-configdep
+-- Building ESP-IDF components for target esp32s3
+"idf_component.yml" file was found for components:
+	/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present
+However, the component manager is not enabled.
+-- KCONFIG_REPORT_VERBOSITY not set, using default
+-- Project sdkconfig file /tmp/present-rgb-link-20261110/s3-rgb/rgb-handoff/present/sdkconfig
+Loading defaults file /home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/dev/boards/configs/base.defaults...
+Loading defaults file /home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/dev/boards/configs/s3-rgb.defaults...
+NOTE: Kconfig parser version: 1
+NOTE: Kconfig defaults policy: use sdkconfig
+NOTE: Status: Finished successfully
+-- Compiler supported targets: xtensa-esp-elf
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_regi2c/esp32s3/rom.regi2c.ld
+-- App "present_rgb_handoff" version: 8b25ea151-dirty
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_wdt/esp32s3/rom.wdt.ld
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_system/ld/esp32s3/memory.ld.in
+--   -> Preprocessing .in script: /home/xuxin/esp_work/esp-idf-qspi/components/esp_system/ld/esp32s3/memory.ld.in
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_system/ld/esp32s3/sections.ld.in
+--   -> Preprocessing .in script: /home/xuxin/esp_work/esp-idf-qspi/components/esp_system/ld/esp32s3/sections.ld.in
+--   -> Applying ldgen processing: /tmp/present-rgb-link-20261110/s3-rgb/rgb-handoff/present/build/esp-idf/esp_system/ld/sections.ld.in
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_rom/esp32s3/ld/esp32s3.rom.ld
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_rom/esp32s3/ld/esp32s3.rom.api.ld
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_rom/esp32s3/ld/esp32s3.rom.bt_funcs.ld
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_rom/esp32s3/ld/esp32s3.rom.libgcc.ld
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_rom/esp32s3/ld/esp32s3.rom.version.ld
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_rom/esp32s3/ld/esp32s3.rom.ble_master.ld
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_rom/esp32s3/ld/esp32s3.rom.ble_50.ld
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_rom/esp32s3/ld/esp32s3.rom.ble_smp.ld
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_rom/esp32s3/ld/esp32s3.rom.ble_dtm.ld
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_rom/esp32s3/ld/esp32s3.rom.ble_test.ld
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_rom/esp32s3/ld/esp32s3.rom.ble_scan.ld
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_rom/esp32s3/ld/esp32s3.rom.libc.ld
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/soc/esp32s3/ld/esp32s3.peripherals.ld
+CMake Warning at /home/xuxin/esp_work/esp-idf-qspi/tools/cmake/component_validation.cmake:57 (message):
+  Source file
+  '/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/dev/test_apps/boards/main/board_s3.c'
+  belongs to component esp_display_present but is being built by component
+  main.  It is recommended to build source files by defining component
+  dependencies for main via using idf_component_register(REQUIRES
+  esp_display_present) or idf_component_register(PRIV_REQUIRES
+  esp_display_present) in the CMakeLists.txt of main.
+Call Stack (most recent call first):
+  /home/xuxin/esp_work/esp-idf-qspi/tools/cmake/component_validation.cmake:129 (__component_validation_check_sources)
+  /home/xuxin/esp_work/esp-idf-qspi/CMakeLists.txt:428 (__component_validation_run_checks)
+
+
+CMake Warning at /home/xuxin/esp_work/esp-idf-qspi/tools/cmake/component_validation.cmake:106 (message):
+  Private include directory
+  '/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/dev/test_apps/boards/main'
+  belongs to component esp_display_present but is being used by component
+  main.  It is recommended to define the component dependency for main on the
+  component esp_display_present, i.e.  'idf_component_register(...
+  PRIV_REQUIRES esp_display_present)' in the CMakeLists.txt of main, and
+  specify the included directory as idf_component_register(...
+  PRIV_INCLUDE_DIRS <dir relative to component>) in the CMakeLists.txt of
+  component esp_display_present.
+Call Stack (most recent call first):
+  /home/xuxin/esp_work/esp-idf-qspi/tools/cmake/component_validation.cmake:130 (__component_validation_check_include_dirs)
+  /home/xuxin/esp_work/esp-idf-qspi/CMakeLists.txt:428 (__component_validation_run_checks)
+
+
+-- Linker: /home/xuxin/.espressif/tools/xtensa-esp-elf/esp-16.1.0_20260609/xtensa-esp-elf/bin/xtensa-esp32s3-elf-ld (GNU ld (crosstool-NG esp-16.1.0_20260609) 2.46)
+-- Components: bootloader bootloader_support cxx efuse esp_app_format esp_blockdev esp_bootloader_format esp_common esp_display_present esp_driver_bitscrambler esp_driver_dma esp_driver_gpio esp_driver_i2c esp_driver_i2s esp_driver_parlio esp_driver_ppa esp_driver_spi esp_hal_ana_conv esp_hal_clock esp_hal_debug_assist esp_hal_dma esp_hal_gpio esp_hal_gpspi esp_hal_i2c esp_hal_i2s esp_hal_lcd esp_hal_mspi esp_hal_parlio esp_hal_pmu esp_hal_ppa esp_hal_regi2c esp_hal_rtc_timer esp_hal_security esp_hal_systimer esp_hal_timg esp_hal_touch_sens esp_hal_uart esp_hal_usb esp_hal_wdt esp_hw_support esp_io_expander esp_io_expander_tca9554 esp_lcd esp_lcd_gc9503 esp_lcd_panel_io_additions esp_libc esp_mm esp_partition esp_pm esp_psram esp_ringbuf esp_rom esp_security esp_stdio esp_system esp_timer esp_usb_cdc_rom_console esptool_py freertos hal heap log main partition_table pthread soc spi_flash xtensa
+-- Component paths: /home/xuxin/esp_work/esp-idf-qspi/components/bootloader /home/xuxin/esp_work/esp-idf-qspi/components/bootloader_support /home/xuxin/esp_work/esp-idf-qspi/components/cxx /home/xuxin/esp_work/esp-idf-qspi/components/efuse /home/xuxin/esp_work/esp-idf-qspi/components/esp_app_format /home/xuxin/esp_work/esp-idf-qspi/components/esp_blockdev /home/xuxin/esp_work/esp-idf-qspi/components/esp_bootloader_format /home/xuxin/esp_work/esp-idf-qspi/components/esp_common /home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present /home/xuxin/esp_work/esp-idf-qspi/components/esp_driver_bitscrambler /home/xuxin/esp_work/esp-idf-qspi/components/esp_driver_dma /home/xuxin/esp_work/esp-idf-qspi/components/esp_driver_gpio /home/xuxin/esp_work/esp-idf-qspi/components/esp_driver_i2c /home/xuxin/esp_work/esp-idf-qspi/components/esp_driver_i2s /home/xuxin/esp_work/esp-idf-qspi/components/esp_driver_parlio /home/xuxin/esp_work/esp-idf-qspi/components/esp_driver_ppa /home/xuxin/esp_work/esp-idf-qspi/components/esp_driver_spi /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_ana_conv /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_clock /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_debug_assist /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_dma /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_gpio /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_gpspi /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_i2c /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_i2s /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_lcd /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_mspi /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_parlio /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_pmu /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_ppa /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_regi2c /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_rtc_timer /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_security /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_systimer /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_timg /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_touch_sens /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_uart /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_usb /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_wdt /home/xuxin/esp_work/esp-idf-qspi/components/esp_hw_support /tmp/present-rgb-link-20261110/deps/esp_io_expander /tmp/present-rgb-link-20261110/deps/esp_io_expander_tca9554 /home/xuxin/esp_work/esp-idf-qspi/components/esp_lcd /tmp/present-rgb-link-20261110/deps/esp_lcd_gc9503 /tmp/present-rgb-link-20261110/deps/esp_lcd_panel_io_additions /home/xuxin/esp_work/esp-idf-qspi/components/esp_libc /home/xuxin/esp_work/esp-idf-qspi/components/esp_mm /home/xuxin/esp_work/esp-idf-qspi/components/esp_partition /home/xuxin/esp_work/esp-idf-qspi/components/esp_pm /home/xuxin/esp_work/esp-idf-qspi/components/esp_psram /home/xuxin/esp_work/esp-idf-qspi/components/esp_ringbuf /home/xuxin/esp_work/esp-idf-qspi/components/esp_rom /home/xuxin/esp_work/esp-idf-qspi/components/esp_security /home/xuxin/esp_work/esp-idf-qspi/components/esp_stdio /home/xuxin/esp_work/esp-idf-qspi/components/esp_system /home/xuxin/esp_work/esp-idf-qspi/components/esp_timer /home/xuxin/esp_work/esp-idf-qspi/components/esp_usb_cdc_rom_console /home/xuxin/esp_work/esp-idf-qspi/components/esptool_py /home/xuxin/esp_work/esp-idf-qspi/components/freertos /home/xuxin/esp_work/esp-idf-qspi/components/hal /home/xuxin/esp_work/esp-idf-qspi/components/heap /home/xuxin/esp_work/esp-idf-qspi/components/log /home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/dev/test_apps/rgb_handoff/main /home/xuxin/esp_work/esp-idf-qspi/components/partition_table /home/xuxin/esp_work/esp-idf-qspi/components/pthread /home/xuxin/esp_work/esp-idf-qspi/components/soc /home/xuxin/esp_work/esp-idf-qspi/components/spi_flash /home/xuxin/esp_work/esp-idf-qspi/components/xtensa
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /tmp/present-rgb-link-20261110/s3-rgb/rgb-handoff/present/build
+[1/12] Building C object esp-idf/main/CMakeFiles/__idf_main.dir/main.c.obj
+[2/12] Building C object esp-idf/esp_display_present/CMakeFiles/__idf_esp_display_present.dir/src/platform/present_lcd_scanout.c.obj
+[3/12] Building C object esp-idf/esp_display_present/CMakeFiles/__idf_esp_display_present.dir/src/resources/present_resources.c.obj
+[4/12] Linking C static library esp-idf/esp_display_present/libesp_display_present.a
+[5/12] Linking C static library esp-idf/main/libmain.a
+[6/12] Performing build step for 'bootloader'
+[0/1] Re-running CMake...
+-- Minimal build - OFF
+-- No compiler launcher chain will be used.
+-- Building ESP-IDF components for target esp32s3
+-- KCONFIG_REPORT_VERBOSITY not set, using default
+-- Project sdkconfig file /tmp/present-rgb-link-20261110/s3-rgb/rgb-handoff/present/sdkconfig
+Default value for ESP_INT_WDT_TIMEOUT_MS in sdkconfig is 800 but it is 300 according to Kconfig.
+Using default value from sdkconfig (800).
+NOTE: Kconfig parser version: 1
+NOTE: Kconfig defaults policy: use sdkconfig
+NOTE: Status: Finished with notifications
+NOTE: /home/xuxin/esp_work/esp-idf-qspi/components/esp_system/Kconfig:281: ESP_INT_WDT_TIMEOUT_MS: Kconfig default value: 300, sdkconfig default value: 800, using 800 from sdkconfig
+-- Compiler supported targets: xtensa-esp-elf
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/soc/esp32s3/ld/esp32s3.peripherals.ld
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_regi2c/esp32s3/rom.regi2c.ld
+-- Bootloader project name: "bootloader" version: 1
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_wdt/esp32s3/rom.wdt.ld
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_rom/esp32s3/ld/esp32s3.rom.ld
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_rom/esp32s3/ld/esp32s3.rom.api.ld
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_rom/esp32s3/ld/esp32s3.rom.bt_funcs.ld
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_rom/esp32s3/ld/esp32s3.rom.libgcc.ld
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_rom/esp32s3/ld/esp32s3.rom.version.ld
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/esp_rom/esp32s3/ld/esp32s3.rom.libc.ld
+-- Linker: /home/xuxin/.espressif/tools/xtensa-esp-elf/esp-16.1.0_20260609/xtensa-esp-elf/bin/xtensa-esp32s3-elf-ld (GNU ld (crosstool-NG esp-16.1.0_20260609) 2.46)
+-- Components: bootloader bootloader_support efuse esp_app_format esp_blockdev esp_bootloader_format esp_common esp_hal_ana_conv esp_hal_clock esp_hal_debug_assist esp_hal_dma esp_hal_gpio esp_hal_gpspi esp_hal_mspi esp_hal_pmu esp_hal_regi2c esp_hal_rtc_timer esp_hal_security esp_hal_systimer esp_hal_timg esp_hal_uart esp_hal_usb esp_hal_wdt esp_hw_support esp_image_verify esp_libc esp_rom esp_security esp_stdio esp_system esptool_py freertos hal log main micro-ecc partition_table soc spi_flash xtensa
+-- Component paths: /home/xuxin/esp_work/esp-idf-qspi/components/bootloader /home/xuxin/esp_work/esp-idf-qspi/components/bootloader_support /home/xuxin/esp_work/esp-idf-qspi/components/efuse /home/xuxin/esp_work/esp-idf-qspi/components/esp_app_format /home/xuxin/esp_work/esp-idf-qspi/components/esp_blockdev /home/xuxin/esp_work/esp-idf-qspi/components/esp_bootloader_format /home/xuxin/esp_work/esp-idf-qspi/components/esp_common /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_ana_conv /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_clock /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_debug_assist /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_dma /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_gpio /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_gpspi /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_mspi /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_pmu /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_regi2c /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_rtc_timer /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_security /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_systimer /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_timg /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_uart /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_usb /home/xuxin/esp_work/esp-idf-qspi/components/esp_hal_wdt /home/xuxin/esp_work/esp-idf-qspi/components/esp_hw_support /home/xuxin/esp_work/esp-idf-qspi/components/esp_image_verify /home/xuxin/esp_work/esp-idf-qspi/components/esp_libc /home/xuxin/esp_work/esp-idf-qspi/components/esp_rom /home/xuxin/esp_work/esp-idf-qspi/components/esp_security /home/xuxin/esp_work/esp-idf-qspi/components/esp_stdio /home/xuxin/esp_work/esp-idf-qspi/components/esp_system /home/xuxin/esp_work/esp-idf-qspi/components/esptool_py /home/xuxin/esp_work/esp-idf-qspi/components/freertos /home/xuxin/esp_work/esp-idf-qspi/components/hal /home/xuxin/esp_work/esp-idf-qspi/components/log /home/xuxin/esp_work/esp-idf-qspi/components/bootloader/subproject/main /home/xuxin/esp_work/esp-idf-qspi/components/bootloader/subproject/components/micro-ecc /home/xuxin/esp_work/esp-idf-qspi/components/partition_table /home/xuxin/esp_work/esp-idf-qspi/components/soc /home/xuxin/esp_work/esp-idf-qspi/components/spi_flash /home/xuxin/esp_work/esp-idf-qspi/components/xtensa
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/bootloader/subproject/main/ld/esp32s3/bootloader.memory.ld.in
+--   -> Preprocessing .in script: /home/xuxin/esp_work/esp-idf-qspi/components/bootloader/subproject/main/ld/esp32s3/bootloader.memory.ld.in
+-- Adding linker script /home/xuxin/esp_work/esp-idf-qspi/components/bootloader/subproject/main/ld/esp32s3/bootloader.sections.ld.in
+--   -> Preprocessing .in script: /home/xuxin/esp_work/esp-idf-qspi/components/bootloader/subproject/main/ld/esp32s3/bootloader.sections.ld.in
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /tmp/present-rgb-link-20261110/s3-rgb/rgb-handoff/present/build/bootloader
+[1/1] cd /tmp/present-rgb-link-20261110/s3-rgb/rgb-handoff/present/build/bootloader && /home/xuxin/.espressif/python_env/idf6.2_py3.10_env/bin/python /home/xuxin/esp_work/esp-idf-qspi/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 /tmp/present-rgb-link-20261110/s3-rgb/rgb-handoff/present/build/bootloader/bootloader.bin
+Bootloader binary size 0x4f80 bytes. 0x3080 bytes (38%) free.
+[7/10] Generating esp-idf/esp_system/ld/sections.ld
+[8/10] Linking CXX executable present_rgb_handoff.elf
+[9/10] Generating binary image from built executable
+esptool v5.4.0
+Creating ESP32-S3 image...
+Merged 3 ELF sections.
+Successfully created ESP32-S3 image.
+Generated /tmp/present-rgb-link-20261110/s3-rgb/rgb-handoff/present/build/present_rgb_handoff.bin
+[10/10] cd /tmp/present-rgb-link-20261110/s3-rgb/rgb-handoff/present/build && /home/xuxin/.espressif/python_env/idf6.2_py3.10_env/bin/python /home/xuxin/esp_work/esp-idf-qspi/components/partition_table/check_sizes.py --offset 0x8000 partition --type app /tmp/present-rgb-link-20261110/s3-rgb/rgb-handoff/present/build/partition_table/partition-table.bin /tmp/present-rgb-link-20261110/s3-rgb/rgb-handoff/present/build/present_rgb_handoff.bin
+present_rgb_handoff.bin binary size 0x49810 bytes. Smallest app partition is 0x177000 bytes. 0x12d7f0 bytes (80%) free.
+Executing action: all (aliases: build)
+Running ninja in directory /tmp/present-rgb-link-20261110/s3-rgb/rgb-handoff/present/build
+Executing "ninja all"...
+
+Project build complete. To flash, run:
+ idf.py flash
+or
+ idf.py -p PORT flash
+or
+ python -m esptool --chip esp32s3 -b 460800 --before default-reset --after hard-reset write-flash --flash-mode dio --flash-size 16MB --flash-freq 80m 0x0 ../../../../../../../../tmp/present-rgb-link-20261110/s3-rgb/rgb-handoff/present/build/bootloader/bootloader.bin 0x8000 ../../../../../../../../tmp/present-rgb-link-20261110/s3-rgb/rgb-handoff/present/build/partition_table/partition-table.bin 0x10000 ../../../../../../../../tmp/present-rgb-link-20261110/s3-rgb/rgb-handoff/present/build/present_rgb_handoff.bin
+or from the "/tmp/present-rgb-link-20261110/s3-rgb/rgb-handoff/present/build" directory
+ python -m esptool --chip esp32s3 -b 460800 --before default-reset --after hard-reset write-flash "@flash_args"
