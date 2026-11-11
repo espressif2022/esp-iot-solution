@@ -1,4 +1,4 @@
-> comparison-current.html是持续更新入口，现覆盖RGB/MIPI/TE/SPI五板。2026-11-11更新：[最新网页](comparison-current.html)、[CSV](comparison-current.csv)、[JSON](comparison-current.json)。来源与测试条件逐项标注；完整说明见[最新汇总](../display-latest-20261111/README.md)。旧XLSX和下列说明属于11-09历史，不代表本轮五板全部重跑。
+> comparison-current.html为持续更新入口，2026-11-11最终补测已合入：[网页](comparison-current.html)、[CSV](comparison-current.csv)、[JSON](comparison-current.json)。181项性能、132项独立诊断，5008场景。48项性能及24项观察为本轮补齐；已核对可复用项保留。[完整说明](../display-latest-20261111/README.md)。旧XLSX及以下文字为11-09历史。
 
 ## 以下为2026-11-09历史说明
 

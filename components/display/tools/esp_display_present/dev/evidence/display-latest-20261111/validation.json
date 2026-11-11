@@ -1,16 +1,20 @@
 {
   "boards": 5,
   "valid_performance_records": 181,
-  "completed_diagnostic_records": 130,
-  "pre_fix_unfinished_diagnostics": 2,
-  "scenes": 4976,
+  "completed_diagnostic_records": 132,
+  "unfinished_current_diagnostics": 0,
+  "scenes": 5008,
+  "new_performance_records": 48,
+  "new_diagnostic_records": 24,
+  "new_scenes": 1152,
   "all_score_records_have_16_scenes_and_memory": true,
   "rgb_mipi_none_excluded": true,
   "rgb_mipi_xip_off_excluded": true,
   "te_native_modes_unpaired": true,
+  "te_same_title_geometry": true,
+  "runtime_source_files_verified": 98,
   "browser_values": 5973,
-  "browser_static_values": 54,
+  "browser_static_values": 60,
   "browser_te_values": 32,
-  "legacy_format_compatible": true,
-  "additional_board_flashes_for_web_update": 0
+  "restored_original_firmware": false
 }

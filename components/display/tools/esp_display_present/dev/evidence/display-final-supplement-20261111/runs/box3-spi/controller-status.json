@@ -1,0 +1,16 @@
+{
+  "board": "box3-spi",
+  "port": "/dev/ttyACM2",
+  "restore_original": false,
+  "success": true,
+  "runs": [
+    {
+      "variant": "present",
+      "passed": 20,
+      "scenes": 320
+    }
+  ],
+  "stage": "done",
+  "updated": 1794387677.2766163,
+  "variant": "present"
+}

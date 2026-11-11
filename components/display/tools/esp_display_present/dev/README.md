@@ -8,7 +8,7 @@
 
 [当前网页](evidence/five-board-regression-20261109/comparison-current.html) · [数据来源与复现](evidence/display-latest-20261111/README.md) · [结果与检测范围](evidence/display-latest-20261111/findings.md)。五板顶部Tab，帧率四角度并排，内存按模式查看，剩余越多越好。
 
-已纳入P4的39156930d五项修复后回归，以及MOSAICO TE的16项带顶部模式标签复测。SPI使用最近归档，未在此轮重新上板。181项有效性能/内存记录、130项完整独立诊断；P4另有2项修复前诊断未完成，不能称为修复后再次失败或零覆盖。不同版本/配置的来源逐项显示，TE原生配置不强行定义等价；未用旧分填补新失败。
+最终补测已合入：181项有效性能/内存、132项完整独立诊断，5008场景。P4修复后24项性能和24项独立观察均已覆盖；TE present16项与adapter9项使用同样顶部标注；BOX-3 present20项当前版本补齐，adapter4项核对复用。本轮新增48项性能、24项观察，已测有效项不重跑。当前无未完成项；历史失败和USB中断分别保留。TE原生配置不强行等价，剩余内存越多越好。
 
 离线重建：先运行`python dev/tools/build_latest_dashboard.py --accounting dev/evidence/display-latest-20261111/memory-accounting.json --output /tmp/display-latest/matrix-data.json`，再运行`python dev/tools/render_comparison.py --data /tmp/display-latest/matrix-data.json --output /tmp/display-latest/comparison.html`。不访问串口或构建目录。静态账目来自归档ELF，未知项记−。
 

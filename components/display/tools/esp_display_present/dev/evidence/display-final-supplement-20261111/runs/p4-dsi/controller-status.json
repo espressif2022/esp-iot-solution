@@ -1,0 +1,21 @@
+{
+  "board": "p4-dsi",
+  "port": "/dev/ttyACM0",
+  "restore_original": false,
+  "success": true,
+  "runs": [
+    {
+      "variant": "present-xip-on",
+      "passed": 19,
+      "scenes": 304
+    },
+    {
+      "variant": "present-xip-on-driver-trace",
+      "passed": 24,
+      "scenes": 384
+    }
+  ],
+  "stage": "done",
+  "updated": 1794389310.8634212,
+  "variant": "present-xip-on-driver-trace"
+}

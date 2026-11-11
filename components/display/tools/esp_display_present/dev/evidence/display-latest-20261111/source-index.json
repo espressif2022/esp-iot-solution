@@ -18,5 +18,13 @@
   {
     "path": "five-board-regression-20261109/aligned-raw-results.json",
     "sha256": "f786d40423e2210f8d8e0e5f932786554b9e28e313bdb9979ff3b92bddf17ac3"
+  },
+  {
+    "path": "display-final-supplement-20261111/results.json",
+    "sha256": "955c52b2ab9d26b51e6be1f25186d52bc4cda5bfd3a15d9b020378dc5159b7ec"
+  },
+  {
+    "path": "display-final-supplement-20261111/memory-accounting.json",
+    "sha256": "c533cfc651b8299201d82bc9e52410e9e7736037da3089c47c53b4f5ff3d0393"
   }
 ]

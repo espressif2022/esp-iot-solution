@@ -1,12 +1,13 @@
 # 测试证据索引
 
-当前网页：[RGB / MIPI / TE / SPI五板](./display-latest-20261111/README.md)。181项有效性能/内存，130项完整独立诊断；每项16场景。P4五项为PPA修复后新回归、TE16项为顶部标注复测、SPI为最近归档。另2项P4修复前诊断未完成，保留原始状态。源码/配置不同的来源分别标注，不宣称五板全部同版本重跑。
+当前网页：[RGB / MIPI / TE / SPI五板](./display-latest-20261111/README.md)。181项性能/内存、132项完整独立诊断，5008场景。最终补测新增P4性能19项与观察24项、adapter TE9项、SPI present20项；P4此前5项与已核对基线保留。当前无未完成项，历史失败和USB中断仍可追溯。
 
 工程入口见 [dev/README.md](../README.md)。证据目录是某次测试的不可变记录，不是后续构建入口；其中绝对路径仅反映当时运行环境。没有本轮板测记录的改动，不沿用旧分数宣称已通过。
 
 | 范围 | 记录 | 状态 / 适用范围 |
 |---|---|---|
-| 五板最新网页汇总 | [display-latest-20261111](display-latest-20261111/README.md) | 五板Tab、四角度、模式内存、静态SRAM、诊断/TE时序；不执行额外板测 |
+| 五板最新网页汇总 | [display-latest-20261111](display-latest-20261111/README.md) | 五板Tab、四角度、模式内存、静态SRAM；181性能/132独立诊断，最终补测已合入 |
+| 最终上板补测 | [display-final-supplement-20261111](display-final-supplement-20261111/README.md) | 新增48性能/24诊断、1152场景；保留原始USB中断，未恢复原固件 |
 | P4旋转PPA阻塞修复 | [p4-rotated-ppa-stall-20261111](p4-rotated-ppa-stall-20261111/README.md) | 独立重放18次复现，修复后20000次像素一致；5项80场景与44项host通过；干净IDF |
 | MOSAICO TE 顶部标注复测 | [mosaico-te-visible-20261111](mosaico-te-visible-20261111/README.md) | 16组合/256场景，串口完整关闭；未确认目视无脏块，保留测试固件 |
 | S31 RGB 单tile XIP性能定位 | [present-s31-rgb-analysis-20261109](present-s31-rgb-analysis-20261109/README.md) | 双方单tile；40项完整16场景；PARTIAL 0°/90°同开XIP后均37/36/40/40 FPS，同容量复核相同；burst/缓存精简无综合收益；双tile排除；默认配置未改，原固件整片恢复校验；未新增目视验收 |

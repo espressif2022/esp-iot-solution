@@ -68,6 +68,23 @@ def assemble(evidence):
  box=extra('box3-spi','ESP-BOX-3 · SPI','320 × 240',sm,spi,'SPI GRAM · 允许撕裂','最近归档11-09，本次仅更新网页，未重新上板','SPI GRAM没有RGB/MIPI内部扫描帧缓冲，本表传输路径允许撕裂，未采集地址观察。adapter只在0°支持这些GRAM输入配置，不支持的软件旋转和AUTO记−。')
  box['performanceNote']='LVGL完整16场景综合分。单tile行容量双方已对齐；双tile/AUTO使用最近归档记录。SPI GRAM允许撕裂，adapter不支持的软件旋转与AUTO记−。'
  payload['boards'].append(box)
+ # New hardware supplements replace only validated cells; prior evidence remains archived.
+ supplement=evidence/'display-final-supplement-20261111'
+ if (supplement/'results.json').exists():
+  fresh=load(supplement/'results.json')
+  for entry in fresh['runs']:
+   board=next(b for b in payload['boards'] if b['id']==entry['board'])
+   rows=board['cohorts'][entry['cohort']][entry['implementation']]
+   lookup={(r['mode'],r['rotation']):r for r in entry['rows']}
+   assert all(r['status']=='PASS' and r['scenes']==16 and len(r['scene_scores'])==16 and 'after_close' in r['memory'] for r in lookup.values())
+   for i,row in enumerate(rows):
+    key=row['mode'],row['rotation']
+    if key in lookup:rows[i]=copy.deepcopy(lookup[key])
+  p4.update(originNote='PPA修复后24项性能与24项独立驱动观察均已覆盖',diagnosticLabel='交接与供数诊断 · present修复后 / adapter核对复用',regressionNote='39156930d：风险旋转尾块在PPA提交前回退CPU。原5项回归与本轮剩余19项组成24项有效性能记录；本轮另跑24项独立驱动观察。修复前失败保留在原始归档，不混入当前结果。')
+  for row in p4['cohorts']['diagnostic']['adapter']:row['origin']='11-11 · adapter核对复用观察'
+  te.update(originNote='present16项、adapter9项均为带顶部模式标签的完整测试',performanceNote='C=compose buffer数，T=输入tile数。两边顶部标签几何样式相同。present C/T与adapter原生配置分别列出，无一一等价项，不强算差值。',method='present16项与adapter9项均各自完整运行16场景并成功关闭。顶部显示实现、模式和角度；驱动地址观察未覆盖本板，串口PASS不证明无脏块或撕裂。')
+  box.update(originNote='present20项本轮补齐；adapter4项复用已核对配置的基线',performanceNote='LVGL完整16场景综合分，单tile容量双方对齐。present20项为当前版本，adapter4项配置及源码已核对复用。SPI GRAM允许撕裂，adapter不支持的软件旋转与AUTO记−。',method='present五种输入组合、四角度均为当前版本完整16场景测试。adapter四项0°基线复用已核对记录；其他软件旋转和AUTO不支持。未采集地址交接观察，SPI GRAM路径允许撕裂。')
+  payload.update(roundNote='RGB/MIPI仅XIP ON。P4已补齐修复后24项性能和24项独立交接检测；TE双方使用同样顶部标签；SPI present20项更新。各项来源随表显示。',caution='完整场景、成功关闭和地址观察分别核验。地址检测未覆盖的TE/SPI不记零异常；串口通过不能证明无脏块或撕裂。',methodNote='RGB/MIPI不含NONE，仅XIP ON；S3开bounce，S31 RGB关闭bounce。P4普通性能测试使用干净IDF，驱动观察单独运行、不混作性能成绩。TE present C/T与adapter原生配置分别列出，顶部标签样式一致，配置不一一等价。SPI GRAM允许撕裂，adapter不支持的软件旋转与AUTO记−。保留已核对可复用的完整记录，四角度均从完整16场景且成功关闭的数据取值。')
  return payload
 
 

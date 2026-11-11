@@ -1,0 +1,5 @@
+# 临时只读驱动观察补丁
+
+原始IDF提交7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe。复制其components/esp_lcd到隔离IDF根目录，在该根目录执行patch -p1 -i observer.patch；补丁包含新增trace源码。trace-manifest.json记录隔离组件全量SHA256，已从干净IDF重建逐文件验证。本目录另保留trace源码便于阅读。
+
+仅用于独立诊断，不修改全局IDF、不纠正buffer交接、不参与普通FPS统计。消费者侧配套consumer-observer.patch在上层目录。observer.patch由本轮实际使用的完整overlay生成，包含旧归档patch之后增加的地址审计；不可直接用旧patch代替。

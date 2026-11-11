@@ -1,0 +1,12 @@
+{
+  "commit": "ec34271d3c095ea7351d8a778d914d758749a280",
+  "runtime_commit": "39156930da8a2c80c95b15f0e159918296556262",
+  "production_modified": false,
+  "cases": {
+    "p4_clean": 19,
+    "p4_diagnostic": 24,
+    "te_adapter": 9,
+    "spi_present": 20
+  },
+  "restore_original": false
+}

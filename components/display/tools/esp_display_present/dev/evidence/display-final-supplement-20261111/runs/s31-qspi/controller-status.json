@@ -1,0 +1,16 @@
+{
+  "board": "s31-qspi",
+  "port": "/dev/ttyACM1",
+  "restore_original": false,
+  "success": true,
+  "runs": [
+    {
+      "variant": "adapter",
+      "passed": 9,
+      "scenes": 144
+    }
+  ],
+  "stage": "done",
+  "updated": 1794387920.405541,
+  "variant": "adapter"
+}

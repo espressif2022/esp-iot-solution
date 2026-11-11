@@ -167,7 +167,7 @@
     "p4-dsi": {
       "accounts": {
         "present": {
-          "elf_sha256": "95505f00ac2485c9efc867094f5edd589565a5a1515d9182460298fd1dd72507",
+          "elf_sha256": "de9609dc97202dc9281569e2888a0d9474e00b25b95c179b9a1ed0d29b433a8f",
           "iram_bytes": 75392,
           "dram_static_bytes": 25412,
           "sram_sections_bytes": 100804,
@@ -187,16 +187,16 @@
             "before_init": {
               "internal_total": 626391,
               "internal_free": 542995,
-              "psram_total": 32605056,
-              "psram_free": 32601340,
+              "psram_total": 32604544,
+              "psram_free": 32600828,
               "internal_min_free": 0,
               "psram_min_free": 0
             },
             "after_init": {
               "internal_total": 626391,
               "internal_free": 551111,
-              "psram_total": 32605056,
-              "psram_free": 28914792,
+              "psram_total": 32604544,
+              "psram_free": 28914280,
               "internal_min_free": 0,
               "psram_min_free": 0
             }
@@ -243,7 +243,7 @@
           "jpeg_symbols": []
         }
       },
-      "note": "整套固件SRAM，不是组件独占；无法取得的ELF统计记−。present来自本次PPA修复后固件。"
+      "note": "普通性能固件ELF与公共启动堆实测；整套固件账目，不是组件独占。新旧复用项逐项注明来源。"
     },
     "s31-qspi": {
       "accounts": {
@@ -285,43 +285,80 @@
           "jpeg_components": [],
           "jpeg_symbols": []
         },
-        "adapter": null
+        "adapter": {
+          "elf_sha256": "a84deccc9eed999d5944de6de7b5faf7ac5cb64121d440b4102bffc7e82e40af",
+          "iram_bytes": 70016,
+          "dram_static_bytes": 22480,
+          "sram_sections_bytes": 92496,
+          "sections": {
+            ".iram0.text": 69940,
+            ".iram0.text_end": 76,
+            ".iram0.data": 0,
+            ".iram0.bss": 0,
+            ".iram0.end": 0,
+            ".dram0.dummy": 0,
+            ".dram0.data": 14797,
+            ".noinit": 3,
+            ".dram0.bss": 7680,
+            ".dram0.heap_start": 0
+          },
+          "suite_baselines": {
+            "before_init": {
+              "internal_total": 493575,
+              "internal_free": 412343,
+              "psram_total": 16777216,
+              "psram_free": 16774784,
+              "internal_min_free": 0,
+              "psram_min_free": 0
+            },
+            "after_init": {
+              "internal_total": 493575,
+              "internal_free": 371071,
+              "psram_total": 16777216,
+              "psram_free": 16774784,
+              "internal_min_free": 0,
+              "psram_min_free": 0
+            }
+          },
+          "jpeg_components": [],
+          "jpeg_symbols": []
+        }
       },
-      "note": "整套固件SRAM，不是组件独占；无法取得的ELF统计记−。TE present来自带顶部标签的固件。"
+      "note": "普通性能固件ELF与公共启动堆实测；整套固件账目，不是组件独占。新旧复用项逐项注明来源。"
     },
     "box3-spi": {
       "accounts": {
         "present": {
-          "elf_sha256": "15536dcf290cd5d01b87145a77ef35874cddb397966a51eba6aec303c8f64080",
-          "iram_bytes": 93184,
-          "dram_static_bytes": 19616,
-          "sram_sections_bytes": 112800,
+          "elf_sha256": "dee9ec59f17878ca6666455270e0f4921245aa39ec3226d1473e79cdb12fd835",
+          "iram_bytes": 71680,
+          "dram_static_bytes": 19228,
+          "sram_sections_bytes": 90908,
           "sections": {
             ".iram0.vectors": 1028,
-            ".iram0.text": 92007,
-            ".dram0.dummy": 93184,
-            ".dram0.data": 16032,
+            ".iram0.text": 70527,
+            ".dram0.dummy": 71680,
+            ".dram0.data": 15652,
             ".noinit": 0,
-            ".dram0.bss": 3584,
-            ".iram0.text_end": 149,
+            ".dram0.bss": 3576,
+            ".iram0.text_end": 125,
             ".iram0.data": 0,
             ".iram0.bss": 0,
             ".dram0.heap_start": 0
           },
           "suite_baselines": {
             "before_init": {
-              "internal_total": 349563,
-              "internal_free": 256051,
-              "psram_total": 15872164,
-              "psram_free": 15869316,
+              "internal_total": 371451,
+              "internal_free": 277939,
+              "psram_total": 15871492,
+              "psram_free": 15868644,
               "internal_min_free": 0,
               "psram_min_free": 0
             },
             "after_init": {
-              "internal_total": 349563,
-              "internal_free": 274743,
-              "psram_total": 15872164,
-              "psram_free": 15869316,
+              "internal_total": 371451,
+              "internal_free": 296631,
+              "psram_total": 15871492,
+              "psram_free": 15868644,
               "internal_min_free": 0,
               "psram_min_free": 0
             }
@@ -368,7 +405,7 @@
           "jpeg_symbols": []
         }
       },
-      "note": "整套固件SRAM，不是组件独占；无法取得的ELF统计记−。来自单tile容量对齐的SPI测试固件。"
+      "note": "普通性能固件ELF与公共启动堆实测；整套固件账目，不是组件独占。新旧复用项逐项注明来源。"
     }
   }
 }
