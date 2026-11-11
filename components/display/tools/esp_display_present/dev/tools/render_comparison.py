@@ -74,9 +74,70 @@ def apply_lifecycle(payload, evidence, output_path):
     payload['downloads'] = {'csv': output_path.with_suffix('.csv').name, 'json': output_path.with_suffix('.json').name}
 
 
+def render_unified(source, raw, data_path, output_path):
+    """Validate a five-board snapshot without claiming every record was rerun."""
+    if source.get('angles') != ANGLES or len(source.get('boards', [])) != 5:
+        raise ValueError('Expected five boards and four angles')
+    payload = source.copy()
+    payload['unified'] = True
+    payload['dataSha256'] = hashlib.sha256(raw).hexdigest()
+    payload['downloads'] = {'csv': output_path.with_suffix('.csv').name, 'json': output_path.with_suffix('.json').name}
+    payload['linksPrefix'] = './'
+    payload['dataFilename'] = data_path.name
+    totals = {'clean': 0, 'diagnostic': 0, 'scenes': 0, 'skip': 0, 'cleanFailed': 0, 'diagnosticFailed': 0}
+    for board in payload['boards']:
+        modes = board['modes']
+        if board['scanout'] and 'NONE' in modes:
+            raise ValueError('Scanout NONE is excluded')
+        expected = {(mode, angle) for mode in modes for angle in ANGLES}
+        for cohort in ('clean', 'diagnostic'):
+            for impl in ('present', 'adapter'):
+                rows = board['cohorts'][cohort][impl]
+                if len(rows) != len(expected) or {(r['mode'], r['rotation']) for r in rows} != expected:
+                    raise ValueError(f'Missing/duplicate cells: {board["id"]}/{cohort}/{impl}')
+                for row in rows:
+                    status = row['status']
+                    if status == 'PASS':
+                        if row.get('scenes') != 16 or not row.get('origin'):
+                            raise ValueError('Every score requires a complete suite and source label')
+                        if cohort == 'clean':
+                            if len(row.get('scene_scores', [])) != 16 or not all(phase in row.get('memory', {}) for phase in ('before_open', 'after_open', 'after_run', 'after_close')):
+                                raise ValueError('Score lacks scene or memory evidence')
+                        elif 'address' not in row:
+                            raise ValueError('Diagnostic PASS lacks observer data')
+                        totals[cohort] += 1
+                        totals['scenes'] += 16
+                    elif status == 'FAIL':
+                        if not row.get('failure_reason'):
+                            raise ValueError('Failure reason is required')
+                        totals[cohort+'Failed'] += 1
+                    elif status == 'SKIP':
+                        totals['skip'] += 1
+                    elif status not in ('UNPAIRED', 'MISSING') or not row.get('reason'):
+                        raise ValueError('Unmeasured/unpaired cell requires an explanation')
+    payload['totals'] = totals
+    embedded = json.dumps(payload, ensure_ascii=False, allow_nan=False, separators=(',', ':')).replace('<', '\u003c')
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    template = Path(__file__).with_name('comparison_dashboard.html').read_text()
+    output_path.write_text(template.replace('__REPORT_DATA__', embedded))
+    output_path.with_suffix('.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2)+'\n')
+    phases = ('before_open', 'after_open', 'after_run', 'after_close')
+    with output_path.with_suffix('.csv').open('w', newline='') as stream:
+        writer = csv.writer(stream)
+        writer.writerow(['board', 'implementation', 'mode', 'rotation', 'status', 'origin', 'condition', 'reason', 'lvgl_fps', 'transport_fps', *[f'{h}_{p}_remaining_bytes' for h in ('internal', 'psram') for p in phases]])
+        for board in payload['boards']:
+            for impl in ('present', 'adapter'):
+                for row in board['cohorts']['clean'][impl]:
+                    mem = row.get('memory', {})
+                    writer.writerow([board['id'], impl, row['mode'], row['rotation'], row['status'], row.get('origin', ''), row.get('condition', ''), row.get('reason', row.get('failure_reason', '')), row.get('lvgl_fps', ''), row.get('transport_fps', ''), *[mem.get(p, {}).get(h+('_min_free' if p=='after_run' else '_free'), '') for h in ('internal', 'psram') for p in phases]])
+    return {'output': str(output_path), 'data_sha256': payload['dataSha256'], **totals}
+
+
 def render(data_path, output_path, lifecycle=None):
     raw = data_path.read_bytes()
     source = json.loads(raw)
+    if source.get('schema') == 'display-dashboard-v2':
+        return render_unified(source, raw, data_path, output_path)
     if not source.get('complete') or source.get('xip') != 'on' or source.get('angles') != ANGLES:
         raise ValueError('Expected a complete four-angle XIP ON dataset')
     payload = {

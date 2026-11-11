@@ -1,0 +1,10 @@
+{
+  "cases_passed": 16,
+  "scenes_completed": 256,
+  "runtime_source_files_verified": 98,
+  "idf_clean": true,
+  "suite_starts": 1,
+  "top_mode_label": true,
+  "optical_cleanliness_verified": false,
+  "restored_original_firmware": false
+}

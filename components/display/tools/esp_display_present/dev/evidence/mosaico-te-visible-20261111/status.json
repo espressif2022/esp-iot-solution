@@ -1,0 +1,13 @@
+{
+  "board": "s31-qspi",
+  "port": "/dev/ttyACM1",
+  "cases": 16,
+  "implementation": "present",
+  "visual_status": "awaiting user observations; serial cannot establish no dirty pixels",
+  "restore_original": false,
+  "success": true,
+  "stage": "done",
+  "updated": "2026-11-11T15:58:50.279521+08:00",
+  "completed_cases": 16,
+  "completed_scenes": 256
+}

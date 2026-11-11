@@ -1,0 +1,38 @@
+--- a/main.c
++++ b/main.c
+@@ -17,6 +17,7 @@
+ static atomic_bool finished;
+ static const bench_case_t *active;
+ static int fps, cpu, render, flush, scenes;
++static lv_obj_t *mode_title;
+ /* Disjoint byte-addressable heaps. Aggregate minima need not be simultaneous. */
+ static void memory_report(const char *phase, bool local_minimum)
+ {
+@@ -75,6 +76,18 @@
+         bench_buffer_audit_start(disp, active);
+         lv_demo_benchmark_set_end_cb(end_cb);
+         lv_demo_benchmark();
++        mode_title = lv_label_create(lv_display_get_layer_top(disp));
++        lv_obj_set_width(mode_title, lv_pct(100));
++        lv_obj_set_style_bg_color(mode_title, lv_color_black(), 0);
++        lv_obj_set_style_bg_opa(mode_title, LV_OPA_COVER, 0);
++        lv_obj_set_style_text_color(mode_title, lv_color_white(), 0);
++        lv_obj_set_style_text_align(mode_title, LV_TEXT_ALIGN_CENTER, 0);
++        lv_obj_set_style_pad_ver(mode_title, 3, 0);
++        lv_label_set_text_fmt(mode_title, "%s | %s | %u deg | %u/16",
++                             BENCH_IMPLEMENTATION, active->name, active->rotation, i+1);
++        lv_obj_align(mode_title, LV_ALIGN_TOP_MID, 0, 0);
++        lv_obj_remove_flag(mode_title, LV_OBJ_FLAG_CLICKABLE);
++
+         lv_obj_invalidate(lv_display_get_screen_active(disp));
+         bench_unlock();
+         ESP_LOGI(TAG, "RUN mode=%s te_buffers=%u rotation=%u", active->name, active->compose, active->rotation);
+@@ -93,6 +106,8 @@
+         uint32_t frames = bench_frame_count();
+         ESP_ERROR_CHECK(bench_lock());
+         bench_buffer_audit_stop(disp);
++        lv_obj_delete(mode_title);
++        mode_title = NULL;
+         bench_unlock();
+         memory_report("after_run", true);
+         ESP_ERROR_CHECK(heap_caps_monitor_local_minimum_free_size_stop());

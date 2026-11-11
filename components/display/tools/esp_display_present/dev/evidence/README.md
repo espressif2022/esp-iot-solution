@@ -1,14 +1,17 @@
 # 测试证据索引
 
-当前正式入口：[RGB / MIPI · XIP ON · 四角度](./rgb-mipi-xip-on-four-angle-20261110/README.md)，132项正式性能/内存 + 132项独立诊断，0°/90°/180°/270°全新完整运行。此前0°及XIP OFF记录只作历史，不混当前成绩。
+当前网页：[RGB / MIPI / TE / SPI五板](./display-latest-20261111/README.md)。181项有效性能/内存，130项完整独立诊断；每项16场景。P4五项为PPA修复后新回归、TE16项为顶部标注复测、SPI为最近归档。另2项P4修复前诊断未完成，保留原始状态。源码/配置不同的来源分别标注，不宣称五板全部同版本重跑。
 
 工程入口见 [dev/README.md](../README.md)。证据目录是某次测试的不可变记录，不是后续构建入口；其中绝对路径仅反映当时运行环境。没有本轮板测记录的改动，不沿用旧分数宣称已通过。
 
 | 范围 | 记录 | 状态 / 适用范围 |
 |---|---|---|
+| 五板最新网页汇总 | [display-latest-20261111](display-latest-20261111/README.md) | 五板Tab、四角度、模式内存、静态SRAM、诊断/TE时序；不执行额外板测 |
+| P4旋转PPA阻塞修复 | [p4-rotated-ppa-stall-20261111](p4-rotated-ppa-stall-20261111/README.md) | 独立重放18次复现，修复后20000次像素一致；5项80场景与44项host通过；干净IDF |
+| MOSAICO TE 顶部标注复测 | [mosaico-te-visible-20261111](mosaico-te-visible-20261111/README.md) | 16组合/256场景，串口完整关闭；未确认目视无脏块，保留测试固件 |
 | S31 RGB 单tile XIP性能定位 | [present-s31-rgb-analysis-20261109](present-s31-rgb-analysis-20261109/README.md) | 双方单tile；40项完整16场景；PARTIAL 0°/90°同开XIP后均37/36/40/40 FPS，同容量复核相同；burst/缓存精简无综合收益；双tile排除；默认配置未改，原固件整片恢复校验；未新增目视验收 |
 | S3 FB_IRAM 当前配置开关A/B | [present-s3-fb-iram-on-off-20261109](present-s3-fb-iram-on-off-20261109/README.md) | SDK唯一差别为FB_IRAM；OFF完整24项、ON引用同日完整24项；内部堆+21.36KiB、PARTIAL/AUTO低1～3FPS；恢复原固件并整片校验；默认仍开启 |
-| 最新五板防撕裂/GRAM完整对照 | [five-board-regression-20261109](five-board-regression-20261109/README.md) | 生产源码b607bb9a1；present108、adapter73项通过，31项跳过；RGB/DSI排除NONE、mosaico仅TE、BOX-3 GRAM；四角度/四时点内存；五板原固件整片恢复校验；无新增目视验收 |
+| 11-09五板防撕裂/GRAM历史对照 | [five-board-regression-20261109](five-board-regression-20261109/README.md) | 生产源码b607bb9a1；present108、adapter73项通过，31项跳过；RGB/DSI排除NONE、mosaico仅TE、BOX-3 GRAM；四角度/四时点内存；五板原固件整片恢复校验；无新增目视验收 |
 | 测试工程统一整理 | [unified-tests-20261106](unified-tests-20261106/README.md) | 40/40 Host、8个benchmark构建、3个专项构建；仅编译，未板测 |
 | RGB NONE 等待与统计优化 | [rgb-none-profile-20261106](rgb-none-profile-20261106/README.md) | 同配置18→25FPS，补回历史cache/XIP后NONE41、DIRECT39；0°，非完整矩阵 |
 | 最新架构 Host / 运行时旋转 | [architecture-20261106](architecture-20261106/README.md) | 修复逻辑/物理尺寸混用；当时37项Host，P4硬件跨轴复测尚待完成 |

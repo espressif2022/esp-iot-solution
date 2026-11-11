@@ -1,0 +1,12 @@
+{
+  "board": "s31-qspi",
+  "port": "/dev/ttyACM1",
+  "cases": 16,
+  "implementation": "present",
+  "visual_status": "awaiting user observations; serial cannot establish no dirty pixels",
+  "restore_original": false,
+  "success": false,
+  "stage": "failed",
+  "updated": "2026-11-11T15:33:51.040604+08:00",
+  "error": "CalledProcessError(1, ['/home/xuxin/.espressif/python_env/idf6.2_py3.10_env/bin/python', '/tmp/present-mosaico-te-visible-20261111/source/components/display/tools/esp_display_present/dev/tools/run.py', 'capture', '--board', 's31-qspi', '--suite', 'benchmark', '--implementation', 'present', '--work-root', '/tmp/present-mosaico-te-visible-20261111', '--port', '/dev/ttyACM1', '--timeout', '2300'])"
+}

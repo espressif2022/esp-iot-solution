@@ -4,7 +4,15 @@
 
 生产源码的职责划分与新增文件规则见[SOURCE_LAYOUT.md](SOURCE_LAYOUT.md)。
 
-## 当前 RGB / MIPI 完整矩阵（2026-11-11）
+## 当前五板网页：RGB / MIPI / TE / SPI（2026-11-11）
+
+[当前网页](evidence/five-board-regression-20261109/comparison-current.html) · [数据来源与复现](evidence/display-latest-20261111/README.md) · [结果与检测范围](evidence/display-latest-20261111/findings.md)。五板顶部Tab，帧率四角度并排，内存按模式查看，剩余越多越好。
+
+已纳入P4的39156930d五项修复后回归，以及MOSAICO TE的16项带顶部模式标签复测。SPI使用最近归档，未在此轮重新上板。181项有效性能/内存记录、130项完整独立诊断；P4另有2项修复前诊断未完成，不能称为修复后再次失败或零覆盖。不同版本/配置的来源逐项显示，TE原生配置不强行定义等价；未用旧分填补新失败。
+
+离线重建：先运行`python dev/tools/build_latest_dashboard.py --accounting dev/evidence/display-latest-20261111/memory-accounting.json --output /tmp/display-latest/matrix-data.json`，再运行`python dev/tools/render_comparison.py --data /tmp/display-latest/matrix-data.json --output /tmp/display-latest/comparison.html`。不访问串口或构建目录。静态账目来自归档ELF，未知项记−。
+
+## 此前RGB / MIPI补齐轮（2026-11-11，PPA旋转修复前）
 
 [当前网页](evidence/five-board-regression-20261109/comparison-current.html) · [本次有效数据与复用依据](evidence/rgb-mipi-current-complete-20261111/README.md) · [失败和交接记录](evidence/rgb-mipi-current-complete-20261111/findings.md)。当前表只展示对最新源码有效的成绩；已失效版本的 FULL 占位画布数据已移出。
 

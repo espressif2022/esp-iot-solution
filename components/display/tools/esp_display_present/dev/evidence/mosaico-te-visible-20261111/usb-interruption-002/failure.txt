@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/tmp/present-mosaico-te-visible-20261111/run_matrix.py", line 11, in <module>
+    subprocess.run([sys.executable,str(runner),action,'--board','s31-qspi','--suite','benchmark','--implementation','present','--work-root',str(r),'--port','/dev/ttyACM1','--timeout','2300'],check=True,stdout=log,stderr=subprocess.STDOUT,timeout=2400)
+  File "/usr/lib/python3.10/subprocess.py", line 526, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/home/xuxin/.espressif/python_env/idf6.2_py3.10_env/bin/python', '/tmp/present-mosaico-te-visible-20261111/source/components/display/tools/esp_display_present/dev/tools/run.py', 'capture', '--board', 's31-qspi', '--suite', 'benchmark', '--implementation', 'present', '--work-root', '/tmp/present-mosaico-te-visible-20261111', '--port', '/dev/ttyACM1', '--timeout', '2300']' returned non-zero exit status 1.

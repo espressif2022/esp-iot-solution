@@ -1,4 +1,6 @@
-> comparison-current.html 是动态入口，现指向移除 S3 FB_IRAM 后的 RGB/MIPI XIP ON 对比。本目录其余 CSV/JSON/XLSX 和下文均为 2026-11-09 历史记录；当前导出请用网页内链接。
+> comparison-current.html是持续更新入口，现覆盖RGB/MIPI/TE/SPI五板。2026-11-11更新：[最新网页](comparison-current.html)、[CSV](comparison-current.csv)、[JSON](comparison-current.json)。来源与测试条件逐项标注；完整说明见[最新汇总](../display-latest-20261111/README.md)。旧XLSX和下列说明属于11-09历史，不代表本轮五板全部重跑。
+
+## 以下为2026-11-09历史说明
 
 # present / adapter 五板对比（2026-11-09 更新）
 

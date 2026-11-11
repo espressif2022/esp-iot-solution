@@ -1,0 +1,12 @@
+{
+  "commit": "39156930da8a2c80c95b15f0e159918296556262",
+  "port": "/dev/ttyACM1",
+  "mac": "30:ed:a0:f4:0b:34",
+  "scope": "present TE C1/C2 x T1/T2 x four angles; visible mode header",
+  "visual_diagnostic": true,
+  "historical_clean_scores_not_replaced": true,
+  "restore_original": false,
+  "production_modified": false,
+  "main_original_sha256": "76d45813c317a06bf2de04417e19d871e1e37178245915b65547d7c0c10ab1f6",
+  "main_overlay_sha256": "6e4d187a734599598be8a3355200d69ed4509e60eb8fa61ae97f19507347f108"
+}
