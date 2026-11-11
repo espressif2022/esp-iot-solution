@@ -4,6 +4,12 @@
 
 生产源码的职责划分与新增文件规则见[SOURCE_LAYOUT.md](SOURCE_LAYOUT.md)。
 
+## Scanout 生命周期收敛（2026-11-11）
+
+移除 RGB/MIPI 的 NONE 更新路径及 `present_lcd_fb_update`；AUTO 根据实际 native FB 池选择三缓冲／双缓冲 PARTIAL，单 FB 拒绝创建。GRAM/TE 的 NONE/AUTO 不变。LVGL FULL 和原生 DIRECT 去除全屏占位画布，先取得写入租约再绑定像素地址，提交／取消前撤销引用；旋转 DIRECT 的实际画布、PARTIAL 的小 tile 兜底保留。
+
+本次单独记录生命周期与内存回归；下方性能网页仍属于其标注的历史源码，不代表本次变更后的完整矩阵成绩。
+
 ## RGB / MIPI XIP ON 对比（2026-11-10，当前数据）
 
 [当前网页](evidence/five-board-regression-20261109/comparison-current.html) · [本次证据与 SRAM/缓冲说明](evidence/rgb-mipi-xip-on-no-fb-iram-20261110/README.md) · [诊断结果](evidence/rgb-mipi-xip-on-no-fb-iram-20261110/findings.md)。移除 S3 的 FB_IRAM Kconfig 和整组对象链接映射，保留显式 ISR/pixel IRAM_ATTR。

@@ -27,7 +27,6 @@ set(PRESENT_ENGINE_SOURCES
     ${PRESENT_PIXEL_SOURCES}
     ${CMAKE_CURRENT_LIST_DIR}/backend/present_backend_region.c
     ${CMAKE_CURRENT_LIST_DIR}/platform/lcd/present_lcd_io.c
-    ${CMAKE_CURRENT_LIST_DIR}/platform/lcd/present_lcd_fb_update.c
     ${CMAKE_CURRENT_LIST_DIR}/platform/lcd/present_lcd_rgb_info.c
     ${CMAKE_CURRENT_LIST_DIR}/platform/lcd/present_lcd_fb_scanout.c
     ${CMAKE_CURRENT_LIST_DIR}/backend/present_te_composer.c

@@ -18,10 +18,9 @@ static const mode_profile_t profiles[] = {
     [ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC] = {ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION, 0},
     [ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL] = {ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION, 2},
 };
-static esp_display_present_present_mode_t legacy_auto(esp_display_present_engine_backend_t kind, bool te_enabled)
+static esp_display_present_present_mode_t io_auto(bool te_enabled)
 {
-    return kind == ESP_DISPLAY_PRESENT_ENGINE_FB ? ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_PARTIAL :
-           te_enabled ? ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC : ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE;
+    return te_enabled ? ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC : ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE;
 }
 
 esp_err_t present_mode_resolve_target(const esp_display_present_target_config_t *target, present_mode_resolution_t *out)
@@ -45,21 +44,27 @@ esp_err_t present_mode_resolve_target(const esp_display_present_target_config_t 
     };
     esp_display_present_present_mode_t mode = public_modes[target->fb.mode];
     if (mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_AUTO) {
-        mode = legacy_auto(fb ? ESP_DISPLAY_PRESENT_ENGINE_FB : ESP_DISPLAY_PRESENT_ENGINE_REGION, te);
+        if (fb) {
+            unsigned count = target->fb.frame_buffer_count ? target->fb.frame_buffer_count : 3;
+            if (count < 2) {
+                return ESP_ERR_NOT_SUPPORTED;
+            }
+            mode = count >= 3 ? ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_PARTIAL : ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL;
+        } else {
+            mode = io_auto(te);
+        }
     }
     if ((mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC && (fb || !te)) ||
             (!fb && mode != ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE && mode != ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC)) {
         return ESP_ERR_NOT_SUPPORTED;
     }
-    /* NONE updates driver-owned framebuffer regions; FB PARTIAL modes instead
-     * assemble a complete candidate and wait for scanout retirement. */
-    bool driver_partition = fb && mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE;
+    if (fb && mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE) {
+        return ESP_ERR_NOT_SUPPORTED;
+    }
     *out = (present_mode_resolution_t) {
-        .kind = fb && !driver_partition ? ESP_DISPLAY_PRESENT_ENGINE_FB : mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC ? ESP_DISPLAY_PRESENT_ENGINE_TE : ESP_DISPLAY_PRESENT_ENGINE_REGION,
+        .kind = fb ? ESP_DISPLAY_PRESENT_ENGINE_FB : mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC ? ESP_DISPLAY_PRESENT_ENGINE_TE : ESP_DISPLAY_PRESENT_ENGINE_REGION,
         .engine_mode = mode,
         .contract = profiles[mode].contract,
-        /* RGB/DSI NONE still requires one driver-owned framebuffer, but does
-         * not expose it as a presenter image slot. */
         .frame_buffers = fb ? profiles[mode].frame_buffers : 0,
         .active_writes = false,
     };
@@ -75,14 +80,14 @@ esp_err_t present_mode_resolve_engine(const esp_display_present_engine_config_t 
         return ESP_ERR_INVALID_ARG;
     }
     *out = *input;
-    if (defaults == ESP_DISPLAY_PRESENT_PLAN_LEGACY_DEFAULTS && out->mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_AUTO) {
-        out->mode = legacy_auto(input->backend_kind, te_enabled);
+    if (defaults == ESP_DISPLAY_PRESENT_PLAN_LEGACY_DEFAULTS && input->backend_kind != ESP_DISPLAY_PRESENT_ENGINE_FB && out->mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_AUTO) {
+        out->mode = io_auto(te_enabled);
     }
     esp_display_present_present_mode_t mode = out->mode;
     if (mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_AUTO) {
         if (input->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB) {
             switch (input->backend.buffer_count) {
-            case 1: mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE; break;
+            case 1: return ESP_ERR_NOT_SUPPORTED;
             case 2: mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL; break;
             case 3: mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_PARTIAL; break;
             default: return ESP_ERR_INVALID_ARG;
@@ -91,19 +96,20 @@ esp_err_t present_mode_resolve_engine(const esp_display_present_engine_config_t 
             mode = input->backend.te_window_us && input->backend.te_budget_us ? ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC : ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE;
         }
     }
+    out->mode = mode;
     if (mode == ESP_DISPLAY_PRESENT_MODE_DEFAULT) {
+        if (input->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB &&
+                (input->backend.buffer_count < 2 || input->backend.active_writes)) {
+            return ESP_ERR_NOT_SUPPORTED;
+        }
         return ESP_OK;
     }
     if (mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE) {
         out->backend.render_contract = profiles[mode].contract;
         if (input->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB) {
-            if (input->backend.ext_bufs && input->backend.buffer_count != profiles[mode].frame_buffers) {
-                return ESP_ERR_INVALID_ARG;
-            }
-            out->backend.buffer_count = profiles[mode].frame_buffers;
-        } else {
-            out->backend_kind = ESP_DISPLAY_PRESENT_ENGINE_REGION;
+            return ESP_ERR_NOT_SUPPORTED;
         }
+        out->backend_kind = ESP_DISPLAY_PRESENT_ENGINE_REGION;
         return ESP_OK;
     }
     if (mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC) {

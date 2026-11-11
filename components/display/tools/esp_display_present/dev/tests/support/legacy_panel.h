@@ -17,6 +17,7 @@
 #include <pthread.h>
 #define OK(x) assert((x) == ESP_OK)
 struct fake_lcd {
+    unsigned available_fbs; /* Zero retains the three-FB fixture default. */
     pthread_mutex_t lock;
     pthread_cond_t changed;
     void *buffers[3];
@@ -167,6 +168,10 @@ esp_err_t esp_lcd_panel_io_register_event_callbacks(esp_lcd_panel_io_handle_t pa
 static esp_err_t get_buffers(struct fake_lcd *panel, uint32_t count, void **first, va_list args)
 {
     ++panel->gets;
+    unsigned available = panel->one_fb ? 1 : panel->available_fbs ? panel->available_fbs : 3;
+    if (!count || count > available) {
+        return ESP_ERR_INVALID_ARG;
+    }
     *first = panel->buffers[0];
     for (unsigned i = 1; i < count; ++i) {
         *va_arg(args, void **) = panel->buffers[i];
@@ -352,7 +357,7 @@ esp_err_t esp_lcd_rgb_panel_get_frame_buffer_info(esp_lcd_panel_handle_t panel, 
     *info = (esp_lcd_rgb_panel_frame_buffer_info_t) {
         .width = panel->physical_width ? panel->physical_width : 8,
         .height = panel->physical_height ? panel->physical_height : 4,
-        .frame_buffer_count = panel->one_fb ? 1 : 3,
+        .frame_buffer_count = panel->one_fb ? 1 : panel->available_fbs ? panel->available_fbs : 3,
         .bits_per_pixel = 16,
         .continuous_refresh = !panel->one_shot,
         .transformed = panel->transformed,

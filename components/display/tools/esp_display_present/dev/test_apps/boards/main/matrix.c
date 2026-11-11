@@ -140,7 +140,6 @@ static const profile_t profiles[] = {
 };
 #else
 static const profile_t profiles[] = {
-    {"NONE_1FB", ESP_DISPLAY_PRESENT_MODE_NONE, 0, 2, false},
     {"DOUBLE_FULL", ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL, 0, 2, false},
     {"TRIPLE_FULL", ESP_DISPLAY_PRESENT_MODE_TRIPLE_FULL, 0, 2, false},
     {"DOUBLE_DIRECT", ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT, 0, 2, false},

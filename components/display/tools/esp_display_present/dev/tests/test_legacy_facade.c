@@ -1107,7 +1107,6 @@ static void rotation_reference(void)
 {
     const esp_display_present_rotation_t rotations[] = {0, 90, 180, 270};
     const esp_display_present_mode_t modes[] = {
-        ESP_DISPLAY_PRESENT_MODE_NONE,
         ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL, ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL,
         ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL, ESP_DISPLAY_PRESENT_MODE_TRIPLE_FULL,
         ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT, ESP_DISPLAY_PRESENT_MODE_AUTO
@@ -1125,8 +1124,7 @@ static void rotation_reference(void)
             cfg.target.hw.rotation = rotations[r];
             uint8_t buffers;
             OK(esp_display_present_get_required_frame_buffer_count(&cfg.target, &buffers));
-            assert(buffers == (modes[mode] == ESP_DISPLAY_PRESENT_MODE_NONE ? 1 :
-                               modes[mode] == ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL ||
+            assert(buffers == (modes[mode] == ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL ||
                                modes[mode] == ESP_DISPLAY_PRESENT_MODE_TRIPLE_FULL ||
                                modes[mode] == ESP_DISPLAY_PRESENT_MODE_AUTO ? 3 : 2));
             cfg.pipeline_acquire_timeout_ms = 1;
@@ -1134,15 +1132,10 @@ static void rotation_reference(void)
             OK(esp_display_presenter_create(&cfg, &presenter));
             size_t count;
             bool full;
-            bool partition_none = modes[mode] == ESP_DISPLAY_PRESENT_MODE_NONE;
-            if (partition_none) {
-                OK(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full));
-            } else {
-                assert(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full) == ESP_ERR_TIMEOUT);
-                boundary(&panel);
-                boundary(&panel);
-                OK(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full));
-            }
+            assert(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full) == ESP_ERR_TIMEOUT);
+            boundary(&panel);
+            boundary(&panel);
+            OK(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full));
             assert(full && !count);
             esp_display_presenter_buffer_t buffer;
             OK(esp_display_presenter_acquire_buffer(presenter, &buffer));
@@ -1175,10 +1168,8 @@ static void rotation_reference(void)
             esp_display_present_area_t area = {0, 0, 7, 3};
             OK(esp_display_presenter_submit_buffer(presenter, &buffer, &area, 16));
             OK(esp_display_presenter_commit_frame(presenter, NULL));
-            finish_scanout(&panel, presenter, partition_none ? 1 : 2);
-            if (!partition_none) {
-                OK(esp_display_presenter_quiesce(presenter, 100));
-            }
+            finish_scanout(&panel, presenter, 2);
+            OK(esp_display_presenter_quiesce(presenter, 100));
             assert(!memcmp(expected, panel.source, sizeof(expected)));
             esp_display_presenter_frame_status_t status;
             OK(esp_display_presenter_get_frame_status(presenter, &status));
@@ -1224,10 +1215,8 @@ static void rotation_reference(void)
             esp_display_present_area_t rotated_area = {0, 0, 3, 7};
             OK(esp_display_presenter_submit_buffer(presenter, &buffer, &rotated_area, 8));
             OK(esp_display_presenter_commit_frame(presenter, NULL));
-            finish_scanout(&panel, presenter, partition_none ? 2 : 3);
-            if (!partition_none) {
-                OK(esp_display_presenter_quiesce(presenter, 100));
-            }
+            finish_scanout(&panel, presenter, 3);
+            OK(esp_display_presenter_quiesce(presenter, 100));
             assert(!memcmp(expected, panel.source, sizeof(expected)));
             esp_display_presenter_frame_status_t unchanged;
             OK(esp_display_presenter_get_frame_status(presenter, &unchanged));
@@ -1259,7 +1248,7 @@ static void rotation_reference(void)
             }
             OK(esp_display_presenter_submit_buffer(presenter, &buffer, &area, 16));
             OK(esp_display_presenter_commit_frame(presenter, NULL));
-            finish_scanout(&panel, presenter, partition_none ? 3 : 4);
+            finish_scanout(&panel, presenter, 4);
             OK(esp_display_presenter_quiesce(presenter, 100));
             assert(!memcmp(expected, panel.source, sizeof(expected)));
             delete_eventually(presenter);

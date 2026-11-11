@@ -28,7 +28,7 @@ typedef enum {
 } esp_display_present_panel_t;
 
 typedef enum {
-    /** No tearing avoidance; single buffer or direct transfer. */
+    /** Panel-IO direct transfer without tearing avoidance. Unsupported for RGB/MIPI scanout. */
     ESP_DISPLAY_PRESENT_MODE_NONE = 0,
     /** Double buffering with full frame buffers. */
     ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL,
@@ -42,7 +42,8 @@ typedef enum {
     ESP_DISPLAY_PRESENT_MODE_TE_SYNC,
     /** Double buffering with partial/partition refresh. */
     ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL,
-    /** Let esp_display_present choose from panel type, TE config and buffers. */
+    /** RGB/MIPI: prefer TRIPLE_PARTIAL with 3 FBs, DOUBLE_PARTIAL with 2; reject 1.
+     * Panel IO retains selection from valid TE configuration. */
     ESP_DISPLAY_PRESENT_MODE_AUTO,
 } esp_display_present_mode_t;
 

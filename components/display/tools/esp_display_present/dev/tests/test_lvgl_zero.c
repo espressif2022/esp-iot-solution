@@ -13,6 +13,13 @@
 #include <time.h>
 #include <stdio.h>
 #define OK(x) assert((x)==ESP_OK)
+static unsigned canvas_allocations;
+lv_draw_buf_t *__real_lv_draw_buf_create(uint32_t width, uint32_t height, lv_color_format_t format, uint32_t stride);
+lv_draw_buf_t *__wrap_lv_draw_buf_create(uint32_t width, uint32_t height, lv_color_format_t format, uint32_t stride)
+{
+    ++canvas_allocations;
+    return __real_lv_draw_buf_create(width, height, format, stride);
+}
 #define W 8
 #define H 6
 static void exercise(bool timeout, esp_display_present_present_mode_t mode)
@@ -32,7 +39,9 @@ static void exercise(bool timeout, esp_display_present_present_mode_t mode)
     assert(esp_lv_present_native_create_zero_copy(p, &b) == ESP_ERR_NOT_SUPPORTED);
     OK(esp_lv_present_native_create(p, 2, &b));
 #else
+    unsigned before = canvas_allocations;
     OK(esp_lv_present_native_create_zero_copy(p, &b));
+    assert(canvas_allocations == before); /* Borrowed FULL needs no pixel allocation. */
 #endif
     lv_display_t *d = esp_lv_present_native_get_display(b);
     lv_obj_t *s = lv_display_get_screen_active(d);
@@ -100,6 +109,33 @@ static void exercise(bool timeout, esp_display_present_present_mode_t mode)
     OK(esp_display_present_engine_destroy(p));
 }
 #if LVGL_VERSION_MINOR >= 5
+/* Binding creation reserves a writable surface before mounting LVGL. An
+ * immediate close must revoke it without submitting or leaking a frame. */
+static void destroy_before_refresh(esp_display_present_present_mode_t mode)
+{
+    scan_panel_t panel = {.immediate = true};
+    esp_display_present_engine_config_t cfg = {
+        .backend = {
+            .width = W, .height = H, .tile_rows = 2, .buffer_count = 2, .max_frames = 4,
+            .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = scan_interface(&panel)
+        },
+        .backend_kind = ESP_DISPLAY_PRESENT_ENGINE_FB, .mode = mode, .timeout_ms = 1000
+    };
+    esp_display_present_engine_t *p;
+    OK(esp_display_present_engine_create(&cfg, &p));
+    unsigned before = canvas_allocations;
+    esp_lv_present_native_t *binding;
+    OK(esp_lv_present_native_create_zero_copy(p, &binding));
+    assert(canvas_allocations == before);
+    esp_display_present_engine_status_t status;
+    OK(esp_display_present_engine_get_status(p, &status));
+    assert(status.frame_active);
+    OK(esp_lv_present_native_destroy(binding));
+    OK(esp_display_present_engine_get_status(p, &status));
+    assert(!status.frame_active && !panel.cookie);
+    OK(esp_display_present_engine_stop(p, 1000));
+    OK(esp_display_present_engine_destroy(p));
+}
 static void pause_copy(void)
 {
     const struct timespec delay = {.tv_nsec = 1000000};
@@ -155,7 +191,9 @@ static void exercise_direct(unsigned rotation, bool async, bool swap)
     esp_display_present_engine_t *p;
     OK(esp_display_present_engine_create(&cfg, &p));
     esp_lv_present_native_t *b;
+    unsigned before = canvas_allocations;
     esp_err_t result = esp_lv_present_native_create_zero_copy(p, &b);
+    assert(canvas_allocations == before); /* No canvas, including layout rejection. */
     if (rotation || swap) {
         assert(result == ESP_ERR_NOT_SUPPORTED);
         OK(esp_lv_present_native_create(p, 2, &b));
@@ -246,11 +284,15 @@ static void exercise_direct(unsigned rotation, bool async, bool swap)
             assert(pixel == 0xffff);
         }
         if (!rotation && !swap) {
+            unsigned before_rotation = canvas_allocations;
             OK(esp_lv_present_native_set_rotation(b, ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90, 1000));
+            assert(canvas_allocations == before_rotation + 1); /* Actual DIRECT copy source. */
             lv_refr_now(d);
             OK(esp_lv_present_native_get_error(b));
             OK(esp_display_present_engine_drain(p, 1000));
+            before_rotation = canvas_allocations;
             OK(esp_lv_present_native_set_rotation(b, ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0, 1000));
+            assert(canvas_allocations == before_rotation); /* Borrow again, no placeholder. */
             lv_refr_now(d);
             OK(esp_lv_present_native_get_error(b));
             OK(esp_display_present_engine_drain(p, 1000));
@@ -269,6 +311,8 @@ int main(void)
     exercise(false, ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT);
     exercise(true, ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT);
 #if LVGL_VERSION_MINOR >= 5
+    destroy_before_refresh(ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_FULL);
+    destroy_before_refresh(ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT);
     for (unsigned r = 0; r < 4; ++r) {
         exercise_direct(r, false, false);
         exercise_direct(r, true, false);

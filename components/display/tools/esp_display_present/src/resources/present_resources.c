@@ -13,7 +13,6 @@
 #include "esp_lcd_io_spi.h"
 #include "platform/te/present_te_sync.h"
 #include "platform/lcd/present_lcd_fb_scanout.h"
-#include "platform/lcd/present_lcd_fb_update.h"
 #include <string.h>
 #ifndef PRESENT_HOST
 #include "esp_heap_caps.h"
@@ -25,7 +24,6 @@ struct present_resources {
     esp_display_present_engine_t *presenter;
     esp_display_present_lcd_fb_scanout_t *scanout;
     esp_display_present_lcd_io_t *spi;
-    esp_display_present_lcd_fb_update_t *lcd_fb_update;
     esp_display_present_te_sync_context_t *te;
     esp_display_present_te_sync_config_t te_config;
     bool te_required, te_armed;
@@ -143,8 +141,20 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
     if (panel_type <= ESP_DISPLAY_PRESENT_PANEL_AUTO || panel_type > ESP_DISPLAY_PRESENT_PANEL_IO) {
         return ESP_ERR_NOT_SUPPORTED;
     }
+    esp_display_present_target_config_t target = input->target;
+    if (target.fb.mode == ESP_DISPLAY_PRESENT_MODE_AUTO && !target.fb.frame_buffer_count && hw->panel &&
+            (panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB || panel_type == ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI)) {
+        size_t count;
+        esp_err_t error = present_lcd_fb_scanout_probe_buffers(hw->panel,
+                                                               panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB ? ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_RGB : ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_DSI,
+                                                               target.fb.frame_buffers, &count);
+        if (error != ESP_OK) {
+            return error;
+        }
+        target.fb.frame_buffer_count = count;
+    }
     present_mode_resolution_t mode;
-    esp_err_t mode_error = present_mode_resolve_target(&input->target, &mode);
+    esp_err_t mode_error = present_mode_resolve_target(&target, &mode);
     if (mode_error != ESP_OK) {
         return mode_error;
     }
@@ -330,13 +340,6 @@ static esp_err_t free_resources(present_resources_t *resources)
         }
         resources->spi = NULL;
     }
-    if (resources->lcd_fb_update) {
-        esp_err_t error = esp_display_present_lcd_fb_update_destroy(resources->lcd_fb_update);
-        if (error != ESP_OK) {
-            return error;
-        }
-        resources->lcd_fb_update = NULL;
-    }
     esp_display_present_executor_t **executors[] = {&resources->ppa, &resources->dma2d, &resources->cpu};
     for (size_t i = 0; i < 3; ++i) {
         if (*executors[i]) {
@@ -446,30 +449,6 @@ static esp_err_t create_lcd_io_adapter(present_resources_t *resources, const esp
     return esp_display_present_lcd_io_get_output_caps(resources->spi, &config->output);
 }
 
-static esp_err_t create_lcd_fb_update_adapter(present_resources_t *resources,
-                                              const esp_display_presenter_config_t *input,
-                                              esp_display_present_plan_config_t *config)
-{
-    bool quarter = config->presenter.backend.rotation & 1;
-    esp_display_present_lcd_fb_update_config_t blit = {
-        .panel = input->target.hw.panel,
-        .kind = input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB ?
-        ESP_DISPLAY_PRESENT_LCD_FB_UPDATE_RGB : ESP_DISPLAY_PRESENT_LCD_FB_UPDATE_DSI,
-        .width = quarter ? input->height : input->width,
-        .height = quarter ? input->width : input->height,
-        .format = config->presenter.backend.format,
-        .byte_order = config->presenter.backend.panel_order,
-    };
-    esp_err_t error = esp_display_present_lcd_fb_update_create(&blit, &resources->lcd_fb_update);
-    if (error != ESP_OK) {
-        return error;
-    }
-    error = esp_display_present_lcd_fb_update_get_interface(resources->lcd_fb_update,
-                                                            &config->presenter.backend.panel);
-    return error != ESP_OK ? error :
-           esp_display_present_lcd_fb_update_get_output_caps(resources->lcd_fb_update, &config->output);
-}
-
 static esp_err_t create_planned_engine(present_resources_t *resources, const esp_display_presenter_config_t *input,
                                        esp_display_present_plan_config_t *config)
 {
@@ -509,11 +488,7 @@ esp_err_t present_resources_create(const esp_display_presenter_config_t *input, 
     if (error != ESP_OK) {
         return error;
     }
-    bool lcd_fb_update = config.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION &&
-                         (input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB ||
-                          input->target.hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI);
-    if (!input->target.hw.panel || (config.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION &&
-                                    !lcd_fb_update && !input->target.hw.io)) {
+    if (!input->target.hw.panel || (config.presenter.backend_kind != ESP_DISPLAY_PRESENT_ENGINE_FB && !input->target.hw.io)) {
         return ESP_ERR_INVALID_ARG;
     }
     present_resources_t *resources = present_alloc(sizeof(*resources));
@@ -534,8 +509,6 @@ esp_err_t present_resources_create(const esp_display_presenter_config_t *input, 
     resources->te_config = input->target.hw.te_sync;
     if (config.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB) {
         error = create_scanout_adapter(resources, input, bounce, on_vsync, vsync_user, &config);
-    } else if (lcd_fb_update) {
-        error = create_lcd_fb_update_adapter(resources, input, &config);
     } else {
         error = create_lcd_io_adapter(resources, input, &config);
     }

@@ -252,7 +252,7 @@ static void exercise(esp_display_present_present_mode_t mode, size_t bpp, bool a
 }
 int main(void)
 {
-    const esp_display_present_present_mode_t modes[] = {ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE, ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_FULL, ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_FULL,
+    const esp_display_present_present_mode_t modes[] = {ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_FULL, ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_FULL,
                                                         ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT, ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL, ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_PARTIAL, ESP_DISPLAY_PRESENT_ENGINE_MODE_AUTO
                                                        };
     lv_init();

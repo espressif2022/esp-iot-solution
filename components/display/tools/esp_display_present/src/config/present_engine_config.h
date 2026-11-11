@@ -37,10 +37,9 @@ typedef struct esp_display_present_engine_config {
     bool background_service;
     uint32_t worker_stack_bytes; /* 0 selects default; ignored by Host. */
     unsigned worker_priority; /* 0 selects default; ignored by Host. */
-    /** FB named modes require backend_kind FB. NONE selects a single FB and
-     * requires backend.active_writes; IO NONE selects region.
-     * AUTO uses explicit backend kind (no hardware detection): FB 2/3 buffers
-     * -> PARTITION, FB 1 -> NONE; IO with both TE budgets -> TE, otherwise region.
+    /** FB modes require at least two buffers; NONE/active scanout writes are unsupported.
+     * IO NONE selects region. AUTO resolves FB 2/3 buffers to DOUBLE/TRIPLE_PARTIAL;
+     * a single FB is rejected. IO with both TE budgets selects TE, otherwise region.
      * Named FB modes set buffer_count; external array must have that many entries. */
     esp_display_present_output_caps_t output_caps; /* Zero region alignments mean 1. */
     /** Per physical panel.submit completion deadline, including driver call

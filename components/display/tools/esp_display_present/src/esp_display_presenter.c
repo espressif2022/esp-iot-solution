@@ -270,7 +270,7 @@ esp_err_t esp_display_presenter_get_caps(const esp_display_presenter_t *input, e
     *out = (esp_display_presenter_caps_t) {
         .contract = caps->contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION ? ESP_DISPLAY_PRESENT_CONTRACT_PARTITION : caps->contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT ? ESP_DISPLAY_PRESENT_CONTRACT_DIRECT : ESP_DISPLAY_PRESENT_CONTRACT_FULL,
         .supports_coverage_areas = legacy_framebuffer(presenter) && caps->contract != ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL,
-        .surface_retains_content = legacy_framebuffer(presenter) && presenter->config.target.fb.mode == ESP_DISPLAY_PRESENT_MODE_NONE,
+        .surface_retains_content = false, /* Scanout leases never retain a writable front surface. */
         .previous_surface_readable = previous_readable(presenter),
         .width = caps->draw_layout.width,
         .height = caps->draw_layout.height,

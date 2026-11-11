@@ -600,3 +600,34 @@ esp_err_t esp_display_present_lcd_fb_scanout_get_output_caps(esp_display_present
     };
     return ESP_OK;
 }
+
+esp_err_t present_lcd_fb_scanout_probe_buffers(esp_lcd_panel_handle_t panel,
+                                               esp_display_present_lcd_fb_scanout_kind_t kind,
+                                               void **buffers, size_t *count)
+{
+    if (!panel || !buffers || !count) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    *count = 0;
+    for (size_t n = 3; n; --n) {
+        esp_err_t error = ESP_ERR_NOT_SUPPORTED;
+#if PRESENT_DSI_SUPPORTED
+        if (kind == ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_DSI) {
+            error = esp_lcd_dpi_panel_get_frame_buffer(panel, n, &buffers[0], &buffers[1], &buffers[2]);
+        }
+#endif
+#if PRESENT_RGB_SUPPORTED
+        if (kind == ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_RGB) {
+            error = esp_lcd_rgb_panel_get_frame_buffer(panel, n, &buffers[0], &buffers[1], &buffers[2]);
+        }
+#endif
+        if (error == ESP_OK) {
+            *count = n;
+            return ESP_OK;
+        }
+        if (error != ESP_ERR_INVALID_ARG) {
+            return error;
+        }
+    }
+    return ESP_ERR_NOT_SUPPORTED;
+}

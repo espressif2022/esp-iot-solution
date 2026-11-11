@@ -34,7 +34,7 @@ def cases_for(board, angles, profiles=None):
     scanout = BOARDS[board]['interface'] in ('rgb', 'dsi')
     if scanout:
         profiles_all = [(n, 'B_' + n, 1, False, 0) for n in
-                        ('NONE', 'DOUBLE_FULL', 'TRIPLE_FULL', 'DOUBLE_DIRECT', 'DOUBLE_PARTIAL', 'TRIPLE_PARTIAL', 'AUTO')]
+                        ('DOUBLE_FULL', 'TRIPLE_FULL', 'DOUBLE_DIRECT', 'DOUBLE_PARTIAL', 'TRIPLE_PARTIAL', 'AUTO')]
     elif board == 's31-qspi':
         profiles_all = [(f'TE_C{c}_T{t}', 'B_TE', t, False, c) for c in (1, 2) for t in (1, 2)]
         # Adapter-native baselines have distinct layouts; never relabel as C/T.
@@ -46,10 +46,6 @@ def cases_for(board, angles, profiles=None):
         profiles_all = [(f'GRAM_T{t}_{m}', 'B_NONE', t, m == 'PSRAM', 0)
                         for m in ('INTERNAL', 'PSRAM') for t in (1, 2)]
         profiles_all += [('AUTO_T2_INTERNAL', 'B_AUTO', 2, False, 0)]
-    # The normal scanout comparison covers tear-avoidance modes only. NONE
-    # remains available explicitly for standalone active-write diagnostics.
-    if scanout and not profiles:
-        profiles_all = [p for p in profiles_all if p[0] != 'NONE']
     if profiles:
         unknown = set(profiles) - {p[0] for p in profiles_all}
         if unknown:

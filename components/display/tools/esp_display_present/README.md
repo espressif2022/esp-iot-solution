@@ -10,7 +10,7 @@ ESP32-S3 no longer forces whole framebuffer engine and pixel-copy objects into I
 
 `CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND` optionally moves synchronous internal-tile GRAM submissions to the existing engine backend worker, releasing the engine gate during driver calls without forcing a pixel copy. It is disabled by default; rotated and PSRAM tile paths keep their existing scheduling. `CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY` sets the experimental backend worker priority, defaulting to 7. See [conditions, RAM cost, and measured results](dev/GRAM_BACKGROUND_RESULTS_20261104.md).
 
-See [mode contracts, backend strategies and LCD adapters](docs/MODE_ARCHITECTURE.md) for the RGB/DSI NONE versus FB PARTIAL paths and completion semantics.
+See [mode contracts, backend strategies and LCD adapters](docs/MODE_ARCHITECTURE.md) for scanout-only RGB/DSI modes, AUTO selection and completion semantics. RGB/DSI NONE and single-framebuffer scanout are unsupported; Panel-IO NONE and TE behavior are unchanged.
 
 See [TE timing and scheduling](docs/TE_TIMING.md) for automatic measurement, the shared window model, and compatibility boundaries.
 

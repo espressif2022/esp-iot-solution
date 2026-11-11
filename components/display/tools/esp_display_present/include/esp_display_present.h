@@ -35,8 +35,10 @@ extern "C" {
  * Query the minimum number of panel framebuffers before creating the panel.
  *
  * Set an explicit RGB, MIPI-DSI or IO panel type. Only panel type, mode,
- * rotation and TE configuration are read; handles, supplied framebuffers,
- * pixel format and draw-buffer settings are ignored. This query performs
+ * rotation, TE configuration and an optional AUTO frame_buffer_count hint
+ * are read; handles, framebuffer addresses, pixel format and draw-buffer
+ * settings are ignored. With no count hint, scanout AUTO recommends three
+ * framebuffers; creation resolves against the actual driver pool. This query performs
  * static policy validation without accessing hardware or allocating memory.
  *
  * IO/GRAM returns 0: draw buffers and TE compose buffers are separate.

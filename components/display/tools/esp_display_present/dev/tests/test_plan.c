@@ -51,7 +51,7 @@ static void modes(void)
         size_t images;
         esp_display_present_render_contract_t contract;
     } cases[] = {
-        {ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE, 1, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION}, {ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_FULL, 2, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL},
+        {ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_FULL, 2, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL},
         {ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_FULL, 3, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL}, {ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT, 2, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT},
         {ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL, 2, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION}, {ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_PARTIAL, 3, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION}
     };
@@ -82,7 +82,7 @@ static void modes(void)
     c.presenter.mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_AUTO;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.images.count == 2);
     c.defaults = ESP_DISPLAY_PRESENT_PLAN_LEGACY_DEFAULTS;
-    assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.images.count == 3);
+    assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.images.count == 2);
     c.presenter.backend.rotation = ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90;
     c.presenter.mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.logical.count == 1);

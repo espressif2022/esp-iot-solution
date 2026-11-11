@@ -1,3 +1,5 @@
+> 2026-11-11 更新：RGB/MIPI NONE 与单 FB 已明确拒绝，AUTO 按实际 FB 数选择双／三缓冲 PARTIAL；GRAM/TE 不变。LVGL FULL／原生 DIRECT 已取消全屏占位画布。当前契约以 [MODE_ARCHITECTURE.md](docs/MODE_ARCHITECTURE.md) 为准。下文保留迁移阶段的历史接口、限制与证据，不作为当前 API 清单。
+
 > 当前布局以 [DEFAULT_SWITCH.md](../esp_display_present_v2/DEFAULT_SWITCH.md) 为准。下文 C1/C2 和旧测试数量保留阶段性记录。
 
 # 旧 API 门面（V2 默认实现）
@@ -37,7 +39,7 @@ pv2_legacy_resources_destroy(resources, timeout_ms);
 
 最新逐项状态见 [兼容状态](../esp_display_present_v2/V1_COMPATIBILITY_GAPS.md)。TE 已接入测量式准入 gate、GPIO/定时器和安全 DMA staging；未测得窗口或整屏发送超窗时等待并超时，不降级成无同步发送。S31 通过 SPI 只读事实确认 direct-PSRAM，避免重复 staging 后，单/双 compose 与旋转传输通过；未知 IO 仍保守 staging。
 
-MODE_NONE 对 RGB/MIPI DSI 使用 PARTITION：present 只管理 tile，`draw_bitmap()` 将脏区复制到驱动内部 framebuffer，`on_color_trans_done` 后释放 source；显式 FULL/DIRECT 模式仍使用 scanout framebuffer 池。FB swap、非 64B 有效容量和 SPI PSRAM 绘制池不再一律拒绝。运行时旋转保持 V1 逻辑尺寸，原生默认旋转契约不变。常规 coverage 只保留有界精确矩形，碎片化才惰性分配位图。
+RGB/MIPI DSI 的 MODE_NONE 更新路径已删除；仅保留多 FB scanout。历史 NONE 的 tile 更新语义不再适用。FB swap、非 64B 有效容量和 SPI PSRAM 绘制池不再一律拒绝。运行时旋转保持 V1 逻辑尺寸，原生默认旋转契约不变。常规 coverage 只保留有界精确矩形，碎片化才惰性分配位图。
 
 RGB 优先使用 [公开只读 IDF 查询](../esp_display_present_v2/test_apps/driver_patches/README.md)，不要求旧应用增加调用。未修补 SDK 的显式确认仍保留。连续无 bounce 多 FB 的 S3 和 refresh-on-demand 未获得安全退休适配，继续拒绝。驱动事实不匹配和非法参数仍拒绝。
 

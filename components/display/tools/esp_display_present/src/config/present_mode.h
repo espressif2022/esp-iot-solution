@@ -17,7 +17,7 @@ typedef enum {
 } esp_display_present_plan_defaults_t;
 
 /* Mode policy only: no heap probing, hardware calls or resource allocation.
- * Public RGB/DSI NONE uses driver-owned framebuffer PARTITION submission.
+ * RGB/DSI scanout requires at least two FBs and rejects NONE.
  * frame_buffers counts driver FBs, not TE composition images or draw tiles. */
 typedef struct {
     esp_display_present_engine_backend_t kind;

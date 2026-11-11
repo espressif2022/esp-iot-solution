@@ -55,15 +55,15 @@ class RunnerTest(unittest.TestCase):
         self.assertEqual(len(runner.cases_for('s3-rgb', [0, 90, 180, 270])), 24)
         for board in ('s3-rgb', 's31-rgb', 'p4-dsi'):
             self.assertTrue(all(c['name'] != 'NONE' for c in runner.cases_for(board, [0, 90, 180, 270])))
-            self.assertEqual(len(runner.cases_for(board, [0, 90, 180, 270], ['NONE'])), 4)
+            with self.assertRaises(ValueError):
+                runner.cases_for(board, [0, 90, 180, 270], ['NONE'])
         self.assertEqual(runner.BOARDS['s31-rgb']['width'], 800)
         self.assertEqual(runner.cases_for('s31-rgb', [0, 90, 180, 270]), runner.cases_for('s3-rgb', [0, 90, 180, 270]))
         self.assertEqual(len(runner.cases_for('box3-spi', [0, 90, 180, 270])), 20)
         self.assertEqual(len(runner.cases_for('s31-qspi', [0, 90, 180, 270])), 16)
 
     def test_adapter_none_rotation_and_auto_not_faked(self):
-        a = runner.cases_for('s3-rgb', [0, 90], ['NONE', 'DOUBLE_DIRECT', 'AUTO'])
-        self.assertFalse(next(c for c in a if c['name'] == 'NONE' and c['rotation'] == 90)['adapter_supported'])
+        a = runner.cases_for('s3-rgb', [0, 90], ['DOUBLE_DIRECT', 'AUTO'])
         self.assertTrue(next(c for c in a if c['name'] == 'DOUBLE_DIRECT' and c['rotation'] == 90)['adapter_supported'])
         self.assertTrue(all(not c['adapter_supported'] for c in a if c['name'] == 'AUTO'))
 
@@ -111,8 +111,8 @@ class RunnerTest(unittest.TestCase):
             args = SimpleNamespace(work_root=Path(tmp), board='s3-rgb', suite='benchmark', implementation='present')
             root = runner.location(args)
             root.mkdir(parents=True)
-            (root / 'manifest.json').write_text(json.dumps(dict(memory_schema=1, cases=runner.cases_for('s3-rgb', [0], ['NONE']))))
-            (root / 'live.log').write_text('PASS mode=NONE rotation=0 lvgl_fps=20 scenes=16\nSUITE_PASS board=x')
+            (root / 'manifest.json').write_text(json.dumps(dict(memory_schema=1, cases=runner.cases_for('s3-rgb', [0], ['DOUBLE_FULL']))))
+            (root / 'live.log').write_text('PASS mode=DOUBLE_FULL rotation=0 lvgl_fps=20 scenes=16\nSUITE_PASS board=x')
             with self.assertRaises(ValueError):
                 runner.report(args)
             result = json.loads((root / 'results.json').read_text())
@@ -189,13 +189,13 @@ class RunnerTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             args = SimpleNamespace(work_root=Path(tmp), board='s3-rgb')
             base = Path(tmp) / args.board / 'benchmark'
-            cases = runner.cases_for('s3-rgb', [90], ['NONE'])
+            cases = runner.cases_for('s3-rgb', [90], ['AUTO'])
             manifest = dict(board='s3-rgb', cases=cases, idf_commit='abc', lvgl_benchmark_sha256='def', comparable_sdkconfig_sha256='123', defaults_sha256={}, test_sources_sha256={})
             for impl in ['present', 'adapter']:
                 root = base / impl
                 root.mkdir(parents=True)
                 (root / 'manifest.json').write_text(json.dumps(manifest))
-                row = dict(mode='NONE', rotation=90, status='SKIP' if impl == 'adapter' else 'PASS', lvgl_fps=20)
+                row = dict(mode='AUTO', rotation=90, status='SKIP' if impl == 'adapter' else 'PASS', lvgl_fps=20)
                 (root / 'results.json').write_text(json.dumps(dict(complete=True, matrix_complete=True, errors=[], rows=[row])))
             runner.compare(args)
             self.assertIn(',20,-', (base / 'comparison.csv').read_text())
@@ -265,7 +265,7 @@ class RunnerTest(unittest.TestCase):
             args = SimpleNamespace(work_root=Path(tmp), board='s3-rgb', suite='benchmark', implementation='present')
             root = runner.location(args)
             root.mkdir(parents=True)
-            (root / 'manifest.json').write_text(json.dumps(dict(cases=runner.cases_for('s3-rgb', [0], ['NONE']))))
+            (root / 'manifest.json').write_text(json.dumps(dict(cases=runner.cases_for('s3-rgb', [0], ['DOUBLE_FULL']))))
             (root / 'live.log').write_text('SUITE_PASS board=x')
             with self.assertRaises(ValueError):
                 runner.report(args)

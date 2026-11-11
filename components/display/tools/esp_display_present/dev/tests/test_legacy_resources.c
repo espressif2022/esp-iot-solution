@@ -179,12 +179,12 @@ static void io_path(void)
 }
 static void platform_matrix(void)
 {
-    const esp_display_present_mode_t modes[] = {ESP_DISPLAY_PRESENT_MODE_NONE,
-                                                ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL, ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL,
-                                                ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT
-                                               };
+    const esp_display_present_mode_t modes[] = {
+        ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL, ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL,
+        ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT
+    };
     for (unsigned rgb = 0; rgb < 2; ++rgb) {
-        for (unsigned mode = 0; mode < 4; ++mode) {
+        for (unsigned mode = 0; mode < sizeof(modes) / sizeof(modes[0]); ++mode) {
             for (unsigned swap = 0; swap < 2; ++swap) {
                 struct fake_lcd panel;
                 init_panel(&panel);
@@ -248,6 +248,34 @@ static void platform_matrix(void)
         }
     }
 }
+static void scanout_policy(void)
+{
+    for (unsigned rgb = 0; rgb < 2; ++rgb) {
+        for (unsigned count = 1; count <= 3; ++count) {
+            struct fake_lcd panel;
+            init_panel(&panel);
+            panel.available_fbs = count;
+            esp_display_presenter_config_t input = config(&panel, rgb);
+            present_resources_t *resources = NULL;
+            input.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_NONE;
+            assert(present_resources_create(&input, false, NULL, NULL, &resources) == ESP_ERR_NOT_SUPPORTED);
+            assert(!resources && !panel.calls && !panel.user);
+            input.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_AUTO;
+            esp_err_t error = present_resources_create(&input, true, NULL, NULL, &resources);
+            if (count == 1) {
+                assert(error == ESP_ERR_NOT_SUPPORTED && !resources && !panel.user);
+            } else {
+                assert(error == ESP_OK);
+                present_resource_status_t status;
+                OK(present_resources_status(resources, &status));
+                assert(status.plan.images.count == count);
+                assert(status.plan.normalized.backend.render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION);
+                OK(present_resources_destroy(resources, 1000));
+            }
+            free_panel(&panel);
+        }
+    }
+}
 static void plans(void)
 {
     esp_display_presenter_config_t io = config(NULL, false);
@@ -281,9 +309,7 @@ static void plans(void)
         assert(plan.presenter.background_service && plan.presenter.backend.async_copy);
     }
     input.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_NONE;
-    OK(present_resources_plan(&input, false, &plan));
-    assert(plan.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION);
-    assert(plan.resources.image_count == 0 && plan.resources.tile_count == 2 && !plan.presenter.backend.active_writes);
+    assert(present_resources_plan(&input, false, &plan) == ESP_ERR_NOT_SUPPORTED);
     input.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL;
     input.width = 4;
     OK(present_resources_plan(&input, false, &plan));
@@ -347,6 +373,7 @@ int main(void)
     panel.attach_fail = false;
     free_panel(&panel);
     plans();
+    scanout_policy();
     platform_matrix();
     io_path();
     exercise(false, false);

@@ -102,6 +102,11 @@ esp_err_t esp_display_present_lcd_fb_scanout_get_output_caps(esp_display_present
  * fences FB0 selection. Only the factory may submit while this is pending. */
 esp_err_t present_lcd_fb_scanout_initialize(esp_display_present_lcd_fb_scanout_t *, uint32_t timeout_ms);
 
+/* Read existing driver buffers only: no callbacks, DMA submission or allocation. */
+esp_err_t present_lcd_fb_scanout_probe_buffers(esp_lcd_panel_handle_t panel,
+                                               esp_display_present_lcd_fb_scanout_kind_t kind,
+                                               void **buffers, size_t *count);
+
 #ifdef __cplusplus
 }
 #endif
