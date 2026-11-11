@@ -1,0 +1,308 @@
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Looking for pthread.h
+-- Looking for pthread.h - found
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE  
+-- Found Python3: /usr/bin/python3.10 (found version "3.10.12") found components: Interpreter 
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /tmp/present-fault-fix-20261111/host-repository
+[  2%] Building C object CMakeFiles/test_pixel_ops.dir/tests/test_pixel_ops.c.o
+[  2%] Building C object CMakeFiles/test_executor_cpu.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/platform/present_os.c.o
+[  2%] Building C object CMakeFiles/test_executor_cpu.dir/tests/test_executor.c.o
+[  3%] Building C object CMakeFiles/test_executor_ppa.dir/tests/test_executor.c.o
+[  3%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/platform/present_os.c.o
+[  3%] Building C object CMakeFiles/test_executor_both.dir/tests/test_executor.c.o
+[  3%] Building C object CMakeFiles/test_executor_dma2d.dir/tests/test_executor.c.o
+[  3%] Building C object CMakeFiles/test_executor_ppa_mb16.dir/tests/test_executor.c.o
+[  4%] Building C object CMakeFiles/test_pixel_ops.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/present_pixel_ops.c.o
+[  5%] Building C object CMakeFiles/test_executor_both.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/platform/present_os.c.o
+[  6%] Building C object CMakeFiles/test_executor_cpu.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/present_pixel_engine.c.o
+[  6%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/platform/te/present_te_timing.c.o
+[  7%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/platform/te/present_te_timer.c.o
+[  9%] Building C object CMakeFiles/test_executor_dma2d.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/platform/present_os.c.o
+[  9%] Building C object CMakeFiles/test_executor_ppa.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/platform/present_os.c.o
+[ 11%] Building C object CMakeFiles/test_executor_ppa_mb16.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/platform/present_os.c.o
+[ 11%] Building C object CMakeFiles/test_executor_dma2d.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/present_pixel_engine.c.o
+[ 11%] Linking C executable test_pixel_ops
+[ 12%] Building C object CMakeFiles/test_executor_cpu.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/present_pixel_ops.c.o
+[ 12%] Building C object CMakeFiles/test_executor_both.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/present_pixel_engine.c.o
+[ 13%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/backend/present_image_repair.c.o
+[ 14%] Building C object CMakeFiles/test_executor_ppa.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/present_pixel_engine.c.o
+[ 14%] Building C object CMakeFiles/test_executor_both.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/present_pixel_ops.c.o
+[ 15%] Building C object CMakeFiles/test_executor_ppa_mb16.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/present_pixel_engine.c.o
+[ 15%] Built target test_pixel_ops
+[ 16%] Building C object CMakeFiles/test_executor_both.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor.c.o
+[ 16%] Building C object CMakeFiles/test_executor_dma2d.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/present_pixel_ops.c.o
+[ 17%] Building C object CMakeFiles/test_executor_dma2d.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor.c.o
+[ 18%] Building C object CMakeFiles/test_executor_cpu.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor.c.o
+[ 19%] Building C object CMakeFiles/test_executor_dma2d.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor_cpu.c.o
+[ 20%] Building C object CMakeFiles/test_executor_cpu.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor_cpu.c.o
+[ 20%] Building C object CMakeFiles/test_executor_ppa.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/present_pixel_ops.c.o
+[ 21%] Building C object CMakeFiles/test_executor_both.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor_cpu.c.o
+[ 21%] Building C object CMakeFiles/test_executor_ppa_mb16.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/present_pixel_ops.c.o
+[ 21%] Building C object CMakeFiles/test_executor_both.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor_ppa.c.o
+[ 22%] Building C object CMakeFiles/test_executor_both.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor_dma2d.c.o
+[ 23%] Building C object CMakeFiles/test_executor_cpu.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor_dma2d.c.o
+[ 23%] Building C object CMakeFiles/test_executor_cpu.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor_ppa.c.o
+[ 23%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/backend/present_frame_core.c.o
+[ 24%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/config/present_plan.c.o
+[ 24%] Building C object CMakeFiles/test_executor_dma2d.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor_ppa.c.o
+[ 25%] Linking C executable test_executor_cpu
+[ 26%] Building C object CMakeFiles/test_executor_dma2d.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor_dma2d.c.o
+[ 27%] Building C object CMakeFiles/test_executor_ppa_mb16.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor.c.o
+[ 28%] Building C object CMakeFiles/test_executor_ppa_mb16.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor_cpu.c.o
+[ 29%] Linking C executable test_executor_both
+[ 30%] Building C object CMakeFiles/test_executor_ppa.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor.c.o
+[ 30%] Building C object CMakeFiles/test_executor_ppa_mb16.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor_ppa.c.o
+[ 32%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/config/present_mode.c.o
+[ 32%] Building C object CMakeFiles/test_executor_ppa_mb16.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor_dma2d.c.o
+[ 32%] Built target test_executor_cpu
+[ 33%] Building C object CMakeFiles/test_executor_ppa.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor_cpu.c.o
+[ 33%] Building C object CMakeFiles/test_executor_ppa.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor_ppa.c.o
+[ 34%] Building C object CMakeFiles/test_executor_ppa.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor_dma2d.c.o
+[ 35%] Linking C executable test_executor_dma2d
+[ 35%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/core/present_engine.c.o
+[ 36%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/core/present_transfer_tracker.c.o
+[ 37%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/core/present_completion_tracker.c.o
+[ 37%] Built target test_executor_both
+[ 37%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/present_pixel_engine.c.o
+[ 38%] Linking C executable test_executor_ppa_mb16
+[ 39%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/present_pixel_ops.c.o
+[ 40%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor.c.o
+[ 41%] Linking C executable test_executor_ppa
+[ 41%] Built target test_executor_dma2d
+[ 41%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor_cpu.c.o
+[ 42%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor_ppa.c.o
+[ 42%] Built target test_executor_ppa_mb16
+[ 43%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/pixel/executor/present_executor_dma2d.c.o
+[ 43%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/backend/present_backend_region.c.o
+[ 44%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/platform/lcd/present_lcd_io.c.o
+[ 45%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/platform/lcd/present_lcd_rgb_info.c.o
+[ 45%] Built target test_executor_ppa
+[ 45%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/platform/lcd/present_lcd_fb_scanout.c.o
+[ 46%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/backend/present_te_composer.c.o
+[ 47%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/backend/present_backend_te.c.o
+[ 47%] Building C object CMakeFiles/present_engine.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/backend/present_backend_fb.c.o
+[ 48%] Linking C static library libpresent_engine.a
+[ 48%] Built target present_engine
+[ 49%] Building C object CMakeFiles/test_te_timing.dir/tests/test_te_timing.c.o
+[ 51%] Building C object CMakeFiles/test_lease_identity.dir/tests/test_lease_identity.c.o
+[ 49%] Building C object CMakeFiles/test_mode.dir/tests/test_mode.c.o
+[ 54%] Building C object CMakeFiles/test_plan.dir/tests/test_plan.c.o
+[ 54%] Building C object CMakeFiles/test_completion_tracker.dir/tests/test_completion_tracker.c.o
+[ 54%] Building C object CMakeFiles/test_image.dir/tests/test_image.c.o
+[ 54%] Building C object CMakeFiles/test_transfer_tracker.dir/tests/test_transfer_tracker.c.o
+[ 54%] Building C object CMakeFiles/test_frame_core.dir/tests/test_frame_core.c.o
+[ 55%] Linking C executable test_transfer_tracker
+[ 56%] Linking C executable test_te_timing
+[ 57%] Linking C executable test_mode
+[ 58%] Linking C executable test_completion_tracker
+[ 58%] Linking C executable test_frame_core
+[ 58%] Linking C executable test_lease_identity
+[ 58%] Built target test_transfer_tracker
+[ 58%] Built target test_mode
+[ 59%] Building C object CMakeFiles/test_records.dir/tests/test_records.c.o
+[ 60%] Linking C executable test_image
+[ 60%] Built target test_te_timing
+[ 60%] Building C object CMakeFiles/test_coverage.dir/tests/test_coverage.c.o
+[ 60%] Built target test_frame_core
+[ 61%] Building C object CMakeFiles/test_repair.dir/tests/test_repair.c.o
+[ 62%] Linking C executable test_plan
+[ 62%] Built target test_completion_tracker
+[ 62%] Building C object CMakeFiles/test_scanout.dir/tests/test_scanout.c.o
+[ 62%] Built target test_lease_identity
+[ 63%] Building C object CMakeFiles/test_rotation.dir/tests/test_rotation.c.o
+[ 64%] Linking C executable test_coverage
+[ 65%] Linking C executable test_records
+[ 66%] Building C object CMakeFiles/test_pixel.dir/tests/test_pixel.c.o
+[ 66%] Built target test_image
+[ 66%] Building C object CMakeFiles/test_region.dir/tests/test_region.c.o
+[ 66%] Built target test_plan
+[ 66%] Building C object CMakeFiles/test_lcd_io.dir/tests/test_lcd_io.c.o
+[ 66%] Built target test_records
+[ 66%] Building C object CMakeFiles/test_presenter.dir/tests/test_presenter.c.o
+[ 66%] Built target test_coverage
+[ 67%] Building C object CMakeFiles/test_te_composer.dir/tests/test_te_composer.c.o
+[ 67%] Linking C executable test_pixel
+[ 68%] Linking C executable test_te_composer
+[ 68%] Built target test_pixel
+[ 69%] Linking C executable test_scanout
+[ 70%] Linking C executable test_rotation
+[ 70%] Linking C executable test_repair
+[ 71%] Building C object CMakeFiles/test_te.dir/tests/test_te.c.o
+[ 71%] Built target test_te_composer
+[ 72%] Linking C executable test_lcd_io
+[ 73%] Building C object CMakeFiles/test_presenter_te.dir/tests/test_presenter_te.c.o
+[ 74%] Linking C executable test_presenter
+[ 75%] Linking C executable test_region
+[ 75%] Built target test_rotation
+[ 75%] Built target test_scanout
+[ 75%] Building C object CMakeFiles/test_fb.dir/tests/test_fb.c.o
+[ 76%] Building C object CMakeFiles/test_direct_resolved.dir/tests/test_direct_resolved.c.o
+[ 76%] Built target test_repair
+[ 76%] Built target test_lcd_io
+[ 77%] Building C object CMakeFiles/test_event.dir/tests/test_event.c.o
+[ 77%] Building C object CMakeFiles/test_scheduler.dir/tests/test_scheduler.c.o
+[ 77%] Built target test_region
+[ 77%] Built target test_presenter
+[ 78%] Building C object CMakeFiles/test_scanout_no_query.dir/tests/test_scanout.c.o
+[ 78%] Linking C executable test_presenter_te
+[ 78%] Building CXX object CMakeFiles/header_smoke.dir/tests/header_smoke.cpp.o
+[ 79%] Linking C executable test_event
+[ 80%] Linking CXX executable header_smoke
+[ 81%] Linking C executable test_scheduler
+[ 81%] Linking C executable test_direct_resolved
+[ 81%] Built target test_presenter_te
+[ 82%] Building C object CMakeFiles/test_boundary_trace.dir/test_apps/scanout_boundary/main/boundary_trace.c.o
+[ 82%] Built target test_event
+[ 82%] Built target header_smoke
+[ 83%] Building C object CMakeFiles/present_legacy_resources.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/resources/present_resources.c.o
+[ 84%] Building C object CMakeFiles/test_boundary_trace.dir/test_apps/scanout_boundary/test_trace.c.o
+[ 85%] Building C object CMakeFiles/test_transfer_timeout.dir/tests/test_transfer_timeout.c.o
+[ 85%] Built target test_direct_resolved
+[ 85%] Built target test_scheduler
+[ 86%] Building C object CMakeFiles/test_legacy_te_gate.dir/tests/test_legacy_te_gate.c.o
+[ 86%] Linking C executable test_boundary_trace
+[ 86%] Linking C executable test_te
+[ 87%] Building C object CMakeFiles/test_legacy_te_gate_old.dir/tests/test_legacy_te_gate_old.c.o
+[ 87%] Building C object CMakeFiles/test_scanout_no_query.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/platform/lcd/present_lcd_fb_scanout.c.o
+[ 88%] Linking C executable test_fb
+[ 88%] Built target test_te
+[ 89%] Building C object CMakeFiles/test_scanout_no_query.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/platform/lcd/present_lcd_rgb_info.c.o
+[ 89%] Built target test_boundary_trace
+[ 90%] Building C object CMakeFiles/test_spi_facts_no_query.dir/tests/test_spi_facts.c.o
+[ 91%] Building C object CMakeFiles/test_spi_facts_query.dir/tests/test_spi_facts.c.o
+[ 91%] Linking C executable test_transfer_timeout
+[ 92%] Linking C executable test_legacy_te_gate_old
+[ 92%] Linking C executable test_legacy_te_gate
+[ 92%] Built target test_fb
+[ 92%] Building C object CMakeFiles/test_spi_facts_no_query.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/resources/present_resources.c.o
+[ 93%] Linking C executable test_scanout_no_query
+[ 93%] Linking C static library libpresent_legacy_resources.a
+[ 93%] Building C object CMakeFiles/test_spi_facts_query.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/resources/present_resources.c.o
+[ 93%] Built target test_transfer_timeout
+[ 93%] Built target test_legacy_te_gate
+[ 93%] Built target present_legacy_resources
+[ 93%] Built target test_legacy_te_gate_old
+[ 94%] Building C object CMakeFiles/present_legacy.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/config/present_geometry.c.o
+[ 94%] Building C object CMakeFiles/present_legacy.dir/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/src/esp_display_presenter.c.o
+[ 94%] Building C object CMakeFiles/test_legacy_resources.dir/tests/test_legacy_resources.c.o
+[ 94%] Built target test_scanout_no_query
+[ 95%] Linking C executable test_spi_facts_no_query
+[ 96%] Linking C executable test_spi_facts_query
+[ 96%] Built target test_spi_facts_no_query
+[ 97%] Linking C executable test_legacy_resources
+[ 97%] Built target test_spi_facts_query
+[ 98%] Linking C static library libpresent_legacy.a
+[ 98%] Built target test_legacy_resources
+[ 98%] Built target present_legacy
+[ 99%] Building C object CMakeFiles/test_legacy_facade.dir/tests/test_legacy_facade.c.o
+[100%] Linking C executable test_legacy_facade
+[100%] Built target test_legacy_facade
+Internal ctest changing into directory: /tmp/present-fault-fix-20261111/host-repository
+Test project /tmp/present-fault-fix-20261111/host-repository
+      Start  1: lease_identity
+ 1/44 Test  #1: lease_identity ...................   Passed    0.01 sec
+      Start  2: mode
+ 2/44 Test  #2: mode .............................   Passed    0.01 sec
+      Start  3: transfer_tracker
+ 3/44 Test  #3: transfer_tracker .................   Passed    0.01 sec
+      Start  4: completion_tracker
+ 4/44 Test  #4: completion_tracker ...............   Passed    0.01 sec
+      Start  5: te_timing
+ 5/44 Test  #5: te_timing ........................   Passed    0.01 sec
+      Start  6: image
+ 6/44 Test  #6: image ............................   Passed    0.03 sec
+      Start  7: frame_core
+ 7/44 Test  #7: frame_core .......................   Passed    0.01 sec
+      Start  8: plan
+ 8/44 Test  #8: plan .............................   Passed    0.01 sec
+      Start  9: records
+ 9/44 Test  #9: records ..........................   Passed    0.01 sec
+      Start 10: coverage
+10/44 Test #10: coverage .........................   Passed    0.11 sec
+      Start 11: repair
+11/44 Test #11: repair ...........................   Passed    0.01 sec
+      Start 12: scanout
+12/44 Test #12: scanout ..........................   Passed    0.01 sec
+      Start 13: rotation
+13/44 Test #13: rotation .........................   Passed    0.02 sec
+      Start 14: pixel
+14/44 Test #14: pixel ............................   Passed    0.01 sec
+      Start 15: region
+15/44 Test #15: region ...........................   Passed    0.02 sec
+      Start 16: lcd_io
+16/44 Test #16: lcd_io ...........................   Passed    0.01 sec
+      Start 17: presenter
+17/44 Test #17: presenter ........................   Passed    0.01 sec
+      Start 18: te_composer
+18/44 Test #18: te_composer ......................   Passed    0.01 sec
+      Start 19: te
+19/44 Test #19: te ...............................   Passed    0.65 sec
+      Start 20: presenter_te
+20/44 Test #20: presenter_te .....................   Passed    0.01 sec
+      Start 21: fb
+21/44 Test #21: fb ...............................   Passed    0.05 sec
+      Start 22: direct_resolved
+22/44 Test #22: direct_resolved ..................   Passed    2.93 sec
+      Start 23: event
+23/44 Test #23: event ............................   Passed    0.02 sec
+      Start 24: scheduler
+24/44 Test #24: scheduler ........................   Passed    0.05 sec
+      Start 25: scanout_no_query
+25/44 Test #25: scanout_no_query .................   Passed    0.01 sec
+      Start 26: headers_cpp
+26/44 Test #26: headers_cpp ......................   Passed    0.01 sec
+      Start 27: boundary_trace
+27/44 Test #27: boundary_trace ...................   Passed    0.01 sec
+      Start 28: scanout_retirement_contract
+28/44 Test #28: scanout_retirement_contract ......   Passed    0.06 sec
+      Start 29: boundary_analyze
+29/44 Test #29: boundary_analyze .................   Passed    0.07 sec
+      Start 30: executor_cpu
+30/44 Test #30: executor_cpu .....................   Passed    0.01 sec
+      Start 31: executor_ppa
+31/44 Test #31: executor_ppa .....................   Passed    0.02 sec
+      Start 32: executor_dma2d
+32/44 Test #32: executor_dma2d ...................   Passed    0.01 sec
+      Start 33: executor_both
+33/44 Test #33: executor_both ....................   Passed    0.03 sec
+      Start 34: executor_ppa_mb16
+34/44 Test #34: executor_ppa_mb16 ................   Passed    0.02 sec
+      Start 35: legacy_resources
+35/44 Test #35: legacy_resources .................   Passed    0.02 sec
+      Start 36: legacy_facade
+36/44 Test #36: legacy_facade ....................   Passed    0.40 sec
+      Start 37: transfer_timeout
+37/44 Test #37: transfer_timeout .................   Passed    0.02 sec
+      Start 38: legacy_te_gate
+38/44 Test #38: legacy_te_gate ...................   Passed    0.01 sec
+      Start 39: legacy_te_gate_old
+39/44 Test #39: legacy_te_gate_old ...............   Passed    0.01 sec
+      Start 40: spi_facts_query
+40/44 Test #40: spi_facts_query ..................   Passed    0.01 sec
+      Start 41: spi_facts_no_query
+41/44 Test #41: spi_facts_no_query ...............   Passed    0.01 sec
+      Start 42: test_runner
+42/44 Test #42: test_runner ......................   Passed    0.10 sec
+      Start 43: header_contracts
+43/44 Test #43: header_contracts .................   Passed    0.69 sec
+      Start 44: pixel_ops_standalone
+44/44 Test #44: pixel_ops_standalone .............   Passed    0.01 sec
+
+100% tests passed, 0 tests failed out of 44
+
+Total Test time (real) =   5.52 sec

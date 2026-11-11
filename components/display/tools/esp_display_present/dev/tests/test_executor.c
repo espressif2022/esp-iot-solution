@@ -178,6 +178,50 @@ static void verify_fifo_boundary(esp_display_present_executor_t *ppa, esp_displa
     free(dst);
     free(expected);
 }
+/* Quarter-turn output tails differ from IDF's input-dimension workaround.
+ * The 128x130 RGB565 request blocked after 18 isolated hardware calls on P4.
+ * Probe is pure; CPU fallback must preserve the entire destination allocation. */
+static void verify_rotated_fifo_tail(esp_display_present_executor_t *ppa, esp_display_present_executor_t *cpu)
+{
+    const size_t capacity = 1024 * 600 * 3;
+    uint8_t *src = aligned_alloc(64, capacity), *dst = aligned_alloc(64, capacity);
+    uint8_t *expected = malloc(capacity);
+    assert(src && dst && expected);
+    for (size_t i = 0; i < capacity; ++i) {
+        src[i] = (uint8_t)(i * 37 + i / 128);
+    }
+    for (unsigned bpp = 2; bpp <= 3; ++bpp) {
+        esp_display_present_engine_pixel_format_t format = bpp == 2 ? ESP_DISPLAY_PRESENT_FORMAT_RGB565 : ESP_DISPLAY_PRESENT_FORMAT_RGB888;
+        for (unsigned rotation = 1; rotation <= 3; rotation += 2) {
+            esp_display_present_copy_request_t request = {
+                .src = {src, 128 * 160 * bpp, {128, 160, 128 * bpp, format, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+                .dst = {dst, 1024 * 600 * bpp, {1024, 600, 1024 * bpp, format, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+                .src_area = {0, 0, 128, 130}, .dst_x = 727, .dst_y = 353, .rotation = rotation
+            };
+            esp_display_present_executor_reason_t reason;
+            unsigned before = submissions, before_syncs = syncs;
+            assert(esp_display_present_executor_probe(ppa, &request, &reason) == ESP_ERR_NOT_SUPPORTED);
+            assert(reason == ESP_DISPLAY_PRESENT_EXEC_LAYOUT);
+            assert(esp_display_present_executor_execute(ppa, &request) == ESP_ERR_NOT_SUPPORTED);
+            assert(submissions == before && syncs == before_syncs);
+            memset(dst, 0xa5, capacity); memset(expected, 0xa5, capacity);
+            paint(src, 128 * bpp, expected, 1024 * bpp, 0, 0, 128, 130, 727, 353, rotation, bpp, false);
+            esp_display_present_executor_dispatch_t dispatch = {ppa, cpu};
+            esp_display_present_executor_selection_t selected;
+            assert(esp_display_present_executor_run(&dispatch, &request, &selected) == ESP_OK);
+            assert(selected.executor == cpu && selected.used_fallback);
+            assert(submissions == before && syncs == before_syncs && !memcmp(dst, expected, capacity));
+            /* Small input tails already enable IDF's bypass; large output tails
+             * are safe. Neither neighbor should lose hardware acceleration. */
+            request.src_area.height = 129;
+            assert(esp_display_present_executor_probe(ppa, &request, &reason) == ESP_OK);
+            request.src_area.height = 137;
+            assert(esp_display_present_executor_probe(ppa, &request, &reason) == ESP_OK);
+        }
+    }
+    free(src); free(dst); free(expected);
+}
+
 #endif
 #if PRESENT_HOST_DMA2D
 static pthread_mutex_t dma_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -587,6 +631,7 @@ int main(void)
     verify_cache_bands(e, false);
     verify_cache_failures(e);
     verify_fifo_boundary(e, cpu);
+    verify_rotated_fifo_tail(e, cpu);
     assert(esp_display_present_executor_destroy(e) == ESP_OK);
     verify_instance_isolation(false);
 #else

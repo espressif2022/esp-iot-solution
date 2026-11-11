@@ -39,10 +39,11 @@ static esp_err_t ppa_caps(void *context, esp_display_present_executor_caps_t *ou
     return ESP_OK;
 }
 #if defined(PRESENT_HOST) || defined(CONFIG_IDF_TARGET_ESP32P4)
-/* P4 DIG-734: the clean IDF workaround bypasses macro-block ordering only
- * below the 192-byte FIFO depth. At equality SRM can stall, reproduced with
- * RGB565 131x352 on rev3. Reject before submission; CPU fallback keeps ownership
- * and copies the requested pixels without changing the driver. */
+/* P4 DIG-734: IDF selects its macro-block-order workaround using input
+ * dimensions. Quarter turns can leave a small output tail even when the input
+ * tail does not enable that workaround (128x130 RGB565, rotation 270).
+ * Reject before hardware acceptance so the dispatcher can safely use CPU.
+ * Keep the independently reproduced 192-byte input equality guard as well. */
 static bool fifo_boundary(const esp_display_present_copy_request_t *request)
 {
 #ifdef PRESENT_HOST
@@ -66,7 +67,28 @@ static bool fifo_boundary(const esp_display_present_copy_request_t *request)
         tail_height = macro_height;
     }
     unsigned bpp = request->dst.layout.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
-    return (width > divisor || height > macro_height) && tail_width * tail_height * bpp == 192;
+    bool input_cut = width > divisor || height > macro_height;
+    unsigned input_tail = tail_width * tail_height * bpp;
+    if (input_cut && input_tail == 192) {
+        return true;
+    }
+    bool quarter = request->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90 ||
+                   request->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270;
+    /* IDF already bypasses macro-block ordering below the input threshold. */
+    if (!quarter || (input_cut && input_tail < 192)) {
+        return false;
+    }
+    unsigned output_width = height, output_height = width;
+    tail_width = output_width % divisor;
+    tail_height = output_height % macro_height;
+    if (!tail_width) {
+        tail_width = divisor;
+    }
+    if (!tail_height) {
+        tail_height = macro_height;
+    }
+    return (output_width > divisor || output_height > macro_height) &&
+           tail_width * tail_height * bpp <= 192;
 }
 #endif
 static esp_err_t ppa_probe(void *context, const esp_display_present_copy_request_t *request, esp_display_present_executor_reason_t *reason)

@@ -1,0 +1,20 @@
+{
+  "base_commit": "4a68ee87b",
+  "idf_clean": true,
+  "source_hashes_match": true,
+  "host_sanitized": {
+    "passed": 44,
+    "failed": 0
+  },
+  "hardware_replay": {
+    "before_stall_iteration": 17,
+    "after_completed": 20000,
+    "full_destination_pixels_match": true
+  },
+  "regression_cases": 5,
+  "regression_scenes": 80,
+  "all_cases_passed": true,
+  "psram_recovered_all_cases": true,
+  "no_original_restore": true,
+  "historical_failures_preserved": true
+}

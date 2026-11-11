@@ -1,0 +1,113 @@
+diff --git a/components/display/tools/esp_display_present/dev/tests/test_executor.c b/components/display/tools/esp_display_present/dev/tests/test_executor.c
+index 35201110d..b3c56c1aa 100644
+--- a/components/display/tools/esp_display_present/dev/tests/test_executor.c
++++ b/components/display/tools/esp_display_present/dev/tests/test_executor.c
+@@ -178,6 +178,50 @@ static void verify_fifo_boundary(esp_display_present_executor_t *ppa, esp_displa
+     free(dst);
+     free(expected);
+ }
++/* Quarter-turn output tails differ from IDF's input-dimension workaround.
++ * The 128x130 RGB565 request blocked after 18 isolated hardware calls on P4.
++ * Probe is pure; CPU fallback must preserve the entire destination allocation. */
++static void verify_rotated_fifo_tail(esp_display_present_executor_t *ppa, esp_display_present_executor_t *cpu)
++{
++    const size_t capacity = 1024 * 600 * 3;
++    uint8_t *src = aligned_alloc(64, capacity), *dst = aligned_alloc(64, capacity);
++    uint8_t *expected = malloc(capacity);
++    assert(src && dst && expected);
++    for (size_t i = 0; i < capacity; ++i) {
++        src[i] = (uint8_t)(i * 37 + i / 128);
++    }
++    for (unsigned bpp = 2; bpp <= 3; ++bpp) {
++        esp_display_present_engine_pixel_format_t format = bpp == 2 ? ESP_DISPLAY_PRESENT_FORMAT_RGB565 : ESP_DISPLAY_PRESENT_FORMAT_RGB888;
++        for (unsigned rotation = 1; rotation <= 3; rotation += 2) {
++            esp_display_present_copy_request_t request = {
++                .src = {src, 128 * 160 * bpp, {128, 160, 128 * bpp, format, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
++                .dst = {dst, 1024 * 600 * bpp, {1024, 600, 1024 * bpp, format, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
++                .src_area = {0, 0, 128, 130}, .dst_x = 727, .dst_y = 353, .rotation = rotation
++            };
++            esp_display_present_executor_reason_t reason;
++            unsigned before = submissions, before_syncs = syncs;
++            assert(esp_display_present_executor_probe(ppa, &request, &reason) == ESP_ERR_NOT_SUPPORTED);
++            assert(reason == ESP_DISPLAY_PRESENT_EXEC_LAYOUT);
++            assert(esp_display_present_executor_execute(ppa, &request) == ESP_ERR_NOT_SUPPORTED);
++            assert(submissions == before && syncs == before_syncs);
++            memset(dst, 0xa5, capacity); memset(expected, 0xa5, capacity);
++            paint(src, 128 * bpp, expected, 1024 * bpp, 0, 0, 128, 130, 727, 353, rotation, bpp, false);
++            esp_display_present_executor_dispatch_t dispatch = {ppa, cpu};
++            esp_display_present_executor_selection_t selected;
++            assert(esp_display_present_executor_run(&dispatch, &request, &selected) == ESP_OK);
++            assert(selected.executor == cpu && selected.used_fallback);
++            assert(submissions == before && syncs == before_syncs && !memcmp(dst, expected, capacity));
++            /* Small input tails already enable IDF's bypass; large output tails
++             * are safe. Neither neighbor should lose hardware acceleration. */
++            request.src_area.height = 129;
++            assert(esp_display_present_executor_probe(ppa, &request, &reason) == ESP_OK);
++            request.src_area.height = 137;
++            assert(esp_display_present_executor_probe(ppa, &request, &reason) == ESP_OK);
++        }
++    }
++    free(src); free(dst); free(expected);
++}
++
+ #endif
+ #if PRESENT_HOST_DMA2D
+ static pthread_mutex_t dma_lock = PTHREAD_MUTEX_INITIALIZER;
+@@ -587,6 +631,7 @@ int main(void)
+     verify_cache_bands(e, false);
+     verify_cache_failures(e);
+     verify_fifo_boundary(e, cpu);
++    verify_rotated_fifo_tail(e, cpu);
+     assert(esp_display_present_executor_destroy(e) == ESP_OK);
+     verify_instance_isolation(false);
+ #else
+diff --git a/components/display/tools/esp_display_present/src/pixel/executor/present_executor_ppa.c b/components/display/tools/esp_display_present/src/pixel/executor/present_executor_ppa.c
+index 7e86d493a..44f8f608c 100644
+--- a/components/display/tools/esp_display_present/src/pixel/executor/present_executor_ppa.c
++++ b/components/display/tools/esp_display_present/src/pixel/executor/present_executor_ppa.c
+@@ -39,10 +39,11 @@ static esp_err_t ppa_caps(void *context, esp_display_present_executor_caps_t *ou
+     return ESP_OK;
+ }
+ #if defined(PRESENT_HOST) || defined(CONFIG_IDF_TARGET_ESP32P4)
+-/* P4 DIG-734: the clean IDF workaround bypasses macro-block ordering only
+- * below the 192-byte FIFO depth. At equality SRM can stall, reproduced with
+- * RGB565 131x352 on rev3. Reject before submission; CPU fallback keeps ownership
+- * and copies the requested pixels without changing the driver. */
++/* P4 DIG-734: IDF selects its macro-block-order workaround using input
++ * dimensions. Quarter turns can leave a small output tail even when the input
++ * tail does not enable that workaround (128x130 RGB565, rotation 270).
++ * Reject before hardware acceptance so the dispatcher can safely use CPU.
++ * Keep the independently reproduced 192-byte input equality guard as well. */
+ static bool fifo_boundary(const esp_display_present_copy_request_t *request)
+ {
+ #ifdef PRESENT_HOST
+@@ -66,7 +67,28 @@ static bool fifo_boundary(const esp_display_present_copy_request_t *request)
+         tail_height = macro_height;
+     }
+     unsigned bpp = request->dst.layout.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
+-    return (width > divisor || height > macro_height) && tail_width * tail_height * bpp == 192;
++    bool input_cut = width > divisor || height > macro_height;
++    unsigned input_tail = tail_width * tail_height * bpp;
++    if (input_cut && input_tail == 192) {
++        return true;
++    }
++    bool quarter = request->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90 ||
++                   request->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270;
++    /* IDF already bypasses macro-block ordering below the input threshold. */
++    if (!quarter || (input_cut && input_tail < 192)) {
++        return false;
++    }
++    unsigned output_width = height, output_height = width;
++    tail_width = output_width % divisor;
++    tail_height = output_height % macro_height;
++    if (!tail_width) {
++        tail_width = divisor;
++    }
++    if (!tail_height) {
++        tail_height = macro_height;
++    }
++    return (output_width > divisor || output_height > macro_height) &&
++           tail_width * tail_height * bpp <= 192;
+ }
+ #endif
+ static esp_err_t ppa_probe(void *context, const esp_display_present_copy_request_t *request, esp_display_present_executor_reason_t *reason)

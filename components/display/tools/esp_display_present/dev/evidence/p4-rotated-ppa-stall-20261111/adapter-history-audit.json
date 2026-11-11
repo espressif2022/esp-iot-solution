@@ -1,0 +1,47 @@
+[
+  {
+    "commit": "f4116b61a",
+    "subject": "fix(ppa): simplify PPA hang workaround patch to use ppa_ll_srm_bypass_mb_order",
+    "in_HEAD": true
+  },
+  {
+    "commit": "b5682317d",
+    "subject": "fix(esp_lvgl_adapter): replace static cache alignment with per-buffer esp_cache_get_line_size_by_addr and fix M2C sync alignment",
+    "in_HEAD": true
+  },
+  {
+    "commit": "59bf442c1",
+    "subject": "fix(esp_lvgl_adapter): ensure DMA2D 16-byte alignment when flash encryption is active",
+    "in_HEAD": true
+  },
+  {
+    "commit": "374c6cb2a",
+    "subject": "fix(esp_lvgl_adapter): compat DMA2D API change in IDF >= 6.2",
+    "in_HEAD": true
+  },
+  {
+    "commit": "9539736b7",
+    "subject": "perf(esp_lvgl_adapter): set DMA2D burst size to 128 bytes for maximum PSRAM throughput",
+    "in_HEAD": true
+  },
+  {
+    "commit": "682d62441",
+    "subject": "fix(esp_lvgl_adapter): correct PPA rendering",
+    "in_HEAD": false
+  },
+  {
+    "commit": "7e37982d8",
+    "subject": "change(esp_lvgl_adapter): optimize PPA drawing",
+    "in_HEAD": false
+  },
+  {
+    "commit": "5e7dfad1a",
+    "subject": "fix(esp_lvgl_adapter): align PPA output buffers",
+    "in_HEAD": false
+  },
+  {
+    "commit": "46a863af8",
+    "subject": "fix(esp_lvgl_adapter): validate PPA dimensions",
+    "in_HEAD": false
+  }
+]
