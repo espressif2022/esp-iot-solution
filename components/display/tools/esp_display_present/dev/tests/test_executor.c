@@ -117,6 +117,68 @@ esp_err_t ppa_do_scale_rotate_mirror(ppa_client_handle_t h, const ppa_srm_oper_c
     return ESP_OK;
 }
 #endif
+#if PRESENT_HOST_PPA
+/* Real P4 failure: (466,248) 131x352 RGB565 on rev3. The CPU fallback must
+ * preserve both the copied region and pixels outside it; adjacent widths
+ * remain eligible for SRM, and rejection must not touch cache or hardware. */
+static void verify_fifo_boundary(esp_display_present_executor_t *ppa, esp_display_present_executor_t *cpu)
+{
+    const size_t allocation = 1024 * 600 * 3;
+    uint8_t *src = aligned_alloc(64, allocation), *dst = aligned_alloc(64, allocation);
+    uint8_t *expected = malloc(allocation);
+    assert(src && dst && expected);
+    for (size_t i = 0; i < allocation; ++i) {
+        src[i] = (uint8_t)(i * 37 + i / 1024);
+    }
+    for (unsigned bpp = 2; bpp <= 3; ++bpp) {
+        unsigned width = PRESENT_HOST_PPA_MB_HEIGHT == 32 ? (bpp == 2 ? 131 : 34) : (bpp == 2 ? 134 : 36);
+        size_t bytes = 1024 * 600 * bpp;
+        esp_display_present_layout_t layout = {1024, 600, 1024 * bpp,
+                                               bpp == 2 ? ESP_DISPLAY_PRESENT_FORMAT_RGB565 : ESP_DISPLAY_PRESENT_FORMAT_RGB888,
+                                               ESP_DISPLAY_PRESENT_ORDER_NATIVE
+                                              };
+        esp_display_present_copy_request_t request = {
+            .src = {src, bytes, layout}, .dst = {dst, bytes, layout},
+            .src_area = {466, 248, width, 352}, .dst_x = 466, .dst_y = 248
+        };
+        unsigned before = submissions, before_syncs = syncs;
+        esp_display_present_executor_reason_t reason;
+        assert(esp_display_present_executor_probe(ppa, &request, &reason) == ESP_ERR_NOT_SUPPORTED);
+        assert(reason == ESP_DISPLAY_PRESENT_EXEC_LAYOUT);
+        assert(esp_display_present_executor_execute(ppa, &request) == ESP_ERR_NOT_SUPPORTED);
+        assert(submissions == before && syncs == before_syncs);
+        memset(dst, 0xa5, bytes);
+        memset(expected, 0xa5, bytes);
+        paint(src, layout.stride_bytes, expected, layout.stride_bytes, 466, 248, width, 352, 466, 248, 0, bpp, false);
+        esp_display_present_executor_dispatch_t dispatch = {ppa, cpu};
+        esp_display_present_executor_selection_t selected;
+        assert(esp_display_present_executor_run(&dispatch, &request, &selected) == ESP_OK);
+        assert(selected.executor == cpu && selected.used_fallback);
+        assert(submissions == before && syncs == before_syncs && !memcmp(dst, expected, bytes));
+        for (int adjacent = -1; adjacent <= 1; adjacent += 2) {
+            request.src_area.width = width + adjacent;
+            assert(esp_display_present_executor_probe(ppa, &request, &reason) == ESP_OK);
+        }
+        request.src_area.width = width;
+        request.src_area.height = 351;
+        assert(esp_display_present_executor_probe(ppa, &request, &reason) == ESP_OK);
+        request.src_area.height = 353;
+        request.src_area.y = request.dst_y = 247;
+        assert(esp_display_present_executor_probe(ppa, &request, &reason) == ESP_OK);
+        /* Equality inside a single macro block does not hit the cut-unit bug. */
+        request.src_area = (esp_display_present_rect_t) {
+            0, 0,
+            PRESENT_HOST_PPA_MB_HEIGHT == 32 ? (bpp == 2 ? 3 : 2) : (bpp == 2 ? 6 : 4),
+            PRESENT_HOST_PPA_MB_HEIGHT
+        };
+        request.dst_x = request.dst_y = 0;
+        assert(esp_display_present_executor_probe(ppa, &request, &reason) == ESP_OK);
+    }
+    free(src);
+    free(dst);
+    free(expected);
+}
+#endif
 #if PRESENT_HOST_DMA2D
 static pthread_mutex_t dma_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t dma_changed = PTHREAD_COND_INITIALIZER;
@@ -256,7 +318,8 @@ static void verify_cache_failures(esp_display_present_executor_t *executor)
     uint8_t *src = aligned_alloc(64, 64), *dst = aligned_alloc(64, 64);
     assert(src && dst);
     esp_display_present_layout_t layout = {4, 4, 8, ESP_DISPLAY_PRESENT_FORMAT_RGB565,
-                                           ESP_DISPLAY_PRESENT_ORDER_NATIVE};
+                                           ESP_DISPLAY_PRESENT_ORDER_NATIVE
+                                          };
     esp_display_present_copy_request_t request = {
         .src = {src, 32, layout}, .dst = {dst, 64, layout}, .src_area = {0, 0, 4, 4},
     };
@@ -289,13 +352,14 @@ static void verify_instance_isolation(bool is_dma)
 {
     esp_display_present_executor_t *a = NULL, *b = NULL;
     esp_err_t (*create)(esp_display_present_executor_t **) = is_dma ?
-            esp_display_present_executor_dma2d_create : esp_display_present_executor_ppa_create;
+                                                             esp_display_present_executor_dma2d_create : esp_display_present_executor_ppa_create;
     assert(create(&a) == ESP_OK && create(&b) == ESP_OK);
     uint8_t *src = aligned_alloc(64, 64), *dst = aligned_alloc(64, 64);
     assert(src && dst);
     memset(src, 0x5a, 32);
     esp_display_present_layout_t layout = {4, 4, 8, ESP_DISPLAY_PRESENT_FORMAT_RGB565,
-                                           ESP_DISPLAY_PRESENT_ORDER_NATIVE};
+                                           ESP_DISPLAY_PRESENT_ORDER_NATIVE
+                                          };
     esp_display_present_copy_request_t request = {
         .src = {src, 32, layout}, .dst = {dst, 64, layout}, .src_area = {0, 0, 4, 4},
     };
@@ -522,6 +586,7 @@ int main(void)
     verify(e, cpu, false);
     verify_cache_bands(e, false);
     verify_cache_failures(e);
+    verify_fifo_boundary(e, cpu);
     assert(esp_display_present_executor_destroy(e) == ESP_OK);
     verify_instance_isolation(false);
 #else

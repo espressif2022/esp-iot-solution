@@ -100,22 +100,28 @@ if(PRESENT_LVGL_DIR)
     set_tests_properties(lvgl_fb PROPERTIES TIMEOUT 20)
 endif()
 
-# Compile and link four independent plugin sets. Disabled plugins have no mock
+# Compile independent plugin sets and both P4 SRM macro-block sizes.
+# Disabled plugins have no mock
 # driver symbols, so accidental dependencies fail the link (including CPU-only).
-foreach(variant cpu ppa dma2d both)
+foreach(variant cpu ppa dma2d both ppa_mb16)
     set(has_ppa 0)
     set(has_dma2d 0)
-    if(variant STREQUAL "ppa" OR variant STREQUAL "both")
+    if(variant STREQUAL "ppa" OR variant STREQUAL "both" OR variant STREQUAL "ppa_mb16")
         set(has_ppa 1)
     endif()
     if(variant STREQUAL "dma2d" OR variant STREQUAL "both")
         set(has_dma2d 1)
     endif()
+    set(ppa_mb_height 32)
+    if(variant STREQUAL "ppa_mb16")
+        set(ppa_mb_height 16)
+    endif()
     add_executable(test_executor_${variant} tests/test_executor.c
         ${PRESENT_OS_SOURCES} ${PRESENT_PIXEL_SOURCES})
     target_include_directories(test_executor_${variant} PRIVATE ../src tests/support)
     target_compile_definitions(test_executor_${variant} PRIVATE PRESENT_HOST=1
-        PRESENT_HOST_PPA=${has_ppa} PRESENT_HOST_DMA2D=${has_dma2d})
+        PRESENT_HOST_PPA=${has_ppa} PRESENT_HOST_DMA2D=${has_dma2d}
+        PRESENT_HOST_PPA_MB_HEIGHT=${ppa_mb_height})
     target_compile_options(test_executor_${variant} PRIVATE -Wall -Wextra -Werror -UNDEBUG)
     target_link_libraries(test_executor_${variant} PRIVATE Threads::Threads)
     if(PRESENT_SANITIZE)

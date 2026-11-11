@@ -38,6 +38,37 @@ static esp_err_t ppa_caps(void *context, esp_display_present_executor_caps_t *ou
     };
     return ESP_OK;
 }
+#if defined(PRESENT_HOST) || defined(CONFIG_IDF_TARGET_ESP32P4)
+/* P4 DIG-734: the clean IDF workaround bypasses macro-block ordering only
+ * below the 192-byte FIFO depth. At equality SRM can stall, reproduced with
+ * RGB565 131x352 on rev3. Reject before submission; CPU fallback keeps ownership
+ * and copies the requested pixels without changing the driver. */
+static bool fifo_boundary(const esp_display_present_copy_request_t *request)
+{
+#ifdef PRESENT_HOST
+#ifndef PRESENT_HOST_PPA_MB_HEIGHT
+#define PRESENT_HOST_PPA_MB_HEIGHT 32
+#endif
+    const unsigned macro_height = PRESENT_HOST_PPA_MB_HEIGHT;
+#elif CONFIG_ESP_REV_MIN_FULL >= 300
+    const unsigned macro_height = 32;
+#else
+    const unsigned macro_height = 16;
+#endif
+    unsigned divisor = request->dst.layout.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 64 : 32;
+    unsigned width = request->src_area.width, height = request->src_area.height;
+    unsigned tail_width = width % divisor;
+    unsigned tail_height = height % macro_height;
+    if (!tail_width) {
+        tail_width = divisor;
+    }
+    if (!tail_height) {
+        tail_height = macro_height;
+    }
+    unsigned bpp = request->dst.layout.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
+    return (width > divisor || height > macro_height) && tail_width * tail_height * bpp == 192;
+}
+#endif
 static esp_err_t ppa_probe(void *context, const esp_display_present_copy_request_t *request, esp_display_present_executor_reason_t *reason)
 {
     (void)context;
@@ -47,6 +78,11 @@ static esp_err_t ppa_probe(void *context, const esp_display_present_copy_request
     if (error != ESP_OK) {
         return error;
     }
+#if defined(PRESENT_HOST) || defined(CONFIG_IDF_TARGET_ESP32P4)
+    if (fifo_boundary(request)) {
+        return unsupported(reason, ESP_DISPLAY_PRESENT_EXEC_LAYOUT);
+    }
+#endif
     if (dma2d_get_buffer_alignment_constraint(request->src.pixels) > 1 ||
             dma2d_get_buffer_alignment_constraint(request->dst.pixels) > 1) {
         return unsupported(reason, ESP_DISPLAY_PRESENT_EXEC_MEMORY);
