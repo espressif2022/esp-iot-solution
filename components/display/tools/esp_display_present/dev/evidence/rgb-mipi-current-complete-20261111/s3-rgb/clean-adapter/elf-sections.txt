@@ -1,0 +1,45 @@
+There are 36 section headers, starting at offset 0xa03a90:
+
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] .rtc.text         PROGBITS        600fe000 0f9024 000000 00   W  0   0  1
+  [ 2] .rtc.force_fast   PROGBITS        600fe000 0f9024 000000 00   W  0   0  1
+  [ 3] .rtc_noinit       PROGBITS        50000000 0f9024 000000 00   W  0   0  1
+  [ 4] .rtc.force_slow   PROGBITS        50000000 0f9000 000024 00  WA  0   0  4
+  [ 5] .rtc_reserved     NOBITS          600fffe8 0f9fe8 000018 00  WA  0   0  8
+  [ 6] .iram0.vectors    PROGBITS        40378000 075000 000404 00  AX  0   0  4
+  [ 7] .iram0.text       PROGBITS        40378404 075404 00eebf 00  AX  0   0  4
+  [ 8] .dram0.dummy      NOBITS          3fc88000 061000 00f300 00  WA  0   0  1
+  [ 9] .dram0.data       PROGBITS        3fc97300 070300 003dc4 00  WA  0   0 16
+  [10] .noinit           NOBITS          3fc9b0c4 000000 000000 00  WA  0   0  1
+  [11] .dram0.bss        NOBITS          3fc9b0c8 0740c4 000ed8 00  WA  0   0  8
+  [12] .flash.text       PROGBITS        42000020 085020 07319c 00  AX  0   0  4
+  [13] .flash_rodata_dummy NOBITS          3c000020 001020 080000 00  WA  0   0  1
+  [14] .flash.appdesc    PROGBITS        3c080020 001020 000100 00   A  0   0 16
+  [15] .flash.rodata     PROGBITS        3c080120 001120 05f61c 00  WA  0   0 16
+  [16] .flash.tdata      PROGBITS        3c0df73c 06073c 000010 00 WAT  0   0  4
+  [17] .ext_ram.dummy    NOBITS          3c000020 001020 0dffe0 00  WA  0   0  1
+  [18] .iram0.text_end   NOBITS          403872c3 0842c3 00003d 00  WA  0   0  1
+  [19] .iram0.data       PROGBITS        40387300 0f9024 000000 00   W  0   0  1
+  [20] .iram0.bss        PROGBITS        40387300 0f9024 000000 00   W  0   0  1
+  [21] .dram0.heap_start PROGBITS        3fc9bfa0 0f9024 000000 00   W  0   0  1
+  [22] .noload           PROGBITS        00000000 0f9024 000004 00   W  0   0  1
+  [23] .debug_aranges    PROGBITS        00000000 0f9028 00bb78 00      0   0  8
+  [24] .debug_info       PROGBITS        00000000 104ba0 36ac7f 00      0   0  1
+  [25] .debug_abbrev     PROGBITS        00000000 46f81f 04fc16 00      0   0  1
+  [26] .debug_line       PROGBITS        00000000 4bf435 2e1c94 00      0   0  1
+  [27] .debug_frame      PROGBITS        00000000 7a10cc 01de20 00      0   0  4
+  [28] .debug_str        PROGBITS        00000000 7beeec 060731 01  MS  0   0  1
+  [29] .debug_loc        PROGBITS        00000000 81f61d 173fa3 00      0   0  1
+  [30] .debug_ranges     PROGBITS        00000000 9935c0 037f50 00      0   0  8
+  [31] .comment          PROGBITS        00000000 9cb510 000054 01  MS  0   0  1
+  [32] .xtensa.info      NOTE            00000000 9cb564 000038 00      0   0  1
+  [33] .symtab           SYMTAB          00000000 9cb59c 019f90 10     34 2350  4
+  [34] .strtab           STRTAB          00000000 9e552c 01e3a8 00      0   0  1
+  [35] .shstrtab         STRTAB          00000000 a038d4 0001bc 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings), I (info),
+  L (link order), O (extra OS processing required), G (group), T (TLS),
+  C (compressed), x (unknown), o (OS specific), E (exclude),
+  D (mbind), p (processor specific)

@@ -1,0 +1,64 @@
+{
+  "reuse_latest_present": {
+    "s3-rgb": {
+      "cases": 8,
+      "production_source_hashes_match": true,
+      "raw_source": "/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/dev/evidence/scanout-lifecycle-cleanup-20261111/s3-rgb",
+      "raw_manifest_sha256": "db7b4338320299660250813dbcbd6fd3e9a9e3fa030be861968def82055a2839"
+    },
+    "s31-rgb": {
+      "cases": 8,
+      "production_source_hashes_match": true,
+      "raw_source": "/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/dev/evidence/scanout-lifecycle-cleanup-20261111/s31-rgb",
+      "raw_manifest_sha256": "5a679d98e5cb486bd31431def434180b954dd6cfd033ff995ec1d5337f1708e6"
+    },
+    "p4-dsi": {
+      "cases": 8,
+      "production_source_hashes_match": true,
+      "raw_source": "/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/dev/evidence/scanout-lifecycle-cleanup-20261111/p4-dsi",
+      "raw_manifest_sha256": "57c4a5196cd7e25f2b8c031c9f9b0404a9db2d8cd88adaf6717bcb1da715f595"
+    }
+  },
+  "reuse_adapter": {
+    "s3-rgb": {
+      "clean_cases": 20,
+      "diagnostic_cases": 20,
+      "actual_aligned_adapter_source_hashes_match": true,
+      "lvgl_scene_and_clock_cache_xip_config_match": true,
+      "cases_match": true,
+      "newly_built_static_sram_matches_old_elf": true,
+      "test_main_difference": "two BENCH_DRIVER_TRACE-only RUN markers; inactive in clean build; same calls as previous diagnostic build",
+      "matrix_c_difference": "boards matrix.c not compiled by benchmark application",
+      "baseline_dataset": "/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/dev/evidence/rgb-mipi-xip-on-no-fb-iram-20261110/matrix-data.json",
+      "diagnostic_adapter_runtime_matches_previous_observer_source": true,
+      "matrix_c_not_in_actual_compile_commands": true
+    },
+    "s31-rgb": {
+      "clean_cases": 20,
+      "diagnostic_cases": 20,
+      "actual_aligned_adapter_source_hashes_match": true,
+      "lvgl_scene_and_clock_cache_xip_config_match": true,
+      "cases_match": true,
+      "newly_built_static_sram_matches_old_elf": true,
+      "test_main_difference": "two BENCH_DRIVER_TRACE-only RUN markers; inactive in clean build; same calls as previous diagnostic build",
+      "matrix_c_difference": "boards matrix.c not compiled by benchmark application",
+      "baseline_dataset": "/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/dev/evidence/rgb-mipi-xip-on-no-fb-iram-20261110/matrix-data.json",
+      "diagnostic_adapter_runtime_matches_previous_observer_source": true,
+      "matrix_c_not_in_actual_compile_commands": true
+    },
+    "p4-dsi": {
+      "clean_cases": 20,
+      "diagnostic_cases": 20,
+      "actual_aligned_adapter_source_hashes_match": true,
+      "lvgl_scene_and_clock_cache_xip_config_match": true,
+      "cases_match": true,
+      "newly_built_static_sram_matches_old_elf": true,
+      "test_main_difference": "two BENCH_DRIVER_TRACE-only RUN markers; inactive in clean build; same calls as previous diagnostic build",
+      "matrix_c_difference": "boards matrix.c not compiled by benchmark application",
+      "baseline_dataset": "/home/xuxin/xuxin/esp-iot-solution-sensor-MR/components/display/tools/esp_display_present/dev/evidence/rgb-mipi-xip-on-no-fb-iram-20261110/matrix-data.json",
+      "diagnostic_adapter_runtime_matches_previous_observer_source": true,
+      "matrix_c_not_in_actual_compile_commands": true
+    }
+  },
+  "excluded_redundant_capture": true
+}

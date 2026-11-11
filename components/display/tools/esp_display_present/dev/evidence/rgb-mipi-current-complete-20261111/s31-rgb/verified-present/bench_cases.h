@@ -1,0 +1,11 @@
+/* Generated from the common case planner; do not edit. */
+static const bench_case_t bench_cases[] = {
+    {"DOUBLE_FULL",B_DOUBLE_FULL,0,1,0,false,true,"",0},
+    {"DOUBLE_FULL",B_DOUBLE_FULL,90,1,0,false,true,"",0},
+    {"TRIPLE_FULL",B_TRIPLE_FULL,0,1,0,false,true,"",0},
+    {"TRIPLE_FULL",B_TRIPLE_FULL,90,1,0,false,true,"",0},
+    {"DOUBLE_DIRECT",B_DOUBLE_DIRECT,0,1,0,false,true,"",0},
+    {"DOUBLE_DIRECT",B_DOUBLE_DIRECT,90,1,0,false,true,"",0},
+    {"AUTO",B_AUTO,0,1,0,false,false,"adapter_has_no_AUTO_mode",0},
+    {"AUTO",B_AUTO,90,1,0,false,false,"adapter_has_no_AUTO_mode",0},
+};

@@ -1,0 +1,22 @@
+{
+  "board": "s3-rgb",
+  "port": "/dev/ttyUSB1",
+  "runs": [
+    {
+      "variant": "present-xip-on",
+      "success": true
+    },
+    {
+      "variant": "present-xip-on-driver-trace",
+      "success": true
+    }
+  ],
+  "restore_original": false,
+  "success": true,
+  "reuse_latest_clean_cases": 8,
+  "new_clean_cases": 16,
+  "new_diagnostic_cases": 24,
+  "stage": "done",
+  "updated": 1794378070.593599,
+  "variant": "present-xip-on-driver-trace"
+}

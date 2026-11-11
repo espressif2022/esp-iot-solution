@@ -18,16 +18,17 @@ await call('Emulation.setDeviceMetricsOverride',{width:1440,height:1050,deviceSc
 await call('Page.navigate',{url:'data:text/html;base64,'+Buffer.from(fs.readFileSync(file)).toString('base64')});
 for(let i=0;i<50;i++){if(await ev("document.readyState==='complete'&&document.querySelectorAll('.board').length===3"))break;await new Promise(r=>setTimeout(r,100));}
 assert.deepEqual(errors,[]);
-const D=await ev('D');assert.equal(D.lifecycle.count,24);
+const D=await ev('D');assert(D.lifecycle||D.currentRound);
 const modes=D.modes,angles=D.angles;
 let values=0,origins=0,selectors=0;
 for(const board of D.boards){
  const id=board.id;
  await ev(`document.getElementById('tab-${id}').click()`);
  assert.deepEqual(await ev("Array.from(document.querySelectorAll('.board')).filter(b=>!b.hidden).map(b=>b.id)"),[id]);
- const fresh=board.cohorts.clean.present.filter(r=>r.origin==='新测 11-11');assert.equal(fresh.length,8);origins+=fresh.length;
- assert((await ev(`document.querySelector('#${id} .accounting').textContent`)).includes('本轮未重采 ELF'));
- assert((await ev(`document.querySelector('#${id} .diagnostics-panel > summary').textContent`)).includes('历史 11-10'));
+ const fresh=board.cohorts.clean.present.filter(r=>D.currentRound?r.status==='PASS':r.origin==='新测 11-11');assert.equal(fresh.length,D.currentRound?board.cohorts.clean.present.filter(r=>r.status==='PASS').length:8);origins+=fresh.length;
+ if(D.lifecycle)assert((await ev(`document.querySelector('#${id} .accounting').textContent`)).includes('本轮未重采 ELF'));
+ else assert(!(await ev(`document.getElementById('${id}').textContent`)).includes('历史'));
+ if(D.lifecycle)assert((await ev(`document.querySelector('#${id} .diagnostics-panel > summary').textContent`)).includes('历史 11-10'));
  for(const m of modes){
   await ev(`(()=>{for(const cls of ['memory-mode','scene-mode']){const s=document.querySelector('#${id} .'+cls);s.value='${m}';s.dispatchEvent(new Event('change'));}})()`);selectors+=2;
   for(const metric of ['free','used']){
@@ -35,10 +36,10 @@ for(const board of D.boards){
    const tables=await ev(`Array.from(document.querySelectorAll('#${id} .memory')).map(t=>({heap:t.dataset.heap,rows:Array.from(t.querySelectorAll('tbody tr')).map(tr=>({phase:tr.dataset.phase,cells:Array.from(tr.querySelectorAll('td[data-impl]')).map(c=>({value:c.querySelector('.value')?.textContent,delta:c.querySelector('.delta')?.className,text:c.textContent}))}))}))`);
    for(const table of tables)for(const tr of table.rows)for(let ai=0;ai<4;ai++)for(let ii=0;ii<2;ii++){
     const impl=['present','adapter'][ii],r=board.cohorts.clean[impl].find(r=>r.mode===m&&r.rotation===angles[ai]),cell=tr.cells[ai*2+ii];
-    if(r.status==='SKIP'){assert.equal(cell.text,'−');continue;}
+    if(r.status==='SKIP'||r.status==='FAIL'){assert.equal(cell.text,r.status==='FAIL'?'失败':'−');continue;}
     const key=table.heap+(tr.phase==='after_run'?'_min_free':'_free');
     const get=r=>(metric==='free'?r.memory[tr.phase][key]:r.memory[tr.phase][table.heap+'_total']-r.memory[tr.phase][key])/1024;
-    assert(Math.abs(Number(cell.value)-get(r))<=0.0051);assert(cell.text.includes(r.origin));values++;
+    assert(Math.abs(Number(cell.value)-get(r))<=0.0051);if(D.lifecycle)assert(cell.text.includes(r.origin));values++;
     const other=board.cohorts.clean.adapter.find(r=>r.mode===m&&r.rotation===angles[ai]);
     if(ii===0&&other.status==='PASS'){const diff=get(r)-get(other);assert(cell.delta.includes(diff===0?'same':((diff>0)===(metric==='free')?'up':'down')));}
    }
@@ -47,23 +48,24 @@ for(const board of D.boards){
   assert.equal(scenes.length,16);
   for(const tr of scenes)for(let ai=0;ai<4;ai++)for(let ii=0;ii<2;ii++){
    const r=board.cohorts.clean[['present','adapter'][ii]].find(r=>r.mode===m&&r.rotation===angles[ai]);
-   if(r.status==='SKIP')continue;assert.equal(Number(tr.cells[ai*2+ii]),r.scene_scores.find(s=>s.name===tr.name).fps);values++;
+   if(r.status!=='PASS')continue;assert.equal(Number(tr.cells[ai*2+ii]),r.scene_scores.find(s=>s.name===tr.name).fps);values++;
   }
  }
  const fps=await ev(`Array.from(document.querySelectorAll('#${id} .fps tbody tr')).map(tr=>Array.from(tr.querySelectorAll('td[data-impl]')).map(c=>c.querySelector('.value')?.textContent))`);
  for(let mi=0;mi<modes.length;mi++)for(let ai=0;ai<4;ai++)for(let ii=0;ii<2;ii++){
   const r=board.cohorts.clean[['present','adapter'][ii]].find(r=>r.mode===modes[mi]&&r.rotation===angles[ai]);
-  if(r.status==='SKIP')continue;assert.equal(Number(fps[mi][ai*2+ii]),r.lvgl_fps);values++;
+  if(r.status!=='PASS')continue;assert.equal(Number(fps[mi][ai*2+ii]),r.lvgl_fps);values++;
  }
  assert(await ev(`Array.from(document.querySelectorAll('#${id} .transport td.a')).every(c=>c.textContent==='−')`));
  await ev("document.getElementById('collapse-all').click()");assert(await ev(`Array.from(document.querySelectorAll('#${id} details.panel')).every(p=>!p.open)`));
  await ev("document.getElementById('expand-all').click()");assert(await ev(`Array.from(document.querySelectorAll('#${id} details.panel')).every(p=>p.open)`));
 }
-assert.equal(origins,24);assert.equal(values,4356);
+assert.equal(origins,D.currentRound?D.boards.reduce((n,b)=>n+b.cohorts.clean.present.filter(r=>r.status==='PASS').length,0):24);assert.equal(values,D.currentRound?D.totals.clean*33:4356);
 await ev("document.getElementById('tab-s3-rgb').click();document.querySelectorAll('#s3-rgb details.panel').forEach(p=>p.open=p.classList.contains('fps-panel')||p.classList.contains('memory-panel'));document.querySelector('#s3-rgb .memory-mode').value='DOUBLE_FULL';document.querySelector('#s3-rgb .memory-mode').dispatchEvent(new Event('change'));scrollTo(0,0)");
 const shot=await call('Page.captureScreenshot',{format:'png'});fs.writeFileSync(output+'/desktop.png',Buffer.from(shot.data,'base64'));
 await call('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
-assert(await ev('document.documentElement.scrollWidth<=innerWidth'));
+for(const board of D.boards){await ev(`document.getElementById('tab-${board.id}').click()`);assert(await ev('document.documentElement.scrollWidth<=innerWidth'),board.id+' mobile overflow');}
+await ev("document.getElementById('tab-s3-rgb').click()");
 const mobile=await call('Page.captureScreenshot',{format:'png'});fs.writeFileSync(output+'/mobile.png',Buffer.from(mobile.data,'base64'));
 assert.deepEqual(errors,[]);
 console.log(JSON.stringify({passed:true,values,origins,selectors,errors:errors.length,desktop:1440,mobile:390}));

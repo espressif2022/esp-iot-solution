@@ -4,7 +4,19 @@
 
 生产源码的职责划分与新增文件规则见[SOURCE_LAYOUT.md](SOURCE_LAYOUT.md)。
 
-## Scanout 生命周期收敛（2026-11-11）
+## 当前 RGB / MIPI 完整矩阵（2026-11-11）
+
+[当前网页](evidence/five-board-regression-20261109/comparison-current.html) · [本次有效数据与复用依据](evidence/rgb-mipi-current-complete-20261111/README.md) · [失败和交接记录](evidence/rgb-mipi-current-complete-20261111/findings.md)。当前表只展示对最新源码有效的成绩；已失效版本的 FULL 占位画布数据已移出。
+
+按用户要求，已测且生产源码/配置一致的项目不重跑：复用 present 24 项，补齐另外 48 个组合；adapter 的实际对齐源码、有效配置、场景和静态 SRAM 已核对一致，复用已有成绩。正式结果 128 项通过、4 项失败。独立诊断 130 项完成、2 项失败；只对完成的检查报告统计交接与供数，不把未完成当成零异常。
+
+P4 正式失败：DOUBLE_DIRECT 270°、DOUBLE_PARTIAL 90°/270°、AUTO 270°；诊断失败：DOUBLE_PARTIAL 90°、TRIPLE_PARTIAL 90°。失败项显示“失败”，不填旧 FPS 或不完整内存。正式与诊断保留各自的结果，不用另一次通过覆盖失败。本轮未修改生产代码和基础 IDF，未恢复原固件。
+
+S3 的缺项连续跑完 16 项；S31 的中断前 12 项已完整完成，仅补剩余 4 项；P4 逐项存档通过与失败后只采集尚未覆盖的组合。每个给分项目均完整运行 16 场景并成功关闭；没有把中途失败的批次称为整套通过。打开前、打开后、运行最小、关闭后保留实际剩余值；内存越多越好。S31 FULL 180°/270° 打开增量约 751 KiB，已无失效版本两张额外画布的数值。
+
+重新生成：`python dev/tools/render_comparison.py --data dev/evidence/rgb-mipi-current-complete-20261111/matrix-data.json --output dev/evidence/five-board-regression-20261109/comparison-current.html`。CSV/JSON 同步生成；顶部 Tab、模式选择与抽屉保持原布局。数据覆盖完整不等于全部测试通过，详见逐项状态。
+
+## Scanout 生命周期收敛（此前实现记录，2026-11-11）
 
 移除 RGB/MIPI 的 NONE 更新路径及 `present_lcd_fb_update`；AUTO 根据实际 native FB 池选择三缓冲／双缓冲 PARTIAL，单 FB 拒绝创建。GRAM/TE 的 NONE/AUTO 不变。LVGL FULL 和原生 DIRECT 去除全屏占位画布，先取得写入租约再绑定像素地址，提交／取消前撤销引用；旋转 DIRECT 的实际画布、PARTIAL 的小 tile 兜底保留。
 
@@ -12,13 +24,11 @@
 
 上板发现 P4 PPA 在 `(466,248) 131×352` 的纯修补复制上阻塞：干净 IDF 重放 130/132 宽成功，131 宽挂起。PPA probe 已提前拒绝 FIFO 相等边界并走现有 CPU fallback；最终 P4 AUTO 90° 完整通过。基础 IDF 和最终固件均无诊断补丁。
 
-[当前网页](evidence/five-board-regression-20261109/comparison-current.html) 已接入本轮 24 项帧率、四阶段内存和逐场景分数，单元格标注“新测 11-11”。其余 present、adapter、静态 SRAM 与独立交接诊断保留 11-10 来源；未将历史诊断作为新版本结论。另有实际提交吞吐与对上一版 present 的 PSRAM 减少抽屉。
-
-重新生成：`python dev/tools/render_comparison.py --data dev/evidence/rgb-mipi-xip-on-no-fb-iram-20261110/matrix-data.json --lifecycle dev/evidence/scanout-lifecycle-cleanup-20261111 --output dev/evidence/five-board-regression-20261109/comparison-current.html`。同时输出含来源的 CSV/JSON；未重跑板子。
+该定向回归当时仅覆盖 24 项。此前混排网页已由上方当前完整矩阵取代，不再用 `--lifecycle` 覆盖当前入口；原始 24 项只在源码与配置核对一致后复用。
 
 ## RGB / MIPI XIP ON 对比（2026-11-10，历史基线）
 
-[当前网页](evidence/five-board-regression-20261109/comparison-current.html) · [本次证据与 SRAM/缓冲说明](evidence/rgb-mipi-xip-on-no-fb-iram-20261110/README.md) · [诊断结果](evidence/rgb-mipi-xip-on-no-fb-iram-20261110/findings.md)。移除 S3 的 FB_IRAM Kconfig 和整组对象链接映射，保留显式 ISR/pixel IRAM_ATTR。
+[当时网页](evidence/rgb-mipi-xip-on-no-fb-iram-20261110/comparison.html) · [本次证据与 SRAM/缓冲说明](evidence/rgb-mipi-xip-on-no-fb-iram-20261110/README.md) · [诊断结果](evidence/rgb-mipi-xip-on-no-fb-iram-20261110/findings.md)。移除 S3 的 FB_IRAM Kconfig 和整组对象链接映射，保留显式 ISR/pixel IRAM_ATTR。
 
 本次新跑 S3 present 6 模式 × 4 角度：24 项干净 IDF 正式性能/内存和 24 项隔离驱动诊断，共 768 场景。adapter、S31 RGB、P4 DSI 沿用上一完整四角度轮；汇总 132 正式 / 132 诊断，不宣称全部重新跑测。S3 十行 bounce，S31 非 bounce，全部 XIP ON；NONE 排除，adapter AUTO 为 −。
 

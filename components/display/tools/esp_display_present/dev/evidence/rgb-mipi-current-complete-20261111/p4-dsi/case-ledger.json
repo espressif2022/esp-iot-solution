@@ -1,0 +1,5446 @@
+{
+  "clean": [
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_FULL",
+      "rotation": 180,
+      "frames": 1200,
+      "transport_fps": 17.3,
+      "lvgl_fps": 19,
+      "cpu": 100,
+      "render": 28,
+      "flush": 0,
+      "scenes": 16,
+      "buffer_audit": {
+        "rotation": 180,
+        "logical_w": 1024,
+        "logical_h": 600,
+        "render_mode": 2,
+        "expected_bytes": 1228800,
+        "active_bytes": 1228800,
+        "min_bytes": 1228800,
+        "max_bytes": 1228800,
+        "internal": 0,
+        "psram": 1,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 1383,
+        "rendered": 1200,
+        "flushes": 1200,
+        "pixels": 737280000,
+        "elapsed_us": 69505613
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 626391,
+          "internal_free": 551111,
+          "psram_total": 32604672,
+          "psram_free": 28914408,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 626391,
+          "internal_free": 504603,
+          "psram_total": 32604672,
+          "psram_free": 27684576,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 626391,
+          "internal_free": 503991,
+          "psram_total": 32604672,
+          "psram_free": 27684576,
+          "internal_min_free": 406755,
+          "psram_min_free": 27208372
+        },
+        "after_close": {
+          "internal_total": 626391,
+          "internal_free": 528707,
+          "psram_total": 32604672,
+          "psram_free": 28914408,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 28
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 15
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 24
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 20
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 20
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 20
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 20
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 20
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 20
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 20
+        },
+        {
+          "name": "Containers",
+          "fps": 20
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 15
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 20
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 15
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 20
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 20
+        }
+      ],
+      "source": "/tmp/present-current-full-20261111/diagnostics/p4-direct270-close-timeout"
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_FULL",
+      "rotation": 270,
+      "frames": 1118,
+      "transport_fps": 16.1,
+      "lvgl_fps": 20,
+      "cpu": 100,
+      "render": 28,
+      "flush": 0,
+      "scenes": 16,
+      "buffer_audit": {
+        "rotation": 270,
+        "logical_w": 600,
+        "logical_h": 1024,
+        "render_mode": 2,
+        "expected_bytes": 1228800,
+        "active_bytes": 1228800,
+        "min_bytes": 1228800,
+        "max_bytes": 1228800,
+        "internal": 0,
+        "psram": 1,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 1814,
+        "rendered": 1118,
+        "flushes": 1118,
+        "pixels": 686899200,
+        "elapsed_us": 69589577
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 626391,
+          "internal_free": 528707,
+          "psram_total": 32604672,
+          "psram_free": 28914408,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 626391,
+          "internal_free": 504595,
+          "psram_total": 32604672,
+          "psram_free": 27684576,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 626391,
+          "internal_free": 504007,
+          "psram_total": 32604672,
+          "psram_free": 27684576,
+          "internal_min_free": 408203,
+          "psram_min_free": 27246772
+        },
+        "after_close": {
+          "internal_total": 626391,
+          "internal_free": 528707,
+          "psram_total": 32604672,
+          "psram_free": 28914408,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 26
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 19
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 21
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 20
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 20
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 20
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 20
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 20
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 20
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 20
+        },
+        {
+          "name": "Containers",
+          "fps": 19
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 14
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 20
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 14
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 20
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 41
+        }
+      ],
+      "source": "/tmp/present-current-full-20261111/diagnostics/p4-direct270-close-timeout"
+    },
+    {
+      "status": "PASS",
+      "mode": "TRIPLE_FULL",
+      "rotation": 180,
+      "frames": 1428,
+      "transport_fps": 20.6,
+      "lvgl_fps": 23,
+      "cpu": 100,
+      "render": 28,
+      "flush": 0,
+      "scenes": 16,
+      "buffer_audit": {
+        "rotation": 180,
+        "logical_w": 1024,
+        "logical_h": 600,
+        "render_mode": 2,
+        "expected_bytes": 1228800,
+        "active_bytes": 1228800,
+        "min_bytes": 1228800,
+        "max_bytes": 1228800,
+        "internal": 0,
+        "psram": 1,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 1600,
+        "rendered": 1428,
+        "flushes": 1428,
+        "pixels": 877363200,
+        "elapsed_us": 69359598
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 626391,
+          "internal_free": 528707,
+          "psram_total": 32604672,
+          "psram_free": 28914408,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 626391,
+          "internal_free": 504595,
+          "psram_total": 32604672,
+          "psram_free": 27684576,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 626391,
+          "internal_free": 504019,
+          "psram_total": 32604672,
+          "psram_free": 27684576,
+          "internal_min_free": 406707,
+          "psram_min_free": 27291324
+        },
+        "after_close": {
+          "internal_total": 626391,
+          "internal_free": 528707,
+          "psram_total": 32604672,
+          "psram_free": 28914408,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 27
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 19
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 30
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 25
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 26
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 25
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 24
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 28
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 20
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 27
+        },
+        {
+          "name": "Containers",
+          "fps": 24
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 16
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 23
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 18
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 21
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 21
+        }
+      ],
+      "source": "/tmp/present-current-full-20261111/diagnostics/p4-direct270-close-timeout"
+    },
+    {
+      "status": "PASS",
+      "mode": "TRIPLE_FULL",
+      "rotation": 270,
+      "frames": 1310,
+      "transport_fps": 18.9,
+      "lvgl_fps": 24,
+      "cpu": 100,
+      "render": 28,
+      "flush": 0,
+      "scenes": 16,
+      "buffer_audit": {
+        "rotation": 270,
+        "logical_w": 600,
+        "logical_h": 1024,
+        "render_mode": 2,
+        "expected_bytes": 1228800,
+        "active_bytes": 1228800,
+        "min_bytes": 1228800,
+        "max_bytes": 1228800,
+        "internal": 0,
+        "psram": 1,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 2004,
+        "rendered": 1310,
+        "flushes": 1310,
+        "pixels": 804864000,
+        "elapsed_us": 69443586
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 626391,
+          "internal_free": 528707,
+          "psram_total": 32604672,
+          "psram_free": 28914408,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 626391,
+          "internal_free": 504595,
+          "psram_total": 32604672,
+          "psram_free": 27684576,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 626391,
+          "internal_free": 504019,
+          "psram_total": 32604672,
+          "psram_free": 27684576,
+          "internal_min_free": 408171,
+          "psram_min_free": 27164844
+        },
+        "after_close": {
+          "internal_total": 626391,
+          "internal_free": 528707,
+          "psram_total": 32604672,
+          "psram_free": 28914408,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 27
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 20
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 30
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 23
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 25
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 24
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 22
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 28
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 20
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 26
+        },
+        {
+          "name": "Containers",
+          "fps": 24
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 16
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 23
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 16
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 22
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 42
+        }
+      ],
+      "source": "/tmp/present-current-full-20261111/diagnostics/p4-direct270-close-timeout"
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_DIRECT",
+      "rotation": 180,
+      "frames": 1579,
+      "transport_fps": 22.7,
+      "lvgl_fps": 32,
+      "cpu": 100,
+      "render": 23,
+      "flush": 15,
+      "scenes": 16,
+      "buffer_audit": {
+        "rotation": 180,
+        "logical_w": 1024,
+        "logical_h": 600,
+        "render_mode": 1,
+        "expected_bytes": 0,
+        "active_bytes": 1228800,
+        "min_bytes": 1228800,
+        "max_bytes": 1228800,
+        "internal": 0,
+        "psram": 1,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 2002,
+        "rendered": 1579,
+        "flushes": 6790,
+        "pixels": 406160598,
+        "elapsed_us": 69493629
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 626391,
+          "internal_free": 528707,
+          "psram_total": 32604672,
+          "psram_free": 28914408,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 626391,
+          "internal_free": 504607,
+          "psram_total": 32604672,
+          "psram_free": 26439388,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 626391,
+          "internal_free": 504015,
+          "psram_total": 32604672,
+          "psram_free": 26439388,
+          "internal_min_free": 406763,
+          "psram_min_free": 26129088
+        },
+        "after_close": {
+          "internal_total": 626391,
+          "internal_free": 528707,
+          "psram_total": 32604672,
+          "psram_free": 28914408,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 18
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 13
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 60
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 28
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 29
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 28
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 37
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 30
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 14
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 16
+        },
+        {
+          "name": "Containers",
+          "fps": 64
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 14
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 64
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 59
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 14
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 24
+        }
+      ],
+      "source": "/tmp/present-current-full-20261111/diagnostics/p4-direct270-close-timeout"
+    },
+    {
+      "mode": "DOUBLE_DIRECT",
+      "rotation": 270,
+      "status": "FAIL",
+      "failure_reason": "bench_close ESP_ERR_TIMEOUT; no valid FPS",
+      "scene_scores": [],
+      "source": "/tmp/present-current-full-20261111/diagnostics/p4-direct270-close-timeout"
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_PARTIAL",
+      "rotation": 0,
+      "frames": 2560,
+      "transport_fps": 37.0,
+      "lvgl_fps": 50,
+      "cpu": 100,
+      "render": 10,
+      "flush": 8,
+      "scenes": 16,
+      "buffer_audit": {
+        "rotation": 0,
+        "logical_w": 1024,
+        "logical_h": 600,
+        "render_mode": 0,
+        "expected_bytes": 102400,
+        "active_bytes": 102400,
+        "min_bytes": 102400,
+        "max_bytes": 102400,
+        "internal": 1,
+        "psram": 0,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 3020,
+        "rendered": 2560,
+        "flushes": 22754,
+        "pixels": 795400805,
+        "elapsed_us": 69197608
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 626391,
+          "internal_free": 551111,
+          "psram_total": 32604928,
+          "psram_free": 28914664,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 626391,
+          "internal_free": 402059,
+          "psram_total": 32604928,
+          "psram_free": 28809184,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 626391,
+          "internal_free": 401459,
+          "psram_total": 32604928,
+          "psram_free": 28809184,
+          "internal_min_free": 334795,
+          "psram_min_free": 28694484
+        },
+        "after_close": {
+          "internal_total": 626391,
+          "internal_free": 528691,
+          "psram_total": 32604928,
+          "psram_free": 28914664,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 57
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 60
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 60
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 60
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 60
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 59
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 59
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 60
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 17
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 41
+        },
+        {
+          "name": "Containers",
+          "fps": 66
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 30
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 65
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 63
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 30
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 26
+        }
+      ],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/clean-002"
+    },
+    {
+      "mode": "DOUBLE_PARTIAL",
+      "rotation": 90,
+      "status": "FAIL",
+      "failure_reason": "bench_close ESP_ERR_INVALID_STATE; drawing stopped; no valid FPS",
+      "scene_scores": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/clean-002"
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_PARTIAL",
+      "rotation": 180,
+      "frames": 2494,
+      "transport_fps": 36.1,
+      "lvgl_fps": 49,
+      "cpu": 100,
+      "render": 10,
+      "flush": 9,
+      "scenes": 16,
+      "buffer_audit": {
+        "rotation": 180,
+        "logical_w": 1024,
+        "logical_h": 600,
+        "render_mode": 0,
+        "expected_bytes": 102400,
+        "active_bytes": 102400,
+        "min_bytes": 102400,
+        "max_bytes": 102400,
+        "internal": 1,
+        "psram": 0,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 2951,
+        "rendered": 2494,
+        "flushes": 22004,
+        "pixels": 759338544,
+        "elapsed_us": 69182500
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 626391,
+          "internal_free": 551111,
+          "psram_total": 32604928,
+          "psram_free": 28914664,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 626391,
+          "internal_free": 402059,
+          "psram_total": 32604928,
+          "psram_free": 28809184,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 626391,
+          "internal_free": 401451,
+          "psram_total": 32604928,
+          "psram_free": 28809184,
+          "internal_min_free": 335067,
+          "psram_min_free": 28694484
+        },
+        "after_close": {
+          "internal_total": 626391,
+          "internal_free": 528691,
+          "psram_total": 32604928,
+          "psram_free": 28914664,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 57
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 57
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 60
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 60
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 60
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 59
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 58
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 60
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 16
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 30
+        },
+        {
+          "name": "Containers",
+          "fps": 65
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 30
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 66
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 63
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 30
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 26
+        }
+      ],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/clean-003"
+    },
+    {
+      "mode": "DOUBLE_PARTIAL",
+      "rotation": 270,
+      "status": "FAIL",
+      "failure_reason": "Run failed before successful close; ESP_ERROR_CHECK failed: esp_err_t 0x103 (ESP_ERR_INVALID_STATE) at 0x480087ea",
+      "scene_scores": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/clean-003"
+    },
+    {
+      "status": "PASS",
+      "mode": "TRIPLE_PARTIAL",
+      "rotation": 0,
+      "frames": 2748,
+      "transport_fps": 39.8,
+      "lvgl_fps": 53,
+      "cpu": 100,
+      "render": 10,
+      "flush": 5,
+      "scenes": 16,
+      "buffer_audit": {
+        "rotation": 0,
+        "logical_w": 1024,
+        "logical_h": 600,
+        "render_mode": 0,
+        "expected_bytes": 102400,
+        "active_bytes": 102400,
+        "min_bytes": 102400,
+        "max_bytes": 102400,
+        "internal": 1,
+        "psram": 0,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 3217,
+        "rendered": 2748,
+        "flushes": 24837,
+        "pixels": 901559250,
+        "elapsed_us": 69125609
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 626391,
+          "internal_free": 551111,
+          "psram_total": 32605056,
+          "psram_free": 28914792,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 626391,
+          "internal_free": 402059,
+          "psram_total": 32605056,
+          "psram_free": 28809312,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 626391,
+          "internal_free": 401475,
+          "psram_total": 32605056,
+          "psram_free": 28809312,
+          "internal_min_free": 334719,
+          "psram_min_free": 28694612
+        },
+        "after_close": {
+          "internal_total": 626391,
+          "internal_free": 528691,
+          "psram_total": 32605056,
+          "psram_free": 28914792,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 57
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 60
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 60
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 60
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 60
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 60
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 62
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 60
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 19
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 57
+        },
+        {
+          "name": "Containers",
+          "fps": 66
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 40
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 66
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 66
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 42
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 27
+        }
+      ],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/clean-004"
+    },
+    {
+      "status": "PASS",
+      "mode": "TRIPLE_PARTIAL",
+      "rotation": 90,
+      "frames": 2439,
+      "transport_fps": 35.3,
+      "lvgl_fps": 51,
+      "cpu": 100,
+      "render": 11,
+      "flush": 6,
+      "scenes": 16,
+      "buffer_audit": {
+        "rotation": 90,
+        "logical_w": 600,
+        "logical_h": 1024,
+        "render_mode": 0,
+        "expected_bytes": 60000,
+        "active_bytes": 60000,
+        "min_bytes": 60000,
+        "max_bytes": 60000,
+        "internal": 1,
+        "psram": 0,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 3485,
+        "rendered": 2439,
+        "flushes": 31653,
+        "pixels": 702639544,
+        "elapsed_us": 69139689
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 626391,
+          "internal_free": 528691,
+          "psram_total": 32605056,
+          "psram_free": 28914792,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 626391,
+          "internal_free": 444387,
+          "psram_total": 32605056,
+          "psram_free": 28853344,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 626391,
+          "internal_free": 443795,
+          "psram_total": 32605056,
+          "psram_free": 28853344,
+          "internal_min_free": 358215,
+          "psram_min_free": 28774488
+        },
+        "after_close": {
+          "internal_total": 626391,
+          "internal_free": 528691,
+          "psram_total": 32605056,
+          "psram_free": 28914792,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 53
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 47
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 60
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 60
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 60
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 59
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 62
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 57
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 12
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 40
+        },
+        {
+          "name": "Containers",
+          "fps": 66
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 29
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 66
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 63
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 35
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 52
+        }
+      ],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/clean-004"
+    },
+    {
+      "status": "PASS",
+      "mode": "TRIPLE_PARTIAL",
+      "rotation": 180,
+      "frames": 2670,
+      "transport_fps": 38.6,
+      "lvgl_fps": 52,
+      "cpu": 100,
+      "render": 10,
+      "flush": 6,
+      "scenes": 16,
+      "buffer_audit": {
+        "rotation": 180,
+        "logical_w": 1024,
+        "logical_h": 600,
+        "render_mode": 0,
+        "expected_bytes": 102400,
+        "active_bytes": 102400,
+        "min_bytes": 102400,
+        "max_bytes": 102400,
+        "internal": 1,
+        "psram": 0,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 3138,
+        "rendered": 2670,
+        "flushes": 23901,
+        "pixels": 855244422,
+        "elapsed_us": 69169620
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 626391,
+          "internal_free": 528691,
+          "psram_total": 32605056,
+          "psram_free": 28914792,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 626391,
+          "internal_free": 401999,
+          "psram_total": 32605056,
+          "psram_free": 28809312,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 626391,
+          "internal_free": 401399,
+          "psram_total": 32605056,
+          "psram_free": 28809312,
+          "internal_min_free": 334875,
+          "psram_min_free": 28694612
+        },
+        "after_close": {
+          "internal_total": 626391,
+          "internal_free": 528691,
+          "psram_total": 32605056,
+          "psram_free": 28914792,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 53
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 60
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 60
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 60
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 60
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 59
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 62
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 60
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 18
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 49
+        },
+        {
+          "name": "Containers",
+          "fps": 66
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 36
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 66
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 66
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 37
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 27
+        }
+      ],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/clean-004"
+    },
+    {
+      "status": "PASS",
+      "mode": "TRIPLE_PARTIAL",
+      "rotation": 270,
+      "frames": 2445,
+      "transport_fps": 35.3,
+      "lvgl_fps": 51,
+      "cpu": 100,
+      "render": 11,
+      "flush": 6,
+      "scenes": 16,
+      "buffer_audit": {
+        "rotation": 270,
+        "logical_w": 600,
+        "logical_h": 1024,
+        "render_mode": 0,
+        "expected_bytes": 60000,
+        "active_bytes": 60000,
+        "min_bytes": 60000,
+        "max_bytes": 60000,
+        "internal": 1,
+        "psram": 0,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 3476,
+        "rendered": 2445,
+        "flushes": 31504,
+        "pixels": 702558496,
+        "elapsed_us": 69203707
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 626391,
+          "internal_free": 528691,
+          "psram_total": 32605056,
+          "psram_free": 28914792,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 626391,
+          "internal_free": 444387,
+          "psram_total": 32605056,
+          "psram_free": 28853344,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 626391,
+          "internal_free": 443787,
+          "psram_total": 32605056,
+          "psram_free": 28853344,
+          "internal_min_free": 358215,
+          "psram_min_free": 28774488
+        },
+        "after_close": {
+          "internal_total": 626391,
+          "internal_free": 528691,
+          "psram_total": 32605056,
+          "psram_free": 28914792,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 53
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 47
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 60
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 60
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 60
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 59
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 62
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 55
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 12
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 40
+        },
+        {
+          "name": "Containers",
+          "fps": 66
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 29
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 65
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 63
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 35
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 52
+        }
+      ],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/clean-004"
+    },
+    {
+      "status": "PASS",
+      "mode": "AUTO",
+      "rotation": 180,
+      "frames": 2676,
+      "transport_fps": 38.7,
+      "lvgl_fps": 52,
+      "cpu": 100,
+      "render": 10,
+      "flush": 6,
+      "scenes": 16,
+      "buffer_audit": {
+        "rotation": 180,
+        "logical_w": 1024,
+        "logical_h": 600,
+        "render_mode": 0,
+        "expected_bytes": 0,
+        "active_bytes": 102400,
+        "min_bytes": 102400,
+        "max_bytes": 102400,
+        "internal": 1,
+        "psram": 0,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 3139,
+        "rendered": 2676,
+        "flushes": 23922,
+        "pixels": 856142340,
+        "elapsed_us": 69182555
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 626391,
+          "internal_free": 528691,
+          "psram_total": 32605056,
+          "psram_free": 28914792,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 626391,
+          "internal_free": 401999,
+          "psram_total": 32605056,
+          "psram_free": 28809312,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 626391,
+          "internal_free": 401399,
+          "psram_total": 32605056,
+          "psram_free": 28809312,
+          "internal_min_free": 334603,
+          "psram_min_free": 28694612
+        },
+        "after_close": {
+          "internal_total": 626391,
+          "internal_free": 528691,
+          "psram_total": 32605056,
+          "psram_free": 28914792,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 53
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 60
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 60
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 60
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 59
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 59
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 63
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 60
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 18
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 49
+        },
+        {
+          "name": "Containers",
+          "fps": 66
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 36
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 66
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 66
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 37
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 27
+        }
+      ],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/clean-004"
+    },
+    {
+      "mode": "AUTO",
+      "rotation": 270,
+      "status": "FAIL",
+      "failure_reason": "Run failed before successful close; ESP_ERROR_CHECK failed: esp_err_t 0x107 (ESP_ERR_TIMEOUT) at 0x480087ea",
+      "scene_scores": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/clean-004"
+    }
+  ],
+  "diagnostic": [
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_DIRECT",
+      "rotation": 270,
+      "frames": 1439,
+      "transport_fps": 20.7,
+      "lvgl_fps": 30,
+      "cpu": 100,
+      "render": 23,
+      "flush": 16,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 1440,
+        "events": 4202,
+        "superseded": 0,
+        "active_submits": 1,
+        "target_diffs": 0,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 1
+      },
+      "buffer_audit": {
+        "rotation": 270,
+        "logical_w": 600,
+        "logical_h": 1024,
+        "render_mode": 1,
+        "expected_bytes": 0,
+        "active_bytes": 1228800,
+        "min_bytes": 1228800,
+        "max_bytes": 1228800,
+        "internal": 0,
+        "psram": 1,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 2398,
+        "rendered": 1439,
+        "flushes": 6952,
+        "pixels": 355159446,
+        "elapsed_us": 69544645
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 548135,
+          "psram_total": 32602112,
+          "psram_free": 28911848,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 501671,
+          "psram_total": 32602112,
+          "psram_free": 26436828,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 501051,
+          "psram_total": 32602112,
+          "psram_free": 26436828,
+          "internal_min_free": 407727,
+          "psram_min_free": 26222792
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525735,
+          "psram_total": 32602112,
+          "psram_free": 28911848,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 18
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 14
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 60
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 28
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 29
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 19
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 25
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 29
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 14
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 16
+        },
+        {
+          "name": "Containers",
+          "fps": 59
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 14
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 59
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 32
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 15
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 51
+        }
+      ],
+      "address": {
+        "mode": "DOUBLE_DIRECT",
+        "rotation": 270,
+        "releases": 1438,
+        "writes": 8391,
+        "confirms": 1438,
+        "not_pool": 1438,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4198,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "DOUBLE_DIRECT",
+        "rotation": 270,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-001"
+    },
+    {
+      "mode": "DOUBLE_PARTIAL",
+      "rotation": 90,
+      "status": "FAIL",
+      "failure_reason": "Run failed before successful close; ESP_ERROR_CHECK failed: esp_err_t 0x103 (ESP_ERR_INVALID_STATE) at 0x480087e6",
+      "scene_scores": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-001"
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_FULL",
+      "rotation": 0,
+      "frames": 1548,
+      "transport_fps": 22.3,
+      "lvgl_fps": 26,
+      "cpu": 100,
+      "render": 28,
+      "flush": 0,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 1549,
+        "events": 4190,
+        "superseded": 0,
+        "active_submits": 1,
+        "target_diffs": 0,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 1
+      },
+      "buffer_audit": {
+        "rotation": 0,
+        "logical_w": 1024,
+        "logical_h": 600,
+        "render_mode": 2,
+        "expected_bytes": 1228800,
+        "active_bytes": 1228800,
+        "min_bytes": 1228800,
+        "max_bytes": 1228800,
+        "internal": 0,
+        "psram": 1,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 1723,
+        "rendered": 1548,
+        "flushes": 1548,
+        "pixels": 951091200,
+        "elapsed_us": 69357589
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 548135,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 501639,
+          "psram_total": 32602240,
+          "psram_free": 28910948,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 501027,
+          "psram_total": 32602240,
+          "psram_free": 28910948,
+          "internal_min_free": 403775,
+          "psram_min_free": 28482876
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 28
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 20
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 30
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 30
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 30
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 30
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 30
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 30
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 20
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 30
+        },
+        {
+          "name": "Containers",
+          "fps": 27
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 20
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 27
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 20
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 22
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 22
+        }
+      ],
+      "address": {
+        "mode": "DOUBLE_FULL",
+        "rotation": 0,
+        "releases": 1547,
+        "writes": 4991,
+        "confirms": 1547,
+        "not_pool": 0,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4186,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "DOUBLE_FULL",
+        "rotation": 0,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-002"
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_FULL",
+      "rotation": 90,
+      "frames": 1130,
+      "transport_fps": 16.2,
+      "lvgl_fps": 21,
+      "cpu": 100,
+      "render": 28,
+      "flush": 0,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 1131,
+        "events": 4208,
+        "superseded": 0,
+        "active_submits": 1,
+        "target_diffs": 0,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 1
+      },
+      "buffer_audit": {
+        "rotation": 90,
+        "logical_w": 600,
+        "logical_h": 1024,
+        "render_mode": 2,
+        "expected_bytes": 1228800,
+        "active_bytes": 1228800,
+        "min_bytes": 1228800,
+        "max_bytes": 1228800,
+        "internal": 0,
+        "psram": 1,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 1826,
+        "rendered": 1130,
+        "flushes": 1130,
+        "pixels": 694272000,
+        "elapsed_us": 69639589
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 501631,
+          "psram_total": 32602240,
+          "psram_free": 27682144,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 501043,
+          "psram_total": 32602240,
+          "psram_free": 27682144,
+          "internal_min_free": 405919,
+          "psram_min_free": 27167020
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 26
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 19
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 25
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 20
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 20
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 20
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 20
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 20
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 20
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 20
+        },
+        {
+          "name": "Containers",
+          "fps": 20
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 15
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 20
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 15
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 20
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 41
+        }
+      ],
+      "address": {
+        "mode": "DOUBLE_FULL",
+        "rotation": 90,
+        "releases": 1129,
+        "writes": 3650,
+        "confirms": 1129,
+        "not_pool": 1129,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4203,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "DOUBLE_FULL",
+        "rotation": 90,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-002"
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_FULL",
+      "rotation": 180,
+      "frames": 1203,
+      "transport_fps": 17.3,
+      "lvgl_fps": 19,
+      "cpu": 100,
+      "render": 28,
+      "flush": 0,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 1204,
+        "events": 4202,
+        "superseded": 0,
+        "active_submits": 1,
+        "target_diffs": 0,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 1
+      },
+      "buffer_audit": {
+        "rotation": 180,
+        "logical_w": 1024,
+        "logical_h": 600,
+        "render_mode": 2,
+        "expected_bytes": 1228800,
+        "active_bytes": 1228800,
+        "min_bytes": 1228800,
+        "max_bytes": 1228800,
+        "internal": 0,
+        "psram": 1,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 1383,
+        "rendered": 1203,
+        "flushes": 1203,
+        "pixels": 739123200,
+        "elapsed_us": 69540485
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 501631,
+          "psram_total": 32602240,
+          "psram_free": 27682144,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 501031,
+          "psram_total": 32602240,
+          "psram_free": 27682144,
+          "internal_min_free": 403707,
+          "psram_min_free": 27254072
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 26
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 15
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 25
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 20
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 20
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 20
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 20
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 20
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 20
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 20
+        },
+        {
+          "name": "Containers",
+          "fps": 20
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 15
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 20
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 15
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 20
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 19
+        }
+      ],
+      "address": {
+        "mode": "DOUBLE_FULL",
+        "rotation": 180,
+        "releases": 1202,
+        "writes": 2764,
+        "confirms": 1202,
+        "not_pool": 1202,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4197,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "DOUBLE_FULL",
+        "rotation": 180,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-002"
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_FULL",
+      "rotation": 270,
+      "frames": 1118,
+      "transport_fps": 16.1,
+      "lvgl_fps": 20,
+      "cpu": 100,
+      "render": 28,
+      "flush": 0,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 1119,
+        "events": 4206,
+        "superseded": 0,
+        "active_submits": 0,
+        "target_diffs": 0,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 0
+      },
+      "buffer_audit": {
+        "rotation": 270,
+        "logical_w": 600,
+        "logical_h": 1024,
+        "render_mode": 2,
+        "expected_bytes": 1228800,
+        "active_bytes": 1228800,
+        "min_bytes": 1228800,
+        "max_bytes": 1228800,
+        "internal": 0,
+        "psram": 1,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 1814,
+        "rendered": 1118,
+        "flushes": 1118,
+        "pixels": 686899200,
+        "elapsed_us": 69605583
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 501631,
+          "psram_total": 32602240,
+          "psram_free": 27682144,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 501043,
+          "psram_total": 32602240,
+          "psram_free": 27682144,
+          "internal_min_free": 405831,
+          "psram_min_free": 27235636
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 26
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 19
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 22
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 20
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 20
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 20
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 20
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 20
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 20
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 20
+        },
+        {
+          "name": "Containers",
+          "fps": 19
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 14
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 20
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 14
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 20
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 41
+        }
+      ],
+      "address": {
+        "mode": "DOUBLE_FULL",
+        "rotation": 270,
+        "releases": 1117,
+        "writes": 3626,
+        "confirms": 1117,
+        "not_pool": 1117,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4201,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "DOUBLE_FULL",
+        "rotation": 270,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-002"
+    },
+    {
+      "status": "PASS",
+      "mode": "TRIPLE_FULL",
+      "rotation": 0,
+      "frames": 2021,
+      "transport_fps": 29.2,
+      "lvgl_fps": 33,
+      "cpu": 100,
+      "render": 28,
+      "flush": 0,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 2022,
+        "events": 4185,
+        "superseded": 0,
+        "active_submits": 1,
+        "target_diffs": 0,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 1
+      },
+      "buffer_audit": {
+        "rotation": 0,
+        "logical_w": 1024,
+        "logical_h": 600,
+        "render_mode": 2,
+        "expected_bytes": 1228800,
+        "active_bytes": 1228800,
+        "min_bytes": 1228800,
+        "max_bytes": 1228800,
+        "internal": 0,
+        "psram": 1,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 2201,
+        "rendered": 2021,
+        "flushes": 2021,
+        "pixels": 1241702400,
+        "elapsed_us": 69268558
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 501631,
+          "psram_total": 32602240,
+          "psram_free": 28910948,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 501031,
+          "psram_total": 32602240,
+          "psram_free": 28910948,
+          "internal_min_free": 403643,
+          "psram_min_free": 28482876
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 46
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 25
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 49
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 36
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 41
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 38
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 36
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 43
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 28
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 41
+        },
+        {
+          "name": "Containers",
+          "fps": 31
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 21
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 32
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 23
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 29
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 24
+        }
+      ],
+      "address": {
+        "mode": "TRIPLE_FULL",
+        "rotation": 0,
+        "releases": 2020,
+        "writes": 6420,
+        "confirms": 2020,
+        "not_pool": 0,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4181,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "TRIPLE_FULL",
+        "rotation": 0,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-002"
+    },
+    {
+      "status": "PASS",
+      "mode": "TRIPLE_FULL",
+      "rotation": 90,
+      "frames": 1314,
+      "transport_fps": 18.9,
+      "lvgl_fps": 24,
+      "cpu": 100,
+      "render": 28,
+      "flush": 0,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 1315,
+        "events": 4191,
+        "superseded": 0,
+        "active_submits": 1,
+        "target_diffs": 0,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 1
+      },
+      "buffer_audit": {
+        "rotation": 90,
+        "logical_w": 600,
+        "logical_h": 1024,
+        "render_mode": 2,
+        "expected_bytes": 1228800,
+        "active_bytes": 1228800,
+        "min_bytes": 1228800,
+        "max_bytes": 1228800,
+        "internal": 0,
+        "psram": 1,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 2020,
+        "rendered": 1314,
+        "flushes": 1314,
+        "pixels": 807321600,
+        "elapsed_us": 69350590
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 501631,
+          "psram_total": 32602240,
+          "psram_free": 27682144,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 501055,
+          "psram_total": 32602240,
+          "psram_free": 27682144,
+          "internal_min_free": 405227,
+          "psram_min_free": 27222324
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 27
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 20
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 30
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 24
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 26
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 24
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 23
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 28
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 21
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 27
+        },
+        {
+          "name": "Containers",
+          "fps": 24
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 16
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 23
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 16
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 22
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 43
+        }
+      ],
+      "address": {
+        "mode": "TRIPLE_FULL",
+        "rotation": 90,
+        "releases": 1313,
+        "writes": 4038,
+        "confirms": 1313,
+        "not_pool": 1313,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4186,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "TRIPLE_FULL",
+        "rotation": 90,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-002"
+    },
+    {
+      "status": "PASS",
+      "mode": "TRIPLE_FULL",
+      "rotation": 180,
+      "frames": 1430,
+      "transport_fps": 20.6,
+      "lvgl_fps": 23,
+      "cpu": 100,
+      "render": 28,
+      "flush": 0,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 1431,
+        "events": 4195,
+        "superseded": 0,
+        "active_submits": 1,
+        "target_diffs": 0,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 1
+      },
+      "buffer_audit": {
+        "rotation": 180,
+        "logical_w": 1024,
+        "logical_h": 600,
+        "render_mode": 2,
+        "expected_bytes": 1228800,
+        "active_bytes": 1228800,
+        "min_bytes": 1228800,
+        "max_bytes": 1228800,
+        "internal": 0,
+        "psram": 1,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 1597,
+        "rendered": 1430,
+        "flushes": 1430,
+        "pixels": 878592000,
+        "elapsed_us": 69418585
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 501631,
+          "psram_total": 32602240,
+          "psram_free": 27682144,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 501031,
+          "psram_total": 32602240,
+          "psram_free": 27682144,
+          "internal_min_free": 403759,
+          "psram_min_free": 27254072
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 27
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 19
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 30
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 25
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 26
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 25
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 24
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 28
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 20
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 27
+        },
+        {
+          "name": "Containers",
+          "fps": 24
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 17
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 23
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 18
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 21
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 21
+        }
+      ],
+      "address": {
+        "mode": "TRIPLE_FULL",
+        "rotation": 180,
+        "releases": 1429,
+        "writes": 3192,
+        "confirms": 1429,
+        "not_pool": 1429,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4190,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "TRIPLE_FULL",
+        "rotation": 180,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-002"
+    },
+    {
+      "status": "PASS",
+      "mode": "TRIPLE_FULL",
+      "rotation": 270,
+      "frames": 1308,
+      "transport_fps": 18.8,
+      "lvgl_fps": 24,
+      "cpu": 100,
+      "render": 28,
+      "flush": 0,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 1309,
+        "events": 4195,
+        "superseded": 0,
+        "active_submits": 0,
+        "target_diffs": 0,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 0
+      },
+      "buffer_audit": {
+        "rotation": 270,
+        "logical_w": 600,
+        "logical_h": 1024,
+        "render_mode": 2,
+        "expected_bytes": 1228800,
+        "active_bytes": 1228800,
+        "min_bytes": 1228800,
+        "max_bytes": 1228800,
+        "internal": 0,
+        "psram": 1,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 2008,
+        "rendered": 1308,
+        "flushes": 1308,
+        "pixels": 803635200,
+        "elapsed_us": 69425568
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 501631,
+          "psram_total": 32602240,
+          "psram_free": 27682144,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 501031,
+          "psram_total": 32602240,
+          "psram_free": 27682144,
+          "internal_min_free": 405567,
+          "psram_min_free": 27222324
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 27
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 20
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 30
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 23
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 25
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 24
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 22
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 28
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 20
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 26
+        },
+        {
+          "name": "Containers",
+          "fps": 24
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 16
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 23
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 16
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 22
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 42
+        }
+      ],
+      "address": {
+        "mode": "TRIPLE_FULL",
+        "rotation": 270,
+        "releases": 1307,
+        "writes": 4014,
+        "confirms": 1307,
+        "not_pool": 1307,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4190,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "TRIPLE_FULL",
+        "rotation": 270,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-002"
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_DIRECT",
+      "rotation": 0,
+      "frames": 2144,
+      "transport_fps": 30.9,
+      "lvgl_fps": 37,
+      "cpu": 100,
+      "render": 17,
+      "flush": 0,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 2145,
+        "events": 4187,
+        "superseded": 0,
+        "active_submits": 1,
+        "target_diffs": 0,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 1
+      },
+      "buffer_audit": {
+        "rotation": 0,
+        "logical_w": 1024,
+        "logical_h": 600,
+        "render_mode": 1,
+        "expected_bytes": 0,
+        "active_bytes": 1228800,
+        "min_bytes": 1228800,
+        "max_bytes": 1228800,
+        "internal": 0,
+        "psram": 1,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 2343,
+        "rendered": 2144,
+        "flushes": 10339,
+        "pixels": 619909568,
+        "elapsed_us": 69310551
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 501631,
+          "psram_total": 32602240,
+          "psram_free": 28910948,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 501023,
+          "psram_total": 32602240,
+          "psram_free": 28910948,
+          "internal_min_free": 407603,
+          "psram_min_free": 28482876
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 26
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 20
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 59
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 60
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 60
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 43
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 41
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 57
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 20
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 30
+        },
+        {
+          "name": "Containers",
+          "fps": 38
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 20
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 38
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 36
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 21
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 26
+        }
+      ],
+      "address": {
+        "mode": "DOUBLE_DIRECT",
+        "rotation": 0,
+        "releases": 2143,
+        "writes": 6827,
+        "confirms": 2143,
+        "not_pool": 0,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4183,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "DOUBLE_DIRECT",
+        "rotation": 0,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-002"
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_DIRECT",
+      "rotation": 90,
+      "frames": 1444,
+      "transport_fps": 20.8,
+      "lvgl_fps": 30,
+      "cpu": 100,
+      "render": 23,
+      "flush": 15,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 1445,
+        "events": 4195,
+        "superseded": 0,
+        "active_submits": 1,
+        "target_diffs": 0,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 1
+      },
+      "buffer_audit": {
+        "rotation": 90,
+        "logical_w": 600,
+        "logical_h": 1024,
+        "render_mode": 1,
+        "expected_bytes": 0,
+        "active_bytes": 1228800,
+        "min_bytes": 1228800,
+        "max_bytes": 1228800,
+        "internal": 0,
+        "psram": 1,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 2421,
+        "rendered": 1444,
+        "flushes": 7062,
+        "pixels": 354015872,
+        "elapsed_us": 69421632
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 501643,
+          "psram_total": 32602240,
+          "psram_free": 26436956,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 501035,
+          "psram_total": 32602240,
+          "psram_free": 26436956,
+          "internal_min_free": 407907,
+          "psram_min_free": 26140480
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 17
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 14
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 60
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 28
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 29
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 20
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 27
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 30
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 14
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 16
+        },
+        {
+          "name": "Containers",
+          "fps": 62
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 14
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 57
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 35
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 15
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 51
+        }
+      ],
+      "address": {
+        "mode": "DOUBLE_DIRECT",
+        "rotation": 90,
+        "releases": 1443,
+        "writes": 8506,
+        "confirms": 1443,
+        "not_pool": 1443,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4190,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "DOUBLE_DIRECT",
+        "rotation": 90,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-002"
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_DIRECT",
+      "rotation": 180,
+      "frames": 1586,
+      "transport_fps": 22.8,
+      "lvgl_fps": 32,
+      "cpu": 100,
+      "render": 23,
+      "flush": 15,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 1587,
+        "events": 4195,
+        "superseded": 0,
+        "active_submits": 1,
+        "target_diffs": 1,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 2
+      },
+      "buffer_audit": {
+        "rotation": 180,
+        "logical_w": 1024,
+        "logical_h": 600,
+        "render_mode": 1,
+        "expected_bytes": 0,
+        "active_bytes": 1228800,
+        "min_bytes": 1228800,
+        "max_bytes": 1228800,
+        "internal": 0,
+        "psram": 1,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 2013,
+        "rendered": 1586,
+        "flushes": 6818,
+        "pixels": 404687744,
+        "elapsed_us": 69420621
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 501643,
+          "psram_total": 32602240,
+          "psram_free": 26436956,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 501023,
+          "psram_total": 32602240,
+          "psram_free": 26436956,
+          "internal_min_free": 403715,
+          "psram_min_free": 26222920
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 18
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 13
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 60
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 28
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 29
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 28
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 42
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 30
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 14
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 16
+        },
+        {
+          "name": "Containers",
+          "fps": 64
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 14
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 62
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 57
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 14
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 23
+        }
+      ],
+      "address": {
+        "mode": "DOUBLE_DIRECT",
+        "rotation": 180,
+        "releases": 1585,
+        "writes": 8404,
+        "confirms": 1585,
+        "not_pool": 1585,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4190,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "DOUBLE_DIRECT",
+        "rotation": 180,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-002"
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_PARTIAL",
+      "rotation": 0,
+      "frames": 2560,
+      "transport_fps": 37.0,
+      "lvgl_fps": 50,
+      "cpu": 100,
+      "render": 10,
+      "flush": 8,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 2561,
+        "events": 4179,
+        "superseded": 0,
+        "active_submits": 1,
+        "target_diffs": 0,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 1
+      },
+      "buffer_audit": {
+        "rotation": 0,
+        "logical_w": 1024,
+        "logical_h": 600,
+        "render_mode": 0,
+        "expected_bytes": 102400,
+        "active_bytes": 102400,
+        "min_bytes": 102400,
+        "max_bytes": 102400,
+        "internal": 1,
+        "psram": 0,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 3021,
+        "rendered": 2560,
+        "flushes": 22703,
+        "pixels": 794564261,
+        "elapsed_us": 69180605
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 399099,
+          "psram_total": 32602240,
+          "psram_free": 28806496,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 398503,
+          "psram_total": 32602240,
+          "psram_free": 28806496,
+          "internal_min_free": 332139,
+          "psram_min_free": 28691796
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 53
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 60
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 61
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 60
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 60
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 59
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 58
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 60
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 17
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 40
+        },
+        {
+          "name": "Containers",
+          "fps": 66
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 30
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 66
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 64
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 30
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 26
+        }
+      ],
+      "address": {
+        "mode": "DOUBLE_PARTIAL",
+        "rotation": 0,
+        "releases": 2560,
+        "writes": 25250,
+        "confirms": 2560,
+        "not_pool": 2559,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4176,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "DOUBLE_PARTIAL",
+        "rotation": 0,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-002"
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_PARTIAL",
+      "rotation": 180,
+      "frames": 2494,
+      "transport_fps": 36.0,
+      "lvgl_fps": 49,
+      "cpu": 100,
+      "render": 10,
+      "flush": 9,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 2495,
+        "events": 4182,
+        "superseded": 0,
+        "active_submits": 1,
+        "target_diffs": 0,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 1
+      },
+      "buffer_audit": {
+        "rotation": 180,
+        "logical_w": 1024,
+        "logical_h": 600,
+        "render_mode": 0,
+        "expected_bytes": 102400,
+        "active_bytes": 102400,
+        "min_bytes": 102400,
+        "max_bytes": 102400,
+        "internal": 1,
+        "psram": 0,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 2957,
+        "rendered": 2494,
+        "flushes": 22017,
+        "pixels": 760028780,
+        "elapsed_us": 69215623
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 399099,
+          "psram_total": 32602240,
+          "psram_free": 28806496,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 398491,
+          "psram_total": 32602240,
+          "psram_free": 28806496,
+          "internal_min_free": 331703,
+          "psram_min_free": 28691796
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 53
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 58
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 60
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 60
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 60
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 59
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 58
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 60
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 16
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 30
+        },
+        {
+          "name": "Containers",
+          "fps": 66
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 30
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 66
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 64
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 29
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 26
+        }
+      ],
+      "address": {
+        "mode": "DOUBLE_PARTIAL",
+        "rotation": 180,
+        "releases": 2493,
+        "writes": 24498,
+        "confirms": 2493,
+        "not_pool": 2493,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4178,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "DOUBLE_PARTIAL",
+        "rotation": 180,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-002"
+    },
+    {
+      "status": "PASS",
+      "mode": "DOUBLE_PARTIAL",
+      "rotation": 270,
+      "frames": 2209,
+      "transport_fps": 31.9,
+      "lvgl_fps": 46,
+      "cpu": 100,
+      "render": 11,
+      "flush": 11,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 2210,
+        "events": 4183,
+        "superseded": 0,
+        "active_submits": 1,
+        "target_diffs": 0,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 1
+      },
+      "buffer_audit": {
+        "rotation": 270,
+        "logical_w": 600,
+        "logical_h": 1024,
+        "render_mode": 0,
+        "expected_bytes": 60000,
+        "active_bytes": 60000,
+        "min_bytes": 60000,
+        "max_bytes": 60000,
+        "internal": 1,
+        "psram": 0,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 3206,
+        "rendered": 2209,
+        "flushes": 27290,
+        "pixels": 604647240,
+        "elapsed_us": 69236700
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 441467,
+          "psram_total": 32602240,
+          "psram_free": 28850528,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 440871,
+          "psram_total": 32602240,
+          "psram_free": 28850528,
+          "internal_min_free": 355295,
+          "psram_min_free": 28771672
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 53
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 30
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 61
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 60
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 59
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 57
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 54
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 38
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 10
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 30
+        },
+        {
+          "name": "Containers",
+          "fps": 64
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 23
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 64
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 53
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 30
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 52
+        }
+      ],
+      "address": {
+        "mode": "DOUBLE_PARTIAL",
+        "rotation": 270,
+        "releases": 2208,
+        "writes": 29480,
+        "confirms": 2208,
+        "not_pool": 2208,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4179,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "DOUBLE_PARTIAL",
+        "rotation": 270,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-002"
+    },
+    {
+      "status": "PASS",
+      "mode": "TRIPLE_PARTIAL",
+      "rotation": 0,
+      "frames": 2756,
+      "transport_fps": 39.8,
+      "lvgl_fps": 53,
+      "cpu": 100,
+      "render": 10,
+      "flush": 5,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 2757,
+        "events": 4179,
+        "superseded": 0,
+        "active_submits": 0,
+        "target_diffs": 0,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 0
+      },
+      "buffer_audit": {
+        "rotation": 0,
+        "logical_w": 1024,
+        "logical_h": 600,
+        "render_mode": 0,
+        "expected_bytes": 102400,
+        "active_bytes": 102400,
+        "min_bytes": 102400,
+        "max_bytes": 102400,
+        "internal": 1,
+        "psram": 0,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 3226,
+        "rendered": 2756,
+        "flushes": 24845,
+        "pixels": 899690024,
+        "elapsed_us": 69181642
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 399099,
+          "psram_total": 32602240,
+          "psram_free": 28806496,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 398499,
+          "psram_total": 32602240,
+          "psram_free": 28806496,
+          "internal_min_free": 331783,
+          "psram_min_free": 28691796
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525743,
+          "psram_total": 32602240,
+          "psram_free": 28911976,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 53
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 60
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 60
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 60
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 60
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 60
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 63
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 60
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 19
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 57
+        },
+        {
+          "name": "Containers",
+          "fps": 66
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 40
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 66
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 66
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 42
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 27
+        }
+      ],
+      "address": {
+        "mode": "TRIPLE_PARTIAL",
+        "rotation": 0,
+        "releases": 2756,
+        "writes": 27588,
+        "confirms": 2756,
+        "not_pool": 2755,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4176,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "TRIPLE_PARTIAL",
+        "rotation": 0,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-002"
+    },
+    {
+      "mode": "TRIPLE_PARTIAL",
+      "rotation": 90,
+      "status": "FAIL",
+      "failure_reason": "Run failed before successful close; ESP_ERROR_CHECK failed: esp_err_t 0x107 (ESP_ERR_TIMEOUT) at 0x480087e6",
+      "scene_scores": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-002"
+    },
+    {
+      "status": "PASS",
+      "mode": "TRIPLE_PARTIAL",
+      "rotation": 180,
+      "frames": 2661,
+      "transport_fps": 38.5,
+      "lvgl_fps": 52,
+      "cpu": 100,
+      "render": 10,
+      "flush": 6,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 2662,
+        "events": 4181,
+        "superseded": 0,
+        "active_submits": 1,
+        "target_diffs": 0,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 1
+      },
+      "buffer_audit": {
+        "rotation": 180,
+        "logical_w": 1024,
+        "logical_h": 600,
+        "render_mode": 0,
+        "expected_bytes": 102400,
+        "active_bytes": 102400,
+        "min_bytes": 102400,
+        "max_bytes": 102400,
+        "internal": 1,
+        "psram": 0,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 3132,
+        "rendered": 2661,
+        "flushes": 23878,
+        "pixels": 854367568,
+        "elapsed_us": 69199625
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 548135,
+          "psram_total": 32602752,
+          "psram_free": 28912488,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 399095,
+          "psram_total": 32602752,
+          "psram_free": 28807008,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 398483,
+          "psram_total": 32602752,
+          "psram_free": 28807008,
+          "internal_min_free": 331831,
+          "psram_min_free": 28692308
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525727,
+          "psram_total": 32602752,
+          "psram_free": 28912488,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 57
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 60
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 60
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 60
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 60
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 59
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 62
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 60
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 18
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 49
+        },
+        {
+          "name": "Containers",
+          "fps": 66
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 35
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 66
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 65
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 37
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 27
+        }
+      ],
+      "address": {
+        "mode": "TRIPLE_PARTIAL",
+        "rotation": 180,
+        "releases": 2660,
+        "writes": 26526,
+        "confirms": 2660,
+        "not_pool": 2660,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4177,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "TRIPLE_PARTIAL",
+        "rotation": 180,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-003"
+    },
+    {
+      "status": "PASS",
+      "mode": "TRIPLE_PARTIAL",
+      "rotation": 270,
+      "frames": 2454,
+      "transport_fps": 35.4,
+      "lvgl_fps": 51,
+      "cpu": 100,
+      "render": 11,
+      "flush": 6,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 2455,
+        "events": 4184,
+        "superseded": 0,
+        "active_submits": 0,
+        "target_diffs": 0,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 0
+      },
+      "buffer_audit": {
+        "rotation": 270,
+        "logical_w": 600,
+        "logical_h": 1024,
+        "render_mode": 0,
+        "expected_bytes": 60000,
+        "active_bytes": 60000,
+        "min_bytes": 60000,
+        "max_bytes": 60000,
+        "internal": 1,
+        "psram": 0,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 3473,
+        "rendered": 2454,
+        "flushes": 31483,
+        "pixels": 700981028,
+        "elapsed_us": 69252684
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 525727,
+          "psram_total": 32602752,
+          "psram_free": 28912488,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 441423,
+          "psram_total": 32602752,
+          "psram_free": 28851040,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 440823,
+          "psram_total": 32602752,
+          "psram_free": 28851040,
+          "internal_min_free": 355251,
+          "psram_min_free": 28772184
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525727,
+          "psram_total": 32602752,
+          "psram_free": 28912488,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 53
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 47
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 60
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 60
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 59
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 59
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 61
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 55
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 12
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 40
+        },
+        {
+          "name": "Containers",
+          "fps": 66
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 29
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 65
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 63
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 35
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 52
+        }
+      ],
+      "address": {
+        "mode": "TRIPLE_PARTIAL",
+        "rotation": 270,
+        "releases": 2453,
+        "writes": 33918,
+        "confirms": 2453,
+        "not_pool": 2453,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4180,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "TRIPLE_PARTIAL",
+        "rotation": 270,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-003"
+    },
+    {
+      "status": "PASS",
+      "mode": "AUTO",
+      "rotation": 0,
+      "frames": 2743,
+      "transport_fps": 39.7,
+      "lvgl_fps": 53,
+      "cpu": 100,
+      "render": 10,
+      "flush": 5,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 2744,
+        "events": 4178,
+        "superseded": 0,
+        "active_submits": 1,
+        "target_diffs": 0,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 1
+      },
+      "buffer_audit": {
+        "rotation": 0,
+        "logical_w": 1024,
+        "logical_h": 600,
+        "render_mode": 0,
+        "expected_bytes": 0,
+        "active_bytes": 102400,
+        "min_bytes": 102400,
+        "max_bytes": 102400,
+        "internal": 1,
+        "psram": 0,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 3216,
+        "rendered": 2743,
+        "flushes": 24846,
+        "pixels": 901179976,
+        "elapsed_us": 69155643
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 525727,
+          "psram_total": 32602752,
+          "psram_free": 28912488,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 399055,
+          "psram_total": 32602752,
+          "psram_free": 28807008,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 398479,
+          "psram_total": 32602752,
+          "psram_free": 28807008,
+          "internal_min_free": 331699,
+          "psram_min_free": 28692308
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525727,
+          "psram_total": 32602752,
+          "psram_free": 28912488,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 53
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 60
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 61
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 60
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 60
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 59
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 62
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 60
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 19
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 56
+        },
+        {
+          "name": "Containers",
+          "fps": 66
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 40
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 66
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 65
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 42
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 27
+        }
+      ],
+      "address": {
+        "mode": "AUTO",
+        "rotation": 0,
+        "releases": 2742,
+        "writes": 27576,
+        "confirms": 2742,
+        "not_pool": 2742,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4174,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "AUTO",
+        "rotation": 0,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-003"
+    },
+    {
+      "status": "PASS",
+      "mode": "AUTO",
+      "rotation": 90,
+      "frames": 2450,
+      "transport_fps": 35.4,
+      "lvgl_fps": 51,
+      "cpu": 100,
+      "render": 11,
+      "flush": 6,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 2451,
+        "events": 4183,
+        "superseded": 0,
+        "active_submits": 1,
+        "target_diffs": 0,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 1
+      },
+      "buffer_audit": {
+        "rotation": 90,
+        "logical_w": 600,
+        "logical_h": 1024,
+        "render_mode": 0,
+        "expected_bytes": 0,
+        "active_bytes": 60000,
+        "min_bytes": 60000,
+        "max_bytes": 60000,
+        "internal": 1,
+        "psram": 0,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 3477,
+        "rendered": 2450,
+        "flushes": 31471,
+        "pixels": 701805722,
+        "elapsed_us": 69241633
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 525727,
+          "psram_total": 32602752,
+          "psram_free": 28912488,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 441423,
+          "psram_total": 32602752,
+          "psram_free": 28851040,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 440831,
+          "psram_total": 32602752,
+          "psram_free": 28851040,
+          "internal_min_free": 355251,
+          "psram_min_free": 28772184
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525727,
+          "psram_total": 32602752,
+          "psram_free": 28912488,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 53
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 47
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 60
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 60
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 60
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 59
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 62
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 55
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 12
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 40
+        },
+        {
+          "name": "Containers",
+          "fps": 66
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 29
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 65
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 64
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 35
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 52
+        }
+      ],
+      "address": {
+        "mode": "AUTO",
+        "rotation": 90,
+        "releases": 2449,
+        "writes": 33903,
+        "confirms": 2449,
+        "not_pool": 2449,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4179,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "AUTO",
+        "rotation": 90,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-003"
+    },
+    {
+      "status": "PASS",
+      "mode": "AUTO",
+      "rotation": 180,
+      "frames": 2667,
+      "transport_fps": 38.5,
+      "lvgl_fps": 52,
+      "cpu": 100,
+      "render": 10,
+      "flush": 6,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 2668,
+        "events": 4180,
+        "superseded": 0,
+        "active_submits": 0,
+        "target_diffs": 0,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 0
+      },
+      "buffer_audit": {
+        "rotation": 180,
+        "logical_w": 1024,
+        "logical_h": 600,
+        "render_mode": 0,
+        "expected_bytes": 0,
+        "active_bytes": 102400,
+        "min_bytes": 102400,
+        "max_bytes": 102400,
+        "internal": 1,
+        "psram": 0,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 3137,
+        "rendered": 2667,
+        "flushes": 23913,
+        "pixels": 855738916,
+        "elapsed_us": 69189614
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 525727,
+          "psram_total": 32602752,
+          "psram_free": 28912488,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 399055,
+          "psram_total": 32602752,
+          "psram_free": 28807008,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 398455,
+          "psram_total": 32602752,
+          "psram_free": 28807008,
+          "internal_min_free": 331767,
+          "psram_min_free": 28692308
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525727,
+          "psram_total": 32602752,
+          "psram_free": 28912488,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 53
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 60
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 61
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 60
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 59
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 59
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 62
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 60
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 18
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 49
+        },
+        {
+          "name": "Containers",
+          "fps": 66
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 35
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 66
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 65
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 37
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 27
+        }
+      ],
+      "address": {
+        "mode": "AUTO",
+        "rotation": 180,
+        "releases": 2666,
+        "writes": 26567,
+        "confirms": 2666,
+        "not_pool": 2666,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4176,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "AUTO",
+        "rotation": 180,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-003"
+    },
+    {
+      "status": "PASS",
+      "mode": "AUTO",
+      "rotation": 270,
+      "frames": 2449,
+      "transport_fps": 35.4,
+      "lvgl_fps": 51,
+      "cpu": 100,
+      "render": 11,
+      "flush": 6,
+      "scenes": 16,
+      "driver_trace": {
+        "kind": 4,
+        "bounce_bytes": 0,
+        "requests": 2450,
+        "events": 4179,
+        "superseded": 0,
+        "active_submits": 0,
+        "target_diffs": 0,
+        "unresolved": 0,
+        "outside_pool": 0,
+        "pending": 0,
+        "saved": 0
+      },
+      "buffer_audit": {
+        "rotation": 270,
+        "logical_w": 600,
+        "logical_h": 1024,
+        "render_mode": 0,
+        "expected_bytes": 0,
+        "active_bytes": 60000,
+        "min_bytes": 60000,
+        "max_bytes": 60000,
+        "internal": 1,
+        "psram": 0,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 3471,
+        "rendered": 2449,
+        "flushes": 31437,
+        "pixels": 699485324,
+        "elapsed_us": 69179641
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 623415,
+          "internal_free": 525727,
+          "psram_total": 32602752,
+          "psram_free": 28912488,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 623415,
+          "internal_free": 441423,
+          "psram_total": 32602752,
+          "psram_free": 28851040,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 623415,
+          "internal_free": 440831,
+          "psram_total": 32602752,
+          "psram_free": 28851040,
+          "internal_min_free": 355251,
+          "psram_min_free": 28772184
+        },
+        "after_close": {
+          "internal_total": 623415,
+          "internal_free": 525727,
+          "psram_total": 32602752,
+          "psram_free": 28912488,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      },
+      "scene_scores": [
+        {
+          "name": "Empty screen",
+          "fps": 53
+        },
+        {
+          "name": "Moving wallpaper",
+          "fps": 47
+        },
+        {
+          "name": "Single rectangle",
+          "fps": 60
+        },
+        {
+          "name": "Multiple rectangles",
+          "fps": 60
+        },
+        {
+          "name": "Multiple RGB images",
+          "fps": 60
+        },
+        {
+          "name": "Multiple ARGB images",
+          "fps": 59
+        },
+        {
+          "name": "Rotated ARGB images",
+          "fps": 61
+        },
+        {
+          "name": "Multiple labels",
+          "fps": 55
+        },
+        {
+          "name": "Screen sized text",
+          "fps": 12
+        },
+        {
+          "name": "Multiple arcs",
+          "fps": 40
+        },
+        {
+          "name": "Containers",
+          "fps": 66
+        },
+        {
+          "name": "Containers with overlay",
+          "fps": 29
+        },
+        {
+          "name": "Containers with opa",
+          "fps": 65
+        },
+        {
+          "name": "Containers with opa_layer",
+          "fps": 63
+        },
+        {
+          "name": "Containers with scrolling",
+          "fps": 35
+        },
+        {
+          "name": "Widgets demo",
+          "fps": 52
+        }
+      ],
+      "address": {
+        "mode": "AUTO",
+        "rotation": 270,
+        "releases": 2449,
+        "writes": 33867,
+        "confirms": 2449,
+        "not_pool": 2448,
+        "raced": 0,
+        "release_active": 0,
+        "write_active": 0,
+        "confirm_wrong": 0,
+        "saved": 0,
+        "boundaries": 4176,
+        "underruns": 0
+      },
+      "supply": {
+        "mode": "AUTO",
+        "rotation": 270,
+        "frames": 0,
+        "short_frames": 0,
+        "restarts": 0,
+        "min_eofs": 0,
+        "expected_eofs": 0,
+        "measured_frames": 0,
+        "measured_short": 0,
+        "measured_restarts": 0
+      },
+      "address_events": [],
+      "source": "/tmp/present-current-full-20261111/p4-attempts/diagnostic-003"
+    }
+  ],
+  "user_scope": "Reuse existing current results; collect missing cases only",
+  "production_modified": false
+}

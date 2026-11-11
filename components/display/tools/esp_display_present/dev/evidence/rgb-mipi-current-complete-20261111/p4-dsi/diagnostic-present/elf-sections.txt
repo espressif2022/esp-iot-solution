@@ -1,0 +1,48 @@
+There are 39 section headers, starting at offset 0xcb1b14:
+
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] .rtc.text         NOBITS          50108018 194018 000068 00  WA  0   0  1
+  [ 2] .rtc.force_fast   PROGBITS        50108080 19335c 000000 00   W  0   0  1
+  [ 3] .rtc_noinit       PROGBITS        50108080 19335c 000000 00   W  0   0  1
+  [ 4] .rtc.force_slow   PROGBITS        50108080 19335c 000000 00   W  0   0  1
+  [ 5] .rtc_reserved     NOBITS          50108000 194000 000018 00  WA  0   0  8
+  [ 6] .spm.text         PROGBITS        30100000 001000 000222 00  AX  0   0 16
+  [ 7] .spm.data         PROGBITS        30100230 001230 000058 00  WA  0   0 16
+  [ 8] .iram0.text       PROGBITS        4ff20000 17c000 012c26 00  AX  0   0 64
+  [ 9] .iram0.text_end   NOBITS          4ff32c26 18ec26 00005a 00  WA  0   0  1
+  [10] .iram0.data       PROGBITS        4ff32c80 19335c 000000 00   W  0   0  1
+  [11] .iram0.bss        PROGBITS        4ff32c80 19335c 000000 00   W  0   0  1
+  [12] .iram0.end        PROGBITS        4ff32c80 19335c 000000 00   W  0   0  1
+  [13] .dram0.dummy      PROGBITS        4ff32c80 19335c 000000 00   W  0   0  1
+  [14] .dram0.data       PROGBITS        4ff32c80 18ec80 0046dc 00  WA  0   0  8
+  [15] .noinit           NOBITS          4ff3735c 000000 000000 00  WA  0   0  1
+  [16] .dram0.bss        NOBITS          4ff37360 19335c 002210 00  WA  0   0 16
+  [17] .flash.text       PROGBITS        48000020 002020 08b160 00  AX  0   0  2
+  [18] .flash_rodata_dummy NOBITS          48000020 08e020 090000 00  WA  0   0  1
+  [19] .flash.appdesc    PROGBITS        48090020 11e020 000100 00   A  0   0 16
+  [20] .flash.rodata     PROGBITS        48090120 11e120 05d248 00  WA  0   0 16
+  [21] .flash.init_array INIT_ARRAY      480ed368 17b368 00003c 04  WA  0   0  4
+  [22] .flash.tdata      PROGBITS        480ed3a4 17b3a4 000010 00 WAT  0   0  4
+  [23] .flash.rodata_noload NOBITS          480ed3b4 17b3b4 00004c 00  WA  0   0  1
+  [24] .dram0.heap_start PROGBITS        4ff39570 19335c 000000 00   W  0   0  1
+  [25] .noload           PROGBITS        00000000 19335c 000004 00   W  0   0  1
+  [26] .debug_aranges    PROGBITS        00000000 193360 00c390 00      0   0  8
+  [27] .debug_info       PROGBITS        00000000 19f6f0 458412 00      0   0  1
+  [28] .debug_abbrev     PROGBITS        00000000 5f7b02 05af21 00      0   0  1
+  [29] .debug_line       PROGBITS        00000000 652a23 2a69de 00      0   0  1
+  [30] .debug_frame      PROGBITS        00000000 8f9404 0347fc 00      0   0  4
+  [31] .debug_str        PROGBITS        00000000 92dc00 085101 01  MS  0   0  1
+  [32] .debug_loc        PROGBITS        00000000 9b2d01 273304 00      0   0  1
+  [33] .debug_ranges     PROGBITS        00000000 c26008 051d90 00      0   0  8
+  [34] .comment          PROGBITS        00000000 c77d98 00002f 01  MS  0   0  1
+  [35] .riscv.attributes RISCV_ATTRIBUTES 00000000 c77dc7 0000a4 00      0   0  1
+  [36] .symtab           SYMTAB          00000000 c77e6c 020d50 10     37 5437  4
+  [37] .strtab           STRTAB          00000000 c98bbc 018d6d 00      0   0  1
+  [38] .shstrtab         STRTAB          00000000 cb1929 0001e9 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings), I (info),
+  L (link order), O (extra OS processing required), G (group), T (TLS),
+  C (compressed), x (unknown), o (OS specific), E (exclude),
+  D (mbind), p (processor specific)

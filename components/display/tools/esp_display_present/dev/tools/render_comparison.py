@@ -82,7 +82,7 @@ def render(data_path, output_path, lifecycle=None):
     payload = {
         'updated': source['updated'], 'sourceCommit': source['source_commit'],
         'dataSha256': hashlib.sha256(raw).hexdigest(), 'modes': MODES, 'angles': ANGLES,
-        'boards': [], 'totals': {'clean': 0, 'diagnostic': 0, 'scenes': 0, 'skip': 0},
+        'boards': [], 'totals': {'clean': 0, 'diagnostic': 0, 'scenes': 0, 'skip': 0, 'cleanFailed': 0, 'diagnosticFailed': 0},
         'linksPrefix': os.path.relpath(data_path.parent, output_path.parent).replace(os.sep, '/') + '/',
         'dataFilename': data_path.name,
         'roundNote': source.get('round_note', '全部四角度重新完整运行，未用历史 0° 或 XIP OFF 成绩补表。'),
@@ -103,13 +103,15 @@ def render(data_path, output_path, lifecycle=None):
                     raise ValueError(f'Missing or duplicate cases: {key}/{cohort}/{implementation}')
                 rows = []
                 for entry in entries:
-                    fields = ('mode', 'rotation', 'status', 'lvgl_fps', 'transport_fps', 'memory', 'scene_scores') if cohort == 'clean' else (
-                        'mode', 'rotation', 'status', 'address', 'supply', 'address_events')
+                    fields = ('mode', 'rotation', 'status', 'lvgl_fps', 'transport_fps', 'memory', 'scene_scores', 'failure_reason') if cohort == 'clean' else (
+                        'mode', 'rotation', 'status', 'address', 'supply', 'address_events', 'failure_reason')
                     rows.append({field: entry[field] for field in fields if field in entry})
                     if entry['status'] == 'SKIP':
                         if implementation != 'adapter' or entry['mode'] != 'AUTO':
                             raise ValueError('Unexpected skipped case')
                         payload['totals']['skip'] += 1
+                    elif entry['status'] == 'FAIL' and source.get('current_round'):
+                        payload['totals'][cohort + 'Failed'] += 1
                     elif entry['status'] == 'PASS' and entry['scenes'] == 16:
                         payload['totals'][cohort] += 1
                         payload['totals']['scenes'] += entry['scenes']
@@ -119,16 +121,24 @@ def render(data_path, output_path, lifecycle=None):
         payload['boards'].append(board)
     if lifecycle is not None:
         apply_lifecycle(payload, lifecycle, output_path)
+    if source.get('current_round'):
+        if lifecycle is not None:
+            raise ValueError('A current full round cannot mix lifecycle overlays')
+        payload['currentRound'] = source['current_round']
+        payload['downloads'] = {'csv': output_path.with_suffix('.csv').name, 'json': output_path.with_suffix('.json').name}
+        for board in payload['boards']:
+            for row in board['cohorts']['clean']['adapter']:
+                row.pop('transport_fps', None)
     template = Path(__file__).with_name('comparison_dashboard.html').read_text()
     embedded = json.dumps(payload, ensure_ascii=False, allow_nan=False, separators=(',', ':')).replace('<', '\\u003c')
     page = template.replace('__REPORT_DATA__', embedded)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(page)
-    if lifecycle is not None:
+    if lifecycle is not None or source.get('current_round'):
         output_path.with_suffix('.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n')
         with output_path.with_suffix('.csv').open('w', newline='') as stream:
             writer = csv.writer(stream)
-            writer.writerow(['board', 'implementation', 'mode', 'rotation', 'origin', 'status',
+            writer.writerow(['board', 'implementation', 'mode', 'rotation', 'origin', 'status', 'failure_reason',
                              'lvgl_fps', 'transport_fps', *[f'{heap}_{phase}_remaining_bytes'
                                                           for heap in ('internal', 'psram')
                                                           for phase in ('before_open', 'after_open', 'after_run', 'after_close')]])
@@ -136,7 +146,7 @@ def render(data_path, output_path, lifecycle=None):
                 for impl, rows in board['cohorts']['clean'].items():
                     for row in rows:
                         memory = row.get('memory', {})
-                        writer.writerow([board['id'], impl, row['mode'], row['rotation'], row['origin'], row['status'],
+                        writer.writerow([board['id'], impl, row['mode'], row['rotation'], row.get('origin', source.get('current_round', {}).get('label', '')), row['status'], row.get('failure_reason', ''),
                                          row.get('lvgl_fps', ''), row.get('transport_fps', ''),
                                          *[memory.get(phase, {}).get(heap + ('_min_free' if phase == 'after_run' else '_free'), '')
                                            for heap in ('internal', 'psram')

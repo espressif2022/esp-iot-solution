@@ -1,0 +1,113 @@
+--- a/components/esp_lcd/CMakeLists.txt
++++ b/components/esp_lcd/CMakeLists.txt
+@@ -10,7 +10,7 @@
+          "src/esp_lcd_panel_st7789.c"
+          "src/esp_lcd_panel_ops.c")
+ set(includes "include" "interface")
+-set(priv_requires "esp_mm" "esp_psram" "esp_pm" "esp_driver_i2s" "esp_driver_dma")
++set(priv_requires "esp_timer" "esp_mm" "esp_psram" "esp_pm" "esp_driver_i2s" "esp_driver_dma")
+ set(public_requires "esp_driver_gpio" "esp_driver_i2c" "esp_driver_spi" "esp_driver_parlio" "esp_hal_lcd")
+ 
+ if(CONFIG_SOC_I2C_SUPPORTED)
+@@ -46,6 +46,8 @@
+     list(APPEND srcs "dsi/esp_lcd_mipi_dsi_bus.c" "dsi/esp_lcd_panel_io_dbi.c" "dsi/esp_lcd_panel_dpi.c")
+ endif()
+ 
++list(APPEND srcs "src/esp_lcd_present_trace.c")
++
+ idf_component_register(SRCS ${srcs}
+                        INCLUDE_DIRS ${includes}
+                        PRIV_INCLUDE_DIRS "priv_include" "i80"
+--- a/components/esp_lcd/rgb/esp_lcd_panel_rgb.c
++++ b/components/esp_lcd/rgb/esp_lcd_panel_rgb.c
+@@ -10,6 +10,10 @@
+ #include <sys/param.h>
+ #include <string.h>
+ #include "sdkconfig.h"
++#include "esp_lcd_present_trace.h"
++#if CONFIG_IDF_TARGET_ESP32S31
++#include "hal/axi_dma_ll.h"
++#endif
+ #if CONFIG_LCD_ENABLE_DEBUG_LOG
+ // The local log level must be defined before including esp_log.h
+ // Set the maximum log level for rgb lcd driver
+@@ -482,6 +486,7 @@
+     rgb_panel->base.swap_xy = rgb_panel_swap_xy;
+     rgb_panel->base.set_gap = rgb_panel_set_gap;
+     // return base class
++    esp_lcd_present_trace_bind(&rgb_panel->base, (void *const *)rgb_panel->fbs, rgb_panel->num_fbs, rgb_panel->bb_size, 1);
+     *ret_panel = &(rgb_panel->base);
+     ESP_LOGD(TAG, "new rgb panel(%d) @%p, num_fbs=%zu, fb_size=%zu, bb0 @%p, bb1 @%p, bb_size=%zu",
+              rgb_panel->panel_id, rgb_panel, rgb_panel->num_fbs, rgb_panel->fb_size,
+@@ -895,6 +900,7 @@
+     } else { // no copy, just do cache memory write back
+         ESP_LOGV(TAG, "draw buffer is in frame buffer memory range, do cache write back only");
+         // only write back the LCD lines that updated by the draw buffer
++        esp_lcd_present_trace_request(&rgb_panel->base, draw_buf_fb_index);
+         rgb_panel->cur_fb_index = draw_buf_fb_index;
+         uint8_t *cache_sync_start = rgb_panel->fbs[draw_buf_fb_index] + (y_start * h_res) * bytes_per_pixel;
+         size_t cache_sync_size = (y_end - y_start) * h_res * bytes_per_pixel;
+@@ -1176,6 +1182,7 @@
+     if (panel->bounce_pos_px >= panel->fb_size / bytes_per_pixel) {
+         panel->bounce_pos_px = 0;
+         panel->bb_fb_index = panel->cur_fb_index;
++        esp_lcd_present_trace_event(&panel->base, 2, panel->cur_fb_index, panel->bb_fb_index, 0);
+         esp_lcd_rgb_panel_frame_buf_complete_cb_t cb = panel->on_frame_buf_complete;
+         if (cb) {
+             if (cb(&panel->base, NULL, panel->user_ctx)) {
+@@ -1224,6 +1231,21 @@
+     (void)event_data;
+     bool need_yield = false;
+     esp_rgb_panel_t *rgb_panel = (esp_rgb_panel_t *)user_data;
++
++    uintptr_t raw = 0;
++    int observed = -1;
++#if CONFIG_IDF_TARGET_ESP32S31
++    int group = 0, channel = 0;
++    if (gdma_get_group_channel_id(dma_chan, &group, &channel) == ESP_OK && group == 0) {
++        raw = axi_dma_ll_tx_get_prefetched_desc_addr(AXI_DMA_LL_GET_HW(group), channel);
++        for (unsigned i = 0; i < rgb_panel->num_fbs; ++i) {
++            uintptr_t head = gdma_link_get_head_addr(rgb_panel->dma_fb_links[i]);
++            uintptr_t last = gdma_link_get_item_addr(rgb_panel->dma_fb_links[i], -1);
++            if (raw >= head && raw <= last) { observed = i; break; }
++        }
++    }
++#endif
++    esp_lcd_present_trace_event(&rgb_panel->base, 3, rgb_panel->cur_fb_index, observed, raw);
+ 
+     if (rgb_panel->on_frame_buf_complete) {
+         if (rgb_panel->on_frame_buf_complete(&rgb_panel->base, NULL, rgb_panel->user_ctx)) {
+--- a/components/esp_lcd/dsi/esp_lcd_panel_dpi.c
++++ b/components/esp_lcd/dsi/esp_lcd_panel_dpi.c
+@@ -4,6 +4,7 @@
+  * SPDX-License-Identifier: Apache-2.0
+  */
+ #include <sys/param.h>
++#include "esp_lcd_present_trace.h"
+ #include "esp_lcd_panel_interface.h"
+ #include "esp_lcd_mipi_dsi.h"
+ #include "esp_intr_alloc.h"
+@@ -96,6 +97,7 @@
+     dw_gdma_lli_set_block_markers(dw_gdma_link_list_get_item(link_list, 0), markers);
+     dw_gdma_channel_use_link_list(chan, link_list);
+     dw_gdma_channel_enable_ctrl(chan, true);
++    esp_lcd_present_trace_event(&dpi_panel->base, 4, dpi_panel->cur_fb_index, fb_index, (uintptr_t)link_list);
+ 
+     if (dpi_panel->on_frame_buf_complete) {
+         if (dpi_panel->on_frame_buf_complete(&dpi_panel->base, NULL, dpi_panel->user_ctx)) {
+@@ -345,6 +347,7 @@
+     dpi_panel->base.init = dpi_panel_init;
+     dpi_panel->base.draw_bitmap = dpi_panel_draw_bitmap;
+     dpi_panel->base.draw_bitmap_2d = dpi_panel_draw_bitmap_2d;
++    esp_lcd_present_trace_bind(&dpi_panel->base, (void *const *)dpi_panel->fbs, dpi_panel->num_fbs, 0, 4);
+     *ret_panel = &dpi_panel->base;
+     ESP_LOGD(TAG, "dpi panel created @%p", dpi_panel);
+     return ESP_OK;
+@@ -656,6 +659,7 @@
+         // the buffer to be flushed is still within the frame buffer, so even an unaligned address is OK
+         esp_cache_msync(cache_sync_start, cache_sync_size, ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_UNALIGNED);
+ 
++        esp_lcd_present_trace_request(&dpi_panel->base, draw_buf_fb_index);
+         dpi_panel->cur_fb_index = draw_buf_fb_index;
+         // invoke the trans done callback
+         if (dpi_panel->on_color_trans_done) {

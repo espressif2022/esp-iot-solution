@@ -1,0 +1,8 @@
+{
+  "scope": "S3 adapter diagnostic defaults differ only by a trailing blank line; actual SDK options identical",
+  "old_sha256": "ebd1edd4a0f81e81628cc7097fa60df964e0e77eaaadd74485f9b1ec67e5780a",
+  "current_sha256": "a730a283061c82e69b6906c3ee7037b8c27c812c2e25234fbab5649d0408c034",
+  "old_text": "CONFIG_SPIRAM_MODE_OCT=y\nCONFIG_SPIRAM_SPEED_80M=y\nCONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y\nCONFIG_ESP32S3_DATA_CACHE_64KB=y\nCONFIG_ESP32S3_DATA_CACHE_LINE_64B=y\nCONFIG_ESP_CONSOLE_UART_DEFAULT=y\n\n# board_s3.c explicitly configures a 10-line RGB bounce buffer.\nCONFIG_PV2_LEGACY_RGB_BOUNCE_CONFIRMED=y\n\n# Keep the same instruction/cache setup as the original RGB benchmark.\nCONFIG_ESP32S3_INSTRUCTION_CACHE_32KB=y\nCONFIG_SPIRAM_XIP_FROM_PSRAM=y\n\n",
+  "current_text": "CONFIG_SPIRAM_MODE_OCT=y\nCONFIG_SPIRAM_SPEED_80M=y\nCONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y\nCONFIG_ESP32S3_DATA_CACHE_64KB=y\nCONFIG_ESP32S3_DATA_CACHE_LINE_64B=y\nCONFIG_ESP_CONSOLE_UART_DEFAULT=y\n\n# board_s3.c explicitly configures a 10-line RGB bounce buffer.\nCONFIG_PV2_LEGACY_RGB_BOUNCE_CONFIRMED=y\n\n# Keep the same instruction/cache setup as the original RGB benchmark.\nCONFIG_ESP32S3_INSTRUCTION_CACHE_32KB=y\nCONFIG_SPIRAM_XIP_FROM_PSRAM=y\n",
+  "normalized_equal": true
+}

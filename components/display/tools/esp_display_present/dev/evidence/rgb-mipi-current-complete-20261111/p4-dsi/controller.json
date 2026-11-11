@@ -1,0 +1,15 @@
+{
+  "board": "p4-dsi",
+  "port": "/dev/ttyACM0",
+  "success": true,
+  "restore_original": false,
+  "case_granularity": true,
+  "stage": "done",
+  "updated": 1794378671.2533731,
+  "variant": "present-xip-on-driver-trace",
+  "cohort": "diagnostic",
+  "covered": 18,
+  "coverage_complete": true,
+  "all_passed": false,
+  "failed": 6
+}

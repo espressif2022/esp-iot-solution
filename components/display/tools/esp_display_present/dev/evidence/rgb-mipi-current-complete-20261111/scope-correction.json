@@ -1,0 +1,6 @@
+{
+  "reason": "User clarified reuse already-tested matching source/config; stop redundant full reruns",
+  "stopped_stage": "capture (no flash interrupted)",
+  "reuse_candidate": "scanout-lifecycle-cleanup-20261111: 24 clean cases",
+  "restore_original": false
+}

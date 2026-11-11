@@ -1,0 +1,22 @@
+{
+  "board": "s31-rgb",
+  "port": "/dev/ttyUSB0",
+  "runs": [
+    {
+      "variant": "present-xip-on",
+      "success": true
+    },
+    {
+      "variant": "present-xip-on-driver-trace",
+      "success": true
+    }
+  ],
+  "restore_original": false,
+  "success": true,
+  "reuse_latest_clean_cases": 8,
+  "new_clean_cases": 4,
+  "new_diagnostic_cases": 24,
+  "stage": "done",
+  "updated": 1794378553.7681046,
+  "variant": "present-xip-on-driver-trace"
+}

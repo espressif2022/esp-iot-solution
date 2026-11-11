@@ -1,0 +1,9 @@
+{
+  "board": "p4-dsi",
+  "mode": "DOUBLE_DIRECT",
+  "rotation": 270,
+  "status": "FAIL",
+  "reason": "bench_close ESP_ERR_TIMEOUT; scene timers continued after display progress stalled; do not publish scene FPS",
+  "completed_preceding_cases": 5,
+  "production_modified": false
+}

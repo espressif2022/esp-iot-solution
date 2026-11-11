@@ -1,0 +1,9 @@
+{
+  "commit": "4e3431584c572fcb700d0cc4535b37397de031fa",
+  "paths": [
+    "components/display/tools/esp_display_present",
+    "components/display/tools/esp_lv_present",
+    "components/display/tools/esp_lvgl_adapter"
+  ],
+  "exclude": "dev/evidence (not build inputs)"
+}
