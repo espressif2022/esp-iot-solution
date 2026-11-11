@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "numeric_cells_verified": 4356,
+  "fresh_rows": 24,
+  "mode_select_changes": 36,
+  "browser_errors": 0,
+  "viewport_widths": [
+    1440,
+    390
+  ],
+  "raw_evidence_match": true,
+  "historical_present_rows": 48,
+  "historical_adapter_and_diagnostics_unchanged": true,
+  "hardware_rerun": false,
+  "hashes": {
+    "evidence/five-board-regression-20261109/comparison-current.html": "d3f073a68322291be8bbe61623b282b7575ccaf9c5d118c4ed30ef21db8cbd74",
+    "evidence/five-board-regression-20261109/comparison-current.csv": "784d7cd323358c607de425fbd9c98dcb4fce253827f2a7ccce0283184bd61b15",
+    "evidence/five-board-regression-20261109/comparison-current.json": "66ab8c1d9b21b02983a1ef6f3f2327cb00dd632a7de420b5e393fd9825a592d7",
+    "tools/render_comparison.py": "77ed64fcfbd6b3c175551a52e333227aab4b496e7c04cd21e4330a32f8d83e32",
+    "tools/comparison_dashboard.html": "63439732a01c617f2167aa2647b56ad867e4786547144fee2d15e8bf0ed28223",
+    "tools/check_comparison.mjs": "b11636861f23371a4a2020e861b8309c167dff37afaac26c461c20ea344e6bf5"
+  }
+}

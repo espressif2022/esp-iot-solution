@@ -12,9 +12,11 @@
 
 上板发现 P4 PPA 在 `(466,248) 131×352` 的纯修补复制上阻塞：干净 IDF 重放 130/132 宽成功，131 宽挂起。PPA probe 已提前拒绝 FIFO 相等边界并走现有 CPU fallback；最终 P4 AUTO 90° 完整通过。基础 IDF 和最终固件均无诊断补丁。
 
-下方性能网页仍属于其标注的历史源码。本次为 0°/90° 的定向回归，并未替换完整四角度 adapter 对比；新结果、历史内存对照和实际提交吞吐分别保留。
+[当前网页](evidence/five-board-regression-20261109/comparison-current.html) 已接入本轮 24 项帧率、四阶段内存和逐场景分数，单元格标注“新测 11-11”。其余 present、adapter、静态 SRAM 与独立交接诊断保留 11-10 来源；未将历史诊断作为新版本结论。另有实际提交吞吐与对上一版 present 的 PSRAM 减少抽屉。
 
-## RGB / MIPI XIP ON 对比（2026-11-10，当前数据）
+重新生成：`python dev/tools/render_comparison.py --data dev/evidence/rgb-mipi-xip-on-no-fb-iram-20261110/matrix-data.json --lifecycle dev/evidence/scanout-lifecycle-cleanup-20261111 --output dev/evidence/five-board-regression-20261109/comparison-current.html`。同时输出含来源的 CSV/JSON；未重跑板子。
+
+## RGB / MIPI XIP ON 对比（2026-11-10，历史基线）
 
 [当前网页](evidence/five-board-regression-20261109/comparison-current.html) · [本次证据与 SRAM/缓冲说明](evidence/rgb-mipi-xip-on-no-fb-iram-20261110/README.md) · [诊断结果](evidence/rgb-mipi-xip-on-no-fb-iram-20261110/findings.md)。移除 S3 的 FB_IRAM Kconfig 和整组对象链接映射，保留显式 ISR/pixel IRAM_ATTR。
 
@@ -22,7 +24,7 @@
 
 内存保留打开前、打开后、运行最小、关闭后四个剩余值；新增堆已用切换（实际堆容量−剩余，运行期取局部峰值）及 ELF 静态 SRAM/堆容量账目。剩余越多越好，已用/静态占用越少越好；差值在 present 列。它是整套测试固件的占用，不是组件独占。实际 ELF 未链接 JPEG 解码库，不扣除假定的 20 KiB。
 
-FULL 的驱动池、模式使用的扫描 FB、绑定层全屏回退画布及旋转逻辑画布分开说明；当前额外画布未同时优化，避免混淆 IRAM 前后成绩。顶部 Tab 切换板卡，板内抽屉可收缩，内存和场景按模式选择。
+FULL 的驱动池、模式使用的扫描 FB、绑定层全屏回退画布及旋转逻辑画布分开说明；当时额外画布未同时优化，避免混淆 IRAM 前后成绩。顶部 Tab 切换板卡，板内抽屉可收缩，内存和场景按模式选择。
 
 诊断只记录、不控制修正，正式与诊断成绩分开；零命中不表示所有视觉异常被覆盖。基础 IDF 干净，交接控制流程未改，按要求不恢复原固件。
 

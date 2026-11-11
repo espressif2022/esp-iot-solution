@@ -2,9 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 """Render the comparison dashboard from recorded data, without rerunning tests."""
 import argparse
+import csv
+import gzip
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 
 MODES = ['DOUBLE_FULL', 'TRIPLE_FULL', 'DOUBLE_DIRECT',
@@ -17,7 +20,61 @@ BOARDS = {
 }
 
 
-def render(data_path, output_path):
+def apply_lifecycle(payload, evidence, output_path):
+    """Overlay only measured cases; retain the dated reference and diagnostics."""
+    expected = {(m, a) for m in ('DOUBLE_FULL', 'TRIPLE_FULL', 'DOUBLE_DIRECT', 'AUTO') for a in (0, 90)}
+    hashes = {}
+    for board in payload['boards']:
+        for cohort in board['cohorts'].values():
+            for rows in cohort.values():
+                for row in rows:
+                    row['origin'] = '历史 11-10'
+        path = evidence / board['id'] / 'results.json'
+        raw = path.read_bytes()
+        result = json.loads(raw)
+        hashes[board['id']] = hashlib.sha256(raw).hexdigest()
+        if not result['complete'] or result['errors'] or len(result['rows']) != 8:
+            raise ValueError('Incomplete lifecycle suite')
+        if {(r['mode'], r['rotation']) for r in result['rows']} != expected:
+            raise ValueError('Unexpected lifecycle coverage')
+        manifest = json.loads((path.parent / 'manifest.json').read_text())
+        if manifest['xip_mode'] != 'on' or manifest['driver_trace'] is not None:
+            raise ValueError('Expected clean XIP ON firmware')
+        log = gzip.open(path.parent / 'live.log.gz', 'rt').read()
+        scores = {}
+        for mode, angle, name, fps in re.findall(
+                r'SCENE mode=(\w+) rotation=(\d+) name="([^"]+)" fps=(\d+)', log):
+            scores.setdefault((mode, int(angle)), []).append({'name': name, 'fps': int(fps)})
+        current = {(r['mode'], r['rotation']): r for r in result['rows']}
+        rows = board['cohorts']['clean']['present']
+        for index, previous in enumerate(rows):
+            key = (previous['mode'], previous['rotation'])
+            if key not in current:
+                continue
+            row = dict(current[key])
+            if row['status'] != 'PASS' or row['scenes'] != 16 or len(scores.get(key, [])) != 16:
+                raise ValueError('Unfinished lifecycle case or missing scene scores')
+            row['scene_scores'] = scores[key]
+            row['origin'] = '新测 11-11'
+            row['source_commit'] = 'aadc0d799'
+            row['previous_open_psram_bytes'] = (previous['memory']['before_open']['psram_free']
+                                                - previous['memory']['after_open']['psram_free'])
+            rows[index] = row
+        for row in board['cohorts']['clean']['adapter']:
+            row.pop('transport_fps', None)  # Adapter logger does not measure this metric.
+        board['originNote'] = '11-11 新测 8 项；其余 present、adapter、静态 SRAM 和交接诊断保留 11-10 来源'
+    payload['lifecycle'] = {
+        'count': 24, 'scenes': 384, 'sourceCommit': 'aadc0d799', 'hashes': hashes,
+        'report': os.path.relpath(evidence / 'README.md', output_path.parent).replace(os.sep, '/'),
+    }
+    payload['roundNote'] = ('11-11：present 三板各完整运行 8 项（FULL / DIRECT / AUTO，0° / 90°），合计 24 项、384 场景。'
+                            '新测单元格标注日期；其他 present 成绩、adapter、静态 SRAM 和独立交接诊断保留 11-10 历史数据。'
+                            '本轮未重测 180° / 270° 和显式 PARTIAL，不是同版本完整矩阵。')
+    payload['updated'] = '2026-11-11'
+    payload['downloads'] = {'csv': output_path.with_suffix('.csv').name, 'json': output_path.with_suffix('.json').name}
+
+
+def render(data_path, output_path, lifecycle=None):
     raw = data_path.read_bytes()
     source = json.loads(raw)
     if not source.get('complete') or source.get('xip') != 'on' or source.get('angles') != ANGLES:
@@ -46,7 +103,7 @@ def render(data_path, output_path):
                     raise ValueError(f'Missing or duplicate cases: {key}/{cohort}/{implementation}')
                 rows = []
                 for entry in entries:
-                    fields = ('mode', 'rotation', 'status', 'lvgl_fps', 'memory', 'scene_scores') if cohort == 'clean' else (
+                    fields = ('mode', 'rotation', 'status', 'lvgl_fps', 'transport_fps', 'memory', 'scene_scores') if cohort == 'clean' else (
                         'mode', 'rotation', 'status', 'address', 'supply', 'address_events')
                     rows.append({field: entry[field] for field in fields if field in entry})
                     if entry['status'] == 'SKIP':
@@ -60,11 +117,30 @@ def render(data_path, output_path):
                         raise ValueError('Unfinished case cannot be published')
                 board['cohorts'][cohort][implementation] = rows
         payload['boards'].append(board)
+    if lifecycle is not None:
+        apply_lifecycle(payload, lifecycle, output_path)
     template = Path(__file__).with_name('comparison_dashboard.html').read_text()
     embedded = json.dumps(payload, ensure_ascii=False, allow_nan=False, separators=(',', ':')).replace('<', '\\u003c')
     page = template.replace('__REPORT_DATA__', embedded)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(page)
+    if lifecycle is not None:
+        output_path.with_suffix('.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n')
+        with output_path.with_suffix('.csv').open('w', newline='') as stream:
+            writer = csv.writer(stream)
+            writer.writerow(['board', 'implementation', 'mode', 'rotation', 'origin', 'status',
+                             'lvgl_fps', 'transport_fps', *[f'{heap}_{phase}_remaining_bytes'
+                                                          for heap in ('internal', 'psram')
+                                                          for phase in ('before_open', 'after_open', 'after_run', 'after_close')]])
+            for board in payload['boards']:
+                for impl, rows in board['cohorts']['clean'].items():
+                    for row in rows:
+                        memory = row.get('memory', {})
+                        writer.writerow([board['id'], impl, row['mode'], row['rotation'], row['origin'], row['status'],
+                                         row.get('lvgl_fps', ''), row.get('transport_fps', ''),
+                                         *[memory.get(phase, {}).get(heap + ('_min_free' if phase == 'after_run' else '_free'), '')
+                                           for heap in ('internal', 'psram')
+                                           for phase in ('before_open', 'after_open', 'after_run', 'after_close')]])
     return {'output': str(output_path), 'data_sha256': payload['dataSha256'], **payload['totals']}
 
 
@@ -72,8 +148,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--data', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--lifecycle', type=Path, help='Optional completed 11-11 targeted regression directory')
     args = parser.parse_args()
-    print(json.dumps(render(args.data.resolve(), args.output.resolve()), ensure_ascii=False))
+    print(json.dumps(render(args.data.resolve(), args.output.resolve(), args.lifecycle.resolve() if args.lifecycle else None), ensure_ascii=False))
 
 
 if __name__ == '__main__':
