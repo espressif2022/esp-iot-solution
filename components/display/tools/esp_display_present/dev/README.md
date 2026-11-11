@@ -8,7 +8,11 @@
 
 移除 RGB/MIPI 的 NONE 更新路径及 `present_lcd_fb_update`；AUTO 根据实际 native FB 池选择三缓冲／双缓冲 PARTIAL，单 FB 拒绝创建。GRAM/TE 的 NONE/AUTO 不变。LVGL FULL 和原生 DIRECT 去除全屏占位画布，先取得写入租约再绑定像素地址，提交／取消前撤销引用；旋转 DIRECT 的实际画布、PARTIAL 的小 tile 兜底保留。
 
-本次单独记录生命周期与内存回归；下方性能网页仍属于其标注的历史源码，不代表本次变更后的完整矩阵成绩。
+[本轮回归、内存及 PPA 定位证据](evidence/scanout-lifecycle-cleanup-20261111/README.md)：LVGL 9.0/9.6 的 ASan/UBSan 各 48 项通过；S3 RGB、S31 RGB、P4 DSI 各 8 项连续完整 benchmark，共 24 项/384 场景，关闭后 PSRAM 回到打开前。另有 S3 实际双 FB AUTO 验证。
+
+上板发现 P4 PPA 在 `(466,248) 131×352` 的纯修补复制上阻塞：干净 IDF 重放 130/132 宽成功，131 宽挂起。PPA probe 已提前拒绝 FIFO 相等边界并走现有 CPU fallback；最终 P4 AUTO 90° 完整通过。基础 IDF 和最终固件均无诊断补丁。
+
+下方性能网页仍属于其标注的历史源码。本次为 0°/90° 的定向回归，并未替换完整四角度 adapter 对比；新结果、历史内存对照和实际提交吞吐分别保留。
 
 ## RGB / MIPI XIP ON 对比（2026-11-10，当前数据）
 

@@ -1,0 +1,8 @@
+{
+  "actual_driver_fbs": 2,
+  "requested_mode": "AUTO",
+  "expected_probe_rejection_lines": [
+    "E (2951) lcd.rgb: esp_lcd_rgb_panel_get_frame_buffer(574): invalid frame buffer number"
+  ],
+  "raw_log_unchanged": true
+}

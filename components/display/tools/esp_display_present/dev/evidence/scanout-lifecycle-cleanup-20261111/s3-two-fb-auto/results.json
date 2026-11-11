@@ -1,0 +1,92 @@
+{
+  "complete": true,
+  "rows": [
+    {
+      "status": "PASS",
+      "mode": "AUTO",
+      "rotation": 0,
+      "frames": 1981,
+      "transport_fps": 28.6,
+      "lvgl_fps": 41,
+      "cpu": 100,
+      "render": 16,
+      "flush": 11,
+      "scenes": 16,
+      "buffer_audit": {
+        "rotation": 0,
+        "logical_w": 480,
+        "logical_h": 480,
+        "render_mode": 0,
+        "expected_bytes": 0,
+        "active_bytes": 48000,
+        "min_bytes": 48000,
+        "max_bytes": 48000,
+        "internal": 1,
+        "psram": 0,
+        "input_tiles": 1,
+        "compose": 0,
+        "refresh": 2329,
+        "rendered": 1981,
+        "flushes": 11059,
+        "pixels": 187472266,
+        "elapsed_us": 69365910
+      },
+      "memory": {
+        "before_open": {
+          "internal_total": 379179,
+          "internal_free": 286467,
+          "psram_total": 15869876,
+          "psram_free": 14943864,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_open": {
+          "internal_total": 379179,
+          "internal_free": 193359,
+          "psram_total": 15869876,
+          "psram_free": 14895704,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        },
+        "after_run": {
+          "internal_total": 379179,
+          "internal_free": 192775,
+          "psram_total": 15869876,
+          "psram_free": 14895704,
+          "internal_min_free": 139007,
+          "psram_min_free": 14823504
+        },
+        "after_close": {
+          "internal_total": 379179,
+          "internal_free": 264307,
+          "psram_total": 15869876,
+          "psram_free": 14943864,
+          "internal_min_free": 0,
+          "psram_min_free": 0
+        }
+      }
+    }
+  ],
+  "errors": [],
+  "suite_memory": {
+    "before_init": {
+      "internal_total": 379179,
+      "internal_free": 297855,
+      "psram_total": 15869876,
+      "psram_free": 15867028,
+      "internal_min_free": 0,
+      "psram_min_free": 0
+    },
+    "after_init": {
+      "internal_total": 379179,
+      "internal_free": 286467,
+      "psram_total": 15869876,
+      "psram_free": 14943864,
+      "internal_min_free": 0,
+      "psram_min_free": 0
+    }
+  },
+  "matrix_complete": true,
+  "memory_complete": true,
+  "buffers_verified": true
+}
