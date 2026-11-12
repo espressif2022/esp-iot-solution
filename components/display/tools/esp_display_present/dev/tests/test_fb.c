@@ -7,6 +7,7 @@
 #include "scan_panel.h"
 #include "../../src/platform/present_os.h"
 #include "core/present_engine.h"
+#include "pixel/present_pixel_ops.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -769,8 +770,58 @@ static void direct_full_redraw_skips_prefill(void)
     }
 }
 
+typedef struct {
+    unsigned remaining;
+    esp_err_t error;
+} repair_failure_t;
+static esp_err_t repair_copy(void *user, const esp_display_present_copy_request_t *request)
+{
+    repair_failure_t *failure = user;
+    if (failure->remaining && --failure->remaining == 0) {
+        return failure->error;
+    }
+    return esp_display_present_pixel_execute_cpu(request);
+}
+
+static void synchronous_repair_retry(void)
+{
+    for (unsigned fail_at = 1; fail_at <= 2; ++fail_at) {
+        for (unsigned timeout = 0; timeout < 2; ++timeout) {
+            scan_panel_t panel = {0};
+            repair_failure_t failure = {.error = timeout ? ESP_ERR_TIMEOUT : ESP_FAIL};
+            esp_display_present_backend_config_t cfg = config(&panel, 2, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION);
+            cfg.copy_execute = repair_copy;
+            cfg.copy_user = &failure;
+            present_backend_t *backend;
+            OK(ops->create(&cfg, &backend));
+            finish(backend, &panel, full(backend, 0x1234));
+            esp_display_present_frame_t frame = begin(backend);
+            write_rect(backend, frame, (esp_display_present_rect_t) {
+                1, 1, 2, 2
+            }, 0xabcd);
+            failure.remaining = fail_at;
+            esp_display_present_receipt_t receipt;
+            assert(ops->end(backend, frame, &receipt) == failure.error);
+            assert(!panel.cookie); /* Rejected seal must not publish a damaged frame. */
+            OK(ops->end(backend, frame, &receipt));
+            OK(present_fb_backend.service(backend));
+            finish(backend, &panel, receipt);
+            for (unsigned y = 0; y < 4; ++y) {
+                for (unsigned x = 0; x < 4; ++x) {
+                    uint16_t value;
+                    memcpy(&value, (uint8_t *)panel.current.pixels + (y * 4 + x) * 2, 2);
+                    assert(value == (x >= 1 && x < 3 && y >= 1 && y < 3 ? 0xabcd : 0x1234));
+                }
+            }
+            OK(ops->stop(backend, UINT32_MAX));
+            OK(ops->destroy(backend));
+        }
+    }
+}
+
 int main(void)
 {
+    synchronous_repair_retry();
     direct_full_redraw_skips_prefill();
     independent_tiles();
     for (size_t buffers = 2; buffers <= 3; ++buffers) {

@@ -415,13 +415,8 @@ bool present_image_next_repair(present_image_builder_t *builder, esp_display_pre
                     row_uncovered(builder, y + rows, x, span_w)) {
                 rows++;
             }
-            uint32_t next_rx = (end - a.x);
-            uint32_t next_ry = ry;
-            if (next_rx >= a.width) {
-                next_rx = 0;
-                next_ry = (rx == 0) ? (ry + rows) : (ry + 1);
-            }
-            builder->offset = (size_t)next_ry * a.width + next_rx;
+            /* Peek only: an executor rejection must leave this span retryable.
+             * mark_repaired commits coverage and advances after acceptance. */
             *out = (esp_display_present_rect_t) {
                 x, y, span_w, rows
             };
@@ -438,6 +433,14 @@ esp_err_t present_image_mark_repaired(present_image_builder_t *builder, const es
     esp_err_t error = cover_exact(builder, *area);
     if (error == ESP_OK) {
         builder->repaired_pixels += (size_t)area->width * area->height;
+        esp_display_present_rect_t repair = builder->repair.areas[builder->rect];
+        uint32_t rx = area->x - repair.x, ry = area->y - repair.y;
+        uint32_t next_rx = rx + area->width, next_ry = ry;
+        if (next_rx >= repair.width) {
+            next_rx = 0;
+            next_ry = rx == 0 ? ry + area->height : ry + 1;
+        }
+        builder->offset = (size_t)next_ry * repair.width + next_rx;
     }
     return error;
 }

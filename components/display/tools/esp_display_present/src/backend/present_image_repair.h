@@ -47,6 +47,8 @@ esp_err_t present_image_cover(present_image_builder_t *, esp_display_present_rec
 esp_err_t present_image_seed(present_image_builder_t *, esp_display_present_rect_t);
 bool present_image_full(const present_image_builder_t *);
 void present_image_prepare_repair(present_image_builder_t *, bool defensive_direct);
+/* Peek a span; only mark_repaired after successful synchronous copy or accepted
+ * async submission. Rejection leaves the same span available for retry. */
 bool present_image_next_repair(present_image_builder_t *, esp_display_present_rect_t *);
 esp_err_t present_image_mark_repaired(present_image_builder_t *, const esp_display_present_rect_t *);
 esp_err_t present_image_commit(present_image_builder_t *);

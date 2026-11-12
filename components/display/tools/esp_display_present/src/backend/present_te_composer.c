@@ -326,7 +326,7 @@ esp_err_t present_te_composer_seal(present_te_composer_t *composer, present_te_f
         esp_display_present_rect_t area;
         while (present_image_next_repair(&composer->image, &area)) {
             esp_err_t error = copy(composer, job, &source, &area, area.x, area.y);
-            if (error == ESP_OK || error == ESP_ERR_TIMEOUT) {
+            if (error == ESP_OK || (error == ESP_ERR_TIMEOUT && composer->repair.value)) {
                 present_image_mark_repaired(&composer->image, &area);
             }
             if (error != ESP_OK) {

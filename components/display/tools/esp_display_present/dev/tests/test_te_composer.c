@@ -4,6 +4,7 @@
  */
 #include "../../src/backend/present_te_composer.h"
 #include <assert.h>
+#include "pixel/present_pixel_ops.h"
 #include <stdio.h>
 #include <string.h>
 #define OK(x) assert((x) == ESP_OK)
@@ -121,8 +122,71 @@ static void coverage(void)
     cfg.width = cfg.height = UINT32_MAX;
     assert(present_te_composer_create(&cfg, &c) == ESP_ERR_INVALID_ARG && c == NULL);
 }
+
+typedef struct {
+    unsigned remaining;
+    esp_err_t error;
+} repair_failure_t;
+static esp_err_t repair_copy(void *user, const esp_display_present_copy_request_t *request)
+{
+    repair_failure_t *failure = user;
+    if (failure->remaining && --failure->remaining == 0) {
+        return failure->error;
+    }
+    return esp_display_present_pixel_execute_cpu(request);
+}
+
+static void synchronous_repair_retry(void)
+{
+    for (unsigned fail_at = 1; fail_at <= 2; ++fail_at) {
+        for (unsigned timeout = 0; timeout < 2; ++timeout) {
+            repair_failure_t failure = {.error = timeout ? ESP_ERR_TIMEOUT : ESP_FAIL};
+            present_te_composer_config_t cfg = {.width = 4, .height = 4, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+                                                .pixel = {.max_jobs = 1, .execute = repair_copy, .execute_user = &failure}
+                                               };
+            present_te_composer_t *composer;
+            OK(present_te_composer_create(&cfg, &composer));
+            uint16_t pixels[16];
+            for (unsigned i = 0; i < 16; ++i) {
+                pixels[i] = 0x1234;
+            }
+            esp_display_present_source_t source = {pixels, sizeof(pixels), {4, 4, 8, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}}, output;
+            esp_display_present_rect_t area = {0, 0, 4, 4};
+            present_te_frame_t frame;
+            OK(present_te_composer_begin(composer, &frame));
+            OK(present_te_composer_write(composer, frame, &source, &area, 0, 0));
+            OK(present_te_composer_seal(composer, frame));
+            OK(present_te_composer_pin(composer, frame, &output));
+            OK(present_te_composer_complete(composer, frame, ESP_OK));
+            OK(present_te_composer_begin(composer, &frame));
+            for (unsigned i = 0; i < 16; ++i) {
+                pixels[i] = 0xabcd;
+            }
+            area = (esp_display_present_rect_t) {
+                0, 0, 2, 2
+            };
+            OK(present_te_composer_write(composer, frame, &source, &area, 1, 1));
+            failure.remaining = fail_at;
+            assert(present_te_composer_seal(composer, frame) == failure.error);
+            assert(present_te_composer_pin(composer, frame, &output) == ESP_ERR_INVALID_STATE);
+            OK(present_te_composer_seal(composer, frame));
+            OK(present_te_composer_pin(composer, frame, &output));
+            for (unsigned y = 0; y < 4; ++y) {
+                for (unsigned x = 0; x < 4; ++x) {
+                    uint16_t value;
+                    memcpy(&value, (uint8_t *)output.pixels + (y * 4 + x) * 2, 2);
+                    assert(value == (x >= 1 && x < 3 && y >= 1 && y < 3 ? 0xabcd : 0x1234));
+                }
+            }
+            OK(present_te_composer_complete(composer, frame, ESP_OK));
+            OK(present_te_composer_destroy(composer));
+        }
+    }
+}
+
 int main(void)
 {
+    synchronous_repair_retry();
     coverage();
     exercise(ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE);
     exercise(ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_SWAPPED);
