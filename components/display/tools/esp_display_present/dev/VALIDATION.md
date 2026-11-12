@@ -12,10 +12,20 @@ They are not a fresh hardware run of this MR's later cleanup commits.
 | LVGL 9.5 binding / ASan+UBSan | 48/48 / 48/48 |
 | Clean-branch Host and repository hooks | 44/44; hooks passed |
 | P4 / S31 smoke, local IDF `80c8922480b5` | Compiled, not flashed |
-| S3 smoke | SDK configuration blocked before present compilation: esp_privilege requires riscv on Xtensa |
+| Exact IDF v6.0 S3 / P4 smoke | Compiled, not flashed; P4 uses CPU fallback, DSI adapter unavailable on this SDK |
+| Public P4 `lvgl_present_benchmark`, IDF v6.0 | Dependency resolution and build passed in isolated copy; not flashed, no DSI runtime support claim |
+| P4 smoke, local IDF `80c8922480b5`, after SDK API detection | Compiled with both accelerators and DPI callback support enabled; not flashed |
 
-Minimum IDF 6.0 and the full public example dependency/build path were not
-separately validated. Host and smoke checks do not establish optical tear freedom.
+The minimum SDK compile check uses exact IDF v6.0 sources/submodule revisions,
+not an arbitrary local 6.x development checkout. See [compatibility](../COMPATIBILITY.md):
+CPU/core availability does not imply optional accelerator or DSI adapter availability.
+Host and smoke checks do not establish optical tear freedom.
+
+GitLab CI runs Host tests with and without ASan/UBSan, plus the LVGL 9.5.0 binding
+in both variants. LVGL is pinned to commit
+`85aa60d18b3d5e5588d7b247abf90198f07c8a63`. Smoke build jobs use the maintained
+`dev/test_apps/smoke` entry on S3/P4, with IDF 6.0/6.1/latest. CI configuration
+validation and local checks are not a claim that remote jobs have passed.
 
 ## Recorded hardware coverage
 
@@ -54,11 +64,14 @@ configurations are listed separately; SPI GRAM permits tearing.
 [Full five-board report, JSON/CSV, diagnostic details and history index](https://gitlab.espressif.cn:6688/-/project/274/uploads/3d4d3f108b6592ebdddc269ffa0ab5b4/present-five-board-results-20261111.tar.gz)
 (352656 bytes; SHA-256 `27af070a4fadfd2a1ef90adb1c4456b6966485b43d951edf79fb18682796235f`).
 
-After extracting the attachment to `/path/to/results`, run from this component:
+Download [the matching report tools](https://gitlab.espressif.cn:6688/-/project/274/uploads/76639e147d43ba6eaa4aa187f650154a/present-report-tools-and-legacy-probe.tar.gz) and extract them to
+`/path/to/tools`. SHA-256: `a918656f17e01d076c424c8802cf0560ba43bac21057cd27a13e5cc76c95dde4`.
+The bundle also retains the old hardware overlay generator as historical source;
+its old anchors/configuration are not claimed to work against current code.
 
 ```sh
-python3 dev/tools/build_latest_dashboard.py --snapshot /path/to/results/report/matrix-data.json --output /tmp/display-latest/matrix-data.json
-python3 dev/tools/render_comparison.py --data /tmp/display-latest/matrix-data.json --output /tmp/display-latest/comparison.html
+python3 /path/to/tools/report-tools/build_latest_dashboard.py --snapshot /path/to/results/report/matrix-data.json --output /tmp/display-latest/matrix-data.json
+python3 /path/to/tools/report-tools/render_comparison.py --data /tmp/display-latest/matrix-data.json --output /tmp/display-latest/comparison.html
 ```
 
 The export requires the downloaded snapshot explicitly; it does not rely on an

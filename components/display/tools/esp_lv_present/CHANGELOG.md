@@ -1,10 +1,11 @@
-## Unreleased — V2 default implementation
-
-- Keep the existing public API and component name; route through V2.
-- Remove the superseded V1 implementation and private-source dependencies.
-- See `../esp_display_present_v2/DEFAULT_SWITCH.md` for scope and validation.
-
 # Changelog
+
+## 0.2.0 — Unreleased
+
+- Bind to esp_display_present 2.x and the single presentation engine.
+- Preserve the binding entry points while requiring the present 2.x ownership
+  and scanout policies. Do not resolve this release against present 1.x.
+- See the sibling component's COMPATIBILITY.md for the source migration boundary.
 
 ## 0.1.2 - 2026-10-09
 

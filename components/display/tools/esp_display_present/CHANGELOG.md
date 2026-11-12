@@ -1,4 +1,12 @@
-## Unreleased — unified presentation engine
+# Changelog
+
+## 2.0.0 — Unreleased
+
+- Declare the public geometry/scanout compatibility break explicitly; see
+  `COMPATIBILITY.md` before upgrading from 1.x.
+- Detect optional SDK acceleration/DPI callback APIs during configuration;
+  unavailable executors use the existing CPU fallback, while unavailable DSI
+  scanout returns `ESP_ERR_NOT_SUPPORTED` rather than reinterpreting refresh events.
 
 - Fix fault classification at the presenter facade: only an original
   `ESP_ERR_TIMEOUT` is reported as `ESP_DISPLAY_PRESENT_FAULT_TRANSFER_TIMEOUT`.
@@ -17,9 +25,7 @@
 - Move the former public geometry interfaces to internal headers; consumers of
   those interfaces require migration.
 - See `COMPATIBILITY.md`, `docs/MODE_ARCHITECTURE.md` and `MIGRATION_STATUS.md`
-  for current contracts. Historical migration records are under `dev/history/`.
-
-# Changelog
+  for current contracts. Historical migration records and report tools are external attachments linked in `dev/ARCHIVE.md`.
 
 ## 1.2.0 - 2026-10-27
 

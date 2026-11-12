@@ -92,6 +92,8 @@
   - "examples/elf_loader/**/*"
   - ".gitlab/ci/pre_check.yml"
   - ".gitlab/ci/rules.yml"
+  - ".gitlab/ci/build.yml"
+  - ".gitlab-ci.yml"
 
 .patterns-components_esp_flux: &patterns-components_esp_flux
   - "components/esp_flux/**/*"
@@ -206,6 +208,12 @@
 
 .patterns-components_display_lcd_touch_esp_lcd_touch_st77926: &patterns-components_display_lcd_touch_esp_lcd_touch_st77926
   - "components/display/lcd_touch/esp_lcd_touch_st77926/**/*"
+
+.patterns-display_present_host: &patterns-display_present_host
+  - "components/display/tools/esp_display_present/**/*"
+  - "components/display/tools/esp_lv_present/**/*"
+  - ".gitlab/ci/pre_check.yml"
+  - ".gitlab/ci/rules.yml"
 
 .patterns-components_display_tools_esp_display_present: &patterns-components_display_tools_esp_display_present
   - "components/display/tools/esp_display_present/**/*"
@@ -4186,3 +4194,11 @@
       changes: *patterns-build_system
     - <<: *if-dev-push
       changes: *patterns-yml
+
+.rules:pre_check:display_present_host:
+  rules:
+    - <<: *if-protected
+    - <<: *if-label-pre_check
+    - <<: *if-trigger-job
+    - <<: *if-dev-push
+      changes: *patterns-display_present_host

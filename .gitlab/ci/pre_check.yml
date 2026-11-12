@@ -94,3 +94,39 @@ check_readme_links:
   allow_failure: true
   script:
     - python ${CI_PROJECT_DIR}/tools/ci/check_readme_links.py
+
+.present_host_template:
+  extends:
+    - .pre_check_template
+    - .rules:pre_check:display_present_host
+  image: espressif/idf:release-v6.0
+  parallel:
+    matrix:
+      - PRESENT_HOST_SANITIZE: ["OFF", "ON"]
+  variables:
+    PRESENT_TEST_WORK_ROOT: "$CI_PROJECT_DIR/.ci-build/present-host"
+  script:
+    - |
+      set -eu
+      component="$CI_PROJECT_DIR/components/display/tools/esp_display_present"
+      if [ "$PRESENT_HOST_SANITIZE" = ON ]; then
+        python3 "$component/dev/tools/dev.py" test --sanitize $PRESENT_HOST_LVGL_ARGS
+      else
+        python3 "$component/dev/tools/dev.py" test $PRESENT_HOST_LVGL_ARGS
+      fi
+
+check_display_present_host:
+  extends: .present_host_template
+  tags: ["build"]
+  variables:
+    PRESENT_HOST_LVGL_ARGS: ""
+
+check_display_present_lvgl_host:
+  extends: .present_host_template
+  tags: ["build", "internet"]
+  variables:
+    PRESENT_HOST_LVGL_ARGS: "--lvgl-dir .ci-build/lvgl"
+  before_script:
+    - mkdir -p .ci-build
+    - git clone --depth 1 --branch v9.5.0 https://github.com/lvgl/lvgl.git .ci-build/lvgl
+    - test "$(git -C .ci-build/lvgl rev-parse HEAD)" = "85aa60d18b3d5e5588d7b247abf90198f07c8a63"

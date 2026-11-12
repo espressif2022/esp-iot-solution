@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "main/boundary_trace.h"
+#include "boundary_trace.h"
 #include <pthread.h>
 #include <assert.h>
 #include <stdio.h>

@@ -613,8 +613,8 @@ def main():
     elif args.action == 'list':
         print(json.dumps(dict(boards=BOARDS, suites=SUITES,
              specialist_tools={'host': 'dev/tools/dev.py test --sanitize --with-lvgl',
-                               'legacy': 'dev/test_apps/legacy_compat/README.md',
-                               'scanout-boundary': 'dev/test_apps/scanout_boundary/README.md'}), ensure_ascii=False, indent=2))
+                               'boundary-trace-host': 'dev/tests/boundary_trace/README.md',
+                               'rgb-handoff': 'dev/test_apps/rgb_handoff/README.md'}), ensure_ascii=False, indent=2))
     elif args.action == 'prepare':
         prepare(args)
     elif args.action in ('backup', 'flash', 'restore'):

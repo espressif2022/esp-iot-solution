@@ -48,8 +48,8 @@ target_compile_options(header_smoke PRIVATE -Wall -Wextra -Werror)
 add_test(NAME headers_cpp COMMAND header_smoke)
 
 # Test-only driver-boundary recorder and trace checker. No production hooks.
-add_executable(test_boundary_trace test_apps/scanout_boundary/main/boundary_trace.c
-    test_apps/scanout_boundary/test_trace.c)
+add_executable(test_boundary_trace tests/boundary_trace/boundary_trace.c
+    tests/boundary_trace/test_trace.c)
 target_compile_definitions(test_boundary_trace PRIVATE BOUNDARY_HOST=1)
 target_compile_options(test_boundary_trace PRIVATE -Wall -Wextra -Werror -UNDEBUG)
 target_link_libraries(test_boundary_trace PRIVATE present_engine)
@@ -58,7 +58,7 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter)
 add_test(NAME scanout_retirement_contract COMMAND ${Python3_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_scanout_retirement_contract.py)
 add_test(NAME boundary_analyze COMMAND ${Python3_EXECUTABLE}
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_apps/scanout_boundary/test_analyze.py)
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/boundary_trace/test_analyze.py)
 
 set(PRESENT_LVGL_DIR "" CACHE PATH "Optional existing LVGL 9 source directory")
 if(PRESENT_LVGL_DIR)
@@ -132,7 +132,7 @@ foreach(variant cpu ppa dma2d both ppa_mb16)
     set_tests_properties(executor_${variant} PROPERTIES TIMEOUT 15)
 endforeach()
 
-# Private V1-facade resource aggregate; the original component stays default.
+# Public-facade/resource regressions linked against the same engine.
 add_executable(test_legacy_resources tests/test_legacy_resources.c)
 target_compile_options(test_legacy_resources PRIVATE -Wall -Wextra -Werror -UNDEBUG)
 target_include_directories(test_legacy_resources PRIVATE ../include)
@@ -141,7 +141,7 @@ target_link_options(test_legacy_resources PRIVATE -Wl,--wrap=present_alloc_pixel
 add_test(NAME legacy_resources COMMAND test_legacy_resources)
 set_tests_properties(legacy_resources PROPERTIES TIMEOUT 15)
 
-# Opt-in V1 symbols live outside the core: benchmarks may still link V1+V2.
+# Keep facade/resource test link units separate from the internal engine.
 add_library(present_legacy_resources STATIC ${PRESENT_RESOURCE_SOURCES})
 target_include_directories(present_legacy_resources PUBLIC ../include
     PRIVATE ../src)

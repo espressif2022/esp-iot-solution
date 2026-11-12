@@ -42,15 +42,9 @@ are isolated diagnostics, never clean-driver performance evidence.
 [The validation summary and report attachment](VALIDATION.md) records tested
 versions from 2026-11-11. Later code edits are not automatically board-tested.
 
-```sh
-python3 dev/tools/build_latest_dashboard.py --snapshot /path/to/results/report/matrix-data.json --output /tmp/display-latest/matrix-data.json
-python3 dev/tools/render_comparison.py --data /tmp/display-latest/matrix-data.json --output /tmp/display-latest/comparison.html
-```
-
-Download and extract the report attachment before exporting the snapshot.
-The snapshot contains scene, memory and handoff observations; firmware build
-folders and boards are unnecessary for rendering. Raw provenance
-and experiments are listed in [the archive index](ARCHIVE.md).
+Download both attachments and use the explicit paths in [VALIDATION.md](VALIDATION.md).
+Report rendering/measurement postprocessing tools are not part of the component
+source or Host test dependencies.
 
 Board driver dependencies are prepared from the configured local component cache
 into the external work directory by `run.py prepare`; dependency source copies
@@ -58,3 +52,19 @@ are not part of this candidate. Standalone board projects can use
 `boards/prepare_deps.py --help` and pass `PRESENT_DEPS_DIR` to CMake.
 The historical standalone legacy-compat preparation scripts are excluded; the
 maintained Host facade/resources regressions remain in `tests/`.
+
+## Test entry points
+
+| Entry | Responsibility | Not a claim of |
+|---|---|---|
+| Host `tests/` | Engine/backend/resource/lease/rotation and negative regressions | Optical behavior |
+| `smoke` | Real IDF API/link integration with a loopback fixture | Real panel behavior |
+| `boards` (`pixels` / `native`) | Public/native mode, rotation and output-pixel checks | LVGL throughput |
+| `benchmark` | Same LVGL scene workload, present/adapter bridges | Optical tear freedom |
+| `te_lifecycle` | Real TE/copy/lease/drain/rotation lifecycle | RGB retirement |
+| `rgb_events` | Driver-only callback order/latency characterization | Presenter ownership correctness |
+| `rgb_handoff` | Real presenter scanout, early completion, core/delay, close/reopen | Driver-internal last bus read or optical output |
+| Host boundary fixtures | Recorder and legacy trace-format negative cases | Current scanout protocol validation |
+
+Historical IDF/producer patch generators are attachments. Changing their anchors
+is not a prerequisite for normal builds or Host tests.

@@ -1,10 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
 # SPDX-License-Identifier: Apache-2.0
 import unittest
-import tempfile
-from pathlib import Path
-from prepare import patch
-import analyze as a
+import analyze_legacy_trace as a
 
 
 def trace(buffers=2, bounce=False):
@@ -106,19 +103,6 @@ class AnalyzeTest(unittest.TestCase):
         cases, complete = a.parse(text + 'BOUNDARY_END,synthetic\nBOUNDARY_SUITE_COMPLETE\n')
         self.assertTrue(complete)
         self.assertEqual(a.analyze_case(cases[0])['result'], 'TRACE_PASS')
-
-    def test_instrumentation_patch_fails_closed(self):
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / 'driver.c'
-            path.write_text('anchor anchor')
-            with self.assertRaises(RuntimeError):
-                patch(path, 'anchor', 'changed')
-            self.assertEqual(path.read_text(), 'anchor anchor')
-            with self.assertRaises(RuntimeError):
-                patch(path, 'missing', 'changed')
-            self.assertEqual(path.read_text(), 'anchor anchor')
-            patch(path, 'anchor anchor', 'instrumented')
-            self.assertEqual(path.read_text(), 'instrumented')
 
     def test_raw_insufficient_evidence(self):
         case = trace()

@@ -4,7 +4,7 @@ dependencies:
   espressif/esp-gsp:
     version: "1.5.*"
   espressif/esp_display_present:
-    version: "^1.1.1"
+    version: "^2.0.0"
     override_path: "../../../../../components/display/tools/esp_display_present"
   hw_init:
     path: "../../common/hw_init"
