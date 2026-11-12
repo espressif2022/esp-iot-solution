@@ -95,8 +95,8 @@ See the component README:
 The LVGL benchmark example lives in
 ``examples/display/gui/lvgl_present_benchmark``. The GSP/LVGL ownership
 handoff example lives in ``examples/display/gui/gsp_lvgl_present_handoff``.
-The Unity test app lives in
-``components/display/tools/esp_display_present/test_apps``.
+The compile/loopback smoke fixture lives in
+``components/display/tools/esp_display_present/dev/test_apps/smoke``.
 
 API Reference
 -------------
@@ -104,4 +104,3 @@ API Reference
 .. include-build-file:: inc/esp_display_present.inc
 .. include-build-file:: inc/esp_display_present_config.inc
 .. include-build-file:: inc/esp_display_present_types.inc
-.. include-build-file:: inc/esp_display_present_geometry.inc

@@ -10,8 +10,8 @@ target_compile_features(${COMPONENT_LIB} PRIVATE c_std_11)
 
 # Optional accelerators depend on private SDK APIs, not only SoC capability.
 # Older supported SDKs keep CPU execution; never guess encrypted-buffer alignment.
-set(_present_dma_header "$ENV{IDF_PATH}/components/esp_driver_dma/include/esp_private/dma2d.h")
-set(_present_async_header "$ENV{IDF_PATH}/components/esp_driver_dma/include/esp_private/async_memcpy_dma2d.h")
+set(_present_dma_header "${IDF_PATH}/components/esp_driver_dma/include/esp_private/dma2d.h")
+set(_present_async_header "${IDF_PATH}/components/esp_driver_dma/include/esp_private/async_memcpy_dma2d.h")
 set(_present_alignment_api 0)
 if(EXISTS "${_present_dma_header}")
     file(READ "${_present_dma_header}" _present_dma_declarations)
@@ -29,7 +29,7 @@ target_compile_definitions(${COMPONENT_LIB} PRIVATE
 
 # Older DPI drivers expose refresh_done only. It is not a retirement event;
 # do not substitute it for frame_buf_complete and silently weaken ownership.
-set(_present_dsi_header "$ENV{IDF_PATH}/components/esp_lcd/dsi/include/esp_lcd_mipi_dsi.h")
+set(_present_dsi_header "${IDF_PATH}/components/esp_lcd/dsi/include/esp_lcd_mipi_dsi.h")
 set(_present_dsi_scanout_api 0)
 if(EXISTS "${_present_dsi_header}")
     file(READ "${_present_dsi_header}" _present_dsi_declarations)
@@ -40,3 +40,10 @@ if(EXISTS "${_present_dsi_header}")
 endif()
 target_compile_definitions(${COMPONENT_LIB} PRIVATE
     PRESENT_IDF_DSI_SCANOUT_API=${_present_dsi_scanout_api})
+
+# Re-evaluate capabilities when SDK private/public declarations change in place.
+foreach(_present_sdk_header IN ITEMS "${_present_dma_header}" "${_present_async_header}" "${_present_dsi_header}")
+    if(EXISTS "${_present_sdk_header}")
+        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${_present_sdk_header}")
+    endif()
+endforeach()

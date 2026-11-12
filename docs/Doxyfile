@@ -65,7 +65,6 @@ INPUT = \
     $(PROJECT_PATH)/components/display/tools/esp_display_present/include/esp_display_present.h \
     $(PROJECT_PATH)/components/display/tools/esp_display_present/include/esp_display_present_config.h \
     $(PROJECT_PATH)/components/display/tools/esp_display_present/include/esp_display_present_types.h \
-    $(PROJECT_PATH)/components/display/tools/esp_display_present/include/esp_display_present_geometry.h \
     $(PROJECT_PATH)/components/display/tools/esp_lv_decoder/include/esp_lv_decoder.h \
     $(PROJECT_PATH)/components/display/tools/esp_lv_fs/include/esp_lv_fs.h \
     $(PROJECT_PATH)/components/display/tools/esp_lv_present/include/esp_lv_present.h \

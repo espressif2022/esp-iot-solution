@@ -85,7 +85,7 @@ FULL         重绘完整逻辑表面
 
 LVGL benchmark example 位于 ``examples/display/gui/lvgl_present_benchmark``。
 GSP/LVGL 所有权切换 example 位于 ``examples/display/gui/gsp_lvgl_present_handoff``。
-Unity test app 位于 ``components/display/tools/esp_display_present/test_apps``。
+编译/loopback smoke 工程位于 ``components/display/tools/esp_display_present/dev/test_apps/smoke``。
 
 API 参考
 --------
@@ -93,4 +93,3 @@ API 参考
 .. include-build-file:: inc/esp_display_present.inc
 .. include-build-file:: inc/esp_display_present_config.inc
 .. include-build-file:: inc/esp_display_present_types.inc
-.. include-build-file:: inc/esp_display_present_geometry.inc
