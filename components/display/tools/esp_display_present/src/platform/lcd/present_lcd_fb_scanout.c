@@ -78,6 +78,7 @@ static bool PRESENT_ISR_ATTR dispatch_completion(esp_display_present_lcd_fb_scan
     return need_yield;
 }
 
+#if PRESENT_DSI_SUPPORTED || PRESENT_RGB_SUPPORTED
 static bool PRESENT_ISR_ATTR frame_boundary(esp_display_present_lcd_fb_scanout_t *scanout, bool from_isr)
 {
     /* IDF unregister updates callback and user_ctx separately. An ISR that
@@ -124,6 +125,7 @@ static bool PRESENT_ISR_ATTR vsync(esp_display_present_lcd_fb_scanout_t *scanout
     present_lock_exit(&scanout->lock, true);
     return yield;
 }
+#endif
 #if PRESENT_DSI_SUPPORTED
 static bool PRESENT_ISR_ATTR dsi_vsync(esp_lcd_panel_handle_t panel, esp_lcd_dpi_panel_event_data_t *data, void *user)
 {
