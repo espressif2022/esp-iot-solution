@@ -1163,6 +1163,21 @@ static void te_compatibility(void)
         free_panel(&panel);
     }
 }
+/* Rotation/pixel correctness is independent of a host thread winning a 1 ms
+ * scheduling race. Keep per-call timeout coverage below, but bound successful
+ * admission retries separately. Unexpected errors must never be retried. */
+static esp_err_t begin_rotation_frame(esp_display_presenter_t *presenter, size_t *count, bool *full)
+{
+    uint64_t start = present_now_ms();
+    for (;;) {
+        esp_err_t error = esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, count, full);
+        if (error != ESP_ERR_TIMEOUT || present_expired(start, 1000)) {
+            return error;
+        }
+        present_pause();
+    }
+}
+
 static void rotation_reference(void)
 {
     const esp_display_present_rotation_t rotations[] = {0, 90, 180, 270};
@@ -1195,7 +1210,7 @@ static void rotation_reference(void)
             assert(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full) == ESP_ERR_TIMEOUT);
             boundary(&panel);
             boundary(&panel);
-            OK(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full));
+            OK(begin_rotation_frame(presenter, &count, &full));
             assert(full && !count);
             esp_display_presenter_buffer_t buffer;
             OK(esp_display_presenter_acquire_buffer(presenter, &buffer));
@@ -1256,7 +1271,7 @@ static void rotation_reference(void)
             esp_display_presenter_caps_t rotated_caps;
             OK(esp_display_presenter_get_caps(presenter, &rotated_caps));
             assert(rotated_caps.width == 4 && rotated_caps.height == 8);
-            OK(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full));
+            OK(begin_rotation_frame(presenter, &count, &full));
             assert(full && !count);
             OK(esp_display_presenter_acquire_buffer(presenter, &buffer));
             assert(buffer.surface.width == 4 && buffer.surface.height == 8);
@@ -1290,7 +1305,7 @@ static void rotation_reference(void)
             assert(caps.width == 8 && caps.height == 4);
             OK(esp_display_presenter_get_frame_status(presenter, &unchanged));
             assert(unchanged.generation == status.generation + 2);
-            OK(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full));
+            OK(begin_rotation_frame(presenter, &count, &full));
             assert(full && !count);
             OK(esp_display_presenter_acquire_buffer(presenter, &buffer));
             memset(expected, 0, sizeof(expected));
@@ -1855,7 +1870,10 @@ static void gram_exhaustion_and_stop(void)
                 init_panel(&panel);
                 esp_display_presenter_config_t cfg = io_config(&panel);
                 cfg.target.drawbuf.buffers = tiles;
-                cfg.pipeline_acquire_timeout_ms = transfer_fault ? 200 : 5;
+                /* The rendezvous requires acquire to reach its event wait before
+                 * STOP starts. 5 ms may expire during sanitizer scheduling;
+                 * short timeout behavior is covered by the non-concurrent case. */
+                cfg.pipeline_acquire_timeout_ms = transfer_fault || concurrent_stop ? 200 : 5;
                 cfg.transfer_timeout_ms = transfer_fault ? 20 : 60000;
                 esp_display_presenter_t *presenter;
                 OK(esp_display_presenter_create(&cfg, &presenter));
