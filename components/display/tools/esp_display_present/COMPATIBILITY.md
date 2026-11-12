@@ -12,7 +12,7 @@
 当前行为以 [模式与缓冲合同](docs/MODE_ARCHITECTURE.md)、
 [TE 时序](docs/TE_TIMING.md) 和 [生命周期规则](STATE_MACHINE.md) 为准。
 构建/测试入口见 [开发说明](dev/README.md)，板测来源见
-[最新五板记录](dev/evidence/display-latest-20261111/README.md)。
+[最新五板记录](dev/VALIDATION.md)。
 
 迁移阶段的 C1/C2、旧目录布局、旧默认模式和阶段性缺口保存在
 [历史兼容记录 (archive)](dev/ARCHIVE.md)，不作为当前 API 清单。

@@ -39,16 +39,17 @@ are isolated diagnostics, never clean-driver performance evidence.
 
 ## Offline report
 
-[The five-board report](evidence/display-latest-20261111/README.md) records tested
+[The validation summary and report attachment](VALIDATION.md) records tested
 versions from 2026-11-11. Later code edits are not automatically board-tested.
 
 ```sh
-python3 dev/tools/build_latest_dashboard.py --output /tmp/display-latest/matrix-data.json
+python3 dev/tools/build_latest_dashboard.py --snapshot /path/to/results/report/matrix-data.json --output /tmp/display-latest/matrix-data.json
 python3 dev/tools/render_comparison.py --data /tmp/display-latest/matrix-data.json --output /tmp/display-latest/comparison.html
 ```
 
-The final snapshot contains scene, memory and handoff observations; historical
-logs, build folders and boards are unnecessary for rendering. Raw provenance
+Download and extract the report attachment before exporting the snapshot.
+The snapshot contains scene, memory and handoff observations; firmware build
+folders and boards are unnecessary for rendering. Raw provenance
 and experiments are listed in [the archive index](ARCHIVE.md).
 
 Board driver dependencies are prepared from the configured local component cache

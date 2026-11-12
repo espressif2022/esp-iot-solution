@@ -5,12 +5,9 @@ import argparse
 import json
 from pathlib import Path
 
-DEFAULT = Path(__file__).resolve().parents[1] / 'evidence/display-latest-20261111/matrix-data.json'
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--snapshot', type=Path, default=DEFAULT)
+    parser.add_argument('--snapshot', type=Path, required=True, help='Downloaded report/matrix-data.json')
     parser.add_argument('--accounting', type=Path, help='Optional measured whole-image SRAM accounts')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()

@@ -1,18 +1,14 @@
-# Historical development material
+# Evidence outside the source diff
 
-The PR candidate keeps production sources, maintainable tests, board defaults and
-one self-contained five-board dataset. Historical logs, complete sdkconfig files,
-source snapshots, driver observer copies, experiments and dated reports are
-excluded. Original paths, sizes and SHA-256 are in [archive-index.json](archive-index.json).
+Generated reports and historical file inventories are attachments, not test code.
+[The verified report bundle](https://gitlab.espressif.cn:6688/-/project/274/uploads/3d4d3f108b6592ebdddc269ffa0ab5b4/present-five-board-results-20261111.tar.gz) includes the final webpage, full JSON/CSV,
+memory and address details, the previous detailed MR text and `history/archive-index.json`.
+Its SHA-256 and reproduction commands are in [VALIDATION.md](VALIDATION.md).
 
-The original checkout still holds this material. Before submitting the PR, store a
-snapshot in project-approved persistent storage and add its accessible URL and
-archive hash here. A local filesystem path is not a shared artifact URL.
+The approximately 90 MB development snapshot remains in the independently
+verified offline backup. GitLab rejected that upload with HTTP 413; a shared raw
+snapshot URL is still pending. The attachment's file inventory is provenance,
+not a claim that every original raw file is available for remote download.
 
-Historical paths in final source-index.json and measurement records refer to that
-snapshot; they are not rewritten to suggest current code was retested.
-[The final report](evidence/display-latest-20261111/README.md) can be rendered without
-historical logs or a firmware build. No test measurement is changed by this cleanup.
-
-Unreleased SDK capability-query patches are historical material in the external
-snapshot, not a production dependency or part of this PR.
+Historical paths in measurements refer to that snapshot, not the current checkout.
+SDK diagnostic extensions remain historical material, not a production dependency.

@@ -14,6 +14,6 @@ production dependency.
 
 See [compatibility](COMPATIBILITY.md), [modes](docs/MODE_ARCHITECTURE.md),
 [state machines](STATE_MACHINE.md) and [development](dev/README.md).
-[Recorded board results](dev/evidence/display-latest-20261111/README.md) retain
+[Recorded board results](dev/VALIDATION.md) retain
 source/configuration provenance and reuse notes. [History](dev/ARCHIVE.md) is
 external. Cleanup does not imply Registry publication or external compatibility.
