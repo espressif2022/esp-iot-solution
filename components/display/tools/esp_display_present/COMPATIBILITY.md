@@ -17,3 +17,35 @@
 迁移阶段的 C1/C2、旧目录布局、旧默认模式和阶段性缺口保存在
 [历史兼容记录 (archive)](dev/ARCHIVE.md)，不作为当前 API 清单。
 源码迁移不代表 Registry 发布或全部外部应用兼容性已经验收。
+
+## 2.0.0 候选的迁移边界
+
+本次不是 1.x 兼容更新：公开 geometry 头/helper/type 移入内部，RGB/MIPI NONE
+与单 FB 准入被删除，故声明为 2.0.0 候选；尚未发布 Registry 包。LVGL binding
+对应 0.2.0，并依赖 present ^2.0.0。仓库内直接依赖的示例同步约束。
+
+应用应只包含公开 `esp_display_present.h` / config / types；按当前公开区域和
+配置结构更新调用，不以包含 `src/` 代替迁移。原先单 FB/NONE 的 scanout 应配置
+至少两张驱动 FB 并使用支持的防撕裂模式；AUTO 不能再当作单 FB 兼容回退。
+GRAM NONE 与 TE 的边界保留。新增 TRANSFER_FAILED 不能继续按 TIMEOUT 处理，
+需要原始错误时使用 `esp_display_presenter_get_fault_error()`。
+
+本表说明不承诺 ABI 兼容；旧外部应用应重新编译并验证，不能仅替换组件二进制。
+
+## SDK capability and optional acceleration
+
+The minimum supported SDK remains ESP-IDF 6.0. PPA and DMA2D executors also
+require the SDK's private buffer-alignment API; DMA2D additionally requires the
+async memcpy DMA2D header. CMake checks these APIs instead of assuming their
+presence from SoC capabilities. Released IDF 6.0/6.1 lack these APIs: explicit
+accelerator creation returns `ESP_ERR_NOT_SUPPORTED`, and resources use the
+existing CPU executor fallback. No SDK patch is installed. Performance recorded
+with an SDK providing the acceleration APIs must not be attributed to older SDKs.
+
+DSI scanout additionally requires DPI `on_frame_buf_complete` and `on_vsync`
+callbacks. IDF 6.0 does not provide them: DSI scanout creation returns
+`ESP_ERR_NOT_SUPPORTED`. Its old `on_refresh_done` is not substituted for buffer
+retirement. Thus a successful 6.0 P4 compile validates core/CPU integration, not
+DSI scanout availability. The P4 DSI measurements use the newer SDK recorded with
+their evidence. RGB and IO support remain subject to their documented driver
+capabilities, independently of this DPI requirement.

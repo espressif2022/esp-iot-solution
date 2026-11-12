@@ -10,7 +10,7 @@
 #define PRESENT_PLUGIN_ENABLED PRESENT_HOST_PPA
 #else
 #include "soc/soc_caps.h"
-#define PRESENT_PLUGIN_ENABLED SOC_PPA_SUPPORTED
+#define PRESENT_PLUGIN_ENABLED (SOC_PPA_SUPPORTED && PRESENT_IDF_DMA2D_ALIGNMENT_API)
 #endif
 #if PRESENT_PLUGIN_ENABLED
 #include "pixel/executor/present_executor_hw.h"
