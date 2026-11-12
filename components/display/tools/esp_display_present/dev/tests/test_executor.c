@@ -463,12 +463,24 @@ static void verify_dma_retry_and_drain(esp_display_present_executor_t *executor)
     void *user = dma_pending_user;
     dma_deferred = false;
     pthread_mutex_unlock(&dma_lock);
-    assert(esp_display_present_pixel_stop(engine, 0) == ESP_ERR_TIMEOUT);
+    esp_display_present_copy_status_t status;
+    /* Withhold the driver's callback: deadlines may expire, ownership may not. */
+    for (unsigned i = 0; i < 3; ++i) {
+        assert(esp_display_present_pixel_wait(engine, ticket, 1, &status) == ESP_ERR_TIMEOUT);
+        assert(esp_display_present_pixel_cancel(engine, ticket, 1, &status) == ESP_ERR_TIMEOUT);
+        assert(esp_display_present_pixel_release(engine, ticket) == ESP_ERR_INVALID_STATE);
+        assert(esp_display_present_pixel_stop(engine, 1) == ESP_ERR_TIMEOUT);
+        assert(esp_display_present_pixel_query(engine, ticket, &status) == ESP_OK);
+        assert(status.state == ESP_DISPLAY_PRESENT_COPY_RUNNING);
+    }
     assert(dst[0] == 0xa5);
     paint(pending.src_buffer, pending.src_stride * 2, pending.dst_buffer, pending.dst_stride * 2,
           pending.src_x, pending.src_y, pending.copy_width, pending.copy_height,
           pending.dst_x, pending.dst_y, 0, 2, false);
-    callback(handle, NULL, user);
+    /* Even if pixels were written, missing notification still isn't completion. */
+    assert(esp_display_present_pixel_wait(engine, ticket, 1, &status) == ESP_ERR_TIMEOUT);
+    assert(esp_display_present_pixel_release(engine, ticket) == ESP_ERR_INVALID_STATE);
+    callback(handle, NULL, user); /* Late completion safely permits drain/release. */
     assert(esp_display_present_pixel_stop(engine, UINT32_MAX) == ESP_OK);
     assert(!memcmp(src, dst, 32));
     assert(esp_display_present_pixel_release(engine, ticket) == ESP_OK);
