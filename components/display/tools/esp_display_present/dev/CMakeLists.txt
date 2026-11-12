@@ -255,5 +255,6 @@ add_test(NAME pixel_ops_standalone COMMAND test_pixel_ops)
 set_tests_properties(pixel_ops_standalone PROPERTIES TIMEOUT 5)
 
 if(TARGET test_lvgl_zero)
-    target_link_options(test_lvgl_zero PRIVATE -Wl,--wrap=lv_draw_buf_create)
+    target_link_options(test_lvgl_zero PRIVATE -Wl,--wrap=lv_draw_buf_create
+        -Wl,--wrap=lv_draw_buf_destroy -Wl,--wrap=esp_display_present_engine_acquire_buffer)
 endif()

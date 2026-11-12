@@ -729,10 +729,11 @@ esp_err_t esp_lv_present_native_set_rotation(esp_lv_present_native_t *binding, e
     } else {
         error = borrow_refresh(binding);
         if (error != ESP_OK) {
+            /* LVGL may still reference the old owned descriptor. Keep it alive
+             * while faulted/paused; destroy releases it after display teardown.
+             * The engine already rotated, so this is not a successful rollback. */
+            binding->draw = old;
             fail_refresh(binding, error);
-            if (old) {
-                lv_draw_buf_destroy(old);
-            }
             return error;
         }
     }

@@ -20,6 +20,26 @@ lv_draw_buf_t *__wrap_lv_draw_buf_create(uint32_t width, uint32_t height, lv_col
     ++canvas_allocations;
     return __real_lv_draw_buf_create(width, height, format, stride);
 }
+static bool fail_acquire;
+static lv_draw_buf_t *watched_draw;
+static unsigned watched_destroyed;
+esp_err_t __real_esp_display_present_engine_acquire_buffer(esp_display_present_engine_t *, esp_display_present_lease_t *);
+esp_err_t __wrap_esp_display_present_engine_acquire_buffer(esp_display_present_engine_t *engine, esp_display_present_lease_t *lease)
+{
+    if (fail_acquire) {
+        fail_acquire = false;
+        return ESP_ERR_NO_MEM;
+    }
+    return __real_esp_display_present_engine_acquire_buffer(engine, lease);
+}
+void __real_lv_draw_buf_destroy(lv_draw_buf_t *draw);
+void __wrap_lv_draw_buf_destroy(lv_draw_buf_t *draw)
+{
+    if (draw == watched_draw) {
+        ++watched_destroyed;
+    }
+    __real_lv_draw_buf_destroy(draw);
+}
 #define W 8
 #define H 6
 static void exercise(bool timeout, esp_display_present_present_mode_t mode)
@@ -303,9 +323,48 @@ static void exercise_direct(unsigned rotation, bool async, bool swap)
     OK(esp_display_present_engine_destroy(p));
 }
 #endif
+
+#if LVGL_VERSION_MINOR >= 5
+static void rotation_borrow_failure(void)
+{
+    scan_panel_t panel = {.immediate = true};
+    esp_display_present_engine_config_t cfg = {.backend = {.width = W, .height = H, .buffer_count = 2, .max_frames = 4,
+                                                           .rotation = ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = scan_interface(&panel)
+                                                          },
+                                               .backend_kind = ESP_DISPLAY_PRESENT_ENGINE_FB, .mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT, .timeout_ms = 1000
+                                              };
+    esp_display_present_engine_t *engine;
+    OK(esp_display_present_engine_create(&cfg, &engine));
+    esp_lv_present_native_t *binding;
+    OK(esp_lv_present_native_create_zero_copy(engine, &binding));
+    OK(esp_lv_present_native_set_rotation(binding, ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90, 1000));
+    lv_display_t *display = esp_lv_present_native_get_display(binding);
+    watched_draw = lv_display_get_buf_active(display);
+    assert(watched_draw);
+    watched_destroyed = 0;
+    fail_acquire = true;
+    assert(esp_lv_present_native_set_rotation(binding, ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0, 1000) == ESP_ERR_NO_MEM);
+    assert(!fail_acquire && watched_destroyed == 0);
+    assert(lv_display_get_buf_active(display) == watched_draw);
+    assert(esp_lv_present_native_get_error(binding) == ESP_ERR_NO_MEM);
+    esp_display_present_engine_rotation_t rotation;
+    OK(esp_display_present_engine_get_rotation(engine, &rotation));
+    assert(rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0); /* Fail closed; no pretend rollback. */
+    assert(esp_lv_present_native_set_rotation(binding, ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90, 0) == ESP_ERR_INVALID_STATE);
+    OK(esp_lv_present_native_destroy(binding));
+    assert(watched_destroyed == 1);
+    watched_draw = NULL;
+    OK(esp_display_present_engine_stop(engine, 1000));
+    OK(esp_display_present_engine_destroy(engine));
+}
+#endif
+
 int main(void)
 {
     lv_init();
+#if LVGL_VERSION_MINOR >= 5
+    rotation_borrow_failure();
+#endif
     exercise(false, ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_FULL);
     exercise(true, ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_FULL);
     exercise(false, ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT);
