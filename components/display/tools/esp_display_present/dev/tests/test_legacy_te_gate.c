@@ -123,8 +123,21 @@ int main(void)
     assert(esp_display_present_te_sync_admit(ctx, 1000, edge, &edge) == ESP_ERR_TIMEOUT);
     fake_time = 12000; /* Late service cannot reuse an old selected edge. */
     assert(esp_display_present_te_sync_admit(ctx, 1000, 0, &edge) == ESP_ERR_TIMEOUT);
-    assert(esp_display_present_te_sync_admit(ctx, 30000, 0, &edge) == ESP_ERR_TIMEOUT);
+    assert(esp_display_present_te_sync_admit(ctx, 30000, 0, &edge) == ESP_ERR_NOT_SUPPORTED);
 
+    /* A measured transfer that cannot fit must not wait for another identical
+     * period forever, nor arm a timer or claim an accepted edge. */
+    for (unsigned cycle = 1; cycle <= 32; ++cycle) {
+        uint64_t rise = 1000 + cycle * 10000;
+        ctx->last_rise_time_us = rise;
+        ctx->last_fall_time_us = rise + 1000;
+        fake_time = rise + 1000;
+        virtual_phase_timer->due = 0;
+        uint64_t untouched = UINT64_MAX;
+        assert(esp_display_present_te_sync_admit(ctx, 30000, 0, &untouched) == ESP_ERR_NOT_SUPPORTED);
+        assert(untouched == UINT64_MAX && virtual_phase_timer->due == 0);
+    }
+    ctx->last_fall_time_us = 2000;
     /* Fast transfer: the same window spans late scan and blanking. A fresh
      * blanking-start edge enables reuse; the next scan start is exclusive. */
     ctx->last_rise_time_us = 11000;
@@ -164,7 +177,7 @@ int main(void)
     assert(esp_display_present_te_sync_admit(ctx, 12000, 0, &edge) == ESP_ERR_TIMEOUT);
     assert(te_estimate_transfer_time_us(ctx, SIZE_MAX) == INT64_MAX);
     assert(te_window_required_percent(INT64_MAX, 10000) == UINT16_MAX);
-    assert(esp_display_present_te_sync_admit(ctx, SIZE_MAX, 0, &edge) == ESP_ERR_TIMEOUT);
+    assert(esp_display_present_te_sync_admit(ctx, SIZE_MAX, 0, &edge) == ESP_ERR_NOT_SUPPORTED);
     /* The model, edge and clock must all belong to the same locked snapshot.
      * Logging provides a deterministic ISR interleaving point: stale 10 ms
      * timing would admit at 10 ms, the new 20 ms timing must wait. */

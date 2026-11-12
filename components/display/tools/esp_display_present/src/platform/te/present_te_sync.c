@@ -577,6 +577,11 @@ esp_err_t esp_display_present_te_sync_admit(esp_display_present_te_sync_context_
     bool arm = selected > after && scan > 0 && now > 0 && present_te_next_open(
                    &timing, &window, (uint64_t)scan, (uint64_t)now, &next);
     portEXIT_CRITICAL(&ctx->lock);
+    /* Another edge cannot make a geometrically impossible measured transfer
+     * fit. Report rejection instead of endlessly waiting for the same window. */
+    if (measured && window.admission == ESP_DISPLAY_PRESENT_TE_UNSUPPORTED) {
+        return ESP_ERR_NOT_SUPPORTED;
+    }
     if (accept) {
         *edge = selected;
         return ESP_OK;

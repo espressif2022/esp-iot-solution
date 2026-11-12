@@ -18,6 +18,15 @@ int main(void)
     assert(esp_display_present_te_sync_admit(ctx, 1000, 0, &edge) == ESP_ERR_NOT_SUPPORTED);
     fake_time = 10000;
     assert(esp_display_present_te_sync_admit(ctx, 1000, 0, &edge) == ESP_OK && edge == 1000);
+    for (unsigned cycle = 1; cycle <= 32; ++cycle) {
+        uint64_t rise = 1000 + cycle * 10000;
+        ctx->last_rise_time_us = rise;
+        ctx->last_fall_time_us = rise + 1000;
+        fake_time = rise + 1000;
+        assert(esp_display_present_te_sync_admit(ctx, 1000, 0, &edge) == ESP_ERR_NOT_SUPPORTED);
+        fake_time = rise + 9000;
+        assert(esp_display_present_te_sync_admit(ctx, 1000, 0, &edge) == ESP_OK && edge == rise);
+    }
     assert(esp_display_present_te_sync_destroy_budget(ctx, 100) == ESP_OK);
     assert(removes == 1);
     return 0;
