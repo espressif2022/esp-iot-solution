@@ -2012,8 +2012,57 @@ static void gram_exhaustion_and_stop(void)
     }
 }
 
+/* Public observations must remain coherent while faults latch and STOP is
+ * retried. In particular a failed detach is still CLOSING, not STOPPED. */
+static void status_projection(void)
+{
+    for (unsigned kind = 0; kind < 3; ++kind) {
+        struct fake_lcd panel;
+        init_panel(&panel);
+        esp_display_presenter_config_t cfg = kind == 0 ? io_config(&panel) : config(&panel, kind == 2);
+        esp_display_presenter_t *presenter;
+        OK(esp_display_presenter_create(&cfg, &presenter));
+        esp_display_presenter_frame_status_t status;
+        OK(esp_display_presenter_get_frame_status(presenter, &status));
+        assert(status.generation == 1 && status.accepting_callbacks);
+        assert(status.completion == (kind == 0 ? ESP_DISPLAY_PRESENT_COMPLETION_TRANSFER : ESP_DISPLAY_PRESENT_COMPLETION_FRAMEBUFFER));
+        assert(status.tracks_transfer == (kind == 0));
+        assert(!status.last_submitted_frame && !status.completed_transfer_frame &&
+               !status.completed_present_frame && !status.confirmed_present_frame);
+
+        injected_snapshot_error = ESP_FAIL;
+        injected_snapshot_failures = 1;
+        assert(esp_display_presenter_get_frame_status(presenter, &status) == ESP_FAIL);
+        assert(status.fault_reason == ESP_DISPLAY_PRESENT_FAULT_TRANSFER_FAILED);
+        assert(status.accepting_callbacks && status.completed_present_frame == status.completed_transfer_frame);
+        esp_display_presenter_state_t state;
+        OK(esp_display_presenter_get_state(presenter, &state));
+        assert(state == ESP_DISPLAY_PRESENTER_STATE_FAULTED);
+
+        panel.detach_fail = true;
+        assert(esp_display_presenter_stop(presenter) == ESP_FAIL);
+        OK(esp_display_presenter_get_state(presenter, &state));
+        assert(state == ESP_DISPLAY_PRESENTER_STATE_CLOSING);
+        OK(esp_display_presenter_get_frame_status(presenter, &status));
+        assert(status.accepting_callbacks && status.fault_reason == ESP_DISPLAY_PRESENT_FAULT_TRANSFER_FAILED);
+        panel.detach_fail = false;
+        stop_eventually(presenter);
+        OK(esp_display_presenter_get_frame_status(presenter, &status));
+        assert(!status.accepting_callbacks && status.tracks_transfer == (kind == 0));
+        assert(status.completion == (kind == 0 ? ESP_DISPLAY_PRESENT_COMPLETION_TRANSFER : ESP_DISPLAY_PRESENT_COMPLETION_FRAMEBUFFER));
+        assert(status.completed_present_frame == status.completed_transfer_frame);
+        assert(status.fault_reason == ESP_DISPLAY_PRESENT_FAULT_TRANSFER_FAILED);
+        esp_err_t error;
+        OK(esp_display_presenter_get_fault_error(presenter, &error));
+        assert(error == ESP_FAIL);
+        delete_eventually(presenter);
+        free_panel(&panel);
+    }
+}
+
 int main(void)
 {
+    status_projection();
     gram_exhaustion_and_stop();
     session_handoff_failures();
     create_allocation_rollback();
