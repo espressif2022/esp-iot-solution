@@ -1183,6 +1183,60 @@ static void te_compatibility(void)
         free_panel(&panel);
     }
 }
+static void rotation_observes_tracking(void)
+{
+    struct fake_lcd panel;
+    init_panel(&panel);
+    esp_display_presenter_config_t cfg = config(&panel, false);
+    cfg.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL;
+    cfg.pipeline_acquire_timeout_ms = 1;
+    esp_display_presenter_t *presenter;
+    OK(esp_display_presenter_create(&cfg, &presenter));
+    size_t count;
+    bool full;
+    assert(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full) == ESP_ERR_TIMEOUT);
+    boundary(&panel);
+    boundary(&panel);
+    start_frame(presenter, false, true);
+    (void)draw(presenter, 0x1234);
+    esp_display_presenter_frame_receipt_t receipt;
+    OK(esp_display_presenter_commit_frame_with_receipt(presenter, NULL, true, &receipt));
+    finish_scanout(&panel, presenter, 2);
+    OK(esp_display_presenter_quiesce(presenter, 1000));
+    assert(esp_display_presenter_set_rotation(presenter, ESP_DISPLAY_PRESENT_ROTATE_90) == ESP_ERR_INVALID_STATE);
+    raw_vsync(&panel);
+    assert(esp_display_presenter_set_rotation(presenter, ESP_DISPLAY_PRESENT_ROTATE_90) == ESP_ERR_INVALID_STATE);
+    raw_vsync(&panel);
+    /* No get_frame_status/cancel_tracking to reap the observation for us. */
+    OK(esp_display_presenter_set_rotation(presenter, ESP_DISPLAY_PRESENT_ROTATE_90));
+    esp_display_presenter_frame_status_t status;
+    OK(esp_display_presenter_get_frame_status(presenter, &status));
+    assert(status.confirmed_present_frame == receipt.frame_id && status.generation == receipt.generation + 1);
+    delete_eventually(presenter);
+    free_panel(&panel);
+}
+
+static void rotation_poll_failure(void)
+{
+    struct fake_lcd panel;
+    init_panel(&panel);
+    esp_display_presenter_config_t cfg = io_config(&panel);
+    esp_display_presenter_t *presenter;
+    OK(esp_display_presenter_create(&cfg, &presenter));
+    injected_snapshot_failures = 1;
+    injected_snapshot_error = ESP_FAIL;
+    assert(esp_display_presenter_set_rotation(presenter, ESP_DISPLAY_PRESENT_ROTATE_90) == ESP_FAIL);
+    assert(!injected_snapshot_failures);
+    esp_display_presenter_caps_t caps;
+    OK(esp_display_presenter_get_caps(presenter, &caps));
+    assert(caps.width == 8 && caps.height == 4);
+    esp_display_presenter_frame_status_t status;
+    OK(esp_display_presenter_get_frame_status(presenter, &status));
+    assert(status.generation == 1);
+    delete_eventually(presenter);
+    free_panel(&panel);
+}
+
 static void rotation_reference(void)
 {
     const esp_display_present_rotation_t rotations[] = {0, 90, 180, 270};
@@ -1979,6 +2033,8 @@ int main(void)
     fault_after_tracking_fence();
     mode_matrix();
     frame_plan_contracts();
+    rotation_observes_tracking();
+    rotation_poll_failure();
     rotation_reference();
     direct_dirty_contract();
     gram_rotation_superset();

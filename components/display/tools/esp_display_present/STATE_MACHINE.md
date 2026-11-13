@@ -31,6 +31,13 @@ The public facade serializes acquire and STOP with its mutex. It has no legacy
 concurrent API calls; testing STOP against acquire does not authorize racing
 successful deletion against a live caller.
 
+Facade `set_rotation` observes completed receipts and the tracked VSYNC fence
+under its mutex before checking admission. `quiesce` may finish transfer drain
+before that observation fence ends; rotation still rejects an outstanding fence.
+After the actual VSYNC events arrive, retrying rotation reaps the observation
+without an unrelated status/cancel-tracking call. An observation error is returned
+before changing rotation, dimensions or generation.
+
 ## Service and lock domains
 
 This section records who may advance state; it changes no scheduling.

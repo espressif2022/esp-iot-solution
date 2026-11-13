@@ -788,6 +788,11 @@ esp_err_t esp_display_presenter_set_rotation(esp_display_presenter_t *presenter,
     }
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
     esp_err_t error = producer(presenter);
+    if (error == ESP_OK) {
+        /* Reap completed tracking/fence observations before checking admission.
+         * Retrying rotation must not require an unrelated status API call. */
+        error = poll(presenter);
+    }
     if (error == ESP_OK && (presenter->active || presenter->tracked_id || presenter->tracked.value || presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN || presenter->timeline.generation == UINT32_MAX)) {
         error = ESP_ERR_INVALID_STATE;
     }
