@@ -149,6 +149,22 @@ static esp_display_presenter_config_t io_config(struct fake_lcd *panel)
     cfg.pipeline_acquire_timeout_ms = 10;
     return cfg;
 }
+/* Frame/pixel correctness is independent of a host thread winning a 1 ms
+ * scheduling race. Keep explicit per-call timeout assertions, but bound successful
+ * admission retries separately. Unexpected errors must never be retried. */
+static esp_err_t begin_frame_eventually(esp_display_presenter_t *presenter, const esp_display_present_surface_request_t *request,
+                                        esp_display_present_area_t *areas, size_t capacity, size_t *count, bool *full)
+{
+    uint64_t start = present_now_ms();
+    for (;;) {
+        esp_err_t error = esp_display_presenter_begin_next_frame(presenter, request, areas, capacity, count, full);
+        if (error != ESP_ERR_TIMEOUT || present_expired(start, 1000)) {
+            return error;
+        }
+        present_pause();
+    }
+}
+
 static void start_frame(esp_display_presenter_t *p, bool scroll, bool expect_full)
 {
     esp_display_present_area_t damage = {2, 1, 3, 2}, out[4];
@@ -157,7 +173,7 @@ static void start_frame(esp_display_presenter_t *p, bool scroll, bool expect_ful
                                                     };
     size_t count;
     bool full;
-    OK(esp_display_presenter_begin_next_frame(p, &request, out, 4, &count, &full));
+    OK(begin_frame_eventually(p, &request, out, 4, &count, &full));
     assert(full == expect_full && count == (full ? 0u : 1u));
     if (!full) {
         assert(out[0].x1 == 2 && out[0].y1 == 1 && out[0].x2 == 3);
@@ -209,17 +225,21 @@ static void delete_eventually(esp_display_presenter_t *p)
         present_pause();
     }
 }
-static void *control_stop(void *user)
+static void stop_eventually(esp_display_presenter_t *presenter)
 {
     uint64_t start = present_now_ms();
     for (;;) {
-        esp_err_t error = esp_display_presenter_stop(user);
+        esp_err_t error = esp_display_presenter_stop(presenter);
         if (error == ESP_OK) {
-            break;
+            return;
         }
         assert(error == ESP_ERR_INVALID_STATE && !present_expired(start, 1000));
         present_pause();
     }
+}
+static void *control_stop(void *user)
+{
+    stop_eventually(user);
     return NULL;
 }
 static void *control_delete(void *user)
@@ -396,7 +416,7 @@ static void cancel_pending_copy(void)
         assert(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full) == ESP_ERR_TIMEOUT);
         boundary(&panel);
         boundary(&panel);
-        OK(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full));
+        OK(begin_frame_eventually(presenter, NULL, NULL, 0, &count, &full));
         pthread_mutex_lock(&executor_gate);
         executor_hold = true;
         executor_entered = false;
@@ -1163,21 +1183,6 @@ static void te_compatibility(void)
         free_panel(&panel);
     }
 }
-/* Rotation/pixel correctness is independent of a host thread winning a 1 ms
- * scheduling race. Keep per-call timeout coverage below, but bound successful
- * admission retries separately. Unexpected errors must never be retried. */
-static esp_err_t begin_rotation_frame(esp_display_presenter_t *presenter, size_t *count, bool *full)
-{
-    uint64_t start = present_now_ms();
-    for (;;) {
-        esp_err_t error = esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, count, full);
-        if (error != ESP_ERR_TIMEOUT || present_expired(start, 1000)) {
-            return error;
-        }
-        present_pause();
-    }
-}
-
 static void rotation_reference(void)
 {
     const esp_display_present_rotation_t rotations[] = {0, 90, 180, 270};
@@ -1210,7 +1215,7 @@ static void rotation_reference(void)
             assert(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full) == ESP_ERR_TIMEOUT);
             boundary(&panel);
             boundary(&panel);
-            OK(begin_rotation_frame(presenter, &count, &full));
+            OK(begin_frame_eventually(presenter, NULL, NULL, 0, &count, &full));
             assert(full && !count);
             esp_display_presenter_buffer_t buffer;
             OK(esp_display_presenter_acquire_buffer(presenter, &buffer));
@@ -1271,7 +1276,7 @@ static void rotation_reference(void)
             esp_display_presenter_caps_t rotated_caps;
             OK(esp_display_presenter_get_caps(presenter, &rotated_caps));
             assert(rotated_caps.width == 4 && rotated_caps.height == 8);
-            OK(begin_rotation_frame(presenter, &count, &full));
+            OK(begin_frame_eventually(presenter, NULL, NULL, 0, &count, &full));
             assert(full && !count);
             OK(esp_display_presenter_acquire_buffer(presenter, &buffer));
             assert(buffer.surface.width == 4 && buffer.surface.height == 8);
@@ -1305,7 +1310,7 @@ static void rotation_reference(void)
             assert(caps.width == 8 && caps.height == 4);
             OK(esp_display_presenter_get_frame_status(presenter, &unchanged));
             assert(unchanged.generation == status.generation + 2);
-            OK(begin_rotation_frame(presenter, &count, &full));
+            OK(begin_frame_eventually(presenter, NULL, NULL, 0, &count, &full));
             assert(full && !count);
             OK(esp_display_presenter_acquire_buffer(presenter, &buffer));
             memset(expected, 0, sizeof(expected));
@@ -1383,7 +1388,15 @@ static void legacy_lvgl_framebuffers(void)
         assert(!display && panel.calls == 1);
         boundary(&panel);
         boundary(&panel);
-        OK(esp_lv_present_start(presenter, &display));
+        uint64_t start = present_now_ms();
+        for (;;) {
+            esp_err_t error = esp_lv_present_start(presenter, &display);
+            if (error == ESP_OK) {
+                break;
+            }
+            assert(error == ESP_ERR_TIMEOUT && !display && !present_expired(start, 1000));
+            present_pause();
+        }
         unsigned flushes = 0;
         lv_display_add_event_cb(display, count_legacy_flush, LV_EVENT_FLUSH_START, &flushes);
         lv_obj_t *screen = lv_display_get_screen_active(display);
@@ -1565,7 +1578,7 @@ static void stop_unsealed(void)
                 immediate = true;
                 (void)draw(presenter, 0x1234);
             }
-            OK(esp_display_presenter_stop(presenter));
+            stop_eventually(presenter);
             esp_display_present_fault_reason_t reason;
             OK(esp_display_presenter_get_fault_reason(presenter, &reason));
             assert(reason == ESP_DISPLAY_PRESENT_FAULT_NONE);

@@ -151,7 +151,7 @@ static void te(bool cancel)
     pthread_mutex_destroy(&g.lock);
 }
 
-static void fb(bool cancel)
+static void fb(unsigned cancel)
 {
     gate_t g = {.lock = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER};
     scan_panel_t panel = {0};
@@ -183,10 +183,24 @@ static void fb(bool cancel)
         assert(o->stop(b, 0) == ESP_ERR_TIMEOUT);
         /* Copy is still blocked; cancel_frame must not falsely succeed after stop(0) sets closing. */
         assert(o->cancel_frame(b, f, 0) == ESP_ERR_TIMEOUT);
+        if (cancel == 3) {
+            pthread_mutex_lock(&g.lock);
+            g.result = ESP_FAIL;
+            pthread_mutex_unlock(&g.lock);
+        }
         unblock(&g);
         wait_done(&g, n);
-        OK(o->cancel_frame(b, f, 0));
-        OK(o->stop(b, UINT32_MAX));
+        if (cancel >= 2) {
+            OK(o->stop(b, UINT32_MAX));
+            OK(o->cancel_frame(b, f, 0));
+            OK(o->cancel_frame(b, f, 0));
+            esp_display_present_backend_fault_t fault;
+            OK(o->get_fault(b, &fault));
+            assert(fault.result == (cancel == 3 ? ESP_FAIL : ESP_OK));
+        } else {
+            OK(o->cancel_frame(b, f, 0));
+            OK(o->stop(b, UINT32_MAX));
+        }
         OK(o->destroy(b));
         pthread_cond_destroy(&g.changed);
         pthread_mutex_destroy(&g.lock);
@@ -352,6 +366,8 @@ int main(void)
     te(true);
     fb(false);
     fb(true);
+    fb(2);
+    fb(3);
     /* Also cover stop(0) during post-seal async repair. */
     {
         gate_t g = {.lock = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER};
