@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: Apache-2.0 */
 /* Benchmark-only wall-time/payload counters. Nested/parallel stages are not additive. */
 #include <inttypes.h>
+#include "bench_api.h"
 #include "esp_display_present.h"
 #include "pixel/present_executor.h"
 #include "core/present_engine.h"
@@ -11,11 +12,13 @@
 typedef struct {
     uint64_t n, us, max_us, bytes, errors;
 } metric_t;
-enum {BEGIN, ACQUIRE, SUBMIT, COMMIT, CPU, HARDWARE, FALLBACK, CACHE_OUT, CACHE_IN, PANEL, STAGES};
-static const char *names[STAGES] = {"begin", "acquire", "submit", "commit", "cpu_exec", "hw_exec", "fallback", "cache_out", "cache_in", "panel_submit"};
+enum {BEGIN, ACQUIRE, SUBMIT, COMMIT, CPU, HARDWARE, FALLBACK, CACHE_OUT, CACHE_IN, PANEL, RENDER, STAGES};
+static const char *names[STAGES] = {"begin", "acquire", "submit", "commit", "cpu_exec", "hw_exec", "fallback",
+                                   "cache_out", "cache_in", "panel_submit", "render"};
 static portMUX_TYPE lock = portMUX_INITIALIZER_UNLOCKED;
 static metric_t metrics[STAGES];
 static bool enabled;
+static uint64_t render_start;
 static void IRAM_ATTR record(unsigned stage, uint64_t start, uint64_t bytes, esp_err_t error)
 {
     uint64_t us = esp_timer_get_time() - start;
@@ -37,7 +40,18 @@ static void IRAM_ATTR record(unsigned stage, uint64_t start, uint64_t bytes, esp
         portEXIT_CRITICAL(&lock);
     }
 }
-void bench_profile_reset(void)
+static void render_event(lv_event_t *event)
+{
+    /* Both events run on the LVGL task. The interval includes flush. */
+    if (lv_event_get_code(event) == LV_EVENT_RENDER_START) {
+        render_start = esp_timer_get_time();
+    } else if (render_start) {
+        record(RENDER, render_start, 0, ESP_OK);
+        render_start = 0;
+    }
+}
+
+void bench_profile_reset(lv_display_t *display)
 {
     portENTER_CRITICAL(&lock);
     for (unsigned i = 0; i < STAGES; i++)metrics[i] = (metric_t) {
@@ -45,6 +59,9 @@ void bench_profile_reset(void)
     };
     enabled = true;
     portEXIT_CRITICAL(&lock);
+    render_start = 0;
+    lv_display_add_event_cb(display, render_event, LV_EVENT_RENDER_START, NULL);
+    lv_display_add_event_cb(display, render_event, LV_EVENT_RENDER_READY, NULL);
 }
 void bench_profile_report(const char *label)
 {
@@ -63,7 +80,11 @@ void bench_profile_report(const char *label)
 esp_err_t __real_esp_display_present_engine_begin_next_frame(esp_display_present_engine_t*, const esp_display_present_frame_request_t*);
 esp_err_t __wrap_esp_display_present_engine_begin_next_frame(esp_display_present_engine_t*p, const esp_display_present_frame_request_t*r)
 {
-    uint64_t t = esp_timer_get_time(); esp_err_t e = __real_esp_display_present_engine_begin_next_frame(p, r); record(BEGIN, t, 0, e); return e;
+    uint64_t t = esp_timer_get_time();
+    esp_err_t e = __real_esp_display_present_engine_begin_next_frame(p, r);
+    bench_frame_timing_begin(t, e);
+    record(BEGIN, t, 0, e);
+    return e;
 }
 esp_err_t __real_esp_display_present_engine_acquire_buffer(esp_display_present_engine_t*, esp_display_present_lease_t*);
 esp_err_t __wrap_esp_display_present_engine_acquire_buffer(esp_display_present_engine_t*p, esp_display_present_lease_t*b)
@@ -78,7 +99,12 @@ esp_err_t __wrap_esp_display_present_engine_submit_buffer(esp_display_present_en
 esp_err_t __real_esp_display_present_engine_commit_frame(esp_display_present_engine_t*, const esp_display_present_frame_coverage_t*);
 esp_err_t __wrap_esp_display_present_engine_commit_frame(esp_display_present_engine_t*p, const esp_display_present_frame_coverage_t*s)
 {
-    uint64_t t = esp_timer_get_time(); esp_err_t e = __real_esp_display_present_engine_commit_frame(p, s); record(COMMIT, t, 0, e); return e;
+    uint64_t sequence = bench_frame_timing_commit_start();
+    uint64_t t = esp_timer_get_time();
+    esp_err_t e = __real_esp_display_present_engine_commit_frame(p, s);
+    bench_frame_timing_commit_done(sequence, e);
+    record(COMMIT, t, 0, e);
+    return e;
 }
 esp_err_t __real_esp_display_present_executor_run(const esp_display_present_executor_dispatch_t*, const esp_display_present_copy_request_t*, esp_display_present_executor_selection_t*);
 esp_err_t __wrap_esp_display_present_executor_run(const esp_display_present_executor_dispatch_t*d, const esp_display_present_copy_request_t*r, esp_display_present_executor_selection_t*out)

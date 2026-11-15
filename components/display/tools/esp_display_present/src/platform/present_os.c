@@ -107,6 +107,37 @@ void *present_alloc_pixels(size_t size)
 #endif
 }
 
+bool present_internal_dma_pool_available(size_t size)
+{
+#if !defined(PRESENT_HOST) && CONFIG_HEAP_ABORT_WHEN_ALLOCATION_FAILS
+    /* An optional allocation may fail after the preflight or race another task. */
+    (void)size;
+    return false;
+#elif defined(PRESENT_HOST)
+    (void)size;
+    return true;
+#else
+    return size <= heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA);
+#endif
+}
+
+bool present_psram_can_fit(size_t bytes, size_t count)
+{
+#ifdef PRESENT_HOST
+    (void)bytes;
+    (void)count;
+    return true;
+#else
+    if (!count || bytes > SIZE_MAX - (PRESENT_BUFFER_ALIGNMENT - 1)) {
+        return false;
+    }
+    size_t aligned = (bytes + PRESENT_BUFFER_ALIGNMENT - 1) & ~(size_t)(PRESENT_BUFFER_ALIGNMENT - 1);
+    return aligned <= SIZE_MAX / count &&
+           heap_caps_get_free_size(MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT) >= aligned * count &&
+           heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT) >= aligned;
+#endif
+}
+
 void *present_alloc_pixels_in(size_t size, bool external)
 {
 #ifdef PRESENT_HOST

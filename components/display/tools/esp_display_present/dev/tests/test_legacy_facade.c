@@ -3,11 +3,11 @@
 /* Both legacy suites share the same synchronized mock driver. */
 #define esp_lcd_panel_draw_bitmap fixture_draw_bitmap
 #include "core/present_control.h"
-#include "core/present_session.h"
 #include "support/legacy_panel.h"
 #undef esp_lcd_panel_draw_bitmap
 #include "core/present_engine.h"
 #include "platform/present_os.h"
+#include <limits.h>
 #include <time.h>
 #include "config/present_geometry.h"
 #ifdef LEGACY_WITH_LVGL
@@ -18,6 +18,8 @@
  * No rendering starts during the sweep; every failed create must detach. */
 static unsigned allocation_target, allocation_index;
 static unsigned allocation_kind; /* metadata, pixels, mutex, event, worker */
+static bool psram_available = true, psram_lost_on_allocation_failure;
+static bool fail_combined_fb_tiles;
 void *__real_present_alloc(size_t);
 void *__wrap_present_alloc(size_t bytes)
 {
@@ -29,10 +31,22 @@ void *__wrap_present_alloc(size_t bytes)
 void *__real_present_alloc_pixels_in(size_t, bool);
 void *__wrap_present_alloc_pixels_in(size_t bytes, bool external)
 {
+    if (fail_combined_fb_tiles && !external && bytes == 2 * 64) {
+        return NULL;
+    }
     if (allocation_target && allocation_kind == 1 && ++allocation_index == allocation_target) {
+        if (psram_lost_on_allocation_failure) {
+            psram_available = false;
+        }
         return NULL;
     }
     return __real_present_alloc_pixels_in(bytes, external);
+}
+
+bool __wrap_present_psram_can_fit(size_t bytes, size_t count)
+{
+    assert(bytes && count);
+    return psram_available;
 }
 
 present_mutex_t *__real_present_mutex_create(void);
@@ -51,14 +65,23 @@ present_os_event_t *__wrap_present_event_create(void)
     }
     return __real_present_event_create();
 }
+static unsigned pixel_workers_created, backend_workers_created;
 present_worker_t *__real_present_worker_create(const char *, present_worker_entry_fn, void *, uint32_t, unsigned);
 present_worker_t *__wrap_present_worker_create(const char *name, present_worker_entry_fn entry, void *user, uint32_t stack_bytes, unsigned priority)
 {
     if (allocation_target && allocation_kind == 4 && ++allocation_index == allocation_target) {
         return NULL;
     }
-    assert(strcmp(name, "present_pixel") == 0 || strcmp(name, "present_backend") == 0);
-    return __real_present_worker_create(name, entry, user, stack_bytes, priority);
+    present_worker_t *worker = __real_present_worker_create(name, entry, user, stack_bytes, priority);
+    if (worker) {
+        if (strcmp(name, "present_pixel") == 0) {
+            ++pixel_workers_created;
+        } else {
+            assert(strcmp(name, "present_backend") == 0);
+            ++backend_workers_created;
+        }
+    }
+    return worker;
 }
 
 static unsigned injected_snapshot_failures, successful_receipt_releases;
@@ -266,7 +289,13 @@ static void leases_and_stop(void)
     assert(pool.count == 2 && pool.bytes >= 64);
     start_frame(p, false, true);
     immediate = false;
+    const esp_display_present_area_t full_area = {0, 0, 7, 3};
+    const esp_display_presenter_buffer_t unleased = {
+        .surface = {.pixels = pool.buffers[0]}, .capacity_bytes = pool.bytes,
+    };
+    assert(esp_display_presenter_submit_buffer(p, &unleased, &full_area, 16) == ESP_ERR_INVALID_STATE);
     esp_display_presenter_buffer_t old = draw(p, 0x4567);
+    assert(old.surface.pixels == pool.buffers[0] || old.surface.pixels == pool.buffers[1]);
     esp_display_presenter_frame_receipt_t receipt;
     assert(esp_display_presenter_commit_frame_with_receipt(p, NULL, true, &receipt) == ESP_ERR_NOT_SUPPORTED && !receipt.frame_id);
     OK(esp_display_presenter_commit_frame_with_receipt(p, NULL, false, &receipt));
@@ -576,12 +605,21 @@ static void framebuffer_tracking(void)
     assert(!count && panel.calls == 1);
     boundary(&panel);
     boundary(&panel);
+    OK(esp_display_presenter_reset_metrics(p));
+    raw_vsync(&panel); /* No demand; idle refreshes are not supply misses. */
     start_frame(p, false, true);
     (void)draw(p, 0x3333);
     esp_display_presenter_frame_receipt_t receipt;
     OK(esp_display_presenter_commit_frame_with_receipt(p, NULL, true, &receipt));
     assert(receipt.display_tracked && receipt.frame_id == 1);
+    raw_vsync(&panel); /* Establish the backlog at the start of the interval. */
+    raw_vsync(&panel); /* Backlog was not served by a switch. */
     finish_scanout(&panel, p, 2);
+    raw_vsync(&panel);
+    esp_display_presenter_metrics_t metrics;
+    OK(esp_display_presenter_get_metrics(p, &metrics));
+    assert(metrics.frame_samples == 1 && metrics.scanout_available &&
+           metrics.scanout_vsyncs == 4 && metrics.scanout_supply_misses == 1);
     esp_display_presenter_frame_status_t status;
     release_failures = 1;
     assert(esp_display_presenter_get_frame_status(p, &status) == ESP_FAIL);
@@ -599,6 +637,7 @@ static void framebuffer_tracking(void)
     OK(esp_display_presenter_commit_frame_with_receipt(p, NULL, true, &receipt));
     OK(esp_display_presenter_cancel_frame_tracking(p, receipt.frame_id, receipt.generation));
     finish_scanout(&panel, p, 3);
+    OK(esp_display_presenter_quiesce(p, 100));
     OK(esp_display_presenter_get_frame_status(p, &status));
     assert(status.completed_present_frame == 2 && status.confirmed_present_frame == 1);
     /* Canceled observation must not arm a stale confirmation for frame 3. */
@@ -849,6 +888,91 @@ static void mode_matrix(void)
     OK(esp_display_present_get_required_frame_buffer_count(&target, &buffers));
     assert(!buffers); /* Pure query; TE creation is still explicitly unsupported. */
 }
+static void simple_open_matrix(void)
+{
+    const struct {
+        esp_display_present_mode_t requested, effective;
+        unsigned driver_fbs, images, tiles;
+    } scanout[] = {
+        {ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL, ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL, 3, 2, 0},
+        {ESP_DISPLAY_PRESENT_MODE_TRIPLE_FULL, ESP_DISPLAY_PRESENT_MODE_TRIPLE_FULL, 3, 3, 0},
+        {ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT, ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT, 3, 2, 0},
+        {ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL, ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL, 3, 2, 1},
+        {ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL, ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL, 3, 3, 2},
+        {ESP_DISPLAY_PRESENT_MODE_AUTO, ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL, 2, 2, 2},
+        {ESP_DISPLAY_PRESENT_MODE_AUTO, ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL, 3, 3, 1},
+    };
+    struct fake_lcd panel;
+    init_panel(&panel);
+    for (unsigned rgb = 0; rgb < 2; ++rgb) {
+        esp_display_presenter_panel_config_t lcd = {.width = 8, .height = 4, .hw = config(&panel, rgb).target.hw};
+        lcd.hw.rotation = ESP_DISPLAY_PRESENT_ROTATE_90;
+        for (size_t i = 0; i < sizeof(scanout) / sizeof(scanout[0]); ++i) {
+            panel.available_fbs = scanout[i].driver_fbs;
+            esp_display_present_drawbuf_config_t policy = {.buffers = scanout[i].tiles};
+            esp_display_presenter_t *presenter;
+            if (policy.buffers) {
+                OK(esp_display_presenter_open_ex(&lcd, scanout[i].requested, &policy, &presenter));
+            } else {
+                OK(esp_display_presenter_open(&lcd, scanout[i].requested, &presenter));
+            }
+            esp_display_presenter_effective_config_t effective;
+            OK(esp_display_presenter_get_effective_config(presenter, &effective));
+            assert(effective.requested_mode == scanout[i].requested && effective.effective_mode == scanout[i].effective);
+            assert(effective.image_count == scanout[i].images && effective.tile_count == scanout[i].tiles);
+            assert(effective.width == 4 && effective.height == 8 && effective.rotation == ESP_DISPLAY_PRESENT_ROTATE_90);
+            assert(effective.draw_stride_bytes == 8 && effective.output_stride_bytes == 16);
+            assert(effective.draw_buffer_count == (policy.buffers ? policy.buffers : 1));
+            esp_display_presenter_caps_t caps;
+            OK(esp_display_presenter_get_caps(presenter, &caps));
+            assert(caps.max_damage_areas == 32 && !panel.calls);
+            delete_eventually(presenter);
+        }
+        panel.available_fbs = 1;
+        esp_display_presenter_t *out = (void *)1;
+        assert(esp_display_presenter_open(&lcd, ESP_DISPLAY_PRESENT_MODE_AUTO, &out) == ESP_ERR_NOT_SUPPORTED);
+        assert(!out && !panel.calls && !panel.user);
+    }
+    esp_display_presenter_panel_config_t lcd = {.width = 8, .height = 4, .hw = io_config(&panel).target.hw};
+    lcd.hw.panel_type = ESP_DISPLAY_PRESENT_PANEL_AUTO;
+    esp_display_presenter_t *presenter;
+    OK(esp_display_presenter_open(&lcd, ESP_DISPLAY_PRESENT_MODE_AUTO, &presenter));
+    esp_display_presenter_effective_config_t effective;
+    OK(esp_display_presenter_get_effective_config(presenter, &effective));
+    assert(effective.effective_mode == ESP_DISPLAY_PRESENT_MODE_NONE && !effective.image_count);
+    delete_eventually(presenter);
+    for (unsigned tiles = 1; tiles <= 2; ++tiles) {
+        esp_display_present_drawbuf_config_t policy = {.buffers = tiles};
+        OK(esp_display_presenter_open_ex(&lcd, ESP_DISPLAY_PRESENT_MODE_NONE, &policy, &presenter));
+        OK(esp_display_presenter_get_effective_config(presenter, &effective));
+        assert(effective.tile_count == tiles && !effective.image_count);
+        delete_eventually(presenter);
+    }
+    lcd.hw.te_enabled = true;
+    lcd.hw.te_sync = (esp_display_present_te_sync_config_t) {.gpio_num = 0, .bus_freq_hz = 8000000};
+    OK(esp_display_presenter_open(&lcd, ESP_DISPLAY_PRESENT_MODE_AUTO, &presenter));
+    OK(esp_display_presenter_get_effective_config(presenter, &effective));
+    assert(effective.effective_mode == ESP_DISPLAY_PRESENT_MODE_TE_SYNC && effective.image_count == 1 && !test_te);
+    delete_eventually(presenter);
+    for (unsigned tiles = 1; tiles <= 2; ++tiles) {
+        for (unsigned compose = 1; compose <= 2; ++compose) {
+            esp_display_present_drawbuf_config_t policy = {.buffers = tiles, .te_compose_buffers = compose};
+            OK(esp_display_presenter_open_ex(&lcd, ESP_DISPLAY_PRESENT_MODE_TE_SYNC, &policy, &presenter));
+            OK(esp_display_presenter_get_effective_config(presenter, &effective));
+            assert(effective.tile_count == tiles && effective.image_count == compose && !test_te);
+            delete_eventually(presenter);
+        }
+    }
+    esp_display_present_drawbuf_config_t invalid_policy = {.te_compose_buffers = 3};
+    presenter = (void *)1;
+    assert(esp_display_presenter_open_ex(&lcd, ESP_DISPLAY_PRESENT_MODE_TE_SYNC, &invalid_policy, &presenter) == ESP_ERR_INVALID_ARG);
+    assert(!presenter && !panel.user);
+    presenter = (void *)1;
+    assert(esp_display_presenter_open(NULL, ESP_DISPLAY_PRESENT_MODE_AUTO, &presenter) == ESP_ERR_INVALID_ARG);
+    assert(!presenter);
+    free_panel(&panel);
+}
+
 static void expect_plan_error(esp_display_presenter_t *presenter,
                               const esp_display_present_surface_request_t *request,
                               size_t capacity, esp_err_t expected)
@@ -1202,7 +1326,7 @@ static void rotation_observes_tracking(void)
     esp_display_presenter_frame_receipt_t receipt;
     OK(esp_display_presenter_commit_frame_with_receipt(presenter, NULL, true, &receipt));
     finish_scanout(&panel, presenter, 2);
-    OK(esp_display_presenter_quiesce(presenter, 1000));
+    assert(esp_display_presenter_quiesce(presenter, 5) == ESP_ERR_TIMEOUT);
     assert(esp_display_presenter_set_rotation(presenter, ESP_DISPLAY_PRESENT_ROTATE_90) == ESP_ERR_INVALID_STATE);
     raw_vsync(&panel);
     assert(esp_display_presenter_set_rotation(presenter, ESP_DISPLAY_PRESENT_ROTATE_90) == ESP_ERR_INVALID_STATE);
@@ -1212,6 +1336,37 @@ static void rotation_observes_tracking(void)
     esp_display_presenter_frame_status_t status;
     OK(esp_display_presenter_get_frame_status(presenter, &status));
     assert(status.confirmed_present_frame == receipt.frame_id && status.generation == receipt.generation + 1);
+    delete_eventually(presenter);
+    free_panel(&panel);
+}
+
+static void quiesce_waits_for_tracked_vsyncs(void)
+{
+    struct fake_lcd panel;
+    init_panel(&panel);
+    esp_display_presenter_config_t cfg = config(&panel, false);
+    cfg.pipeline_acquire_timeout_ms = 1;
+    esp_display_presenter_t *presenter;
+    OK(esp_display_presenter_create(&cfg, &presenter));
+    size_t count;
+    bool full;
+    assert(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full) == ESP_ERR_TIMEOUT);
+    boundary(&panel);
+    boundary(&panel);
+    start_frame(presenter, false, true);
+    (void)draw(presenter, 0x1234);
+    esp_display_presenter_frame_receipt_t receipt;
+    OK(esp_display_presenter_commit_frame_with_receipt(presenter, NULL, true, &receipt));
+    finish_scanout(&panel, presenter, 2);
+
+    assert(esp_display_presenter_quiesce(presenter, 5) == ESP_ERR_TIMEOUT);
+    raw_vsync(&panel);
+    assert(esp_display_presenter_quiesce(presenter, 5) == ESP_ERR_TIMEOUT);
+    raw_vsync(&panel);
+    OK(esp_display_presenter_quiesce(presenter, 100));
+    esp_display_presenter_frame_status_t status;
+    OK(esp_display_presenter_get_frame_status(presenter, &status));
+    assert(status.confirmed_present_frame == receipt.frame_id);
     delete_eventually(presenter);
     free_panel(&panel);
 }
@@ -1237,6 +1392,221 @@ static void rotation_poll_failure(void)
     free_panel(&panel);
 }
 
+static void effective_config_low_memory(void)
+{
+    for (unsigned profile = 0; profile < 4; ++profile) {
+        struct fake_lcd panel;
+        init_panel(&panel);
+        bool te = profile == 2;
+        bool fb = profile == 3;
+        esp_display_presenter_config_t cfg = fb ? config(&panel, false) : io_config(&panel);
+        cfg.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_AUTO;
+        cfg.target.drawbuf.in_psram = !fb;
+        if (fb) {
+            panel.available_fbs = 2;
+        } else if (te) {
+            cfg.target.hw.te_enabled = true;
+            cfg.target.hw.te_sync = (esp_display_present_te_sync_config_t) {.gpio_num = 1, .bus_freq_hz = 8000000};
+        }
+
+        allocation_kind = 1;
+        allocation_index = 0;
+        allocation_target = fb || profile == 1 ? 2 : 3;
+        fail_combined_fb_tiles = fb;
+        psram_available = profile == 0;
+        esp_display_presenter_t *presenter;
+        OK(esp_display_presenter_create(&cfg, &presenter));
+        allocation_target = 0;
+        fail_combined_fb_tiles = false;
+        psram_available = true;
+
+        esp_display_presenter_effective_config_t effective;
+        OK(esp_display_presenter_get_effective_config(presenter, &effective));
+        assert(effective.requested_mode == ESP_DISPLAY_PRESENT_MODE_AUTO);
+        assert(effective.effective_mode == (fb ? ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL :
+                                            te ? ESP_DISPLAY_PRESENT_MODE_TE_SYNC : ESP_DISPLAY_PRESENT_MODE_NONE));
+        assert(effective.rotation == ESP_DISPLAY_PRESENT_ROTATE_0 && effective.width == 8 && effective.height == 4);
+        assert(effective.draw_stride_bytes == 16 && effective.output_stride_bytes == 16);
+        assert(effective.draw_buffer_count == 1 && effective.tile_count == 1);
+        assert(effective.image_count == (fb ? 2 : te ? 1 : 0));
+        assert(effective.draw_memory == (profile == 0 ? ESP_DISPLAY_PRESENT_MEMORY_PSRAM : ESP_DISPLAY_PRESENT_MEMORY_INTERNAL));
+        assert(effective.image_memory == (fb ? ESP_DISPLAY_PRESENT_MEMORY_UNKNOWN :
+                                         te ? ESP_DISPLAY_PRESENT_MEMORY_INTERNAL : ESP_DISPLAY_PRESENT_MEMORY_NONE));
+        uint32_t flags = ESP_DISPLAY_PRESENT_DEGRADE_TILE_ALLOCATION;
+        if (profile == 1 || te) {
+            flags |= ESP_DISPLAY_PRESENT_DEGRADE_TILE_PSRAM;
+        }
+        if (te) {
+            flags |= ESP_DISPLAY_PRESENT_DEGRADE_COMPOSE_PSRAM;
+        }
+        if (fb) {
+            flags |= ESP_DISPLAY_PRESENT_DEGRADE_AUTO_FB_POOL;
+        }
+        assert(effective.degradation_flags == flags);
+        esp_display_presenter_drawbuf_t pool;
+        OK(esp_display_presenter_get_drawbuf(presenter, &pool));
+        assert(pool.count == effective.tile_count && pool.bytes == 64 && !panel.calls);
+        delete_eventually(presenter);
+        free_panel(&panel);
+    }
+}
+
+static void region_psram_fallback_path(void)
+{
+    for (unsigned profile = 0; profile < 3; ++profile) {
+        struct fake_lcd panel;
+        init_panel(&panel);
+        esp_display_presenter_config_t cfg = io_config(&panel);
+        cfg.target.drawbuf.in_psram = true;
+        cfg.target.drawbuf.buffers = profile == 2 ? 0 : 1;
+        /* Available PSRAM stages through DMA. A failed T2 plan may lose
+         * PSRAM between attempts and must replan the T1 execution path. */
+        psram_available = profile != 1;
+        psram_lost_on_allocation_failure = profile == 2;
+        allocation_kind = 1;
+        allocation_index = 0;
+        allocation_target = profile == 2 ? 3 : UINT_MAX;
+        unsigned pixels_before = pixel_workers_created, backends_before = backend_workers_created;
+        esp_display_presenter_t *presenter;
+        OK(esp_display_presenter_create(&cfg, &presenter));
+        if (profile == 2) {
+            allocation_target = UINT_MAX;
+        } else {
+            assert(allocation_index == (profile == 0 ? 2 : 1));
+        }
+        esp_display_presenter_effective_config_t effective;
+        OK(esp_display_presenter_get_effective_config(presenter, &effective));
+        assert(effective.tile_count == 1 && effective.draw_memory == (profile == 0 ?
+               ESP_DISPLAY_PRESENT_MEMORY_PSRAM : ESP_DISPLAY_PRESENT_MEMORY_INTERNAL));
+        assert(pixel_workers_created - pixels_before == (profile == 0));
+        /* The failed T2 attempt creates its backend worker before tiles. */
+        assert(backend_workers_created - backends_before == (profile != 1));
+        unsigned allocations_before = allocation_index;
+        immediate = true;
+        start_frame(presenter, false, true);
+        const void *pixels = draw(presenter, 0x4821).surface.pixels;
+        OK(esp_display_presenter_commit_frame(presenter, NULL));
+        OK(esp_display_presenter_quiesce(presenter, 100));
+        assert(panel.calls == 1 && image[0] == 0x4821 && image[31] == 0x4821);
+        assert((panel.source == pixels) == (profile != 0));
+        assert(allocation_index == allocations_before);
+        start_frame(presenter, false, false);
+        esp_display_presenter_buffer_t next;
+        OK(esp_display_presenter_acquire_buffer(presenter, &next));
+        assert(next.surface.pixels == pixels);
+        const uint16_t padded[] = {0x1357, 0x2468, 0xffff, 0x369a, 0x47ab};
+        memcpy(next.surface.pixels, padded, sizeof(padded));
+        const esp_display_present_area_t dirty = {2, 1, 3, 2};
+        OK(esp_display_presenter_submit_buffer(presenter, &next, &dirty, 6));
+        OK(esp_display_presenter_commit_frame(presenter, NULL));
+        OK(esp_display_presenter_quiesce(presenter, 100));
+        assert(panel.calls == 2 && panel.source != pixels);
+        assert(image[10] == padded[0] && image[11] == padded[1]);
+        assert(image[18] == padded[3] && image[19] == padded[4]);
+        assert(allocation_index - allocations_before == (profile != 0));
+        delete_eventually(presenter);
+        free_panel(&panel);
+        allocation_target = 0;
+        psram_available = true;
+        psram_lost_on_allocation_failure = false;
+    }
+}
+
+static void region_rotation_allocation_failure(void)
+{
+    struct fake_lcd panel;
+    init_panel(&panel);
+    esp_display_presenter_config_t cfg = io_config(&panel);
+    cfg.target.drawbuf.buffers = 2;
+    esp_display_presenter_t *presenter;
+    OK(esp_display_presenter_create(&cfg, &presenter));
+
+    /* The first conversion buffer succeeds, the second fails. Neither new
+     * storage nor geometry may be published by the failed rotation. */
+    allocation_kind = 1;
+    allocation_index = 0;
+    allocation_target = 2;
+    assert(esp_display_presenter_set_rotation(presenter, ESP_DISPLAY_PRESENT_ROTATE_90) == ESP_ERR_NO_MEM);
+    allocation_target = 0;
+    esp_display_presenter_effective_config_t effective;
+    OK(esp_display_presenter_get_effective_config(presenter, &effective));
+    assert(effective.rotation == ESP_DISPLAY_PRESENT_ROTATE_0 && effective.width == 8 && effective.height == 4);
+    assert(effective.draw_stride_bytes == 16 && effective.output_stride_bytes == 16 && effective.tile_count == 2);
+    assert(effective.effective_mode == ESP_DISPLAY_PRESENT_MODE_NONE && !effective.degradation_flags);
+    esp_display_presenter_frame_status_t status;
+    OK(esp_display_presenter_get_frame_status(presenter, &status));
+    assert(status.generation == 1 && status.fault_reason == ESP_DISPLAY_PRESENT_FAULT_NONE);
+
+    immediate = true;
+    start_frame(presenter, false, true);
+    (void)draw(presenter, 0x1234);
+    OK(esp_display_presenter_commit_frame(presenter, NULL));
+    OK(esp_display_presenter_quiesce(presenter, 100));
+    assert(panel.calls == 1 && image[31] == 0x1234);
+
+    allocation_index = 0;
+    allocation_target = UINT_MAX;
+    OK(esp_display_presenter_set_rotation(presenter, ESP_DISPLAY_PRESENT_ROTATE_90));
+    allocation_target = 0;
+    assert(allocation_index == 2); /* Failed attempt did not leave the first allocation installed. */
+    OK(esp_display_presenter_get_effective_config(presenter, &effective));
+    assert(effective.rotation == ESP_DISPLAY_PRESENT_ROTATE_90 && effective.width == 4 && effective.height == 8);
+    assert(effective.draw_stride_bytes == 8 && effective.output_stride_bytes == 16 && effective.tile_count == 2);
+    delete_eventually(presenter);
+    free_panel(&panel);
+}
+
+static void te_rotation_capacity_failure(void)
+{
+    struct fake_lcd panel;
+    init_panel(&panel);
+    panel.physical_width = 4;
+    panel.physical_height = 8;
+    esp_display_presenter_config_t cfg = io_config(&panel);
+    cfg.width = 4;
+    cfg.height = 8;
+    cfg.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_TE_SYNC;
+    cfg.target.hw.te_enabled = true;
+    cfg.target.hw.te_sync = (esp_display_present_te_sync_config_t) {.gpio_num = 6, .bus_freq_hz = 80000000};
+    cfg.target.drawbuf.lines = 1;
+    cfg.transfer_timeout_ms = 1000;
+    esp_display_presenter_t *presenter;
+    OK(esp_display_presenter_create(&cfg, &presenter));
+    assert(esp_display_presenter_set_rotation(presenter, ESP_DISPLAY_PRESENT_ROTATE_90) == ESP_ERR_INVALID_SIZE);
+    esp_display_presenter_effective_config_t effective;
+    OK(esp_display_presenter_get_effective_config(presenter, &effective));
+    assert(effective.rotation == ESP_DISPLAY_PRESENT_ROTATE_0 && effective.width == 4 && effective.height == 8);
+    assert(effective.draw_stride_bytes == 8 && effective.output_stride_bytes == 8);
+    assert(effective.image_count == 1 && effective.effective_mode == ESP_DISPLAY_PRESENT_MODE_TE_SYNC);
+
+    size_t count;
+    bool full;
+    OK(begin_frame_eventually(presenter, NULL, NULL, 0, &count, &full));
+    assert(full && !count && test_te);
+    immediate = true;
+    for (int y = 0; y < 8; ++y) {
+        esp_display_presenter_buffer_t buffer;
+        OK(esp_display_presenter_acquire_buffer(presenter, &buffer));
+        assert(buffer.surface.stride_bytes == 8 && buffer.capacity_bytes == 8);
+        memset(buffer.surface.pixels, 0x32 + y, 8);
+        const esp_display_present_area_t row = {0, y, 3, y};
+        OK(esp_display_presenter_submit_buffer(presenter, &buffer, &row, 8));
+    }
+    OK(esp_display_presenter_commit_frame(presenter, NULL));
+    pthread_mutex_lock(&test_te->lock);
+    test_te->edge = 2000;
+    test_te->allow = true;
+    pthread_mutex_unlock(&test_te->lock);
+    (void)test_te->wakeup(test_te->user, false);
+    OK(esp_display_presenter_quiesce(presenter, 1000));
+    assert(panel.calls == 1);
+    for (unsigned i = 0; i < 32; ++i) {
+        assert(image[i] == (0x32 + i / 4) * 0x101);
+    }
+    delete_eventually(presenter);
+    free_panel(&panel);
+}
+
 static void rotation_reference(void)
 {
     const esp_display_present_rotation_t rotations[] = {0, 90, 180, 270};
@@ -1247,6 +1617,8 @@ static void rotation_reference(void)
     };
     for (unsigned variant = 0; variant < 2 * sizeof(modes) / sizeof(modes[0]); ++variant) {
         unsigned mode = variant % (sizeof(modes) / sizeof(modes[0]));
+        bool full_mode = modes[mode] == ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL || modes[mode] == ESP_DISPLAY_PRESENT_MODE_TRIPLE_FULL;
+        bool partial_mode = !full_mode && modes[mode] != ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT;
         bool rgb = variant >= sizeof(modes) / sizeof(modes[0]);
         for (unsigned r = 0; r < 4; ++r) {
             struct fake_lcd panel;
@@ -1263,7 +1635,13 @@ static void rotation_reference(void)
                                modes[mode] == ESP_DISPLAY_PRESENT_MODE_AUTO ? 3 : 2));
             cfg.pipeline_acquire_timeout_ms = 1;
             esp_display_presenter_t *presenter;
+            bool canvas_psram = !rgb || r != 0;
+            psram_available = canvas_psram;
+            unsigned pixels_before = pixel_workers_created, backends_before = backend_workers_created;
             OK(esp_display_presenter_create(&cfg, &presenter));
+            psram_available = true;
+            assert(pixel_workers_created - pixels_before == partial_mode);
+            assert(backend_workers_created == backends_before + 1);
             size_t count;
             bool full;
             assert(esp_display_presenter_begin_next_frame(presenter, NULL, NULL, 0, &count, &full) == ESP_ERR_TIMEOUT);
@@ -1307,9 +1685,8 @@ static void rotation_reference(void)
             assert(!memcmp(expected, panel.source, sizeof(expected)));
             esp_display_presenter_frame_status_t status;
             OK(esp_display_presenter_get_frame_status(presenter, &status));
-            if (!r && (modes[mode] == ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL ||
-                       modes[mode] == ESP_DISPLAY_PRESENT_MODE_TRIPLE_FULL ||
-                       modes[mode] == ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT)) {
+            unsigned next_scanout = 3;
+            if (!r && (full_mode || modes[mode] == ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT)) {
                 /* Converting a direct physical pool into a logical canvas may
                  * allocate. Failure must preserve generation, axes and panel. */
                 allocation_kind = 1;
@@ -1318,18 +1695,58 @@ static void rotation_reference(void)
                 esp_err_t error = esp_display_presenter_set_rotation(presenter, ESP_DISPLAY_PRESENT_ROTATE_90);
                 allocation_target = 0;
                 assert(error == ESP_ERR_NO_MEM);
+                if (full_mode) {
+                    unsigned scanout_calls = panel.calls;
+                    const void *scanning = panel.source;
+                    /* Inline conversion still allocates its completion events. */
+                    allocation_kind = 3;
+                    allocation_index = 0;
+                    allocation_target = 1;
+                    assert(esp_display_presenter_set_rotation(presenter, ESP_DISPLAY_PRESENT_ROTATE_90) == ESP_ERR_NO_MEM);
+                    allocation_target = 0;
+                    assert(allocation_index == 2 && pixel_workers_created == pixels_before);
+                    assert(panel.calls == scanout_calls && panel.source == scanning);
+                }
                 esp_display_presenter_caps_t retained;
                 OK(esp_display_presenter_get_caps(presenter, &retained));
                 assert(retained.width == 8 && retained.height == 4);
                 esp_display_presenter_frame_status_t retained_status;
                 OK(esp_display_presenter_get_frame_status(presenter, &retained_status));
                 assert(retained_status.generation == status.generation);
+                esp_display_presenter_effective_config_t effective;
+                OK(esp_display_presenter_get_effective_config(presenter, &effective));
+                assert(effective.rotation == ESP_DISPLAY_PRESENT_ROTATE_0 && effective.draw_stride_bytes == 16);
+                assert(!effective.tile_count && effective.draw_buffer_count == effective.image_count);
+                assert(effective.draw_memory == effective.image_memory);
+
+                OK(begin_frame_eventually(presenter, NULL, NULL, 0, &count, &full));
+                OK(esp_display_presenter_acquire_buffer(presenter, &buffer));
+                assert(buffer.surface.width == 8 && buffer.surface.height == 4 && buffer.surface.stride_bytes == 16);
+                memcpy(buffer.surface.pixels, expected, sizeof(expected));
+                OK(esp_display_presenter_submit_buffer(presenter, &buffer, &area, 16));
+                OK(esp_display_presenter_commit_frame(presenter, NULL));
+                finish_scanout(&panel, presenter, next_scanout++);
+                OK(esp_display_presenter_quiesce(presenter, 100));
+                assert(!memcmp(expected, panel.source, sizeof(expected)));
             }
             OK(esp_display_presenter_set_rotation(presenter, rotations[(r + 1) % 4]));
+            assert(pixel_workers_created == pixels_before + partial_mode);
+            assert(backend_workers_created == backends_before + 1);
             /* Panel geometry never changes when the logical view rotates. */
             esp_display_presenter_caps_t rotated_caps;
             OK(esp_display_presenter_get_caps(presenter, &rotated_caps));
             assert(rotated_caps.width == 4 && rotated_caps.height == 8);
+            esp_display_presenter_effective_config_t rotated;
+            OK(esp_display_presenter_get_effective_config(presenter, &rotated));
+            assert(rotated.effective_mode == (modes[mode] == ESP_DISPLAY_PRESENT_MODE_AUTO ?
+                                             ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL : modes[mode]));
+            assert(rotated.rotation == rotations[(r + 1) % 4] && rotated.draw_stride_bytes == 8);
+            assert(rotated.output_stride_bytes == (r & 1 ? 8 : 16));
+            if (!r && rotated_caps.contract != ESP_DISPLAY_PRESENT_CONTRACT_PARTITION) {
+                assert(!rotated.tile_count && rotated.draw_buffer_count == 1);
+                assert(rotated.draw_memory == (canvas_psram ? ESP_DISPLAY_PRESENT_MEMORY_PSRAM : ESP_DISPLAY_PRESENT_MEMORY_INTERNAL));
+                assert(rotated.degradation_flags == (canvas_psram ? 0 : ESP_DISPLAY_PRESENT_DEGRADE_CANVAS_PSRAM));
+            }
             OK(begin_frame_eventually(presenter, NULL, NULL, 0, &count, &full));
             assert(full && !count);
             OK(esp_display_presenter_acquire_buffer(presenter, &buffer));
@@ -1349,7 +1766,7 @@ static void rotation_reference(void)
             esp_display_present_area_t rotated_area = {0, 0, 3, 7};
             OK(esp_display_presenter_submit_buffer(presenter, &buffer, &rotated_area, 8));
             OK(esp_display_presenter_commit_frame(presenter, NULL));
-            finish_scanout(&panel, presenter, 3);
+            finish_scanout(&panel, presenter, next_scanout++);
             OK(esp_display_presenter_quiesce(presenter, 100));
             assert(!memcmp(expected, panel.source, sizeof(expected)));
             esp_display_presenter_frame_status_t unchanged;
@@ -1382,7 +1799,7 @@ static void rotation_reference(void)
             }
             OK(esp_display_presenter_submit_buffer(presenter, &buffer, &area, 16));
             OK(esp_display_presenter_commit_frame(presenter, NULL));
-            finish_scanout(&panel, presenter, 4);
+            finish_scanout(&panel, presenter, next_scanout);
             OK(esp_display_presenter_quiesce(presenter, 100));
             assert(!memcmp(expected, panel.source, sizeof(expected)));
             delete_eventually(presenter);
@@ -1895,9 +2312,33 @@ bool __wrap_present_event_wait(present_os_event_t *event, uint32_t timeout)
     return __real_present_event_wait(event, timeout);
 }
 
+static _Thread_local present_mutex_t **capture_facade_gate;
+static _Thread_local bool expect_bounded_gate_wait;
+static _Thread_local present_mutex_t *slow_facade_gate;
+static _Thread_local unsigned quiesce_core_budget_checks;
+
 bool __real_present_mutex_take(present_mutex_t *, uint32_t);
 bool __wrap_present_mutex_take(present_mutex_t *mutex, uint32_t timeout)
 {
+    if (capture_facade_gate) {
+        *capture_facade_gate = mutex;
+        capture_facade_gate = NULL;
+    }
+    if (expect_bounded_gate_wait) {
+        assert(timeout != UINT32_MAX && timeout <= 5);
+    }
+    if (slow_facade_gate) {
+        if (mutex == slow_facade_gate) {
+            bool acquired = __real_present_mutex_take(mutex, timeout);
+            uint64_t start = present_now_ms();
+            while (!present_expired(start, 10)) {
+                present_pause();
+            }
+            return acquired;
+        }
+        assert(timeout <= 90); /* The core inherits the remainder of the 100 ms budget. */
+        ++quiesce_core_budget_checks;
+    }
     pthread_mutex_lock(&gram_race.lock);
     if (gram_race.enabled && gram_race.stop_ready &&
             present_same_task(gram_race.stopper, present_current_task())) {
@@ -1906,6 +2347,42 @@ bool __wrap_present_mutex_take(present_mutex_t *mutex, uint32_t timeout)
     }
     pthread_mutex_unlock(&gram_race.lock);
     return __real_present_mutex_take(mutex, timeout);
+}
+
+static void quiesce_has_bounded_gate_waits(void)
+{
+    struct fake_lcd panel;
+    init_panel(&panel);
+    esp_display_presenter_config_t cfg = io_config(&panel);
+    esp_display_presenter_t *presenter;
+    OK(esp_display_presenter_create(&cfg, &presenter));
+    esp_display_present_engine_t *core;
+    OK(present_session_bind(presenter, &core));
+    present_session_unbind(presenter);
+
+    esp_display_presenter_state_t state;
+    present_mutex_t *facade_gate = NULL;
+    capture_facade_gate = &facade_gate;
+    OK(esp_display_presenter_get_state(presenter, &state));
+    assert(facade_gate && __real_present_mutex_take(facade_gate, 0));
+    expect_bounded_gate_wait = true;
+    assert(esp_display_presenter_quiesce(presenter, 5) == ESP_ERR_TIMEOUT);
+    expect_bounded_gate_wait = false;
+    present_mutex_give(facade_gate);
+
+    present_presenter_test_gate_lock(core);
+    expect_bounded_gate_wait = true;
+    assert(esp_display_presenter_quiesce(presenter, 5) == ESP_ERR_TIMEOUT);
+    expect_bounded_gate_wait = false;
+    present_presenter_test_gate_unlock(core);
+
+    slow_facade_gate = facade_gate;
+    quiesce_core_budget_checks = 0;
+    OK(esp_display_presenter_quiesce(presenter, 100));
+    slow_facade_gate = NULL;
+    assert(quiesce_core_budget_checks == 1);
+    delete_eventually(presenter);
+    free_panel(&panel);
 }
 
 typedef struct {
@@ -1937,13 +2414,16 @@ static void gram_exhaustion_and_stop(void)
                 init_panel(&panel);
                 esp_display_presenter_config_t cfg = io_config(&panel);
                 cfg.target.drawbuf.buffers = tiles;
+                cfg.target.drawbuf.in_psram = true;
                 /* The rendezvous requires acquire to reach its event wait before
                  * STOP starts. 5 ms may expire during sanitizer scheduling;
                  * short timeout behavior is covered by the non-concurrent case. */
                 cfg.pipeline_acquire_timeout_ms = transfer_fault || concurrent_stop ? 200 : 5;
                 cfg.transfer_timeout_ms = transfer_fault ? 20 : 60000;
                 esp_display_presenter_t *presenter;
+                psram_available = false;
                 OK(esp_display_presenter_create(&cfg, &presenter));
+                psram_available = true;
                 immediate = false;
                 start_frame(presenter, false, true);
                 const uint16_t *sources[2];
@@ -1951,6 +2431,7 @@ static void gram_exhaustion_and_stop(void)
                 for (unsigned i = 0; i < tiles; ++i) {
                     old[i] = draw(presenter, 0x6a00 + i);
                     sources[i] = panel.source;
+                    assert(sources[i] == old[i].surface.pixels);
                 }
                 assert(panel.calls == tiles);
                 if (tiles == 2) {
@@ -2081,9 +2562,16 @@ int main(void)
     fault_classification_matrix();
     fault_after_tracking_fence();
     mode_matrix();
+    simple_open_matrix();
     frame_plan_contracts();
     rotation_observes_tracking();
+    quiesce_waits_for_tracked_vsyncs();
+    quiesce_has_bounded_gate_waits();
     rotation_poll_failure();
+    effective_config_low_memory();
+    region_psram_fallback_path();
+    region_rotation_allocation_failure();
+    te_rotation_capacity_failure();
     rotation_reference();
     direct_dirty_contract();
     gram_rotation_superset();

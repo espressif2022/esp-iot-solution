@@ -14,6 +14,8 @@ typedef struct {
     size_t frame_buffer_count, frame_buffer_bytes, bounce_buffer_bytes;
     unsigned bits_per_pixel;
     bool continuous_refresh, custom_bounce_callback, transformed;
+    /* BSP owns this live panel and never requests asynchronous RGB restart. */
+    bool no_explicit_restart;
 } present_lcd_rgb_info_t;
 typedef struct {
     present_lcd_rgb_info_t panel;

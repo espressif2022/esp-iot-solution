@@ -5,6 +5,7 @@
 #include "backend/present_backend_config.h"
 #include "backend/present_backend.h"
 #include "platform/lcd/present_lcd_fb_scanout.h"
+#include "platform/lcd/present_lcd_dpi_info.h"
 #include "platform/lcd/present_lcd_rgb_info.h"
 #include "esp_lcd_mipi_dsi.h"
 #include "esp_lcd_panel_rgb.h"
@@ -57,14 +58,26 @@ struct fake_lcd {
     rgb_cb_t rgb, rgb_vsync;
     void *user;
     bool early, fail, stop_timeout, deleted, detach_fail;
-    bool link_early, board_info;
+    bool link_early, board_info, no_explicit_restart;
     unsigned board_queries;
     unsigned *link_published;
     size_t calls, buffer_count;
     bool no_bounce, no_retirement, link_retirement, one_shot, transformed, custom_bounce, one_fb;
     bool info_error, wrong_dimensions, wrong_format, wrong_size;
+    bool dpi_board_info;
+    present_lcd_dpi_info_t dpi;
+    size_t cache_calls_at_draw, cache_bytes_at_draw;
     const void *source;
 };
+bool present_lcd_dpi_get_board_info(esp_lcd_panel_handle_t panel, present_lcd_dpi_info_t *info)
+{
+    if (!panel->dpi_board_info) {
+        return false;
+    }
+    *info = panel->dpi;
+    return true;
+}
+
 esp_err_t present_lcd_rgb_get_board_info(esp_lcd_panel_handle_t panel, present_lcd_rgb_info_t *info)
 {
     ++panel->board_queries;
@@ -83,6 +96,7 @@ esp_err_t present_lcd_rgb_get_board_info(esp_lcd_panel_handle_t panel, present_l
         .continuous_refresh = !panel->one_shot,
         .custom_bounce_callback = panel->custom_bounce,
         .transformed = panel->transformed,
+        .no_explicit_restart = panel->no_explicit_restart,
     };
     return ESP_OK;
 }
@@ -178,16 +192,33 @@ esp_err_t esp_lcd_rgb_panel_get_frame_buffer(esp_lcd_panel_handle_t p, uint32_t 
     return error;
 }
 
+static size_t cache_calls;
+static size_t cache_bytes;
+static esp_err_t cache_result = ESP_OK;
 esp_err_t esp_cache_msync(void *p, size_t bytes, int flags)
 {
-    assert(p && bytes == 12 && (flags & ESP_CACHE_MSYNC_FLAG_DIR_C2M));
-    return ESP_OK;
+    assert(p && bytes && flags == (ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_UNALIGNED));
+    ++cache_calls;
+    cache_bytes = bytes;
+    return cache_result;
 }
 
 esp_err_t esp_lcd_panel_draw_bitmap(esp_lcd_panel_handle_t p, int x, int y, int ex, int ey, const void *source)
 {
     assert(x == 0 && y == 0 && ex == 3 && ey == 2);
     p->calls++;
+    p->cache_calls_at_draw = cache_calls;
+    p->cache_bytes_at_draw = cache_bytes;
+    if (p->no_bounce && p->link_retirement) {
+        /* ESP-IDF flushes the registered FB before requesting the link switch. */
+        esp_cache_msync((void *)source, 12, ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_UNALIGNED);
+    }
+    if (p->dpi.width) {
+        assert(source == p->buffers[0] || source == p->buffers[1]);
+        size_t rows = p->dpi.height < (unsigned)ey ? p->dpi.height : (unsigned)ey;
+        esp_cache_msync((void *)source, rows * p->dpi.width * p->dpi.bits_per_pixel / 8,
+                        ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_UNALIGNED);
+    }
     p->source = source;
     if (p->early) {
         boundary(p);
@@ -253,8 +284,10 @@ static void exercise(esp_display_present_lcd_fb_scanout_kind_t kind, bool fail, 
     memset(lease.surface.pixels, 0x55, 12);
     OK(ops->submit_region(b, f, lease.id));
     esp_display_present_receipt_t receipt;
+    size_t cache_before = cache_calls;
     OK(ops->end(b, f, &receipt));
     OK(present_fb_backend.service(b));
+    assert(cache_calls == cache_before + 1); /* No mocked driver writeback in this exercise. */
     esp_display_present_frame_status_t status;
     OK(ops->query(b, receipt, &status));
     assert(!status.terminal);
@@ -445,6 +478,80 @@ static bool count_single(void *user, const esp_display_present_backend_event_t *
     ++*(unsigned *)user;
     return false;
 }
+
+static void dpi_registered_writeback(void)
+{
+    const struct {
+        present_lcd_dpi_info_t driver;
+        bool board_info;
+        unsigned input_bpp;
+        size_t driver_bytes;
+    } cases[] = {
+        {{3, 2, 16}, true, 16, 12},
+        {{3, 2, 24}, true, 24, 18},
+        {{3, 2, 16}, false, 16, 12},
+        {{2, 2, 16}, true, 16, 8},
+        {{3, 1, 16}, true, 16, 6},
+        {{3, 3, 16}, true, 16, 12},
+        {{3, 2, 24}, true, 16, 18},
+        {{0}, false, 16, 0},
+    };
+    for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+        struct fake_lcd panel = {.dpi_board_info = cases[i].board_info, .dpi = cases[i].driver, .early = true};
+        for (size_t b = 0; b < 2; ++b) {
+            panel.buffers[b] = aligned_alloc(64, 64);
+            assert(panel.buffers[b]);
+        }
+        esp_display_present_lcd_fb_scanout_config_t cfg = {
+            .panel = &panel, .kind = ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_DSI,
+            .width = 3, .height = 2,
+            .format = cases[i].input_bpp == 16 ? ESP_DISPLAY_PRESENT_FORMAT_RGB565 : ESP_DISPLAY_PRESENT_FORMAT_RGB888,
+            .buffer_count = 2, .delete_panel = true,
+        };
+        esp_display_present_lcd_fb_scanout_t *adapter;
+        OK(esp_display_present_lcd_fb_scanout_create(&cfg, &adapter));
+        esp_display_present_panel_adapter_t api;
+        OK(esp_display_present_lcd_fb_scanout_get_interface(adapter, &api));
+        unsigned confirmed = 0;
+        OK(api.attach(api.context, count_single, &confirmed));
+        size_t row_bytes = 3 * cases[i].input_bpp / 8;
+        size_t frame_bytes = 2 * row_bytes;
+        esp_display_present_surface_t surface = {panel.buffers[1], frame_bytes, {3, 2, row_bytes, cfg.format, ESP_DISPLAY_PRESENT_ORDER_NATIVE}};
+        esp_display_present_rect_t area = {0, 0, 3, 2};
+        size_t before = cache_calls;
+        area.height = 1;
+        assert(api.submit(api.context, &surface, &area, 91).acceptance == ESP_DISPLAY_PRESENT_TX_REJECTED);
+        area.height = 2;
+        surface.layout.stride_bytes = row_bytes + 2;
+        assert(api.submit(api.context, &surface, &area, 91).acceptance == ESP_DISPLAY_PRESENT_TX_REJECTED);
+        surface.layout.stride_bytes = row_bytes;
+        surface.pixels = (uint8_t *)panel.buffers[1] + 2;
+        assert(api.submit(api.context, &surface, &area, 91).acceptance == ESP_DISPLAY_PRESENT_TX_REJECTED);
+        surface.pixels = panel.buffers[1];
+        assert(cache_calls == before && !panel.calls);
+
+        bool delegated = false;
+#ifdef PRESENT_IDF_DPI_FRAME_WRITEBACK
+        delegated = i < 2;
+#endif
+        assert(api.submit(api.context, &surface, &area, 91).acceptance == ESP_DISPLAY_PRESENT_TX_ACCEPTED);
+        assert(panel.cache_calls_at_draw == before + !delegated);
+        if (!delegated) {
+            assert(panel.cache_bytes_at_draw == frame_bytes);
+        }
+        assert(cache_calls == before + !delegated + (cases[i].driver_bytes != 0));
+        assert(cache_bytes == (cases[i].driver_bytes ? cases[i].driver_bytes : frame_bytes));
+        assert(!confirmed && !submit_barrier_panel);
+        boundary(&panel);
+        assert(confirmed == 1);
+        OK(api.quiesce(api.context, 100));
+        OK(esp_display_present_lcd_fb_scanout_destroy(adapter));
+        for (size_t b = 0; b < 2; ++b) {
+            free(panel.buffers[b]);
+        }
+    }
+}
+
 static void single_buffer_join(void)
 {
     const esp_err_t outcomes[] = {ESP_OK, ESP_ERR_TIMEOUT, ESP_ERR_NOT_SUPPORTED};
@@ -561,14 +668,15 @@ static bool link_complete(void *user, const esp_display_present_backend_event_t 
     receipt->from_isr = from_isr;
     return false;
 }
-static void test_rgb_link_switch(void)
+static void test_rgb_link_switch(bool no_explicit_restart)
 {
     for (size_t count = 2; count <= 3; ++count) {
         for (unsigned early = 0; early < 2; ++early) {
             for (unsigned fail = 0; fail < 2; ++fail) {
                 link_receipt_t receipt = {0};
                 struct fake_lcd panel = {.no_bounce = true, .link_retirement = true, .buffer_count = count,
-                           .link_early = early, .board_info = true, .fail = fail, .link_published = &receipt.count
+                           .link_early = early, .board_info = true, .fail = fail, .link_published = &receipt.count,
+                           .no_explicit_restart = no_explicit_restart,
                 };
                 for (size_t i = 0; i < count; ++i) {
                     panel.buffers[i] = aligned_alloc(64, 64);
@@ -590,7 +698,20 @@ static void test_rgb_link_switch(void)
                 };
                 esp_display_present_rect_t area = {0, 0, 3, 2};
                 unsigned joins = barrier_calls;
+                bool driver_only = false;
+#ifdef PRESENT_IDF_RGB_FRAME_WRITEBACK
+                driver_only = no_explicit_restart;
+#endif
+                if (!driver_only) {
+                    cache_result = ESP_FAIL;
+                    esp_display_present_tx_result_t rejected = api.submit(api.context, &surface, &area, 71);
+                    assert(rejected.acceptance == ESP_DISPLAY_PRESENT_TX_REJECTED && rejected.result == ESP_FAIL);
+                    assert(!panel.calls && !receipt.count);
+                    cache_result = ESP_OK;
+                }
+                size_t cache_before = cache_calls;
                 esp_display_present_tx_result_t tx = api.submit(api.context, &surface, &area, 71);
+                assert(cache_calls == cache_before + (driver_only ? 1 : 2));
                 assert(barrier_calls == joins); /* Never join away the sole link-switch event. */
                 assert(tx.acceptance == (fail ? ESP_DISPLAY_PRESENT_TX_UNCERTAIN : ESP_DISPLAY_PRESENT_TX_ACCEPTED));
                 if (fail) {
@@ -686,7 +807,9 @@ int main(void)
 #ifdef ESP_LCD_RGB_PANEL_HAS_FRAME_BUFFER_INFO
     queried_rgb();
 #endif
-    test_rgb_link_switch();
+    test_rgb_link_switch(false);
+    test_rgb_link_switch(true);
+    dpi_registered_writeback();
     const esp_err_t join_results[] = {ESP_OK, ESP_ERR_NOT_SUPPORTED, ESP_ERR_TIMEOUT, ESP_FAIL};
     for (int kind = ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_DSI; kind <= ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_RGB; ++kind) {
         for (size_t count = 2; count <= 3; ++count) {

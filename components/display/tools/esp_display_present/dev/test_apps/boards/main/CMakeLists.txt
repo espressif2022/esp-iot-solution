@@ -32,7 +32,7 @@ endif()
 idf_component_register(SRCS ${APP_SOURCE} ${BOARD_SOURCE} INCLUDE_DIRS "."
     REQUIRES esp_display_present esp_lcd esp_timer esp_psram esp_driver_gpio esp_driver_i2c ${BOARD_DEPS})
 idf_component_get_property(_present_dir esp_display_present COMPONENT_DIR)
-target_include_directories(${COMPONENT_LIB} PRIVATE "${_present_dir}/src")
+target_include_directories(${COMPONENT_LIB} PRIVATE "${_present_dir}/src" "${_present_dir}/private_include")
 
 if(IDF_TARGET STREQUAL "esp32p4")
     target_compile_definitions(${COMPONENT_LIB} PRIVATE PRESENT_BOARD_EXECUTOR_CHECK=1)
@@ -52,5 +52,6 @@ if(PRESENT_P4_TRANSITION_MATRIX)
 endif()
 
 if(PRESENT_BOARD STREQUAL "s31-rgb")
-    target_compile_definitions(${COMPONENT_LIB} PRIVATE PRESENT_BOARD_S31_RGB=1)
+    target_sources(${COMPONENT_LIB} PRIVATE board_rgb_info.c)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE PRESENT_BOARD_S31_RGB=1 PRESENT_BOARD_RGB_INFO=1 PRESENT_RGB_BOUNCE_LINES=0)
 endif()

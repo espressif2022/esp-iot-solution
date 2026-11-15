@@ -23,7 +23,9 @@ HEADERS = (
     'core/present_engine_types.h',
     'config/present_engine_config.h',
     'core/present_engine.h',
-    'core/present_session.h',
+    'esp_display_present_draw_types.h',
+    'esp_display_present_renderer_types.h',
+    'esp_display_present_lvgl_bridge.h',
     'core/present_control.h',
     'core/present_producer.h',
     'core/present_completion_tracker.h',
@@ -50,7 +52,6 @@ FORBIDDEN = {
     'resources/present_memory.h': (
         'core/present_engine.h', 'config/present_engine_config.h', 'backend/present_backend.h'),
     'core/present_engine_types.h': ('config/present_engine_config.h', 'backend/present_backend.h'),
-    'core/present_session.h': ('config/present_engine_config.h', 'backend/present_backend.h'),
     'backend/present_output_caps.h': ('backend/present_backend.h',),
     'config/present_mode.h': ('core/present_engine.h', 'esp_display_present.h', 'backend/present_backend.h'),
     'config/present_plan.h': ('core/present_engine.h', 'esp_display_present.h', 'backend/present_backend.h'),
@@ -64,17 +65,20 @@ def main():
     parser.add_argument('--cxx', required=True)
     args = parser.parse_args()
     component = pathlib.Path(__file__).resolve().parents[2]
-    flags = ['-DPRESENT_HOST=1', '-I' + str(component / 'src'),
+    flags = ['-DPRESENT_HOST=1', '-I' + str(component / 'private_include'),
              '-I' + str(component / 'include'), '-I' + str(component / 'dev/tests/support')]
     with tempfile.TemporaryDirectory(prefix='present-header-contract-') as temp:
         for header in HEADERS:
+            internal = [] if (component / 'private_include' / header).exists() else ['-I' + str(component / 'src')]
             for compiler, suffix, standard in ((args.cc, '.c', 'c11'), (args.cxx, '.cpp', 'c++17')):
                 source = pathlib.Path(temp) / ('header' + suffix)
                 source.write_text('#include "' + header + '"\n')
-                command = [compiler, '-std=' + standard, '-Wall', '-Wextra', '-Werror', *flags]
+                command = [compiler, '-std=' + standard, '-Wall', '-Wextra', '-Werror', *flags, *internal]
                 subprocess.run([*command, '-fsyntax-only', str(source)], check=True)
                 output = subprocess.check_output([*command, '-M', str(source)], text=True)
                 dependencies = {pathlib.Path(p).resolve() for p in shlex.split(output.replace('\\\n', ' '))[1:]}
+                if not internal:
+                    assert all(component / 'src' not in dependency.parents for dependency in dependencies), (header, suffix)
                 for forbidden in FORBIDDEN.get(header, ()):
                     search = 'include' if forbidden == 'esp_display_present.h' else 'src'
                     assert component / search / forbidden not in dependencies, (header, forbidden, suffix)

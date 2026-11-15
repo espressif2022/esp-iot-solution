@@ -4,10 +4,20 @@
 #include "support/legacy_panel.h"
 /* Fail a real pixel-pool allocation, not the planning function. */
 static unsigned fail_pixel_at, pixel_calls;
+static bool fail_combined_fb_tiles, count_pixel_calls;
+static size_t largest_internal_dma_block = SIZE_MAX;
+bool __wrap_present_internal_dma_pool_available(size_t bytes)
+{
+    return bytes <= largest_internal_dma_block;
+}
+
 void *__real_present_alloc_pixels_in(size_t bytes, bool external);
 void *__wrap_present_alloc_pixels_in(size_t bytes, bool external)
 {
-    if (fail_pixel_at && ++pixel_calls == fail_pixel_at) {
+    if (fail_combined_fb_tiles && !external && bytes == 2 * 64) {
+        return NULL;
+    }
+    if ((count_pixel_calls || fail_pixel_at) && ++pixel_calls == fail_pixel_at) {
         return NULL;
     }
     return __real_present_alloc_pixels_in(bytes, external);
@@ -37,10 +47,12 @@ static void optional_tile_fallback(void)
             /* GRAM async: draw+converted before the second slot. TE: compose
              * before two tiles. FB borrows images; only tiles allocate here. */
             fail_pixel_at = kind == 1 || kind == 2 ? 3 : 2;
+            fail_combined_fb_tiles = kind == 3;
             pixel_calls = 0;
             present_resources_t *resources = NULL;
             esp_err_t error = present_resources_create(&input, false, NULL, NULL, &resources);
             fail_pixel_at = 0;
+            fail_combined_fb_tiles = false;
             if (explicit_count) {
                 assert(error == ESP_ERR_NO_MEM && !resources);
             } else {
@@ -75,7 +87,7 @@ static void initialize(present_resources_t *resources, struct fake_lcd *panel)
     OK(present_resources_prepare(resources, 0));
     assert(panel->calls == before + 1); /* Retry never submits a second bootstrap. */
 }
-static void submit_frame(present_resources_t *resources, struct fake_lcd *panel, bool hardware_error)
+static void *submit_frame(present_resources_t *resources, struct fake_lcd *panel, bool hardware_error)
 {
     esp_display_present_engine_t *presenter = present_resources_presenter(resources);
     esp_display_present_frame_request_t request = {.full_redraw = true};
@@ -109,7 +121,50 @@ static void submit_frame(present_resources_t *resources, struct fake_lcd *panel,
         assert(status.result == ESP_OK && ((const uint16_t *)panel->source)[0] == 0x5a5a);
     }
     OK(esp_display_present_engine_release_receipt(presenter, receipt));
+    return lease.surface.pixels;
 }
+
+static void fb_reopen_two_internal_tiles(void)
+{
+    struct fake_lcd panel;
+    init_panel(&panel);
+    esp_display_presenter_config_t input = config(&panel, true);
+    input.target.drawbuf.buffers = 2;
+    for (unsigned open = 0; open < 3; ++open) {
+        input.target.fb.mode = open ? ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL : ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL;
+        /* The warm reopen would fail on a second individual allocation.
+         * Also exercise a heap that can fit two tiles in separate blocks. */
+        fail_pixel_at = open == 1 ? 2 : 0;
+        largest_internal_dma_block = open == 2 ? 64 : SIZE_MAX;
+        count_pixel_calls = true;
+        pixel_calls = 0;
+        present_resources_t *resources;
+        OK(present_resources_create(&input, true, NULL, NULL, &resources));
+        assert(pixel_calls == (open == 2 ? 2 : 1));
+        fail_pixel_at = 0;
+        largest_internal_dma_block = SIZE_MAX;
+        count_pixel_calls = false;
+
+        initialize(resources, &panel);
+        present_resource_status_t status;
+        OK(present_resources_status(resources, &status));
+        assert(status.plan.tiles.count == 2 && status.plan.tiles.memory == ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA);
+        assert(status.plan.images.count == (open ? 3 : 2));
+        void *tiles[2];
+        size_t count, bytes;
+        OK(esp_display_present_engine_get_draw_buffers(present_resources_presenter(resources), tiles, 2, &count, &bytes));
+        assert(count == 2 && bytes == 64 && tiles[0] != tiles[1]);
+        assert((uintptr_t)tiles[0] % 64 == 0 && (uintptr_t)tiles[1] % 64 == 0);
+        if (open != 2) {
+            assert((uintptr_t)tiles[1] - (uintptr_t)tiles[0] == bytes);
+        }
+        assert(submit_frame(resources, &panel, false) == tiles[0]);
+        assert(submit_frame(resources, &panel, false) == tiles[1]);
+        OK(present_resources_destroy(resources, 1000));
+    }
+    free_panel(&panel);
+}
+
 static void exercise(bool rgb, bool hardware)
 {
     struct fake_lcd panel;
@@ -425,6 +480,7 @@ int main(void)
 {
     automatic_te_memory_budget();
     optional_tile_fallback();
+    fb_reopen_two_internal_tiles();
     struct fake_lcd panel;
     init_panel(&panel);
     esp_display_presenter_config_t input = config(&panel, true);

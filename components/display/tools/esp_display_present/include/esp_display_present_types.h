@@ -44,6 +44,28 @@ typedef enum {
     ESP_DISPLAY_PRESENT_FAULT_TRANSFER_FAILED,
 } esp_display_present_fault_reason_t;
 
+/** Memory domain of the active pixel storage. */
+typedef enum {
+    ESP_DISPLAY_PRESENT_MEMORY_NONE = 0, /**< This pool is absent. */
+    ESP_DISPLAY_PRESENT_MEMORY_INTERNAL,
+    ESP_DISPLAY_PRESENT_MEMORY_PSRAM,
+    ESP_DISPLAY_PRESENT_MEMORY_MIXED,   /**< Driver framebuffers span both domains. */
+    ESP_DISPLAY_PRESENT_MEMORY_UNKNOWN, /**< The platform cannot identify borrowed storage. */
+} esp_display_present_memory_domain_t;
+
+/** Opt-in performance statistics since the last reset. Durations are in microseconds. */
+typedef struct {
+    uint64_t frame_samples;       /**< Successful commits with a measured begin. */
+    uint64_t frame_p99_us;        /**< Begin-to-commit P99 upper bound (1 ms buckets, max for overflow). */
+    uint64_t buffer_waits;        /**< Begin/acquire calls that encountered buffer backpressure. */
+    uint64_t buffer_wait_timeouts;
+    uint64_t buffer_wait_us;      /**< Total time from first buffer denial to call return. */
+    uint64_t buffer_wait_max_us;
+    bool scanout_available;       /**< RGB/DPI scanout VSYNC counters are supported. */
+    uint64_t scanout_vsyncs;
+    uint64_t scanout_supply_misses; /**< VSYNC intervals with backlog at the previous VSYNC and no confirmed switch. */
+} esp_display_presenter_metrics_t;
+
 /** Driver completion feedback. */
 typedef enum {
     /** All frame transfers completed; no scanout event is available. */

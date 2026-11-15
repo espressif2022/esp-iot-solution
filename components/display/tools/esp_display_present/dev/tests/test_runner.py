@@ -69,8 +69,19 @@ class RunnerTest(unittest.TestCase):
 
     def test_explicit_profile_filter(self):
         self.assertEqual(len(runner.cases_for('s31-qspi', [0, 90], ['TE_C2_T2'])), 2)
+        rows = runner.cases_for('s31-qspi', [0], ['TE_C2_T2', 'GRAM_T1_INTERNAL', 'GRAM_T2_PSRAM'])
+        self.assertEqual([(row['mode'], row['tiles'], row['psram'], row['compose']) for row in rows],
+                         [('B_TE', 2, False, 2), ('B_NONE', 1, False, 0), ('B_NONE', 2, True, 0)])
         with self.assertRaises(ValueError):
             runner.cases_for('box3-spi', [0], ['TE_C2_T2'])
+
+    def test_partial_draw_buffer_variant_is_isolated(self):
+        rows = runner.cases_for('s3-rgb', [0], ['DOUBLE_FULL', 'TRIPLE_PARTIAL'], draw_buffers=2)
+        self.assertEqual({row['mode']: row['tiles'] for row in rows},
+                         {'B_DOUBLE_FULL': 1, 'B_TRIPLE_PARTIAL': 2})
+        args = SimpleNamespace(work_root=Path('/tmp/test-draw'), board='s3-rgb', suite='benchmark',
+                               implementation='present', draw_buffers=2)
+        self.assertEqual(runner.location(args).name, 'present-draw2')
 
     def test_adapter_native_te_modes_are_not_faked_ct_equivalents(self):
         rows = runner.cases_for('s31-qspi', [0, 90, 180, 270], ['ADAPTER_TE_SYNC_FULL', 'ADAPTER_TE_ASYNC_FULL', 'ADAPTER_TE_ASYNC_BOUNCE'])
@@ -87,6 +98,24 @@ class RunnerTest(unittest.TestCase):
         self.assertEqual(value['rows'][0]['wait_avg_us'], 1700)
         self.assertEqual(value['rows'][0]['tx_avg_us'], 24000)
 
+    def test_present_metrics_follow_mode_and_rotation(self):
+        log = ('METRICS mode=DOUBLE_DIRECT te_buffers=0 rotation=90 frame_samples=12 '
+               'begin_commit_p99_us=12500 buffer_waits=3 scanout_supply_misses=8\n'
+               'PASS mode=DOUBLE_DIRECT rotation=90 lvgl_fps=30\n'
+               'PASS mode=DOUBLE_DIRECT rotation=0 lvgl_fps=30\n')
+        rows = runner.parse_log(log)['rows']
+        self.assertEqual(rows[0]['metrics'], dict(frame_samples=12, begin_commit_p99_us=12500,
+                                                  buffer_waits=3, scanout_supply_misses=8))
+        self.assertNotIn('metrics', rows[1])
+
+    def test_lvgl_version_comes_from_selected_source(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp)
+            (path / 'lv_version.h').write_text('#define LVGL_VERSION_MAJOR 9\n'
+                                              '#define LVGL_VERSION_MINOR 5\n'
+                                              '#define LVGL_VERSION_PATCH 0\n')
+            self.assertEqual(runner.lvgl_version(path), '9.5.0')
+
     def test_profile_metrics_and_output_isolation(self):
         log = 'RUN mode=NONE rotation=0\nPRESENT_PROFILE: label=NONE stage=begin n=5 sum_us=100 avg_us=20 max_us=24 bytes=0 errors=0\nPASS mode=NONE rotation=0 lvgl_fps=50 scenes=16\nSUITE_PASS board=x'
         parsed = runner.parse_log(log)
@@ -96,13 +125,14 @@ class RunnerTest(unittest.TestCase):
 
     def test_memory_metrics_keep_phases_heaps_and_rotations_separate(self):
         log = ('MEMORY mode=SUITE rotation=0 phase=after_init internal_total=1000 internal_free=900 psram_total=8000 psram_free=7000 internal_min_free=0 psram_min_free=0\n'
-               'MEMORY mode=DOUBLE_FULL rotation=90 phase=after_open internal_total=1000 internal_free=800 psram_total=8000 psram_free=6000 internal_min_free=0 psram_min_free=0\n'
+               'MEMORY mode=DOUBLE_FULL rotation=90 phase=after_open internal_total=1000 internal_free=800 psram_total=8000 psram_free=6000 internal_min_free=0 psram_min_free=0 internal_dma_largest=450\n'
                'MEMORY mode=DOUBLE_FULL rotation=90 phase=after_run internal_total=1000 internal_free=750 psram_total=8000 psram_free=5900 internal_min_free=700 psram_min_free=5000\n'
                'PASS mode=DOUBLE_FULL rotation=90 lvgl_fps=31 scenes=16\n'
                'SKIP mode=NONE rotation=90 reason=unsupported\nSUITE_PASS board=x')
         result = runner.parse_log(log)
         self.assertEqual(result['suite_memory']['after_init']['internal_free'], 900)
         self.assertEqual(result['rows'][0]['memory']['after_open']['psram_free'], 6000)
+        self.assertEqual(result['rows'][0]['memory']['after_open']['internal_dma_largest'], 450)
         self.assertEqual(result['rows'][0]['memory']['after_run']['internal_min_free'], 700)
         self.assertNotIn('memory', result['rows'][1])
 

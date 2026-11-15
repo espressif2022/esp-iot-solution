@@ -31,12 +31,25 @@ The public facade serializes acquire and STOP with its mutex. It has no legacy
 concurrent API calls; testing STOP against acquire does not authorize racing
 successful deletion against a live caller.
 
-Facade `set_rotation` observes completed receipts and the tracked VSYNC fence
-under its mutex before checking admission. `quiesce` may finish transfer drain
-before that observation fence ends; rotation still rejects an outstanding fence.
-After the actual VSYNC events arrive, retrying rotation reaps the observation
-without an unrelated status/cancel-tracking call. An observation error is returned
-before changing rotation, dimensions or generation.
+Facade `quiesce` drains the hardware fences and any outstanding tracked VSYNC
+confirmation. `set_rotation` independently checks for and reaps these
+observations before changing rotation, dimensions or generation.
+
+## Recovery after a timeout or fault
+
+| Situation | Caller action |
+|---|---|
+| Admission, lease acquisition, or observation budget expires with no latched fault | Retry the same operation on the live presenter. A failed observation does not revoke a lease, consume a receipt, or reset an already accepted transfer's deadline. |
+| Adapter rejects before accepting access | Correct the rejection cause and retry. An unconsumed producer lease remains valid. An already committed frame may still be queued for backend service. |
+| A pre-commit cancel has not finished draining | Retry cancellation or finish draining it before starting a new frame. The canceled lease has already been revoked. |
+| A physical transfer expires or an accepted operation records a fault | Pause the producer and revoke its lease or stop its binding before stopping the presenter. Late matching completion can retire hardware references. The fault remains latched and the same engine cannot accept a new frame or producer. |
+| STOP cannot join a worker, acquire a gate, or quiesce the output within budget | Retain the closing presenter and its resources and retry STOP. While the adapter cannot prove quiescence, keep the panel/IO and all potentially in-flight storage alive. |
+| STOP succeeds after a fault | Release terminal observers as needed, delete the old presenter and create a new one. If a callback is permanently missing, this requires the adapter to independently prove hardware access and callback exit. The SPI adapter has no such abort path today. |
+
+The engine reports a wait budget expiry as `ESP_ERR_TIMEOUT`. Consult the sticky
+`first_error` or public `esp_display_presenter_get_fault_error()` to distinguish
+it from a transfer fault. The public `esp_display_presenter_stop()` retains its
+`ESP_ERR_INVALID_STATE` result when its stop budget expires.
 
 ## Service and lock domains
 
@@ -61,8 +74,9 @@ reason about backend state as if the gate alone made it single-threaded.
   backend `query`/`release_receipt` ops, which are not guaranteed free of
   service side effects (the FB release path advances its pipeline first).
 - The per-instance background backend worker, when the backend runs in
-  background mode. Each pass takes the gate, runs one `service` pass plus
-  transfer-deadline expiry, then releases the gate and wakes the owner.
+  background mode. Each pass can first execute one queued FB copy outside
+  the gate, then takes the gate, runs one `service` pass plus transfer-deadline
+  expiry, releases the gate and wakes the owner.
   For a background REGION backend it is also the only context allowed to
   enter the panel driver submit; foreground calls that reach a ready slot
   signal the worker instead.
@@ -76,27 +90,37 @@ reason about backend state as if the gate alone made it single-threaded.
 
 Gate handling while blocked depends on the wait, and the two cases must
 not be conflated. `wait_change` (used by `wait_frame` and drain) releases
-the gate, waits on the instance `changed` event, and reacquires before
-inspecting state, so that kind of waiting owner cannot starve the
-worker. STOP is different: `present_presenter_control_stop` takes the
-gate and holds it across `stop_impl`, whose backend `stop` may block
-waiting for the pixel worker to go idle and for panel quiesce. During
-that window every other gate user is excluded, and any callback or
-reentrancy analysis must assume the gate is held, not lent. ISR-context
+the gate, waits on the instance `changed` event, and uses the remaining
+budget to reacquire it. If reacquisition expires, the waiter returns without
+accessing gated state. A running backend worker advances hardware during
+these observations. Cooperative driver calls already entered by a task are
+not preempted by the deadline. STOP first publishes CLOSING and joins the
+backend worker within the total remaining budget, without holding the gate.
+A shared copy waiting for a missing hardware callback makes this join time out;
+the worker, tickets and buffers remain alive for a later completion and STOP
+retry. After a successful join, `present_presenter_control_stop` takes the gate
+and holds it across `stop_impl`, whose backend `stop` may wait for a dedicated
+pixel worker or for panel quiesce. During that window every other gate user is
+excluded, and callback/reentrancy analysis must assume the gate is held. ISR-context
 panel/TE events do not take the gate; they update the ISR-safe trackers
 and, as above, mutate backend state under the backend's own lock.
 
-The pixel-copy worker is a separate, narrower domain: one serial worker
-per pixel engine instance (not a global queue shared across instances).
-It dispatches queued copies strictly by ascending token, one at a time.
+The pixel-copy queue is a separate, narrower domain per pixel engine instance
+(not a global queue shared across instances). It dispatches queued copies
+strictly by ascending token, one at a time. Advanced asynchronous configurations
+use a dedicated pixel worker. The facade's FB paths with at most one input tile
+instead let the existing backend worker consume this queue outside the engine
+gate; this avoids a separate 4096-byte stack and preserves bounded owner waits.
+The backend worker retains its own priority. Stop cancels unstarted shared
+copies without entering the hardware executor; an already-running copy must
+finish before its storage is released.
 A queued copy therefore waits for every copy ahead of it and for the
 completion callback each of those copies invokes synchronously on the
 worker (`finish_copy` runs the notification callback before the next
 copy starts). No hard bound on that wait is established: it grows with
 queue depth, copy sizes and callback duration. Synchronous pixel
-engines run the copy on the submitting caller instead. There is no
-evidence requiring a different policy; do not add priorities or extra
-workers without measurements showing this blocking matters.
+engines run the copy on the submitting caller instead. Do not add priorities
+or extra workers without measurements showing this blocking matters.
 
 ## State authority and backend op side effects
 

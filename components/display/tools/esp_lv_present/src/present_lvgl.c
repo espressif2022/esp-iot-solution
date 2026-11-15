@@ -2,10 +2,12 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "core/present_engine.h"
 #include "present_lvgl.h"
 #include <limits.h>
 #include <string.h>
+#ifdef PRESENT_LVGL_PPA_FILL
+#include "ppa_rgb565.h"
+#endif
 
 #if LVGL_VERSION_MAJOR != 9
 #error "Binding requires LVGL major version 9"
@@ -15,7 +17,6 @@ struct esp_lv_present_native {
     esp_display_present_engine_t *presenter;
     lv_display_t *display;
     lv_draw_buf_t *draw;
-    void *pool_base;
     struct {
         void *buffers[2];
         size_t count;
@@ -32,6 +33,9 @@ struct esp_lv_present_native {
     bool zero_copy;
     bool pooled_partial;
     bool need_tile;
+#ifdef PRESENT_LVGL_PPA_FILL
+    bool ppa_fill;
+#endif
     lv_draw_buf_t borrowed;
     esp_display_present_lease_t lease;
     esp_err_t error;
@@ -144,8 +148,31 @@ static esp_err_t copy_flush(esp_lv_present_native_t *binding, const lv_area_t *a
     return ESP_OK;
 }
 
+#ifdef PRESENT_LVGL_PPA_FILL
+static bool ppa_fill_compatible(const esp_lv_present_native_t *binding)
+{
+    const esp_display_present_backend_caps_t *caps = &binding->caps;
+    return binding->zero_copy && caps->contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL &&
+           caps->image_count == 3 && caps->draw_buffer_count == 3 &&
+           caps->draw_layout.width == PRESENT_LVGL_PPA_WIDTH && caps->draw_layout.height == PRESENT_LVGL_PPA_HEIGHT &&
+           caps->draw_layout.stride_bytes == PRESENT_LVGL_PPA_STRIDE && caps->draw_memory == ESP_DISPLAY_PRESENT_MEMORY_PSRAM;
+}
+
+static void publish_ppa_lease(esp_lv_present_native_t *binding)
+{
+    if (binding->ppa_fill && ppa_fill_compatible(binding)) {
+        present_lvgl_ppa_fill_set_lease(binding->lease.surface.pixels, binding->lease.surface.capacity_bytes);
+    }
+}
+#endif
+
 static void detach(esp_lv_present_native_t *binding)
 {
+#ifdef PRESENT_LVGL_PPA_FILL
+    if (binding->ppa_fill) {
+        present_lvgl_ppa_fill_set_lease(NULL, 0);
+    }
+#endif
     if (binding->draw) {
         lv_display_set_draw_buffers(binding->display, binding->draw, NULL);
     } else {
@@ -268,6 +295,9 @@ static esp_err_t borrow_refresh(esp_lv_present_native_t *binding)
         lv_display_set_draw_buffers(binding->display, &binding->borrowed,
                                     binding->direct.count == 2 ? &binding->direct.peer : NULL);
     }
+#ifdef PRESENT_LVGL_PPA_FILL
+    publish_ppa_lease(binding);
+#endif
     return ESP_OK;
 }
 
@@ -308,9 +338,11 @@ static void refresh_event(lv_event_t *event)
         return;
     }
     if (code == LV_EVENT_RENDER_START && binding->pooled_partial && binding->error == ESP_OK) {
+        /* LVGL shapes the descriptor before FLUSH_WAIT_START acquires a lease.
+         * Until then its storage must be the binding-owned tile. */
         (void)lv_draw_buf_init(&binding->borrowed, binding->caps.draw_layout.width, binding->draw->header.h,
                                LV_COLOR_FORMAT_RGB565, binding->caps.draw_layout.width * 2,
-                               binding->pool_base, binding->draw->data_size);
+                               binding->draw->data, binding->draw->data_size);
         lv_display_set_draw_buffers(binding->display, &binding->borrowed, NULL);
         binding->need_tile = true;
     }
@@ -359,7 +391,15 @@ static void flush(lv_display_t *display, const lv_area_t *area, uint8_t *pixels)
 {
     esp_lv_present_native_t *binding = lv_display_get_user_data(display);
     if (binding->error == ESP_OK) {
-        esp_err_t ret = binding->zero_copy ? submit_borrowed(binding, area, pixels) : copy_flush(binding, area, pixels);
+        esp_err_t ret = ESP_OK;
+#ifdef PRESENT_LVGL_PPA_FILL
+        if (binding->ppa_fill) {
+            ret = present_lvgl_ppa_fill_error();
+        }
+#endif
+        if (ret == ESP_OK) {
+            ret = binding->zero_copy ? submit_borrowed(binding, area, pixels) : copy_flush(binding, area, pixels);
+        }
         if (ret == ESP_OK && lv_display_flush_is_last(display)) {
             ret = esp_display_present_engine_commit_frame(binding->presenter, NULL);
             if (ret == ESP_OK) {
@@ -368,6 +408,8 @@ static void flush(lv_display_t *display, const lv_area_t *area, uint8_t *pixels)
             }
         }
         if (ret == ESP_OK && binding->pooled_partial && binding->refreshing) {
+            binding->borrowed.data = binding->draw->data;
+            binding->borrowed.unaligned_data = binding->draw->unaligned_data;
             binding->need_tile = true;
         }
         if (ret != ESP_OK) {
@@ -461,7 +503,6 @@ static esp_err_t create_binding(esp_display_present_engine_t *presenter, uint32_
         return ESP_ERR_NO_MEM;
     }
     binding->presenter = presenter;
-    binding->pool_base = pool[0];
     if (zero_copy && caps.contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT) {
         binding->direct.count = pool_count;
         binding->direct.requested = true;
@@ -535,6 +576,12 @@ static esp_err_t create_binding(esp_display_present_engine_t *presenter, uint32_
     }
     /* TE has no baseline until actual full coverage has been composed. */
     lv_obj_invalidate(lv_display_get_screen_active(binding->display));
+#ifdef PRESENT_LVGL_PPA_FILL
+    if (ppa_fill_compatible(binding)) {
+        binding->ppa_fill = present_lvgl_ppa_fill_start();
+        publish_ppa_lease(binding);
+    }
+#endif
     *out = binding;
     return ESP_OK;
 }
@@ -615,6 +662,14 @@ esp_err_t esp_lv_present_native_destroy(esp_lv_present_native_t *binding)
     if (ret != ESP_OK) {
         return ret;
     }
+#ifdef PRESENT_LVGL_PPA_FILL
+    if (binding->ppa_fill) {
+        ret = present_lvgl_ppa_fill_stop();
+        if (ret != ESP_OK) {
+            return ret;
+        }
+    }
+#endif
     lv_display_delete(binding->display);
     if (binding->draw) {
         lv_draw_buf_destroy(binding->draw);
@@ -712,14 +767,6 @@ esp_err_t esp_lv_present_native_set_rotation(esp_lv_present_native_t *binding, e
         binding->direct.requested = true;
         for (size_t i = 0; i < binding->direct.count; ++i) {
             binding->direct.buffers[i] = pool[i];
-        }
-        binding->pool_base = binding->zero_copy ? pool[0] : NULL;
-    }
-    if (binding->pooled_partial) {
-        void *pool[16] = {0};
-        size_t count = 0, bytes = 0;
-        if (esp_display_present_engine_get_draw_buffers(binding->presenter, pool, 16, &count, &bytes) == ESP_OK && count) {
-            binding->pool_base = pool[0];
         }
     }
     lv_draw_buf_t *old = binding->draw;

@@ -12,7 +12,7 @@
 #include "platform/lcd/present_lcd_fb_scanout.h"
 #include "core/present_transfer_tracker.h"
 #include "core/present_completion_tracker.h"
-#include "core/present_session.h"
+#include "esp_display_present_lvgl_bridge.h"
 #include "core/present_control.h"
 #include "core/present_producer.h"
 #include "resources/present_memory.h"

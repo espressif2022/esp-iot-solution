@@ -51,11 +51,15 @@ struct esp_display_present_backend_config {
     /** Single-FB is permitted only with explicit acceptance of active scanout
      * writes/tearing. Cancel cannot roll back pixels already visible. */
     bool active_writes;
-    /** Enables the pixel worker for copy, repair and conversion jobs.
+    /** Runs copy, repair and conversion jobs on the pixel worker.
      * Defaults retain synchronous CPU operation.
      * Executor must obey pixel_execute's return-means-access-ended contract.
      * region async_copy requires separate conversion storage (no in_place). */
     bool async_copy;
+    /** FB only: service queued copies on the existing backend worker, outside
+     * the engine gate. Requires async_copy and background service. Single-source
+     * facade paths avoid a separate pixel worker stack this way. */
+    bool shared_copy_worker;
     esp_display_present_pixel_execute_fn copy_execute;
     void *copy_user;
     /** Optional wake only, outside locks; cannot reenter backend task APIs.
@@ -72,6 +76,17 @@ struct esp_display_present_backend_config {
     size_t tile_count; /* FB PARTIAL input tiles; 0 retains the legacy default of one. */
     size_t compose_count; /* TE: 0 legacy serialized dual-image, explicit 1/2 enables pool scheduling. */
 };
+
+static inline bool present_fb_needs_pixel_engine(const esp_display_present_backend_config_t *config)
+{
+    return config->render_contract != ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL ||
+           config->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || config->draw_order != config->panel_order;
+}
+
+static inline bool present_fb_uses_pixel_worker(const esp_display_present_backend_config_t *config)
+{
+    return config->async_copy && !config->shared_copy_worker && present_fb_needs_pixel_engine(config);
+}
 
 #ifdef __cplusplus
 }

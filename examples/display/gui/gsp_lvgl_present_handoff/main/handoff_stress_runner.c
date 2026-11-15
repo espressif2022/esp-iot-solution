@@ -23,6 +23,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "handoff_lvgl_screen.h"
+#include "handoff_recovery.h"
 #include "hw_init.h"
 #include "lvgl.h"
 
@@ -71,8 +72,10 @@ static esp_err_t resume_gsp_with_retry(esp_gsp_esp_lcd_pause_t *pause,
     esp_err_t ret = ESP_FAIL;
     for (unsigned attempt = 1; attempt <= HANDOFF_RESUME_MAX_ATTEMPTS;
             ++attempt) {
-        ret = esp_gsp_esp_lcd_resume_paused(pause, gsp);
+        esp_gsp_handle_t resumed = NULL;
+        ret = esp_gsp_esp_lcd_resume_paused(pause, &resumed);
         if (ret == ESP_OK) {
+            *gsp = resumed;
             if (out_elapsed_ms != NULL) {
                 *out_elapsed_ms = elapsed_ms(start);
             }
@@ -87,28 +90,32 @@ static esp_err_t resume_gsp_with_retry(esp_gsp_esp_lcd_pause_t *pause,
     return ret;
 }
 
-static esp_err_t quiesce_lvgl_owner_with_retry(
-    esp_display_presenter_t *presenter,
-    uint32_t *cycle_errors,
-    uint32_t *total_errors,
-    uint32_t batch,
-    int cycle)
+typedef struct {
+    esp_display_presenter_t *presenter;
+    esp_gsp_esp_lcd_pause_t *pause;
+    esp_gsp_handle_t *gsp;
+    uint32_t resume_ms;
+    uint32_t cycle_errors;
+    uint32_t *total_errors;
+    bool lvgl_stopped;
+} handoff_cycle_t;
+
+static esp_err_t quiesce_lvgl_owner_with_retry(void *context)
 {
+    handoff_cycle_t *handoff = context;
     esp_err_t ret = ESP_FAIL;
     for (unsigned attempt = 1; attempt <= HANDOFF_QUIESCE_MAX_ATTEMPTS;
             ++attempt) {
-        ret = esp_display_presenter_quiesce(presenter,
+        ret = esp_display_presenter_quiesce(handoff->presenter,
                                             HANDOFF_PAUSE_TIMEOUT_MS);
         if (ret == ESP_OK) {
+            handoff_lvgl_screen_delete();
             return ESP_OK;
         }
-        ++(*cycle_errors);
-        ++(*total_errors);
-        ESP_LOGE(TAG,
-                 "batch %" PRIu32 " cycle %d: LVGL quiesce failed: %s; "
-                 "keeping LVGL active (attempt=%u/%u errors=%" PRIu32 ")",
-                 batch, cycle, esp_err_to_name(ret), attempt,
-                 HANDOFF_QUIESCE_MAX_ATTEMPTS, *total_errors);
+        ++handoff->cycle_errors;
+        ++(*handoff->total_errors);
+        ESP_LOGE(TAG, "LVGL quiesce attempt %u/%u failed: %s", attempt,
+                 HANDOFF_QUIESCE_MAX_ATTEMPTS, esp_err_to_name(ret));
         if (attempt < HANDOFF_QUIESCE_MAX_ATTEMPTS) {
             pump_lvgl_until(esp_timer_get_time() +
                             (int64_t)HANDOFF_QUIESCE_RETRY_MS * 1000);
@@ -117,13 +124,15 @@ static esp_err_t quiesce_lvgl_owner_with_retry(
     return ret;
 }
 
-static esp_err_t stop_lvgl_with_retry(void)
+static esp_err_t stop_lvgl_with_retry(void *context)
 {
+    handoff_cycle_t *handoff = context;
     esp_err_t ret = ESP_FAIL;
     for (unsigned attempt = 1; attempt <= HANDOFF_STOP_MAX_ATTEMPTS;
             ++attempt) {
         ret = esp_lv_present_stop();
         if (ret == ESP_OK) {
+            handoff->lvgl_stopped = true;
             return ESP_OK;
         }
         ESP_LOGE(TAG, "LVGL stop attempt %u/%u failed: %s", attempt,
@@ -133,6 +142,24 @@ static esp_err_t stop_lvgl_with_retry(void)
         }
     }
     return ret;
+}
+
+static esp_err_t resume_paused_gsp(void *context)
+{
+    handoff_cycle_t *handoff = context;
+    if (handoff->lvgl_stopped) {
+        esp_err_t error = esp_display_presenter_release_producer(handoff->presenter);
+        if (error != ESP_OK) {
+            return error;
+        }
+        handoff->lvgl_stopped = false;
+    }
+    esp_err_t error = resume_gsp_with_retry(handoff->pause, handoff->gsp,
+                                            &handoff->resume_ms);
+    if (error == ESP_OK) {
+        handoff->pause = NULL;
+    }
+    return error;
 }
 
 static esp_err_t run_lvgl_owner_phase(esp_display_presenter_t *presenter,
@@ -161,16 +188,17 @@ static void run_handoff_cycle(esp_display_presenter_t *presenter,
                               int cycle,
                               uint32_t *total_errors)
 {
-    uint32_t cycle_errors = 0;
+    handoff_cycle_t handoff = {
+        .presenter = presenter, .gsp = gsp, .total_errors = total_errors,
+    };
     ESP_LOGI(TAG, "batch %" PRIu32 " cycle %d/%d: GSP phase (%d s)",
              batch, cycle, CONFIG_APP_HANDOFF_CYCLES,
              CONFIG_APP_PHASE_SECONDS);
     vTaskDelay(pdMS_TO_TICKS(CONFIG_APP_PHASE_SECONDS * 1000));
 
     int64_t start = esp_timer_get_time();
-    esp_gsp_esp_lcd_pause_t *pause = NULL;
     esp_err_t ret = esp_gsp_esp_lcd_pause(*gsp, HANDOFF_PAUSE_TIMEOUT_MS,
-                                          &pause);
+                                          &handoff.pause);
     if (ret != ESP_OK) {
         ++(*total_errors);
         ESP_LOGE(TAG,
@@ -184,63 +212,55 @@ static void run_handoff_cycle(esp_display_presenter_t *presenter,
     uint32_t lvgl_frames = 0;
     ret = run_lvgl_owner_phase(presenter, cycle, CONFIG_APP_HANDOFF_CYCLES,
                                &lvgl_frames);
+    handoff_recovery_stage_t stage = HANDOFF_QUIESCE_LVGL;
     if (ret != ESP_OK) {
+        ++handoff.cycle_errors;
         ++(*total_errors);
-        ESP_LOGE(TAG,
-                 "FAIL batch=%" PRIu32 " cycle=%d stage=lvgl_start error=%s "
-                 "total_errors=%" PRIu32,
-                 batch, cycle, esp_err_to_name(ret), *total_errors);
-        uint32_t ignored_resume_ms = 0;
-        ESP_ERROR_CHECK(resume_gsp_with_retry(pause, gsp,
-                                              &ignored_resume_ms));
-        return;
-    }
-
-    if (lvgl_frames == 0) {
-        ++cycle_errors;
-        ++(*total_errors);
-        ESP_LOGE(TAG, "FAIL batch=%" PRIu32 " cycle=%d stage=lvgl "
-                 "reason=no_frames", batch, cycle);
-    }
-
-    ret = quiesce_lvgl_owner_with_retry(presenter, &cycle_errors,
-                                        total_errors, batch, cycle);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG,
-                 "FAIL batch=%" PRIu32 " cycle=%d stage=quiesce error=%s; "
-                 "LVGL retains presenter ownership",
+        ESP_LOGE(TAG, "FAIL batch=%" PRIu32 " cycle=%d stage=lvgl_start error=%s",
                  batch, cycle, esp_err_to_name(ret));
-        ESP_ERROR_CHECK(ret);
+        /* A failed LVGL create may leave the app task as producer after unbind.
+         * If bind itself failed, GSP still owns the presenter. */
+        (void)esp_display_presenter_release_producer(presenter);
+        stage = HANDOFF_RESUME_GSP;
+    } else if (lvgl_frames == 0) {
+        ++handoff.cycle_errors;
+        ++(*total_errors);
+        ESP_LOGE(TAG, "FAIL batch=%" PRIu32 " cycle=%d stage=lvgl reason=no_frames",
+                 batch, cycle);
     }
 
-    handoff_lvgl_screen_delete();
-    ret = stop_lvgl_with_retry();
-    if (ret != ESP_OK) {
-        ++cycle_errors;
-        ++(*total_errors);
-        ESP_LOGE(TAG,
-                 "FAIL batch=%" PRIu32 " cycle=%d stage=lvgl_stop error=%s; "
-                 "refusing to resume GSP",
-                 batch, cycle, esp_err_to_name(ret));
-        ESP_ERROR_CHECK(ret);
+    const handoff_recovery_ops_t recovery = {
+        .quiesce_lvgl = quiesce_lvgl_owner_with_retry,
+        .stop_lvgl = stop_lvgl_with_retry,
+        .resume_gsp = resume_paused_gsp,
+    };
+    const char *const stage_names[] = {
+        [HANDOFF_QUIESCE_LVGL] = "quiesce",
+        [HANDOFF_STOP_LVGL] = "lvgl_stop",
+        [HANDOFF_RESUME_GSP] = "resume",
+    };
+    while ((ret = handoff_recover(&stage, &recovery, &handoff)) != ESP_OK) {
+        if (stage != HANDOFF_QUIESCE_LVGL) {
+            ++handoff.cycle_errors;
+            ++(*total_errors);
+        }
+        ESP_LOGE(TAG, "FAIL batch=%" PRIu32 " cycle=%d stage=%s error=%s; retrying",
+                 batch, cycle, stage_names[stage], esp_err_to_name(ret));
+        if (stage == HANDOFF_QUIESCE_LVGL) {
+            pump_lvgl_until(esp_timer_get_time() +
+                            (int64_t)HANDOFF_QUIESCE_RETRY_MS * 1000);
+        } else {
+            vTaskDelay(pdMS_TO_TICKS(HANDOFF_RETRY_DELAY_MS));
+        }
     }
 
-    uint32_t resume_ms = 0;
-    ret = resume_gsp_with_retry(pause, gsp, &resume_ms);
-    if (ret != ESP_OK) {
-        ++cycle_errors;
-        ++(*total_errors);
-        ESP_LOGE(TAG, "FAIL batch=%" PRIu32 " cycle=%d stage=resume error=%s",
-                 batch, cycle, esp_err_to_name(ret));
-        ESP_ERROR_CHECK(ret);
-    }
     ESP_LOGI(TAG,
              "%s batch=%" PRIu32 " cycle=%d/%d pause=%" PRIu32
              "ms lvgl_frames=%" PRIu32 " resume=%" PRIu32
              "ms cycle_errors=%" PRIu32 " total_errors=%" PRIu32,
-             cycle_errors == 0 ? "PASS" : "FAIL", batch, cycle,
-             CONFIG_APP_HANDOFF_CYCLES, pause_ms, lvgl_frames, resume_ms,
-             cycle_errors, *total_errors);
+             handoff.cycle_errors == 0 ? "PASS" : "FAIL", batch, cycle,
+             CONFIG_APP_HANDOFF_CYCLES, pause_ms, lvgl_frames, handoff.resume_ms,
+             handoff.cycle_errors, *total_errors);
 }
 
 void handoff_stress_run(esp_display_presenter_t *presenter,

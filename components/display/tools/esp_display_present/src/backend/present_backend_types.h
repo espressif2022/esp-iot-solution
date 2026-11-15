@@ -4,6 +4,7 @@
  */
 #pragma once
 #include "pixel/present_pixel_types.h"
+#include "esp_display_present_renderer_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,48 +16,7 @@ typedef struct {
 } esp_display_present_frame_t;
 typedef struct {
     uint64_t value;
-} esp_display_present_lease_id_t;
-typedef struct {
-    uint64_t value;
 } esp_display_present_receipt_t;
-
-typedef enum {
-    ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION,
-    ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL,
-    ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT,
-} esp_display_present_render_contract_t;
-
-typedef struct {
-    esp_display_present_render_contract_t contract;
-    esp_display_present_layout_t draw_layout;
-    size_t drawbuf_capacity_bytes; /* Per-slot writable capacity in bytes. */
-    size_t buffer_alignment;       /* Power-of-two base alignment in bytes. */
-    uint32_t max_tile_rows;
-    uint32_t max_damage_areas;
-    bool retains_content;
-    bool supports_present_confirmation;
-    bool writes_active_scanout; /* Explicit persistent single-FB contract. */
-} esp_display_present_backend_caps_t;
-
-typedef struct {
-    const esp_display_present_rect_t *damage;
-    size_t damage_count;
-    /* Producer redraws every pixel without relying on the old contents of
-     * the acquired surface. Actual coverage is still checked before publish
-     * if prior pixels were not seeded. */
-    bool full_redraw;
-    /* DIRECT only: submitted regions contain resolved pixels from an
-     * independent producer canvas. The producer never reads old lease pixels.
-     * Skip readable prefill; repair missing image history after actual writes.
-     * This does not promise full coverage or relax framebuffer retirement. */
-    bool resolved_pixels;
-} esp_display_present_frame_request_t;
-
-typedef struct {
-    esp_display_present_lease_id_t id;
-    esp_display_present_surface_t surface;
-    esp_display_present_rect_t logical_area; /* Surface origin maps to logical_area origin. */
-} esp_display_present_lease_t;
 
 /** Optional override when submitting a leased buffer.
  * - logical_area {0,0,0,0} uses the lease's acquired logical_area.
@@ -72,14 +32,6 @@ typedef struct {
     esp_display_present_rect_t logical_area;
     size_t stride_bytes;
 } esp_display_present_region_submit_t;
-
-/** Optional explicit dirty coverage when sealing a FULL/DIRECT frame.
- * Ignored by region (which tracks each submitted partition region directly). */
-typedef struct {
-    const esp_display_present_rect_t *areas;
-    size_t area_count;
-    bool full_coverage;
-} esp_display_present_frame_coverage_t;
 
 typedef enum {
     ESP_DISPLAY_PRESENT_COMPLETION_SOURCE_RELEASED,

@@ -18,6 +18,12 @@ extern "C" {
  * calls while drain releases the engine gate). Drain before committing owner;
  * failure preserves owner and never cancels accepted transfers. */
 esp_err_t present_presenter_control_bind_producer(esp_display_present_engine_t *, uint32_t);
+/* Poll a stopped producer's receipts without executing driver submissions.
+ * Return a tracked terminal receipt and release its engine observer together. */
+esp_err_t present_presenter_control_poll_quiesce(esp_display_present_engine_t *, uint32_t,
+                                                 esp_display_present_engine_receipt_t,
+                                                 esp_display_present_engine_status_t *,
+                                                 esp_display_present_frame_status_t *);
 esp_err_t present_presenter_control_get_status(esp_display_present_engine_t *, esp_display_present_engine_status_t *);
 esp_err_t present_presenter_control_get_status_snapshot(esp_display_present_engine_t *, esp_display_present_engine_status_t *, bool *valid);
 esp_err_t present_presenter_control_query_frame(esp_display_present_engine_t *, esp_display_present_engine_receipt_t, esp_display_present_frame_status_t *);
@@ -26,6 +32,10 @@ esp_err_t present_presenter_control_stop(esp_display_present_engine_t *, uint32_
 esp_err_t present_presenter_control_destroy(esp_display_present_engine_t *);
 esp_err_t present_presenter_control_cancel_tracking(esp_display_present_engine_t *, esp_display_present_engine_receipt_t);
 esp_err_t present_presenter_control_finish_cancel(esp_display_present_engine_t *, uint32_t);
+
+esp_err_t present_presenter_control_reset_metrics(esp_display_present_engine_t *);
+esp_err_t present_presenter_control_get_metrics(esp_display_present_engine_t *, esp_display_presenter_metrics_t *);
+void present_presenter_metrics_vsync(esp_display_present_engine_t *, bool isr);
 
 #ifdef PRESENT_HOST
 void present_presenter_test_gate_lock(esp_display_present_engine_t *);

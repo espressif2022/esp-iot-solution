@@ -48,6 +48,8 @@ typedef struct {
     present_worker_t *task;
     pixel_worker_priority_t priority;
     bool asynchronous;
+    bool external;
+    void (*on_work)(void *user);
 } pixel_worker_t;
 
 struct esp_display_present_pixel_engine {
@@ -87,51 +89,84 @@ static void finish_copy(esp_display_present_pixel_engine_t *engine, copy_record_
     (void)present_event_signal(engine->sync.idle, false);
 }
 
+static void wake_worker(esp_display_present_pixel_engine_t *engine)
+{
+    if (engine->worker.external) {
+        engine->worker.on_work(engine->notification.user);
+    } else {
+        (void)present_event_signal(engine->worker.work, false);
+    }
+}
+
+static bool execute_next(esp_display_present_pixel_engine_t *engine)
+{
+    present_lock_enter(&engine->sync.lock, false);
+    if (engine->lifecycle.executing) {
+        present_lock_exit(&engine->sync.lock, false);
+        return false;
+    }
+    copy_record_t *next = NULL;
+    for (size_t i = 0; i < engine->count; i++) {
+        copy_record_t *record = &engine->records[i];
+        if (record->token && record->status.state == ESP_DISPLAY_PRESENT_COPY_QUEUED &&
+                (!next || record->token < next->token)) {
+            next = record;
+        }
+    }
+    if (!next) {
+        present_lock_exit(&engine->sync.lock, false);
+        return false;
+    }
+    bool canceled = next->canceled;
+    bool set_priority = !engine->worker.external && !engine->worker.priority.applied;
+    unsigned priority = engine->worker.priority.value;
+    engine->worker.priority.applied = true;
+    next->status.state = ESP_DISPLAY_PRESENT_COPY_RUNNING;
+    engine->lifecycle.executing = true;
+    esp_display_present_copy_request_t request = next->request;
+    present_lock_exit(&engine->sync.lock, false);
+    /* Only the dedicated pixel task inherits producer priority. An external
+     * consumer keeps the priority and scheduling policy of its own task. */
+    if (set_priority) {
+        present_task_set_priority(priority);
+    }
+    esp_err_t result = ESP_ERR_INVALID_STATE;
+    if (!canceled) {
+        if (engine->executor.execute) {
+            result = engine->executor.execute(engine->executor.user, &request);
+        } else {
+            present_pixel_copy_cpu_validated(&request);
+            result = ESP_OK;
+        }
+    }
+    finish_copy(engine, next, result);
+    return true;
+}
+
+bool present_pixel_run_one(esp_display_present_pixel_engine_t *engine)
+{
+    return engine && engine->worker.external && execute_next(engine);
+}
+
 static void pixel_worker(void *context)
 {
     esp_display_present_pixel_engine_t *engine = context;
     for (;;) {
-        present_lock_enter(&engine->sync.lock, false);
-        copy_record_t *next = NULL;
-        for (size_t i = 0; i < engine->count; i++) {
-            copy_record_t *record = &engine->records[i];
-            if (record->token && record->status.state == ESP_DISPLAY_PRESENT_COPY_QUEUED &&
-                    (!next || record->token < next->token)) {
-                next = record;
-            }
-        }
-        if (!next) {
-            bool exit = engine->lifecycle.closing;
-            present_lock_exit(&engine->sync.lock, false);
-            if (exit) {
-                return;
-            }
-            (void)present_event_wait(engine->worker.work, UINT32_MAX);
+        if (execute_next(engine)) {
             continue;
         }
-        bool canceled = next->canceled;
-        bool set_priority = !engine->worker.priority.applied;
-        unsigned priority = engine->worker.priority.value;
-        engine->worker.priority.applied = true;
-        next->status.state = ESP_DISPLAY_PRESENT_COPY_RUNNING;
-        engine->lifecycle.executing = true;
-        esp_display_present_copy_request_t request = next->request;
+        present_lock_enter(&engine->sync.lock, false);
+        bool closing = engine->lifecycle.closing;
         present_lock_exit(&engine->sync.lock, false);
-        /* Apply from the live worker itself. A concurrent stop cannot leave a
-         * producer changing the priority of an already-deleted task handle. */
-        if (set_priority) {
-            present_task_set_priority(priority);
-        }
-        esp_err_t result = ESP_ERR_INVALID_STATE;
-        if (!canceled) {
-            if (engine->executor.execute) {
-                result = engine->executor.execute(engine->executor.user, &request);
-            } else {
-                present_pixel_copy_cpu_validated(&request);
-                result = ESP_OK;
+        if (closing) {
+            /* A submit may have raced the earlier empty-queue observation
+             * before stop closed admission. Drain it before leaving. */
+            if (execute_next(engine)) {
+                continue;
             }
+            return;
         }
-        finish_copy(engine, next, result);
+        (void)present_event_wait(engine->worker.work, UINT32_MAX);
     }
 }
 
@@ -153,7 +188,8 @@ esp_err_t esp_display_present_pixel_create(const esp_display_present_pixel_confi
         return ESP_ERR_INVALID_ARG;
     }
     *out = NULL;
-    if (!config || !config->max_jobs || config->max_jobs > PRESENT_MAX_COPY_JOBS) {
+    if (!config || !config->max_jobs || config->max_jobs > PRESENT_MAX_COPY_JOBS ||
+            (config->external_worker && (!config->asynchronous || !config->on_work))) {
         return ESP_ERR_INVALID_ARG;
     }
     esp_display_present_pixel_engine_t *engine = present_alloc(sizeof(*engine) + config->max_jobs * sizeof(copy_record_t));
@@ -168,6 +204,8 @@ esp_err_t esp_display_present_pixel_create(const esp_display_present_pixel_confi
     engine->notification.on_event = config->on_event;
     engine->notification.user = config->user;
     engine->worker.asynchronous = config->asynchronous;
+    engine->worker.external = config->external_worker;
+    engine->worker.on_work = config->on_work;
     engine->executor.execute = config->execute;
     engine->executor.user = config->execute_user;
     engine->worker.work = present_event_create();
@@ -183,7 +221,7 @@ esp_err_t esp_display_present_pixel_create(const esp_display_present_pixel_confi
             return ESP_ERR_NO_MEM;
         }
     }
-    if (engine->worker.asynchronous) {
+    if (engine->worker.asynchronous && !engine->worker.external) {
         engine->worker.task = present_worker_create("present_pixel", pixel_worker, engine, 4096, 5);
         if (!engine->worker.task) {
             free_engine(engine);
@@ -247,7 +285,7 @@ esp_err_t esp_display_present_pixel_submit(esp_display_present_pixel_engine_t *e
     }
     present_lock_exit(&engine->sync.lock, false);
     if (engine->worker.asynchronous) {
-        (void)present_event_signal(engine->worker.work, false);
+        wake_worker(engine);
     } else {
         esp_err_t exec_res = engine->executor.execute ? engine->executor.execute(engine->executor.user, request) : (present_pixel_copy_cpu_validated(request), ESP_OK);
         finish_copy(engine, record, exec_res);
@@ -331,7 +369,7 @@ esp_err_t esp_display_present_pixel_cancel(esp_display_present_pixel_engine_t *e
         record->canceled = true;
     }
     present_lock_exit(&engine->sync.lock, false);
-    (void)present_event_signal(engine->worker.work, false);
+    wake_worker(engine);
     return esp_display_present_pixel_wait(engine, ticket, timeout, out);
 }
 
@@ -363,14 +401,26 @@ esp_err_t esp_display_present_pixel_stop(esp_display_present_pixel_engine_t *eng
         return ESP_ERR_INVALID_STATE;
     }
     engine->lifecycle.closing = true;
+    if (engine->worker.external) {
+        /* The owning worker may already be joined. Cancel queued work here;
+         * never start fresh hardware from the stop caller. */
+        for (size_t i = 0; i < engine->count; ++i) {
+            if (engine->records[i].status.state == ESP_DISPLAY_PRESENT_COPY_QUEUED) {
+                engine->records[i].canceled = true;
+            }
+        }
+    }
     present_lock_exit(&engine->sync.lock, false);
-    (void)present_event_signal(engine->worker.work, false);
-    if (engine->worker.asynchronous) {
+    wake_worker(engine);
+    if (engine->worker.asynchronous && !engine->worker.external) {
         if (!present_worker_join(engine->worker.task, timeout)) {
             return ESP_ERR_TIMEOUT;
         }
     } else {
         for (;;) {
+            if (engine->worker.external && execute_next(engine)) {
+                continue;
+            }
             present_lock_enter(&engine->sync.lock, false);
             bool busy = engine->lifecycle.executing;
             present_lock_exit(&engine->sync.lock, false);
@@ -384,7 +434,9 @@ esp_err_t esp_display_present_pixel_stop(esp_display_present_pixel_engine_t *eng
             (void)present_event_wait(engine->sync.idle, timeout == UINT32_MAX ? UINT32_MAX : timeout - elapsed);
         }
     }
+    present_lock_enter(&engine->sync.lock, false);
     engine->lifecycle.stopped = true;
+    present_lock_exit(&engine->sync.lock, false);
     return ESP_OK;
 }
 

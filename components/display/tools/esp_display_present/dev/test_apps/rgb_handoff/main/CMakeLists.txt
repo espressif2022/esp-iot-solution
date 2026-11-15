@@ -17,5 +17,5 @@ if(PRESENT_BOARD STREQUAL "s31-rgb")
 endif()
 
 idf_component_get_property(_present_dir esp_display_present COMPONENT_DIR)
-target_include_directories(${COMPONENT_LIB} PRIVATE "${_present_dir}/src")
+target_include_directories(${COMPONENT_LIB} PRIVATE "${_present_dir}/src" "${_present_dir}/private_include")
 target_compile_definitions(${COMPONENT_LIB} PRIVATE PRESENT_BOARD_RGB_INFO=1)
