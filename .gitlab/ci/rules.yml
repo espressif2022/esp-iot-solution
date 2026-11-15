@@ -212,6 +212,7 @@
 .patterns-display_present_host: &patterns-display_present_host
   - "components/display/tools/esp_display_present/**/*"
   - "components/display/tools/esp_lv_present/**/*"
+  - "examples/display/gui/gsp_lvgl_present_handoff/**/*"
   - ".gitlab/ci/pre_check.yml"
   - ".gitlab/ci/rules.yml"
 

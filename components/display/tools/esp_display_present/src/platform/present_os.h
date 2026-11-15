@@ -33,6 +33,8 @@ void present_lock_exit(present_lock_t *lock, bool isr);
 void *present_alloc(size_t size);
 void *present_alloc_pixels(size_t size);
 void *present_alloc_pixels_in(size_t size, bool external);
+bool present_internal_dma_pool_available(size_t size);
+bool present_psram_can_fit(size_t bytes, size_t count);
 void present_free(void *memory);
 uint64_t present_now_us(void);
 uint64_t present_now_ms(void);

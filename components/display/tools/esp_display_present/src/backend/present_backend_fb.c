@@ -14,6 +14,9 @@
 #include "backend/present_transaction.h"
 #include "backend/present_image_repair.h"
 #include <string.h>
+#ifndef PRESENT_HOST
+#include "esp_memory_utils.h"
+#endif
 
 enum {
     FB_LIMIT = 3,
@@ -122,6 +125,7 @@ struct present_backend {
     size_t tile_bytes;
     present_image_builder_t image;
     fb_tile_t *tiles;
+    uint8_t *tile_pool;
     size_t tile_count;
     size_t next_tile;
     esp_display_present_lease_t lease;
@@ -250,6 +254,14 @@ static esp_display_present_copy_request_t baseline_copy(present_backend_t *backe
         .dst_y = area.y,
         .rotation = rotation
     };
+}
+
+static void copy_work_ready(void *context)
+{
+    present_backend_t *backend = context;
+    if (backend->config.on_progress) {
+        (void)backend->config.on_progress(backend->config.progress_user, false);
+    }
 }
 
 static bool copy_done(void *context, esp_display_present_copy_ticket_t ticket, const esp_display_present_copy_status_t *status, bool isr)
@@ -669,14 +681,50 @@ static void free_backend(present_backend_t *backend)
         (void)esp_display_present_pixel_destroy(backend->pixel);
     }
     present_frame_core_deinit(&backend->core);
-    if (backend->tiles)
+    if (backend->tile_pool) {
+        present_free(backend->tile_pool);
+    } else if (backend->tiles) {
         for (size_t i = 0; i < backend->tile_count; i++) {
             present_free(backend->tiles[i].pixels);
         }
+    }
     present_free(backend->tiles);
     present_image_deinit(&backend->image);
     present_lock_destroy(&backend->lock);
     present_free(backend);
+}
+
+static esp_err_t create_pixel_engine(present_backend_t *backend)
+{
+    const esp_display_present_backend_config_t *config = &backend->config;
+    esp_display_present_pixel_config_t pc = {
+        .max_jobs = backend->tile_count ? backend->tile_count : 1,
+        .asynchronous = config->async_copy,
+        .external_worker = config->shared_copy_worker,
+        .on_work = copy_work_ready,
+        .execute = config->copy_execute,
+        .execute_user = config->copy_user,
+        .on_event = config->async_copy ? copy_done : NULL,
+        .user = backend,
+    };
+    esp_display_present_pixel_engine_t *pixel = NULL;
+    esp_err_t result = esp_display_present_pixel_create(&pc, &pixel);
+    if (result == ESP_OK) {
+        /* Runtime rotation can create the first pixel engine while the shared
+         * worker is awake. Publish once; stop joins it before pointer cleanup. */
+        present_lock_enter(&backend->lock, false);
+        backend->pixel = pixel;
+        present_lock_exit(&backend->lock, false);
+    }
+    return result;
+}
+
+static bool fb_copy_work(present_backend_t *backend)
+{
+    present_lock_enter(&backend->lock, false);
+    esp_display_present_pixel_engine_t *pixel = backend->config.shared_copy_worker ? backend->pixel : NULL;
+    present_lock_exit(&backend->lock, false);
+    return present_pixel_run_one(pixel);
 }
 
 static esp_err_t fb_create(const esp_display_present_backend_config_t *config, present_backend_t **out)
@@ -688,7 +736,8 @@ static esp_err_t fb_create(const esp_display_present_backend_config_t *config, p
     if (!config || !config->panel.attach || !config->panel.submit || !config->panel.quiesce) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (config->tile_count > PRESENT_MAX_TILE_BUFFERS || !config->width || !config->height || !config->buffer_count || config->buffer_count > FB_LIMIT ||
+    if ((config->shared_copy_worker && !config->async_copy) ||
+            config->tile_count > PRESENT_MAX_TILE_BUFFERS || !config->width || !config->height || !config->buffer_count || config->buffer_count > FB_LIMIT ||
             !config->max_frames || config->max_frames > RECORD_LIMIT) {
         return ESP_ERR_INVALID_ARG;
     }
@@ -757,8 +806,16 @@ static esp_err_t fb_create(const esp_display_present_backend_config_t *config, p
             free_backend(backend);
             return ESP_ERR_NO_MEM;
         }
+        size_t pitch = (backend->tile_bytes + PRESENT_BUFFER_ALIGNMENT - 1) & ~(size_t)(PRESENT_BUFFER_ALIGNMENT - 1);
+        if (!config->tile_in_psram && backend->tile_count > 1 && pitch <= SIZE_MAX / backend->tile_count &&
+                present_internal_dma_pool_available(pitch * backend->tile_count)) {
+            /* Keep internal DMA tiles together so long-lived allocations cannot
+             * occupy gaps between them and prevent coalescing on close. */
+            backend->tile_pool = present_alloc_pixels_in(pitch * backend->tile_count, false);
+        }
         for (size_t i = 0; i < backend->tile_count; i++) {
-            backend->tiles[i].pixels = present_alloc_pixels_in(backend->tile_bytes, config->tile_in_psram);
+            backend->tiles[i].pixels = backend->tile_pool ? backend->tile_pool + i * pitch :
+                                       present_alloc_pixels_in(backend->tile_bytes, config->tile_in_psram);
             if (!backend->tiles[i].pixels) {
                 free_backend(backend);
                 return ESP_ERR_NO_MEM;
@@ -817,15 +874,7 @@ static esp_err_t fb_create(const esp_display_present_backend_config_t *config, p
             return ESP_ERR_INVALID_ARG;
         }
     }
-    esp_display_present_pixel_config_t pc = {
-        .max_jobs = backend->tile_count ? backend->tile_count : 1,
-        .asynchronous = config->async_copy,
-        .execute = config->copy_execute,
-        .execute_user = config->copy_user,
-        .on_event = config->async_copy ? copy_done : NULL,
-        .user = backend,
-    };
-    esp_err_t error = esp_display_present_pixel_create(&pc, &backend->pixel);
+    esp_err_t error = present_fb_needs_pixel_engine(config) ? create_pixel_engine(backend) : ESP_OK;
     if (error == ESP_OK) {
         error = config->panel.attach(config->panel.context, dispatch, backend);
     }
@@ -837,13 +886,49 @@ static esp_err_t fb_create(const esp_display_present_backend_config_t *config, p
     return ESP_OK;
 }
 
+static esp_display_present_memory_domain_t fb_image_memory(const present_backend_t *backend)
+{
+    if (!backend->config.ext_bufs) {
+        return backend->config.image_in_psram ? ESP_DISPLAY_PRESENT_MEMORY_PSRAM : ESP_DISPLAY_PRESENT_MEMORY_INTERNAL;
+    }
+#ifdef PRESENT_HOST
+    return ESP_DISPLAY_PRESENT_MEMORY_UNKNOWN;
+#else
+    esp_display_present_memory_domain_t memory = ESP_DISPLAY_PRESENT_MEMORY_NONE;
+    for (size_t i = 0; i < backend->config.buffer_count; ++i) {
+        const void *pixels = backend->scan_storage ? backend->slots[i].scan.pixels : backend->slots[i].surface.pixels;
+        esp_display_present_memory_domain_t domain = esp_ptr_external_ram(pixels) ? ESP_DISPLAY_PRESENT_MEMORY_PSRAM :
+                esp_ptr_internal(pixels) ? ESP_DISPLAY_PRESENT_MEMORY_INTERNAL : ESP_DISPLAY_PRESENT_MEMORY_UNKNOWN;
+        if (domain == ESP_DISPLAY_PRESENT_MEMORY_UNKNOWN) {
+            return domain;
+        }
+        if (memory == ESP_DISPLAY_PRESENT_MEMORY_NONE) {
+            memory = domain;
+        } else if (memory != domain) {
+            memory = ESP_DISPLAY_PRESENT_MEMORY_MIXED;
+        }
+    }
+    return memory;
+#endif
+}
+
 static esp_err_t fb_get_caps(present_backend_t *backend, esp_display_present_backend_caps_t *out)
 {
     if (!backend || !out) {
         return ESP_ERR_INVALID_ARG;
     }
+    esp_display_present_memory_domain_t image_memory = fb_image_memory(backend);
     *out = (esp_display_present_backend_caps_t) {
         .contract = backend->config.render_contract,
+        .draw_buffer_count = backend->tile_count ? backend->tile_count : backend->scan_storage ? 1 : backend->config.buffer_count,
+        .tile_count = backend->tile_count,
+        .image_count = backend->config.buffer_count,
+        .draw_memory = backend->tile_count ?
+                       (backend->config.tile_in_psram ? ESP_DISPLAY_PRESENT_MEMORY_PSRAM : ESP_DISPLAY_PRESENT_MEMORY_INTERNAL) :
+                       backend->scan_storage ?
+                       (backend->config.logical_in_psram ? ESP_DISPLAY_PRESENT_MEMORY_PSRAM : ESP_DISPLAY_PRESENT_MEMORY_INTERNAL) :
+                       image_memory,
+        .image_memory = image_memory,
         .draw_layout = backend->slots[0].surface.layout,
         .drawbuf_capacity_bytes = backend->tile_bytes,
         .buffer_alignment = PRESENT_BUFFER_ALIGNMENT,
@@ -1308,13 +1393,18 @@ static esp_err_t fb_cancel_frame(present_backend_t *backend, esp_display_present
     }
 }
 
+static esp_err_t fb_peek(present_backend_t *backend, esp_display_present_receipt_t receipt, esp_display_present_frame_status_t *out)
+{
+    return present_frame_core_query(&backend->core, &backend->lock, receipt, true, out);
+}
+
 static esp_err_t fb_query(present_backend_t *backend, esp_display_present_receipt_t receipt, esp_display_present_frame_status_t *out)
 {
     if (!backend || !out) {
         return ESP_ERR_INVALID_ARG;
     }
     (void)present_fb_service(backend);
-    return present_frame_core_query(&backend->core, &backend->lock, receipt, true, out);
+    return fb_peek(backend, receipt, out);
 }
 
 static esp_err_t fb_get_fault(present_backend_t *backend, esp_display_present_backend_fault_t *out)
@@ -1328,13 +1418,18 @@ static esp_err_t fb_wait(present_backend_t *backend, esp_display_present_receipt
     return present_frame_core_wait(backend, fb_query, receipt, point, true, timeout, out);
 }
 
+static esp_err_t fb_forget(present_backend_t *backend, esp_display_present_receipt_t receipt)
+{
+    return present_frame_core_release_receipt(&backend->core, &backend->lock, receipt);
+}
+
 static esp_err_t fb_release_receipt(present_backend_t *backend, esp_display_present_receipt_t receipt)
 {
     if (!backend) {
         return ESP_ERR_INVALID_ARG;
     }
     (void)present_fb_service(backend);
-    return present_frame_core_release_receipt(&backend->core, &backend->lock, receipt);
+    return fb_forget(backend, receipt);
 }
 
 static esp_err_t fb_stop(present_backend_t *backend, uint32_t timeout)
@@ -1347,7 +1442,7 @@ static esp_err_t fb_stop(present_backend_t *backend, uint32_t timeout)
     }
     backend->core.life = PRESENT_CORE_CLOSING;
     uint64_t start = present_now_ms();
-    esp_err_t error = esp_display_present_pixel_stop(backend->pixel, timeout);
+    esp_err_t error = backend->pixel ? esp_display_present_pixel_stop(backend->pixel, timeout) : ESP_OK;
     if (error != ESP_OK) {
         return error;
     }
@@ -1455,6 +1550,16 @@ static esp_err_t fb_set_rotation(present_backend_t *backend, esp_display_present
         if (!draw) {
             return ESP_ERR_NO_MEM;
         }
+        /* A native FULL backend starts without a pixel engine. Make both
+         * allocations before publishing the new producer layout. Once created,
+         * the engine stays available for future rotations until stop. */
+        if (!backend->pixel) {
+            esp_err_t error = create_pixel_engine(backend);
+            if (error != ESP_OK) {
+                present_free(draw);
+                return error;
+            }
+        }
         /* Preserve every existing physical scan pointer, including current. */
         for (size_t i = 0; i < backend->config.buffer_count; ++i) {
             backend->slots[i].scan = backend->slots[i].surface;
@@ -1489,6 +1594,7 @@ static esp_err_t fb_set_rotation(present_backend_t *backend, esp_display_present
 const present_backend_ops_t present_fb_backend = {
     .name = "fb",
     .service = present_fb_service,
+    .copy_work = fb_copy_work,
     .create = fb_create,
     .get_caps = fb_get_caps,
     .begin = fb_begin,
@@ -1501,6 +1607,8 @@ const present_backend_ops_t present_fb_backend = {
     .end_ex = fb_end_ex,
     .cancel_frame = fb_cancel_frame,
     .query = fb_query,
+    .peek = fb_peek,
+    .forget = fb_forget,
     .get_fault = fb_get_fault,
     .wait = fb_wait,
     .release_receipt = fb_release_receipt,
@@ -1515,5 +1623,5 @@ size_t present_fb_memory(const esp_display_present_backend_config_t *config)
 {
     size_t tiles = config->render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION ? (config->tile_count ? config->tile_count : 1) : 0;
     return sizeof(present_backend_t) + tiles * sizeof(fb_tile_t) + config->max_frames * sizeof(present_core_frame_t) +
-           present_pixel_memory(tiles ? tiles : 1, config->async_copy);
+           (present_fb_needs_pixel_engine(config) ? present_pixel_memory(tiles ? tiles : 1, present_fb_uses_pixel_worker(config)) : 0);
 }

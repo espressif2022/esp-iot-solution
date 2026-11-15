@@ -25,6 +25,9 @@ void board_rgb_created(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_con
         .custom_bounce_callback = config->flags.no_fb,
         /* These maintained BSPs apply no driver-side memory transforms. */
         .transformed = false,
+        /* This binding tracks a newly created panel. None of these BSPs
+         * requests a restart during the lifetime of the registered panel. */
+        .no_explicit_restart = true,
     };
     binding.panel = panel;
     ESP_LOGI("rgb_facts", "RGB_FACTS width=%u height=%u fbs=%u bounce_bytes=%u continuous=%u bpp=%u",

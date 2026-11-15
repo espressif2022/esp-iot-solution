@@ -412,14 +412,28 @@ static esp_err_t delayed_executor(void *user, const esp_display_present_copy_req
     return ESP_OK;
 }
 
-static void queued_lifetime(void)
+static void count_external_work(void *user)
+{
+    atomic_fetch_add((_Atomic unsigned *)user, 1);
+}
+
+static void *run_external_copy(void *user)
+{
+    assert(present_pixel_run_one(user));
+    return NULL;
+}
+
+static void queued_lifetime(bool external)
 {
     executor_gate_t gate = {.lock = PTHREAD_MUTEX_INITIALIZER,
                             .changed = PTHREAD_COND_INITIALIZER
                            };
     uint8_t src[3][2] = {{1, 2}, {3, 4}, {5, 6}}, dst[2] = {0};
+    _Atomic unsigned wakes = 0;
+    unsigned priority_calls = atomic_load(&priority_set_calls);
     esp_display_present_pixel_config_t cfg = {.max_jobs = 3, .asynchronous = true,
-                                              .execute = delayed_executor, .execute_user = &gate
+                                              .execute = delayed_executor, .execute_user = &gate,
+                                              .external_worker = external, .on_work = count_external_work, .user = &wakes,
                                              };
     esp_display_present_pixel_engine_t *e;
     assert(esp_display_present_pixel_create(&cfg, &e) == ESP_OK);
@@ -430,6 +444,14 @@ static void queued_lifetime(void)
     };
     esp_display_present_copy_ticket_t tickets[3], extra;
     assert(esp_display_present_pixel_submit(e, &r, &tickets[0]) == ESP_OK);
+    pthread_t consumer;
+    if (external) {
+        esp_display_present_copy_status_t queued;
+        assert(atomic_load(&wakes) == 1);
+        assert(esp_display_present_pixel_query(e, tickets[0], &queued) == ESP_OK);
+        assert(queued.state == ESP_DISPLAY_PRESENT_COPY_QUEUED && !gate.calls);
+        assert(pthread_create(&consumer, NULL, run_external_copy, e) == 0);
+    }
     pthread_mutex_lock(&gate.lock);
     while (!gate.entered) {
         pthread_cond_wait(&gate.changed, &gate.lock);
@@ -456,12 +478,17 @@ static void queued_lifetime(void)
     pthread_cond_broadcast(&gate.changed);
     pthread_mutex_unlock(&gate.lock);
     assert(esp_display_present_pixel_stop(e, UINT32_MAX) == ESP_OK);
-    assert(gate.calls == 2);
-    assert(memcmp(dst, src[1], 2) == 0); /* FIFO; canceled third never wrote. */
+    if (external) {
+        assert(pthread_join(consumer, NULL) == 0);
+        assert(atomic_load(&priority_set_calls) == priority_calls);
+        assert(!present_pixel_run_one(e));
+    }
+    assert(gate.calls == (external ? 1u : 2u));
+    assert(memcmp(dst, src[external ? 0 : 1], 2) == 0); /* Canceled work never wrote. */
     assert(esp_display_present_pixel_destroy(e) == ESP_ERR_INVALID_STATE); /* receipts survive */
     for (unsigned i = 0; i < 3; ++i) {
         assert(esp_display_present_pixel_wait(e, tickets[i], 0, &status) == ESP_OK);
-        assert(status.result == (i == 2 ? ESP_ERR_INVALID_STATE : ESP_OK));
+        assert(status.result == ((i == 2 || (external && i == 1)) ? ESP_ERR_INVALID_STATE : ESP_OK));
         assert(esp_display_present_pixel_release(e, tickets[i]) == ESP_OK);
         assert(esp_display_present_pixel_query(e, tickets[i], &status) == ESP_ERR_INVALID_STATE);
     }
@@ -476,7 +503,8 @@ int main(void)
     stop_during_priority_setup();
     pixels_and_padding(false);
     pixels_and_padding(true);
-    queued_lifetime();
+    queued_lifetime(false);
+    queued_lifetime(true);
     validation_and_records();
     in_place_and_events();
     callback_lifetime(false);

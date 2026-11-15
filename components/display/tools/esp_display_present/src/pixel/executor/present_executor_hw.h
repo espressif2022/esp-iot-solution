@@ -7,7 +7,45 @@
 #include "pixel/present_executor.h"
 #include "platform/present_os.h"
 #include "esp_cache.h"
+#ifndef PRESENT_IDF_DMA2D_ALIGNMENT_API
+#define PRESENT_IDF_DMA2D_ALIGNMENT_API 1
+#endif
+#if PRESENT_IDF_DMA2D_ALIGNMENT_API
 #include "esp_private/dma2d.h"
+#else
+#include "esp_memory_utils.h"
+#ifndef PRESENT_IDF_EFUSE_ENCRYPTION_API
+#define PRESENT_IDF_EFUSE_ENCRYPTION_API 1
+#endif
+#if PRESENT_IDF_EFUSE_ENCRYPTION_API
+#include "esp_efuse.h"
+#else
+#include "esp_flash_encrypt.h"
+#endif
+#endif
+
+/* Earlier SDKs lack a per-address MSPI alignment query. Admit ordinary RAM
+ * only; strict external-memory modes retain pre-submission CPU fallback. */
+static inline size_t hw_memory_alignment(const void *pixels)
+{
+#if PRESENT_IDF_DMA2D_ALIGNMENT_API
+    return dma2d_get_buffer_alignment_constraint(pixels);
+#else
+    if (esp_ptr_internal(pixels)) {
+        return 1;
+    }
+    if (!esp_ptr_external_ram(pixels)) {
+        return SIZE_MAX;
+    }
+#if CONFIG_SPIRAM_ECC_ENABLE
+    return SIZE_MAX;
+#elif PRESENT_IDF_EFUSE_ENCRYPTION_API
+    return esp_efuse_is_flash_encryption_enabled() ? SIZE_MAX : 1;
+#else
+    return esp_flash_encryption_enabled() ? SIZE_MAX : 1;
+#endif
+#endif
+}
 /* Match the driver's extended destination rows, including quarter-turn height.
  * The allocation is exclusively borrowed; aligned edge lines remain inside it. */
 static bool destination_band(const esp_display_present_copy_request_t *request, size_t alignment,

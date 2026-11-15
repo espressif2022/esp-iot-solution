@@ -192,7 +192,7 @@ static bool channel_full(const present_backend_t *backend)
     return used >= limit;
 }
 
-static esp_err_t present_region_service(present_backend_t *backend)
+static esp_err_t service_regions(present_backend_t *backend, frame_record_t *canceled)
 {
     if (!backend) {
         return ESP_ERR_INVALID_ARG;
@@ -203,6 +203,7 @@ static esp_err_t present_region_service(present_backend_t *backend)
         for (size_t i = 0; i < backend->config.buffer_count; ++i) {
             region_tx_t *candidate = &backend->txs[i];
             if ((candidate->state == TX_COPYING || candidate->state == TX_READY) &&
+                    (!canceled || &backend->core.frames[candidate->frame] == canceled) &&
                     (!tx || candidate->cookie < tx->cookie)) {
                 tx = candidate;
             }
@@ -270,6 +271,11 @@ static esp_err_t present_region_service(present_backend_t *backend)
         settle_submit(backend, tx, record, resolved);
         present_lock_exit(&backend->lock, false);
     }
+}
+
+static esp_err_t present_region_service(present_backend_t *backend)
+{
+    return service_regions(backend, NULL);
 }
 
 static bool PRESENT_ISR_ATTR event_dispatch(void *user, const esp_display_present_backend_event_t *event, bool isr)
@@ -436,6 +442,9 @@ static esp_err_t region_get_caps(present_backend_t *backend, esp_display_present
     size_t bytes = backend->config.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
     *out = (esp_display_present_backend_caps_t) {
         .contract = ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION,
+        .draw_buffer_count = backend->config.buffer_count,
+        .tile_count = backend->config.buffer_count,
+        .draw_memory = backend->config.tile_in_psram ? ESP_DISPLAY_PRESENT_MEMORY_PSRAM : ESP_DISPLAY_PRESENT_MEMORY_INTERNAL,
         .draw_layout = { backend->config.width, backend->config.height, backend->config.width * bytes,
                          backend->config.format, backend->config.draw_order
                        },
@@ -1041,7 +1050,8 @@ static esp_err_t region_cancel_frame(present_backend_t *backend, esp_display_pre
             return ESP_OK;
         }
         present_lock_exit(&backend->lock, false);
-        (void)present_region_service(backend);
+        /* Drain only the canceled frame. Unrelated frames may require driver calls. */
+        (void)service_regions(backend, record);
         present_lock_enter(&backend->lock, false);
         bool canceled = present_cancel_matches(&backend->core.canceled, frame.value);
         present_lock_exit(&backend->lock, false);
@@ -1055,13 +1065,18 @@ static esp_err_t region_cancel_frame(present_backend_t *backend, esp_display_pre
     }
 }
 
+static esp_err_t region_peek(present_backend_t *backend, esp_display_present_receipt_t receipt, esp_display_present_frame_status_t *out)
+{
+    return present_frame_core_query(&backend->core, &backend->lock, receipt, false, out);
+}
+
 static esp_err_t region_query(present_backend_t *backend, esp_display_present_receipt_t receipt, esp_display_present_frame_status_t *out)
 {
     if (!backend || !out) {
         return ESP_ERR_INVALID_ARG;
     }
     (void)present_region_service(backend);
-    return present_frame_core_query(&backend->core, &backend->lock, receipt, false, out);
+    return region_peek(backend, receipt, out);
 }
 
 static esp_err_t region_get_fault(present_backend_t *backend, esp_display_present_backend_fault_t *out)
@@ -1161,6 +1176,27 @@ static esp_err_t region_set_rotation(present_backend_t *backend, esp_display_pre
     if (!rows) {
         return ESP_ERR_INVALID_SIZE;
     }
+    if (rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0) {
+        /* Reserve conversion storage before changing geometry. On failure,
+         * preserve both the old layout and any existing conversion tiles. */
+        void *converted[PRESENT_MAX_TILE_BUFFERS] = {0};
+        for (size_t i = 0; i < backend->config.buffer_count; ++i) {
+            if (!backend->txs[i].converted) {
+                converted[i] = present_alloc_pixels_in(backend->tile_bytes, converted_external(&backend->config));
+                if (!converted[i]) {
+                    for (size_t j = 0; j < i; ++j) {
+                        present_free(converted[j]);
+                    }
+                    return ESP_ERR_NO_MEM;
+                }
+            }
+        }
+        for (size_t i = 0; i < backend->config.buffer_count; ++i) {
+            if (converted[i]) {
+                backend->txs[i].converted = converted[i];
+            }
+        }
+    }
     backend->config.width = width;
     backend->config.height = height;
     backend->config.tile_rows = rows > height ? height : rows;
@@ -1183,6 +1219,8 @@ const present_backend_ops_t present_region_backend = {
     .end_ex = region_end_ex,
     .cancel_frame = region_cancel_frame,
     .query = region_query,
+    .peek = region_peek,
+    .forget = region_release_receipt,
     .get_fault = region_get_fault,
     .wait = region_wait,
     .release_receipt = region_release_receipt,

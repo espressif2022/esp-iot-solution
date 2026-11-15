@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #pragma once
-#include "core/present_engine.h"
+#include "esp_display_present_lvgl_bridge.h"
 #include "lvgl.h"
 
 #ifdef __cplusplus

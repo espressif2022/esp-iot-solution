@@ -888,9 +888,6 @@ static void run_v1_vs_v2_benchmark(unsigned cycle)
     }
 }
 
-#ifdef PRESENT_BOARD_EXECUTOR_CHECK
-void present_board_test_executors(void);
-#endif
 void app_main(void)
 {
 #ifdef PRESENT_NATIVE_ROTATION_MATRIX

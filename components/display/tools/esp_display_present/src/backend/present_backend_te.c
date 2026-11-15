@@ -342,6 +342,16 @@ static esp_err_t service_frame(present_backend_t *backend, size_t index, size_t 
                        (backend->config.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3);
         error = backend->config.te_gate.admit(backend->config.te_gate.user, bytes,
                                               job->attempted ? job->attempted_edge : 0, &edge);
+        if (error == ESP_ERR_NOT_SUPPORTED) {
+            /* No window can fit this transfer. Finish the sealed frame without
+             * submitting to the panel, and drop the composer's transfer pin. */
+            present_lock_enter(&backend->lock, false);
+            record_fault(backend, index, error);
+            (void)present_te_composer_complete(backend->composer, job->compose_frame, error);
+            retire_frame(backend, index);
+            present_lock_exit(&backend->lock, false);
+            return ESP_OK;
+        }
         if (error != ESP_OK) {
             (void)present_te_composer_reject(backend->composer, job->compose_frame);
             return error == ESP_ERR_TIMEOUT ? ESP_OK : error;
@@ -566,6 +576,11 @@ static esp_err_t te_get_caps(present_backend_t *backend, esp_display_present_bac
     size_t bpp = backend->config.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
     *out = (esp_display_present_backend_caps_t) {
         .contract = ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION,
+        .draw_buffer_count = backend->config.buffer_count,
+        .tile_count = backend->config.buffer_count,
+        .draw_memory = backend->config.tile_in_psram ? ESP_DISPLAY_PRESENT_MEMORY_PSRAM : ESP_DISPLAY_PRESENT_MEMORY_INTERNAL,
+        .image_count = backend->config.compose_count ? backend->config.compose_count : 2,
+        .image_memory = backend->config.image_in_psram ? ESP_DISPLAY_PRESENT_MEMORY_PSRAM : ESP_DISPLAY_PRESENT_MEMORY_INTERNAL,
         .draw_layout = {backend->config.width, backend->config.height,
                         backend->config.width * bpp, backend->config.format, backend->config.draw_order
                        },
@@ -876,7 +891,7 @@ static esp_err_t te_cancel_frame(present_backend_t *backend, esp_display_present
     }
     uint64_t start = present_now_ms();
     do {
-        (void)present_te_service(backend);
+        (void)service_frame(backend, index, progress_copies(backend));
         if (present_cancel_matches(&backend->core.canceled, frame.value)) {
             return ESP_OK;
         }
@@ -887,13 +902,18 @@ static esp_err_t te_cancel_frame(present_backend_t *backend, esp_display_present
     } while (true);
 }
 
+static esp_err_t te_peek(present_backend_t *backend, esp_display_present_receipt_t receipt, esp_display_present_frame_status_t *out)
+{
+    return present_frame_core_query(&backend->core, &backend->lock, receipt, false, out);
+}
+
 static esp_err_t te_query(present_backend_t *backend, esp_display_present_receipt_t receipt, esp_display_present_frame_status_t *out)
 {
     if (!backend || !out) {
         return ESP_ERR_INVALID_ARG;
     }
     (void)present_te_service(backend);
-    return present_frame_core_query(&backend->core, &backend->lock, receipt, false, out);
+    return te_peek(backend, receipt, out);
 }
 
 static esp_err_t te_get_fault(present_backend_t *backend, esp_display_present_backend_fault_t *out)
@@ -907,13 +927,18 @@ static esp_err_t te_wait(present_backend_t *backend, esp_display_present_receipt
     return present_frame_core_wait(backend, te_query, receipt, point, false, timeout, out);
 }
 
+static esp_err_t te_forget(present_backend_t *backend, esp_display_present_receipt_t receipt)
+{
+    return present_frame_core_release_receipt(&backend->core, &backend->lock, receipt);
+}
+
 static esp_err_t te_release_receipt(present_backend_t *backend, esp_display_present_receipt_t receipt)
 {
     if (!backend) {
         return ESP_ERR_INVALID_ARG;
     }
     (void)present_te_service(backend);
-    return present_frame_core_release_receipt(&backend->core, &backend->lock, receipt);
+    return te_forget(backend, receipt);
 }
 
 static esp_err_t te_stop(present_backend_t *backend, uint32_t timeout)
@@ -1044,6 +1069,8 @@ const present_backend_ops_t present_te_backend = {
     .end_ex = te_end_ex,
     .cancel_frame = te_cancel_frame,
     .query = te_query,
+    .peek = te_peek,
+    .forget = te_forget,
     .get_fault = te_get_fault,
     .wait = te_wait,
     .release_receipt = te_release_receipt,

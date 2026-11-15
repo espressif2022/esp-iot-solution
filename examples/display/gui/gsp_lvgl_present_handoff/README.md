@@ -6,7 +6,8 @@
 On-target example of GSP ↔ LVGL display handoff over a shared
 `esp_display_present` presenter. The app owns the presenter; GSP borrows
 it (`esp_gsp_esp_lcd_config_t.presenter`) and LVGL binds through
-`esp_lv_present` during its exclusive phase.
+`esp_lv_present` during its exclusive phase. The app releases producer
+ownership before GSP startup so GSP's worker can claim it on its first frame.
 
 Each cycle runs fully automatically:
 
@@ -20,18 +21,19 @@ Each cycle runs fully automatically:
    with `lv_timer_handler()` for `CONFIG_APP_PHASE_SECONDS`.
 4. `esp_display_presenter_quiesce()` retires the last LVGL frame fences
    before `esp_lv_present_stop()`. If quiesce fails, LVGL remains the active
-   producer and continues pumping during a bounded retry window. Exhausting
-   the retry budget reports `FAIL` and aborts instead of hanging forever.
-5. `esp_gsp_esp_lcd_resume_paused()` resumes GSP; its first frame is a
-   forced full redraw.
+   producer and continues pumping during a bounded retry window.
+5. Once LVGL is stopped, the app releases producer ownership once and calls
+   `esp_gsp_esp_lcd_resume_paused()`. GSP's first successful frame redraws
+   the screen and successful resume consumes the pause token.
 6. Per-cycle stats are logged:
    `handoff batch=N cycle=k/K pause=Xms lvgl_frames=Y resume=Zms`.
 
 `CONFIG_APP_HANDOFF_CYCLES` (default 5) is one reporting batch. The app repeats
 batches until reset. Recoverable failures are counted and logged. Quiesce,
-LVGL stop, and GSP resume all have bounded retry budgets. GSP is never resumed
-unless LVGL has stopped successfully, so two producers cannot own the presenter
-after a failed transition.
+LVGL stop, and GSP resume each retry in bounded groups. After a group is
+exhausted, the app keeps the pause token and retries the same stage after a
+delay. LVGL retains ownership until stop succeeds. If LVGL startup fails, the
+app retries restoring GSP directly.
 
 ## Build / flash
 
@@ -66,5 +68,5 @@ I (xxx) gsp_lvgl_handoff: batch 1 complete; continuing (total_errors=0)
 
 `lvgl_frames` must be above zero each cycle (the animated bar keeps
 invalidating); zero frames produce `FAIL`. Pause/resume times should stay
-within the 1000 ms budget. An unrecoverable ownership transition logs
-`FAIL ... stage=<quiesce|lvgl_stop|resume>` before aborting.
+within the 1000 ms budget. An exhausted retry group logs `FAIL ... stage=<quiesce|lvgl_stop|resume>`
+and the current cycle stays at that stage until it succeeds.

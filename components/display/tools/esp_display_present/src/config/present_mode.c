@@ -23,6 +23,22 @@ static esp_display_present_present_mode_t io_auto(bool te_enabled)
     return te_enabled ? ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC : ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE;
 }
 
+static const esp_display_present_present_mode_t public_modes[] = {
+    ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE, ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_FULL, ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_FULL,
+    ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT, ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_PARTIAL, ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC,
+    ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL, ESP_DISPLAY_PRESENT_ENGINE_MODE_AUTO,
+};
+
+esp_display_present_mode_t present_mode_to_public(esp_display_present_present_mode_t mode)
+{
+    for (size_t i = 0; i < sizeof(public_modes) / sizeof(public_modes[0]); ++i) {
+        if (public_modes[i] == mode) {
+            return (esp_display_present_mode_t)i;
+        }
+    }
+    return ESP_DISPLAY_PRESENT_MODE_AUTO;
+}
+
 esp_err_t present_mode_resolve_target(const esp_display_present_target_config_t *target, present_mode_resolution_t *out)
 {
     if (!target || !out || (target->hw.rotation != 0 && target->hw.rotation != 90 && target->hw.rotation != 180 && target->hw.rotation != 270) ||
@@ -37,11 +53,6 @@ esp_err_t present_mode_resolve_target(const esp_display_present_target_config_t 
     }
     bool fb = target->hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_RGB || target->hw.panel_type == ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI;
     bool te = target->hw.te_enabled && target->hw.te_sync.gpio_num >= 0;
-    static const esp_display_present_present_mode_t public_modes[] = {
-        ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE, ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_FULL, ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_FULL,
-        ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT, ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_PARTIAL, ESP_DISPLAY_PRESENT_ENGINE_MODE_TE_SYNC,
-        ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL, ESP_DISPLAY_PRESENT_ENGINE_MODE_AUTO,
-    };
     esp_display_present_present_mode_t mode = public_modes[target->fb.mode];
     if (mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_AUTO) {
         if (fb) {

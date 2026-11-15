@@ -73,6 +73,7 @@ void app_main(void)
     esp_display_presenter_t *presenter = NULL;
     ESP_ERROR_CHECK(
         esp_display_presenter_create(&presenter_config, &presenter));
+    ESP_ERROR_CHECK(esp_display_presenter_release_producer(presenter));
 
     esp_gsp_handle_t gsp = NULL;
     esp_gsp_config_t app_config = gsp_bundle_config();

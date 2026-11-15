@@ -12,18 +12,18 @@ void present_completion_record_error(present_completion_tracker_t *tracker, esp_
     }
 }
 
-esp_err_t present_completion_reap(present_completion_tracker_t *tracker, const present_backend_ops_t *ops, present_backend_t *backend)
+esp_err_t present_completion_reap(present_completion_tracker_t *tracker, const present_backend_ops_t *ops, present_backend_t *backend, bool service)
 {
     while (tracker->count) {
         esp_display_present_frame_status_t status;
-        esp_err_t ret = ops->query(backend, tracker->receipts[tracker->head], &status);
+        esp_err_t ret = (service ? ops->query : ops->peek)(backend, tracker->receipts[tracker->head], &status);
         if (ret != ESP_OK) {
             return ret;
         }
         if (!status.terminal) {
             break;
         }
-        ret = ops->release_receipt(backend, tracker->receipts[tracker->head]);
+        ret = (service ? ops->release_receipt : ops->forget)(backend, tracker->receipts[tracker->head]);
         if (ret != ESP_OK) {
             return ret;
         }
@@ -33,7 +33,6 @@ esp_err_t present_completion_reap(present_completion_tracker_t *tracker, const p
                 observer->status = status;
             }
         }
-        present_completion_record_error(tracker, status.result);
         tracker->head = (tracker->head + 1) % tracker->limit;
         --tracker->count;
         ++tracker->completed;
@@ -50,13 +49,13 @@ present_completion_observer_t *present_completion_find(present_completion_tracke
     return NULL;
 }
 
-esp_err_t present_completion_query(present_completion_observer_t *observer, const present_backend_ops_t *ops, present_backend_t *backend, esp_display_present_frame_status_t *out)
+esp_err_t present_completion_query(present_completion_observer_t *observer, const present_backend_ops_t *ops, present_backend_t *backend, esp_display_present_frame_status_t *out, bool service)
 {
     if (!observer) {
         return ESP_ERR_INVALID_STATE;
     }
     if (!observer->status.terminal) {
-        esp_err_t error = ops->query(backend, observer->backend, &observer->status);
+        esp_err_t error = (service ? ops->query : ops->peek)(backend, observer->backend, &observer->status);
         if (error != ESP_OK) {
             return error;
         }

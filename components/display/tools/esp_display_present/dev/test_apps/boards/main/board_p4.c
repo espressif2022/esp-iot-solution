@@ -8,12 +8,29 @@
 #include "esp_lcd_mipi_dsi.h"
 #include "esp_lcd_panel_io.h"
 #include "esp_lcd_ek79007.h"
+#include "esp_lcd_panel_interface.h"
 #include "esp_ldo_regulator.h"
 #include "esp_check.h"
+#include "platform/lcd/present_lcd_dpi_info.h"
 
 static esp_ldo_channel_handle_t ldo;
 static esp_lcd_dsi_bus_handle_t bus;
 static esp_lcd_panel_io_handle_t io;
+static struct {
+    esp_lcd_panel_handle_t panel;
+    esp_err_t (*draw_bitmap)(esp_lcd_panel_handle_t, int, int, int, int, const void *);
+    present_lcd_dpi_info_t info;
+} dpi_binding;
+
+bool present_lcd_dpi_get_board_info(esp_lcd_panel_handle_t panel, present_lcd_dpi_info_t *info)
+{
+    if (!panel || panel != dpi_binding.panel || !dpi_binding.draw_bitmap ||
+            panel->draw_bitmap != dpi_binding.draw_bitmap) {
+        return false;
+    }
+    *info = dpi_binding.info;
+    return true;
+}
 
 esp_err_t board_panel_create(esp_lcd_panel_handle_t *panel, size_t buffer_count)
 {
@@ -30,15 +47,25 @@ esp_err_t board_panel_create(esp_lcd_panel_handle_t *panel, size_t buffer_count)
                                       .bits_per_pixel = 16, .vendor_config = &vendor
                                      };
     ESP_RETURN_ON_ERROR(esp_lcd_new_panel_ek79007(io, &dev, panel), "board", "EK79007");
+    /* The pinned EK79007 driver wraps initialization and control ops while
+     * retaining the native DPI draw_bitmap. Check it before exposing facts. */
+    dpi_binding.draw_bitmap = (*panel)->draw_bitmap;
     ESP_RETURN_ON_ERROR(esp_lcd_panel_reset(*panel), "board", "reset");
     ESP_RETURN_ON_ERROR(esp_lcd_panel_init(*panel), "board", "init");
     gpio_config_t backlight = {.pin_bit_mask = 1ULL << 26, .mode = GPIO_MODE_OUTPUT};
     ESP_RETURN_ON_ERROR(gpio_config(&backlight), "board", "backlight config");
-    return gpio_set_level(26, 1);
+    ESP_RETURN_ON_ERROR(gpio_set_level(26, 1), "board", "backlight on");
+    dpi_binding.info = (present_lcd_dpi_info_t) {
+        .width = dpi.video_timing.h_size, .height = dpi.video_timing.v_size,
+        .bits_per_pixel = dpi.in_color_format == LCD_COLOR_FMT_RGB565 ? 16 : 0,
+    };
+    dpi_binding.panel = *panel;
+    return ESP_OK;
 }
 
 esp_err_t board_resources_destroy(void)
 {
+    dpi_binding.panel = NULL;
     ESP_RETURN_ON_ERROR(gpio_set_level(26, 0), "board", "backlight off");
     ESP_RETURN_ON_ERROR(esp_lcd_panel_io_del(io), "board", "delete DBI");
     io = NULL;

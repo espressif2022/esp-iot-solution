@@ -68,8 +68,9 @@ enum {
  * - Pool planned capacity (each pool's count / bytes_each / total_bytes):
  *   how many buffers of what size in which memory a path may need at most.
  * - Current actual allocation: what a backend has allocated and holds right
- *   now. Lazy paths (e.g. conversion tiles after a runtime rotation) can be
- *   below planned capacity and can still fail with ESP_ERR_NO_MEM later.
+ *   now. Lazy paths (e.g. packing a non-tight REGION source) can be below
+ *   planned capacity. Runtime rotation reserves its required conversion
+ *   storage before committing the new layout.
  * Passing a budget check reserves no heap memory. */
 typedef struct {
     esp_display_present_engine_config_t normalized;

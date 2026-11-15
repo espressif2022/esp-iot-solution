@@ -51,3 +51,18 @@ I (...) lvgl_bench: RUN mode=DOUBLE_DIRECT te_buffers=0 rotation=0 size=1024x600
 I (...) lvgl_bench: PASS mode=DOUBLE_DIRECT te_buffers=0 rotation=0 frames=... transport_fps=... lvgl_fps=... cpu=... render=...ms flush=...ms scenes=...
 I (...) lvgl_bench: SKIP mode=TE_SYNC te_buffers=1 rotation=0: outside target capability matrix
 ```
+
+
+### Performance counters
+
+Each successful case emits a `METRICS` line. `begin_commit_p99_us` measures
+successful producer frames from begin admission to commit. It includes waits
+for tiles during the frame and uses 1 ms histogram buckets. If P99 lands in
+the overflow bucket, the line reports the observed maximum as its upper bound.
+
+`buffer_waits`, `buffer_wait_us`, `buffer_wait_max_us` and
+`buffer_wait_timeouts` describe backpressure during frame or tile acquisition.
+Gate-only contention is excluded. `scanout_supply_misses` counts VSYNC intervals
+that started with a committed framebuffer backlog and received no matched
+scanout switch. It is available for RGB/DPI when `scanout_available=1`.
+Physical LCD DMA underruns and restarts require separate driver counters.

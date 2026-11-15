@@ -22,12 +22,14 @@ static void memory_report(const char *phase, bool local_minimum)
 {
     const uint32_t internal = MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT;
     const uint32_t psram = MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT;
-    ESP_LOGI(TAG, "MEMORY mode=%s rotation=%u phase=%s internal_total=%u internal_free=%u psram_total=%u psram_free=%u internal_min_free=%u psram_min_free=%u",
+    const uint32_t internal_dma = MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA;
+    ESP_LOGI(TAG, "MEMORY mode=%s rotation=%u phase=%s internal_total=%u internal_free=%u psram_total=%u psram_free=%u internal_min_free=%u psram_min_free=%u internal_dma_largest=%u",
              active ? active->name : "SUITE", active ? active->rotation : 0, phase,
              (unsigned)heap_caps_get_total_size(internal), (unsigned)heap_caps_get_free_size(internal),
              (unsigned)heap_caps_get_total_size(psram), (unsigned)heap_caps_get_free_size(psram),
              local_minimum ? (unsigned)heap_caps_get_minimum_free_size(internal) : 0,
-             local_minimum ? (unsigned)heap_caps_get_minimum_free_size(psram) : 0);
+             local_minimum ? (unsigned)heap_caps_get_minimum_free_size(psram) : 0,
+             (unsigned)heap_caps_get_largest_free_block(internal_dma));
 }
 static void end_cb(const lv_demo_benchmark_summary_t *s)
 {
@@ -70,8 +72,9 @@ static void run(void *unused)
         memory_report("after_open", false);
         atomic_store(&finished, false);
         bench_meter_reset();
-        bench_profile_reset();
         ESP_ERROR_CHECK(bench_lock());
+        bench_frame_timing_reset();
+        bench_profile_reset(disp);
         bench_buffer_audit_start(disp, active);
         lv_demo_benchmark_set_end_cb(end_cb);
         lv_demo_benchmark();
@@ -90,6 +93,7 @@ static void run(void *unused)
 #endif
         bool complete = atomic_load_explicit(&finished, memory_order_acquire);
         int64_t elapsed = esp_timer_get_time() - start;
+        bench_metrics_report(active);
         uint32_t frames = bench_frame_count();
         ESP_ERROR_CHECK(bench_lock());
         bench_buffer_audit_stop(disp);
@@ -105,6 +109,7 @@ static void run(void *unused)
 #endif
         bench_meter_report(active->name);
         bench_profile_report(active->name);
+        bench_frame_timing_report(active->name);
         ESP_ERROR_CHECK(complete && scenes > 0 ? ESP_OK : ESP_ERR_TIMEOUT);
         ESP_LOGI(TAG, "PASS mode=%s te_buffers=%u rotation=%u frames=%u transport_fps=%.1f lvgl_fps=%d cpu=%d%% render=%dms flush=%dms scenes=%d", active->name, active->compose, active->rotation, (unsigned)frames, frames * 1000000.0 / elapsed, fps, cpu, render, flush, scenes);
     }

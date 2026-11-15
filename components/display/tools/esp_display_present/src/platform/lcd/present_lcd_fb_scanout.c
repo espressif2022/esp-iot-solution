@@ -11,12 +11,23 @@
 #define PRESENT_DSI_SUPPORTED 1
 #define PRESENT_RGB_SUPPORTED 1
 #else
+#include "sdkconfig.h"
 #include "soc/soc_caps.h"
 #define PRESENT_DSI_SUPPORTED (SOC_MIPI_DSI_SUPPORTED && PRESENT_IDF_DSI_SCANOUT_API)
 #define PRESENT_RGB_SUPPORTED SOC_LCD_RGB_SUPPORTED
 #endif
 #if PRESENT_DSI_SUPPORTED
 #include "esp_lcd_mipi_dsi.h"
+#endif
+#if PRESENT_DSI_SUPPORTED && defined(PRESENT_IDF_DPI_FRAME_WRITEBACK)
+#include "platform/lcd/present_lcd_dpi_info.h"
+
+bool __attribute__((weak)) present_lcd_dpi_get_board_info(esp_lcd_panel_handle_t panel, present_lcd_dpi_info_t *info)
+{
+    (void)panel;
+    (void)info;
+    return false;
+}
 #endif
 #if PRESENT_RGB_SUPPORTED
 #include "esp_lcd_panel_rgb.h"
@@ -42,7 +53,7 @@ struct esp_display_present_lcd_fb_scanout {
     } pending;
     size_t active_callbacks;
     bool attached, closing, src_stopped, stopped, callbacks_removed;
-    bool initial_started, initial_ready, single_vsync;
+    bool initial_started, initial_ready, single_vsync, driver_writeback;
 };
 typedef struct {
     esp_display_present_panel_event_fn callback;
@@ -229,12 +240,18 @@ static esp_display_present_tx_result_t scanout_submit(void *context, const esp_d
         return (esp_display_present_tx_result_t) {
         ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_STATE
     };
-    esp_err_t error =
-        esp_cache_msync(surface->pixels, bytes, ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_UNALIGNED);
-    if (error != ESP_OK && error != ESP_ERR_NOT_SUPPORTED)
-        return (esp_display_present_tx_result_t) {
-        ESP_DISPLAY_PRESENT_TX_REJECTED, error
-    };
+    /* The range guard and the audited driver's C2M | UNALIGNED flags
+     * exclude hard errors in the matching esp_cache_msync implementation. */
+    bool driver_writeback = scanout->driver_writeback && bytes <= INT_MAX &&
+                            bytes <= UINTPTR_MAX - (uintptr_t)surface->pixels;
+    if (!driver_writeback) {
+        esp_err_t error = esp_cache_msync(surface->pixels, bytes, ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_UNALIGNED);
+        if (error != ESP_OK && error != ESP_ERR_NOT_SUPPORTED) {
+            return (esp_display_present_tx_result_t) {
+                ESP_DISPLAY_PRESENT_TX_REJECTED, error
+            };
+        }
+    }
     present_lock_enter(&scanout->lock, false);
     /* Reserve atomically after cache maintenance as well: another caller must
      * not overwrite an outstanding transaction. */
@@ -252,7 +269,7 @@ static esp_display_present_tx_result_t scanout_submit(void *context, const esp_d
     scanout->pending.boundaries = 0;
     scanout->pending.required_boundaries = 1;
     present_lock_exit(&scanout->lock, false);
-    error = esp_lcd_panel_draw_bitmap(scanout->config.panel, 0, 0, area->width, area->height, surface->pixels);
+    esp_err_t error = esp_lcd_panel_draw_bitmap(scanout->config.panel, 0, 0, area->width, area->height, surface->pixels);
     if (link_switch) {
         scanout_completion_t completion = {0};
         present_lock_enter(&scanout->lock, false);
@@ -417,6 +434,7 @@ esp_err_t esp_display_present_lcd_fb_scanout_create(const esp_display_present_lc
         return ESP_ERR_NOT_SUPPORTED;
     }
     bool single_vsync = false;
+    bool driver_writeback = false;
     scanout_protocol_t protocol = SCANOUT_PERIODIC;
     if (config->kind == ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_RGB) {
         present_lcd_rgb_facts_t facts;
@@ -439,6 +457,11 @@ esp_err_t esp_display_present_lcd_fb_scanout_create(const esp_display_present_lc
                     return ESP_ERR_NOT_SUPPORTED;
                 }
                 protocol = SCANOUT_REQUESTED;
+#if defined(PRESENT_IDF_RGB_FRAME_WRITEBACK) && !CONFIG_LCD_RGB_RESTART_IN_VSYNC
+                /* No bounce, periodic restart, or pending BSP restart can
+                 * switch DMA to cur_fb_index before the driver's C2M. */
+                driver_writeback = info->no_explicit_restart;
+#endif
             }
         } else if (error != ESP_ERR_NOT_FOUND) {
             return error; /* Known conflicting/unsupported facts cannot fall back. */
@@ -446,6 +469,18 @@ esp_err_t esp_display_present_lcd_fb_scanout_create(const esp_display_present_lc
             return ESP_ERR_NOT_SUPPORTED;
         }
     }
+#if PRESENT_DSI_SUPPORTED && defined(PRESENT_IDF_DPI_FRAME_WRITEBACK)
+    if (config->kind == ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_DSI) {
+        present_lcd_dpi_info_t info;
+        unsigned bits_per_pixel = config->format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 16 : 24;
+        /* The address query alone cannot prove the clipping bounds. DPI also
+         * computes the total bit count in size_t before dividing by eight. */
+        driver_writeback = present_lcd_dpi_get_board_info(config->panel, &info) &&
+                           info.width == config->width && info.height == config->height &&
+                           info.bits_per_pixel == bits_per_pixel &&
+                           (uint64_t)config->width * config->height <= UINT32_MAX / bits_per_pixel;
+    }
+#endif
     size_t bpp = config->format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
     if (config->width > SIZE_MAX / config->height / bpp) {
         return ESP_ERR_INVALID_SIZE;
@@ -461,6 +496,7 @@ esp_err_t esp_display_present_lcd_fb_scanout_create(const esp_display_present_lc
     scanout->config = *config;
     scanout->protocol = protocol;
     scanout->single_vsync = single_vsync;
+    scanout->driver_writeback = driver_writeback;
     esp_err_t error = ESP_ERR_NOT_SUPPORTED;
 #if PRESENT_DSI_SUPPORTED
     if (config->kind == ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_DSI)

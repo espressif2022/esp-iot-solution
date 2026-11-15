@@ -5,6 +5,7 @@
 #pragma once
 #include <stdbool.h>
 bool esp_ptr_internal(const void *);
+bool esp_ptr_external_ram(const void *);
 bool esp_ptr_dma_capable(const void *);
 
 bool esp_ptr_dma_ext_capable(const void *);

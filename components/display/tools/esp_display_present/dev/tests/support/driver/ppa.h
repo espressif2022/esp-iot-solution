@@ -12,6 +12,8 @@ typedef void *ppa_client_handle_t;
 typedef enum { PPA_SRM_COLOR_MODE_RGB565, PPA_SRM_COLOR_MODE_RGB888 } ppa_srm_color_mode_t;
 typedef enum { PPA_SRM_ROTATION_ANGLE_0, PPA_SRM_ROTATION_ANGLE_90, PPA_SRM_ROTATION_ANGLE_180, PPA_SRM_ROTATION_ANGLE_270 } ppa_srm_rotation_angle_t;
 #define PPA_OPERATION_SRM 0
+#define PPA_OPERATION_FILL 1
+#define PPA_FILL_COLOR_MODE_RGB565 0
 #define PPA_TRANS_MODE_BLOCKING 0
 typedef struct {
     int oper_type;
@@ -27,6 +29,7 @@ typedef struct {
     size_t buffer_size;
     uint32_t pic_w, pic_h, block_offset_x, block_offset_y;
     ppa_srm_color_mode_t srm_cm;
+    int fill_cm;
 } ppa_out_pic_blk_config_t;
 typedef struct {
     ppa_in_pic_blk_config_t in;
@@ -39,3 +42,12 @@ typedef struct {
 esp_err_t ppa_register_client(const ppa_client_config_t *, ppa_client_handle_t *);
 esp_err_t ppa_unregister_client(ppa_client_handle_t);
 esp_err_t ppa_do_scale_rotate_mirror(ppa_client_handle_t, const ppa_srm_oper_config_t *);
+typedef struct {
+    ppa_out_pic_blk_config_t out;
+    uint32_t fill_block_w, fill_block_h;
+    struct {
+        uint8_t a, r, g, b;
+    } fill_argb_color;
+    int mode;
+} ppa_fill_oper_config_t;
+esp_err_t ppa_do_fill(ppa_client_handle_t, const ppa_fill_oper_config_t *);

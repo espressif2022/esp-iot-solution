@@ -10,7 +10,7 @@
 #define PRESENT_PLUGIN_ENABLED PRESENT_HOST_PPA
 #else
 #include "soc/soc_caps.h"
-#define PRESENT_PLUGIN_ENABLED (SOC_PPA_SUPPORTED && PRESENT_IDF_DMA2D_ALIGNMENT_API)
+#define PRESENT_PLUGIN_ENABLED SOC_PPA_SUPPORTED
 #endif
 #if PRESENT_PLUGIN_ENABLED
 #include "pixel/executor/present_executor_hw.h"
@@ -105,8 +105,8 @@ static esp_err_t ppa_probe(void *context, const esp_display_present_copy_request
         return unsupported(reason, ESP_DISPLAY_PRESENT_EXEC_LAYOUT);
     }
 #endif
-    if (dma2d_get_buffer_alignment_constraint(request->src.pixels) > 1 ||
-            dma2d_get_buffer_alignment_constraint(request->dst.pixels) > 1) {
+    if (hw_memory_alignment(request->src.pixels) > 1 ||
+            hw_memory_alignment(request->dst.pixels) > 1) {
         return unsupported(reason, ESP_DISPLAY_PRESENT_EXEC_MEMORY);
     }
     return ESP_OK;

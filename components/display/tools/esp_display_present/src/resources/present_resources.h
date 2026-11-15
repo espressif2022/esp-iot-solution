@@ -14,6 +14,7 @@ typedef struct {
     /* Creation-time allocation plan, not a mutable runtime layout snapshot.
      * Query engine caps for the current producer dimensions after rotation. */
     esp_display_present_resolved_plan_t plan;
+    uint32_t degradation_flags;
     const char *preferred_executor;
     uint64_t hardware_copies, cpu_copies; /* Executed attempts, including errors. */
     esp_err_t dma2d_create_result, ppa_create_result;
@@ -25,6 +26,8 @@ esp_err_t present_resources_create(const esp_display_presenter_config_t *, bool 
 esp_display_present_engine_t *present_resources_presenter(present_resources_t *);
 esp_err_t present_resources_prepare(present_resources_t *, uint32_t timeout_ms);
 esp_err_t present_resources_select_executor(present_resources_t *, esp_display_present_engine_rotation_t);
+/* Selection is immutable once creation succeeds and safe to read under the facade gate. */
+void present_resources_get_selection(const present_resources_t *, esp_display_present_mode_t *, uint32_t *);
 esp_err_t present_resources_status(present_resources_t *, present_resource_status_t *);
 esp_err_t present_resources_destroy(present_resources_t *, uint32_t timeout_ms);
 

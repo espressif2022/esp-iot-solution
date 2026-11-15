@@ -10,9 +10,10 @@
  * @file esp_lv_present.h
  * @brief Bind an LVGL 9 display to an existing esp_display_present presenter.
  *
- * PARTITION borrows the presenter's tile draw buffer. DIRECT and FULL render
- * into the presenter's rotating framebuffer lease. Only the task that calls
- * esp_lv_present_start() may pump LVGL (lv_timer_handler).
+ * With LVGL 9.5 or later, compatible PARTITION layouts can render into leased
+ * tiles, and compatible DIRECT and FULL layouts can use framebuffer leases.
+ * Earlier LVGL 9 releases and incompatible layouts use a separate LVGL draw
+ * buffer and copy on flush. Pump LVGL on the task that called esp_lv_present_start().
  */
 
 #include <stdint.h>

@@ -2,6 +2,10 @@
 
 `esp_display_present` provides the stable `esp_display_presenter_*` API, platform resource assembly, and one presentation engine. `esp_lv_present` provides the LVGL binding to that engine. Existing applications keep their presenter API and own the panel, IO, and bus resources.
 
+See the [configuration and resource matrix](README_CN.md#模式与缓冲组合) for the mode selection diagrams, TE T/C combinations, rotation and byte-swap costs, worker selection, and public API index.
+
+Use `esp_display_presenter_open(&lcd, mode, &presenter)` with an initialized panel and physical dimensions. Use `open_ex()` to choose tile and TE compose counts, or `create()` for advanced configuration. See the [setup example](README_CN.md#一键初始化).
+
 Public headers are in `include`; internal engine headers in `src` are not application API. The previously public geometry header and its point/size types are no longer exposed; consumers of those interfaces require migration.
 
 For local component discovery add `esp_display_present` and, for LVGL, `esp_lv_present`; neither requires a V2 component. Registry publication and external compatibility have not been established by this source migration. See [current development and validation](MIGRATION_STATUS.md) and the [historical transition design (archive)](dev/ARCHIVE.md).
@@ -28,6 +32,9 @@ not a requested protocol. Known invalid facts fail closed.
 
 A verified S31 non-bounce AXI path retains requested completion received before
 the driver returns. Bounce completion retains its periodic ISR-join fence.
+Audited S31 driver and cache sources can handle the full-frame cache writeback
+once in the RGB driver when BSP facts also rule out pending manual restarts
+and SDK periodic restart is disabled. Other paths retain Present writeback.
 S3 non-bounce EOF is not accepted as a multi-buffer retirement guarantee.
 Without driver/BSP facts, only the existing confirmed-bounce fallback remains;
 a generic borrowed handle alone does not enable non-bounce support. No global

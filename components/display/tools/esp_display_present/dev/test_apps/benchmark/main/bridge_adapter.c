@@ -61,6 +61,10 @@ uint32_t bench_frame_count(void)
 {
     return 0;   /* Unavailable: report must not compare adapter transport FPS. */
 }
+void bench_metrics_report(const bench_case_t *test)
+{
+    (void)test;
+}
 void bench_meter_reset(void) {}
 void bench_meter_report(const char *label)
 {
