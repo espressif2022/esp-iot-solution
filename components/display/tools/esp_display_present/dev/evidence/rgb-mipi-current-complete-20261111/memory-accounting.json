@@ -4,76 +4,80 @@
   "boards": {
     "s3-rgb": {
       "present": {
-        "elf_sha256": "444ad148d6cb7a80de4c1fbf62f6a62ae3ef1a2cd4591531b88e1835f38d8e36",
-        "iram_bytes": 63744,
-        "dram_static_bytes": 19436,
-        "sram_sections_bytes": 83180,
+        "elf_sha256": "952d60df505d4f47888c40254a5a64e3f9b26848e2c63dc2f4a1efbccfa6d430",
+        "iram_bytes": 62976,
+        "dram_static_bytes": 19376,
+        "sram_sections_bytes": 82352,
         "sections": {
           ".iram0.vectors": 1028,
-          ".iram0.text": 62483,
-          ".dram0.dummy": 63744,
-          ".dram0.data": 15828,
+          ".iram0.text": 61747,
+          ".dram0.dummy": 62976,
+          ".dram0.data": 15632,
           ".noinit": 0,
-          ".dram0.bss": 3608,
-          ".iram0.text_end": 233,
+          ".dram0.bss": 3744,
+          ".iram0.text_end": 201,
           ".iram0.data": 0,
           ".iram0.bss": 0,
           ".dram0.heap_start": 0
         },
         "suite_baselines": {
           "before_init": {
-            "internal_total": 379179,
-            "internal_free": 297855,
-            "psram_total": 15869348,
-            "psram_free": 15866500,
+            "internal_total": 380011,
+            "internal_free": 306231,
+            "psram_total": 7480336,
+            "psram_free": 7477620,
             "internal_min_free": 0,
-            "psram_min_free": 0
+            "psram_min_free": 0,
+            "internal_dma_largest": 233472
           },
           "after_init": {
-            "internal_total": 379179,
-            "internal_free": 286467,
-            "psram_total": 15869348,
-            "psram_free": 14482532,
+            "internal_total": 380011,
+            "internal_free": 286043,
+            "psram_total": 7480336,
+            "psram_free": 6093684,
             "internal_min_free": 0,
-            "psram_min_free": 0
+            "psram_min_free": 0,
+            "internal_dma_largest": 233472
           }
         },
         "jpeg_components": [],
         "jpeg_symbols": []
       },
       "adapter": {
-        "elf_sha256": "1fb5c015055893e866a245e28089d0ca4e91d3414bf2e68b6bc4bfe8c6beafee",
-        "iram_bytes": 62208,
-        "dram_static_bytes": 19612,
-        "sram_sections_bytes": 81820,
+        "elf_sha256": "4a3ba31952922749846544d72480c0af686c86b8813d0e997a65dd199b3b0285",
+        "iram_bytes": 61184,
+        "dram_static_bytes": 19584,
+        "sram_sections_bytes": 80768,
         "sections": {
           ".iram0.vectors": 1028,
-          ".iram0.text": 61119,
-          ".dram0.dummy": 62208,
-          ".dram0.data": 15812,
+          ".iram0.text": 60079,
+          ".dram0.dummy": 61184,
+          ".dram0.data": 15632,
           ".noinit": 0,
-          ".dram0.bss": 3800,
-          ".iram0.text_end": 61,
+          ".dram0.bss": 3952,
+          ".iram0.text_end": 77,
           ".iram0.data": 0,
           ".iram0.bss": 0,
           ".dram0.heap_start": 0
         },
         "suite_baselines": {
           "before_init": {
-            "internal_total": 380539,
-            "internal_free": 299215,
-            "psram_total": 15861940,
-            "psram_free": 15859164,
+            "internal_total": 381595,
+            "internal_free": 307815,
+            "psram_total": 7539392,
+            "psram_free": 7536748,
             "internal_min_free": 0,
-            "psram_min_free": 0
+            "psram_min_free": 0,
+            "internal_dma_largest": 237568
           },
           "after_init": {
-            "internal_total": 380539,
-            "internal_free": 243483,
-            "psram_total": 15861940,
-            "psram_free": 14475196,
+            "internal_total": 381595,
+            "internal_free": 243307,
+            "psram_total": 7539392,
+            "psram_free": 6152812,
             "internal_min_free": 0,
-            "psram_min_free": 0
+            "psram_min_free": 0,
+            "internal_dma_largest": 196608
           }
         },
         "jpeg_components": [],
@@ -82,76 +86,80 @@
     },
     "s31-rgb": {
       "present": {
-        "elf_sha256": "facd2c0c38f05d40961da9d873b3b99d6968c5fa3ba1931b92d399c9a7afe5ea",
-        "iram_bytes": 69120,
-        "dram_static_bytes": 25324,
-        "sram_sections_bytes": 94444,
+        "elf_sha256": "5306f5aa73c44536edfb0e6a848448a0c2fab6b76e2562f753ce776d18b5fdba",
+        "iram_bytes": 68608,
+        "dram_static_bytes": 24696,
+        "sram_sections_bytes": 93304,
         "sections": {
-          ".iram0.text": 69038,
-          ".iram0.text_end": 82,
+          ".iram0.text": 68604,
+          ".iram0.text_end": 4,
           ".iram0.data": 0,
           ".iram0.bss": 0,
           ".iram0.end": 0,
           ".dram0.dummy": 0,
-          ".dram0.data": 17881,
-          ".noinit": 3,
-          ".dram0.bss": 7440,
+          ".dram0.data": 17158,
+          ".noinit": 2,
+          ".dram0.bss": 7536,
           ".dram0.heap_start": 0
         },
         "suite_baselines": {
           "before_init": {
-            "internal_total": 491623,
-            "internal_free": 410311,
-            "psram_total": 15827712,
-            "psram_free": 15824128,
+            "internal_total": 492759,
+            "internal_free": 418991,
+            "psram_total": 15830272,
+            "psram_free": 15826688,
             "internal_min_free": 0,
-            "psram_min_free": 0
+            "psram_min_free": 0,
+            "internal_dma_largest": 327680
           },
           "after_init": {
-            "internal_total": 491623,
-            "internal_free": 409667,
-            "psram_total": 15827712,
-            "psram_free": 13519696,
+            "internal_total": 492759,
+            "internal_free": 409547,
+            "psram_total": 15830272,
+            "psram_free": 13522288,
             "internal_min_free": 0,
-            "psram_min_free": 0
+            "psram_min_free": 0,
+            "internal_dma_largest": 327680
           }
         },
         "jpeg_components": [],
         "jpeg_symbols": []
       },
       "adapter": {
-        "elf_sha256": "dce74a415f3e797058716341a3377b70478bad4d2fa990ed0f0cdd0c6aa0b9c1",
-        "iram_bytes": 68608,
-        "dram_static_bytes": 25584,
-        "sram_sections_bytes": 94192,
+        "elf_sha256": "f3294f17f69481d7895f1763deeeea7485da49ab0d44cd8e9cd914a589c16d15",
+        "iram_bytes": 68096,
+        "dram_static_bytes": 24956,
+        "sram_sections_bytes": 93052,
         "sections": {
-          ".iram0.text": 68542,
-          ".iram0.text_end": 66,
+          ".iram0.text": 68002,
+          ".iram0.text_end": 94,
           ".iram0.data": 0,
           ".iram0.bss": 0,
           ".iram0.end": 0,
           ".dram0.dummy": 0,
-          ".dram0.data": 17901,
-          ".noinit": 3,
-          ".dram0.bss": 7672,
-          ".dram0.heap_start": 8
+          ".dram0.data": 17178,
+          ".noinit": 2,
+          ".dram0.bss": 7776,
+          ".dram0.heap_start": 0
         },
         "suite_baselines": {
           "before_init": {
-            "internal_total": 491879,
-            "internal_free": 410567,
-            "psram_total": 15849856,
-            "psram_free": 15846384,
+            "internal_total": 493015,
+            "internal_free": 419247,
+            "psram_total": 15860608,
+            "psram_free": 15857028,
             "internal_min_free": 0,
-            "psram_min_free": 0
+            "psram_min_free": 0,
+            "internal_dma_largest": 327680
           },
           "after_init": {
-            "internal_total": 491879,
-            "internal_free": 365547,
-            "psram_total": 15849856,
-            "psram_free": 13541968,
+            "internal_total": 493015,
+            "internal_free": 365451,
+            "psram_total": 15860608,
+            "psram_free": 13552628,
             "internal_min_free": 0,
-            "psram_min_free": 0
+            "psram_min_free": 0,
+            "internal_dma_largest": 294912
           }
         },
         "jpeg_components": [],
@@ -160,76 +168,80 @@
     },
     "p4-dsi": {
       "present": {
-        "elf_sha256": "d8632226c6c03e30a9f3eb1e3c4097c21779eb5154fd7a8788833ad899340cd2",
-        "iram_bytes": 75392,
-        "dram_static_bytes": 25412,
-        "sram_sections_bytes": 100804,
+        "elf_sha256": "c4b3e65ecc55b3973110fc3601a1869c81d957a869200a29e1b63f276f3a5714",
+        "iram_bytes": 74624,
+        "dram_static_bytes": 24960,
+        "sram_sections_bytes": 99584,
         "sections": {
-          ".iram0.text": 75388,
-          ".iram0.text_end": 4,
+          ".iram0.text": 74532,
+          ".iram0.text_end": 92,
           ".iram0.data": 0,
           ".iram0.bss": 0,
           ".iram0.end": 0,
           ".dram0.dummy": 0,
-          ".dram0.data": 18132,
-          ".noinit": 0,
-          ".dram0.bss": 7280,
+          ".dram0.data": 17502,
+          ".noinit": 2,
+          ".dram0.bss": 7456,
           ".dram0.heap_start": 0
         },
         "suite_baselines": {
           "before_init": {
-            "internal_total": 626391,
-            "internal_free": 542995,
-            "psram_total": 32605056,
-            "psram_free": 32601340,
+            "internal_total": 627639,
+            "internal_free": 551787,
+            "psram_total": 32615808,
+            "psram_free": 32612024,
             "internal_min_free": 0,
-            "psram_min_free": 0
+            "psram_min_free": 0,
+            "internal_dma_largest": 450560
           },
           "after_init": {
-            "internal_total": 626391,
-            "internal_free": 551111,
-            "psram_total": 32605056,
-            "psram_free": 28914792,
+            "internal_total": 627639,
+            "internal_free": 551091,
+            "psram_total": 32615808,
+            "psram_free": 28925476,
             "internal_min_free": 0,
-            "psram_min_free": 0
+            "psram_min_free": 0,
+            "internal_dma_largest": 450560
           }
         },
         "jpeg_components": [],
         "jpeg_symbols": []
       },
       "adapter": {
-        "elf_sha256": "b2d343c89248ada44790c253dca9d7672ccde7e2faf606b07a42e601f2696c9c",
-        "iram_bytes": 75008,
-        "dram_static_bytes": 25660,
-        "sram_sections_bytes": 100668,
+        "elf_sha256": "c1a08fc99a07f7b656ea0f04a4484906d7028ba704acc2bbbbc61b4f68a78a33",
+        "iram_bytes": 74240,
+        "dram_static_bytes": 25208,
+        "sram_sections_bytes": 99448,
         "sections": {
-          ".iram0.text": 74908,
-          ".iram0.text_end": 100,
+          ".iram0.text": 74164,
+          ".iram0.text_end": 76,
           ".iram0.data": 0,
           ".iram0.bss": 0,
           ".iram0.end": 0,
           ".dram0.dummy": 0,
-          ".dram0.data": 18140,
-          ".noinit": 0,
-          ".dram0.bss": 7520,
+          ".dram0.data": 17510,
+          ".noinit": 2,
+          ".dram0.bss": 7696,
           ".dram0.heap_start": 0
         },
         "suite_baselines": {
           "before_init": {
-            "internal_total": 626535,
-            "internal_free": 543139,
-            "psram_total": 32627200,
-            "psram_free": 32623560,
+            "internal_total": 627767,
+            "internal_free": 551915,
+            "psram_total": 32646016,
+            "psram_free": 32642764,
             "internal_min_free": 0,
-            "psram_min_free": 0
+            "psram_min_free": 0,
+            "internal_dma_largest": 450560
           },
           "after_init": {
-            "internal_total": 626535,
-            "internal_free": 506879,
-            "psram_total": 32627200,
-            "psram_free": 28937012,
+            "internal_total": 627767,
+            "internal_free": 506867,
+            "psram_total": 32646016,
+            "psram_free": 28956216,
             "internal_min_free": 0,
-            "psram_min_free": 0
+            "psram_min_free": 0,
+            "internal_dma_largest": 425984
           }
         },
         "jpeg_components": [],

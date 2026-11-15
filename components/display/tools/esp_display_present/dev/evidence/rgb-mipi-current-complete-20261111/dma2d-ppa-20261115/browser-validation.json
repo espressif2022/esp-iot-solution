@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "browser": "Chrome headless",
+  "html_sha256": "37082aa91bfc54f5510f43d846fb126db2fd0f71df53af163245435ce543cb35",
+  "checks": [
+    "board tabs",
+    "six modes and four angles",
+    "all FPS cells",
+    "four sampling phases of SRAM/PSRAM",
+    "AUTO unsupported entries"
+  ]
+}

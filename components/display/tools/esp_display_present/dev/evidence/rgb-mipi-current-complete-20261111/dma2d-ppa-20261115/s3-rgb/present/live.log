@@ -1,0 +1,709 @@
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x1 (POWERON),boot:0x2b (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce2820,len:0x1504
+load:0x403c8700,len:0xda4
+load:0x403cb700,len:0x2e3c
+entry 0x403c88f4
+I (24) boot: ESP-IDF v6.1-dev-5824-gfa8039b5cad 2nd stage bootloader
+I (25) boot: compile time Nov 15 2026 18:04:31
+I (25) boot: Multicore bootloader
+I (27) boot: chip revision: v0.1
+I (29) boot: efuse block revision: v1.2
+I (33) boot.esp32s3: Boot SPI Speed : 80MHz
+I (37) boot.esp32s3: SPI Mode       : DIO
+I (41) boot.esp32s3: SPI Flash Size : 16MB
+I (45) boot: Enabling RNG early entropy source...
+I (49) boot: Partition Table:
+I (52) boot: ## Label            Usage          Type ST Offset   Length
+I (58) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (64) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (71) boot:  2 factory          factory app      00 00 00010000 00177000
+I (78) boot: End of partition table
+I (81) esp_image: segment 0: paddr=00010020 vaddr=3c080020 size=5dbd0h (383952) map
+I (158) esp_image: segment 1: paddr=0006dbf8 vaddr=3fc97600 size=02420h (  9248) load
+I (161) esp_image: segment 2: paddr=00070020 vaddr=42000020 size=76a90h (486032) map
+I (251) esp_image: segment 3: paddr=000e6ab8 vaddr=3fc99a20 size=018f0h (  6384) load
+I (253) esp_image: segment 4: paddr=000e83b0 vaddr=40378000 size=0f538h ( 62776) load
+I (269) esp_image: segment 5: paddr=000f78f0 vaddr=50000000 size=00024h (    36) load
+I (276) boot: Loaded app from partition at offset 0x10000
+I (276) boot: Disabling RNG early entropy source...
+I (287) octal_psram: vendor id    : 0x0d (AP)
+I (287) octal_psram: dev id       : 0x02 (generation 3)
+I (287) octal_psram: density      : 0x03 (64 Mbit)
+I (289) octal_psram: good-die     : 0x01 (Pass)
+I (293) octal_psram: Latency      : 0x01 (Fixed)
+I (298) octal_psram: VCC          : 0x01 (3V)
+I (302) octal_psram: SRF          : 0x01 (Fast Refresh)
+I (307) octal_psram: BurstType    : 0x01 (Hybrid Wrap)
+I (312) octal_psram: BurstLen     : 0x01 (32 Byte)
+I (316) octal_psram: Readlatency  : 0x02 (10 cycles@Fixed)
+I (321) octal_psram: DriveStrength: 0x00 (1/1)
+I (325) MSPI Timing: Enter psram timing tuning
+I (330) esp_psram: Found 8MB PSRAM device
+I (333) esp_psram: Speed: 80MHz
+I (369) mmu_psram: Read only data copied and mapped to SPIRAM
+I (418) mmu_psram: Instructions copied and mapped to SPIRAM
+I (418) cpu_start: Multicore app
+I (672) esp_psram: SPI SRAM memory test OK
+I (681) cpu_start: GPIO 44 and 43 are used as console UART I/O pins
+I (681) cpu_start: Pro cpu start user code
+I (681) cpu_start: cpu freq: 240000000 Hz
+I (683) app_init: Application information:
+I (687) app_init: Project name:     present_benchmark
+I (692) app_init: App version:      1
+I (695) app_init: Compile time:     Nov 15 2026 18:04:29
+I (700) app_init: ELF file SHA256:  952d60df5...
+I (704) app_init: ESP-IDF:          v6.1-dev-5824-gfa8039b5cad
+I (710) efuse_init: Min chip rev:     v0.0
+I (714) efuse_init: Max chip rev:     v0.99
+I (718) efuse_init: Chip rev:         v0.1
+I (722) heap_init: Initializing. RAM available for dynamic allocation:
+I (728) heap_init: At 3FC9C1B0 len 0004D560 (309 KiB): RAM
+I (733) heap_init: At 3FCE9710 len 00005724 (21 KiB): RAM
+I (738) heap_init: At 600FE000 len 00001FE8 (7 KiB): RTCRAM
+I (744) esp_psram: Adding pool of 7296K of PSRAM memory to heap allocator
+I (750) esp_psram: Adding pool of 9K of PSRAM memory gap generated due to end address alignment of drom to the heap allocator
+I (761) spi_flash: detected chip: gd
+I (764) spi_flash: flash io: dio
+I (767) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (774) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (780) main_task: Started on CPU0
+I (783) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (791) main_task: Calling app_main()
+I (794) main_task: Returned from app_main()
+I (5794) present_bench: MEMORY mode=SUITE rotation=0 phase=before_init internal_total=380011 internal_free=306231 psram_total=7480336 psram_free=7477620 internal_min_free=0 psram_min_free=0 internal_dma_largest=233472
+I (5802) lcd_panel.io.3wire_spi: Panel IO create success, version: 1.0.1
+W (7609) lcd_panel.io.3wire_spi: Delete but keep CS line inactive
+W (7638) lcd.rgb: GPIO 3 is not usable, maybe is reserved by others
+I (7638) gc9503: LCD panel create success, version: 3.0.1
+I (7638) rgb_facts: RGB_FACTS width=480 height=480 fbs=3 bounce_bytes=9600 continuous=1 bpp=16
+I (7666) present_bench: MEMORY mode=SUITE rotation=0 phase=after_init internal_total=380011 internal_free=286043 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=233472
+I (7673) present_bench: SUITE_BEGIN board=s3-rgb implementation=present cases=24
+I (7680) present_bench: MEMORY mode=DOUBLE_FULL rotation=0 phase=before_open internal_total=380011 internal_free=286043 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=233472
+I (7709) present_bench: MEMORY mode=DOUBLE_FULL rotation=0 phase=after_open internal_total=380011 internal_free=244751 psram_total=7480336 psram_free=6093656 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (7721) present_bench: RUN mode=DOUBLE_FULL te_buffers=0 rotation=0
+I (77023) present_bench: SCENE mode=DOUBLE_FULL rotation=0 name="Empty screen" fps=26 cpu=100% render=16ms flush=0ms
+I (77023) present_bench: SCENE mode=DOUBLE_FULL rotation=0 name="Moving wallpaper" fps=20 cpu=100% render=40ms flush=0ms
+I (77033) present_bench: SCENE mode=DOUBLE_FULL rotation=0 name="Single rectangle" fps=30 cpu=100% render=18ms flush=0ms
+I (77043) present_bench: SCENE mode=DOUBLE_FULL rotation=0 name="Multiple rectangles" fps=30 cpu=100% render=24ms flush=0ms
+I (77054) present_bench: SCENE mode=DOUBLE_FULL rotation=0 name="Multiple RGB images" fps=30 cpu=100% render=22ms flush=0ms
+I (77065) present_bench: SCENE mode=DOUBLE_FULL rotation=0 name="Multiple ARGB images" fps=30 cpu=100% render=23ms flush=0ms
+I (77076) present_bench: SCENE mode=DOUBLE_FULL rotation=0 name="Rotated ARGB images" fps=30 cpu=100% render=25ms flush=0ms
+I (77087) present_bench: SCENE mode=DOUBLE_FULL rotation=0 name="Multiple labels" fps=30 cpu=100% render=19ms flush=0ms
+I (77097) present_bench: SCENE mode=DOUBLE_FULL rotation=0 name="Screen sized text" fps=20 cpu=100% render=38ms flush=0ms
+I (77108) present_bench: SCENE mode=DOUBLE_FULL rotation=0 name="Multiple arcs" fps=30 cpu=100% render=18ms flush=0ms
+I (77118) present_bench: SCENE mode=DOUBLE_FULL rotation=0 name="Containers" fps=24 cpu=100% render=25ms flush=0ms
+I (77128) present_bench: SCENE mode=DOUBLE_FULL rotation=0 name="Containers with overlay" fps=20 cpu=100% render=42ms flush=0ms
+I (77139) present_bench: SCENE mode=DOUBLE_FULL rotation=0 name="Containers with opa" fps=25 cpu=100% render=26ms flush=0ms
+I (77150) present_bench: SCENE mode=DOUBLE_FULL rotation=0 name="Containers with opa_layer" fps=15 cpu=100% render=49ms flush=0ms
+I (77162) present_bench: SCENE mode=DOUBLE_FULL rotation=0 name="Containers with scrolling" fps=22 cpu=100% render=31ms flush=0ms
+I (77173) present_bench: SCENE mode=DOUBLE_FULL rotation=0 name="Widgets demo" fps=12 cpu=100% render=50ms flush=0ms
+I (77204) present_bench: METRICS mode=DOUBLE_FULL te_buffers=0 rotation=0 frame_samples=1506 begin_commit_p99_us=78000 buffer_waits=1434 buffer_wait_us=13481514 buffer_wait_max_us=16392 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4192 scanout_supply_misses=0
+I (77216) present_bench: MEMORY mode=DOUBLE_FULL rotation=0 phase=after_run internal_total=380011 internal_free=244183 psram_total=7480336 psram_free=6093656 internal_min_free=155427 psram_min_free=5901128 internal_dma_largest=163840
+I (77237) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (77249) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (77281) present_bench: MEMORY mode=DOUBLE_FULL rotation=0 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (77289) BUFFER_AUDIT: mode=DOUBLE_FULL rotation=0 logical_w=480 logical_h=480 render_mode=2 expected_bytes=460800 active_bytes=460800 min_bytes=460800 max_bytes=460800 internal=0 psram=1 input_tiles=1 compose=0 refresh=1507 rendered=1507 flushes=1507 pixels=347212800 elapsed_us=69496799
+I (77314) present_bench: PASS mode=DOUBLE_FULL te_buffers=0 rotation=0 frames=1507 transport_fps=21.7 lvgl_fps=24 cpu=100% render=29ms flush=0ms scenes=16
+I (77328) present_bench: MEMORY mode=DOUBLE_FULL rotation=90 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (77354) present_bench: MEMORY mode=DOUBLE_FULL rotation=90 phase=after_open internal_total=380011 internal_free=244275 psram_total=7480336 psram_free=5632852 internal_min_free=0 psram_min_free=0 internal_dma_largest=200704
+I (77369) present_bench: RUN mode=DOUBLE_FULL te_buffers=0 rotation=90
+I (146842) present_bench: SCENE mode=DOUBLE_FULL rotation=90 name="Empty screen" fps=17 cpu=100% render=16ms flush=0ms
+I (146842) present_bench: SCENE mode=DOUBLE_FULL rotation=90 name="Moving wallpaper" fps=12 cpu=100% render=40ms flush=0ms
+I (146852) present_bench: SCENE mode=DOUBLE_FULL rotation=90 name="Single rectangle" fps=20 cpu=100% render=18ms flush=0ms
+I (146863) present_bench: SCENE mode=DOUBLE_FULL rotation=90 name="Multiple rectangles" fps=17 cpu=100% render=24ms flush=0ms
+I (146874) present_bench: SCENE mode=DOUBLE_FULL rotation=90 name="Multiple RGB images" fps=19 cpu=100% render=21ms flush=0ms
+I (146885) present_bench: SCENE mode=DOUBLE_FULL rotation=90 name="Multiple ARGB images" fps=16 cpu=100% render=23ms flush=0ms
+I (146896) present_bench: SCENE mode=DOUBLE_FULL rotation=90 name="Rotated ARGB images" fps=16 cpu=100% render=25ms flush=0ms
+I (146907) present_bench: SCENE mode=DOUBLE_FULL rotation=90 name="Multiple labels" fps=20 cpu=100% render=19ms flush=0ms
+I (146918) present_bench: SCENE mode=DOUBLE_FULL rotation=90 name="Screen sized text" fps=14 cpu=100% render=38ms flush=0ms
+I (146929) present_bench: SCENE mode=DOUBLE_FULL rotation=90 name="Multiple arcs" fps=19 cpu=100% render=18ms flush=0ms
+I (146939) present_bench: SCENE mode=DOUBLE_FULL rotation=90 name="Containers" fps=15 cpu=100% render=25ms flush=0ms
+I (146949) present_bench: SCENE mode=DOUBLE_FULL rotation=90 name="Containers with overlay" fps=12 cpu=100% render=42ms flush=0ms
+I (146961) present_bench: SCENE mode=DOUBLE_FULL rotation=90 name="Containers with opa" fps=15 cpu=100% render=26ms flush=0ms
+I (146972) present_bench: SCENE mode=DOUBLE_FULL rotation=90 name="Containers with opa_layer" fps=12 cpu=100% render=49ms flush=0ms
+I (146983) present_bench: SCENE mode=DOUBLE_FULL rotation=90 name="Containers with scrolling" fps=15 cpu=100% render=31ms flush=0ms
+I (146995) present_bench: SCENE mode=DOUBLE_FULL rotation=90 name="Widgets demo" fps=9 cpu=100% render=50ms flush=0ms
+I (147023) present_bench: METRICS mode=DOUBLE_FULL te_buffers=0 rotation=90 frame_samples=998 begin_commit_p99_us=78000 buffer_waits=998 buffer_wait_us=31251968 buffer_wait_max_us=41718 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4203 scanout_supply_misses=396
+I (147036) present_bench: MEMORY mode=DOUBLE_FULL rotation=90 phase=after_run internal_total=380011 internal_free=243703 psram_total=7480336 psram_free=5632852 internal_min_free=155743 psram_min_free=5405504 internal_dma_largest=159744
+I (147067) present_v2: executor=cpu cpu_attempts=999 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (147068) present_v2: executor=cpu cpu_attempts=999 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (147101) present_bench: MEMORY mode=DOUBLE_FULL rotation=90 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (147109) BUFFER_AUDIT: mode=DOUBLE_FULL rotation=90 logical_w=480 logical_h=480 render_mode=2 expected_bytes=460800 active_bytes=460800 min_bytes=460800 max_bytes=460800 internal=0 psram=1 input_tiles=1 compose=0 refresh=999 rendered=999 flushes=999 pixels=230169600 elapsed_us=69668585
+I (147134) present_bench: PASS mode=DOUBLE_FULL te_buffers=0 rotation=90 frames=999 transport_fps=14.3 lvgl_fps=15 cpu=100% render=29ms flush=0ms scenes=16
+I (147148) present_bench: MEMORY mode=DOUBLE_FULL rotation=180 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (147184) present_bench: MEMORY mode=DOUBLE_FULL rotation=180 phase=after_open internal_total=380011 internal_free=244275 psram_total=7480336 psram_free=5632852 internal_min_free=0 psram_min_free=0 internal_dma_largest=200704
+I (147195) present_bench: RUN mode=DOUBLE_FULL te_buffers=0 rotation=180
+I (216540) present_bench: SCENE mode=DOUBLE_FULL rotation=180 name="Empty screen" fps=17 cpu=100% render=16ms flush=0ms
+I (216540) present_bench: SCENE mode=DOUBLE_FULL rotation=180 name="Moving wallpaper" fps=12 cpu=100% render=40ms flush=0ms
+I (216550) present_bench: SCENE mode=DOUBLE_FULL rotation=180 name="Single rectangle" fps=20 cpu=100% render=17ms flush=0ms
+I (216561) present_bench: SCENE mode=DOUBLE_FULL rotation=180 name="Multiple rectangles" fps=16 cpu=100% render=24ms flush=0ms
+I (216572) present_bench: SCENE mode=DOUBLE_FULL rotation=180 name="Multiple RGB images" fps=18 cpu=100% render=22ms flush=0ms
+I (216583) present_bench: SCENE mode=DOUBLE_FULL rotation=180 name="Multiple ARGB images" fps=16 cpu=100% render=23ms flush=0ms
+I (216595) present_bench: SCENE mode=DOUBLE_FULL rotation=180 name="Rotated ARGB images" fps=15 cpu=100% render=25ms flush=0ms
+I (216606) present_bench: SCENE mode=DOUBLE_FULL rotation=180 name="Multiple labels" fps=20 cpu=100% render=19ms flush=0ms
+I (216616) present_bench: SCENE mode=DOUBLE_FULL rotation=180 name="Screen sized text" fps=13 cpu=100% render=38ms flush=0ms
+I (216627) present_bench: SCENE mode=DOUBLE_FULL rotation=180 name="Multiple arcs" fps=20 cpu=100% render=18ms flush=0ms
+I (216638) present_bench: SCENE mode=DOUBLE_FULL rotation=180 name="Containers" fps=15 cpu=100% render=25ms flush=0ms
+I (216648) present_bench: SCENE mode=DOUBLE_FULL rotation=180 name="Containers with overlay" fps=12 cpu=100% render=41ms flush=0ms
+I (216660) present_bench: SCENE mode=DOUBLE_FULL rotation=180 name="Containers with opa" fps=15 cpu=100% render=26ms flush=0ms
+I (216671) present_bench: SCENE mode=DOUBLE_FULL rotation=180 name="Containers with opa_layer" fps=11 cpu=100% render=49ms flush=0ms
+I (216682) present_bench: SCENE mode=DOUBLE_FULL rotation=180 name="Containers with scrolling" fps=15 cpu=100% render=31ms flush=0ms
+I (216694) present_bench: SCENE mode=DOUBLE_FULL rotation=180 name="Widgets demo" fps=9 cpu=100% render=50ms flush=0ms
+I (216724) present_bench: METRICS mode=DOUBLE_FULL te_buffers=0 rotation=180 frame_samples=985 begin_commit_p99_us=79000 buffer_waits=985 buffer_wait_us=31605389 buffer_wait_max_us=42064 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4195 scanout_supply_misses=445
+I (216737) present_bench: MEMORY mode=DOUBLE_FULL rotation=180 phase=after_run internal_total=380011 internal_free=243715 psram_total=7480336 psram_free=5632852 internal_min_free=154643 psram_min_free=5418816 internal_dma_largest=159744
+I (216765) present_v2: executor=cpu cpu_attempts=986 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (216770) present_v2: executor=cpu cpu_attempts=986 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (216802) present_bench: MEMORY mode=DOUBLE_FULL rotation=180 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (216810) BUFFER_AUDIT: mode=DOUBLE_FULL rotation=180 logical_w=480 logical_h=480 render_mode=2 expected_bytes=460800 active_bytes=460800 min_bytes=460800 max_bytes=460800 internal=0 psram=1 input_tiles=1 compose=0 refresh=986 rendered=986 flushes=986 pixels=227174400 elapsed_us=69543620
+I (216836) present_bench: PASS mode=DOUBLE_FULL te_buffers=0 rotation=180 frames=986 transport_fps=14.2 lvgl_fps=15 cpu=100% render=29ms flush=0ms scenes=16
+I (216849) present_bench: MEMORY mode=DOUBLE_FULL rotation=270 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (216882) present_bench: MEMORY mode=DOUBLE_FULL rotation=270 phase=after_open internal_total=380011 internal_free=244275 psram_total=7480336 psram_free=5632852 internal_min_free=0 psram_min_free=0 internal_dma_largest=200704
+I (216893) present_bench: RUN mode=DOUBLE_FULL te_buffers=0 rotation=270
+I (286354) present_bench: SCENE mode=DOUBLE_FULL rotation=270 name="Empty screen" fps=17 cpu=100% render=16ms flush=0ms
+I (286354) present_bench: SCENE mode=DOUBLE_FULL rotation=270 name="Moving wallpaper" fps=12 cpu=100% render=40ms flush=0ms
+I (286364) present_bench: SCENE mode=DOUBLE_FULL rotation=270 name="Single rectangle" fps=20 cpu=100% render=17ms flush=0ms
+I (286375) present_bench: SCENE mode=DOUBLE_FULL rotation=270 name="Multiple rectangles" fps=17 cpu=100% render=24ms flush=0ms
+I (286386) present_bench: SCENE mode=DOUBLE_FULL rotation=270 name="Multiple RGB images" fps=19 cpu=100% render=21ms flush=0ms
+I (286397) present_bench: SCENE mode=DOUBLE_FULL rotation=270 name="Multiple ARGB images" fps=16 cpu=100% render=23ms flush=0ms
+I (286409) present_bench: SCENE mode=DOUBLE_FULL rotation=270 name="Rotated ARGB images" fps=15 cpu=100% render=25ms flush=0ms
+I (286420) present_bench: SCENE mode=DOUBLE_FULL rotation=270 name="Multiple labels" fps=20 cpu=100% render=19ms flush=0ms
+I (286430) present_bench: SCENE mode=DOUBLE_FULL rotation=270 name="Screen sized text" fps=14 cpu=100% render=38ms flush=0ms
+I (286441) present_bench: SCENE mode=DOUBLE_FULL rotation=270 name="Multiple arcs" fps=20 cpu=100% render=18ms flush=0ms
+I (286452) present_bench: SCENE mode=DOUBLE_FULL rotation=270 name="Containers" fps=15 cpu=100% render=25ms flush=0ms
+I (286462) present_bench: SCENE mode=DOUBLE_FULL rotation=270 name="Containers with overlay" fps=12 cpu=100% render=41ms flush=0ms
+I (286474) present_bench: SCENE mode=DOUBLE_FULL rotation=270 name="Containers with opa" fps=15 cpu=100% render=26ms flush=0ms
+I (286485) present_bench: SCENE mode=DOUBLE_FULL rotation=270 name="Containers with opa_layer" fps=11 cpu=100% render=49ms flush=0ms
+I (286496) present_bench: SCENE mode=DOUBLE_FULL rotation=270 name="Containers with scrolling" fps=15 cpu=100% render=31ms flush=0ms
+I (286508) present_bench: SCENE mode=DOUBLE_FULL rotation=270 name="Widgets demo" fps=9 cpu=100% render=50ms flush=0ms
+I (286538) present_bench: METRICS mode=DOUBLE_FULL te_buffers=0 rotation=270 frame_samples=995 begin_commit_p99_us=78000 buffer_waits=995 buffer_wait_us=31385355 buffer_wait_max_us=41695 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4202 scanout_supply_misses=413
+I (286551) present_bench: MEMORY mode=DOUBLE_FULL rotation=270 phase=after_run internal_total=380011 internal_free=243715 psram_total=7480336 psram_free=5632852 internal_min_free=155431 psram_min_free=5418816 internal_dma_largest=159744
+I (286579) present_v2: executor=cpu cpu_attempts=996 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (286584) present_v2: executor=cpu cpu_attempts=996 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (286616) present_bench: MEMORY mode=DOUBLE_FULL rotation=270 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (286624) BUFFER_AUDIT: mode=DOUBLE_FULL rotation=270 logical_w=480 logical_h=480 render_mode=2 expected_bytes=460800 active_bytes=460800 min_bytes=460800 max_bytes=460800 internal=0 psram=1 input_tiles=1 compose=0 refresh=996 rendered=996 flushes=996 pixels=229478400 elapsed_us=69659491
+I (286650) present_bench: PASS mode=DOUBLE_FULL te_buffers=0 rotation=270 frames=996 transport_fps=14.3 lvgl_fps=15 cpu=100% render=28ms flush=0ms scenes=16
+I (286663) present_bench: MEMORY mode=TRIPLE_FULL rotation=0 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (286696) present_bench: MEMORY mode=TRIPLE_FULL rotation=0 phase=after_open internal_total=380011 internal_free=244747 psram_total=7480336 psram_free=6093656 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (286707) present_bench: RUN mode=TRIPLE_FULL te_buffers=0 rotation=0
+I (355967) present_bench: SCENE mode=TRIPLE_FULL rotation=0 name="Empty screen" fps=48 cpu=100% render=16ms flush=0ms
+I (355967) present_bench: SCENE mode=TRIPLE_FULL rotation=0 name="Moving wallpaper" fps=22 cpu=100% render=40ms flush=0ms
+I (355976) present_bench: SCENE mode=TRIPLE_FULL rotation=0 name="Single rectangle" fps=50 cpu=100% render=17ms flush=0ms
+I (355987) present_bench: SCENE mode=TRIPLE_FULL rotation=0 name="Multiple rectangles" fps=36 cpu=100% render=24ms flush=0ms
+I (355998) present_bench: SCENE mode=TRIPLE_FULL rotation=0 name="Multiple RGB images" fps=40 cpu=100% render=22ms flush=0ms
+I (356009) present_bench: SCENE mode=TRIPLE_FULL rotation=0 name="Multiple ARGB images" fps=37 cpu=100% render=23ms flush=0ms
+I (356020) present_bench: SCENE mode=TRIPLE_FULL rotation=0 name="Rotated ARGB images" fps=34 cpu=100% render=24ms flush=0ms
+I (356031) present_bench: SCENE mode=TRIPLE_FULL rotation=0 name="Multiple labels" fps=45 cpu=100% render=19ms flush=0ms
+I (356042) present_bench: SCENE mode=TRIPLE_FULL rotation=0 name="Screen sized text" fps=24 cpu=100% render=38ms flush=0ms
+I (356052) present_bench: SCENE mode=TRIPLE_FULL rotation=0 name="Multiple arcs" fps=47 cpu=100% render=18ms flush=0ms
+I (356063) present_bench: SCENE mode=TRIPLE_FULL rotation=0 name="Containers" fps=28 cpu=100% render=25ms flush=0ms
+I (356073) present_bench: SCENE mode=TRIPLE_FULL rotation=0 name="Containers with overlay" fps=22 cpu=100% render=42ms flush=0ms
+I (356084) present_bench: SCENE mode=TRIPLE_FULL rotation=0 name="Containers with opa" fps=28 cpu=100% render=26ms flush=0ms
+I (356095) present_bench: SCENE mode=TRIPLE_FULL rotation=0 name="Containers with opa_layer" fps=18 cpu=100% render=49ms flush=0ms
+I (356107) present_bench: SCENE mode=TRIPLE_FULL rotation=0 name="Containers with scrolling" fps=29 cpu=100% render=31ms flush=0ms
+I (356118) present_bench: SCENE mode=TRIPLE_FULL rotation=0 name="Widgets demo" fps=13 cpu=100% render=50ms flush=0ms
+I (356148) present_bench: METRICS mode=TRIPLE_FULL te_buffers=0 rotation=0 frame_samples=1968 begin_commit_p99_us=77000 buffer_waits=0 buffer_wait_us=0 buffer_wait_max_us=0 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4190 scanout_supply_misses=0
+I (356159) present_bench: MEMORY mode=TRIPLE_FULL rotation=0 phase=after_run internal_total=380011 internal_free=244187 psram_total=7480336 psram_free=6093656 internal_min_free=155859 psram_min_free=5879620 internal_dma_largest=163840
+I (356180) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (356192) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (356224) present_bench: MEMORY mode=TRIPLE_FULL rotation=0 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (356232) BUFFER_AUDIT: mode=TRIPLE_FULL rotation=0 logical_w=480 logical_h=480 render_mode=2 expected_bytes=460800 active_bytes=460800 min_bytes=460800 max_bytes=460800 internal=0 psram=1 input_tiles=1 compose=0 refresh=1969 rendered=1969 flushes=1969 pixels=453657600 elapsed_us=69454207
+I (356257) present_bench: PASS mode=TRIPLE_FULL te_buffers=0 rotation=0 frames=1969 transport_fps=28.4 lvgl_fps=32 cpu=100% render=29ms flush=0ms scenes=16
+I (356271) present_bench: MEMORY mode=TRIPLE_FULL rotation=90 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (356295) present_bench: MEMORY mode=TRIPLE_FULL rotation=90 phase=after_open internal_total=380011 internal_free=244275 psram_total=7480336 psram_free=5632852 internal_min_free=0 psram_min_free=0 internal_dma_largest=200704
+I (356312) present_bench: RUN mode=TRIPLE_FULL te_buffers=0 rotation=90
+I (425738) present_bench: SCENE mode=TRIPLE_FULL rotation=90 name="Empty screen" fps=20 cpu=100% render=16ms flush=0ms
+I (425738) present_bench: SCENE mode=TRIPLE_FULL rotation=90 name="Moving wallpaper" fps=14 cpu=100% render=40ms flush=0ms
+I (425748) present_bench: SCENE mode=TRIPLE_FULL rotation=90 name="Single rectangle" fps=22 cpu=100% render=17ms flush=0ms
+I (425758) present_bench: SCENE mode=TRIPLE_FULL rotation=90 name="Multiple rectangles" fps=19 cpu=100% render=24ms flush=0ms
+I (425770) present_bench: SCENE mode=TRIPLE_FULL rotation=90 name="Multiple RGB images" fps=20 cpu=100% render=22ms flush=0ms
+I (425781) present_bench: SCENE mode=TRIPLE_FULL rotation=90 name="Multiple ARGB images" fps=20 cpu=100% render=23ms flush=0ms
+I (425792) present_bench: SCENE mode=TRIPLE_FULL rotation=90 name="Rotated ARGB images" fps=19 cpu=100% render=24ms flush=0ms
+I (425803) present_bench: SCENE mode=TRIPLE_FULL rotation=90 name="Multiple labels" fps=21 cpu=100% render=19ms flush=0ms
+I (425813) present_bench: SCENE mode=TRIPLE_FULL rotation=90 name="Screen sized text" fps=14 cpu=100% render=38ms flush=0ms
+I (425824) present_bench: SCENE mode=TRIPLE_FULL rotation=90 name="Multiple arcs" fps=21 cpu=100% render=18ms flush=0ms
+I (425835) present_bench: SCENE mode=TRIPLE_FULL rotation=90 name="Containers" fps=19 cpu=100% render=25ms flush=0ms
+I (425845) present_bench: SCENE mode=TRIPLE_FULL rotation=90 name="Containers with overlay" fps=14 cpu=100% render=41ms flush=0ms
+I (425856) present_bench: SCENE mode=TRIPLE_FULL rotation=90 name="Containers with opa" fps=18 cpu=100% render=26ms flush=0ms
+I (425867) present_bench: SCENE mode=TRIPLE_FULL rotation=90 name="Containers with opa_layer" fps=13 cpu=100% render=49ms flush=0ms
+I (425879) present_bench: SCENE mode=TRIPLE_FULL rotation=90 name="Containers with scrolling" fps=17 cpu=100% render=31ms flush=0ms
+I (425890) present_bench: SCENE mode=TRIPLE_FULL rotation=90 name="Widgets demo" fps=10 cpu=100% render=50ms flush=0ms
+I (425921) present_bench: METRICS mode=TRIPLE_FULL te_buffers=0 rotation=90 frame_samples=1130 begin_commit_p99_us=78000 buffer_waits=1127 buffer_wait_us=26625454 buffer_wait_max_us=25539 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4200 scanout_supply_misses=600
+I (425934) present_bench: MEMORY mode=TRIPLE_FULL rotation=90 phase=after_run internal_total=380011 internal_free=243715 psram_total=7480336 psram_free=5632852 internal_min_free=155959 psram_min_free=5370684 internal_dma_largest=159744
+I (425958) present_v2: executor=cpu cpu_attempts=1131 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (425967) present_v2: executor=cpu cpu_attempts=1131 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (425999) present_bench: MEMORY mode=TRIPLE_FULL rotation=90 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (426007) BUFFER_AUDIT: mode=TRIPLE_FULL rotation=90 logical_w=480 logical_h=480 render_mode=2 expected_bytes=460800 active_bytes=460800 min_bytes=460800 max_bytes=460800 internal=0 psram=1 input_tiles=1 compose=0 refresh=1131 rendered=1131 flushes=1131 pixels=260582400 elapsed_us=69623147
+I (426033) present_bench: PASS mode=TRIPLE_FULL te_buffers=0 rotation=90 frames=1131 transport_fps=16.2 lvgl_fps=17 cpu=100% render=28ms flush=0ms scenes=16
+I (426046) present_bench: MEMORY mode=TRIPLE_FULL rotation=180 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (426075) present_bench: MEMORY mode=TRIPLE_FULL rotation=180 phase=after_open internal_total=380011 internal_free=244275 psram_total=7480336 psram_free=5632852 internal_min_free=0 psram_min_free=0 internal_dma_largest=200704
+I (426088) present_bench: RUN mode=TRIPLE_FULL te_buffers=0 rotation=180
+I (495551) present_bench: SCENE mode=TRIPLE_FULL rotation=180 name="Empty screen" fps=20 cpu=100% render=16ms flush=0ms
+I (495551) present_bench: SCENE mode=TRIPLE_FULL rotation=180 name="Moving wallpaper" fps=14 cpu=100% render=40ms flush=0ms
+I (495561) present_bench: SCENE mode=TRIPLE_FULL rotation=180 name="Single rectangle" fps=22 cpu=100% render=17ms flush=0ms
+I (495572) present_bench: SCENE mode=TRIPLE_FULL rotation=180 name="Multiple rectangles" fps=19 cpu=100% render=24ms flush=0ms
+I (495583) present_bench: SCENE mode=TRIPLE_FULL rotation=180 name="Multiple RGB images" fps=20 cpu=100% render=22ms flush=0ms
+I (495594) present_bench: SCENE mode=TRIPLE_FULL rotation=180 name="Multiple ARGB images" fps=19 cpu=100% render=23ms flush=0ms
+I (495605) present_bench: SCENE mode=TRIPLE_FULL rotation=180 name="Rotated ARGB images" fps=19 cpu=100% render=25ms flush=0ms
+I (495616) present_bench: SCENE mode=TRIPLE_FULL rotation=180 name="Multiple labels" fps=21 cpu=100% render=19ms flush=0ms
+I (495627) present_bench: SCENE mode=TRIPLE_FULL rotation=180 name="Screen sized text" fps=15 cpu=100% render=38ms flush=0ms
+I (495638) present_bench: SCENE mode=TRIPLE_FULL rotation=180 name="Multiple arcs" fps=21 cpu=100% render=18ms flush=0ms
+I (495649) present_bench: SCENE mode=TRIPLE_FULL rotation=180 name="Containers" fps=18 cpu=100% render=25ms flush=0ms
+I (495659) present_bench: SCENE mode=TRIPLE_FULL rotation=180 name="Containers with overlay" fps=14 cpu=100% render=42ms flush=0ms
+I (495670) present_bench: SCENE mode=TRIPLE_FULL rotation=180 name="Containers with opa" fps=17 cpu=100% render=26ms flush=0ms
+I (495681) present_bench: SCENE mode=TRIPLE_FULL rotation=180 name="Containers with opa_layer" fps=12 cpu=100% render=49ms flush=0ms
+I (495693) present_bench: SCENE mode=TRIPLE_FULL rotation=180 name="Containers with scrolling" fps=17 cpu=100% render=31ms flush=0ms
+I (495705) present_bench: SCENE mode=TRIPLE_FULL rotation=180 name="Widgets demo" fps=10 cpu=100% render=50ms flush=0ms
+I (495735) present_bench: METRICS mode=TRIPLE_FULL te_buffers=0 rotation=180 frame_samples=1121 begin_commit_p99_us=78000 buffer_waits=1119 buffer_wait_us=26963987 buffer_wait_max_us=25820 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4202 scanout_supply_misses=602
+I (495748) present_bench: MEMORY mode=TRIPLE_FULL rotation=180 phase=after_run internal_total=380011 internal_free=243715 psram_total=7480336 psram_free=5632852 internal_min_free=155707 psram_min_free=5453636 internal_dma_largest=159744
+I (495772) present_v2: executor=cpu cpu_attempts=1122 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (495781) present_v2: executor=cpu cpu_attempts=1122 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (495813) present_bench: MEMORY mode=TRIPLE_FULL rotation=180 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (495821) BUFFER_AUDIT: mode=TRIPLE_FULL rotation=180 logical_w=480 logical_h=480 render_mode=2 expected_bytes=460800 active_bytes=460800 min_bytes=460800 max_bytes=460800 internal=0 psram=1 input_tiles=1 compose=0 refresh=1122 rendered=1122 flushes=1122 pixels=258508800 elapsed_us=69661750
+I (495847) present_bench: PASS mode=TRIPLE_FULL te_buffers=0 rotation=180 frames=1122 transport_fps=16.1 lvgl_fps=17 cpu=100% render=29ms flush=0ms scenes=16
+I (495861) present_bench: MEMORY mode=TRIPLE_FULL rotation=270 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (495889) present_bench: MEMORY mode=TRIPLE_FULL rotation=270 phase=after_open internal_total=380011 internal_free=244275 psram_total=7480336 psram_free=5632852 internal_min_free=0 psram_min_free=0 internal_dma_largest=200704
+I (495902) present_bench: RUN mode=TRIPLE_FULL te_buffers=0 rotation=270
+I (565318) present_bench: SCENE mode=TRIPLE_FULL rotation=270 name="Empty screen" fps=20 cpu=100% render=16ms flush=0ms
+I (565318) present_bench: SCENE mode=TRIPLE_FULL rotation=270 name="Moving wallpaper" fps=14 cpu=100% render=40ms flush=0ms
+I (565328) present_bench: SCENE mode=TRIPLE_FULL rotation=270 name="Single rectangle" fps=22 cpu=100% render=17ms flush=0ms
+I (565339) present_bench: SCENE mode=TRIPLE_FULL rotation=270 name="Multiple rectangles" fps=19 cpu=100% render=24ms flush=0ms
+I (565350) present_bench: SCENE mode=TRIPLE_FULL rotation=270 name="Multiple RGB images" fps=20 cpu=100% render=22ms flush=0ms
+I (565361) present_bench: SCENE mode=TRIPLE_FULL rotation=270 name="Multiple ARGB images" fps=19 cpu=100% render=23ms flush=0ms
+I (565372) present_bench: SCENE mode=TRIPLE_FULL rotation=270 name="Rotated ARGB images" fps=18 cpu=100% render=25ms flush=0ms
+I (565383) present_bench: SCENE mode=TRIPLE_FULL rotation=270 name="Multiple labels" fps=21 cpu=100% render=19ms flush=0ms
+I (565394) present_bench: SCENE mode=TRIPLE_FULL rotation=270 name="Screen sized text" fps=14 cpu=100% render=38ms flush=0ms
+I (565405) present_bench: SCENE mode=TRIPLE_FULL rotation=270 name="Multiple arcs" fps=21 cpu=100% render=18ms flush=0ms
+I (565416) present_bench: SCENE mode=TRIPLE_FULL rotation=270 name="Containers" fps=18 cpu=100% render=25ms flush=0ms
+I (565426) present_bench: SCENE mode=TRIPLE_FULL rotation=270 name="Containers with overlay" fps=14 cpu=100% render=41ms flush=0ms
+I (565437) present_bench: SCENE mode=TRIPLE_FULL rotation=270 name="Containers with opa" fps=17 cpu=100% render=26ms flush=0ms
+I (565448) present_bench: SCENE mode=TRIPLE_FULL rotation=270 name="Containers with opa_layer" fps=13 cpu=100% render=49ms flush=0ms
+I (565460) present_bench: SCENE mode=TRIPLE_FULL rotation=270 name="Containers with scrolling" fps=17 cpu=100% render=31ms flush=0ms
+I (565472) present_bench: SCENE mode=TRIPLE_FULL rotation=270 name="Widgets demo" fps=10 cpu=100% render=50ms flush=0ms
+I (565502) present_bench: METRICS mode=TRIPLE_FULL te_buffers=0 rotation=270 frame_samples=1129 begin_commit_p99_us=77000 buffer_waits=1125 buffer_wait_us=26506437 buffer_wait_max_us=25505 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4199 scanout_supply_misses=613
+I (565515) present_bench: MEMORY mode=TRIPLE_FULL rotation=270 phase=after_run internal_total=380011 internal_free=243715 psram_total=7480336 psram_free=5632852 internal_min_free=154639 psram_min_free=5405504 internal_dma_largest=159744
+I (565553) present_v2: executor=cpu cpu_attempts=1130 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (565554) present_v2: executor=cpu cpu_attempts=1130 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (565587) present_bench: MEMORY mode=TRIPLE_FULL rotation=270 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (565595) BUFFER_AUDIT: mode=TRIPLE_FULL rotation=270 logical_w=480 logical_h=480 render_mode=2 expected_bytes=460800 active_bytes=460800 min_bytes=460800 max_bytes=460800 internal=0 psram=1 input_tiles=1 compose=0 refresh=1130 rendered=1130 flushes=1130 pixels=260352000 elapsed_us=69614454
+I (565621) present_bench: PASS mode=TRIPLE_FULL te_buffers=0 rotation=270 frames=1130 transport_fps=16.2 lvgl_fps=17 cpu=100% render=29ms flush=0ms scenes=16
+I (565635) present_bench: MEMORY mode=DOUBLE_DIRECT rotation=0 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (565670) present_bench: MEMORY mode=DOUBLE_DIRECT rotation=0 phase=after_open internal_total=380011 internal_free=244275 psram_total=7480336 psram_free=6093656 internal_min_free=0 psram_min_free=0 internal_dma_largest=200704
+I (565682) present_bench: RUN mode=DOUBLE_DIRECT te_buffers=0 rotation=0
+I (634906) present_bench: SCENE mode=DOUBLE_DIRECT rotation=0 name="Empty screen" fps=26 cpu=100% render=16ms flush=0ms
+I (634906) present_bench: SCENE mode=DOUBLE_DIRECT rotation=0 name="Moving wallpaper" fps=20 cpu=100% render=40ms flush=0ms
+I (634916) present_bench: SCENE mode=DOUBLE_DIRECT rotation=0 name="Single rectangle" fps=59 cpu=100% render=1ms flush=0ms
+I (634926) present_bench: SCENE mode=DOUBLE_DIRECT rotation=0 name="Multiple rectangles" fps=57 cpu=100% render=9ms flush=0ms
+I (634938) present_bench: SCENE mode=DOUBLE_DIRECT rotation=0 name="Multiple RGB images" fps=51 cpu=100% render=7ms flush=0ms
+I (634949) present_bench: SCENE mode=DOUBLE_DIRECT rotation=0 name="Multiple ARGB images" fps=36 cpu=100% render=13ms flush=0ms
+I (634960) present_bench: SCENE mode=DOUBLE_DIRECT rotation=0 name="Rotated ARGB images" fps=43 cpu=100% render=13ms flush=0ms
+I (634971) present_bench: SCENE mode=DOUBLE_DIRECT rotation=0 name="Multiple labels" fps=52 cpu=100% render=12ms flush=0ms
+I (634982) present_bench: SCENE mode=DOUBLE_DIRECT rotation=0 name="Screen sized text" fps=20 cpu=100% render=38ms flush=0ms
+I (634993) present_bench: SCENE mode=DOUBLE_DIRECT rotation=0 name="Multiple arcs" fps=52 cpu=100% render=2ms flush=0ms
+I (635003) present_bench: SCENE mode=DOUBLE_DIRECT rotation=0 name="Containers" fps=27 cpu=100% render=8ms flush=0ms
+I (635013) present_bench: SCENE mode=DOUBLE_DIRECT rotation=0 name="Containers with overlay" fps=20 cpu=100% render=41ms flush=0ms
+I (635025) present_bench: SCENE mode=DOUBLE_DIRECT rotation=0 name="Containers with opa" fps=28 cpu=100% render=8ms flush=0ms
+I (635036) present_bench: SCENE mode=DOUBLE_DIRECT rotation=0 name="Containers with opa_layer" fps=24 cpu=100% render=23ms flush=0ms
+I (635047) present_bench: SCENE mode=DOUBLE_DIRECT rotation=0 name="Containers with scrolling" fps=22 cpu=100% render=31ms flush=0ms
+I (635059) present_bench: SCENE mode=DOUBLE_DIRECT rotation=0 name="Widgets demo" fps=14 cpu=100% render=39ms flush=0ms
+I (635089) present_bench: METRICS mode=DOUBLE_DIRECT te_buffers=0 rotation=0 frame_samples=2009 begin_commit_p99_us=69000 buffer_waits=1781 buffer_wait_us=14278679 buffer_wait_max_us=16400 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4188 scanout_supply_misses=0
+I (635102) present_bench: MEMORY mode=DOUBLE_DIRECT rotation=0 phase=after_run internal_total=380011 internal_free=243683 psram_total=7480336 psram_free=6093656 internal_min_free=161539 psram_min_free=5914440 internal_dma_largest=159744
+I (635123) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (635134) present_v2: executor=cpu cpu_attempts=0 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (635167) present_bench: MEMORY mode=DOUBLE_DIRECT rotation=0 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (635175) BUFFER_AUDIT: mode=DOUBLE_DIRECT rotation=0 logical_w=480 logical_h=480 render_mode=1 expected_bytes=0 active_bytes=460800 min_bytes=460800 max_bytes=460800 internal=0 psram=1 input_tiles=1 compose=0 refresh=2010 rendered=2010 flushes=6212 pixels=205045137 elapsed_us=69422415
+I (635200) present_bench: PASS mode=DOUBLE_DIRECT te_buffers=0 rotation=0 frames=2010 transport_fps=29.0 lvgl_fps=34 cpu=100% render=18ms flush=0ms scenes=16
+I (635214) present_bench: MEMORY mode=DOUBLE_DIRECT rotation=90 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (635252) present_bench: MEMORY mode=DOUBLE_DIRECT rotation=90 phase=after_open internal_total=380011 internal_free=244323 psram_total=7480336 psram_free=5165904 internal_min_free=0 psram_min_free=0 internal_dma_largest=200704
+I (635263) present_bench: RUN mode=DOUBLE_DIRECT te_buffers=0 rotation=90
+I (704689) present_bench: SCENE mode=DOUBLE_DIRECT rotation=90 name="Empty screen" fps=17 cpu=100% render=32ms flush=25ms
+I (704689) present_bench: SCENE mode=DOUBLE_DIRECT rotation=90 name="Moving wallpaper" fps=11 cpu=100% render=61ms flush=23ms
+I (704700) present_bench: SCENE mode=DOUBLE_DIRECT rotation=90 name="Single rectangle" fps=58 cpu=100% render=2ms flush=11ms
+I (704711) present_bench: SCENE mode=DOUBLE_DIRECT rotation=90 name="Multiple rectangles" fps=20 cpu=100% render=21ms flush=24ms
+I (704722) present_bench: SCENE mode=DOUBLE_DIRECT rotation=90 name="Multiple RGB images" fps=28 cpu=100% render=15ms flush=15ms
+I (704733) present_bench: SCENE mode=DOUBLE_DIRECT rotation=90 name="Multiple ARGB images" fps=26 cpu=100% render=21ms flush=12ms
+I (704745) present_bench: SCENE mode=DOUBLE_DIRECT rotation=90 name="Rotated ARGB images" fps=52 cpu=100% render=15ms flush=2ms
+I (704756) present_bench: SCENE mode=DOUBLE_DIRECT rotation=90 name="Multiple labels" fps=27 cpu=100% render=18ms flush=10ms
+I (704767) present_bench: SCENE mode=DOUBLE_DIRECT rotation=90 name="Screen sized text" fps=11 cpu=100% render=58ms flush=22ms
+I (704778) present_bench: SCENE mode=DOUBLE_DIRECT rotation=90 name="Multiple arcs" fps=59 cpu=100% render=2ms flush=9ms
+I (704789) present_bench: SCENE mode=DOUBLE_DIRECT rotation=90 name="Containers" fps=57 cpu=100% render=10ms flush=5ms
+I (704799) present_bench: SCENE mode=DOUBLE_DIRECT rotation=90 name="Containers with overlay" fps=13 cpu=100% render=50ms flush=19ms
+I (704811) present_bench: SCENE mode=DOUBLE_DIRECT rotation=90 name="Containers with opa" fps=55 cpu=100% render=11ms flush=5ms
+I (704822) present_bench: SCENE mode=DOUBLE_DIRECT rotation=90 name="Containers with opa_layer" fps=29 cpu=100% render=32ms flush=5ms
+I (704834) present_bench: SCENE mode=DOUBLE_DIRECT rotation=90 name="Containers with scrolling" fps=12 cpu=100% render=51ms flush=22ms
+I (704845) present_bench: SCENE mode=DOUBLE_DIRECT rotation=90 name="Widgets demo" fps=10 cpu=100% render=43ms flush=22ms
+I (704898) present_bench: METRICS mode=DOUBLE_DIRECT te_buffers=0 rotation=90 frame_samples=1494 begin_commit_p99_us=44000 buffer_waits=878 buffer_wait_us=7179040 buffer_wait_max_us=38181 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4201 scanout_supply_misses=360
+I (704911) present_bench: MEMORY mode=DOUBLE_DIRECT rotation=90 phase=after_run internal_total=380011 internal_free=243755 psram_total=7480336 psram_free=5165904 internal_min_free=160895 psram_min_free=5034820 internal_dma_largest=159744
+I (704949) present_v2: executor=cpu cpu_attempts=6299 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (704950) present_v2: executor=cpu cpu_attempts=6299 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (704983) present_bench: MEMORY mode=DOUBLE_DIRECT rotation=90 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (704991) BUFFER_AUDIT: mode=DOUBLE_DIRECT rotation=90 logical_w=480 logical_h=480 render_mode=1 expected_bytes=0 active_bytes=460800 min_bytes=460800 max_bytes=460800 internal=0 psram=1 input_tiles=1 compose=0 refresh=1721 rendered=1494 flushes=4025 pixels=130855881 elapsed_us=69649676
+I (705017) present_bench: PASS mode=DOUBLE_DIRECT te_buffers=0 rotation=90 frames=1494 transport_fps=21.5 lvgl_fps=30 cpu=100% render=27ms flush=14ms scenes=16
+I (705030) present_bench: MEMORY mode=DOUBLE_DIRECT rotation=180 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (705066) present_bench: MEMORY mode=DOUBLE_DIRECT rotation=180 phase=after_open internal_total=380011 internal_free=244323 psram_total=7480336 psram_free=5165904 internal_min_free=0 psram_min_free=0 internal_dma_largest=200704
+I (705078) present_bench: RUN mode=DOUBLE_DIRECT te_buffers=0 rotation=180
+I (774501) present_bench: SCENE mode=DOUBLE_DIRECT rotation=180 name="Empty screen" fps=17 cpu=100% render=32ms flush=25ms
+I (774501) present_bench: SCENE mode=DOUBLE_DIRECT rotation=180 name="Moving wallpaper" fps=11 cpu=100% render=61ms flush=22ms
+I (774512) present_bench: SCENE mode=DOUBLE_DIRECT rotation=180 name="Single rectangle" fps=58 cpu=100% render=2ms flush=11ms
+I (774523) present_bench: SCENE mode=DOUBLE_DIRECT rotation=180 name="Multiple rectangles" fps=20 cpu=100% render=20ms flush=24ms
+I (774534) present_bench: SCENE mode=DOUBLE_DIRECT rotation=180 name="Multiple RGB images" fps=29 cpu=100% render=15ms flush=15ms
+I (774546) present_bench: SCENE mode=DOUBLE_DIRECT rotation=180 name="Multiple ARGB images" fps=28 cpu=100% render=20ms flush=10ms
+I (774557) present_bench: SCENE mode=DOUBLE_DIRECT rotation=180 name="Rotated ARGB images" fps=56 cpu=100% render=13ms flush=2ms
+I (774569) present_bench: SCENE mode=DOUBLE_DIRECT rotation=180 name="Multiple labels" fps=29 cpu=100% render=16ms flush=12ms
+I (774580) present_bench: SCENE mode=DOUBLE_DIRECT rotation=180 name="Screen sized text" fps=11 cpu=100% render=58ms flush=22ms
+I (774591) present_bench: SCENE mode=DOUBLE_DIRECT rotation=180 name="Multiple arcs" fps=59 cpu=100% render=2ms flush=10ms
+I (774602) present_bench: SCENE mode=DOUBLE_DIRECT rotation=180 name="Containers" fps=54 cpu=100% render=11ms flush=6ms
+I (774612) present_bench: SCENE mode=DOUBLE_DIRECT rotation=180 name="Containers with overlay" fps=13 cpu=100% render=50ms flush=19ms
+I (774624) present_bench: SCENE mode=DOUBLE_DIRECT rotation=180 name="Containers with opa" fps=56 cpu=100% render=12ms flush=5ms
+I (774635) present_bench: SCENE mode=DOUBLE_DIRECT rotation=180 name="Containers with opa_layer" fps=31 cpu=100% render=29ms flush=5ms
+I (774647) present_bench: SCENE mode=DOUBLE_DIRECT rotation=180 name="Containers with scrolling" fps=12 cpu=100% render=51ms flush=22ms
+I (774659) present_bench: SCENE mode=DOUBLE_DIRECT rotation=180 name="Widgets demo" fps=10 cpu=100% render=42ms flush=22ms
+I (774709) present_bench: METRICS mode=DOUBLE_DIRECT te_buffers=0 rotation=180 frame_samples=1516 begin_commit_p99_us=43000 buffer_waits=897 buffer_wait_us=7566414 buffer_wait_max_us=33033 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4201 scanout_supply_misses=355
+I (774722) present_bench: MEMORY mode=DOUBLE_DIRECT rotation=180 phase=after_run internal_total=380011 internal_free=243731 psram_total=7480336 psram_free=5165904 internal_min_free=160995 psram_min_free=4986688 internal_dma_largest=159744
+I (774746) present_v2: executor=cpu cpu_attempts=6347 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (774755) present_v2: executor=cpu cpu_attempts=6347 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (774787) present_bench: MEMORY mode=DOUBLE_DIRECT rotation=180 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (774795) BUFFER_AUDIT: mode=DOUBLE_DIRECT rotation=180 logical_w=480 logical_h=480 render_mode=1 expected_bytes=0 active_bytes=460800 min_bytes=460800 max_bytes=460800 internal=0 psram=1 input_tiles=1 compose=0 refresh=1760 rendered=1516 flushes=4096 pixels=132231444 elapsed_us=69646609
+I (774821) present_bench: PASS mode=DOUBLE_DIRECT te_buffers=0 rotation=180 frames=1516 transport_fps=21.8 lvgl_fps=30 cpu=100% render=27ms flush=14ms scenes=16
+I (774835) present_bench: MEMORY mode=DOUBLE_DIRECT rotation=270 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (774863) present_bench: MEMORY mode=DOUBLE_DIRECT rotation=270 phase=after_open internal_total=380011 internal_free=244323 psram_total=7480336 psram_free=5165904 internal_min_free=0 psram_min_free=0 internal_dma_largest=200704
+I (774877) present_bench: RUN mode=DOUBLE_DIRECT te_buffers=0 rotation=270
+I (844323) present_bench: SCENE mode=DOUBLE_DIRECT rotation=270 name="Empty screen" fps=17 cpu=100% render=31ms flush=25ms
+I (844324) present_bench: SCENE mode=DOUBLE_DIRECT rotation=270 name="Moving wallpaper" fps=11 cpu=100% render=61ms flush=22ms
+I (844334) present_bench: SCENE mode=DOUBLE_DIRECT rotation=270 name="Single rectangle" fps=58 cpu=100% render=2ms flush=11ms
+I (844345) present_bench: SCENE mode=DOUBLE_DIRECT rotation=270 name="Multiple rectangles" fps=20 cpu=100% render=21ms flush=25ms
+I (844357) present_bench: SCENE mode=DOUBLE_DIRECT rotation=270 name="Multiple RGB images" fps=28 cpu=100% render=15ms flush=15ms
+I (844368) present_bench: SCENE mode=DOUBLE_DIRECT rotation=270 name="Multiple ARGB images" fps=27 cpu=100% render=21ms flush=12ms
+I (844379) present_bench: SCENE mode=DOUBLE_DIRECT rotation=270 name="Rotated ARGB images" fps=52 cpu=100% render=14ms flush=2ms
+I (844391) present_bench: SCENE mode=DOUBLE_DIRECT rotation=270 name="Multiple labels" fps=28 cpu=100% render=18ms flush=10ms
+I (844402) present_bench: SCENE mode=DOUBLE_DIRECT rotation=270 name="Screen sized text" fps=11 cpu=100% render=57ms flush=22ms
+I (844413) present_bench: SCENE mode=DOUBLE_DIRECT rotation=270 name="Multiple arcs" fps=58 cpu=100% render=2ms flush=10ms
+I (844424) present_bench: SCENE mode=DOUBLE_DIRECT rotation=270 name="Containers" fps=56 cpu=100% render=11ms flush=5ms
+I (844434) present_bench: SCENE mode=DOUBLE_DIRECT rotation=270 name="Containers with overlay" fps=13 cpu=100% render=50ms flush=20ms
+I (844446) present_bench: SCENE mode=DOUBLE_DIRECT rotation=270 name="Containers with opa" fps=52 cpu=100% render=13ms flush=6ms
+I (844457) present_bench: SCENE mode=DOUBLE_DIRECT rotation=270 name="Containers with opa_layer" fps=29 cpu=100% render=32ms flush=5ms
+I (844469) present_bench: SCENE mode=DOUBLE_DIRECT rotation=270 name="Containers with scrolling" fps=12 cpu=100% render=51ms flush=23ms
+I (844481) present_bench: SCENE mode=DOUBLE_DIRECT rotation=270 name="Widgets demo" fps=10 cpu=100% render=42ms flush=22ms
+I (844531) present_bench: METRICS mode=DOUBLE_DIRECT te_buffers=0 rotation=270 frame_samples=1492 begin_commit_p99_us=44000 buffer_waits=883 buffer_wait_us=7550913 buffer_wait_max_us=43062 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4203 scanout_supply_misses=371
+I (844544) present_bench: MEMORY mode=DOUBLE_DIRECT rotation=270 phase=after_run internal_total=380011 internal_free=243731 psram_total=7480336 psram_free=5165904 internal_min_free=161127 psram_min_free=5034820 internal_dma_largest=159744
+I (844577) present_v2: executor=cpu cpu_attempts=6250 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (844578) present_v2: executor=cpu cpu_attempts=6250 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (844611) present_bench: MEMORY mode=DOUBLE_DIRECT rotation=270 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (844619) BUFFER_AUDIT: mode=DOUBLE_DIRECT rotation=270 logical_w=480 logical_h=480 render_mode=1 expected_bytes=0 active_bytes=460800 min_bytes=460800 max_bytes=460800 internal=0 psram=1 input_tiles=1 compose=0 refresh=1715 rendered=1492 flushes=4000 pixels=131072466 elapsed_us=69668924
+I (844645) present_bench: PASS mode=DOUBLE_DIRECT te_buffers=0 rotation=270 frames=1492 transport_fps=21.4 lvgl_fps=30 cpu=100% render=27ms flush=14ms scenes=16
+I (844659) present_bench: MEMORY mode=DOUBLE_PARTIAL rotation=0 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (844694) present_bench: MEMORY mode=DOUBLE_PARTIAL rotation=0 phase=after_open internal_total=380011 internal_free=196159 psram_total=7480336 psram_free=6045524 internal_min_free=0 psram_min_free=0 internal_dma_largest=155648
+I (844706) present_bench: RUN mode=DOUBLE_PARTIAL te_buffers=0 rotation=0
+I (913949) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=0 name="Empty screen" fps=26 cpu=100% render=7ms flush=23ms
+I (913949) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=0 name="Moving wallpaper" fps=30 cpu=100% render=16ms flush=14ms
+I (913959) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=0 name="Single rectangle" fps=60 cpu=100% render=1ms flush=13ms
+I (913970) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=0 name="Multiple rectangles" fps=39 cpu=100% render=5ms flush=14ms
+I (913982) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=0 name="Multiple RGB images" fps=60 cpu=100% render=2ms flush=10ms
+I (913993) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=0 name="Multiple ARGB images" fps=54 cpu=100% render=7ms flush=7ms
+I (914004) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=0 name="Rotated ARGB images" fps=61 cpu=100% render=8ms flush=3ms
+I (914015) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=0 name="Multiple labels" fps=30 cpu=100% render=10ms flush=17ms
+I (914026) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=0 name="Screen sized text" fps=9 cpu=100% render=80ms flush=17ms
+I (914037) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=0 name="Multiple arcs" fps=60 cpu=100% render=1ms flush=12ms
+I (914048) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=0 name="Containers" fps=64 cpu=100% render=6ms flush=3ms
+I (914058) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=0 name="Containers with overlay" fps=19 cpu=100% render=29ms flush=16ms
+I (914070) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=0 name="Containers with opa" fps=63 cpu=100% render=7ms flush=3ms
+I (914081) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=0 name="Containers with opa_layer" fps=37 cpu=100% render=18ms flush=11ms
+I (914093) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=0 name="Containers with scrolling" fps=20 cpu=100% render=28ms flush=19ms
+I (914104) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=0 name="Widgets demo" fps=11 cpu=100% render=55ms flush=8ms
+I (914140) present_bench: METRICS mode=DOUBLE_PARTIAL te_buffers=0 rotation=0 frame_samples=1904 begin_commit_p99_us=94000 buffer_waits=9614 buffer_wait_us=20815253 buffer_wait_max_us=37695 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4189 scanout_supply_misses=5
+I (914153) present_bench: MEMORY mode=DOUBLE_PARTIAL rotation=0 phase=after_run internal_total=380011 internal_free=195599 psram_total=7480336 psram_free=6045524 internal_min_free=142403 psram_min_free=5973324 internal_dma_largest=114688
+I (914174) present_v2: executor=cpu cpu_attempts=12847 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (914186) present_v2: executor=cpu cpu_attempts=12847 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (914218) present_bench: MEMORY mode=DOUBLE_PARTIAL rotation=0 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (914226) BUFFER_AUDIT: mode=DOUBLE_PARTIAL rotation=0 logical_w=480 logical_h=480 render_mode=0 expected_bytes=48000 active_bytes=48000 min_bytes=48000 max_bytes=48000 internal=1 psram=0 input_tiles=1 compose=0 refresh=2216 rendered=1904 flushes=10483 pixels=179302488 elapsed_us=69449706
+I (914252) present_bench: PASS mode=DOUBLE_PARTIAL te_buffers=0 rotation=0 frames=1904 transport_fps=27.4 lvgl_fps=40 cpu=100% render=17ms flush=11ms scenes=16
+I (914266) present_bench: MEMORY mode=DOUBLE_PARTIAL rotation=90 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (914292) present_bench: MEMORY mode=DOUBLE_PARTIAL rotation=90 phase=after_open internal_total=380011 internal_free=196159 psram_total=7480336 psram_free=6045524 internal_min_free=0 psram_min_free=0 internal_dma_largest=155648
+I (914308) present_bench: RUN mode=DOUBLE_PARTIAL te_buffers=0 rotation=90
+I (983746) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=90 name="Empty screen" fps=26 cpu=100% render=7ms flush=23ms
+I (983746) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=90 name="Moving wallpaper" fps=20 cpu=100% render=16ms flush=30ms
+I (983756) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=90 name="Single rectangle" fps=59 cpu=100% render=1ms flush=13ms
+I (983768) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=90 name="Multiple rectangles" fps=38 cpu=100% render=5ms flush=15ms
+I (983779) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=90 name="Multiple RGB images" fps=61 cpu=100% render=2ms flush=9ms
+I (983790) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=90 name="Multiple ARGB images" fps=41 cpu=100% render=8ms flush=13ms
+I (983801) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=90 name="Rotated ARGB images" fps=60 cpu=100% render=8ms flush=4ms
+I (983813) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=90 name="Multiple labels" fps=30 cpu=100% render=11ms flush=14ms
+I (983824) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=90 name="Screen sized text" fps=8 cpu=100% render=77ms flush=27ms
+I (983835) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=90 name="Multiple arcs" fps=59 cpu=100% render=1ms flush=11ms
+I (983845) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=90 name="Containers" fps=63 cpu=100% render=5ms flush=5ms
+I (983856) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=90 name="Containers with overlay" fps=15 cpu=100% render=25ms flush=32ms
+I (983868) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=90 name="Containers with opa" fps=60 cpu=100% render=6ms flush=6ms
+I (983879) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=90 name="Containers with opa_layer" fps=35 cpu=100% render=18ms flush=12ms
+I (983891) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=90 name="Containers with scrolling" fps=15 cpu=100% render=28ms flush=33ms
+I (983903) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=90 name="Widgets demo" fps=10 cpu=100% render=56ms flush=16ms
+I (983947) present_bench: METRICS mode=DOUBLE_PARTIAL te_buffers=0 rotation=90 frame_samples=1785 begin_commit_p99_us=104000 buffer_waits=8677 buffer_wait_us=25367883 buffer_wait_max_us=44344 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4202 scanout_supply_misses=9
+I (983960) present_bench: MEMORY mode=DOUBLE_PARTIAL rotation=90 phase=after_run internal_total=380011 internal_free=195599 psram_total=7480336 psram_free=6045524 internal_min_free=140419 psram_min_free=5973324 internal_dma_largest=114688
+I (983982) present_v2: executor=cpu cpu_attempts=11881 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (983993) present_v2: executor=cpu cpu_attempts=11881 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (984026) present_bench: MEMORY mode=DOUBLE_PARTIAL rotation=90 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (984034) BUFFER_AUDIT: mode=DOUBLE_PARTIAL rotation=90 logical_w=480 logical_h=480 render_mode=0 expected_bytes=48000 active_bytes=48000 min_bytes=48000 max_bytes=48000 internal=1 psram=0 input_tiles=1 compose=0 refresh=2056 rendered=1785 flushes=9491 pixels=156917796 elapsed_us=69654313
+I (984060) present_bench: PASS mode=DOUBLE_PARTIAL te_buffers=0 rotation=90 frames=1785 transport_fps=25.6 lvgl_fps=37 cpu=100% render=17ms flush=16ms scenes=16
+I (984074) present_bench: MEMORY mode=DOUBLE_PARTIAL rotation=180 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (984106) present_bench: MEMORY mode=DOUBLE_PARTIAL rotation=180 phase=after_open internal_total=380011 internal_free=196159 psram_total=7480336 psram_free=6045524 internal_min_free=0 psram_min_free=0 internal_dma_largest=155648
+I (984118) present_bench: RUN mode=DOUBLE_PARTIAL te_buffers=0 rotation=180
+I (1053316) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=180 name="Empty screen" fps=26 cpu=100% render=7ms flush=23ms
+I (1053317) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=180 name="Moving wallpaper" fps=30 cpu=100% render=15ms flush=14ms
+I (1053327) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=180 name="Single rectangle" fps=60 cpu=100% render=1ms flush=13ms
+I (1053339) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=180 name="Multiple rectangles" fps=34 cpu=100% render=5ms flush=18ms
+I (1053350) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=180 name="Multiple RGB images" fps=60 cpu=100% render=2ms flush=9ms
+I (1053362) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=180 name="Multiple ARGB images" fps=43 cpu=100% render=8ms flush=12ms
+I (1053373) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=180 name="Rotated ARGB images" fps=58 cpu=100% render=8ms flush=4ms
+I (1053384) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=180 name="Multiple labels" fps=30 cpu=100% render=10ms flush=17ms
+I (1053396) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=180 name="Screen sized text" fps=9 cpu=100% render=77ms flush=19ms
+I (1053407) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=180 name="Multiple arcs" fps=59 cpu=100% render=1ms flush=11ms
+I (1053418) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=180 name="Containers" fps=64 cpu=100% render=6ms flush=2ms
+I (1053428) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=180 name="Containers with overlay" fps=20 cpu=100% render=29ms flush=17ms
+I (1053440) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=180 name="Containers with opa" fps=63 cpu=100% render=7ms flush=3ms
+I (1053452) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=180 name="Containers with opa_layer" fps=35 cpu=100% render=18ms flush=12ms
+I (1053464) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=180 name="Containers with scrolling" fps=19 cpu=100% render=28ms flush=19ms
+I (1053476) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=180 name="Widgets demo" fps=10 cpu=100% render=55ms flush=10ms
+I (1053513) present_bench: METRICS mode=DOUBLE_PARTIAL te_buffers=0 rotation=180 frame_samples=1855 begin_commit_p99_us=98000 buffer_waits=9419 buffer_wait_us=21911277 buffer_wait_max_us=40254 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4187 scanout_supply_misses=6
+I (1053526) present_bench: MEMORY mode=DOUBLE_PARTIAL rotation=180 phase=after_run internal_total=380011 internal_free=195599 psram_total=7480336 psram_free=6045524 internal_min_free=136195 psram_min_free=5973324 internal_dma_largest=114688
+I (1053548) present_v2: executor=cpu cpu_attempts=12580 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (1053560) present_v2: executor=cpu cpu_attempts=12580 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (1053592) present_bench: MEMORY mode=DOUBLE_PARTIAL rotation=180 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (1053601) BUFFER_AUDIT: mode=DOUBLE_PARTIAL rotation=180 logical_w=480 logical_h=480 render_mode=0 expected_bytes=48000 active_bytes=48000 min_bytes=48000 max_bytes=48000 internal=1 psram=0 input_tiles=1 compose=0 refresh=2153 rendered=1855 flushes=10247 pixels=176066664 elapsed_us=69410763
+I (1053626) present_bench: PASS mode=DOUBLE_PARTIAL te_buffers=0 rotation=180 frames=1855 transport_fps=26.7 lvgl_fps=38 cpu=100% render=17ms flush=12ms scenes=16
+I (1053640) present_bench: MEMORY mode=DOUBLE_PARTIAL rotation=270 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (1053671) present_bench: MEMORY mode=DOUBLE_PARTIAL rotation=270 phase=after_open internal_total=380011 internal_free=196159 psram_total=7480336 psram_free=6045524 internal_min_free=0 psram_min_free=0 internal_dma_largest=155648
+I (1053683) present_bench: RUN mode=DOUBLE_PARTIAL te_buffers=0 rotation=270
+I (1123049) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=270 name="Empty screen" fps=26 cpu=100% render=7ms flush=23ms
+I (1123050) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=270 name="Moving wallpaper" fps=20 cpu=100% render=16ms flush=30ms
+I (1123060) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=270 name="Single rectangle" fps=60 cpu=100% render=0ms flush=13ms
+I (1123072) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=270 name="Multiple rectangles" fps=38 cpu=100% render=5ms flush=15ms
+I (1123083) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=270 name="Multiple RGB images" fps=60 cpu=100% render=2ms flush=9ms
+I (1123094) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=270 name="Multiple ARGB images" fps=37 cpu=100% render=9ms flush=14ms
+I (1123106) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=270 name="Rotated ARGB images" fps=61 cpu=100% render=8ms flush=3ms
+I (1123117) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=270 name="Multiple labels" fps=30 cpu=100% render=11ms flush=15ms
+I (1123129) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=270 name="Screen sized text" fps=8 cpu=100% render=77ms flush=27ms
+I (1123140) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=270 name="Multiple arcs" fps=59 cpu=100% render=1ms flush=11ms
+I (1123151) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=270 name="Containers" fps=62 cpu=100% render=5ms flush=5ms
+I (1123161) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=270 name="Containers with overlay" fps=15 cpu=100% render=25ms flush=33ms
+I (1123173) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=270 name="Containers with opa" fps=60 cpu=100% render=7ms flush=6ms
+I (1123185) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=270 name="Containers with opa_layer" fps=36 cpu=100% render=18ms flush=11ms
+I (1123197) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=270 name="Containers with scrolling" fps=15 cpu=100% render=28ms flush=33ms
+I (1123209) present_bench: SCENE mode=DOUBLE_PARTIAL rotation=270 name="Widgets demo" fps=10 cpu=100% render=55ms flush=16ms
+I (1123252) present_bench: METRICS mode=DOUBLE_PARTIAL te_buffers=0 rotation=270 frame_samples=1774 begin_commit_p99_us=105000 buffer_waits=8670 buffer_wait_us=25118640 buffer_wait_max_us=46499 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4197 scanout_supply_misses=9
+I (1123265) present_bench: MEMORY mode=DOUBLE_PARTIAL rotation=270 phase=after_run internal_total=380011 internal_free=195583 psram_total=7480336 psram_free=6045524 internal_min_free=140227 psram_min_free=5973324 internal_dma_largest=114688
+I (1123287) present_v2: executor=cpu cpu_attempts=11897 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (1123299) present_v2: executor=cpu cpu_attempts=11897 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (1123331) present_bench: MEMORY mode=DOUBLE_PARTIAL rotation=270 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (1123340) BUFFER_AUDIT: mode=DOUBLE_PARTIAL rotation=270 logical_w=480 logical_h=480 render_mode=0 expected_bytes=48000 active_bytes=48000 min_bytes=48000 max_bytes=48000 internal=1 psram=0 input_tiles=1 compose=0 refresh=2056 rendered=1774 flushes=9493 pixels=156951048 elapsed_us=69584272
+I (1123365) present_bench: PASS mode=DOUBLE_PARTIAL te_buffers=0 rotation=270 frames=1774 transport_fps=25.5 lvgl_fps=37 cpu=100% render=17ms flush=16ms scenes=16
+I (1123379) present_bench: MEMORY mode=TRIPLE_PARTIAL rotation=0 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (1123419) present_bench: MEMORY mode=TRIPLE_PARTIAL rotation=0 phase=after_open internal_total=380011 internal_free=196159 psram_total=7480336 psram_free=6045524 internal_min_free=0 psram_min_free=0 internal_dma_largest=155648
+I (1123431) present_bench: RUN mode=TRIPLE_PARTIAL te_buffers=0 rotation=0
+I (1192702) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=0 name="Empty screen" fps=38 cpu=100% render=7ms flush=13ms
+I (1192703) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=0 name="Moving wallpaper" fps=32 cpu=100% render=16ms flush=11ms
+I (1192713) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=0 name="Single rectangle" fps=60 cpu=100% render=0ms flush=14ms
+I (1192724) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=0 name="Multiple rectangles" fps=55 cpu=100% render=5ms flush=7ms
+I (1192735) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=0 name="Multiple RGB images" fps=63 cpu=100% render=2ms flush=6ms
+I (1192746) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=0 name="Multiple ARGB images" fps=59 cpu=100% render=6ms flush=5ms
+I (1192758) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=0 name="Rotated ARGB images" fps=62 cpu=100% render=8ms flush=2ms
+I (1192769) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=0 name="Multiple labels" fps=49 cpu=100% render=10ms flush=5ms
+I (1192780) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=0 name="Screen sized text" fps=10 cpu=100% render=78ms flush=10ms
+I (1192791) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=0 name="Multiple arcs" fps=59 cpu=100% render=1ms flush=12ms
+I (1192802) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=0 name="Containers" fps=65 cpu=100% render=6ms flush=1ms
+I (1192812) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=0 name="Containers with overlay" fps=22 cpu=100% render=29ms flush=10ms
+I (1192824) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=0 name="Containers with opa" fps=65 cpu=100% render=7ms flush=1ms
+I (1192835) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=0 name="Containers with opa_layer" fps=53 cpu=100% render=15ms flush=2ms
+I (1192847) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=0 name="Containers with scrolling" fps=23 cpu=100% render=28ms flush=11ms
+I (1192859) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=0 name="Widgets demo" fps=11 cpu=100% render=55ms flush=9ms
+I (1192894) present_bench: METRICS mode=TRIPLE_PARTIAL te_buffers=0 rotation=0 frame_samples=2126 begin_commit_p99_us=94000 buffer_waits=10684 buffer_wait_us=15519014 buffer_wait_max_us=25476 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4191 scanout_supply_misses=9
+I (1192907) present_bench: MEMORY mode=TRIPLE_PARTIAL rotation=0 phase=after_run internal_total=380011 internal_free=195599 psram_total=7480336 psram_free=6045524 internal_min_free=138591 psram_min_free=5973324 internal_dma_largest=114688
+I (1192928) present_v2: executor=cpu cpu_attempts=16522 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (1192940) present_v2: executor=cpu cpu_attempts=16522 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (1192973) present_bench: MEMORY mode=TRIPLE_PARTIAL rotation=0 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (1192981) BUFFER_AUDIT: mode=TRIPLE_PARTIAL rotation=0 logical_w=480 logical_h=480 render_mode=0 expected_bytes=48000 active_bytes=48000 min_bytes=48000 max_bytes=48000 internal=1 psram=0 input_tiles=1 compose=0 refresh=2484 rendered=2126 flushes=12362 pixels=204444216 elapsed_us=69478855
+I (1193007) present_bench: PASS mode=TRIPLE_PARTIAL te_buffers=0 rotation=0 frames=2126 transport_fps=30.6 lvgl_fps=45 cpu=100% render=17ms flush=7ms scenes=16
+I (1193021) present_bench: MEMORY mode=TRIPLE_PARTIAL rotation=90 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (1193050) present_bench: MEMORY mode=TRIPLE_PARTIAL rotation=90 phase=after_open internal_total=380011 internal_free=196159 psram_total=7480336 psram_free=6045524 internal_min_free=0 psram_min_free=0 internal_dma_largest=155648
+I (1193064) present_bench: RUN mode=TRIPLE_PARTIAL te_buffers=0 rotation=90
+I (1262253) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=90 name="Empty screen" fps=27 cpu=100% render=7ms flush=22ms
+I (1262254) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=90 name="Moving wallpaper" fps=25 cpu=100% render=16ms flush=20ms
+I (1262264) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=90 name="Single rectangle" fps=60 cpu=100% render=0ms flush=14ms
+I (1262275) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=90 name="Multiple rectangles" fps=52 cpu=100% render=5ms flush=8ms
+I (1262287) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=90 name="Multiple RGB images" fps=60 cpu=100% render=2ms flush=8ms
+I (1262298) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=90 name="Multiple ARGB images" fps=61 cpu=100% render=6ms flush=5ms
+I (1262309) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=90 name="Rotated ARGB images" fps=62 cpu=100% render=8ms flush=2ms
+I (1262320) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=90 name="Multiple labels" fps=38 cpu=100% render=11ms flush=7ms
+I (1262332) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=90 name="Screen sized text" fps=9 cpu=100% render=79ms flush=19ms
+I (1262343) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=90 name="Multiple arcs" fps=60 cpu=100% render=1ms flush=11ms
+I (1262354) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=90 name="Containers" fps=65 cpu=100% render=5ms flush=2ms
+I (1262364) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=90 name="Containers with overlay" fps=18 cpu=100% render=27ms flush=20ms
+I (1262376) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=90 name="Containers with opa" fps=64 cpu=100% render=6ms flush=2ms
+I (1262387) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=90 name="Containers with opa_layer" fps=48 cpu=100% render=16ms flush=5ms
+I (1262399) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=90 name="Containers with scrolling" fps=19 cpu=100% render=28ms flush=20ms
+I (1262411) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=90 name="Widgets demo" fps=10 cpu=100% render=55ms flush=16ms
+I (1262453) present_bench: METRICS mode=TRIPLE_PARTIAL te_buffers=0 rotation=90 frame_samples=1971 begin_commit_p99_us=104000 buffer_waits=9269 buffer_wait_us=20218073 buffer_wait_max_us=35371 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4187 scanout_supply_misses=16
+I (1262466) present_bench: MEMORY mode=TRIPLE_PARTIAL rotation=90 phase=after_run internal_total=380011 internal_free=195583 psram_total=7480336 psram_free=6045524 internal_min_free=140135 psram_min_free=5973324 internal_dma_largest=114688
+I (1262488) present_v2: executor=cpu cpu_attempts=14962 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (1262500) present_v2: executor=cpu cpu_attempts=14962 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (1262532) present_bench: MEMORY mode=TRIPLE_PARTIAL rotation=90 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (1262541) BUFFER_AUDIT: mode=TRIPLE_PARTIAL rotation=90 logical_w=480 logical_h=480 render_mode=0 expected_bytes=48000 active_bytes=48000 min_bytes=48000 max_bytes=48000 internal=1 psram=0 input_tiles=1 compose=0 refresh=2301 rendered=1971 flushes=10736 pixels=175611617 elapsed_us=69405063
+I (1262566) present_bench: PASS mode=TRIPLE_PARTIAL te_buffers=0 rotation=90 frames=1971 transport_fps=28.4 lvgl_fps=42 cpu=100% render=17ms flush=11ms scenes=16
+I (1262580) present_bench: MEMORY mode=TRIPLE_PARTIAL rotation=180 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (1262616) present_bench: MEMORY mode=TRIPLE_PARTIAL rotation=180 phase=after_open internal_total=380011 internal_free=196159 psram_total=7480336 psram_free=6045524 internal_min_free=0 psram_min_free=0 internal_dma_largest=155648
+I (1262628) present_bench: RUN mode=TRIPLE_PARTIAL te_buffers=0 rotation=180
+I (1331841) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=180 name="Empty screen" fps=36 cpu=100% render=8ms flush=13ms
+I (1331842) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=180 name="Moving wallpaper" fps=30 cpu=100% render=16ms flush=13ms
+I (1331852) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=180 name="Single rectangle" fps=60 cpu=100% render=0ms flush=13ms
+I (1331864) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=180 name="Multiple rectangles" fps=53 cpu=100% render=6ms flush=8ms
+I (1331875) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=180 name="Multiple RGB images" fps=61 cpu=100% render=2ms flush=8ms
+I (1331886) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=180 name="Multiple ARGB images" fps=60 cpu=100% render=6ms flush=5ms
+I (1331898) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=180 name="Rotated ARGB images" fps=63 cpu=100% render=8ms flush=2ms
+I (1331909) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=180 name="Multiple labels" fps=48 cpu=100% render=10ms flush=5ms
+I (1331920) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=180 name="Screen sized text" fps=10 cpu=100% render=78ms flush=12ms
+I (1331932) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=180 name="Multiple arcs" fps=60 cpu=100% render=1ms flush=11ms
+I (1331943) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=180 name="Containers" fps=66 cpu=100% render=5ms flush=1ms
+I (1331953) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=180 name="Containers with overlay" fps=21 cpu=100% render=29ms flush=13ms
+I (1331965) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=180 name="Containers with opa" fps=65 cpu=100% render=7ms flush=1ms
+I (1331977) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=180 name="Containers with opa_layer" fps=50 cpu=100% render=16ms flush=3ms
+I (1331988) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=180 name="Containers with scrolling" fps=22 cpu=100% render=27ms flush=13ms
+I (1332001) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=180 name="Widgets demo" fps=10 cpu=100% render=55ms flush=10ms
+I (1332037) present_bench: METRICS mode=TRIPLE_PARTIAL te_buffers=0 rotation=180 frame_samples=2089 begin_commit_p99_us=97000 buffer_waits=10455 buffer_wait_us=17093528 buffer_wait_max_us=24235 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4188 scanout_supply_misses=8
+I (1332050) present_bench: MEMORY mode=TRIPLE_PARTIAL rotation=180 phase=after_run internal_total=380011 internal_free=195599 psram_total=7480336 psram_free=6045524 internal_min_free=140511 psram_min_free=5973324 internal_dma_largest=114688
+I (1332072) present_v2: executor=cpu cpu_attempts=16203 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (1332084) present_v2: executor=cpu cpu_attempts=16203 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (1332116) present_bench: MEMORY mode=TRIPLE_PARTIAL rotation=180 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (1332125) BUFFER_AUDIT: mode=TRIPLE_PARTIAL rotation=180 logical_w=480 logical_h=480 render_mode=0 expected_bytes=48000 active_bytes=48000 min_bytes=48000 max_bytes=48000 internal=1 psram=0 input_tiles=1 compose=0 refresh=2436 rendered=2089 flushes=12034 pixels=198176416 elapsed_us=69424800
+I (1332150) present_bench: PASS mode=TRIPLE_PARTIAL te_buffers=0 rotation=180 frames=2089 transport_fps=30.1 lvgl_fps=44 cpu=100% render=17ms flush=8ms scenes=16
+I (1332164) present_bench: MEMORY mode=TRIPLE_PARTIAL rotation=270 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (1332197) present_bench: MEMORY mode=TRIPLE_PARTIAL rotation=270 phase=after_open internal_total=380011 internal_free=196159 psram_total=7480336 psram_free=6045524 internal_min_free=0 psram_min_free=0 internal_dma_largest=155648
+I (1332209) present_bench: RUN mode=TRIPLE_PARTIAL te_buffers=0 rotation=270
+I (1401416) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=270 name="Empty screen" fps=27 cpu=100% render=7ms flush=21ms
+I (1401416) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=270 name="Moving wallpaper" fps=24 cpu=100% render=16ms flush=21ms
+I (1401427) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=270 name="Single rectangle" fps=60 cpu=100% render=0ms flush=13ms
+I (1401438) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=270 name="Multiple rectangles" fps=53 cpu=100% render=5ms flush=7ms
+I (1401449) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=270 name="Multiple RGB images" fps=61 cpu=100% render=2ms flush=7ms
+I (1401461) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=270 name="Multiple ARGB images" fps=61 cpu=100% render=6ms flush=4ms
+I (1401472) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=270 name="Rotated ARGB images" fps=62 cpu=100% render=8ms flush=2ms
+I (1401484) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=270 name="Multiple labels" fps=38 cpu=100% render=11ms flush=7ms
+I (1401495) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=270 name="Screen sized text" fps=9 cpu=100% render=77ms flush=19ms
+I (1401506) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=270 name="Multiple arcs" fps=59 cpu=100% render=1ms flush=11ms
+I (1401517) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=270 name="Containers" fps=65 cpu=100% render=5ms flush=2ms
+I (1401528) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=270 name="Containers with overlay" fps=18 cpu=100% render=27ms flush=20ms
+I (1401539) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=270 name="Containers with opa" fps=64 cpu=100% render=7ms flush=2ms
+I (1401551) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=270 name="Containers with opa_layer" fps=49 cpu=100% render=15ms flush=4ms
+I (1401563) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=270 name="Containers with scrolling" fps=19 cpu=100% render=28ms flush=20ms
+I (1401575) present_bench: SCENE mode=TRIPLE_PARTIAL rotation=270 name="Widgets demo" fps=10 cpu=100% render=55ms flush=16ms
+I (1401620) present_bench: METRICS mode=TRIPLE_PARTIAL te_buffers=0 rotation=270 frame_samples=1967 begin_commit_p99_us=102000 buffer_waits=9278 buffer_wait_us=20039578 buffer_wait_max_us=33007 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4188 scanout_supply_misses=17
+I (1401633) present_bench: MEMORY mode=TRIPLE_PARTIAL rotation=270 phase=after_run internal_total=380011 internal_free=195599 psram_total=7480336 psram_free=6045524 internal_min_free=137643 psram_min_free=5973324 internal_dma_largest=114688
+I (1401655) present_v2: executor=cpu cpu_attempts=14953 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (1401667) present_v2: executor=cpu cpu_attempts=14953 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (1401699) present_bench: MEMORY mode=TRIPLE_PARTIAL rotation=270 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (1401708) BUFFER_AUDIT: mode=TRIPLE_PARTIAL rotation=270 logical_w=480 logical_h=480 render_mode=0 expected_bytes=48000 active_bytes=48000 min_bytes=48000 max_bytes=48000 internal=1 psram=0 input_tiles=1 compose=0 refresh=2306 rendered=1967 flushes=10744 pixels=175809663 elapsed_us=69426803
+I (1401733) present_bench: PASS mode=TRIPLE_PARTIAL te_buffers=0 rotation=270 frames=1967 transport_fps=28.3 lvgl_fps=42 cpu=100% render=16ms flush=11ms scenes=16
+I (1401747) present_bench: MEMORY mode=AUTO rotation=0 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (1401779) present_bench: MEMORY mode=AUTO rotation=0 phase=after_open internal_total=380011 internal_free=196159 psram_total=7480336 psram_free=6045524 internal_min_free=0 psram_min_free=0 internal_dma_largest=155648
+I (1401790) present_bench: RUN mode=AUTO te_buffers=0 rotation=0
+I (1471064) present_bench: SCENE mode=AUTO rotation=0 name="Empty screen" fps=38 cpu=100% render=7ms flush=13ms
+I (1471064) present_bench: SCENE mode=AUTO rotation=0 name="Moving wallpaper" fps=32 cpu=100% render=16ms flush=11ms
+I (1471073) present_bench: SCENE mode=AUTO rotation=0 name="Single rectangle" fps=60 cpu=100% render=0ms flush=13ms
+I (1471083) present_bench: SCENE mode=AUTO rotation=0 name="Multiple rectangles" fps=54 cpu=100% render=5ms flush=7ms
+I (1471093) present_bench: SCENE mode=AUTO rotation=0 name="Multiple RGB images" fps=61 cpu=100% render=2ms flush=9ms
+I (1471104) present_bench: SCENE mode=AUTO rotation=0 name="Multiple ARGB images" fps=60 cpu=100% render=6ms flush=5ms
+I (1471114) present_bench: SCENE mode=AUTO rotation=0 name="Rotated ARGB images" fps=62 cpu=100% render=10ms flush=1ms
+I (1471124) present_bench: SCENE mode=AUTO rotation=0 name="Multiple labels" fps=49 cpu=100% render=10ms flush=5ms
+I (1471134) present_bench: SCENE mode=AUTO rotation=0 name="Screen sized text" fps=10 cpu=100% render=79ms flush=9ms
+I (1471145) present_bench: SCENE mode=AUTO rotation=0 name="Multiple arcs" fps=59 cpu=100% render=1ms flush=11ms
+I (1471155) present_bench: SCENE mode=AUTO rotation=0 name="Containers" fps=65 cpu=100% render=5ms flush=1ms
+I (1471164) present_bench: SCENE mode=AUTO rotation=0 name="Containers with overlay" fps=22 cpu=100% render=29ms flush=10ms
+I (1471175) present_bench: SCENE mode=AUTO rotation=0 name="Containers with opa" fps=65 cpu=100% render=7ms flush=2ms
+I (1471185) present_bench: SCENE mode=AUTO rotation=0 name="Containers with opa_layer" fps=54 cpu=100% render=15ms flush=2ms
+I (1471196) present_bench: SCENE mode=AUTO rotation=0 name="Containers with scrolling" fps=23 cpu=100% render=28ms flush=11ms
+I (1471207) present_bench: SCENE mode=AUTO rotation=0 name="Widgets demo" fps=11 cpu=100% render=56ms flush=8ms
+I (1471242) present_bench: METRICS mode=AUTO te_buffers=0 rotation=0 frame_samples=2127 begin_commit_p99_us=94000 buffer_waits=10735 buffer_wait_us=15931755 buffer_wait_max_us=25633 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4190 scanout_supply_misses=12
+I (1471254) present_bench: MEMORY mode=AUTO rotation=0 phase=after_run internal_total=380011 internal_free=195599 psram_total=7480336 psram_free=6045524 internal_min_free=138211 psram_min_free=5973324 internal_dma_largest=114688
+I (1471275) present_v2: executor=cpu cpu_attempts=16536 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (1471287) present_v2: executor=cpu cpu_attempts=16536 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (1471319) present_bench: MEMORY mode=AUTO rotation=0 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (1471327) BUFFER_AUDIT: mode=AUTO rotation=0 logical_w=480 logical_h=480 render_mode=0 expected_bytes=0 active_bytes=48000 min_bytes=48000 max_bytes=48000 internal=1 psram=0 input_tiles=1 compose=0 refresh=2473 rendered=2127 flushes=12352 pixels=203702966 elapsed_us=69466897
+I (1471351) present_bench: PASS mode=AUTO te_buffers=0 rotation=0 frames=2127 transport_fps=30.6 lvgl_fps=45 cpu=100% render=17ms flush=7ms scenes=16
+I (1471364) present_bench: MEMORY mode=AUTO rotation=90 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (1471394) present_bench: MEMORY mode=AUTO rotation=90 phase=after_open internal_total=380011 internal_free=196159 psram_total=7480336 psram_free=6045524 internal_min_free=0 psram_min_free=0 internal_dma_largest=155648
+I (1471405) present_bench: RUN mode=AUTO te_buffers=0 rotation=90
+I (1540565) present_bench: SCENE mode=AUTO rotation=90 name="Empty screen" fps=27 cpu=100% render=7ms flush=21ms
+I (1540566) present_bench: SCENE mode=AUTO rotation=90 name="Moving wallpaper" fps=25 cpu=100% render=16ms flush=21ms
+I (1540574) present_bench: SCENE mode=AUTO rotation=90 name="Single rectangle" fps=59 cpu=100% render=0ms flush=13ms
+I (1540585) present_bench: SCENE mode=AUTO rotation=90 name="Multiple rectangles" fps=53 cpu=100% render=5ms flush=8ms
+I (1540595) present_bench: SCENE mode=AUTO rotation=90 name="Multiple RGB images" fps=61 cpu=100% render=2ms flush=8ms
+I (1540606) present_bench: SCENE mode=AUTO rotation=90 name="Multiple ARGB images" fps=61 cpu=100% render=6ms flush=4ms
+I (1540616) present_bench: SCENE mode=AUTO rotation=90 name="Rotated ARGB images" fps=63 cpu=100% render=7ms flush=2ms
+I (1540626) present_bench: SCENE mode=AUTO rotation=90 name="Multiple labels" fps=38 cpu=100% render=11ms flush=7ms
+I (1540637) present_bench: SCENE mode=AUTO rotation=90 name="Screen sized text" fps=9 cpu=100% render=77ms flush=19ms
+I (1540647) present_bench: SCENE mode=AUTO rotation=90 name="Multiple arcs" fps=59 cpu=100% render=1ms flush=12ms
+I (1540657) present_bench: SCENE mode=AUTO rotation=90 name="Containers" fps=65 cpu=100% render=5ms flush=2ms
+I (1540667) present_bench: SCENE mode=AUTO rotation=90 name="Containers with overlay" fps=18 cpu=100% render=28ms flush=20ms
+I (1540678) present_bench: SCENE mode=AUTO rotation=90 name="Containers with opa" fps=63 cpu=100% render=7ms flush=2ms
+I (1540688) present_bench: SCENE mode=AUTO rotation=90 name="Containers with opa_layer" fps=47 cpu=100% render=17ms flush=5ms
+I (1540699) present_bench: SCENE mode=AUTO rotation=90 name="Containers with scrolling" fps=19 cpu=100% render=28ms flush=20ms
+I (1540710) present_bench: SCENE mode=AUTO rotation=90 name="Widgets demo" fps=10 cpu=100% render=55ms flush=16ms
+I (1540751) present_bench: METRICS mode=AUTO te_buffers=0 rotation=90 frame_samples=1956 begin_commit_p99_us=103000 buffer_waits=9258 buffer_wait_us=20183307 buffer_wait_max_us=33675 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4184 scanout_supply_misses=20
+I (1540763) present_bench: MEMORY mode=AUTO rotation=90 phase=after_run internal_total=380011 internal_free=195583 psram_total=7480336 psram_free=6045524 internal_min_free=139163 psram_min_free=5973324 internal_dma_largest=114688
+I (1540784) present_v2: executor=cpu cpu_attempts=14927 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (1540796) present_v2: executor=cpu cpu_attempts=14927 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (1540828) present_bench: MEMORY mode=AUTO rotation=90 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (1540836) BUFFER_AUDIT: mode=AUTO rotation=90 logical_w=480 logical_h=480 render_mode=0 expected_bytes=0 active_bytes=48000 min_bytes=48000 max_bytes=48000 internal=1 psram=0 input_tiles=1 compose=0 refresh=2303 rendered=1956 flushes=10719 pixels=174427220 elapsed_us=69360848
+I (1540860) present_bench: PASS mode=AUTO te_buffers=0 rotation=90 frames=1956 transport_fps=28.2 lvgl_fps=42 cpu=100% render=17ms flush=11ms scenes=16
+I (1540873) present_bench: MEMORY mode=AUTO rotation=180 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (1540910) present_bench: MEMORY mode=AUTO rotation=180 phase=after_open internal_total=380011 internal_free=196159 psram_total=7480336 psram_free=6045524 internal_min_free=0 psram_min_free=0 internal_dma_largest=155648
+I (1540921) present_bench: RUN mode=AUTO te_buffers=0 rotation=180
+I (1610130) present_bench: SCENE mode=AUTO rotation=180 name="Empty screen" fps=36 cpu=100% render=7ms flush=14ms
+I (1610131) present_bench: SCENE mode=AUTO rotation=180 name="Moving wallpaper" fps=30 cpu=100% render=16ms flush=13ms
+I (1610140) present_bench: SCENE mode=AUTO rotation=180 name="Single rectangle" fps=59 cpu=100% render=0ms flush=13ms
+I (1610150) present_bench: SCENE mode=AUTO rotation=180 name="Multiple rectangles" fps=53 cpu=100% render=5ms flush=7ms
+I (1610160) present_bench: SCENE mode=AUTO rotation=180 name="Multiple RGB images" fps=60 cpu=100% render=2ms flush=9ms
+I (1610171) present_bench: SCENE mode=AUTO rotation=180 name="Multiple ARGB images" fps=60 cpu=100% render=6ms flush=5ms
+I (1610182) present_bench: SCENE mode=AUTO rotation=180 name="Rotated ARGB images" fps=63 cpu=100% render=8ms flush=2ms
+I (1610192) present_bench: SCENE mode=AUTO rotation=180 name="Multiple labels" fps=48 cpu=100% render=10ms flush=5ms
+I (1610202) present_bench: SCENE mode=AUTO rotation=180 name="Screen sized text" fps=10 cpu=100% render=79ms flush=12ms
+I (1610213) present_bench: SCENE mode=AUTO rotation=180 name="Multiple arcs" fps=60 cpu=100% render=1ms flush=11ms
+I (1610223) present_bench: SCENE mode=AUTO rotation=180 name="Containers" fps=65 cpu=100% render=5ms flush=1ms
+I (1610233) present_bench: SCENE mode=AUTO rotation=180 name="Containers with overlay" fps=21 cpu=100% render=29ms flush=13ms
+I (1610244) present_bench: SCENE mode=AUTO rotation=180 name="Containers with opa" fps=63 cpu=100% render=7ms flush=2ms
+I (1610254) present_bench: SCENE mode=AUTO rotation=180 name="Containers with opa_layer" fps=52 cpu=100% render=16ms flush=3ms
+I (1610265) present_bench: SCENE mode=AUTO rotation=180 name="Containers with scrolling" fps=22 cpu=100% render=28ms flush=13ms
+I (1610276) present_bench: SCENE mode=AUTO rotation=180 name="Widgets demo" fps=10 cpu=100% render=55ms flush=10ms
+I (1610312) present_bench: METRICS mode=AUTO te_buffers=0 rotation=180 frame_samples=2093 begin_commit_p99_us=97000 buffer_waits=10441 buffer_wait_us=17208565 buffer_wait_max_us=24030 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4187 scanout_supply_misses=13
+I (1610324) present_bench: MEMORY mode=AUTO rotation=180 phase=after_run internal_total=380011 internal_free=195599 psram_total=7480336 psram_free=6045524 internal_min_free=142323 psram_min_free=5973324 internal_dma_largest=114688
+I (1610345) present_v2: executor=cpu cpu_attempts=16192 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (1610357) present_v2: executor=cpu cpu_attempts=16192 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (1610390) present_bench: MEMORY mode=AUTO rotation=180 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (1610398) BUFFER_AUDIT: mode=AUTO rotation=180 logical_w=480 logical_h=480 render_mode=0 expected_bytes=0 active_bytes=48000 min_bytes=48000 max_bytes=48000 internal=1 psram=0 input_tiles=1 compose=0 refresh=2435 rendered=2093 flushes=12020 pixels=198544376 elapsed_us=69405945
+I (1610422) present_bench: PASS mode=AUTO te_buffers=0 rotation=180 frames=2093 transport_fps=30.2 lvgl_fps=44 cpu=100% render=17ms flush=8ms scenes=16
+I (1610435) present_bench: MEMORY mode=AUTO rotation=270 phase=before_open internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (1610459) present_bench: MEMORY mode=AUTO rotation=270 phase=after_open internal_total=380011 internal_free=196159 psram_total=7480336 psram_free=6045524 internal_min_free=0 psram_min_free=0 internal_dma_largest=155648
+I (1610476) present_bench: RUN mode=AUTO te_buffers=0 rotation=270
+I (1679681) present_bench: SCENE mode=AUTO rotation=270 name="Empty screen" fps=27 cpu=100% render=7ms flush=21ms
+I (1679682) present_bench: SCENE mode=AUTO rotation=270 name="Moving wallpaper" fps=24 cpu=100% render=16ms flush=20ms
+I (1679691) present_bench: SCENE mode=AUTO rotation=270 name="Single rectangle" fps=59 cpu=100% render=0ms flush=13ms
+I (1679701) present_bench: SCENE mode=AUTO rotation=270 name="Multiple rectangles" fps=53 cpu=100% render=5ms flush=7ms
+I (1679711) present_bench: SCENE mode=AUTO rotation=270 name="Multiple RGB images" fps=61 cpu=100% render=2ms flush=8ms
+I (1679722) present_bench: SCENE mode=AUTO rotation=270 name="Multiple ARGB images" fps=60 cpu=100% render=6ms flush=4ms
+I (1679733) present_bench: SCENE mode=AUTO rotation=270 name="Rotated ARGB images" fps=62 cpu=100% render=8ms flush=2ms
+I (1679743) present_bench: SCENE mode=AUTO rotation=270 name="Multiple labels" fps=38 cpu=100% render=11ms flush=7ms
+I (1679753) present_bench: SCENE mode=AUTO rotation=270 name="Screen sized text" fps=9 cpu=100% render=77ms flush=19ms
+I (1679764) present_bench: SCENE mode=AUTO rotation=270 name="Multiple arcs" fps=59 cpu=100% render=1ms flush=11ms
+I (1679774) present_bench: SCENE mode=AUTO rotation=270 name="Containers" fps=65 cpu=100% render=6ms flush=2ms
+I (1679783) present_bench: SCENE mode=AUTO rotation=270 name="Containers with overlay" fps=18 cpu=100% render=28ms flush=20ms
+I (1679794) present_bench: SCENE mode=AUTO rotation=270 name="Containers with opa" fps=63 cpu=100% render=7ms flush=2ms
+I (1679805) present_bench: SCENE mode=AUTO rotation=270 name="Containers with opa_layer" fps=48 cpu=100% render=16ms flush=4ms
+I (1679816) present_bench: SCENE mode=AUTO rotation=270 name="Containers with scrolling" fps=19 cpu=100% render=28ms flush=20ms
+I (1679827) present_bench: SCENE mode=AUTO rotation=270 name="Widgets demo" fps=10 cpu=100% render=56ms flush=16ms
+I (1679868) present_bench: METRICS mode=AUTO te_buffers=0 rotation=270 frame_samples=1964 begin_commit_p99_us=103000 buffer_waits=9296 buffer_wait_us=20319803 buffer_wait_max_us=33782 buffer_wait_timeouts=0 scanout_available=1 scanout_vsyncs=4187 scanout_supply_misses=17
+I (1679880) present_bench: MEMORY mode=AUTO rotation=270 phase=after_run internal_total=380011 internal_free=195583 psram_total=7480336 psram_free=6045524 internal_min_free=136279 psram_min_free=5973324 internal_dma_largest=114688
+I (1679901) present_v2: executor=cpu cpu_attempts=14951 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (1679913) present_v2: executor=cpu cpu_attempts=14951 hardware_attempts=0 dma2d_create=ESP_ERR_NOT_SUPPORTED ppa_create=ESP_ERR_NOT_SUPPORTED
+I (1679946) present_bench: MEMORY mode=AUTO rotation=270 phase=after_close internal_total=380011 internal_free=263915 psram_total=7480336 psram_free=6093684 internal_min_free=0 psram_min_free=0 internal_dma_largest=204800
+I (1679954) BUFFER_AUDIT: mode=AUTO rotation=270 logical_w=480 logical_h=480 render_mode=0 expected_bytes=0 active_bytes=48000 min_bytes=48000 max_bytes=48000 internal=1 psram=0 input_tiles=1 compose=0 refresh=2302 rendered=1964 flushes=10751 pixels=175581910 elapsed_us=69406211
+I (1679978) present_bench: PASS mode=AUTO te_buffers=0 rotation=270 frames=1964 transport_fps=28.3 lvgl_fps=42 cpu=100% render=17ms flush=11ms scenes=16
+I (1679992) present_bench: SUITE_PASS board=s3-rgb implementation=present
