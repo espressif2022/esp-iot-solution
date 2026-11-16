@@ -64,6 +64,18 @@ static void optional_tile_fallback(void)
                 OK(present_resources_status(resources, &status));
                 /* The reported plan must be the shrunk final attempt. */
                 assert(status.plan.tiles.count == 1);
+                /* Retry must update policy as well as buffer counts. In
+                 * particular FB's automatic pair now shares its copy worker. */
+                assert(status.plan.normalized.backend.shared_copy_worker == (kind >= 2));
+                assert(status.plan.normalized.backend.tx_staging == (kind == 1));
+                assert(status.plan.normalized.backend.async_copy == (kind != 0));
+                size_t stack_bytes = kind == 1 ? 8192u : kind >= 2 ? 4096u : 0;
+#ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND
+                if (kind == 0 && CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND) {
+                    stack_bytes = 4096;
+                }
+#endif
+                assert(status.plan.stack_bytes == stack_bytes);
                 if (kind != 3) {
                     assert(status.plan.normalized.backend.buffer_count == 1);
                 }

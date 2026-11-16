@@ -121,39 +121,79 @@ static size_t default_tiles(bool overlap, esp_display_present_plan_memory_t memo
 #endif
 }
 
-static void plan_pixel_path(esp_display_present_plan_config_t *plan, const esp_display_presenter_config_t *input)
+/* Creation-only input policy, not another stored execution plan. */
+typedef struct {
+    bool background;
+    unsigned priority;
+} submission_policy_t;
+
+static submission_policy_t read_submission_policy(esp_display_present_io_submit_t request)
 {
-    esp_display_present_backend_config_t *backend = &plan->presenter.backend;
-    bool region = plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION;
-    bool swap = backend->panel_order == ESP_DISPLAY_PRESENT_ORDER_SWAPPED;
-    backend->tx_staging = region && plan->resources.tile_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL;
-    /* Preserve out-of-place swap and runtime rotation for PSRAM-preferring callers. */
-    backend->async_copy = !region || backend->tx_staging || backend->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 ||
-                          (swap && input->target.drawbuf.in_psram);
-    backend->shared_copy_worker = (plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB &&
-                                   plan->resources.tile_count <= 1) ||
-                                  (plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_TE &&
-                                   plan->resources.image_count == 1);
-    backend->in_place = region && !backend->async_copy && swap;
-    bool background = input->target.io_submit == ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND;
+    submission_policy_t policy = {
+        .background = request == ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND,
+        .priority = 7,
+    };
 #ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND
-    background |= input->target.io_submit == ESP_DISPLAY_PRESENT_IO_SUBMIT_DEFAULT &&
-                  CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND;
-#endif
-    backend->deferred_submit = region && !backend->async_copy && background;
-    /* C2's pixel worker adopts the producer priority. Output priority 7
-     * precedes producers below 7 (the LVGL benchmark uses 6), reducing bounded
-     * DMA refill gaps. C1 shares pixel work and retains the normal priority.
-     * Explicit BACKGROUND also preserves the compatibility default when its
-     * dependent Kconfig priority symbol is absent. */
-    bool concurrent_te = plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_TE && !backend->shared_copy_worker;
-    plan->presenter.worker_priority = (backend->deferred_submit || concurrent_te) ? 7 : 0;
-#ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY
-    if (backend->deferred_submit) {
-        plan->presenter.worker_priority = CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY;
+    if (request == ESP_DISPLAY_PRESENT_IO_SUBMIT_DEFAULT) {
+        policy.background = CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND;
     }
 #endif
+#ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY
+    policy.priority = CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY;
+#endif
+    return policy;
+}
+
+/* Memory and layout are already selected. No IO/heap query or task creation.
+ * Keep transmission staging distinct from pixel conversion requirements. */
+static void resolve_pixel_path(esp_display_present_plan_config_t *plan, bool prefer_psram)
+{
+    esp_display_present_backend_config_t *backend = &plan->presenter.backend;
+    backend->tx_staging = false;
+    backend->async_copy = true;
+    backend->in_place = false;
+    if (plan->presenter.backend_kind != ESP_DISPLAY_PRESENT_ENGINE_REGION) {
+        return;
+    }
+
+    /* Compatibility policy: external REGION tiles always stage for now.
+     * Direct-PSRAM eligibility, including runtime rotation, is a separate change. */
+    backend->tx_staging = plan->resources.tile_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL;
+    bool needs_rotation = backend->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0;
+    bool needs_swap = backend->panel_order == ESP_DISPLAY_PRESENT_ORDER_SWAPPED;
+    /* Preserve out-of-place swap and runtime rotation even if the preferred
+     * PSRAM draw pool fell back to internal memory. */
+    bool out_of_place_swap = needs_swap && prefer_psram;
+    backend->async_copy = backend->tx_staging || needs_rotation || out_of_place_swap;
+    backend->in_place = needs_swap && !backend->async_copy;
+}
+
+/* Derive task policy from the selected pixel path and resource counts.
+ * Having a background service does not make submission worker-exclusive:
+ * async REGION still permits task-side service to submit. */
+static void resolve_worker_policy(esp_display_present_plan_config_t *plan, const submission_policy_t *submission)
+{
+    esp_display_present_backend_config_t *backend = &plan->presenter.backend;
+    backend->shared_copy_worker = false;
+    if (plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB) {
+        backend->shared_copy_worker = plan->resources.tile_count <= 1;
+    } else if (plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_TE) {
+        backend->shared_copy_worker = plan->resources.image_count == 1;
+    }
+
+    bool synchronous_region = plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION && !backend->async_copy;
+    backend->deferred_submit = synchronous_region && submission->background;
     plan->presenter.background_service = backend->async_copy || backend->deferred_submit;
+
+    /* Zero keeps the engine's default priority (5). Only deferred REGION and
+     * concurrent TE output override it. C2's dedicated pixel worker inherits
+     * its first submitter's priority; output 7 precedes producers below 7. */
+    plan->presenter.worker_priority = 0;
+    if (backend->deferred_submit) {
+        plan->presenter.worker_priority = submission->priority;
+    } else if (plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_TE && !backend->shared_copy_worker) {
+        plan->presenter.worker_priority = 7;
+    }
 }
 
 static esp_err_t plan_resources(const esp_display_presenter_config_t *input, bool bounce,
@@ -282,7 +322,11 @@ static esp_err_t plan_resources(const esp_display_presenter_config_t *input, boo
             .logical_memory = preferred_external_memory((size_t)input->width * input->height * bytes_per_pixel, 1),
         },
     };
-    plan_pixel_path(out, input);
+    const submission_policy_t submission = read_submission_policy(input->target.io_submit);
+    resolve_pixel_path(out, input->target.drawbuf.in_psram);
+    /* Only background_service is needed to choose the automatic tile count.
+     * Final task sharing is resolved again once that count is known. */
+    resolve_worker_policy(out, &submission);
     size_t slot_bytes = tile_bytes;
     if (!framebuffer && !te && out->presenter.backend.async_copy) {
         if (tile_memory == ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA) {
@@ -304,7 +348,7 @@ static esp_err_t plan_resources(const esp_display_presenter_config_t *input, boo
             out->presenter.backend.buffer_count = out->resources.tile_count;
         }
     }
-    plan_pixel_path(out, input);
+    resolve_worker_policy(out, &submission);
     if (input->target.io_submit != ESP_DISPLAY_PRESENT_IO_SUBMIT_DEFAULT &&
             (mode.kind != ESP_DISPLAY_PRESENT_ENGINE_REGION || out->presenter.backend.async_copy)) {
         return ESP_ERR_INVALID_ARG;
@@ -505,7 +549,11 @@ static esp_err_t create_planned_engine(present_resources_t *resources, const esp
         size_t bytes = (size_t)input->width * config->presenter.backend.tile_rows * bpp;
         config->resources.tile_memory = preferred_external_memory(bytes, 1);
     }
-    plan_pixel_path(config, input);
+    /* A retry may change both tile memory and count. Recompute each decision
+     * from the final resources, without changing the submission policy. */
+    const submission_policy_t submission = read_submission_policy(input->target.io_submit);
+    resolve_pixel_path(config, input->target.drawbuf.in_psram);
+    resolve_worker_policy(config, &submission);
     config->presenter.backend.copy_execute = config->presenter.backend.async_copy ? copy_execute : NULL;
     return present_engine_create_with_plan(config, &resources->status.plan, &resources->presenter);
 }

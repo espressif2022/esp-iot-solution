@@ -250,6 +250,26 @@ foreach(variant IN ITEMS query no_query)
     add_test(NAME spi_facts_${variant} COMMAND test_spi_facts_${variant})
 endforeach()
 
+# Freeze resource policy with undefined/disabled/enabled background defaults
+# and both implicit and explicitly configured background priorities.
+foreach(variant IN ITEMS default disabled background_default background)
+    add_executable(test_resource_policy_${variant} test_resource_policy.c ${PRESENT_RESOURCE_SOURCES})
+    target_include_directories(test_resource_policy_${variant} PRIVATE ../../include ../../src)
+    target_compile_definitions(test_resource_policy_${variant} PRIVATE PRESENT_HOST=1)
+    target_compile_options(test_resource_policy_${variant} PRIVATE -Wall -Wextra -Werror -Wno-unused-function -UNDEBUG)
+    target_link_libraries(test_resource_policy_${variant} PRIVATE present_engine)
+    target_link_options(test_resource_policy_${variant} PRIVATE -Wl,--wrap=present_psram_can_fit)
+    if(variant STREQUAL "background")
+        target_compile_definitions(test_resource_policy_${variant} PRIVATE
+            CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND=1 CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY=9)
+    elseif(variant STREQUAL "background_default")
+        target_compile_definitions(test_resource_policy_${variant} PRIVATE CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND=1)
+    elseif(variant STREQUAL "disabled")
+        target_compile_definitions(test_resource_policy_${variant} PRIVATE CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND=0)
+    endif()
+    add_test(NAME resource_policy_${variant} COMMAND test_resource_policy_${variant})
+endforeach()
+
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 # Compile each split contract first, independently in C and C++, and reject
