@@ -13,12 +13,6 @@
 extern "C" {
 #endif
 
-/* Transport contract shared with creation-time geometry negotiation. */
-enum {
-    PRESENT_LCD_IO_BASE_ALIGNMENT = 64,
-    PRESENT_LCD_IO_EXTERNAL_LENGTH_ALIGNMENT = 64,
-};
-
 typedef struct esp_display_present_lcd_io esp_display_present_lcd_io_t;
 
 typedef struct {

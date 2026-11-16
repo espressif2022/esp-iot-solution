@@ -63,8 +63,8 @@ enum {
 /* Memory accounting uses three distinct quantities; do not conflate them.
  * - Peak resource budget (pixel_bytes / required_bytes): an estimate over
  *   every supported path, including borrowed buffers and the caller
- *   reservation. Async REGION and direct external REGION plans count the
- *   full conversion pool even when identity has not allocated any of it.
+ *   reservation. An async REGION plan counts the full conversion pool even
+ *   when the identity path has not allocated any of it.
  * - Pool planned capacity (each pool's count / bytes_each / total_bytes):
  *   how many buffers of what size in which memory a path may need at most.
  * - Current actual allocation: what a backend has allocated and holds right

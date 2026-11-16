@@ -26,7 +26,7 @@ struct fake_lcd {
     esp_lcd_panel_io_color_trans_done_cb_t io;
     void *user;
     const void *source;
-    unsigned calls, gets, detached, deleted, memory_queries;
+    unsigned calls, gets, detached, deleted;
     unsigned physical_width, physical_height; /* Zero: default 8x4. */
     bool attach_fail, detach_fail, psram_direct;
     bool no_bounce, one_shot, transformed, custom_bounce, one_fb;
@@ -37,13 +37,11 @@ esp_err_t esp_lcd_panel_io_spi_get_memory_info(esp_lcd_panel_io_handle_t io,
     if (!io || !info) {
         return ESP_ERR_INVALID_ARG;
     }
-    ++io->memory_queries;
     *info = (esp_lcd_panel_io_spi_memory_info_t) {
         .psram_dma_direct = io->psram_direct
     };
     return ESP_OK;
 }
-#ifndef PRESENT_HOST_CUSTOM_MEMORY_POINTERS
 bool esp_ptr_internal(const void *pixels)
 {
     return pixels != NULL;
@@ -57,7 +55,6 @@ bool esp_ptr_dma_ext_capable(const void *pixels)
     (void)pixels;
     return false;
 }
-#endif
 static unsigned executor_failure, destroy_failure, executor_calls;
 static bool unavailable = true;
 static pthread_mutex_t executor_gate = PTHREAD_MUTEX_INITIALIZER;
@@ -206,9 +203,6 @@ esp_err_t esp_lcd_panel_draw_bitmap(esp_lcd_panel_handle_t panel, int x, int y, 
 {
     assert(x >= 0 && y >= 0 && ex <= (int)(panel->physical_width ? panel->physical_width : 8) &&
            ey <= (int)(panel->physical_height ? panel->physical_height : 4) && x < ex && y < ey);
-#ifdef PRESENT_HOST_DRAW_OBSERVER
-    PRESENT_HOST_DRAW_OBSERVER(x, y, ex, ey, source);
-#endif
     pthread_mutex_lock(&panel->lock);
     panel->source = source;
     ++panel->calls;

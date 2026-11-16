@@ -11,12 +11,6 @@
 extern "C" {
 #endif
 
-/* REGION conversion storage doubles as its transfer source. */
-static inline bool present_region_conversion_in_psram(bool external_tiles, bool tx_staging)
-{
-    return external_tiles && !tx_staging;
-}
-
 struct esp_display_present_backend_config;
 struct esp_display_present_engine_config;
 /* Allocation request accounting, not allocator usable-size prediction. Counts

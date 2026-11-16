@@ -270,17 +270,6 @@ foreach(variant IN ITEMS default disabled background_default background)
     add_test(NAME resource_policy_${variant} COMMAND test_resource_policy_${variant})
 endforeach()
 
-# Exercise real external-pointer validation, lazy conversion and late retirement.
-add_executable(test_region_direct_psram test_region_direct_psram.c ${PRESENT_RESOURCE_SOURCES})
-target_include_directories(test_region_direct_psram PRIVATE ../../include ../../src)
-target_compile_definitions(test_region_direct_psram PRIVATE PRESENT_HOST=1)
-target_compile_options(test_region_direct_psram PRIVATE -Wall -Wextra -Werror -Wno-unused-function -UNDEBUG)
-target_link_libraries(test_region_direct_psram PRIVATE present_engine)
-target_link_options(test_region_direct_psram PRIVATE -Wl,--wrap=present_psram_can_fit
-    -Wl,--wrap=present_alloc_pixels_in -Wl,--wrap=present_free)
-add_test(NAME region_direct_psram COMMAND test_region_direct_psram)
-set_tests_properties(region_direct_psram PROPERTIES TIMEOUT 15)
-
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 # Compile each split contract first, independently in C and C++, and reject

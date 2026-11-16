@@ -41,8 +41,8 @@ static void region_policy(void)
         for (unsigned rotation = 0; rotation < 4; ++rotation) {
             for (unsigned count = 0; count <= 2; ++count) {
                 for (unsigned submit = 0; submit < 3; ++submit) {
-                    /* These 16-row tiles cannot satisfy quarter-turn direct
-                     * DMA geometry, so both IO capabilities retain staging. */
+                    /* Direct capability intentionally does not change the old
+                     * REGION staging policy; optimize it in a separate change. */
                     for (unsigned direct = 0; direct < 2; ++direct) {
                         esp_display_presenter_config_t input = config(NULL, false);
                         input.width = input.height = 480;
@@ -98,51 +98,6 @@ static void region_policy(void)
     psram_available = true;
 }
 
-static void direct_submission_policy(void)
-{
-    psram_available = true;
-    const bool background[] = {
-#ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND
-        CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND,
-#else
-        false,
-#endif
-        false, true,
-    };
-    for (unsigned submit = 0; submit < 3; ++submit) {
-        esp_display_presenter_config_t input = config(NULL, false);
-        input.width = input.height = 64;
-        input.target.hw.panel_type = ESP_DISPLAY_PRESENT_PANEL_IO;
-        input.target.hw.spi_psram_dma_direct = true;
-        input.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_NONE;
-        input.target.drawbuf.in_psram = true;
-        input.target.drawbuf.lines = 32;
-        input.target.drawbuf.buffers = 1;
-        input.target.io_submit = (esp_display_present_io_submit_t)submit;
-        esp_display_present_plan_config_t plan;
-        OK(present_resources_plan(&input, false, &plan));
-        assert(!plan.presenter.backend.tx_staging && !plan.presenter.backend.async_copy);
-        assert(!plan.presenter.backend.in_place && !plan.presenter.backend.shared_copy_worker);
-        assert(plan.presenter.backend.deferred_submit == background[submit]);
-        assert(plan.presenter.background_service == background[submit]);
-        plan.output = (esp_display_present_output_caps_t) {
-            .internal_dma = true, .ext_mem = true, .tight_stride = true,
-            .ext_len_align = 64,
-        };
-        esp_display_present_resolved_plan_t resolved;
-        OK(esp_display_present_plan_resolve(&plan, &resolved));
-        assert(resolved.conversion.count == 1 && resolved.conversion.memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL);
-        assert(resolved.pixel_bytes == 2 * 64 * 32 * 2); /* Peak, not initial allocation. */
-        assert(resolved.stack_bytes == (background[submit] ? 4096u : 0));
-        size_t peak = resolved.pixel_bytes;
-        plan.pixel_budget_bytes = peak - 1;
-        assert(esp_display_present_plan_resolve(&plan, &resolved) == ESP_ERR_NO_MEM);
-        plan.pixel_budget_bytes = peak;
-        OK(esp_display_present_plan_resolve(&plan, &resolved));
-        assert(resolved.conversion.count == 1 && resolved.pixel_bytes == peak);
-    }
-}
-
 static void framebuffer_and_te_workers(void)
 {
     static const esp_display_present_mode_t modes[] = {
@@ -191,7 +146,6 @@ static void framebuffer_and_te_workers(void)
 int main(void)
 {
     region_policy();
-    direct_submission_policy();
     framebuffer_and_te_workers();
     return 0;
 }

@@ -16,6 +16,11 @@
 #define PRESENT_SPI_EXTERNAL_DMA SOC_PSRAM_DMA_CAPABLE
 #endif
 
+enum {
+    PRESENT_SPI_BASE_ALIGNMENT = 64,
+    PRESENT_SPI_EXTERNAL_LENGTH_ALIGNMENT = 64,
+};
+
 typedef enum {
     STAGE_FREE, STAGE_FILLING, STAGE_READY, STAGE_SUBMITTED
 } stage_state_t;
@@ -163,7 +168,7 @@ static esp_err_t validate_tx(esp_display_present_lcd_io_t *spi, const esp_displa
         return ESP_ERR_INVALID_SIZE;
     }
     *bytes = row * area->height;
-    if (*bytes > surface->capacity_bytes || (uintptr_t)surface->pixels % PRESENT_LCD_IO_BASE_ALIGNMENT ||
+    if (*bytes > surface->capacity_bytes || (uintptr_t)surface->pixels % PRESENT_SPI_BASE_ALIGNMENT ||
             (uintptr_t)surface->pixels > UINTPTR_MAX - *bytes) {
         return ESP_ERR_INVALID_SIZE;
     }
@@ -175,7 +180,7 @@ static esp_err_t validate_tx(esp_display_present_lcd_io_t *spi, const esp_displa
     bool valid = esp_ptr_internal(surface->pixels) && esp_ptr_internal(last) &&
                  esp_ptr_dma_capable(surface->pixels) && esp_ptr_dma_capable(last);
 #if PRESENT_SPI_EXTERNAL_DMA
-    if (!valid && spi->config.psram_dma_direct && *bytes % PRESENT_LCD_IO_EXTERNAL_LENGTH_ALIGNMENT == 0) {
+    if (!valid && spi->config.psram_dma_direct && *bytes % PRESENT_SPI_EXTERNAL_LENGTH_ALIGNMENT == 0) {
         valid = esp_ptr_dma_ext_capable(surface->pixels) && esp_ptr_dma_ext_capable(last);
     }
 #endif
@@ -539,23 +544,23 @@ esp_err_t esp_display_present_lcd_io_get_output_caps(esp_display_present_lcd_io_
         .y_alignment = 1,
         .w_align = 1,
         .h_align = 1,
-        .base_alignment = PRESENT_LCD_IO_BASE_ALIGNMENT,
+        .base_alignment = PRESENT_SPI_BASE_ALIGNMENT,
         .stride_align = 1,
         .tight_stride = true,
         .full_only = false,
         .internal_dma = true,
         .ext_mem = spi->config.psram_dma_direct || spi->config.staging_bytes != 0,
         .max_inflight = spi->config.max_inflight,
-        .ext_len_align = direct_external_dma ? PRESENT_LCD_IO_EXTERNAL_LENGTH_ALIGNMENT : 1,
+        .ext_len_align = direct_external_dma ? PRESENT_SPI_EXTERNAL_LENGTH_ALIGNMENT : 1,
     };
     return ESP_OK;
 }
 
 size_t esp_display_present_lcd_io_memory(size_t staging_bytes)
 {
-    if (staging_bytes > (SIZE_MAX - sizeof(esp_display_present_lcd_io_t) - present_event_memory()) / 2 - PRESENT_LCD_IO_BASE_ALIGNMENT) {
+    if (staging_bytes > (SIZE_MAX - sizeof(esp_display_present_lcd_io_t) - present_event_memory()) / 2 - PRESENT_SPI_BASE_ALIGNMENT) {
         return SIZE_MAX;
     }
-    size_t aligned = (staging_bytes + PRESENT_LCD_IO_BASE_ALIGNMENT - 1) & ~(size_t)(PRESENT_LCD_IO_BASE_ALIGNMENT - 1);
+    size_t aligned = (staging_bytes + PRESENT_SPI_BASE_ALIGNMENT - 1) & ~(size_t)(PRESENT_SPI_BASE_ALIGNMENT - 1);
     return sizeof(esp_display_present_lcd_io_t) + (staging_bytes ? 2 * aligned + present_event_memory() : 0);
 }
