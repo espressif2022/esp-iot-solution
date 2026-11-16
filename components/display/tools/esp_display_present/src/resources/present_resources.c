@@ -71,7 +71,7 @@ static bool io_direct_psram(const esp_display_present_hw_config_t *hw)
     bool direct = hw->spi_psram_dma_direct;
 #ifdef ESP_LCD_SPI_IO_HAS_MEMORY_INFO
     esp_lcd_panel_io_spi_memory_info_t memory;
-    if (esp_lcd_panel_io_spi_get_memory_info(hw->io, &memory) == ESP_OK) {
+    if (hw->io && esp_lcd_panel_io_spi_get_memory_info(hw->io, &memory) == ESP_OK) {
         direct = memory.psram_dma_direct;
     }
 #endif
@@ -144,9 +144,53 @@ static submission_policy_t read_submission_policy(esp_display_present_io_submit_
     return policy;
 }
 
+/* Sufficient geometry for every runtime rotation, not only the initial one.
+ * The physical panel width stays fixed; quarter turns consume tile capacity
+ * in aligned physical-width bands. Use the widest logical row conservatively. */
+static bool region_direct_geometry(const esp_display_present_plan_config_t *plan)
+{
+    const esp_display_present_backend_config_t *backend = &plan->presenter.backend;
+    size_t bpp = backend->format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
+    size_t length_alignment = plan->output.ext_len_align ? plan->output.ext_len_align : PRESENT_LCD_IO_EXTERNAL_LENGTH_ALIGNMENT;
+    size_t divisor = length_alignment, value = bpp;
+    while (value) {
+        size_t remainder = divisor % value;
+        divisor = value;
+        value = remainder;
+    }
+    size_t pixels = length_alignment / divisor;
+    bool quarter = backend->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90 ||
+                   backend->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270;
+    size_t physical_width = quarter ? backend->height : backend->width;
+    size_t widest_row = backend->width > backend->height ? backend->width : backend->height;
+    size_t tile_bytes = (size_t)backend->width * bpp * backend->tile_rows;
+    return physical_width % pixels == 0 && tile_bytes / (widest_row * bpp) >= pixels;
+}
+
+/* Probe outside the pixel decision. If the external peak cannot fit, keep the
+ * existing internal conversion path instead of turning an optimization into
+ * a new creation failure. Planning does not reserve this memory. */
+static bool select_region_direct(const esp_display_present_plan_config_t *plan, bool io_direct, size_t tiles)
+{
+    if (plan->presenter.backend_kind != ESP_DISPLAY_PRESENT_ENGINE_REGION || !io_direct ||
+            plan->resources.tile_memory != ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL || !region_direct_geometry(plan)) {
+        return false;
+    }
+    const esp_display_present_backend_config_t *backend = &plan->presenter.backend;
+    /* Initial conversion stays on the established internal path: external
+     * conversion output can reduce single-tile throughput. Optimize identity
+     * submission first; runtime rotation still has its external peak budget. */
+    if (backend->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || backend->draw_order != backend->panel_order) {
+        return false;
+    }
+    size_t bpp = backend->format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
+    size_t bytes = (size_t)backend->width * bpp * backend->tile_rows;
+    return present_psram_can_fit(bytes, 2 * tiles);
+}
+
 /* Memory and layout are already selected. No IO/heap query or task creation.
  * Keep transmission staging distinct from pixel conversion requirements. */
-static void resolve_pixel_path(esp_display_present_plan_config_t *plan, bool prefer_psram)
+static void resolve_pixel_path(esp_display_present_plan_config_t *plan, bool prefer_psram, bool direct_external)
 {
     esp_display_present_backend_config_t *backend = &plan->presenter.backend;
     backend->tx_staging = false;
@@ -156,9 +200,9 @@ static void resolve_pixel_path(esp_display_present_plan_config_t *plan, bool pre
         return;
     }
 
-    /* Compatibility policy: external REGION tiles always stage for now.
-     * Direct-PSRAM eligibility, including runtime rotation, is a separate change. */
-    backend->tx_staging = plan->resources.tile_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL;
+    /* Direct eligibility includes actual IO opt-in, all rotations and the
+     * external conversion peak. Other external tiles keep internal staging. */
+    backend->tx_staging = plan->resources.tile_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL && !direct_external;
     bool needs_rotation = backend->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0;
     bool needs_swap = backend->panel_order == ESP_DISPLAY_PRESENT_ORDER_SWAPPED;
     /* Preserve out-of-place swap and runtime rotation even if the preferred
@@ -197,7 +241,7 @@ static void resolve_worker_policy(esp_display_present_plan_config_t *plan, const
 }
 
 static esp_err_t plan_resources(const esp_display_presenter_config_t *input, bool bounce,
-                                esp_display_present_plan_config_t *out, uint32_t *degradation)
+                                esp_display_present_plan_config_t *out, uint32_t *degradation, bool *out_io_direct)
 {
     if (!input || !out || !input->width || !input->height ||
             input->pixel_format < ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 || input->pixel_format > ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB888 ||
@@ -242,6 +286,10 @@ static esp_err_t plan_resources(const esp_display_presenter_config_t *input, boo
     }
     bool te = mode.kind == ESP_DISPLAY_PRESENT_ENGINE_TE;
     bool framebuffer = mode.kind == ESP_DISPLAY_PRESENT_ENGINE_FB;
+    bool direct_psram = !framebuffer && io_direct_psram(hw);
+    if (out_io_direct) {
+        *out_io_direct = direct_psram;
+    }
 #if !defined(PRESENT_HOST) && !CONFIG_FREERTOS_UNICORE && !CONFIG_ESP_IPC_ENABLE
     if (framebuffer) {
         return ESP_ERR_NOT_SUPPORTED; /* Cannot join borrowed-panel ISRs safely. */
@@ -268,7 +316,7 @@ static esp_err_t plan_resources(const esp_display_presenter_config_t *input, boo
     size_t tile_bytes = (size_t)input->width * rows * bytes_per_pixel;
     esp_display_present_plan_memory_t tile_memory = input->target.drawbuf.in_psram ? preferred_external_memory(tile_bytes, input->target.drawbuf.buffers ? input->target.drawbuf.buffers : 1) : ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA;
     esp_display_present_plan_memory_t image_memory = te ? preferred_external_memory((size_t)input->width * input->height * bytes_per_pixel, images) : ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL;
-    bool staged_te = te && image_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL && !io_direct_psram(hw);
+    bool staged_te = te && image_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL && !direct_psram;
     size_t staging = staged_te ? te_band_bytes(input) : 0;
     if (staged_te && !staging) {
         return ESP_ERR_INVALID_SIZE; /* One physical row cannot fit the bounded staging slot. */
@@ -323,7 +371,9 @@ static esp_err_t plan_resources(const esp_display_presenter_config_t *input, boo
         },
     };
     const submission_policy_t submission = read_submission_policy(input->target.io_submit);
-    resolve_pixel_path(out, input->target.drawbuf.in_psram);
+    size_t requested_tiles = input->target.drawbuf.buffers ? input->target.drawbuf.buffers : 2;
+    bool direct_external = select_region_direct(out, direct_psram, requested_tiles);
+    resolve_pixel_path(out, input->target.drawbuf.in_psram, direct_external);
     /* Only background_service is needed to choose the automatic tile count.
      * Final task sharing is resolved again once that count is known. */
     resolve_worker_policy(out, &submission);
@@ -334,7 +384,7 @@ static esp_err_t plan_resources(const esp_display_presenter_config_t *input, boo
                 return ESP_ERR_INVALID_SIZE;
             }
             slot_bytes *= 2;
-        } else {
+        } else if (!present_region_conversion_in_psram(true, out->presenter.backend.tx_staging)) {
             if (tile_bytes > (SIZE_MAX - reserved) / 2) {
                 return ESP_ERR_INVALID_SIZE;
             }
@@ -359,7 +409,7 @@ static esp_err_t plan_resources(const esp_display_presenter_config_t *input, boo
 esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bool bounce, esp_display_present_plan_config_t *out)
 {
     uint32_t degradation = 0;
-    return plan_resources(input, bounce, out, &degradation);
+    return plan_resources(input, bounce, out, &degradation, NULL);
 }
 
 static esp_err_t copy_execute(void *user, const esp_display_present_copy_request_t *request)
@@ -501,10 +551,9 @@ static esp_err_t create_scanout_adapter(present_resources_t *resources, const es
 
 /* Direct DMA requires driver facts or an explicit matching IO declaration. */
 static esp_err_t create_lcd_io_adapter(present_resources_t *resources, const esp_display_presenter_config_t *input,
-                                       esp_display_present_plan_config_t *config)
+                                       esp_display_present_plan_config_t *config, bool direct_psram)
 {
     esp_err_t error;
-    bool direct_psram = io_direct_psram(&input->target.hw);
     size_t staging = resources->te_required && config->resources.image_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL && !direct_psram ? te_band_bytes(input) : 0;
     esp_display_present_lcd_io_config_t spi = {
         .panel = input->target.hw.panel,
@@ -528,7 +577,7 @@ static esp_err_t create_lcd_io_adapter(present_resources_t *resources, const esp
 }
 
 static esp_err_t create_planned_engine(present_resources_t *resources, const esp_display_presenter_config_t *input,
-                                       esp_display_present_plan_config_t *config)
+                                       esp_display_present_plan_config_t *config, bool direct_psram)
 {
     /* Single resolve per attempt: status.plan is the plan actually used. */
     config->presenter.backend.copy_execute = config->presenter.backend.async_copy ? copy_execute : NULL;
@@ -552,7 +601,8 @@ static esp_err_t create_planned_engine(present_resources_t *resources, const esp
     /* A retry may change both tile memory and count. Recompute each decision
      * from the final resources, without changing the submission policy. */
     const submission_policy_t submission = read_submission_policy(input->target.io_submit);
-    resolve_pixel_path(config, input->target.drawbuf.in_psram);
+    bool direct_external = select_region_direct(config, direct_psram, config->resources.tile_count);
+    resolve_pixel_path(config, input->target.drawbuf.in_psram, direct_external);
     resolve_worker_policy(config, &submission);
     config->presenter.backend.copy_execute = config->presenter.backend.async_copy ? copy_execute : NULL;
     return present_engine_create_with_plan(config, &resources->status.plan, &resources->presenter);
@@ -567,7 +617,8 @@ esp_err_t present_resources_create(const esp_display_presenter_config_t *input, 
     *out = NULL;
     esp_display_present_plan_config_t config;
     uint32_t degradation = 0;
-    esp_err_t error = plan_resources(input, bounce, &config, &degradation);
+    bool direct_psram = false;
+    esp_err_t error = plan_resources(input, bounce, &config, &degradation, &direct_psram);
     if (error != ESP_OK) {
         return error;
     }
@@ -594,12 +645,12 @@ esp_err_t present_resources_create(const esp_display_presenter_config_t *input, 
     if (config.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB) {
         error = create_scanout_adapter(resources, input, bounce, on_vsync, vsync_user, &config);
     } else {
-        error = create_lcd_io_adapter(resources, input, &config);
+        error = create_lcd_io_adapter(resources, input, &config, direct_psram);
     }
     config.presenter.backend.copy_user = resources;
     config.presenter.backend.te_gate.user = resources;
     if (error == ESP_OK) {
-        error = create_planned_engine(resources, input, &config);
+        error = create_planned_engine(resources, input, &config, direct_psram);
     }
     if (error != ESP_OK) {
         /* No hardware work has been submitted. Attach failure guarantees no

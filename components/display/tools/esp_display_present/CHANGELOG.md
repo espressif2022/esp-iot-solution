@@ -2,6 +2,14 @@
 
 ## 2.0.0 — Unreleased
 
+- Allow eligible native 0-degree Panel-IO REGION tiles to use PSRAM direct
+  DMA, with conservative geometry checks covering runtime rotation. Initial
+  rotation or byte swapping retains internal conversion for throughput.
+  Native direct submission skips conversion allocation and unnecessary workers.
+- Include the lazy conversion pool in direct-external REGION peak budgets.
+  Low-level planned callers using a previous draw-only budget may now receive
+  `ESP_ERR_NO_MEM`; the larger budget covers packing and runtime rotation.
+
 - Allow synchronous Panel-IO NONE submission to select CALLER or BACKGROUND
   per presenter; DEFAULT preserves the existing Kconfig policy.
 - Run single-image TE composition on the existing backend worker while

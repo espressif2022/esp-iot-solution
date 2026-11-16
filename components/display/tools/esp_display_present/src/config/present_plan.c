@@ -331,7 +331,9 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
             !pool(&plan->logical, logical, plan->logical_layout, alignment, config->resources.logical_memory, false)) {
         return ESP_ERR_INVALID_SIZE;
     }
-    bool convert = kind == ESP_DISPLAY_PRESENT_ENGINE_REGION && (backend_config->async_copy || backend_config->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || (backend_config->draw_order != backend_config->panel_order && !backend_config->in_place));
+    /* Direct external identity allocates no conversion initially, but packing
+     * or runtime rotation can need the whole pool later. Budget the peak. */
+    bool convert = kind == ESP_DISPLAY_PRESENT_ENGINE_REGION && (external_tx || backend_config->async_copy || backend_config->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || (backend_config->draw_order != backend_config->panel_order && !backend_config->in_place));
     esp_display_present_layout_t converted = tile;
     converted.byte_order = backend_config->panel_order;
     if (quarter) {
@@ -339,7 +341,10 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
             return ESP_ERR_INVALID_SIZE;
         }
     }
-    if (!pool(&plan->conversion, convert ? tiles : 0, converted, alignment, backend_config->tx_staging ? ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA : config->resources.tile_memory, false)) {
+    esp_display_present_plan_memory_t conversion_memory = present_region_conversion_in_psram(
+                                                              config->resources.tile_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL, backend_config->tx_staging) ?
+                                                          ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL : ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA;
+    if (!pool(&plan->conversion, convert ? tiles : 0, converted, alignment, conversion_memory, false)) {
         return ESP_ERR_INVALID_SIZE;
     }
     esp_display_present_plan_memory_t tx_memory = transport_memory;

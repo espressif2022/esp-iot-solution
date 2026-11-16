@@ -72,7 +72,7 @@ struct present_backend {
 
 static bool converted_external(const esp_display_present_backend_config_t *config)
 {
-    return config->tile_in_psram && !config->tx_staging;
+    return present_region_conversion_in_psram(config->tile_in_psram, config->tx_staging);
 }
 
 static bool valid_area(const present_backend_t *backend, const esp_display_present_rect_t *area)
