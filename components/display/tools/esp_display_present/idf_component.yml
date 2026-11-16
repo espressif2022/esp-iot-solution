@@ -15,6 +15,8 @@ files:
   exclude:
     - "dist/**/*"
     - "dev/**/*"
+    - "tests/**/*"
+    - "test_apps/**/*"
 sbom:
   supplier: 'Organization: Espressif Systems (Shanghai) CO LTD'
   originator: 'Organization: Espressif Systems (Shanghai) CO LTD'

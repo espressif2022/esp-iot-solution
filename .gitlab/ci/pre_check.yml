@@ -110,9 +110,9 @@ check_readme_links:
       set -eu
       component="$CI_PROJECT_DIR/components/display/tools/esp_display_present"
       if [ "$PRESENT_HOST_SANITIZE" = ON ]; then
-        python3 "$component/dev/tools/dev.py" test --sanitize $PRESENT_HOST_LVGL_ARGS
+        python3 "$component/tests/run.py" test --sanitize $PRESENT_HOST_LVGL_ARGS
       else
-        python3 "$component/dev/tools/dev.py" test $PRESENT_HOST_LVGL_ARGS
+        python3 "$component/tests/run.py" test $PRESENT_HOST_LVGL_ARGS
       fi
 
 check_display_present_host:

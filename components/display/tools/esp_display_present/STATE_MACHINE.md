@@ -1,6 +1,6 @@
 # State machines
 
-The component uses one presentation engine. See [mode contracts](docs/MODE_ARCHITECTURE.md), [compatibility](COMPATIBILITY.md) and [regression instructions](dev/README.md).
+The component uses one presentation engine. See [mode contracts](docs/MODE_ARCHITECTURE.md), [compatibility](COMPATIBILITY.md) and [regression instructions](tests/host/README.md).
 
 
 ## GRAM cancellation, deadlines and retirement
@@ -247,11 +247,11 @@ misuse returns its error to the caller without latching a fault. This is an
 observable classification contract: a non-timeout transfer failure must not
 be reported as a timeout, because the two suggest different recovery.
 
-Host regressions in `dev/tests/test_legacy_facade.c` cover one/two exhausted
+Host regressions in `tests/host/test_legacy_facade.c` cover one/two exhausted
 GRAM tiles, independent admission/transfer deadlines, and STOP reaching the
 facade mutex after acquire enters its event wait. Test-only linker wrappers
 establish that ordering with condition variables. They do not change firmware.
-`dev/tests/test_transfer_timeout.c` uses a controlled clock to exercise DONE
+`tests/host/test_transfer_timeout.c` uses a controlled clock to exercise DONE
 at deadline minus one microsecond, exactly at deadline, and plus one microsecond,
 with task observation before/after DONE and cancellation/failed STOP before DONE.
 It also covers cancellation after only one of two transfers completes. Tests

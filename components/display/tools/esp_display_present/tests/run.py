@@ -34,13 +34,13 @@ def main():
         if not formatter:
             parser.error('astyle_py not found; install the repository formatting tool')
         subprocess.run([formatter, '--astyle-version=3.4.7', '--version'], check=True)
-        rules = ROOT.parents[4] / 'tools/ci/astyle-rules.yml'
-        files = sorted(p for directory in ('../src', '../include', '../private_include', '../../esp_lv_present/src', '../../esp_lv_present/include', 'tests', 'test_apps/smoke/main')
+        rules = ROOT.parents[3] / 'tools/ci/astyle-rules.yml'
+        files = sorted(p for directory in ('src', 'include', 'private_include', '../esp_lv_present/src', '../esp_lv_present/include', 'tests/host', 'test_apps/smoke/main')
                        for p in (ROOT / directory).rglob('*') if p.suffix in ('.c', '.h', '.cpp'))
         # Preserve the five stable application headers byte-for-byte on writes;
         # check mode still checks them against the repository rules.
         if not args.check:
-            stable = {(ROOT / '../include').resolve(), (ROOT / '../../esp_lv_present/include').resolve()}
+            stable = {(ROOT / 'include').resolve(), (ROOT / '../esp_lv_present/include').resolve()}
             files = [p for p in files if p.parent.resolve() not in stable]
         command = [formatter, '--astyle-version=3.4.7', f'--rules={rules}']
         if args.check:
@@ -50,8 +50,8 @@ def main():
     lvgl = None
     if args.with_lvgl or args.lvgl_dir or args.gsp_dir:
         candidates = [args.lvgl_dir] if args.lvgl_dir else [
-            ROOT.parents[4] / 'examples/display/gui/lvgl_present_benchmark/managed_components/lvgl__lvgl',
-            ROOT.parents[1] / 'esp_lvgl_adapter/test_apps/lvgl9/managed_components/lvgl__lvgl',
+            ROOT.parents[3] / 'examples/display/gui/lvgl_present_benchmark/managed_components/lvgl__lvgl',
+            ROOT.parent / 'esp_lvgl_adapter/test_apps/lvgl9/managed_components/lvgl__lvgl',
             *sorted((Path.home() / '.cache/Espressif/ComponentManager').glob('*/lvgl__lvgl_9.5.0_*')),
         ]
         lvgl = next((p.resolve() for p in candidates if p and (p / 'lvgl.h').is_file()), None)
@@ -77,7 +77,7 @@ def main():
     if args.gsp_dir:
         mode += '-gsp'
     build = (args.build_dir or Path(os.environ.get('PRESENT_TEST_WORK_ROOT', '/tmp/esp-display-present-tests')) / mode).resolve()
-    subprocess.run(['cmake', '-S', str(ROOT), '-B', str(build),
+    subprocess.run(['cmake', '-S', str(ROOT / 'tests/host'), '-B', str(build),
                     '-DCMAKE_BUILD_TYPE=Debug',
                     f"-DPRESENT_LVGL_DIR={lvgl or ''}",
                     f"-DPRESENT_GSP_DIR={args.gsp_dir.resolve() if args.gsp_dir else ''}",

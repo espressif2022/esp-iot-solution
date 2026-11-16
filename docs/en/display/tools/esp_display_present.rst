@@ -96,7 +96,7 @@ The LVGL benchmark example lives in
 ``examples/display/gui/lvgl_present_benchmark``. The GSP/LVGL ownership
 handoff example lives in ``examples/display/gui/gsp_lvgl_present_handoff``.
 The compile/loopback smoke fixture lives in
-``components/display/tools/esp_display_present/dev/test_apps/smoke``.
+``components/display/tools/esp_display_present/test_apps/smoke``.
 
 API Reference
 -------------

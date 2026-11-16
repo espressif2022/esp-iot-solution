@@ -1,10 +1,5 @@
 /build*/
 /dist/
+/dev/
 **/__pycache__/
 *.pyc
-/dev/**/build*/
-/dev/**/managed_components/
-/dev/**/sdkconfig
-/dev/**/sdkconfig.old
-# Measurement outputs are MR attachments, not source assets.
-/dev/evidence/

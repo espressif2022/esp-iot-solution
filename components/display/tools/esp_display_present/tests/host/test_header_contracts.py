@@ -66,7 +66,7 @@ def main():
     args = parser.parse_args()
     component = pathlib.Path(__file__).resolve().parents[2]
     flags = ['-DPRESENT_HOST=1', '-I' + str(component / 'private_include'),
-             '-I' + str(component / 'include'), '-I' + str(component / 'dev/tests/support')]
+             '-I' + str(component / 'include'), '-I' + str(component / 'tests/host/support')]
     with tempfile.TemporaryDirectory(prefix='present-header-contract-') as temp:
         for header in HEADERS:
             internal = [] if (component / 'private_include' / header).exists() else ['-I' + str(component / 'src')]

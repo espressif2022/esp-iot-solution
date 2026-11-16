@@ -25,7 +25,7 @@ internal-tile GRAM work on the backend worker outside the engine gate. It is off
 by default; its priority is configured separately. Whole framebuffer/copy object
 placement in IRAM is not forced; explicit ISR/pixel `IRAM_ATTR` annotations remain.
 
-[Host regression and target smoke instructions](dev/README.md) describe the
+[Host regression and target smoke instructions](tests/host/README.md) describe the
 maintained test entry points. Performance measurements and raw hardware evidence
 belong to the MR validation attachments, with their tested source/configuration;
 they are not a claim about every later revision. Receipt completion and pixel

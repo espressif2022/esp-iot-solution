@@ -7,12 +7,12 @@ if(NOT EXISTS "${gsp_adapter}/src/esp_gsp_esp_lcd.c" OR
    NOT EXISTS "${gsp_runtime}/esp_gsp_idf_runtime.c" OR
    NOT EXISTS "${gsp_bundle}" OR
    NOT EXISTS "${PRESENT_GSP_DIR}/cmake/gsp_portable_targets.cmake")
-    message(FATAL_ERROR "PRESENT_GSP_DIR must point to a GSP source checkout with the split adapter and Host fixtures. See dev/README.md.")
+    message(FATAL_ERROR "PRESENT_GSP_DIR must point to a GSP source checkout with the split adapter and Host fixtures. See tests/host/README.md.")
 endif()
 include("${PRESENT_GSP_DIR}/cmake/gsp_portable_targets.cmake")
 gsp_add_portable_targets("${PRESENT_GSP_DIR}")
-set(gsp_shim tests/support/gsp_host)
-add_executable(test_gsp_lvgl_integration tests/test_gsp_lvgl_integration.c
+set(gsp_shim support/gsp_host)
+add_executable(test_gsp_lvgl_integration test_gsp_lvgl_integration.c
     "${gsp_shim}/gsp_host_freertos.c"
     "${gsp_shim}/gsp_host_disabled.c"
     "${gsp_adapter}/src/esp_gsp_esp_lcd.c"
@@ -20,7 +20,7 @@ add_executable(test_gsp_lvgl_integration tests/test_gsp_lvgl_integration.c
     "${gsp_runtime}/esp_gsp_idf_runtime.c")
 set_source_files_properties("${gsp_runtime}/esp_gsp_idf_runtime.c" PROPERTIES COMPILE_DEFINITIONS ESP_PLATFORM=1)
 target_include_directories(test_gsp_lvgl_integration PRIVATE
-    "${gsp_shim}" tests/support
+    "${gsp_shim}" support
     "${gsp_adapter}/include"
     "${PRESENT_GSP_DIR}/ci/host/shim")
 target_link_libraries(test_gsp_lvgl_integration PRIVATE present_legacy_lvgl present_legacy gsp_portable_app m)

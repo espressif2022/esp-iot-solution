@@ -16,7 +16,7 @@
   classification. This changes the reported reason for non-timeout failures;
   applications must not treat the new reason as a timeout. The classification
   contract and matrix are documented in `STATE_MACHINE.md` and covered by
-  `fault_classification_matrix` in `dev/tests/test_legacy_facade.c`.
+  `fault_classification_matrix` in `tests/host/test_legacy_facade.c`.
 - Keep the main presenter API and component name, backed by one internal engine.
 - Remove the superseded implementation and private-source dependencies.
 - Require multi-framebuffer scanout for RGB/MIPI; reject NONE and single-FB

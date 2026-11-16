@@ -1,18 +1,19 @@
 # Component regression tests
 
-This directory contains tests of production code and a minimal ESP-IDF smoke
-application. Benchmark datasets, lab device identities, board diagnostics and
-historical experiment reports are maintained outside the component repository.
+This directory contains Host regressions of production code. The target smoke
+application lives in `../../test_apps/smoke`; `../run.py` is the shared entry.
+Benchmark datasets, lab device identities and board diagnostics are local-only
+under `../../dev` and are not required by formal tests or distributed packages.
 
 ## Host
 
 CMake, a C/C++ compiler, Threads and Python 3 are required. From the component root:
 
 ```sh
-python3 dev/tools/dev.py test
-python3 dev/tools/dev.py test --sanitize
-python3 dev/tools/dev.py test --lvgl-dir /path/to/lvgl
-python3 dev/tools/dev.py test --lvgl-dir /path/to/lvgl --sanitize
+python3 tests/run.py test
+python3 tests/run.py test --sanitize
+python3 tests/run.py test --lvgl-dir /path/to/lvgl
+python3 tests/run.py test --lvgl-dir /path/to/lvgl --sanitize
 ```
 
 LVGL tests require an existing LVGL 9 source checkout; this runner never downloads
@@ -36,8 +37,8 @@ Host fixture `ci/host/data/out_nav/nav.gspb`. No GSP source or bundle is vendore
 Activate ESP-IDF 6.0 or newer, then run:
 
 ```sh
-python3 dev/tools/dev.py idf-build --target esp32s3
-python3 dev/tools/dev.py idf-build --target esp32p4
+python3 tests/run.py idf-build --target esp32s3
+python3 tests/run.py idf-build --target esp32p4
 ```
 
 This application verifies target API and link integration using a loopback

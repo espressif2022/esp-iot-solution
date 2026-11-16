@@ -6,7 +6,7 @@
 
 公开应用头位于 `include`；`src` 内头文件均为内部实现，不作为应用 API 导出。当前版本不再公开旧几何头和其中的坐标／尺寸类型；依赖这些接口的应用需单独迁移，不能将其视为完全源码兼容。
 
-本地依赖只需 `esp_display_present`，LVGL 场景再加入 `esp_lv_present`，不再需要 V2 组件。源码合并不代表已发布 Registry 包或确认全部外部兼容。兼容范围见 [迁移说明](COMPATIBILITY.md)，回归入口见 [开发说明](dev/README.md)。
+本地依赖只需 `esp_display_present`，LVGL 场景再加入 `esp_lv_present`，不再需要 V2 组件。源码合并不代表已发布 Registry 包或确认全部外部兼容。兼容范围见 [迁移说明](COMPATIBILITY.md)，回归入口见 [开发说明](tests/host/README.md)。
 
 ## 一键初始化
 
@@ -190,4 +190,4 @@ LVGL FULL 和原生 0° DIRECT 先取得可写租约再绑定像素，提交／�
 
 `CONFIG_ESP_DISPLAY_PRESENT_FB_IRAM` 及整组对象链接映射已移除；显式 ISR/pixel 的 `IRAM_ATTR` 保留。panel 物理尺寸固定，backend 维护逻辑宽高；运行时旋转后应重新查询 caps。S31 GRAM 缺少旋转目标存储时仍可能拒绝运行时旋转。
 
-[Host 回归与目标 smoke](dev/README.md) 覆盖生产代码的所有权、失败恢复、预算及绑定行为。板级 benchmark、adapter 对比、详细内存数据和实验日志由 MR 验证附件单独维护，不纳入组件源码。数据应绑定测试版本与实际配置，不能把历史成绩当成新版本结果；串口完成及交接检查不能单独证明光学无撕裂。
+[Host 回归与目标 smoke](tests/host/README.md) 覆盖生产代码的所有权、失败恢复、预算及绑定行为。板级 benchmark、adapter 对比、详细内存数据和实验日志由 MR 验证附件单独维护，不纳入组件源码。数据应绑定测试版本与实际配置，不能把历史成绩当成新版本结果；串口完成及交接检查不能单独证明光学无撕裂。

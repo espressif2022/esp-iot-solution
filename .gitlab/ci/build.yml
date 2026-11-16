@@ -1709,9 +1709,9 @@ build_components_display_tools_esp_display_present_test_apps:
       - IMAGE: [espressif/idf:release-v6.0, espressif/idf:release-v6.1, espressif/idf:latest]
         IDF_TARGET: [esp32s3, esp32p4]
   variables:
-    EXAMPLE_DIR: components/display/tools/esp_display_present/dev/test_apps/smoke
+    EXAMPLE_DIR: components/display/tools/esp_display_present/test_apps/smoke
   script:
-    - python3 components/display/tools/esp_display_present/dev/tools/dev.py idf-build --target "$IDF_TARGET" --build-dir "$CI_PROJECT_DIR/build-present-smoke-$IDF_TARGET"
+    - python3 components/display/tools/esp_display_present/tests/run.py idf-build --target "$IDF_TARGET" --build-dir "$CI_PROJECT_DIR/build-present-smoke-$IDF_TARGET"
 
 build_components_display_tools_esp_lv_present_test_apps:
   extends:
