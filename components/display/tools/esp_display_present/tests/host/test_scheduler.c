@@ -20,6 +20,7 @@ typedef struct {
     uint64_t cookie;
     unsigned submissions;
     unsigned quiesces;
+    unsigned aborts;
     bool blocked;
     bool release;
     bool reject;
@@ -90,6 +91,15 @@ static esp_err_t quiesce(void *context, uint32_t timeout)
     return result;
 }
 
+static void request_abort(void *context)
+{
+    panel_t *p = context;
+    pthread_mutex_lock(&p->lock);
+    ++p->aborts;
+    pthread_cond_broadcast(&p->condition);
+    pthread_mutex_unlock(&p->lock);
+}
+
 static void init_panel(panel_t *p)
 {
     *p = (panel_t) {
@@ -126,6 +136,7 @@ static esp_display_present_engine_t *create(panel_t *panel, bool fb)
         .backend_kind = fb ? ESP_DISPLAY_PRESENT_ENGINE_FB : ESP_DISPLAY_PRESENT_ENGINE_TE,
         .timeout_ms = 1000, .background_service = true
     };
+    config.backend.panel.request_abort = request_abort;
     esp_display_present_engine_t *p;
     OK(esp_display_present_engine_create(&config, &p));
     return p;
@@ -471,6 +482,128 @@ static void gram_timeout_during_driver_call(void)
     destroy(p, &panel);
 }
 
+/* TE driver calls may block; the worker must lend the engine gate just as
+ * REGION does, so foreground status and bounded stop remain usable. */
+static void te_driver_block_and_stop(void)
+{
+    panel_t panel;
+    init_panel(&panel);
+    panel.blocked = true;
+    esp_display_present_engine_t *p = create(&panel, false);
+    frame(p);
+    esp_display_present_engine_notify_te_isr(p, present_now_us());
+    wait_submit(&panel, 1);
+    esp_display_present_engine_status_t status;
+    OK(esp_display_present_engine_get_status(p, &status));
+    assert(esp_display_present_engine_stop(p, 5) == ESP_ERR_TIMEOUT);
+    assert(esp_display_present_engine_destroy(p) == ESP_ERR_INVALID_STATE);
+    pthread_mutex_lock(&panel.lock);
+    assert(panel.quiesces == 0 && panel.submissions == 1 && panel.aborts >= 1);
+    assert(*(const uint16_t *)panel.surface.pixels == 0xabab);
+    panel.release = panel.immediate = true;
+    pthread_cond_broadcast(&panel.condition);
+    pthread_mutex_unlock(&panel.lock);
+    destroy(p, &panel);
+}
+
+static esp_display_present_engine_t *create_shared_te(panel_t *panel, unsigned tiles, bool stalled)
+{
+    esp_display_present_engine_config_t config = {
+        .backend_kind = ESP_DISPLAY_PRESENT_ENGINE_TE,
+        .backend = {
+            .width = 4, .height = 4, .tile_rows = 2, .buffer_count = tiles,
+            .compose_count = 1, .max_frames = 4, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+            .async_copy = true, .shared_copy_worker = true,
+            .copy_execute = stalled ? stalled_copy : NULL, .copy_user = panel,
+            .te_window_us = 1000000, .te_budget_us = 1000,
+            .panel = {panel, attach, submit, quiesce, request_abort},
+        },
+        .timeout_ms = stalled ? 5 : 1000, .background_service = true,
+    };
+    esp_display_present_engine_t *engine = NULL;
+    OK(esp_display_present_engine_create(&config, &engine));
+    return engine;
+}
+
+/* Both input pool sizes retain async copy, including runtime rotation and
+ * a driver call that blocks while foreground APIs and bounded stop run. */
+/* Model recurring GPIO edges: asynchronous composition may become READY after
+ * commit returns, so a single earlier edge must not be treated as admission. */
+static void wait_shared_te_submit(esp_display_present_engine_t *engine, panel_t *panel, unsigned count)
+{
+    uint64_t start = present_now_ms();
+    for (;;) {
+        pthread_mutex_lock(&panel->lock);
+        bool ready = panel->submissions >= count;
+        pthread_mutex_unlock(&panel->lock);
+        if (ready) {
+            return;
+        }
+        assert(present_now_ms() - start < 2000);
+        esp_display_present_engine_notify_te_isr(engine, present_now_us());
+        present_pause();
+    }
+}
+
+static void shared_te_pipeline(void)
+{
+    for (unsigned tiles = 1; tiles <= 2; ++tiles) {
+        panel_t panel;
+        init_panel(&panel);
+        esp_display_present_engine_t *engine = create_shared_te(&panel, tiles, false);
+        frame(engine);
+        esp_display_present_engine_notify_te_isr(engine, present_now_us());
+        wait_shared_te_submit(engine, &panel, 1);
+        complete(&panel);
+        OK(esp_display_present_engine_drain(engine, 1000));
+        OK(esp_display_present_engine_set_rotation(engine, ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90, 1000));
+        pthread_mutex_lock(&panel.lock);
+        panel.blocked = true;
+        pthread_mutex_unlock(&panel.lock);
+        frame(engine);
+        esp_display_present_engine_notify_te_isr(engine, present_now_us());
+        wait_shared_te_submit(engine, &panel, 2);
+        esp_display_present_engine_status_t status;
+        OK(esp_display_present_engine_get_status(engine, &status));
+        assert(esp_display_present_engine_stop(engine, 5) == ESP_ERR_TIMEOUT);
+        assert(esp_display_present_engine_destroy(engine) == ESP_ERR_INVALID_STATE);
+        pthread_mutex_lock(&panel.lock);
+        assert(panel.aborts && !panel.quiesces);
+        panel.release = panel.immediate = true;
+        pthread_cond_broadcast(&panel.condition);
+        pthread_mutex_unlock(&panel.lock);
+        destroy(engine, &panel);
+    }
+}
+
+static void shared_te_cancel_copy_stop(void)
+{
+    panel_t panel;
+    init_panel(&panel);
+    esp_display_present_engine_t *engine = create_shared_te(&panel, 1, true);
+    esp_display_present_frame_request_t request = {.full_redraw = true};
+    OK(esp_display_present_engine_begin_next_frame(engine, &request));
+    esp_display_present_lease_t source = gram_tile(engine, 0);
+    struct timespec deadline;
+    clock_gettime(CLOCK_MONOTONIC, &deadline);
+    deadline.tv_sec += 2;
+    pthread_mutex_lock(&panel.lock);
+    while (!panel.copy_entered) {
+        assert(pthread_cond_timedwait(&panel.condition, &panel.lock, &deadline) == 0);
+    }
+    pthread_mutex_unlock(&panel.lock);
+    assert(esp_display_present_engine_cancel_frame(engine) == ESP_ERR_TIMEOUT);
+    assert(esp_display_present_engine_stop(engine, 5) == ESP_ERR_TIMEOUT);
+    assert(esp_display_present_engine_destroy(engine) == ESP_ERR_INVALID_STATE);
+    assert(*(const uint16_t *)source.surface.pixels == 0xabab);
+    pthread_mutex_lock(&panel.lock);
+    assert(panel.submissions == 0 && panel.quiesces == 0);
+    panel.release = true;
+    pthread_cond_broadcast(&panel.condition);
+    pthread_mutex_unlock(&panel.lock);
+    destroy(engine, &panel);
+}
+
 static void wait_te_stop(void)
 {
     panel_t panel;
@@ -505,6 +638,9 @@ int main(void)
     gram_zero_copy_backpressure();
     gram_uncertain_keeps_pixels();
     gram_timeout_during_driver_call();
+    te_driver_block_and_stop();
+    shared_te_pipeline();
+    shared_te_cancel_copy_stop();
     wait_te_stop();
     failure_cleanup();
     puts("Scheduler: autonomous TE/FB, queued FB, early callback, bounded join and parked exit passed");

@@ -2,6 +2,17 @@
 
 ## 2.0.0 — Unreleased
 
+- Allow synchronous Panel-IO NONE submission to select CALLER or BACKGROUND
+  per presenter; DEFAULT preserves the existing Kconfig policy.
+- Run single-image TE composition on the existing backend worker while
+  retaining asynchronous copy ownership; dual-image TE keeps its pixel worker.
+- Detect TE short-pulse polarity after enabling the input, using a bounded
+  startup sample instead of a single level that may land inside the pulse.
+- Prioritize dual-image TE output over its pixel worker to reduce bounded
+  DMA staging refill gaps during concurrent rendering.
+- Configure the default tile-byte target and per-slot TE staging limit through
+  Kconfig, with shared factory/plan rounding rules and explicit tile-row overrides.
+
 - Declare the public geometry/scanout compatibility break explicitly; see
   `COMPATIBILITY.md` before upgrading from 1.x.
 - Detect optional SDK acceleration/DPI callback APIs during configuration;

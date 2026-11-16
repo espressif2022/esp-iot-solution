@@ -77,9 +77,10 @@ reason about backend state as if the gate alone made it single-threaded.
   background mode. Each pass can first execute one queued FB copy outside
   the gate, then takes the gate, runs one `service` pass plus transfer-deadline
   expiry, releases the gate and wakes the owner.
-  For a background REGION backend it is also the only context allowed to
-  enter the panel driver submit; foreground calls that reach a ready slot
-  signal the worker instead.
+  For background REGION and TE backends it is also the only context allowed
+  to enter the panel driver submit; foreground calls that reach a ready slot
+  signal the worker instead. TE checks this identity before pinning/admission,
+  so a foreground service pass cannot consume an edge and then reject submit.
   While the worker is inside the driver submit it lends the gate back,
   with the submitting slots pinned; backend task state is only resolved
   after the gate is reacquired.
@@ -94,8 +95,8 @@ the gate, waits on the instance `changed` event, and uses the remaining
 budget to reacquire it. If reacquisition expires, the waiter returns without
 accessing gated state. A running backend worker advances hardware during
 these observations. Cooperative driver calls already entered by a task are
-not preempted by the deadline. STOP first publishes CLOSING and joins the
-backend worker within the total remaining budget, without holding the gate.
+not preempted by the deadline. STOP first publishes CLOSING, requests the adapter to stop future bands
+when that internal hook exists, and joins the backend worker within the total remaining budget, without holding the gate.
 A shared copy waiting for a missing hardware callback makes this join time out;
 the worker, tickets and buffers remain alive for a later completion and STOP
 retry. After a successful join, `present_presenter_control_stop` takes the gate
@@ -108,9 +109,9 @@ and, as above, mutate backend state under the backend's own lock.
 The pixel-copy queue is a separate, narrower domain per pixel engine instance
 (not a global queue shared across instances). It dispatches queued copies
 strictly by ascending token, one at a time. Advanced asynchronous configurations
-use a dedicated pixel worker. The facade's FB paths with at most one input tile
-instead let the existing backend worker consume this queue outside the engine
-gate; this avoids a separate 4096-byte stack and preserves bounded owner waits.
+use a dedicated pixel worker. The facade's FB paths with at most one input tile and TE paths with one
+compose image instead let the existing backend worker consume this queue
+outside the engine gate; this avoids a separate 4096-byte stack and preserves bounded owner waits.
 The backend worker retains its own priority. Stop cancels unstarted shared
 copies without entering the hardware executor; an already-running copy must
 finish before its storage is released.
@@ -208,23 +209,42 @@ There are two distinct levels of splitting:
 1. **Driver chunks:** one successful `tx_color` produces one color-done
    callback after its last SPI chunk. The source must remain valid until
    that callback, even if `draw_bitmap` has already returned.
-2. **Present staging bands:** creation with staging forces adapter capacity
-   to one transaction. `stage_transfer` reuses one scratch buffer, submits one band and
-   waits for that band's real color-done before copying the next band.
-   `finish_color` signals intermediate bands without popping the cookie;
-   only the final band's completion publishes logical success. A pending
-   band's timeout does not prove DMA stopped: storage stays pinned until
-   real completion. If submission fails without a final callback, quiesce
-   may time out while retaining storage; it must not fabricate completion.
+2. **Present staging bands:** the public TE factory selects two internal DMA
+   slots for PSRAM compose images without direct DMA. Each slot uses the
+   configured `ESP_DISPLAY_PRESENT_TE_STAGING_SLOT_BYTES` budget (default
+   16 KiB), rounded down to physical whole rows. Internal images and direct PSRAM
+   DMA use no stages. The adapter allows one logical transaction and one DMA
+   band at a time. The existing backend worker fills the other slot while the
+   current band sends; it never rewrites a submitted slot until `draw_bitmap`
+   has returned AND that band's real color-done has arrived. Final wire length
+   is the actual pixel length, independent of allocation/cache alignment.
+   `finish_color` only records band completion and wakes the task; it never
+   copies or submits from ISR. Wakeups may coalesce: slot flags are authoritative.
+   A logical cookie is published once, after submit exits and every submitted
+   slot retires. This includes late completion after timeout or abort.
+   A failure before any draw reservation is a clean REJECTED operation, with
+   no completion and no forced closure. Once a draw is reserved, errors remain
+   UNCERTAIN until genuine retirement. Submit commits its result before logical
+   publication; a later abort cannot change that completed result.
+   The internal `request_abort` hook closes the adapter and stops future bands;
+   it neither aborts DMA nor unregisters callbacks. Engine stop calls it before
+   joining the worker; transfer expiry also calls it. Ordinary producer frame
+   cancel retains its existing pre-commit semantics. A pending band's timeout
+   or a driver error without final callback cannot prove DMA stopped: quiesce
+   returns TIMEOUT and retains buffers/context. No completion is fabricated.
 
 The adapter also permits completion before `draw_bitmap` returns: it queues
-the cookie before entering the panel driver. Callback removal is not a DMA
+the cookie before entering the panel driver. In direct mode the early
+color-done proves DMA retirement, not successful return of the enclosing driver
+call; transaction resolution still records a later submit error. Callback removal is not a DMA
 drain; quiesce first waits for outstanding cookies, active callbacks and the
 submit call itself to retire. Host `test_lcd_io.c` covers FIFO cookies, early
-completion, staged delayed reads and timeout retention with a fake panel;
+completion, two-slot prefill/reuse, exact tail lengths, abort, delayed reads
+and timeout retention with a fake panel;
 it does not verify the hardware driver's ordering. Recheck both the panel's
 one-color-transfer contract and the IDF queue/callback path when changing
-drivers or supported revisions. No extra detection or scheduling is added.
+drivers or supported revisions. Untagged callbacks do not support reliable
+duplicate/foreign-callback detection.
 
 ## Fault classification at the facade
 
@@ -262,3 +282,15 @@ A missing callback is held back through repeated failed teardown attempts and
 then supplied to clean up the fixture. This verifies retention during the test;
 it is not an infinite-duration test, a hard driver-call deadline, a target-IDF
 compatibility test, or proof of physical DMA/scanout behavior.
+
+### Concurrent TE output priority
+
+For factory-created C2 TE presenters, the backend output worker defaults to
+priority 7. The dedicated pixel worker is created at 5, then adopts its first
+accepted submitter's priority. With producers below 7 (the benchmark uses 6),
+output therefore precedes composition and can refill bounded DMA bands promptly.
+Producers at or above 7 do not have that precedence guarantee. C1 shares pixel
+processing on its backend worker and retains priority 5.
+The change affects scheduling precedence, not gate ownership, callback or
+cancellation rules. It adds no task, stack or pixel buffer. It does not promise
+a safe window under arbitrary application priorities or memory/bus contention.

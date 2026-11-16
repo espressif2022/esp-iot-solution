@@ -8,6 +8,7 @@
 #include "config/present_plan.h"
 #include "core/present_engine.h"
 #include "config/present_mode.h"
+#include "config/present_defaults.h"
 #include "platform/present_limits.h"
 #include "resources/present_memory.h"
 #include <limits.h>
@@ -130,7 +131,7 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
     if (backend_config->copy_execute && !backend_config->async_copy) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (backend_config->shared_copy_worker && (kind != ESP_DISPLAY_PRESENT_ENGINE_FB || !backend_config->async_copy ||
+    if (backend_config->shared_copy_worker && (kind == ESP_DISPLAY_PRESENT_ENGINE_REGION || !backend_config->async_copy ||
                                                !plan->normalized.background_service)) {
         return ESP_ERR_INVALID_ARG;
     }
@@ -153,6 +154,9 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
         }
         images = config->resources.image_count;
     }
+    if (kind == ESP_DISPLAY_PRESENT_ENGINE_TE && backend_config->shared_copy_worker && images != 1) {
+        return ESP_ERR_INVALID_ARG;
+    }
     if ((kind == ESP_DISPLAY_PRESENT_ENGINE_TE && (images < 1 || images > 2)) ||
             (kind == ESP_DISPLAY_PRESENT_ENGINE_FB && (images < 1 || images > 3))) {
         return ESP_ERR_INVALID_ARG;
@@ -171,8 +175,7 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
         if (!mul(backend_config->width, bpp, &row)) {
             return ESP_ERR_INVALID_SIZE;
         }
-        size_t rows = 32768 / row;
-        backend_config->tile_rows = rows ? (rows < backend_config->height ? rows : backend_config->height) : 1;
+        backend_config->tile_rows = present_default_tile_rows(row, backend_config->height);
     }
     if (partial && backend_config->tile_rows > backend_config->height) {
         return ESP_ERR_INVALID_ARG;
@@ -426,8 +429,7 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
     plan->metadata_bytes = present_presenter_memory(&plan->normalized) +
                            (kind == ESP_DISPLAY_PRESENT_ENGINE_REGION ? present_region_memory(backend_config) : kind == ESP_DISPLAY_PRESENT_ENGINE_TE ? present_te_memory(backend_config) : present_fb_memory(backend_config));
     /* Reserve the peak worker stack even when native FULL allocates lazily. */
-    bool pixel_worker = kind == ESP_DISPLAY_PRESENT_ENGINE_FB ? (backend_config->async_copy && !backend_config->shared_copy_worker) :
-                        backend_config->async_copy;
+    bool pixel_worker = backend_config->async_copy && !backend_config->shared_copy_worker;
     plan->stack_bytes = pixel_worker ? 4096 : 0;
     if (plan->normalized.background_service && !add(plan->stack_bytes,
                                                     plan->normalized.worker_stack_bytes ? plan->normalized.worker_stack_bytes : 4096, &plan->stack_bytes)) {

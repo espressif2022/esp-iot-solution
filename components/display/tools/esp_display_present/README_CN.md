@@ -1,193 +1,148 @@
 # ESP Display Present
 
-`esp_display_present` 提供稳定的 `esp_display_presenter_*` 应用接口、平台资源装配和唯一显示引擎；`esp_lv_present` 将 LVGL 接入同一引擎。应用继续持有 panel、IO 和总线资源。
+[English](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/README.md)
 
-[一键初始化](#一键初始化) · [模式与缓冲组合](#模式与缓冲组合) · [创建时资源](#创建时资源) · [运行时旋转](#运行时旋转) · [公开配置与接口](#公开配置与接口)
+`esp_display_present` 为 ESP LCD 面板管理帧提交、缓冲所有权和显示同步，以同一组渲染接口接入 RGB/MIPI 扫描输出与 Panel IO 传输。应用负责初始化面板和总线，Present 负责经它提交的像素工作的生命周期。
 
-公开应用头位于 `include`；`src` 内头文件均为内部实现，不作为应用 API 导出。当前版本不再公开旧几何头和其中的坐标／尺寸类型；依赖这些接口的应用需单独迁移，不能将其视为完全源码兼容。
+LVGL 9 通过 [esp_lv_present](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_lv_present/README_CN.md) 接入；自定义渲染器使用 [公开 Presenter API](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/include/esp_display_present.h)。
 
-本地依赖只需 `esp_display_present`，LVGL 场景再加入 `esp_lv_present`，不再需要 V2 组件。源码合并不代表已发布 Registry 包或确认全部外部兼容。兼容范围见 [迁移说明](COMPATIBILITY.md)，回归入口见 [开发说明](tests/host/README.md)。
+## 接入要求
 
-## 一键初始化
+- ESP-IDF 6.0 及以上；输入为 RGB565 或 RGB888，须与面板配置匹配。
+- 面板已初始化。RGB/MIPI 至少需要两张驱动 framebuffer，且驱动须支持可确认的缓冲交接。DSI 还要求 DPI 提供帧完成与 VSYNC 回调，ESP-IDF 6.0 不具备这些回调。
+- Panel IO 提供 panel 和 IO 句柄。TE 还需要接入并启用 TE 信号，且总线能在允许窗口内发送合成帧。合成帧在 PSRAM 且输出端未开启直 DMA 时，Present 使用两块有界内部 DMA 中转缓冲分片发送；内部 DMA 合成帧或已确认开启 PSRAM 直 DMA 时直接提交。驱动无法查询直 DMA 能力时，`hw.spi_psram_dma_direct` 须与实际 IO 创建标志一致。
 
-面板由应用或 BSP 初始化。描述一次物理分辨率、接口和实际像素格式，之后用模式打开 Present。初始旋转配置在 `hw.rotation`，旋转 90° 或 270° 时接口自动交换上层的逻辑宽高。
+ESP32-S3 RGB 须在面板驱动中启用 bounce buffer。RGB 使用连续刷新和未经驱动变换的坐标，逻辑旋转交给 Present。SDK／BSP 须提供实际 framebuffer 配置事实；较旧驱动缺少这些事实时，可用 [Kconfig 中的兼容选项](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/Kconfig) 确认**确实启用 bounce buffer** 的配置，它不能让不支持的芯片获得无 bounce 交接能力。
+
+当前源码声明 Present 2.0.0、LVGL binding 0.2.0。使用本地源码时，在应用的 `main/idf_component.yml` 添加以下依赖并替换路径。版本声明不代表 Registry 中已经发布；LVGL 用户应按 [绑定说明](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_lv_present/README_CN.md) 同时指定两个本地组件。
+
+```yaml
+dependencies:
+  espressif/esp_display_present:
+    version: "^2.0.0"
+    override_path: /path/to/esp-iot-solution/components/display/tools/esp_display_present
+```
+
+## 创建 Presenter
+
+先通过 BSP 或 `esp_lcd` 初始化面板。下面借用已有 RGB 面板，由 AUTO 按实际驱动 framebuffer 池选择模式：
 
 ```c
-const esp_display_presenter_panel_config_t lcd = {
-    .width = 480, .height = 480,
-    .hw = {
-        .panel = panel,
-        .panel_type = ESP_DISPLAY_PRESENT_PANEL_RGB,
-        .input_pixel_format = ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565,
-    },
-};
-esp_display_presenter_t *presenter;
-esp_err_t err = esp_display_presenter_open(&lcd, ESP_DISPLAY_PRESENT_MODE_AUTO, &presenter);
+#include "esp_display_present.h"
+
+// BSP 已初始化受支持的 480x480 RGB 面板，驱动至少提供两张 framebuffer。
+esp_err_t create_presenter(esp_lcd_panel_handle_t panel,
+                           esp_display_presenter_t **out_presenter)
+{
+    const esp_display_presenter_panel_config_t lcd = {
+        .width = 480,
+        .height = 480,
+        .hw = {
+            .panel = panel,
+            .panel_type = ESP_DISPLAY_PRESENT_PANEL_RGB,
+            .input_pixel_format = ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565,
+        },
+    };
+    return esp_display_presenter_open(&lcd, ESP_DISPLAY_PRESENT_MODE_AUTO,
+                                      out_presenter);
+}
 ```
 
-RGB/MIPI 在初始化面板时配置 FB 池，Panel IO 提供 `hw.io`，接有 TE 时填写 `hw.te_enabled` 和 `hw.te_sync`。需要控制 tile 行数、T1/T2、PSRAM 偏好或 TE 的 C1/C2 时，调用 `open_ex(&lcd, mode, &drawbuf, &presenter)`。例如 T2C2 设置 `drawbuf.buffers = 2` 和 `drawbuf.te_compose_buffers = 2`。超时、脏区上限及显式 FB 地址由高级 `create()` 配置。成功后用 `get_effective_config()` 查询实际模式和缓冲池。
+MIPI 使用 `ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI`；Panel IO 使用 `ESP_DISPLAY_PRESENT_PANEL_IO` 并填写 `hw.io`。启用 TE 时再填写 `hw.te_enabled` 和与接线、总线一致的 `hw.te_sync`。在 Presenter 删除成功前，保持 panel、IO 及其存储有效，由 Present 管理它注册的完成回调。
 
-## 模式与缓冲组合
+`open()` 接收面板的**物理宽高**，通过 `hw.rotation` 指定逻辑方向。需要设置 tile 行数、T1/T2、PSRAM 偏好或 TE 的 C1/C2 时用 `open_ex()`；需要显式 framebuffer、脏区上限或超时时间时用 `create()`，其中 `width`、`height` 是**逻辑宽高**。创建后用 `get_caps()`、`get_effective_config()` 查询实际布局、模式和缓冲池。
 
-**FB** 是驱动创建的整帧扫描缓冲，**T** 是绘制 tile 数，**C** 是 TE 传输前的整帧合成缓冲数。选择模式后，还要根据旋转、字节序和内存位置计算转换资源。
+初始化 RGB/MIPI 面板前，可用 `esp_display_present_get_required_frame_buffer_count()` 查询建议 framebuffer 数量；该查询不分配缓冲。
 
-```mermaid
-flowchart TD
-    start["create(config)<br/>面板类型、模式、FB 池、TE 配置"] --> bus{"面板接口"}
-    bus -->|RGB / MIPI DPI| fbMode{"显式 FB 模式或 AUTO？"}
-    fbMode -->|显式 FB 模式| required{"所需 2 或 3 张 FB<br/>驱动能提供？"}
-    fbMode -->|AUTO| pool{"驱动可用 FB 数"}
-    pool -->|3| triple["TRIPLE_PARTIAL"]
-    pool -->|2| double["DOUBLE_PARTIAL"]
-    pool -->|少于 2| reject["返回不支持"]
-    fbMode -->|NONE 或 TE_SYNC| reject
-    required -->|能| fb["FB backend<br/>FULL、DIRECT 或 PARTITION"]
-    required -->|不能| reject
-    triple --> fb
-    double --> fb
-    bus -->|Panel IO| ioMode{"选择的模式"}
-    ioMode -->|NONE| region["REGION backend<br/>PARTITION，按区域发送"]
-    ioMode -->|AUTO| autoTe{"有有效 TE 配置？"}
-    autoTe -->|有| te["TE backend<br/>PARTITION，合成整帧"]
-    autoTe -->|无| region
-    ioMode -->|TE_SYNC| checkTe{"有有效 TE 配置？"}
-    checkTe -->|有| te
-    checkTe -->|无| reject
-    ioMode -->|显式 FB 模式| reject
+## 选择模式与流水线组合
 
-    classDef result fill:#e6f4ff,stroke:#4078ad,color:#122a42
-    classDef error fill:#fff0ec,stroke:#b36150,color:#47241c
-    class fb,region,te result
-    class reject error
-```
+下表列出 `open()` / `open_ex()` / `create()` 创建的**单个 Presenter 实例**。输入 tile 是分块绘制缓冲；整屏绘制缓冲供渲染器绘制，整帧合成缓冲供 TE 输出，两者职责不同。
 
-| 公开模式 | 面板接口 | 上层绘制方式 | 主缓冲池组合 |
-|---|---|---|---|
-| `NONE` | Panel IO | 按 tile 绘制，逐区域发到面板 | T1、T2 |
-| `TE_SYNC` | 有有效 TE 的 Panel IO | 按 tile 绘制，合成整帧后等 TE 窗口发送 | T1C1、T2C1、T1C2、T2C2 |
-| `DOUBLE_FULL` | RGB / MIPI DPI | 每次绘制整帧 | 2 FB |
-| `TRIPLE_FULL` | RGB / MIPI DPI | 每次绘制整帧 | 3 FB |
-| `DOUBLE_DIRECT` | RGB / MIPI DPI | 在全尺寸缓冲上绘制脏区 | 2 FB |
-| `DOUBLE_PARTIAL` | RGB / MIPI DPI | 按 tile 绘制并组装到待扫描 FB | 2 FB + T1、2 FB + T2 |
-| `TRIPLE_PARTIAL` | RGB / MIPI DPI | 按 tile 绘制并组装到待扫描 FB | 3 FB + T1、3 FB + T2 |
-| `AUTO` | RGB / MIPI DPI | 根据驱动 FB 池选 PARTIAL | 3 FB 选 `TRIPLE_PARTIAL`，2 FB 选 `DOUBLE_PARTIAL`，少于 2 FB 返回不支持 |
-| `AUTO` | Panel IO | 根据 TE 配置选 PARTITION 路径 | 有效 TE 配置选 `TE_SYNC`，其余选 `NONE` |
+**驱动帧缓冲由驱动持有，表中的 Present 像素缓冲在它之外另行分配，两列需要分别计算。** 后台任务数量不包含应用／LVGL、驱动任务、ISR 和定时器回调。代码中的 `backend` 任务负责显示推进，`pixel` 任务负责像素处理；表中直接写明由几个任务承担。
 
-RGB/MIPI 准入还要校验格式、物理尺寸和旧 FB 的扫描退休能力。驱动适配层负责确定 RGB bounce 或切链协议。MIPI DPI 路径需要 SDK 提供相应的帧完成和 VSYNC 回调。Panel IO 的板测记录覆盖 SPI/QSPI。`TE_SYNC` 的公开头文件也列出了 I80。[模式与 LCD 适配](docs/MODE_ARCHITECTURE.md#公开模式实际走向) · [兼容范围](COMPATIBILITY.md)
+RGB/MIPI 按原生 framebuffer 像素布局使用，不需要软件交换 RGB565 高低字节；下表按旋转区分其路径。Panel IO 的线上字节顺序按面板要求配置，字节交换与 RGB/BGR 分量顺序是不同设置。
 
-S31 无 bounce RGB 在构建时核验过驱动和 cache 实现，且 BSP 确认没有显式重启、SDK 未开启 VSYNC 周期重启时，由 RGB 驱动执行一次整帧 cache 写回。其他扫描路径由 Present 写回。[扫描适配器](src/platform/lcd/present_lcd_fb_scanout.c)
+| 面板／模式 | 旋转 | 驱动帧缓冲 | Present 分配的像素缓冲 | Present 后台任务 |
+|---|---|---|---|---|
+| RGB/MIPI `DOUBLE_FULL` / `TRIPLE_FULL` | 0° | 2 或 3 张 | 不另分配像素缓冲，直接绘制驱动帧缓冲 | 1 个显示推进任务 |
+| RGB/MIPI `DOUBLE_FULL` / `TRIPLE_FULL` | 90° / 180° / 270° | 2 或 3 张，保留 | 另加 1 张整屏绘制缓冲，由这些驱动帧缓冲共用 | 1 个任务：推进显示并处理像素 |
+| RGB/MIPI `DOUBLE_DIRECT` | 0° | 2 张 | 不另分配像素缓冲，直接在驱动帧缓冲绘制脏区 | 1 个任务：推进显示并补全内容 |
+| RGB/MIPI `DOUBLE_DIRECT` | 90° / 180° / 270° | 2 张，保留 | 另加 1 张整屏绘制缓冲，由两张驱动帧缓冲共用 | 1 个任务：推进显示并处理像素 |
+| RGB/MIPI `DOUBLE_PARTIAL` / `TRIPLE_PARTIAL` | 0° / 90° / 180° / 270° | 2 或 3 张 | 1 块输入 tile；直接复制／旋转到驱动帧缓冲，不另加整帧 | 1 个任务：推进显示并处理像素 |
+| RGB/MIPI `DOUBLE_PARTIAL` / `TRIPLE_PARTIAL` | 0° / 90° / 180° / 270° | 2 或 3 张 | 2 块输入 tile；直接复制／旋转到驱动帧缓冲，不另加整帧 | 2 个任务：显示推进、像素处理各 1 个 |
+| IO `NONE`，同步像素处理，后台提交关闭 | 初始 0° | 无 | 1 或 2 块输入 tile；按需再加转换 tile，最多与输入 tile 同数量 | 不建后台任务，由调用任务执行 |
+| IO `NONE`，同步像素处理，后台提交开启 | 初始 0° | 无 | 1 或 2 块输入 tile；按需再加转换 tile，最多与输入 tile 同数量 | 1 个显示推进任务；像素处理在调用任务执行 |
+| IO `NONE`，异步像素处理 | 0° / 90° / 180° / 270° | 无 | 1 或 2 块输入 tile，另加同数量的转换 tile，兼作 DMA 发送源 | 2 个任务：显示推进、像素处理各 1 个 |
+| IO `TE_SYNC` | 0° / 90° / 180° / 270° | 无 | 1 块输入 tile，1 张整帧合成缓冲；发送中转缓冲见注¹ | 1 个任务：推进显示并处理像素 |
+| IO `TE_SYNC` | 0° / 90° / 180° / 270° | 无 | 2 块输入 tile，1 张整帧合成缓冲；发送中转缓冲见注¹ | 1 个任务：推进显示并处理像素 |
+| IO `TE_SYNC` | 0° / 90° / 180° / 270° | 无 | 1 块输入 tile，2 张整帧合成缓冲；发送中转缓冲见注¹ | 2 个任务：显示推进、像素处理各 1 个 |
+| IO `TE_SYNC` | 0° / 90° / 180° / 270° | 无 | 2 块输入 tile，2 张整帧合成缓冲；发送中转缓冲见注¹ | 2 个任务：显示推进、像素处理各 1 个 |
 
-### TE 四种组合
+¹ PSRAM 合成帧不能直 DMA 时，增加 **2 块内部 DMA 中转缓冲，每块预算默认 16 KiB，按物理整行取整**；尾片只发送实际像素。两块交替预填／发送，最多一片 DMA 在途，由已有显示推进任务执行，不增加任务。预算由 `CONFIG_ESP_DISPLAY_PRESENT_TE_STAGING_SLOT_BYTES` 配置；物理单行超过预算时，该路径拒绝创建。内部 DMA 合成帧或 PSRAM 直 DMA 路径不分配中转缓冲。渲染前端自有缓冲、驱动内部 bounce buffer、任务栈和元数据不计入像素缓冲列。
 
-| 组合 | `target.drawbuf.buffers` | `target.drawbuf.te_compose_buffers` | 可重叠的工作 |
-|---|---:|---:|---|
-| T1C1 | 1 | 1 | 单 tile、单 compose |
-| T2C1 | 2 | 1 | 绘制下一 tile 与处理上一 tile |
-| T1C2 | 1 | 2 | 合成下一帧与发送上一帧 |
-| T2C2 | 2 | 2 | tile 处理和整帧合成都可重叠 |
+### 自动选择
 
-`buffers = 0` 自动选 T1/T2，允许在自动选出的 T2 分配失败时尝试 T1。`te_compose_buffers = 0` 等同 C1。C2 增加一块合成缓冲，Panel IO 仍逐帧发送。实际发帧取决于面板 TE 窗口和总线预算。[公开缓冲配置](include/esp_display_present_config.h) · [TE 时序](docs/TE_TIMING.md)
+`AUTO` 先解析为具体模式，再按上表执行：RGB/MIPI 有三张驱动 FB 时选 `TRIPLE_PARTIAL`，两张时选 `DOUBLE_PARTIAL`；Panel IO 的 TE 配置有效时选 `TE_SYNC`，否则选 `NONE`。
 
-## 创建时资源
+RGB/MIPI 不支持 `NONE` 和 `TE_SYNC`。`mode` 清零得到 `NONE`，需要自动选择时须显式填写 `AUTO`。TE 效果取决于面板时序和传输预算，并非所有配置都能消除撕裂。
 
-```mermaid
-flowchart LR
-    mode{"实际模式"} -->|NONE| region{"初始旋转、实际使用 PSRAM tile<br/>或 PSRAM 回落后仍需换序？"}
-    region -->|是| regionCopy["绘制 tile → 发送转换 tile<br/>→ Panel IO"]
-    region -->|"否，行紧凑"| regionDirect["绘制 tile 直接发送<br/>内部 tile 可原地换序"]
-    region -->|"否，行有填充"| regionPack["绘制 tile → 按需申请转换 tile<br/>→ Panel IO"]
-    mode -->|TE_SYNC| te["绘制 tile → 旋转 / 换序<br/>→ C1 或 C2"]
-    te -->|"IO 支持 PSRAM 直传"| send["等 TE 窗口，整帧发送"]
-    te -->|"IO 走内部 DMA staging"| staging["一块 staging 必须能容纳整帧"]
-    staging -->|容量足够| send
-    staging -->|容量不足| reject["创建返回不支持"]
-    mode -->|FB PARTIAL| partial["绘制 tile → 旋转 / 换序<br/>→ 待扫描 FB"]
-    mode -->|FB FULL / DIRECT| full{"旋转或换序？"}
-    full -->|否| lease["直接借用可写 FB"]
-    full -->|是| canvas["共享整帧逻辑画布<br/>→ 旋转 / 换序 → 待扫描 FB"]
-```
+### 配置缓冲
 
-| 模式 | 创建条件 | 实际像素缓冲 | 默认 worker 数 |
-|---|---|---|---:|
-| `NONE` | `0°`、实际使用内部 tile、原字节序。包含 PSRAM 偏好回落 | T1/T2。紧凑 stride 直接发送，带行填充时按需分配转换 tile | 0 |
-| `NONE` | `0°`、直接选择内部 tile、RGB565 换序 | T1/T2。紧凑 stride 可原地换序，带行填充时按需分配转换 tile | 0 |
-| `NONE` | 初始 `90° / 180° / 270°`、实际使用 PSRAM tile，或 PSRAM 偏好回落到内部 tile 后仍需换序 | T1/T2 + 同数量内部 DMA 发送转换 tile | 2 |
-| `TE_SYNC` | T1/T2 × C1/C2，可选旋转和 RGB565 换序 | T + C。旋转或换序直接写入 compose。IO 无 PSRAM 直传能力时按当前 staging 路径校验并增加 1 块内部 DMA staging，容量须覆盖整帧 | 2 |
-| `DOUBLE_PARTIAL` / `TRIPLE_PARTIAL` | 原方向、旋转、RGB565 换序或两者叠加 | 2/3 FB + T1/T2。转换直接写入待扫描 FB | 2 |
-| `DOUBLE_FULL` / `TRIPLE_FULL` | `0°`、原字节序 | 2/3 FB，直接借用可写 FB | 1 |
-| `DOUBLE_DIRECT` | `0°`、原字节序 | 2 FB，直接借用可写 FB，跨帧可能修补像素 | 2 |
-| `DOUBLE_FULL` / `TRIPLE_FULL` / `DOUBLE_DIRECT` | 初始旋转非 `0°`，或 RGB565 换序 | 2/3 FB + 1 块共享整帧逻辑画布。旋转和换序叠加时仍共用一块 | 2 |
-| `AUTO` | 解析出实际模式后 | 按该模式和转换条件计算 | 同实际模式 |
+通过 `open_ex()` 的 `drawbuf` 参数配置；使用 `create()` 时填写 `target.drawbuf`：
 
-图中的 staging 是将源像素搬到内部 DMA 内存的发送缓冲。当前 TE staging 按约 32 KiB 的整行容量计算，整帧放不下时返回 `ESP_ERR_NOT_SUPPORTED`。逻辑画布和 TE compose 在规划时优先选可容纳的 PSRAM，否则用内部 DMA 内存。REGION 的懒分配缓冲，以及 FB/TE 的覆盖位图，可能在创建之后才出现。预算和实际驻留应分别计算。[资源装配](src/resources/present_resources.c) · [资源规划](src/config/present_plan.h) · [REGION 提交](src/backend/present_backend_region.c)
+- `lines`：每块输入 tile 的行数。0 使用 `CONFIG_ESP_DISPLAY_PRESENT_DEFAULT_TILE_BYTES` 的预算（默认 32 KiB），按逻辑整行取整，至少一行、不超过逻辑高度。显式行数覆盖该默认值；此预算不是单行大小的硬上限。
+- `buffers`：输入 tile 数 T，取 1 或 2。0 自动选择；仅自动选择的双 tile 分配失败时可回退单 tile。FULL/DIRECT 不使用此池。
+- `in_psram`：优先把输入 tile 放到 PSRAM；实际可能回退到内部 DMA 内存。
+- `te_compose_buffers`：TE 合成帧数 C，0/1 为单帧，2 为双帧；仅 `TE_SYNC` 生效，与 tile 数独立。
 
-异步拷贝按 SDK 能力和请求条件选择执行器。非 `0°` 旋转优先尝试 PPA，`0°` 优先尝试 DMA2D。请求不满足硬件准入条件时可在启动前走 CPU。PSRAM XIP 由固件的 SDK 配置控制。[执行器选择](src/resources/present_resources.c) · [SDK 能力](COMPATIBILITY.md)
+### 异步处理与旋转
 
-### Present 后台任务
+表格描述**创建时**的任务配置。IO `NONE` 初始旋转非 0°、需要将 PSRAM tile 搬到内部 DMA 缓冲，或开启 PSRAM 偏好且需要非原地字节交换时，会选择异步像素处理；这些工厂入口没有独立的 `async_copy` 开关。
 
-```mermaid
-flowchart TD
-    mode{"创建时的像素路径"}
-    mode -->|"TE、FB PARTIAL / DIRECT、带转换的 FULL<br/>或异步转换的 NONE"| two["2 个 worker<br/>present_pixel + present_backend"]
-    mode -->|"FB FULL，0° 原字节序"| one["1 个 worker<br/>present_backend"]
-    mode -->|"同步处理像素的 NONE"| gram{"启用了 GRAM_BACKGROUND？"}
-    gram -->|是| one
-    gram -->|否| zero["0 个 worker<br/>调用任务推进 REGION"]
-```
+同步像素处理的 IO `NONE` 可用 `target.io_submit` 按实例选择：`CALLER` 在调用任务提交，`BACKGROUND` 由显示推进任务提交，`DEFAULT`（零值）沿用 `CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND` 的默认值，默认关闭。该字段通过 `create()` 配置；`open()` / `open_ex()` 使用 `DEFAULT`。其他模式或异步像素处理须保持 `DEFAULT`，显式覆盖会返回 `ESP_ERR_INVALID_ARG`。
 
-每个 worker 默认 **4 KiB 栈**。`CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND` 默认关闭。开启后，内部 tile 的普通 GRAM 路径用 backend worker 在引擎 gate 外提交，优先级由 `CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY` 设置，默认 7。TE 另用 GPIO 中断，在支持的 SDK 上用系统 `esp_timer` 任务处理定时器回调。RGB 驱动的 bounce buffer、LVGL 自己的绘制或备用缓冲、应用任务均单独计入整机 RAM。[GRAM 后台配置](Kconfig) · [TE 定时器](src/platform/te/present_te_timer.c)
+运行时 `set_rotation()` 保持原有后台任务数量和共享方式。初始同步的 IO 路径旋转后仍同步处理；原地字节交换路径不支持切到非 0°。90°／270° 会交换逻辑宽高，切换前须排空，切换后重新查询布局，并处理尺寸或内存不足导致的失败。
 
-**480×480 RGB565 的额外成本示例。** FULL/DIRECT 新增一块逻辑画布为 **450 KiB**。TE 从 C1 到 C2 同样多 **450 KiB**。两块 50 行绘制 tile 的 `NONE` 从 `0°` 普通路径改为创建时启用旋转，多两块发送转换 tile（约 **94 KiB**）和 **8 KiB** worker 栈。以上是对应项目的增量，整机预算还需纳入元数据、对齐和驱动或渲染器资源。
+TE 单合成帧共用显示推进任务执行异步像素队列，不另建像素任务；两张合成帧保留独立像素任务，以允许合成与传输重叠。任务合并不改变异步请求、完成回调和缓冲所有权。
 
-## 运行时旋转
+两个输入 tile 可以交替使用，让应用绘制与后台像素处理重叠。TE 有两张合成帧时，可在上一帧传输期间合成下一帧；只有一张时，要等传输释放该帧后才能重写。增加缓冲不会自动增加后台任务，也不保证帧率提高。
 
-先暂停生产者并 `quiesce()`，再调用 `set_rotation()`。物理屏幕保持原尺寸。切换成功后重新查询逻辑宽高、stride 和 tile 容量。
+异步表示像素工作可交给后台推进，不表示一定使用 PPA／DMA2D；CPU 也可执行。像素请求仍逐笔处理，总线传输是否异步由输出路径决定。
 
-| 已创建的路径 | 切换结果 |
-|---|---|
-| `NONE`，`0°` 原字节序切到非 `0°` | 先分配各发送槽缺少的转换 tile，再更新布局。沿用创建时的任务配置。回到 `0°` 时已分配的转换 tile 仍保留 |
-| `NONE`，创建时使用原地换序 | 切到非 `0°` 返回 `ESP_ERR_NOT_SUPPORTED` |
-| FB FULL / DIRECT | 按需增加或释放共享逻辑画布，保留物理 FB 池。仍需换序时，回到 `0°` 也保留画布 |
-| FB PARTIAL / TE | 复用 FB、tile 或 compose 池。跨轴切换后，按原 tile 字节容量和新逻辑行宽重新计算可绘制行数 |
+TE 双合成帧的显示推进任务默认优先级为 7；独立像素任务会继承首个提交者的优先级。提交者低于 7 时，输出可优先续传，减少并行合成带来的调度间隙。仍须结合应用优先级、XIP、总线带宽和实测传输时长核对 TE 窗口。
 
-旋转要新增的像素缓冲在布局生效前分配。原生 FULL 首次旋转时同时创建像素 worker，回到 `0°` 后保留该 worker 供下次旋转复用，关闭时回收。分配失败时保留原布局。[REGION 旋转](src/backend/present_backend_region.c) · [FB 旋转](src/backend/present_backend_fb.c) · [TE 旋转](src/backend/present_backend_te.c)
+### TE 接入条件与限制
 
-## 公开配置与接口
+先在面板驱动中启用 TE 输出并连接信号，再按实际硬件填写 `te_enabled`、`te_sync.gpio_num`、`bus_freq_hz` 和 `data_lines`。总线参数用于首次传输估算；后续准入使用实测时序，包含分片之间的间隙。
 
-RGB/MIPI 的 FB 数量在创建面板时确定。可以先用 `esp_display_present_get_required_frame_buffer_count()` 查数量，再创建面板并调用 `esp_display_presenter_create()`。Panel IO 的 FB 数量查询返回 0。现有配置为 `esp_display_presenter_config_t`，`mode = 0` 表示 `NONE`，自动选择须显式填 `ESP_DISPLAY_PRESENT_MODE_AUTO`。
+启动时会采样 GPIO 约 9 ms 判断极性，前提是消隐脉冲较短、空闲电平持续较长；不增加后台任务或周期采样。其他 TE 波形需要单独验证。缓冲数量不能保证传输一定落在 TE 窗口内，详见 [TE 时序与准入](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/docs/TE_TIMING.md)。
 
-| 配置字段 | 作用 |
-|---|---|
-| `width`、`height`、`pixel_format` | 初始逻辑宽高与绘制格式。跨轴创建时逻辑宽高和物理宽高互换。支持 RGB565、RGB888，绘制格式与面板输入格式匹配 |
-| `target.hw.panel`、`io`、`panel_type`、`input_pixel_format` | 借用已初始化的面板和 IO。RGB/MIPI 指定类型。Panel IO 提供 `io`，可用 `PANEL_AUTO` 解析 |
-| `target.hw.rotation`、`swap_bytes` | 初始 `0° / 90° / 180° / 270°`，以及 RGB565 传输字节序。两项会影响资源路径 |
-| `target.hw.te_enabled`、`te_sync` | TE 开关、GPIO、总线频率和数据线数。GPIO 0 有效，须同时设置 `te_enabled`。总线参数用于首帧预算，运行时使用测量结果 |
-| `target.hw.spi_psram_dma_direct` | 驱动查询不可用时，声明 SPI IO 实际具备的 PSRAM DMA 直传能力 |
-| `target.fb.mode`、`frame_buffer_count`、`frame_buffers` | 模式和可选的驱动 FB 列表。数量为 0 时组件查询驱动，显式给出的地址需与驱动一致 |
-| `target.drawbuf.lines`、`buffers`、`in_psram`、`te_compose_buffers` | tile 高度、T1/T2、绘制池 PSRAM 偏好和 C1/C2。行数为 0 时按约 32 KiB 的 tile 目标计算 |
-| `max_damage_areas`、`transfer_timeout_ms`、`pipeline_acquire_timeout_ms` | 脏区容量、传输完成和获取空闲缓冲的超时。填 `0` 时，默认最多 32 个脏区，两个超时各为 `1000 ms` |
+### 内存与实际配置
 
-下表除 FB 数量查询外，函数均省略 `esp_display_presenter_` 前缀。
+输入 tile、TE 合成帧、驱动帧缓冲和转换／中转缓冲是**分别占用的存储**。驱动帧缓冲和 Present 像素缓冲已在表中分列；各路径的分配与回收规则如下：
 
-| 用途 | 公开函数 | 适用范围 |
-|---|---|---|
-| 建屏前规划 | `esp_display_present_get_required_frame_buffer_count()` | 全模式，报告所需面板 FB 数 |
-| 生命周期 | `open()`、`open_ex()`、`create()`、`quiesce()`、`stop()`、`delete()` | 全模式 |
-| 生产者交接 | `release_producer()`、`rebind_producer()` | 全模式，帧间执行 |
-| 旋转和坐标 | `set_rotation()`、`map_point()` | 全模式，旋转按实际路径校验 |
-| 能力与布局 | `get_caps()`、`get_effective_config()`、`get_buffer_alignment()` | 全模式 |
-| 查看 tile 池 | `get_drawbuf()` | PARTITION。取得有效 lease 后才可写入 |
-| 开帧和绘制 | `begin_next_frame()`、`acquire_buffer()`、`submit_buffer()`、`cancel_frame()` | 全模式。lease 里的 `resolve_rows` 可以查询给定 stride 下的行数 |
-| 提交与完成 | `commit_frame()`、`commit_frame_with_receipt()`、`get_frame_status()`、`cancel_frame_tracking()` | 普通提交全模式可用。`track_display=true` 要求 RGB/MIPI 的硬件 VSYNC 与扫描交接能力 |
-| 状态和故障 | `get_state()`、`get_fault_reason()`、`get_fault_error()` | 全模式 |
-| 性能统计 | `reset_metrics()`、`get_metrics()` | P99 和缓冲等待全模式可用。扫描供帧统计要求 VSYNC 反馈 |
+- RGB/MIPI FULL/DIRECT：0° 时直接借用驱动 FB；90°／180°／270° 时增加 **1 张共享逻辑整帧**，不是每张驱动 FB 各加一张。该逻辑帧优先放 PSRAM，可能回退内部 DMA 内存；旋转回 0° 时释放。
+- PARTIAL：分配 T 块输入 tile，直接复制／旋转到候选驱动 FB；旋转不另加整帧画布，也不另建转换 tile 池。
+- IO NONE：分配 T 块输入 tile。异步路径创建时另分配 T 块内部 DMA 转换 tile，兼作发送源；同步路径仅在需要重排跨行数据等处理时按需分配，最多 T 块。运行时旋转也可能补充分配转换 tile，切回 0° 后保留到销毁。这些转换 tile 不是额外整帧，也不是两套 conversion 与 staging 池。
+- TE_SYNC：分配 T 块输入 tile 和 C 张物理整帧合成图像，旋转直接合成到图像，不再加旋转整帧。合成图像优先放 PSRAM，可能回退内部 DMA 内存。不能直 DMA 的 PSRAM 图像另用上述两块中转缓冲，大小独立于 T 和 C。整帧保留到逻辑传输完成；停止或超时会禁止发送后续片，但已进入驱动的片仍须等真实完成回调后回收。停止超时需保留实例重试；已经写入面板的部分不能撤销。
 
-实际模式、tile/图像池数量、内存域、stride 和降级原因用 `get_effective_config()` 查询。转换 tile、逻辑画布、staging 和 worker 的分项资源预算见上表，当前查询结构未单独返回这些项目。LVGL 的 `esp_lv_present_start()`、`esp_lv_present_stop()`、`esp_lv_present_get_frame_count()` 由绑定组件提供，GSP adapter 使用这里的公开 Presenter 接口。[Present 公开头文件](include/esp_display_present.h) · [LVGL 绑定](../esp_lv_present/include/esp_lv_present.h)
+这些数量仍不是应用的全部内存：驱动内部的 RGB bounce buffer、DMA 描述符、渲染前端（例如 LVGL）另行分配的绘制缓冲，以及任务栈、元数据和对齐开销均需另计。一张 480×480 RGB565 图像为 450 KiB，一块 480×32 RGB565 tile 为 30 KiB。
 
-## 绑定与验证说明
+创建后用 `get_effective_config()` 确认实际模式、`tile_count`、`image_count`、内存域和降级标志，用 `get_caps()` 查询绘制合同；这些接口不枚举所有懒分配缓冲，实际内存还需按运行路径测量。详见 [模式与缓冲合同](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/docs/MODE_ARCHITECTURE.md)。
 
-LVGL FULL 和原生 0° DIRECT 先取得可写租约再绑定像素，提交／取消前撤销引用，不再分配全屏占位画布；旋转 DIRECT 的实际绘图画布、PARTIAL 的 tile 兜底保留。不要在 LVGL 绑定尚存活时停止或删除 presenter。
+## 渲染与释放
 
-`CONFIG_ESP_DISPLAY_PRESENT_FB_IRAM` 及整组对象链接映射已移除；显式 ISR/pixel 的 `IRAM_ATTR` 保留。panel 物理尺寸固定，backend 维护逻辑宽高；运行时旋转后应重新查询 caps。S31 GRAM 缺少旋转目标存储时仍可能拒绝运行时旋转。
+自定义渲染器通常按 `begin_next_frame()` → `acquire_buffer()` → 绘制并 `submit_buffer()` → `commit_frame()` 推进。PARTITION 可在一帧内多次获取和提交区域。遵守返回的绘制合同与租约容量，提交后的缓冲不能继续写入。LVGL 用户由绑定完成这些操作。
 
-[Host 回归与目标 smoke](tests/host/README.md) 覆盖生产代码的所有权、失败恢复、预算及绑定行为。板级 benchmark、adapter 对比、详细内存数据和实验日志由 MR 验证附件单独维护，不纳入组件源码。数据应绑定测试版本与实际配置，不能把历史成绩当成新版本结果；串口完成及交接检查不能单独证明光学无撕裂。
+渲染调用由拥有 Presenter 的生产者任务执行，`open()` 首先绑定调用任务。自定义渲染器换任务时，在帧间调用 `rebind_producer()`；若下一 adapter 无法自行重绑，由当前所有者排空并 `release_producer()`，再启动下一渲染器，其首个获准帧会认领所有权。LVGL `start()` 会自动绑定。
+
+旋转或切换渲染器前，先暂停生产并 `quiesce()`；LVGL 须先按 [绑定说明](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_lv_present/README_CN.md) 停止绑定。旋转后重新查询布局。销毁 Presenter 前，先停止并销毁渲染绑定；Presenter 删除成功后，再释放应用持有的面板和 IO。
+
+超时或取消不代表硬件已停止读取。stop/delete 无法完成时，保留对象和借用存储供后续重试，不在错误分支强行释放。故障锁存后须安全销毁并重建，原始原因用 `get_fault_error()` 查询。硬件加速是可选能力，取决于 SDK、SoC 和像素布局。详见 [所有权与恢复规则](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/STATE_MACHINE.md)。
+
+## 示例与参考
+
+- [LVGL benchmark](https://github.com/espressif/esp-iot-solution/tree/master/examples/display/gui/lvgl_present_benchmark)：面板初始化与 LVGL 接入。
+- [GSP/LVGL 交接](https://github.com/espressif/esp-iot-solution/tree/master/examples/display/gui/gsp_lvgl_present_handoff)：生产者所有权和可重试恢复。
+- [兼容与迁移](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/COMPATIBILITY.md)、[TE 时序](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/docs/TE_TIMING.md)、[公开 API](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/include/esp_display_present.h)。
+- [Host 回归与目标 smoke](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/tests/host/README.md)：正式测试入口。

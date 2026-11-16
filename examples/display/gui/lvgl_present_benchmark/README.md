@@ -21,8 +21,8 @@ runs `lv_demo_benchmark` through its final summary callback (bounded by
 quiesce presenter -> stop LVGL -> delete presenter -> next combination
 ```
 
-RGB/MIPI targets run `NONE`, both FULL modes, 0° `DOUBLE_DIRECT`, both PARTIAL
-modes, and `AUTO`. GRAM targets run `NONE`, `AUTO`, and `TE_SYNC` with both one
+RGB/MIPI targets run both FULL modes, `DOUBLE_DIRECT`, both PARTIAL modes,
+and `AUTO`; `NONE` is unsupported and logged as `SKIP`. GRAM targets run `NONE`, `AUTO`, and `TE_SYNC` with both one
 and two compose buffers when TE is wired. Inapplicable combinations are logged
 as `SKIP`; driver-rejected configurations are reported separately. By default,
 the worker stops after one complete matrix. Enable

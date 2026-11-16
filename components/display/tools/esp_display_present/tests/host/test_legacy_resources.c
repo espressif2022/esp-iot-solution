@@ -1,6 +1,8 @@
+#include "platform/lcd/present_lcd_io.h"
 /* SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0 */
 #include "core/present_engine.h"
+#include "resources/present_memory.h"
 #include "support/legacy_panel.h"
 /* Fail a real pixel-pool allocation, not the planning function. */
 static unsigned fail_pixel_at, pixel_calls;
@@ -38,6 +40,7 @@ static void optional_tile_fallback(void)
                 input.target.drawbuf.in_psram = true;
             }
             if (kind == 2) {
+                panel.psram_direct = true; /* TE compose images use PSRAM; no factory staging. */
                 input.target.hw.te_enabled = true;
                 input.target.hw.te_sync = (esp_display_present_te_sync_config_t) {
                     .gpio_num = 1, .bus_freq_hz = 8000000
@@ -209,6 +212,7 @@ static void io_path(void)
     input.target.hw.io = &panel;
     input.target.hw.swap_bytes = true;
     input.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_NONE;
+    input.target.io_submit = ESP_DISPLAY_PRESENT_IO_SUBMIT_CALLER; /* Assert inline submission below. */
     present_resources_t *resources;
     OK(present_resources_create(&input, false, NULL, NULL, &resources));
     OK(present_resources_prepare(resources, 0));
@@ -457,6 +461,16 @@ static void automatic_te_memory_budget(void)
     esp_display_present_resolved_plan_t before, after;
     te_memory_test_extra = 0;
     OK(present_resources_plan(&input, false, &plan));
+    size_t framework_bytes = plan.extra_bytes;
+    uint32_t width = input.width, height = input.height;
+    input.width = input.height = 480;
+    OK(present_resources_plan(&input, false, &plan));
+    assert(plan.extra_bytes - framework_bytes ==
+           esp_display_present_lcd_io_memory(16320) - esp_display_present_lcd_io_memory(64));
+    assert(esp_display_present_lcd_io_memory(16320) - esp_display_present_lcd_io_memory(0) < 33 * 1024);
+    input.width = width;
+    input.height = height;
+    OK(present_resources_plan(&input, false, &plan));
     /* Normally filled by the created SPI adapter before resolve. */
     plan.output = (esp_display_present_output_caps_t) {
         .internal_dma = true, .ext_mem = true, .tight_stride = true
@@ -476,8 +490,69 @@ static void automatic_te_memory_budget(void)
     free_panel(&panel);
 }
 
+static void submission_policy_and_te_workers(void)
+{
+    for (unsigned policy = 0; policy <= 2; ++policy) {
+        esp_display_presenter_config_t input = config(NULL, false);
+        input.target.hw.panel_type = ESP_DISPLAY_PRESENT_PANEL_IO;
+        input.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_NONE;
+        input.target.io_submit = (esp_display_present_io_submit_t)policy;
+        esp_display_present_plan_config_t plan;
+        OK(present_resources_plan(&input, false, &plan));
+        assert(!plan.presenter.backend.async_copy);
+        bool expected = policy == ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND;
+#ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND
+        expected |= policy == ESP_DISPLAY_PRESENT_IO_SUBMIT_DEFAULT && CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND;
+#endif
+        assert(plan.presenter.backend.deferred_submit == expected);
+        assert(plan.presenter.background_service == expected);
+#ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY
+        assert(plan.presenter.worker_priority == (expected ? CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY : 0));
+#else
+        assert(plan.presenter.worker_priority == (expected ? 7 : 0));
+#endif
+        input.target.hw.rotation = 90;
+        assert(present_resources_plan(&input, false, &plan) ==
+               (policy ? ESP_ERR_INVALID_ARG : ESP_OK));
+    }
+    esp_display_presenter_config_t input = config(NULL, false);
+    input.target.hw.panel_type = ESP_DISPLAY_PRESENT_PANEL_IO;
+    input.target.hw.te_enabled = true;
+    input.target.hw.te_sync = (esp_display_present_te_sync_config_t) {
+        .gpio_num = 1, .bus_freq_hz = 8000000
+    };
+    input.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_TE_SYNC;
+    for (unsigned images = 1; images <= 2; ++images) {
+        for (unsigned tiles = 1; tiles <= 2; ++tiles) {
+            input.target.drawbuf.te_compose_buffers = images;
+            input.target.drawbuf.buffers = tiles;
+            esp_display_present_plan_config_t plan;
+            OK(present_resources_plan(&input, false, &plan));
+            assert(plan.presenter.backend.async_copy && plan.presenter.background_service);
+            assert(plan.presenter.backend.shared_copy_worker == (images == 1));
+            assert(plan.presenter.worker_priority == (images == 2 ? 7 : 0));
+            plan.output = (esp_display_present_output_caps_t) {
+                .internal_dma = true, .ext_mem = true, .tight_stride = true
+            };
+            esp_display_present_resolved_plan_t resolved;
+            OK(esp_display_present_plan_resolve(&plan, &resolved));
+            assert(resolved.stack_bytes == (images == 1 ? 4096 : 8192));
+            if (images == 1) {
+                size_t shared_bytes = resolved.required_bytes;
+                plan.presenter.backend.shared_copy_worker = false;
+                OK(esp_display_present_plan_resolve(&plan, &resolved));
+                assert(resolved.required_bytes == shared_bytes + 4096 + present_worker_memory());
+            }
+        }
+    }
+    input.target.io_submit = ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND;
+    esp_display_present_plan_config_t plan;
+    assert(present_resources_plan(&input, false, &plan) == ESP_ERR_INVALID_ARG);
+}
+
 int main(void)
 {
+    submission_policy_and_te_workers();
     automatic_te_memory_budget();
     optional_tile_fallback();
     fb_reopen_two_internal_tiles();

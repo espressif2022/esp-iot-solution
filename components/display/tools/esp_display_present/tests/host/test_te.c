@@ -871,6 +871,44 @@ static void gate_checked_after_pin(void)
     OK(ops->destroy(backend));
 }
 
+static bool submit_allowed(void *context)
+{
+    return *(const bool *)context;
+}
+
+/* A non-sending service pass must neither pin the source nor consume a gate
+ * admission. A later permitted pass can send the same READY frame. */
+static void submission_context_before_admission(void)
+{
+    fixture_t fixture = {0};
+    fixture.panel.width = fixture.panel.height = 4;
+    fixture.panel.bpp = 2;
+    bool allowed = false;
+    esp_display_present_backend_config_t config = {
+        .width = 4, .height = 4, .tile_rows = 2, .buffer_count = 2, .max_frames = 2,
+        .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = {&fixture, test_panel_attach, submit, stop},
+        .te_gate = {.admit = single_use_gate}, .can_submit = submit_allowed, .submit_user = &allowed
+    };
+    present_backend_t *backend;
+    OK(ops->create(&config, &backend));
+    custom_gate_open = close_gate_on_pin = true;
+    custom_gate_calls = 0;
+    esp_display_present_receipt_t receipt = full(backend, true);
+    for (unsigned i = 0; i < 3; ++i) {
+        OK(ops->service(backend));
+    }
+    assert(close_gate_on_pin && custom_gate_open && custom_gate_calls == 0 && fixture.panel.count == 0);
+    close_gate_on_pin = false;
+    allowed = true;
+    OK(ops->service(backend));
+    assert(custom_gate_calls == 1 && fixture.panel.count == 1);
+    test_panel_complete(&fixture.panel);
+    OK(ops->service(backend));
+    OK(ops->release_receipt(backend, receipt));
+    OK(ops->stop(backend, 1000));
+    OK(ops->destroy(backend));
+}
+
 static esp_err_t gate_result(void *user, size_t bytes, uint64_t after, uint64_t *edge_out)
 {
     (void)bytes;
@@ -998,6 +1036,7 @@ static void native_phase_wakeup(void)
 
 int main(void)
 {
+    submission_context_before_admission();
     gate_checked_after_pin();
     unsupported_window_retires_queue();
     reject_mixed_policies();

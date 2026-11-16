@@ -5,6 +5,7 @@
 #include "core/present_control.h"
 #include "resources/present_resources.h"
 #include "config/present_mode.h"
+#include "config/present_defaults.h"
 #include "platform/present_os.h"
 #include "backend/present_records.h"
 #include "resources/present_memory.h"
@@ -64,18 +65,27 @@ static bool PRESENT_ISR_ATTR te_wakeup(void *user, bool isr)
     return false;
 }
 
-static size_t te_staging_bytes(uint32_t width, uint32_t height, unsigned rotation, size_t bpp)
+/* Transport facts remain separate from CPU-readable PSRAM staged by Present. */
+static bool io_direct_psram(const esp_display_present_hw_config_t *hw)
 {
-    size_t row = (size_t)(rotation & 1 ? height : width) * bpp;
-    size_t rows = row ? 32768 / row : 0;
-    if (!rows) {
-        rows = 1;
+    bool direct = hw->spi_psram_dma_direct;
+#ifdef ESP_LCD_SPI_IO_HAS_MEMORY_INFO
+    esp_lcd_panel_io_spi_memory_info_t memory;
+    if (esp_lcd_panel_io_spi_get_memory_info(hw->io, &memory) == ESP_OK) {
+        direct = memory.psram_dma_direct;
     }
-    uint32_t physical_height = rotation & 1 ? width : height;
-    if (rows > physical_height) {
-        rows = physical_height;
-    }
-    return row * rows;
+#endif
+    return direct;
+}
+
+/* Per-slot budget, physical whole rows. Never grow beyond the fixed target. */
+static size_t te_band_bytes(const esp_display_presenter_config_t *input)
+{
+    bool quarter = (input->target.hw.rotation / 90) & 1;
+    size_t row = (size_t)(quarter ? input->height : input->width) *
+                 (input->pixel_format == ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 ? 2 : 3);
+    size_t height = quarter ? input->width : input->height;
+    return present_default_te_stage_bytes(row, height);
 }
 
 static esp_display_present_plan_memory_t preferred_external_memory(size_t bytes, size_t count)
@@ -111,7 +121,7 @@ static size_t default_tiles(bool overlap, esp_display_present_plan_memory_t memo
 #endif
 }
 
-static void plan_pixel_path(esp_display_present_plan_config_t *plan, bool prefer_psram)
+static void plan_pixel_path(esp_display_present_plan_config_t *plan, const esp_display_presenter_config_t *input)
 {
     esp_display_present_backend_config_t *backend = &plan->presenter.backend;
     bool region = plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION;
@@ -119,15 +129,25 @@ static void plan_pixel_path(esp_display_present_plan_config_t *plan, bool prefer
     backend->tx_staging = region && plan->resources.tile_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL;
     /* Preserve out-of-place swap and runtime rotation for PSRAM-preferring callers. */
     backend->async_copy = !region || backend->tx_staging || backend->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 ||
-                          (swap && prefer_psram);
-    backend->shared_copy_worker = plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB &&
-                                  plan->resources.tile_count <= 1;
+                          (swap && input->target.drawbuf.in_psram);
+    backend->shared_copy_worker = (plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB &&
+                                   plan->resources.tile_count <= 1) ||
+                                  (plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_TE &&
+                                   plan->resources.image_count == 1);
     backend->in_place = region && !backend->async_copy && swap;
-    backend->deferred_submit = false;
-    plan->presenter.worker_priority = 0;
+    bool background = input->target.io_submit == ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND;
 #ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND
-    backend->deferred_submit = !backend->async_copy && CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND;
+    background |= input->target.io_submit == ESP_DISPLAY_PRESENT_IO_SUBMIT_DEFAULT &&
+                  CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND;
 #endif
+    backend->deferred_submit = region && !backend->async_copy && background;
+    /* C2's pixel worker adopts the producer priority. Output priority 7
+     * precedes producers below 7 (the LVGL benchmark uses 6), reducing bounded
+     * DMA refill gaps. C1 shares pixel work and retains the normal priority.
+     * Explicit BACKGROUND also preserves the compatibility default when its
+     * dependent Kconfig priority symbol is absent. */
+    bool concurrent_te = plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_TE && !backend->shared_copy_worker;
+    plan->presenter.worker_priority = (backend->deferred_submit || concurrent_te) ? 7 : 0;
 #ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY
     if (backend->deferred_submit) {
         plan->presenter.worker_priority = CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY;
@@ -143,7 +163,9 @@ static esp_err_t plan_resources(const esp_display_presenter_config_t *input, boo
             input->pixel_format < ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 || input->pixel_format > ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB888 ||
             input->pixel_format != input->target.hw.input_pixel_format || input->max_damage_areas > UINT16_MAX ||
             input->target.drawbuf.buffers > 2 || input->target.drawbuf.te_compose_buffers > 2 ||
-            input->target.fb.frame_buffer_count > 3) {
+            input->target.fb.frame_buffer_count > 3 ||
+            input->target.io_submit < ESP_DISPLAY_PRESENT_IO_SUBMIT_DEFAULT ||
+            input->target.io_submit > ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND) {
         return ESP_ERR_INVALID_ARG;
     }
     (void)bounce; /* Adapter queries authoritative RGB facts at creation. */
@@ -193,13 +215,7 @@ static esp_err_t plan_resources(const esp_display_presenter_config_t *input, boo
      * when its aligned destination window does not fit; never invent padding. */
     size_t rows = input->target.drawbuf.lines;
     if (!rows) {
-        rows = 32768 / ((size_t)input->width * bytes_per_pixel);
-        if (!rows) {
-            rows = 1;
-        }
-        if (rows > input->height) {
-            rows = input->height;
-        }
+        rows = present_default_tile_rows((size_t)input->width * bytes_per_pixel, input->height);
     }
     if (rows > input->height) {
         return ESP_ERR_INVALID_ARG;
@@ -211,9 +227,17 @@ static esp_err_t plan_resources(const esp_display_presenter_config_t *input, boo
     }
     size_t tile_bytes = (size_t)input->width * rows * bytes_per_pixel;
     esp_display_present_plan_memory_t tile_memory = input->target.drawbuf.in_psram ? preferred_external_memory(tile_bytes, input->target.drawbuf.buffers ? input->target.drawbuf.buffers : 1) : ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA;
-    size_t staging = te ? te_staging_bytes(input->width, input->height, hw->rotation / 90, bytes_per_pixel) : 0;
     esp_display_present_plan_memory_t image_memory = te ? preferred_external_memory((size_t)input->width * input->height * bytes_per_pixel, images) : ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL;
-    size_t reserved = staging;
+    bool staged_te = te && image_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL && !io_direct_psram(hw);
+    size_t staging = staged_te ? te_band_bytes(input) : 0;
+    if (staged_te && !staging) {
+        return ESP_ERR_INVALID_SIZE; /* One physical row cannot fit the bounded staging slot. */
+    }
+    size_t io_bytes = framebuffer ? 0 : esp_display_present_lcd_io_memory(staging);
+    if (io_bytes == SIZE_MAX) {
+        return ESP_ERR_INVALID_SIZE;
+    }
+    size_t reserved = staging ? io_bytes : 0;
     if (te && image_memory == ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA) {
         size_t image_bytes = (size_t)input->width * input->height * bytes_per_pixel;
         if (images > (SIZE_MAX - reserved) / image_bytes) {
@@ -250,7 +274,7 @@ static esp_err_t plan_resources(const esp_display_presenter_config_t *input, boo
                 .panel_order = hw->swap_bytes ? ESP_DISPLAY_PRESENT_ORDER_SWAPPED : ESP_DISPLAY_PRESENT_ORDER_NATIVE,
             },
         },
-        .extra_bytes = sizeof(present_resources_t) + (te ? te_staging_bytes(input->width, input->height, hw->rotation / 90, bytes_per_pixel) + 64 + present_event_memory() + esp_display_present_te_sync_memory() : 0),
+        .extra_bytes = sizeof(present_resources_t) + io_bytes + (te ? esp_display_present_te_sync_memory() : 0),
         .resources = {
             .image_count = images,
             .tile_memory = tile_memory,
@@ -258,7 +282,7 @@ static esp_err_t plan_resources(const esp_display_presenter_config_t *input, boo
             .logical_memory = preferred_external_memory((size_t)input->width * input->height * bytes_per_pixel, 1),
         },
     };
-    plan_pixel_path(out, input->target.drawbuf.in_psram);
+    plan_pixel_path(out, input);
     size_t slot_bytes = tile_bytes;
     if (!framebuffer && !te && out->presenter.backend.async_copy) {
         if (tile_memory == ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA) {
@@ -280,7 +304,11 @@ static esp_err_t plan_resources(const esp_display_presenter_config_t *input, boo
             out->presenter.backend.buffer_count = out->resources.tile_count;
         }
     }
-    plan_pixel_path(out, input->target.drawbuf.in_psram);
+    plan_pixel_path(out, input);
+    if (input->target.io_submit != ESP_DISPLAY_PRESENT_IO_SUBMIT_DEFAULT &&
+            (mode.kind != ESP_DISPLAY_PRESENT_ENGINE_REGION || out->presenter.backend.async_copy)) {
+        return ESP_ERR_INVALID_ARG;
+    }
     return ESP_OK;
 }
 
@@ -432,30 +460,8 @@ static esp_err_t create_lcd_io_adapter(present_resources_t *resources, const esp
                                        esp_display_present_plan_config_t *config)
 {
     esp_err_t error;
-    size_t bpp = input->pixel_format == ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 ? 2 : 3;
-    bool quarter = config->presenter.backend.rotation & 1;
-    size_t staging = resources->te_required ? te_staging_bytes(input->width, input->height,
-                                                               config->presenter.backend.rotation, bpp) : 0;
-    bool direct_psram = input->target.hw.spi_psram_dma_direct;
-#ifdef ESP_LCD_SPI_IO_HAS_MEMORY_INFO
-    esp_lcd_panel_io_spi_memory_info_t memory;
-    if (esp_lcd_panel_io_spi_get_memory_info(input->target.hw.io, &memory) == ESP_OK) {
-        direct_psram = memory.psram_dma_direct;
-    }
-#endif
-    if (direct_psram) {
-        staging = 0; /* The configured IO supports direct external DMA. */
-    }
-    if (resources->te_required && staging) {
-        size_t row = (size_t)(quarter ? input->height : input->width) * bpp;
-        size_t rows = row ? staging / row : 0;
-        uint32_t physical_height = quarter ? input->width : input->height;
-        /* TE timing assumes one continuous window. A staging band that cannot
-         * hold the physical frame would split draw_bitmap. */
-        if (rows < physical_height) {
-            return ESP_ERR_NOT_SUPPORTED;
-        }
-    }
+    bool direct_psram = io_direct_psram(&input->target.hw);
+    size_t staging = resources->te_required && config->resources.image_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL && !direct_psram ? te_band_bytes(input) : 0;
     esp_display_present_lcd_io_config_t spi = {
         .panel = input->target.hw.panel,
         .io = input->target.hw.io,
@@ -499,7 +505,7 @@ static esp_err_t create_planned_engine(present_resources_t *resources, const esp
         size_t bytes = (size_t)input->width * config->presenter.backend.tile_rows * bpp;
         config->resources.tile_memory = preferred_external_memory(bytes, 1);
     }
-    plan_pixel_path(config, input->target.drawbuf.in_psram);
+    plan_pixel_path(config, input);
     config->presenter.backend.copy_execute = config->presenter.backend.async_copy ? copy_execute : NULL;
     return present_engine_create_with_plan(config, &resources->status.plan, &resources->presenter);
 }

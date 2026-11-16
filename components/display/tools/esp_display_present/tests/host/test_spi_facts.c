@@ -1,7 +1,7 @@
 /* SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0 */
 #include "support/legacy_panel.h"
-int main(void)
+static void check_size(unsigned side)
 {
     for (unsigned driver = 0; driver < 2; ++driver) {
         for (unsigned declared = 0; declared < 2; ++declared) {
@@ -9,7 +9,7 @@ int main(void)
             init_panel(&panel);
             panel.psram_direct = driver;
             esp_display_presenter_config_t input = config(&panel, false);
-            input.width = input.height = 480;
+            input.width = input.height = side;
             input.target.hw.panel_type = ESP_DISPLAY_PRESENT_PANEL_IO;
             input.target.hw.io = &panel;
             input.target.hw.spi_psram_dma_direct = declared;
@@ -25,7 +25,11 @@ int main(void)
 #else
             bool supported = driver;
 #endif
-            assert(error == (supported ? ESP_OK : ESP_ERR_NOT_SUPPORTED));
+            assert(error == ESP_OK);
+            present_resource_status_t status;
+            OK(present_resources_status(resources, &status));
+            assert(status.plan.output.ext_mem);
+            assert(status.plan.output.ext_len_align == (supported ? 64 : 1));
             assert(panel.calls == 0);
             if (resources) {
                 OK(present_resources_destroy(resources, 1000));
@@ -33,5 +37,11 @@ int main(void)
             free_panel(&panel);
         }
     }
+}
+
+int main(void)
+{
+    check_size(8); /* Both direct and bounded dual-stage transport accept a tiny frame. */
+    check_size(480);
     return 0;
 }

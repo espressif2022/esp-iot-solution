@@ -948,6 +948,7 @@ static void simple_open_matrix(void)
         assert(effective.tile_count == tiles && !effective.image_count);
         delete_eventually(presenter);
     }
+    panel.psram_direct = true; /* TE compose images use PSRAM. */
     lcd.hw.te_enabled = true;
     lcd.hw.te_sync = (esp_display_present_te_sync_config_t) {
         .gpio_num = 0, .bus_freq_hz = 8000000
@@ -1259,7 +1260,7 @@ static void te_compatibility(void)
         unsigned rotation = (variant % 4) * 90;
         struct fake_lcd panel;
         init_panel(&panel);
-        panel.psram_direct = variant >= 4; /* Authoritative direct path vs staging. */
+        panel.psram_direct = variant >= 4; /* Authoritative direct path vs internal compose images. */
         panel.physical_width = (variant & 1) ? 4 : 8;
         panel.physical_height = (variant & 1) ? 8 : 4;
         esp_display_presenter_config_t cfg = io_config(&panel);
@@ -1274,7 +1275,12 @@ static void te_compatibility(void)
         cfg.transfer_timeout_ms = 1000;
         cfg.pipeline_acquire_timeout_ms = 1;
         esp_display_presenter_t *presenter;
+        psram_available = variant >= 4;
         OK(esp_display_presenter_create(&cfg, &presenter));
+        psram_available = true;
+        esp_display_presenter_effective_config_t effective;
+        OK(esp_display_presenter_get_effective_config(presenter, &effective));
+        assert(effective.image_memory == (variant >= 4 ? ESP_DISPLAY_PRESENT_MEMORY_PSRAM : ESP_DISPLAY_PRESENT_MEMORY_INTERNAL));
         assert(!test_te); /* GPIO is armed only at prepare, with retryable ownership. */
         start_frame(presenter, false, true);
         assert(test_te);
@@ -1570,6 +1576,7 @@ static void te_rotation_capacity_failure(void)
     cfg.width = 4;
     cfg.height = 8;
     cfg.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_TE_SYNC;
+    panel.psram_direct = true; /* Test rotation capacity, not output capability. */
     cfg.target.hw.te_enabled = true;
     cfg.target.hw.te_sync = (esp_display_present_te_sync_config_t) {
         .gpio_num = 6, .bus_freq_hz = 80000000
@@ -2035,6 +2042,7 @@ static void stop_unsealed(void)
             esp_display_presenter_config_t cfg = kind == 2 ? config(&panel, false) : io_config(&panel);
             cfg.pipeline_acquire_timeout_ms = 100;
             if (kind == 1) {
+                panel.psram_direct = true; /* No factory TE staging. */
                 cfg.target.hw.te_enabled = true;
                 cfg.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_TE_SYNC;
                 cfg.target.hw.te_sync = (esp_display_present_te_sync_config_t) {
@@ -2084,6 +2092,7 @@ static esp_display_presenter_config_t lifecycle_config(struct fake_lcd *panel, u
             cfg.target.hw.rotation = ESP_DISPLAY_PRESENT_ROTATE_90;
         }
         if (profile == 5) {
+            panel->psram_direct = true; /* No factory TE staging. */
             cfg.target.hw.te_enabled = true;
             cfg.target.hw.te_sync = (esp_display_present_te_sync_config_t) {
                 .gpio_num = 1, .bus_freq_hz = 8000000
@@ -2237,6 +2246,7 @@ static void session_handoff_failures(void)
         cfg.pipeline_acquire_timeout_ms = 2;
         cfg.transfer_timeout_ms = 10000;
         if (variant == 0) {
+            panel.psram_direct = true; /* Exercise handoff, not unsupported PSRAM output. */
             cfg.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_TE_SYNC;
             cfg.target.hw.te_enabled = true;
             cfg.target.hw.te_sync = (esp_display_present_te_sync_config_t) {

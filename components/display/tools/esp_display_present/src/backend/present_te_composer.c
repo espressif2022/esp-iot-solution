@@ -140,6 +140,11 @@ fail:
     return err;
 }
 
+bool present_te_composer_run_one(present_te_composer_t *composer)
+{
+    return composer && present_pixel_run_one(composer->pixel);
+}
+
 esp_err_t present_te_composer_begin(present_te_composer_t *composer, present_te_frame_t *out)
 {
     if (!composer || !out) {

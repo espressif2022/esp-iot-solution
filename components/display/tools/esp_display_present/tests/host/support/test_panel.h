@@ -88,6 +88,6 @@ static inline esp_err_t test_panel_stop(void *context, uint32_t timeout)
 static inline esp_display_present_panel_adapter_t test_panel_interface(test_panel_t *p)
 {
     return (esp_display_present_panel_adapter_t) {
-        p, test_panel_attach, test_panel_submit, test_panel_stop
+        p, test_panel_attach, test_panel_submit, test_panel_stop, NULL
     };
 }

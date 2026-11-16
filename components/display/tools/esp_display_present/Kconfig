@@ -1,8 +1,10 @@
 menu "Display presenter"
 config ESP_DISPLAY_PRESENT_GRAM_BACKGROUND
-    bool "Experimental zero-copy GRAM background submission"
+    bool "Default synchronous GRAM submission to background task"
     default n
     help
+        Compatibility default when an instance uses IO_SUBMIT_DEFAULT.
+        Instances can explicitly choose CALLER or BACKGROUND without menuconfig.
         Use the existing engine backend worker for synchronous internal DMA tile paths.
         Rotated and PSRAM tiles retain their existing async-copy scheduling.
         Adds the backend worker task when the synchronous GRAM path would not have one.
@@ -14,10 +16,30 @@ config ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY
     range 1 24
     default 7
     help
-        Priority of the existing engine backend worker for experimental GRAM submission.
+        Priority of the existing engine backend worker for background GRAM submission.
         Choose relative to the producer: a lower-priority backend worker can introduce
         command refill gaps while rendering continues. The board comparison
         uses producer priority 6 and backend worker priority 7.
+
+config ESP_DISPLAY_PRESENT_DEFAULT_TILE_BYTES
+    int "Default input tile byte target"
+    range 64 1048576
+    default 32768
+    help
+        Used only when drawbuf.lines is zero. Rounded down to logical whole
+        rows and capped by height. At least one row is allocated, so a single
+        row may exceed this target. Explicit drawbuf.lines takes precedence.
+
+config ESP_DISPLAY_PRESENT_TE_STAGING_SLOT_BYTES
+    int "TE internal DMA staging byte limit per slot"
+    range 64 65536
+    default 16384
+    help
+        PSRAM compose images without direct DMA use two slots. Each logical
+        capacity is rounded down to physical whole rows and capped by height.
+        A row larger than this limit is rejected. Allocations are aligned up
+        to 64 bytes; account for both slots, their event and adapter metadata.
+        Internal DMA compose images and direct PSRAM DMA allocate no slots.
 
 config PV2_LEGACY_CALLBACK_JOIN
     bool

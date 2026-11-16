@@ -78,7 +78,9 @@ typedef struct {
     /** Pixel format accepted by the initialized panel data path. */
     esp_display_present_pixel_format_t input_pixel_format;
     esp_display_present_rotation_t rotation; /**< Logical-to-physical rotation. */
-    bool swap_bytes; /**< Whether RGB565 bytes are swapped on transfer. */
+    /** Panel-IO RGB565 wire byte swap. Leave false for native RGB/MIPI
+     * framebuffer layouts. */
+    bool swap_bytes;
     bool te_enabled; /**< Whether TE synchronization is enabled. */
     esp_display_present_te_sync_config_t te_sync; /**< TE synchronization settings. */
     bool spi_psram_dma_direct; /**< Must match the SPI IO creation flag. Fallback when driver memory query is unavailable; a successful query takes precedence. */
@@ -105,7 +107,7 @@ typedef struct {
  * TE compose images and panel framebuffers are separate from the tile pool.
  */
 typedef struct {
-    uint16_t lines; /**< Preferred height of each input tile. */
+    uint16_t lines; /**< Input tile rows; 0 uses the configured default byte target. */
     /**
      * Number of input tiles (1 or 2). 0 selects an automatic count based on
      * the mode, target and available internal DMA memory. Creation may retry
@@ -114,18 +116,28 @@ typedef struct {
     uint8_t buffers;
     bool in_psram; /**< Prefer PSRAM for input tiles when available. */
     /**
-     * TE_SYNC full-screen compose buffers. 0/1 keeps the synchronous,
-     * single-buffer path; 2 enables a rotating compose pool so composition
-     * can overlap an in-flight GRAM transfer.
+     * TE_SYNC full-screen compose buffers. 0/1 selects one compose image;
+     * it cannot be rewritten while its transfer is in flight. 2 allows
+     * composition into the next image during an in-flight GRAM transfer.
+     * This count does not select synchronous/asynchronous pixel processing.
      */
     uint8_t te_compose_buffers;
 } esp_display_present_drawbuf_config_t;
+
+/** Driver submission context for synchronous Panel-IO NONE only.
+ * Other paths require DEFAULT; their scheduling is selected internally. */
+typedef enum {
+    ESP_DISPLAY_PRESENT_IO_SUBMIT_DEFAULT = 0, /**< Use the build's compatibility default. */
+    ESP_DISPLAY_PRESENT_IO_SUBMIT_CALLER,      /**< Submit from the producer task; may block. */
+    ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND,  /**< Submit from the display-progress task. */
+} esp_display_present_io_submit_t;
 
 /** Target hardware, presentation policy and endpoint memory configuration. */
 typedef struct {
     esp_display_present_hw_config_t hw; /**< Panel and bus configuration. */
     esp_display_present_fb_config_t fb; /**< Framebuffer presentation policy. */
     esp_display_present_drawbuf_config_t drawbuf; /**< Partition draw-buffer policy. */
+    esp_display_present_io_submit_t io_submit; /**< Synchronous Panel-IO NONE submission policy. */
 } esp_display_present_target_config_t;
 
 #ifdef __cplusplus

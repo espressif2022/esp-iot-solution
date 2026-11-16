@@ -130,6 +130,8 @@ typedef struct {
      * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
      */
     esp_err_t (*quiesce)(void *context, uint32_t timeout_ms);
+    /* Task-only, nonblocking and idempotent. Stops future bands, never aborts DMA. */
+    void (*request_abort)(void *context);
 } esp_display_present_panel_adapter_t;
 
 typedef bool (*esp_display_present_progress_fn)(void *user, bool from_isr);

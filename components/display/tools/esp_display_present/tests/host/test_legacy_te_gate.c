@@ -84,6 +84,31 @@ static bool wake(void *user, bool isr)
     ++wakeups;
     return false;
 }
+/* 60 Hz TE with a 540 us pulse. Sweep startup phase, including creation
+ * inside the active pulse, for both active-high and active-low panels. */
+static bool inverted_pulse;
+static int pulse_level(int pin)
+{
+    (void)pin;
+    bool active = fake_time % 16700 < 540;
+    return active != inverted_pulse;
+}
+static void startup_polarity(void)
+{
+    int64_t saved_time = fake_time;
+    gpio_level_hook = pulse_level;
+    const esp_display_present_te_sync_config_t cfg = {.gpio_num = 1};
+    for (unsigned inverted = 0; inverted < 2; ++inverted) {
+        inverted_pulse = inverted;
+        for (unsigned phase = 0; phase < 16700; phase += 251) {
+            fake_time = phase;
+            assert(detect_blanking_start_edge(&cfg) ==
+                   (inverted ? GPIO_INTR_NEGEDGE : GPIO_INTR_POSEDGE));
+        }
+    }
+    gpio_level_hook = NULL;
+    fake_time = saved_time;
+}
 int main(void)
 {
     esp_display_present_te_sync_config_t cfg = {.gpio_num = 1, .bus_freq_hz = 8000000, .data_lines = 1};
@@ -96,6 +121,7 @@ int main(void)
     }
     cfg.gpio_num = 1;
     assert(esp_display_present_te_sync_create(&cfg, false, &ctx) == ESP_OK);
+    startup_polarity();
     esp_display_present_te_sync_set_wakeup(ctx, wake, NULL);
     uint64_t edge = 0;
     fake_time = 100;

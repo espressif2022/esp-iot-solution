@@ -91,14 +91,17 @@ typedef struct {
     uint64_t pin_bit_mask;
 } gpio_config_t;
 static unsigned removes;
+static bool gpio_input_configured;
+static int (*gpio_level_hook)(int pin);
 static inline int gpio_get_level(int pin)
 {
-    (void)pin;
-    return 0;
+    assert(gpio_input_configured);
+    return gpio_level_hook ? gpio_level_hook(pin) : 0;
 }
 static inline int gpio_config(const gpio_config_t *c)
 {
     (void)c;
+    gpio_input_configured = true;
     return ESP_OK;
 }
 static inline int gpio_install_isr_service(int flags)

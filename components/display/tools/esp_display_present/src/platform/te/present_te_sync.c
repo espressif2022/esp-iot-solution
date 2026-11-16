@@ -17,6 +17,7 @@
 #include "esp_idf_version.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "esp_rom_sys.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -261,12 +262,23 @@ static void IRAM_ATTR te_gpio_isr(void *arg)
 static gpio_int_type_t detect_blanking_start_edge(
     const esp_display_present_te_sync_config_t *cfg)
 {
-    int idle_level = gpio_get_level(cfg->gpio_num);
-    bool idle_high = (idle_level == 1);
+    /* TE is a short blanking pulse separated by a longer idle scan. A
+     * single read can land inside that pulse and invert every timing window.
+     * Observe the dominant level for about 9 ms, independently of RTOS tick
+     * resolution. This is creation-only and precedes ISR registration. */
+    unsigned high = 0;
+    const unsigned samples = 64;
+    for (unsigned i = 0; i < samples; ++i) {
+        high += gpio_get_level(cfg->gpio_num) != 0;
+        if (i + 1 < samples) {
+            esp_rom_delay_us(137);
+        }
+    }
+    bool idle_high = high > samples / 2;
     gpio_int_type_t start_edge = idle_high ? GPIO_INTR_NEGEDGE : GPIO_INTR_POSEDGE;
 
-    ESP_LOGI(TAG, "TE blanking start auto-detected: gpio=%d idle=%d edge=%s",
-             cfg->gpio_num, idle_level,
+    ESP_LOGI(TAG, "TE blanking start auto-detected: gpio=%d idle=%d high_samples=%u/%u edge=%s",
+             cfg->gpio_num, idle_high, high, samples,
              (start_edge == GPIO_INTR_NEGEDGE) ? "falling" : "rising");
 
     return start_edge;
@@ -319,12 +331,6 @@ esp_err_t esp_display_present_te_sync_create(const esp_display_present_te_sync_c
 
     ctx->cfg = *cfg;
     ctx->lock = (portMUX_TYPE)portMUX_INITIALIZER_UNLOCKED;
-    ctx->blanking_start_edge = detect_blanking_start_edge(cfg);
-    ctx->blanking_end_edge =
-        ctx->blanking_start_edge == GPIO_INTR_POSEDGE
-        ? GPIO_INTR_NEGEDGE : GPIO_INTR_POSEDGE;
-    ctx->sync_edge = prefer_refresh_end
-                     ? ctx->blanking_end_edge : ctx->blanking_start_edge;
 
 #if PRESENT_TE_PHASE_TIMER
     /* One shared private timer implements drainable phase wakeups. */
@@ -344,6 +350,13 @@ esp_err_t esp_display_present_te_sync_create(const esp_display_present_te_sync_c
                              .pull_up_en = GPIO_PULLUP_ENABLE,
     };
     ESP_GOTO_ON_ERROR(gpio_config(&gpio_cfg), fail, TAG, "gpio config failed");
+    /* Sampling is only meaningful after the TE input has been enabled. */
+    ctx->blanking_start_edge = detect_blanking_start_edge(cfg);
+    ctx->blanking_end_edge =
+        ctx->blanking_start_edge == GPIO_INTR_POSEDGE
+        ? GPIO_INTR_NEGEDGE : GPIO_INTR_POSEDGE;
+    ctx->sync_edge = prefer_refresh_end
+                     ? ctx->blanking_end_edge : ctx->blanking_start_edge;
 
     ret = gpio_install_isr_service(ESP_INTR_FLAG_LOWMED);
     if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {

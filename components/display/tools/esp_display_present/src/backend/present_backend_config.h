@@ -56,9 +56,9 @@ struct esp_display_present_backend_config {
      * Executor must obey pixel_execute's return-means-access-ended contract.
      * region async_copy requires separate conversion storage (no in_place). */
     bool async_copy;
-    /** FB only: service queued copies on the existing backend worker, outside
-     * the engine gate. Requires async_copy and background service. Single-source
-     * facade paths avoid a separate pixel worker stack this way. */
+    /** FB or single-image TE: service queued copies on the existing backend
+     * worker, outside the engine gate. Requires async_copy and background service.
+     * C2 TE keeps a dedicated pixel worker for copy/transfer overlap. */
     bool shared_copy_worker;
     esp_display_present_pixel_execute_fn copy_execute;
     void *copy_user;
@@ -71,6 +71,9 @@ struct esp_display_present_backend_config {
     bool tx_staging; /* region async copies from external tiles to internal DMA conversion slots. */
     size_t transfer_capacity; /* region: 0 uses tile count. */
     bool deferred_submit; /* Engine-owned region backend worker; READY slots retain pixels. */
+    /* TE: gate-held scheduling check before pin/admit; NULL keeps cooperative submit. */
+    bool (*can_submit)(void *user);
+    void *submit_user;
     esp_display_present_te_gate_t te_gate; /* Explicit injection; default retains native timing model. */
     esp_display_present_te_timing_t te_timing; /* period_us=0 retains the explicit fixed edge window. */
     size_t tile_count; /* FB PARTIAL input tiles; 0 retains the legacy default of one. */

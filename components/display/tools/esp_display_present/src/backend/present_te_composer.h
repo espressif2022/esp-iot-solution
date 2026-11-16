@@ -22,6 +22,10 @@ typedef struct {
     esp_display_present_pixel_config_t pixel; /* max_jobs=0 selects synchronous default. */
 } present_te_composer_config_t;
 
+/* External pixel consumer: executes one request without touching composer
+ * state. The owner joins that worker before stop/destroy; no concurrent destroy. */
+bool present_te_composer_run_one(present_te_composer_t *);
+
 esp_err_t present_te_composer_create(const present_te_composer_config_t *, present_te_composer_t **);
 /* One construction writer, with up to two READY/INFLIGHT image slots. Explicit
  * image_count publishes the content baseline at READY; legacy zero serializes

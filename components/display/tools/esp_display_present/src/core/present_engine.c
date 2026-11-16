@@ -38,6 +38,7 @@ struct esp_display_present_engine {
         bool ready;
     } backend_worker;
     bool background_region;
+    bool worker_submit_only;
     present_lock_t control;
     present_metrics_t *metrics; /* Opt-in sampler protected by control. */
     present_transfer_tracker_t transfer;
@@ -109,6 +110,9 @@ static void expire_transfers(esp_display_present_engine_t *presenter)
         (void)presenter->backend_event(presenter->backend_event_user, &event, false);
     }
     if (count) {
+        if (presenter->panel.request_abort) {
+            presenter->panel.request_abort(presenter->panel.context);
+        }
         (void)notify(presenter, false);
     }
 }
@@ -171,14 +175,14 @@ static esp_err_t panel_attach(void *context, esp_display_present_panel_event_fn 
     return presenter->panel.attach(presenter->panel.context, panel_event, presenter);
 }
 
-/* region SUBMITTING slots stay pinned while the backend_worker lends the task gate.
+/* REGION/TE SUBMITTING slots stay pinned while the backend_worker lends the task gate.
  * Backend task state is resolved only after reacquiring it. Stop joins backend_worker
  * before quiesce/destruction, so the adapter and callback context remain live. */
 static esp_display_present_tx_result_t execute_panel_submit(esp_display_present_engine_t *presenter,
                                                             const esp_display_present_surface_t *surface,
                                                             const esp_display_present_rect_t *area, uint64_t cookie)
 {
-    if (presenter->background_region) {
+    if (presenter->worker_submit_only) {
         present_mutex_give(presenter->gate);
     }
     present_metrics_t *scanout_metrics = presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_FB ? presenter->metrics : NULL;
@@ -193,10 +197,23 @@ static esp_display_present_tx_result_t execute_panel_submit(esp_display_present_
         scanout_metrics->scanout_cookie = 0;
         present_lock_exit(&presenter->control, false);
     }
-    if (presenter->background_region) {
+    if (presenter->worker_submit_only) {
         (void)present_mutex_take(presenter->gate, UINT32_MAX);
     }
     return result;
+}
+
+/* Called under the engine gate, before TE pins a frame or consumes an edge. */
+static bool panel_can_submit(void *context)
+{
+    esp_display_present_engine_t *presenter = context;
+    bool allowed = presenter->state == ESP_DISPLAY_PRESENT_ENGINE_RUNNING &&
+                   presenter->backend_worker.ready &&
+                   present_same_task(presenter->backend_worker.task, present_current_task());
+    if (!allowed && presenter->state == ESP_DISPLAY_PRESENT_ENGINE_RUNNING) {
+        (void)present_event_signal(presenter->work, false);
+    }
+    return allowed;
 }
 
 static esp_display_present_tx_result_t panel_submit(void *context, const esp_display_present_surface_t *surface,
@@ -210,8 +227,8 @@ static esp_display_present_tx_result_t panel_submit(void *context, const esp_dis
             ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_STATE
         };
     }
-    if (presenter->background_region && (!presenter->backend_worker.ready ||
-                                         !present_same_task(presenter->backend_worker.task, present_current_task()))) {
+    if (presenter->worker_submit_only && (!presenter->backend_worker.ready ||
+                                          !present_same_task(presenter->backend_worker.task, present_current_task()))) {
         (void)present_event_signal(presenter->work, false);
         return (esp_display_present_tx_result_t) {
             ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_NO_MEM
@@ -290,7 +307,7 @@ static void backend_worker(void *context)
     /* Creation holds the gate until backend publication (or exit on failure).
      * The blocking copy phase below cannot rely on the per-iteration gate. */
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
-    if (presenter->background_region) {
+    if (presenter->worker_submit_only) {
         presenter->backend_worker.task = present_current_task();
         presenter->backend_worker.ready = true;
     }
@@ -452,7 +469,8 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
     }
     config = &resolved;
     if (config->backend.shared_copy_worker &&
-            (config->backend_kind != ESP_DISPLAY_PRESENT_ENGINE_FB || !config->backend.async_copy || !config->background_service)) {
+            (config->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION || !config->backend.async_copy || !config->background_service ||
+             (config->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_TE && config->backend.compose_count != 1))) {
         return ESP_ERR_INVALID_ARG;
     }
     if (config->backend.width > INT_MAX || config->backend.height > INT_MAX) {
@@ -479,6 +497,8 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
     }
     presenter->kind = config->backend_kind;
     presenter->background_region = config->background_service && config->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION && config->backend.deferred_submit;
+    presenter->worker_submit_only = presenter->background_region ||
+                                    (config->background_service && config->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_TE);
     presenter->output = config->output_caps;
     if (!presenter->output.x_alignment) {
         presenter->output.x_alignment = 1;
@@ -518,8 +538,12 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
     }
     esp_display_present_backend_config_t backend = config->backend;
     backend.deferred_submit = presenter->background_region;
+    if (presenter->worker_submit_only && presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_TE) {
+        backend.can_submit = panel_can_submit;
+        backend.submit_user = presenter;
+    }
     backend.panel = (esp_display_present_panel_adapter_t) {
-        presenter, panel_attach, panel_submit, panel_quiesce
+        presenter, panel_attach, panel_submit, panel_quiesce, NULL
     };
     backend.on_progress = pixel_progress;
     backend.progress_user = presenter;
@@ -1308,6 +1332,9 @@ esp_err_t present_presenter_control_stop(esp_display_present_engine_t *presenter
     (void)atomic_compare_exchange_strong(&presenter->state, &state, ESP_DISPLAY_PRESENT_ENGINE_CLOSING);
     if (state == ESP_DISPLAY_PRESENT_ENGINE_STOPPED) {
         return ESP_OK;
+    }
+    if (presenter->panel.request_abort) {
+        presenter->panel.request_abort(presenter->panel.context);
     }
     request_exit(presenter);
     (void)present_event_signal(presenter->changed, false);

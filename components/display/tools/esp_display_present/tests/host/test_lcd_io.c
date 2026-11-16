@@ -7,6 +7,7 @@
 #include "platform/lcd/present_lcd_io.h"
 #include "esp_cache.h"
 #include "esp_memory_utils.h"
+#include "platform/present_os.h"
 #include <assert.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -20,7 +21,7 @@ struct fake_lcd {
     size_t draws, pending;
     int x0, y0, x1, y1;
     uint8_t bytes[64];
-    bool staged;
+    bool staged, block_return, return_entered, allow_return;
     const void *pending_source;
     size_t band_bytes, history_bytes;
     uint8_t history[192];
@@ -29,6 +30,9 @@ struct fake_lcd {
 static esp_err_t cache_result;
 static bool internal = true, dma_capable = true;
 static size_t cache_calls;
+static bool watch_fills;
+static size_t fills;
+static const void *fill_source[8];
 static pthread_mutex_t stage_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t stage_changed = PTHREAD_COND_INITIALIZER;
 
@@ -53,7 +57,14 @@ bool esp_ptr_dma_ext_capable(const void *p)
 esp_err_t esp_cache_msync(void *p, size_t bytes, int flags)
 {
     assert(p && bytes && flags == (ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_UNALIGNED));
+    pthread_mutex_lock(&stage_lock);
     ++cache_calls;
+    if (watch_fills) {
+        assert(fills < 8);
+        fill_source[fills++] = p;
+        pthread_cond_broadcast(&stage_changed);
+    }
+    pthread_mutex_unlock(&stage_lock);
     return cache_result;
 }
 
@@ -88,6 +99,15 @@ esp_err_t esp_lcd_panel_draw_bitmap(esp_lcd_panel_handle_t p,
         if (p->early) {
             (void)p->done(p, NULL, p->user);
         }
+        pthread_mutex_lock(&stage_lock);
+        if (p->block_return) {
+            p->return_entered = true;
+            pthread_cond_broadcast(&stage_changed);
+            while (!p->allow_return) {
+                pthread_cond_wait(&stage_changed, &stage_lock);
+            }
+        }
+        pthread_mutex_unlock(&stage_lock);
         return p->draw_result;
     }
     ++p->draws;
@@ -373,7 +393,7 @@ static void staged_transfer(void)
         struct fake_lcd lcd = {.staged = true, .early = path == 0};
         esp_display_present_lcd_io_config_t config = {.panel = &lcd, .io = &lcd,
                                                       .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .max_inflight = 2, .staging_bytes = 64,
-                                                      .staging_timeout_ms = path == 2 ? 1 : 1000
+                                                      .staging_timeout_ms = 1000 /* Leave scheduling margin before the first band. */
                                                      };
         esp_display_present_lcd_io_t *adapter;
         assert(esp_display_present_lcd_io_create(&config, &adapter) == ESP_OK);
@@ -426,10 +446,282 @@ static void staged_transfer(void)
         internal = dma_capable = true;
     }
 }
+/* No callback means no reuse: prefill the second slot, cancel, then deliver
+ * the first band's late DMA read. The prepared second band is never sent. */
+static void staged_abort_and_overlap(void)
+{
+    for (unsigned path = 0; path < 4; ++path) {
+        struct fake_lcd lcd = {.staged = true, .early = path == 2, .block_return = path == 2};
+        esp_display_present_lcd_io_config_t config = {.panel = &lcd, .io = &lcd,
+                                                      .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .max_inflight = 1,
+                                                      .staging_bytes = 64, .staging_timeout_ms = 1000
+                                                     };
+        esp_display_present_lcd_io_t *adapter;
+        assert(esp_display_present_lcd_io_create(&config, &adapter) == ESP_OK);
+        staged_test_t test = {0};
+        assert(esp_display_present_lcd_io_get_interface(adapter, &test.api) == ESP_OK);
+        assert(test.api.attach(test.api.context, staged_event, &test) == ESP_OK);
+        _Alignas(64) uint8_t source[192];
+        for (unsigned i = 0; i < sizeof(source); ++i) {
+            source[i] = (uint8_t)i;
+        }
+        /* Normal path includes a 32-byte tail: wire bytes must not be padded. */
+        test.surface = (esp_display_present_surface_t) {
+            source, sizeof(source),
+            {8, 10, 16, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}
+        };
+        test.area = (esp_display_present_rect_t) {
+            0, 0, 8, 10
+        };
+        watch_fills = true;
+        fills = 0;
+        internal = dma_capable = false;
+        pthread_t worker;
+        assert(!pthread_create(&worker, NULL, staged_submit, &test));
+        pthread_mutex_lock(&stage_lock);
+        while (path == 2 ? !lcd.return_entered : fills < 2) {
+            pthread_cond_wait(&stage_changed, &stage_lock);
+        }
+        assert(lcd.draws == 1 && test.completions == 0);
+        if (path != 2) {
+            assert(fill_source[0] != fill_source[1]);
+            assert(lcd.pending_source == fill_source[0]);
+            assert(!memcmp(fill_source[0], source, 64));
+            assert(!memcmp(fill_source[1], source + 64, 64));
+        }
+        pthread_mutex_unlock(&stage_lock);
+        if (path) {
+            if (path == 3) {
+                complete(&lcd);
+                pthread_mutex_lock(&stage_lock);
+                while (lcd.draws < 2 || fills < 3) {
+                    pthread_cond_wait(&stage_changed, &stage_lock);
+                }
+                assert(lcd.pending_source == fill_source[1]);
+                assert(!memcmp(fill_source[0], source + 128, 32)); /* Prefilled third band. */
+                pthread_mutex_unlock(&stage_lock);
+            }
+            if (path == 1) {
+                assert(test.api.request_abort);
+                test.api.request_abort(test.api.context);
+            } else {
+                /* Exercise quiesce concurrently with submit, including a
+                 * callback that arrived while the driver has not returned. */
+                assert(test.api.quiesce(test.api.context, 0) == ESP_ERR_TIMEOUT);
+                assert(lcd.done != NULL);
+            }
+            assert(esp_display_present_lcd_io_destroy(adapter) == ESP_ERR_INVALID_STATE);
+            if (path == 2) {
+                pthread_mutex_lock(&stage_lock);
+                assert(test.completions == 0); /* Early done is not driver return. */
+                lcd.allow_return = true;
+                pthread_cond_broadcast(&stage_changed);
+                pthread_mutex_unlock(&stage_lock);
+            }
+            assert(!pthread_join(worker, NULL));
+            assert(test.result.acceptance == ESP_DISPLAY_PRESENT_TX_UNCERTAIN);
+            assert(test.result.result == ESP_ERR_INVALID_STATE);
+            if (path == 1 || path == 3) {
+                assert(test.completions == 0 && lcd.pending == 1);
+                assert(test.api.quiesce(test.api.context, 0) == ESP_ERR_TIMEOUT);
+                assert(!memcmp(lcd.pending_source, source + (path == 3 ? 64 : 0), 64));
+                complete(&lcd);
+            }
+            assert(lcd.draws == (path == 3 ? 2 : 1) && lcd.history_bytes == (path == 3 ? 128 : 64));
+            assert(test.completions == 1 && test.completion_result == ESP_ERR_INVALID_STATE);
+        } else {
+            for (unsigned band = 1; band <= 3; ++band) {
+                pthread_mutex_lock(&stage_lock);
+                while (lcd.draws < band) {
+                    pthread_cond_wait(&stage_changed, &stage_lock);
+                }
+                assert(lcd.pending == 1);
+                assert(lcd.band_bytes == (band == 3 ? 32 : 64));
+                assert(lcd.pending_source == fill_source[(band - 1) % 2]);
+                pthread_mutex_unlock(&stage_lock);
+                complete(&lcd);
+            }
+            assert(!pthread_join(worker, NULL));
+            assert(test.result.acceptance == ESP_DISPLAY_PRESENT_TX_ACCEPTED);
+            assert(test.completions == 1 && test.completion_result == ESP_OK);
+            assert(fills == 3 && fill_source[2] == fill_source[0]);
+            assert(lcd.history_bytes == 160 && !memcmp(lcd.history, source, 160));
+        }
+        watch_fills = false;
+        internal = dma_capable = true;
+        assert(test.api.quiesce(test.api.context, 100) == ESP_OK);
+        assert(esp_display_present_lcd_io_destroy(adapter) == ESP_OK);
+    }
+}
+/* Neither a driver error nor callback-before-return is an implicit rollback. */
+static void staged_driver_failure(void)
+{
+    for (unsigned early = 0; early < 2; ++early) {
+        struct fake_lcd lcd = {.staged = true, .early = early, .draw_result = ESP_FAIL};
+        esp_display_present_lcd_io_config_t config = {.panel = &lcd, .io = &lcd,
+                                                      .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .max_inflight = 1,
+                                                      .staging_bytes = 64, .staging_timeout_ms = 1000
+                                                     };
+        esp_display_present_lcd_io_t *adapter;
+        assert(esp_display_present_lcd_io_create(&config, &adapter) == ESP_OK);
+        staged_test_t test = {0};
+        assert(esp_display_present_lcd_io_get_interface(adapter, &test.api) == ESP_OK);
+        assert(test.api.attach(test.api.context, staged_event, &test) == ESP_OK);
+        _Alignas(64) uint8_t source[128] = {0x12, 0x34};
+        test.surface = (esp_display_present_surface_t) {
+            source, sizeof(source),
+            {8, 8, 16, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}
+        };
+        test.area = (esp_display_present_rect_t) {
+            0, 0, 8, 8
+        };
+        staged_submit(&test);
+        assert(test.result.acceptance == ESP_DISPLAY_PRESENT_TX_UNCERTAIN && test.result.result == ESP_FAIL);
+        if (!early) {
+            assert(test.completions == 0);
+            assert(test.api.quiesce(test.api.context, 0) == ESP_ERR_TIMEOUT);
+            assert(esp_display_present_lcd_io_destroy(adapter) == ESP_ERR_INVALID_STATE);
+            assert(!memcmp(lcd.pending_source, source, 64));
+            complete(&lcd);
+        }
+        assert(lcd.draws == 1 && lcd.history_bytes == 64);
+        assert(test.completions == 1 && test.completion_result == ESP_FAIL);
+        assert(test.api.quiesce(test.api.context, 0) == ESP_OK);
+        assert(esp_display_present_lcd_io_destroy(adapter) == ESP_OK);
+    }
+}
+/* The final band can complete before a blocking driver call returns. Its late
+ * return must still report the configured whole-transaction deadline. */
+static void staged_late_driver_return(void)
+{
+    struct fake_lcd lcd = {.staged = true, .early = true, .block_return = true};
+    esp_display_present_lcd_io_config_t config = {.panel = &lcd, .io = &lcd,
+                                                  .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .max_inflight = 1,
+                                                  .staging_bytes = 64, .staging_timeout_ms = 1000
+                                                 };
+    esp_display_present_lcd_io_t *adapter;
+    assert(esp_display_present_lcd_io_create(&config, &adapter) == ESP_OK);
+    staged_test_t test = {0};
+    assert(esp_display_present_lcd_io_get_interface(adapter, &test.api) == ESP_OK);
+    assert(test.api.attach(test.api.context, staged_event, &test) == ESP_OK);
+    _Alignas(64) uint8_t source[64] = {0};
+    test.surface = (esp_display_present_surface_t) {
+        source, sizeof(source),
+        {8, 4, 16, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}
+    };
+    test.area = (esp_display_present_rect_t) {
+        0, 0, 8, 4
+    };
+    pthread_t worker;
+    assert(!pthread_create(&worker, NULL, staged_submit, &test));
+    pthread_mutex_lock(&stage_lock);
+    while (!lcd.return_entered) {
+        pthread_cond_wait(&stage_changed, &stage_lock);
+    }
+    assert(test.completions == 0);
+    pthread_mutex_unlock(&stage_lock);
+    uint64_t start = present_now_ms();
+    while (present_now_ms() - start <= config.staging_timeout_ms) {
+        present_pause();
+    }
+    pthread_mutex_lock(&stage_lock);
+    lcd.allow_return = true;
+    pthread_cond_broadcast(&stage_changed);
+    pthread_mutex_unlock(&stage_lock);
+    assert(!pthread_join(worker, NULL));
+    assert(test.result.acceptance == ESP_DISPLAY_PRESENT_TX_UNCERTAIN && test.result.result == ESP_ERR_TIMEOUT);
+    assert(test.completions == 1 && test.completion_result == ESP_ERR_TIMEOUT);
+    assert(test.api.quiesce(test.api.context, 0) == ESP_OK);
+    assert(esp_display_present_lcd_io_destroy(adapter) == ESP_OK);
+}
+/* Before any driver call, a cache failure is a clean rejection. It must
+ * neither fabricate a completion nor close an otherwise usable adapter. */
+static void staged_preflight_retry(void)
+{
+    struct fake_lcd lcd = {.staged = true, .early = true};
+    esp_display_present_lcd_io_config_t config = {.panel = &lcd, .io = &lcd,
+                                                  .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .max_inflight = 1,
+                                                  .staging_bytes = 64, .staging_timeout_ms = 1000
+                                                 };
+    esp_display_present_lcd_io_t *adapter;
+    assert(esp_display_present_lcd_io_create(&config, &adapter) == ESP_OK);
+    staged_test_t test = {0};
+    assert(esp_display_present_lcd_io_get_interface(adapter, &test.api) == ESP_OK);
+    assert(test.api.attach(test.api.context, staged_event, &test) == ESP_OK);
+    _Alignas(64) uint8_t source[128] = {0x12, 0x34};
+    test.surface = (esp_display_present_surface_t) {
+        source, sizeof(source),
+        {8, 8, 16, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}
+    };
+    test.area = (esp_display_present_rect_t) {
+        0, 0, 8, 8
+    };
+    cache_result = ESP_FAIL;
+    staged_submit(&test);
+    assert(test.result.acceptance == ESP_DISPLAY_PRESENT_TX_REJECTED && test.result.result == ESP_FAIL);
+    assert(lcd.draws == 0 && test.completions == 0);
+    cache_result = ESP_OK;
+    staged_submit(&test);
+    assert(test.result.acceptance == ESP_DISPLAY_PRESENT_TX_ACCEPTED);
+    assert(lcd.draws == 2 && test.completions == 1 && test.completion_result == ESP_OK);
+    assert(lcd.history_bytes == sizeof(source) && !memcmp(lcd.history, source, sizeof(source)));
+    assert(test.api.quiesce(test.api.context, 0) == ESP_OK);
+    assert(esp_display_present_lcd_io_destroy(adapter) == ESP_OK);
+}
+
+/* Race final driver return against quiesce. Whichever wins, the returned
+ * transaction result and the single logical completion must agree. */
+static void staged_completion_quiesce_race(void)
+{
+    for (unsigned repeat = 0; repeat < 64; ++repeat) {
+        struct fake_lcd lcd = {.staged = true, .early = true, .block_return = true};
+        esp_display_present_lcd_io_config_t config = {.panel = &lcd, .io = &lcd,
+                                                      .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .max_inflight = 1,
+                                                      .staging_bytes = 64, .staging_timeout_ms = 1000
+                                                     };
+        esp_display_present_lcd_io_t *adapter;
+        assert(esp_display_present_lcd_io_create(&config, &adapter) == ESP_OK);
+        staged_test_t test = {0};
+        assert(esp_display_present_lcd_io_get_interface(adapter, &test.api) == ESP_OK);
+        assert(test.api.attach(test.api.context, staged_event, &test) == ESP_OK);
+        _Alignas(64) uint8_t source[64] = {0};
+        test.surface = (esp_display_present_surface_t) {
+            source, sizeof(source),
+            {8, 4, 16, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}
+        };
+        test.area = (esp_display_present_rect_t) {
+            0, 0, 8, 4
+        };
+        pthread_t worker;
+        assert(!pthread_create(&worker, NULL, staged_submit, &test));
+        pthread_mutex_lock(&stage_lock);
+        while (!lcd.return_entered) {
+            pthread_cond_wait(&stage_changed, &stage_lock);
+        }
+        lcd.allow_return = true;
+        pthread_cond_broadcast(&stage_changed);
+        pthread_mutex_unlock(&stage_lock);
+        esp_err_t quiet = test.api.quiesce(test.api.context, 0);
+        assert(quiet == ESP_OK || quiet == ESP_ERR_TIMEOUT);
+        assert(!pthread_join(worker, NULL));
+        assert(test.result.acceptance == ESP_DISPLAY_PRESENT_TX_ACCEPTED ||
+               test.result.acceptance == ESP_DISPLAY_PRESENT_TX_UNCERTAIN);
+        assert(test.completions == 1 && test.completion_result == test.result.result);
+        assert(lcd.draws == 1 && lcd.history_bytes == sizeof(source));
+        assert(test.api.quiesce(test.api.context, 0) == ESP_OK);
+        assert(esp_display_present_lcd_io_destroy(adapter) == ESP_OK);
+    }
+}
+
 int main(void)
 {
     external_dma();
     staged_transfer();
+    staged_abort_and_overlap();
+    staged_driver_failure();
+    staged_late_driver_return();
+    staged_preflight_retry();
+    staged_completion_quiesce_race();
     fifo_and_validation();
     early_and_uncertain();
     callback_exit_barrier();
