@@ -24,28 +24,38 @@ def sha(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def lvgl_version(path):
+    header = (path / 'lv_version.h').read_text()
+    parts = dict(re.findall(r'^#define\s+LVGL_VERSION_(MAJOR|MINOR|PATCH)\s+(\d+)', header, re.MULTILINE))
+    if len(parts) != 3:
+        raise ValueError(f'Cannot read the LVGL version from {path / "lv_version.h"}')
+    return '.'.join(parts[key] for key in ('MAJOR', 'MINOR', 'PATCH'))
+
+
 def run(cmd, **kwargs):
     print('+', ' '.join(map(str, cmd)), flush=True)
     return subprocess.run(list(map(str, cmd)), check=True, **kwargs)
 
 
-def cases_for(board, angles, profiles=None):
+def cases_for(board, angles, profiles=None, draw_buffers=None):
     """One case table for both implementations; unsupported cases remain explicit."""
     scanout = BOARDS[board]['interface'] in ('rgb', 'dsi')
+    gram = [(f'GRAM_T{tiles}_{memory}', 'B_NONE', tiles, memory == 'PSRAM', 0)
+            for memory in ('INTERNAL', 'PSRAM') for tiles in (1, 2)]
     if scanout:
         profiles_all = [(n, 'B_' + n, 1, False, 0) for n in
                         ('DOUBLE_FULL', 'TRIPLE_FULL', 'DOUBLE_DIRECT', 'DOUBLE_PARTIAL', 'TRIPLE_PARTIAL', 'AUTO')]
     elif board == 's31-qspi':
         profiles_all = [(f'TE_C{c}_T{t}', 'B_TE', t, False, c) for c in (1, 2) for t in (1, 2)]
+        if profiles:
+            profiles_all += gram
         # Adapter-native baselines have distinct layouts; never relabel as C/T.
         if profiles and any(name.startswith('ADAPTER_TE_') for name in profiles):
             profiles_all += [('ADAPTER_TE_SYNC_FULL', 'B_TE', 1, True, 0),
                              ('ADAPTER_TE_ASYNC_FULL', 'B_TE', 1, True, 3),
                              ('ADAPTER_TE_ASYNC_BOUNCE', 'B_TE', 1, True, 4)]
     else:
-        profiles_all = [(f'GRAM_T{t}_{m}', 'B_NONE', t, m == 'PSRAM', 0)
-                        for m in ('INTERNAL', 'PSRAM') for t in (1, 2)]
-        profiles_all += [('AUTO_T2_INTERNAL', 'B_AUTO', 2, False, 0)]
+        profiles_all = [*gram, ('AUTO_T2_INTERNAL', 'B_AUTO', 2, False, 0)]
     if profiles:
         unknown = set(profiles) - {p[0] for p in profiles_all}
         if unknown:
@@ -53,6 +63,8 @@ def cases_for(board, angles, profiles=None):
         profiles_all = [p for p in profiles_all if p[0] in profiles]
     rows = []
     for name, mode, tiles, psram, compose in profiles_all:
+        if draw_buffers is not None and scanout and mode in ('B_DOUBLE_PARTIAL', 'B_TRIPLE_PARTIAL', 'B_AUTO'):
+            tiles = draw_buffers
         for angle in angles:
             reason = ''
             if mode == 'B_AUTO':
@@ -95,6 +107,8 @@ def variant_name(args, implementation=None):
         name += '-profile'
     if getattr(args, 'xip', 'default') != 'default':
         name += '-xip-' + args.xip
+    if getattr(args, 'draw_buffers', None) is not None:
+        name += f'-draw{args.draw_buffers}'
     if getattr(args, 'driver_trace', None):
         name += '-driver-trace'
     return name
@@ -183,7 +197,7 @@ def build(args):
             alias.unlink()
         if not alias.exists():
             alias.symlink_to(lvgl, target_is_directory=True)
-        planned = cases_for(args.board, args.angles, args.profiles)
+        planned = cases_for(args.board, args.angles, args.profiles, args.draw_buffers)
         if args.implementation != 'adapter' and any(c['name'].startswith('ADAPTER_TE_') for c in planned):
             raise ValueError('ADAPTER_TE profiles describe adapter-native layouts; use --implementation adapter')
         (root / 'bench_cases.h').write_text(header(planned))
@@ -224,7 +238,9 @@ def build(args):
         env['PRESENT_TEST_LCD_DRIVER_DIR'] = str(driver_trace / 'esp_lcd')
         env['PRESENT_TEST_DRIVER_TRACE'] = 'ON'
 
-    env['LVGL_VERSION'] = '9.6.0'
+    version = lvgl_version(lvgl) if lvgl else None
+    if version:
+        env['LVGL_VERSION'] = version
     env['PRESENT_TEST_BUFFER_POLICY'] = buffer_policy
     env['PRESENT_TEST_PROFILE'] = 'ON' if args.profile else 'OFF'
     if args.implementation == 'adapter':
@@ -277,7 +293,7 @@ def build(args):
                  idf_commit=subprocess.check_output(['git', '-C', str(idf()), 'rev-parse', 'HEAD'], text=True).strip(),
                  xip_mode=xip_mode, driver_trace=trace_manifest,
                  rgb_bounce_lines=(0 if args.board == 's31-rgb' else 10) if args.suite == 'benchmark' and args.board in ('s31-rgb', 's3-rgb') else None,
-                 lvgl_version='9.6.0' if lvgl else None,
+                 lvgl_version=version,
                  lvgl_benchmark_sha256=sha(lvgl / 'demos/benchmark/lv_demo_benchmark.c') if lvgl else None,
                  comparable_sdkconfig_sha256=hashlib.sha256(comparable.encode()).hexdigest(),
                  defaults_sha256={p.name: sha(p) for p in defaults},
@@ -286,7 +302,7 @@ def build(args):
     state['test_sources_sha256'] = {str(p.relative_to(DEV)): sha(p) for directory in source_dirs for p in directory.rglob('*') if p.is_file() and p.suffix in ('.c', '.h', '.txt')}
     state['component_sources_sha256'] = {str(p.relative_to(DEV.parent.parent)): sha(p)
         for name in ('esp_display_present', 'esp_lv_present', 'esp_lvgl_adapter')
-        for sub in ('src', 'include') for p in (DEV.parent.parent / name / sub).rglob('*')
+        for sub in ('src', 'include', 'private_include') for p in (DEV.parent.parent / name / sub).rglob('*')
         if p.is_file() and p.suffix in ('.c', '.h')}
     if args.suite == 'benchmark':
         state['expected_input_bytes'] = {f"{c['name']}/{c['rotation']}": expected_input_bytes(board, c, args.implementation, buffer_policy) for c in planned}
@@ -299,6 +315,12 @@ def build(args):
     print('Build passed:', root)
 
 
+def suite_complete(text):
+    # Executor checks precede the matrix; EXECUTOR_SUITE_PASS is not its end.
+    return bool(re.search(r'\b(?:SUITE_PASS|TE_SUITE_PASS|RGB_EVENT_SUITE_PASS|RGB_HANDOFF_SUITE_PASS|MATRIX_PASS|MATRIX_DONE)\b', text) or
+                'present_v2 smoke passed' in text)
+
+
 def parse_log(text):
     rows = []
     meters = {}
@@ -307,13 +329,15 @@ def parse_log(text):
     memory = {}
     suite_memory = {}
     buffers = {}
+    metrics = {}
     active = None
     errors = []
     for raw in text.splitlines():
         line = re.sub(r'\x1b\[[0-9;]*[A-Za-z]', '', raw)
         mem = re.search(r'MEMORY mode=(\S+) rotation=(\d+) phase=(\S+)', line)
         if mem:
-            values = {k: int(v) for k, v in re.findall(r'(internal_total|internal_free|psram_total|psram_free|internal_min_free|psram_min_free)=(\d+)', line)}
+            values = {k: int(v) for k, v in re.findall(
+                r'(internal_total|internal_free|psram_total|psram_free|internal_min_free|psram_min_free|internal_dma_largest)=(\d+)', line)}
             if mem[1] == 'SUITE':
                 suite_memory[mem[3]] = values
             else:
@@ -335,6 +359,9 @@ def parse_log(text):
                 stages.setdefault(active, {})[stage[1]] = {k: int(v) for k, v in re.findall(r'(n|sum_us|avg_us|max_us|bytes|errors)=(\d+)', line)}
         if 'TE_METER:' in line and active:
             meters[active] = {k: int(v) for k, v in re.findall(r'(admitted|wait_avg_us|wait_max_us|tx_n|tx_avg_us|tx_max_us)=(\d+)', line)}
+        sample = re.search(r'\bMETRICS mode=(\S+) te_buffers=\d+ rotation=(\d+) (.+)', line)
+        if sample:
+            metrics[sample[1], int(sample[2])] = {k: int(v) for k, v in re.findall(r'(\w+)=(\d+)', sample[3])}
         m = re.search(r'(PASS|SKIP) mode=(\S+).*rotation=(\d+)', line)
         if m:
             row = dict(status=m[1], mode=m[2], rotation=int(m[3]))
@@ -349,13 +376,15 @@ def parse_log(text):
                 row['memory'] = memory[(m[2], int(m[3]))]
             if (m[2], int(m[3])) in stages:
                 row['stages'] = stages[(m[2], int(m[3]))]
+            if (m[2], int(m[3])) in metrics:
+                row['metrics'] = metrics[(m[2], int(m[3]))]
             if m[1] == 'SKIP':
                 row['reason'] = line.split('reason=', 1)[-1]
             rows.append(row)
         if any(t in line for t in ('assert failed', 'Guru Meditation', 'ESP_ERROR_CHECK failed', 'Stack canary')) or (
                 re.search(r'\bE \(', line) and 'GPIO isr service already installed' not in line):
             errors.append(line.strip())
-    return dict(complete='SUITE_PASS ' in text or 'TE_SUITE_PASS ' in text or 'MATRIX_PASS ' in text or 'present_v2 smoke passed' in text,
+    return dict(complete=suite_complete(text),
                 rows=rows, errors=errors, suite_memory=suite_memory)
 
 
@@ -424,7 +453,8 @@ def compare(args):
         manifests[impl] = json.loads((root / 'manifest.json').read_text())
         if not results[impl]['complete'] or results[impl]['errors'] or not results[impl]['matrix_complete']:
             raise ValueError('Cannot compare incomplete/failed suites')
-    for key in ('xip_mode', 'driver_trace', 'rgb_bounce_lines', 'board', 'cases', 'idf_commit', 'lvgl_benchmark_sha256', 'comparable_sdkconfig_sha256', 'defaults_sha256', 'test_sources_sha256'):
+    for key in ('xip_mode', 'driver_trace', 'rgb_bounce_lines', 'board', 'cases', 'idf_commit', 'lvgl_version',
+                'lvgl_benchmark_sha256', 'comparable_sdkconfig_sha256', 'defaults_sha256', 'test_sources_sha256'):
         if manifests['present'].get(key) != manifests['adapter'].get(key):
             raise ValueError('Comparison configurations differ: ' + key)
     if manifests['present'].get('buffer_policy', 'legacy-physical-50') != manifests['adapter'].get('buffer_policy', 'legacy-physical-50'):
@@ -550,7 +580,6 @@ def capture(args):
     HardReset(serial_port, uses_usb=args.port.startswith('/dev/ttyACM'))()
     start = last = time.monotonic()
     pending = b''
-    stop = ('SUITE_PASS ', 'TE_SUITE_PASS ', 'MATRIX_PASS ', 'MATRIX_DONE ', 'present_v2 smoke passed')
     with serial_port, (root / 'live.log').open('wb') as log:
         while time.monotonic()-start < args.timeout:
             data = serial_port.read(serial_port.in_waiting or 1)
@@ -560,9 +589,9 @@ def capture(args):
             while b'\n' in pending:
                 raw, pending = pending.split(b'\n', 1)
                 line = raw.decode(errors='replace')
-                if any(k in line for k in ('RUN ', 'PASS ', 'SKIP ', 'RGB_EVENT_BEGIN ', 'TE_METER:', 'PRESENT_PROFILE:', 'FAIL', 'E (')):
+                if any(k in line for k in ('RUN ', 'PASS ', 'SKIP ', 'RGB_EVENT_BEGIN ', 'TE_METER:', 'METRICS mode=', 'PRESENT_PROFILE:', 'FAIL', 'E (')):
                     print(line.strip(), flush=True)
-                if any(k in line for k in stop):
+                if suite_complete(line):
                     return
                 if parse_log(line)['errors']:
                     raise ValueError('Hardware error; raw log retained')
@@ -585,6 +614,8 @@ def main():
     p.add_argument('--profiles', type=lambda v: v.split(','))
     p.add_argument('--buffer-policy', choices=POLICIES, default='logical-50', help='PARTIAL byte-capacity alignment; legacy policy reproduces old allocation')
     p.add_argument('--xip', choices=('default', 'on', 'off'), default='default', help='Isolated RGB/DSI benchmark XIP configuration')
+    p.add_argument('--draw-buffers', type=int, choices=(1, 2),
+                   help='Override the PARTIAL tile count for an isolated Present RGB/DSI benchmark')
     p.add_argument('--driver-trace', type=Path, help='Verified read-only driver observer overlay; separate diagnostic output')
     p.add_argument('--profile', action='store_true', help='Benchmark-only stage counters; isolated present-profile output')
     p.add_argument('--sanitize', action='store_true')
@@ -596,6 +627,10 @@ def main():
         p.error('Compare uninstrumented baseline runs; profiling has separate output')
     if args.action not in ('list', 'prepare', 'host', 'format') and not args.board:
         p.error('--board required')
+    if args.draw_buffers is not None and (args.suite != 'benchmark' or args.implementation != 'present' or
+                                          not args.board or BOARDS[args.board]['interface'] not in ('rgb', 'dsi') or
+                                          args.action not in ('build', 'flash', 'capture', 'report')):
+        p.error('--draw-buffers applies to Present RGB/DSI benchmark build, flash, capture and report')
     if any(a not in (0, 90, 180, 270) for a in args.angles) or not args.angles or len(set(args.angles)) != len(args.angles):
         p.error('--angles requires distinct 0,90,180,270 values')
     # Never put firmware backups or build products in the source tree.

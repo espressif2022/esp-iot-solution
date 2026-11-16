@@ -28,6 +28,7 @@ struct present_resources {
     esp_display_present_te_sync_config_t te_config;
     bool te_required, te_armed;
     esp_display_present_executor_t *cpu, *dma2d, *ppa;
+    bool dma2d_attempted, ppa_attempted;
     esp_display_present_executor_dispatch_t dispatch;
     present_lock_t lock;
     present_resource_status_t status;
@@ -79,45 +80,64 @@ static size_t te_staging_bytes(uint32_t width, uint32_t height, unsigned rotatio
 
 static esp_display_present_plan_memory_t preferred_external_memory(size_t bytes, size_t count)
 {
-#ifdef PRESENT_HOST
-    (void)bytes;
-    (void)count;
-    return ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL;
-#else
-    if (count && bytes <= SIZE_MAX / count &&
-            heap_caps_get_free_size(MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT) >= bytes * count &&
-            heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT) >= bytes) {
-        return ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL;
-    }
-    return ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA;
-#endif
+    return present_psram_can_fit(bytes, count) ? ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL : ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA;
 }
-static size_t default_tiles(bool overlap, esp_display_present_plan_memory_t memory, size_t bytes, size_t staging)
+static size_t default_tiles(bool overlap, esp_display_present_plan_memory_t memory, size_t bytes, size_t staging, uint32_t *degradation)
 {
 #ifdef PRESENT_HOST
     (void)overlap;
     (void)memory;
     (void)bytes;
     (void)staging;
+    (void)degradation;
     return 2;
 #else
     if (!overlap) {
         return 2;    /* V1 plain region default. */
     }
     if (portNUM_PROCESSORS < 2) {
+        *degradation |= ESP_DISPLAY_PRESENT_DEGRADE_TILE_SINGLE_CORE;
         return 1;
     }
     if (memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL) {
         bytes = 0;
     }
-    if (staging > SIZE_MAX - 128 * 1024 || bytes > (SIZE_MAX - staging - 128 * 1024) / 2) {
-        return 1;
+    if (staging <= SIZE_MAX - 128 * 1024 && bytes <= (SIZE_MAX - staging - 128 * 1024) / 2 &&
+            heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA) >= bytes * 2 + staging + 128 * 1024) {
+        return 2;
     }
-    return heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA) >= bytes * 2 + staging + 128 * 1024 ? 2 : 1;
+    *degradation |= ESP_DISPLAY_PRESENT_DEGRADE_TILE_HEADROOM;
+    return 1;
 #endif
 }
 
-esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bool bounce, esp_display_present_plan_config_t *out)
+static void plan_pixel_path(esp_display_present_plan_config_t *plan, bool prefer_psram)
+{
+    esp_display_present_backend_config_t *backend = &plan->presenter.backend;
+    bool region = plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION;
+    bool swap = backend->panel_order == ESP_DISPLAY_PRESENT_ORDER_SWAPPED;
+    backend->tx_staging = region && plan->resources.tile_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL;
+    /* Preserve out-of-place swap and runtime rotation for PSRAM-preferring callers. */
+    backend->async_copy = !region || backend->tx_staging || backend->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 ||
+                          (swap && prefer_psram);
+    backend->shared_copy_worker = plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB &&
+                                  plan->resources.tile_count <= 1;
+    backend->in_place = region && !backend->async_copy && swap;
+    backend->deferred_submit = false;
+    plan->presenter.worker_priority = 0;
+#ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND
+    backend->deferred_submit = !backend->async_copy && CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND;
+#endif
+#ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY
+    if (backend->deferred_submit) {
+        plan->presenter.worker_priority = CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY;
+    }
+#endif
+    plan->presenter.background_service = backend->async_copy || backend->deferred_submit;
+}
+
+static esp_err_t plan_resources(const esp_display_presenter_config_t *input, bool bounce,
+                                esp_display_present_plan_config_t *out, uint32_t *degradation)
 {
     if (!input || !out || !input->width || !input->height ||
             input->pixel_format < ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 || input->pixel_format > ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB888 ||
@@ -201,23 +221,46 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
         }
         reserved += image_bytes * images;
     }
-    /* Pixel copying and backend progress are separate decisions. The region
-     * experiment adds a backend worker to the synchronous pixel path without adding
-     * a copy worker or changing the existing async-copy paths. */
-    bool async = framebuffer || te || hw->rotation != 0 || input->target.drawbuf.in_psram;
-    bool deferred = false;
-#ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND
-    deferred = !async && CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND;
-#endif
-    bool background = async || deferred;
-    unsigned backend_priority = 0;
-#ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY
-    if (deferred) {
-        backend_priority = CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY;
-    }
-#endif
+    *out = (esp_display_present_plan_config_t) {
+        .presenter = {
+            .backend_kind = mode.kind,
+            .mode = mode.engine_mode,
+            .transfer_timeout_ms = input->transfer_timeout_ms ? input->transfer_timeout_ms : 1000,
+            .timeout_ms = input->pipeline_acquire_timeout_ms ? input->pipeline_acquire_timeout_ms : 1000,
+            .backend = {
+                .width = input->width,
+                .height = input->height,
+                .tile_rows = rows,
+                .render_contract = mode.engine_mode == ESP_DISPLAY_PRESENT_MODE_DEFAULT ? mode.contract : ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION,
+                .buffer_count = images,
+                .max_frames = 8,
+                .format = input->pixel_format == ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 ? ESP_DISPLAY_PRESENT_FORMAT_RGB565 : ESP_DISPLAY_PRESENT_FORMAT_RGB888,
+                .rotation = (esp_display_present_engine_rotation_t)(hw->rotation / 90),
+                /* The panel's physical axes stay fixed. Runtime quarter-turns
+                 * transpose the producer layout in the backend. */
+                .fixed_rotation = false,
+                .active_writes = mode.active_writes,
+                .te_gate = te ? (esp_display_present_te_gate_t)
+                {
+                    te_admit, te_start, te_done, NULL
+} : (esp_display_present_te_gate_t)
+                {
+                    0
+                },
+                .panel_order = hw->swap_bytes ? ESP_DISPLAY_PRESENT_ORDER_SWAPPED : ESP_DISPLAY_PRESENT_ORDER_NATIVE,
+            },
+        },
+        .extra_bytes = sizeof(present_resources_t) + (te ? te_staging_bytes(input->width, input->height, hw->rotation / 90, bytes_per_pixel) + 64 + present_event_memory() + esp_display_present_te_sync_memory() : 0),
+        .resources = {
+            .image_count = images,
+            .tile_memory = tile_memory,
+            .image_memory = image_memory,
+            .logical_memory = preferred_external_memory((size_t)input->width * input->height * bytes_per_pixel, 1),
+        },
+    };
+    plan_pixel_path(out, input->target.drawbuf.in_psram);
     size_t slot_bytes = tile_bytes;
-    if (!framebuffer && !te && async) {
+    if (!framebuffer && !te && out->presenter.backend.async_copy) {
         if (tile_memory == ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA) {
             if (slot_bytes > SIZE_MAX / 2) {
                 return ESP_ERR_INVALID_SIZE;
@@ -230,55 +273,21 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
             reserved += 2 * tile_bytes; /* PSRAM draw + internal DMA conversion. */
         }
     }
-    size_t tiles = partial ? (input->target.drawbuf.buffers ? input->target.drawbuf.buffers :
-                              default_tiles(background, tile_memory, slot_bytes, reserved)) : 0;
-    *out = (esp_display_present_plan_config_t) {
-        .presenter = {
-            .backend_kind = mode.kind,
-            .mode = mode.engine_mode,
-            .transfer_timeout_ms = input->transfer_timeout_ms ? input->transfer_timeout_ms : 1000,
-            .timeout_ms = input->pipeline_acquire_timeout_ms ? input->pipeline_acquire_timeout_ms : 1000,
-            .background_service = background,
-            .worker_priority = backend_priority,
-            .backend = {
-                .width = input->width,
-                .height = input->height,
-                .tile_rows = rows,
-                .render_contract = mode.engine_mode == ESP_DISPLAY_PRESENT_MODE_DEFAULT ? mode.contract : ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION,
-                .buffer_count = framebuffer ? images : tiles,
-                .max_frames = 8,
-                .format = input->pixel_format == ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 ? ESP_DISPLAY_PRESENT_FORMAT_RGB565 : ESP_DISPLAY_PRESENT_FORMAT_RGB888,
-                .rotation = (esp_display_present_engine_rotation_t)(hw->rotation / 90),
-                .async_copy = async,
-                .deferred_submit = deferred,
-                /* The panel's physical axes stay fixed. Runtime quarter-turns
-                 * transpose the producer layout in the backend. */
-                .fixed_rotation = false,
-                .active_writes = mode.active_writes,
-                .tx_staging = !framebuffer && !te && input->target.drawbuf.in_psram,
-                .te_gate = te ? (esp_display_present_te_gate_t)
-                {
-                    te_admit, te_start, te_done, NULL
-} : (esp_display_present_te_gate_t)
-                {
-                    0
-                },
-                .panel_order = hw->swap_bytes ? ESP_DISPLAY_PRESENT_ORDER_SWAPPED : ESP_DISPLAY_PRESENT_ORDER_NATIVE,
-                .in_place = !framebuffer && !async && hw->swap_bytes,
-            },
-        },
-        .extra_bytes = sizeof(present_resources_t) + (te ? te_staging_bytes(input->width, input->height, hw->rotation / 90, bytes_per_pixel) + 64 + present_event_memory() + esp_display_present_te_sync_memory() : 0),
-        .resources = {
-            .tile_count = tiles,
-            .image_count = images,
-            .tile_memory = tile_memory,
-            .image_memory = image_memory,
-            .logical_memory = preferred_external_memory((size_t)input->width * input->height * bytes_per_pixel, 1),
-        },
-    };
-    /* Opaque SPI IO cannot establish direct PSRAM DMA support: stage through
-     * independent internal conversion slots instead of rejecting valid draw memory. */
+    if (partial) {
+        out->resources.tile_count = input->target.drawbuf.buffers ? input->target.drawbuf.buffers :
+                                    default_tiles(out->presenter.background_service, tile_memory, slot_bytes, reserved, degradation);
+        if (!framebuffer) {
+            out->presenter.backend.buffer_count = out->resources.tile_count;
+        }
+    }
+    plan_pixel_path(out, input->target.drawbuf.in_psram);
     return ESP_OK;
+}
+
+esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bool bounce, esp_display_present_plan_config_t *out)
+{
+    uint32_t degradation = 0;
+    return plan_resources(input, bounce, out, &degradation);
 }
 
 static esp_err_t copy_execute(void *user, const esp_display_present_copy_request_t *request)
@@ -305,6 +314,25 @@ esp_err_t present_resources_select_executor(present_resources_t *resources, esp_
 {
     if (!resources || resources->status.closing || rotation < ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || rotation > ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270) {
         return ESP_ERR_INVALID_STATE;
+    }
+    esp_display_present_backend_config_t backend = resources->status.plan.normalized.backend;
+    backend.rotation = rotation;
+    bool needs_copy = backend.async_copy &&
+                      (resources->status.plan.normalized.backend_kind != ESP_DISPLAY_PRESENT_ENGINE_FB ||
+                       present_fb_needs_pixel_engine(&backend));
+    if (needs_copy && rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 && !resources->dma2d_attempted) {
+        resources->dma2d_attempted = true;
+        esp_err_t result = esp_display_present_executor_dma2d_create(&resources->dma2d);
+        present_lock_enter(&resources->lock, false);
+        resources->status.dma2d_create_result = result;
+        present_lock_exit(&resources->lock, false);
+    }
+    if (needs_copy && (rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || !resources->dma2d) && !resources->ppa_attempted) {
+        resources->ppa_attempted = true;
+        esp_err_t result = esp_display_present_executor_ppa_create(&resources->ppa);
+        present_lock_enter(&resources->lock, false);
+        resources->status.ppa_create_result = result;
+        present_lock_exit(&resources->lock, false);
     }
     esp_display_present_executor_t *primary = rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 ? resources->ppa : resources->dma2d;
     if (!primary) {
@@ -453,6 +481,7 @@ static esp_err_t create_planned_engine(present_resources_t *resources, const esp
                                        esp_display_present_plan_config_t *config)
 {
     /* Single resolve per attempt: status.plan is the plan actually used. */
+    config->presenter.backend.copy_execute = config->presenter.backend.async_copy ? copy_execute : NULL;
     esp_err_t error = present_engine_create_with_plan(config, &resources->status.plan, &resources->presenter);
     if (error != ESP_ERR_NO_MEM || input->target.drawbuf.buffers != 0 || config->resources.tile_count != 2) {
         return error;
@@ -460,6 +489,7 @@ static esp_err_t create_planned_engine(present_resources_t *resources, const esp
 
     /* No pixels were submitted; only an automatically selected count may shrink. */
     config->resources.tile_count = 1;
+    resources->status.degradation_flags |= ESP_DISPLAY_PRESENT_DEGRADE_TILE_ALLOCATION;
     if (config->presenter.backend_kind != ESP_DISPLAY_PRESENT_ENGINE_FB) {
         config->presenter.backend.buffer_count = 1;
     }
@@ -469,6 +499,8 @@ static esp_err_t create_planned_engine(present_resources_t *resources, const esp
         size_t bytes = (size_t)input->width * config->presenter.backend.tile_rows * bpp;
         config->resources.tile_memory = preferred_external_memory(bytes, 1);
     }
+    plan_pixel_path(config, input->target.drawbuf.in_psram);
+    config->presenter.backend.copy_execute = config->presenter.backend.async_copy ? copy_execute : NULL;
     return present_engine_create_with_plan(config, &resources->status.plan, &resources->presenter);
 }
 
@@ -480,7 +512,8 @@ esp_err_t present_resources_create(const esp_display_presenter_config_t *input, 
     }
     *out = NULL;
     esp_display_present_plan_config_t config;
-    esp_err_t error = present_resources_plan(input, bounce, &config);
+    uint32_t degradation = 0;
+    esp_err_t error = plan_resources(input, bounce, &config, &degradation);
     if (error != ESP_OK) {
         return error;
     }
@@ -500,6 +533,7 @@ esp_err_t present_resources_create(const esp_display_presenter_config_t *input, 
         (void)free_resources(resources);
         return error;
     }
+    resources->status.degradation_flags = degradation;
     resources->dispatch.primary = resources->cpu;
     resources->te_required = config.presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_TE;
     resources->te_config = input->target.hw.te_sync;
@@ -508,7 +542,6 @@ esp_err_t present_resources_create(const esp_display_presenter_config_t *input, 
     } else {
         error = create_lcd_io_adapter(resources, input, &config);
     }
-    config.presenter.backend.copy_execute = config.presenter.backend.async_copy ? copy_execute : NULL;
     config.presenter.backend.copy_user = resources;
     config.presenter.backend.te_gate.user = resources;
     if (error == ESP_OK) {
@@ -523,8 +556,16 @@ esp_err_t present_resources_create(const esp_display_presenter_config_t *input, 
     /* Optional accelerators are created last: no later initialization failure
      * needs to discard a hardware handle whose unregister may fail. A setup
      * failure uses CPU and is visible in the diagnostic snapshot. */
-    resources->status.dma2d_create_result = config.presenter.backend.async_copy ? esp_display_present_executor_dma2d_create(&resources->dma2d) : ESP_ERR_NOT_SUPPORTED;
-    resources->status.ppa_create_result = config.presenter.backend.async_copy ? esp_display_present_executor_ppa_create(&resources->ppa) : ESP_ERR_NOT_SUPPORTED;
+    resources->status.dma2d_create_result = ESP_ERR_NOT_SUPPORTED;
+    resources->status.ppa_create_result = ESP_ERR_NOT_SUPPORTED;
+    const esp_display_present_resolved_plan_t *plan = &resources->status.plan;
+    if (input->target.fb.mode == ESP_DISPLAY_PRESENT_MODE_AUTO &&
+            plan->normalized.mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL) {
+        resources->status.degradation_flags |= ESP_DISPLAY_PRESENT_DEGRADE_AUTO_FB_POOL;
+    }
+    if (input->target.drawbuf.in_psram && plan->tiles.count && plan->tiles.memory == ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA) {
+        resources->status.degradation_flags |= ESP_DISPLAY_PRESENT_DEGRADE_TILE_PSRAM;
+    }
     (void)present_resources_select_executor(resources, config.presenter.backend.rotation);
     resources->status.ready = resources->scanout == NULL && !resources->te_required;
     *out = resources;
@@ -563,6 +604,12 @@ esp_err_t present_resources_prepare(present_resources_t *resources, uint32_t tim
         resources->status.ready = true;
     }
     return error;
+}
+
+void present_resources_get_selection(const present_resources_t *resources, esp_display_present_mode_t *mode, uint32_t *degradation)
+{
+    *mode = present_mode_to_public(resources->status.plan.normalized.mode);
+    *degradation = resources->status.degradation_flags;
 }
 
 esp_err_t present_resources_status(present_resources_t *resources, present_resource_status_t *out)

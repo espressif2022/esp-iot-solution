@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include "core/present_engine.h"
+#include "pixel/present_pixel_ops.h"
 #include "../../src/platform/present_os.h"
 #include <assert.h>
 #include <stdio.h>
@@ -25,6 +26,7 @@ typedef struct {
     bool immediate;
     bool uncertain;
     bool fb;
+    bool copy_entered;
 } panel_t;
 static void complete_locked(panel_t *p)
 {
@@ -193,6 +195,20 @@ static void autonomous(bool fb)
     destroy(p, &panel);
 }
 
+static _Thread_local esp_display_present_engine_t *wake_engine_on_wait;
+static _Thread_local panel_t *wake_panel_on_wait;
+bool __real_present_event_wait(present_os_event_t *, uint32_t);
+bool __wrap_present_event_wait(present_os_event_t *event, uint32_t timeout)
+{
+    if (wake_panel_on_wait) {
+        panel_t *panel = wake_panel_on_wait;
+        wake_panel_on_wait = NULL;
+        esp_display_present_engine_notify_te(wake_engine_on_wait, present_now_us());
+        wait_submit(panel, 1); /* Worker has taken the gate while the caller waits. */
+    }
+    return __real_present_event_wait(event, timeout);
+}
+
 static void bounded_join(void)
 {
     panel_t panel;
@@ -200,9 +216,12 @@ static void bounded_join(void)
     panel.blocked = true;
     esp_display_present_engine_t *p = create(&panel, false);
     frame(p);
-    esp_display_present_engine_notify_te(p, present_now_us());
-    wait_submit(&panel, 1); /* Sender is inside a deliberately blocked driver call. */
+    wake_engine_on_wait = p;
+    wake_panel_on_wait = &panel;
     uint64_t start = present_now_ms();
+    assert(esp_display_present_engine_drain(p, 25) == ESP_ERR_TIMEOUT);
+    assert(!wake_panel_on_wait && present_now_ms() - start < 500);
+    start = present_now_ms();
     assert(esp_display_present_engine_stop(p, 5) == ESP_ERR_TIMEOUT);
     assert(present_now_ms() - start < 500);
     assert(esp_display_present_engine_destroy(p) == ESP_ERR_INVALID_STATE);
@@ -268,6 +287,73 @@ static esp_display_present_lease_t gram_tile(esp_display_present_engine_t *p, un
     esp_display_present_engine_area_t area = {0, y, 3, y + 1};
     OK(esp_display_present_engine_submit_buffer(p, &lease, &area, 8));
     return lease;
+}
+
+static esp_err_t stalled_copy(void *context, const esp_display_present_copy_request_t *request)
+{
+    panel_t *panel = context;
+    pthread_mutex_lock(&panel->lock);
+    panel->copy_entered = true;
+    pthread_cond_broadcast(&panel->condition);
+    while (!panel->release) {
+        pthread_cond_wait(&panel->condition, &panel->lock);
+    }
+    pthread_mutex_unlock(&panel->lock);
+    return esp_display_present_pixel_execute_cpu(request);
+}
+
+static void shared_copy_bounded_stop(void)
+{
+    panel_t panel;
+    init_panel(&panel);
+    panel.fb = true;
+    esp_display_present_engine_config_t config = {
+        .backend_kind = ESP_DISPLAY_PRESENT_ENGINE_FB,
+        .mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL,
+        .backend = {
+            .width = 4, .height = 4, .tile_rows = 2, .buffer_count = 2, .tile_count = 1, .max_frames = 4,
+            .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+            .async_copy = true, .shared_copy_worker = true,
+            .copy_execute = stalled_copy, .copy_user = &panel,
+            .panel = {&panel, attach, submit, quiesce},
+        },
+        .timeout_ms = 5, .background_service = true,
+    };
+    esp_display_present_engine_t *p = NULL;
+    OK(esp_display_present_engine_create(&config, &p));
+    esp_display_present_frame_request_t request = {.full_redraw = true};
+    OK(esp_display_present_engine_begin_next_frame(p, &request));
+    esp_display_present_lease_t first = gram_tile(p, 0);
+    struct timespec deadline;
+    clock_gettime(CLOCK_MONOTONIC, &deadline);
+    deadline.tv_sec += 2;
+    pthread_mutex_lock(&panel.lock);
+    while (!panel.copy_entered) {
+        assert(pthread_cond_timedwait(&panel.condition, &panel.lock, &deadline) == 0);
+    }
+    pthread_mutex_unlock(&panel.lock);
+    /* Simulate a missing hardware callback. No caller may reuse the source,
+     * but the executor must not hold the owner gate or defeat time budgets. */
+    uint64_t start = present_now_ms();
+    esp_display_present_lease_t unavailable;
+    assert(esp_display_present_engine_acquire_buffer(p, &unavailable) == ESP_ERR_TIMEOUT);
+    assert(esp_display_present_engine_cancel_frame(p) == ESP_ERR_TIMEOUT);
+    assert(esp_display_present_engine_stop(p, 5) == ESP_ERR_TIMEOUT);
+    assert(present_now_ms() - start < 500);
+    assert(esp_display_present_engine_destroy(p) == ESP_ERR_INVALID_STATE);
+    assert(esp_display_present_engine_stop(p, 0) == ESP_ERR_TIMEOUT);
+    assert(esp_display_present_engine_acquire_buffer(p, &unavailable) == ESP_ERR_INVALID_STATE);
+    for (unsigned i = 0; i < 16; ++i) {
+        assert(((const unsigned char *)first.surface.pixels)[i] == 0xab);
+    }
+    pthread_mutex_lock(&panel.lock);
+    assert(panel.quiesces == 0 && panel.submissions == 0);
+    panel.release = true; /* Late callback: retained buffers are still valid. */
+    pthread_cond_broadcast(&panel.condition);
+    pthread_mutex_unlock(&panel.lock);
+    OK(esp_display_present_engine_stop(p, 1000));
+    assert(panel.submissions == 0);
+    destroy(p, &panel);
 }
 
 static void gram_driver_block_and_stop(void)
@@ -414,6 +500,7 @@ int main(void)
     autonomous(true);
     bounded_join();
     rejection();
+    shared_copy_bounded_stop();
     gram_driver_block_and_stop();
     gram_zero_copy_backpressure();
     gram_uncertain_keeps_pixels();

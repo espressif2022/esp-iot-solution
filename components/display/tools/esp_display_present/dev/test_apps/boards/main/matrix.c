@@ -148,28 +148,60 @@ static const profile_t profiles[] = {
     {"AUTO", ESP_DISPLAY_PRESENT_MODE_AUTO, 0, 2, false},
 };
 #endif
+static void check_layout(esp_display_presenter_t *presenter, const profile_t *profile, unsigned rot,
+                         esp_display_presenter_caps_t *caps)
+{
+    unsigned lw = (rot == 90 || rot == 270) ? HEIGHT : WIDTH;
+    unsigned lh = (rot == 90 || rot == 270) ? WIDTH : HEIGHT;
+    require(esp_display_presenter_get_caps(presenter, caps), "caps");
+    esp_display_presenter_effective_config_t effective;
+    require(esp_display_presenter_get_effective_config(presenter, &effective), "effective config");
+    esp_display_present_mode_t mode = profile->mode;
+    if (mode == ESP_DISPLAY_PRESENT_MODE_AUTO) {
+#if CONFIG_IDF_TARGET_ESP32S31 && !defined(PRESENT_BOARD_S31_RGB)
+        mode = profile->te ? ESP_DISPLAY_PRESENT_MODE_TE_SYNC : ESP_DISPLAY_PRESENT_MODE_NONE;
+#else
+        mode = ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL;
+#endif
+    }
+    unsigned images = mode == ESP_DISPLAY_PRESENT_MODE_NONE ? 0 : mode == ESP_DISPLAY_PRESENT_MODE_TE_SYNC ?
+                      profile->compose : (mode == ESP_DISPLAY_PRESENT_MODE_TRIPLE_FULL ||
+                                          mode == ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL ? 3 : 2);
+    esp_display_present_contract_t contract = mode == ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL ||
+                                              mode == ESP_DISPLAY_PRESENT_MODE_TRIPLE_FULL ? ESP_DISPLAY_PRESENT_CONTRACT_FULL :
+                                              mode == ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT ? ESP_DISPLAY_PRESENT_CONTRACT_DIRECT :
+                                              ESP_DISPLAY_PRESENT_CONTRACT_PARTITION;
+    unsigned tiles = contract == ESP_DISPLAY_PRESENT_CONTRACT_PARTITION ? profile->tiles : 0;
+    require(effective.requested_mode == profile->mode && effective.effective_mode == mode &&
+            effective.rotation == rot && effective.width == lw && effective.height == lh &&
+            effective.image_count == images && effective.tile_count == tiles &&
+            caps->contract == contract && caps->width == lw && caps->height == lh &&
+            effective.draw_stride_bytes == lw * 2 && effective.output_stride_bytes == WIDTH * 2 ?
+            ESP_OK : ESP_FAIL, "effective mode, pools and layout");
+}
+
 static void run_case(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_handle_t io, unsigned id, unsigned rot)
 {
     const profile_t *p = &profiles[id];
     unsigned lw = (rot == 90 || rot == 270) ? HEIGHT : WIDTH;
     unsigned lh = (rot == 90 || rot == 270) ? WIDTH : HEIGHT;
-    esp_display_presenter_config_t config = {
-        .width = lw, .height = lh, .max_damage_areas = 8,
-        .transfer_timeout_ms = 5000, .pipeline_acquire_timeout_ms = 5000,
-        .target = {
-            .hw = {
-                .panel = panel, .io = io, .rotation = rot,
+    esp_display_presenter_panel_config_t lcd = {
+        .width = WIDTH, .height = HEIGHT,
+        .hw = {
+            .panel = panel, .io = io, .rotation = rot,
+            .input_pixel_format = ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565,
 #if CONFIG_IDF_TARGET_ESP32S31 && !defined(PRESENT_BOARD_S31_RGB)
-                .panel_type = ESP_DISPLAY_PRESENT_PANEL_IO, .swap_bytes = true,
-                .te_enabled = p->te, .spi_psram_dma_direct = true, .te_sync = {.gpio_num = QSPI_TE_GPIO, .bus_freq_hz = 40000000, .data_lines = 4},
+            .panel_type = ESP_DISPLAY_PRESENT_PANEL_IO, .swap_bytes = true,
+            .te_enabled = p->te, .spi_psram_dma_direct = true, .te_sync = {.gpio_num = QSPI_TE_GPIO, .bus_freq_hz = 40000000, .data_lines = 4},
 #elif CONFIG_IDF_TARGET_ESP32S3 || defined(PRESENT_BOARD_S31_RGB)
-                .panel_type = ESP_DISPLAY_PRESENT_PANEL_RGB,
+            .panel_type = ESP_DISPLAY_PRESENT_PANEL_RGB,
 #else
-                .panel_type = ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI,
+            .panel_type = ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI,
 #endif
-            }, .fb = {.mode = p->mode},
-            .drawbuf = {.lines = 16, .buffers = p->tiles, .te_compose_buffers = p->compose}
-        }
+        },
+    };
+    esp_display_present_drawbuf_config_t tiles = {
+        .lines = 16, .buffers = p->tiles, .te_compose_buffers = p->compose,
     };
     gram_mode = !p->te;
 #if !CONFIG_IDF_TARGET_ESP32S31 || defined(PRESENT_BOARD_S31_RGB)
@@ -177,13 +209,26 @@ static void run_case(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_handle_t io,
 #endif
     esp_display_presenter_t *presenter = NULL;
     ESP_LOGI(TAG, "CASE_BEGIN board=%s profile=%s rotation=%u logical=%ux%u physical=%ux%u", PANEL_KIND, p->name, rot, lw, lh, WIDTH, HEIGHT);
+#if CONFIG_IDF_TARGET_ESP32S31 && !defined(PRESENT_BOARD_S31_RGB)
+    esp_display_presenter_config_t config = {
+        .width = lw, .height = lh, .max_damage_areas = 8,
+        .transfer_timeout_ms = 5000, .pipeline_acquire_timeout_ms = 5000,
+        .target = {.hw = lcd.hw, .fb = {.mode = p->mode}, .drawbuf = tiles},
+    };
     require(esp_display_presenter_create(&config, &presenter), "create");
+#else
+    if (p->mode == ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL || p->mode == ESP_DISPLAY_PRESENT_MODE_TRIPLE_FULL ||
+            p->mode == ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT) {
+        require(esp_display_presenter_open(&lcd, p->mode, &presenter), "open");
+    } else {
+        require(esp_display_presenter_open_ex(&lcd, p->mode, &tiles, &presenter), "open_ex");
+    }
+#endif
     if (p->te) {
         vTaskDelay(pdMS_TO_TICKS(100));
     }
     esp_display_presenter_caps_t caps;
-    require(esp_display_presenter_get_caps(presenter, &caps), "caps");
-    require(caps.width == lw && caps.height == lh ? ESP_OK : ESP_FAIL, "logical dimensions");
+    check_layout(presenter, p, rot, &caps);
     uint64_t duration_us = 0;
     unsigned current_rot = rot;
 #ifdef PRESENT_P4_TRANSITION_MATRIX
@@ -204,11 +249,9 @@ static void run_case(esp_lcd_panel_handle_t panel, esp_lcd_panel_io_handle_t io,
             } else {
                 require(changed, "runtime rotation");
                 current_rot = next;
-#ifdef PRESENT_P4_CROSS_AXIS_PROBE
-                require(esp_display_presenter_get_caps(presenter, &caps), "runtime caps");
+                check_layout(presenter, p, current_rot, &caps);
                 lw = caps.width;
                 lh = caps.height;
-#endif
                 ESP_LOGI(TAG, "ROTATION_CHANGED profile=%s from=%u to=%u", p->name, rot, next);
             }
         }
@@ -319,6 +362,9 @@ static void run(void *unused)
     esp_lcd_panel_handle_t panel = NULL;
     esp_lcd_panel_io_handle_t io = NULL;
     vTaskDelay(pdMS_TO_TICKS(3000)); /* Allow the host to attach a serial collector. */
+#ifdef PRESENT_BOARD_EXECUTOR_CHECK
+    present_board_test_executors();
+#endif
     shadow = heap_caps_malloc(WIDTH * HEIGHT * sizeof(*shadow), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     require(shadow ? ESP_OK : ESP_ERR_NO_MEM, "shadow");
 #if CONFIG_IDF_TARGET_ESP32S31 && !defined(PRESENT_BOARD_S31_RGB)

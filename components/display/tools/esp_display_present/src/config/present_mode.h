@@ -26,6 +26,7 @@ typedef struct {
     uint8_t frame_buffers;
     bool active_writes;
 } present_mode_resolution_t;
+esp_display_present_mode_t present_mode_to_public(esp_display_present_present_mode_t);
 esp_err_t present_mode_resolve_target(const esp_display_present_target_config_t *, present_mode_resolution_t *);
 esp_err_t present_mode_resolve_engine(const esp_display_present_engine_config_t *, esp_display_present_plan_defaults_t,
                                       bool te_enabled, esp_display_present_engine_config_t *);

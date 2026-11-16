@@ -68,7 +68,7 @@ typedef enum {
     ESP_DISPLAY_PRESENT_CONTRACT_FULL,
 } esp_display_present_contract_t;
 
-/** Explicit coverage of a DIRECT/FULL surface submission. */
+/** Coverage declaration for a frame at commit. */
 typedef enum {
     /** The complete logical screen has been produced. */
     ESP_DISPLAY_PRESENT_COVERAGE_FULL = 0,
@@ -108,11 +108,18 @@ typedef struct {
     esp_display_present_target_config_t target;
 } esp_display_presenter_config_t;
 
+/** Initialized panel binding for the one-call presenter setup. */
+typedef struct {
+    uint16_t width;  /**< Physical panel width in pixels. */
+    uint16_t height; /**< Physical panel height in pixels. */
+    esp_display_present_hw_config_t hw; /**< Borrowed panel, pixel format and bus settings. */
+} esp_display_presenter_panel_config_t;
+
 /** Renderer-visible capabilities of a presenter. */
 typedef struct {
     /** Public draw contract seen by GSP. */
     esp_display_present_contract_t contract;
-    /** DIRECT/FULL only; true when submit may use COVERAGE_AREAS. */
+    /** True for FB DIRECT and PARTIAL, which accept explicit area hints. */
     bool supports_coverage_areas;
     /** DIRECT/FULL only: pixels remain valid across frames for dirty rendering. */
     bool surface_retains_content;
@@ -126,6 +133,33 @@ typedef struct {
     size_t drawbuf_bytes;
     size_t max_damage_areas; /**< Maximum dirty areas accepted per frame. */
 } esp_display_presenter_caps_t;
+
+/** Reasons for selecting a reduced configuration. Flags can be combined. */
+enum {
+    ESP_DISPLAY_PRESENT_DEGRADE_AUTO_FB_POOL = 1u << 0, /**< AUTO resolved to two driver FBs. */
+    ESP_DISPLAY_PRESENT_DEGRADE_TILE_SINGLE_CORE = 1u << 1, /**< Auto overlap pool limited to one tile. */
+    ESP_DISPLAY_PRESENT_DEGRADE_TILE_HEADROOM = 1u << 2, /**< Internal DMA heap headroom limited the auto pool. */
+    ESP_DISPLAY_PRESENT_DEGRADE_TILE_ALLOCATION = 1u << 3, /**< Two-tile allocation failed and one tile succeeded. */
+    ESP_DISPLAY_PRESENT_DEGRADE_TILE_PSRAM = 1u << 4, /**< Requested PSRAM tiles use internal DMA memory. */
+    ESP_DISPLAY_PRESENT_DEGRADE_COMPOSE_PSRAM = 1u << 5, /**< TE compose images use internal DMA memory. */
+    ESP_DISPLAY_PRESENT_DEGRADE_CANVAS_PSRAM = 1u << 6, /**< FB conversion canvas uses internal DMA memory. */
+};
+
+/** Snapshot of the successfully applied presenter configuration. */
+typedef struct {
+    esp_display_present_mode_t requested_mode;
+    esp_display_present_mode_t effective_mode;
+    esp_display_present_rotation_t rotation;
+    uint16_t width, height;             /**< Logical dimensions. */
+    size_t draw_stride_bytes;           /**< Full-width producer stride; a tile lease can be narrower. */
+    size_t output_stride_bytes;         /**< Packed full-width physical row, before panel transport. */
+    uint8_t draw_buffer_count;          /**< Writable pool size, including full-frame leases. */
+    uint8_t tile_count;                 /**< Number of PARTITION input tiles; zero for FULL/DIRECT. */
+    uint8_t image_count;                /**< Driver FBs or TE compose images; zero for REGION. */
+    esp_display_present_memory_domain_t draw_memory;
+    esp_display_present_memory_domain_t image_memory;
+    uint32_t degradation_flags;         /**< ESP_DISPLAY_PRESENT_DEGRADE_* bitmask. */
+} esp_display_presenter_effective_config_t;
 
 /** Coverage supplied when submitting a DIRECT or FULL surface. */
 typedef struct {
@@ -171,6 +205,32 @@ typedef enum {
 } esp_display_presenter_state_t;
 
 /**
+ * Open a presenter on an initialized panel using the requested mode and
+ * default resource policy. 90/270 degree rotation exchanges the logical
+ * axes; keep width and height in the panel's physical orientation.
+ *
+ * AUTO resolves against the supplied driver framebuffer pool or TE config.
+ * The presenter borrows the panel and IO until deletion. It adopts the
+ * calling task as producer and prepares the first scanout or TE window on
+ * first frame admission. @p out_presenter is set to NULL on error.
+ */
+esp_err_t esp_display_presenter_open(
+    const esp_display_presenter_panel_config_t *panel,
+    esp_display_present_mode_t mode,
+    esp_display_presenter_t **out_presenter);
+
+/**
+ * Open with a custom tile policy and, for TE_SYNC, one or two compose buffers.
+ * A NULL policy uses the defaults of esp_display_presenter_open().
+ * See esp_display_presenter_create() for timeout and damage overrides.
+ */
+esp_err_t esp_display_presenter_open_ex(
+    const esp_display_presenter_panel_config_t *panel,
+    esp_display_present_mode_t mode,
+    const esp_display_present_drawbuf_config_t *drawbuf,
+    esp_display_presenter_t **out_presenter);
+
+/**
  * Create a renderer endpoint and bind all required target callbacks.
  *
  * Renderer calls are single-task and serialize acquire, submit and
@@ -185,8 +245,10 @@ esp_err_t esp_display_presenter_create(
 /**
  * Enter CLOSING and stop after all asynchronous work has retired. New acquire
  * calls fail with ESP_ERR_INVALID_STATE. An active lease must be cancelled by
- * its renderer. Retry ESP_ERR_INVALID_STATE while renderer calls or hardware
- * work are in flight. A terminal hardware fault never reopens the presenter.
+ * its renderer. The acquisition budget also bounds waiting for the facade
+ * gate and draining accepted work. Retry ESP_ERR_INVALID_STATE while renderer
+ * calls or hardware work are in flight. After a terminal fault, resume
+ * rendering only after safe stop, deletion and recreation.
  */
 esp_err_t esp_display_presenter_stop(
     esp_display_presenter_t *presenter);
@@ -219,11 +281,41 @@ esp_err_t esp_display_presenter_get_caps(
     esp_display_presenter_caps_t *out_caps);
 
 /**
- * PARTITION only: borrow the presenter's drawbuf pool pointers.
+ * Query the effective configuration from task context. Serialize with deletion.
+ * The result describes the current layout, including after a successful rotation.
+ * Pool counts describe allocated slots, not the number currently available.
+ * Memory domains describe the producer and image pools; a borrowed framebuffer
+ * can be shared by both. The snapshot grants no buffer lease.
+ * The query allocates no storage and does not start transfers.
+ */
+esp_err_t esp_display_presenter_get_effective_config(
+    const esp_display_presenter_t *presenter,
+    esp_display_presenter_effective_config_t *out_config);
+
+/**
+ * Enable and reset opt-in performance sampling. The first call allocates
+ * sampler storage. Call between producer runs with no pending commits.
+ * A frame already active at reset is excluded from frame latency samples.
+ */
+esp_err_t esp_display_presenter_reset_metrics(esp_display_presenter_t *presenter);
+
+/**
+ * Read the current sampling window without driving the backend. If sampling
+ * has never been enabled, returns ESP_ERR_INVALID_STATE. Serialize both
+ * metrics APIs with deletion. Scanout supply misses measure frame switches
+ * under producer backlog; physical LCD DMA underruns require driver counters.
+ */
+esp_err_t esp_display_presenter_get_metrics(const esp_display_presenter_t *presenter,
+                                            esp_display_presenter_metrics_t *out);
+
+/**
+ * PARTITION only: inspect the presenter's draw-buffer pool.
  *
- * The pointers remain owned by the presenter for its lifetime. Producers such
- * as LVGL may register them with lv_display_set_buffers() and render directly
- * into them so flush can submit without an extra memcpy hop.
+ * These addresses are informational. Acquire a buffer before drawing and
+ * write only through the returned lease's surface while that lease is valid.
+ * A successful submit or frame cancellation ends the lease. Do not attach
+ * an unleased pool address to a renderer as writable storage. Query the pool
+ * again after changing rotation and discard the addresses on deletion.
  */
 typedef struct {
     void *buffers[2]; /**< Borrowed draw-buffer addresses. */
@@ -249,6 +341,16 @@ esp_err_t esp_display_presenter_get_buffer_alignment(
  * Valid only between frames; it retains pending hardware completion fences.
  */
 esp_err_t esp_display_presenter_rebind_producer(
+    esp_display_presenter_t *presenter);
+
+/**
+ * Release the calling task's producer ownership between frames. Use when the
+ * next renderer starts on a task that cannot call rebind_producer itself.
+ * Stop the previous renderer and serialize startup of the next one. Its first
+ * admitted begin_next_frame claims ownership. Explicit rebind or LVGL start
+ * can also claim it. Existing hardware completion fences stay in effect.
+ */
+esp_err_t esp_display_presenter_release_producer(
     esp_display_presenter_t *presenter);
 
 /** Read the monotonic lifecycle state; FAULTED never reopens in place. */
@@ -351,8 +453,18 @@ void esp_display_presenter_cancel_frame(
     esp_display_presenter_t *presenter);
 
 /**
- * Wait until all work accepted before this call has completed transfer and
- * presentation. The producer must already be stopped between frames.
+ * Drain work accepted before this call. The producer must stay paused
+ * between frames for the entire call, and deletion must be serialized.
+ *
+ * REGION and TE wait for source reads to finish. FB waits for scanout switch
+ * confirmation. An outstanding display-tracked receipt also waits for its
+ * confirmation VSYNCs unless the caller cancels that tracking. The current
+ * scanout surface remains owned by the panel.
+ *
+ * The nonzero timeout_ms covers gate acquisition, cancellation drain, and
+ * completion waits together. UINT32_MAX waits indefinitely. ESP_ERR_TIMEOUT
+ * leaves work and tracking available for a later retry. A faulted presenter
+ * returns ESP_ERR_INVALID_STATE. Query get_fault_error() for the cause.
  */
 esp_err_t esp_display_presenter_quiesce(
     esp_display_presenter_t *presenter,

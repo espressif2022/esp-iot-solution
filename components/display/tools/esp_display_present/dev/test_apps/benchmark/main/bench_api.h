@@ -25,14 +25,46 @@ void bench_unlock(void);
 void bench_pump(void);
 esp_err_t bench_close(void);
 uint32_t bench_frame_count(void);
+void bench_metrics_report(const bench_case_t *);
 void bench_meter_reset(void);
 void bench_meter_report(const char *);
 
+#ifdef BENCH_FRAME_TIMING
+void bench_frame_timing_reset(void);
+void bench_frame_timing_begin(uint64_t started_us, esp_err_t result);
+uint64_t bench_frame_timing_commit_start(void);
+void bench_frame_timing_commit_done(uint64_t sequence, esp_err_t result);
+void bench_frame_timing_report(const char *label);
+#else
+static inline void bench_frame_timing_reset(void) {}
+static inline void bench_frame_timing_begin(uint64_t started_us, esp_err_t result)
+{
+    (void)started_us;
+    (void)result;
+}
+static inline uint64_t bench_frame_timing_commit_start(void)
+{
+    return 0;
+}
+static inline void bench_frame_timing_commit_done(uint64_t sequence, esp_err_t result)
+{
+    (void)sequence;
+    (void)result;
+}
+static inline void bench_frame_timing_report(const char *label)
+{
+    (void)label;
+}
+#endif
+
 #ifdef BENCH_PROFILE
-void bench_profile_reset(void);
+void bench_profile_reset(lv_display_t *display);
 void bench_profile_report(const char *label);
 #else
-static inline void bench_profile_reset(void) {}
+static inline void bench_profile_reset(lv_display_t *display)
+{
+    (void)display;
+}
 static inline void bench_profile_report(const char *label)
 {
     (void)label;

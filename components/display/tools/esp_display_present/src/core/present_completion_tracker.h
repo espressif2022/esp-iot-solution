@@ -25,10 +25,11 @@ typedef struct {
     uint64_t committed, completed;
     esp_err_t first_error;
 } present_completion_tracker_t;
+/* Latch the backend fault in event order, independently of FIFO receipt reaping. */
 void present_completion_record_error(present_completion_tracker_t *, esp_err_t);
-esp_err_t present_completion_reap(present_completion_tracker_t *, const present_backend_ops_t *, present_backend_t *);
+esp_err_t present_completion_reap(present_completion_tracker_t *, const present_backend_ops_t *, present_backend_t *, bool service);
 present_completion_observer_t *present_completion_find(present_completion_tracker_t *, esp_display_present_engine_receipt_t);
-esp_err_t present_completion_query(present_completion_observer_t *, const present_backend_ops_t *, present_backend_t *, esp_display_present_frame_status_t *);
+esp_err_t present_completion_query(present_completion_observer_t *, const present_backend_ops_t *, present_backend_t *, esp_display_present_frame_status_t *, bool service);
 
 #ifdef __cplusplus
 }

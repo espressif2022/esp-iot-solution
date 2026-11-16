@@ -60,10 +60,20 @@ static void modes(void)
         esp_display_present_plan_config_t c = config(ESP_DISPLAY_PRESENT_ENGINE_FB);
         c.presenter.mode = cases[i].mode;
         c.presenter.backend.active_writes = true;
+        c.presenter.backend.async_copy = true;
+        c.presenter.background_service = true;
         esp_display_present_resolved_plan_t p;
         assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK);
         assert(p.images.count == cases[i].images && p.normalized.backend.render_contract == cases[i].contract);
         assert(p.logical.count == 0);
+        assert(p.stack_bytes == 8192);
+        size_t peak_metadata = p.metadata_bytes;
+        c.presenter.backend.panel_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED;
+        assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.stack_bytes == 8192);
+        c.presenter.backend.panel_order = ESP_DISPLAY_PRESENT_ORDER_NATIVE;
+        c.presenter.backend.rotation = ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90;
+        assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.stack_bytes == 8192);
+        assert(p.metadata_bytes == peak_metadata);
         c.resources.image_count = cases[i].images == 2 ? 3 : 2;
         assert(esp_display_present_plan_resolve(&c, &p) == ESP_ERR_INVALID_ARG);
     }
@@ -91,6 +101,34 @@ static void modes(void)
     c.defaults = ESP_DISPLAY_PRESENT_PLAN_LEGACY_DEFAULTS;
     c.presenter.backend.rotation = ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.conversion.count == p.tiles.count);
+}
+
+static void shared_copy_worker_budget(void)
+{
+    esp_display_present_plan_config_t c = config(ESP_DISPLAY_PRESENT_ENGINE_FB);
+    c.presenter.mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_PARTIAL;
+    c.presenter.background_service = true;
+    c.presenter.backend.async_copy = true;
+    c.resources.tile_count = 1;
+    esp_display_present_resolved_plan_t worker, shared_plan;
+    assert(esp_display_present_plan_resolve(&c, &worker) == ESP_OK);
+    c.presenter.backend.shared_copy_worker = true;
+    assert(esp_display_present_plan_resolve(&c, &shared_plan) == ESP_OK);
+    assert(worker.stack_bytes == shared_plan.stack_bytes + 4096);
+    assert(worker.metadata_bytes > shared_plan.metadata_bytes);
+    assert(worker.pixel_bytes == shared_plan.pixel_bytes);
+    assert(worker.tiles.count == shared_plan.tiles.count && shared_plan.tiles.count == 1);
+    assert(worker.tiles.bytes_each == shared_plan.tiles.bytes_each);
+    assert(worker.required_bytes > shared_plan.required_bytes + 4096);
+    c.presenter.background_service = false;
+    assert(esp_display_present_plan_resolve(&c, &shared_plan) == ESP_ERR_INVALID_ARG);
+    c.presenter.background_service = true;
+    c.presenter.backend.async_copy = false;
+    assert(esp_display_present_plan_resolve(&c, &shared_plan) == ESP_ERR_INVALID_ARG);
+    c = config(ESP_DISPLAY_PRESENT_ENGINE_REGION);
+    c.presenter.backend.async_copy = true;
+    c.presenter.backend.shared_copy_worker = true;
+    assert(esp_display_present_plan_resolve(&c, &shared_plan) == ESP_ERR_INVALID_ARG);
 }
 /* Golden cases for the constraints shared by plan and backend create.
  * These passed before the extraction and must keep the same error codes;
@@ -432,6 +470,7 @@ static void executor(void)
 }
 int main(void)
 {
+    shared_copy_worker_budget();
     reverse_band_alignment();
     external_dma_alignment();
     timing_model();

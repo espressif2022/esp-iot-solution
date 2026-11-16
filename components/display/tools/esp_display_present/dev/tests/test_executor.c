@@ -8,31 +8,125 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#if PRESENT_HOST_DMA2D
+#if PRESENT_HOST_PPA || PRESENT_HOST_DMA2D
 #include <pthread.h>
+#include <stdatomic.h>
 #endif
 #if PRESENT_HOST_PPA
 #include "driver/ppa.h"
 #endif
 #if PRESENT_HOST_DMA2D
+#if PRESENT_IDF_COLOR_CONVERT_DMA2D_API
+#include "esp_async_color_convert.h"
+typedef async_color_convert_handle_t mock_dma_handle_t;
+typedef async_color_convert_request_t mock_dma_request_t;
+typedef async_color_convert_isr_cb_t mock_dma_callback_t;
+typedef async_color_convert_config_t mock_dma_config_t;
+#define mock_dma_install esp_async_color_convert_install_dma2d
+#define mock_dma_uninstall esp_async_color_convert_uninstall
+#define mock_dma_submit esp_async_color_convert
+#else
 #include "esp_private/async_memcpy_dma2d.h"
+typedef async_memcpy_dma2d_handle_t mock_dma_handle_t;
+typedef async_memcpy_dma2d_trans_desc_t mock_dma_request_t;
+typedef async_memcpy_dma2d_isr_cb_t mock_dma_callback_t;
+typedef async_memcpy_dma2d_config_t mock_dma_config_t;
+#define mock_dma_install esp_async_memcpy_install_dma2d
+#define mock_dma_uninstall esp_async_memcpy_uninstall_dma2d
+#define mock_dma_submit esp_async_memcpy_dma2d
+#endif
 #endif
 #if PRESENT_HOST_PPA || PRESENT_HOST_DMA2D
 #include "esp_cache.h"
-static unsigned submissions, syncs;
-static unsigned source_flushes, flushes, invalidates;
+static atomic_uint submissions, syncs;
+static atomic_uint source_flushes, flushes, invalidates;
 static void *expected_sync;
 static size_t expected_sync_bytes;
 static void *expected_source;
 static size_t expected_source_bytes;
 static size_t cache_line = 64;
 static size_t strict_alignment = 1;
+static const void *psram_source, *psram_destination;
+#if !PRESENT_IDF_DMA2D_ALIGNMENT_API
+static bool flash_encrypted;
+static const void *unmapped_pointer;
+bool esp_ptr_external_ram(const void *p)
+{
+    return p == psram_source || p == psram_destination || strict_alignment > 1;
+}
+bool esp_ptr_internal(const void *p)
+{
+    return p != unmapped_pointer && !esp_ptr_external_ram(p);
+}
+bool esp_efuse_is_flash_encryption_enabled(void)
+{
+    return flash_encrypted || strict_alignment > 1;
+}
+bool esp_flash_encryption_enabled(void)
+{
+    return flash_encrypted || strict_alignment > 1;
+}
+#endif
+static _Thread_local unsigned cache_stage;
+static bool check_cache_order, poison_on_invalidate_failure;
+typedef struct {
+    bool active;
+} mock_client_t;
+static mock_client_t *last_client, *hold_client;
+static pthread_mutex_t clients_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t clients_changed = PTHREAD_COND_INITIALIZER;
+static bool release_client;
+
+static mock_client_t *create_client(void)
+{
+    last_client = calloc(1, sizeof(*last_client));
+    assert(last_client);
+    return last_client;
+}
+
+static esp_err_t destroy_client(mock_client_t *client, esp_err_t error)
+{
+    pthread_mutex_lock(&clients_lock);
+    assert(client && !client->active);
+    pthread_mutex_unlock(&clients_lock);
+    if (error == ESP_OK) {
+        free(client);
+    }
+    return error;
+}
+
+static void begin_driver_copy(mock_client_t *client)
+{
+    if (check_cache_order) {
+        assert(cache_stage == 2);
+        cache_stage = 3;
+    }
+    pthread_mutex_lock(&clients_lock);
+    assert(client && !client->active);
+    client->active = true;
+    pthread_cond_broadcast(&clients_changed);
+    while (client == hold_client && !release_client) {
+        pthread_cond_wait(&clients_changed, &clients_lock);
+    }
+    pthread_mutex_unlock(&clients_lock);
+}
+
+static void end_driver_copy(mock_client_t *client)
+{
+    pthread_mutex_lock(&clients_lock);
+    assert(client->active);
+    client->active = false;
+    pthread_mutex_unlock(&clients_lock);
+    if (check_cache_order) {
+        assert(cache_stage == 3);
+        cache_stage = 4;
+    }
+}
 static esp_err_t driver_error, unregister_error, cache_error;
 static int cache_error_flags;
 size_t dma2d_get_buffer_alignment_constraint(const void *p)
 {
-    (void)p;
-    return strict_alignment;
+    return p == psram_source || p == psram_destination ? 64 : strict_alignment;
 }
 size_t esp_cache_get_line_size_by_addr(const void *p)
 {
@@ -45,11 +139,19 @@ esp_err_t esp_cache_msync(void *p, size_t n, int flags)
         if (expected_source) {
             assert(p == expected_source && n == expected_source_bytes);
         }
+        if (check_cache_order) {
+            assert(cache_stage == 0);
+            cache_stage = 1;
+        }
         source_flushes++;
     } else if (flags == ESP_CACHE_MSYNC_FLAG_DIR_C2M) {
         assert((uintptr_t)p % cache_line == 0 && n % cache_line == 0);
         if (expected_sync) {
             assert(p == expected_sync && n == expected_sync_bytes);
+        }
+        if (check_cache_order) {
+            assert(cache_stage == 1);
+            cache_stage = 2;
         }
         flushes++;
     } else {
@@ -58,9 +160,16 @@ esp_err_t esp_cache_msync(void *p, size_t n, int flags)
         if (expected_sync) {
             assert(p == expected_sync && n == expected_sync_bytes);
         }
+        if (check_cache_order) {
+            assert(cache_stage == 4);
+            cache_stage = 0;
+        }
         invalidates++;
     }
     syncs++;
+    if (poison_on_invalidate_failure && flags == ESP_CACHE_MSYNC_FLAG_DIR_M2C) {
+        ((uint8_t *)p)[0] = 0xef; /* Model a destination the failed invalidate did not make coherent. */
+    }
     return flags == cache_error_flags ? cache_error : ESP_OK;
 }
 #endif
@@ -95,13 +204,12 @@ static void paint(const uint8_t *src, size_t ss, uint8_t *dst, size_t ds,
 esp_err_t ppa_register_client(const ppa_client_config_t *c, ppa_client_handle_t *h)
 {
     assert(c->max_pending_trans_num == 1);
-    *h = (void *)1;
+    *h = (void *)create_client();
     return ESP_OK;
 }
 esp_err_t ppa_unregister_client(ppa_client_handle_t h)
 {
-    assert(h);
-    return unregister_error;
+    return destroy_client((void *)h, unregister_error);
 }
 esp_err_t ppa_do_scale_rotate_mirror(ppa_client_handle_t h, const ppa_srm_oper_config_t *o)
 {
@@ -110,10 +218,12 @@ esp_err_t ppa_do_scale_rotate_mirror(ppa_client_handle_t h, const ppa_srm_oper_c
     if (driver_error) {
         return driver_error;
     }
+    begin_driver_copy((void *)h);
     unsigned bpp = o->in.srm_cm == PPA_SRM_COLOR_MODE_RGB565 ? 2 : 3;
     paint(o->in.buffer, o->in.pic_w * bpp, o->out.buffer, o->out.pic_w * bpp,
           o->in.block_offset_x, o->in.block_offset_y, o->in.block_w, o->in.block_h,
           o->out.block_offset_x, o->out.block_offset_y, (4 - o->rotation_angle) % 4, bpp, o->byte_swap);
+    end_driver_copy((void *)h);
     return ESP_OK;
 }
 #endif
@@ -228,24 +338,26 @@ static pthread_mutex_t dma_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t dma_changed = PTHREAD_COND_INITIALIZER;
 static bool dma_deferred, dma_entered;
 static unsigned dma_busy_count;
-static async_memcpy_dma2d_trans_desc_t dma_pending;
-static async_memcpy_dma2d_isr_cb_t dma_pending_cb;
-static async_memcpy_dma2d_handle_t dma_pending_handle;
+static mock_dma_request_t dma_pending;
+static mock_dma_callback_t dma_pending_cb;
+static mock_dma_handle_t dma_pending_handle;
 static void *dma_pending_user;
 
-esp_err_t esp_async_memcpy_install_dma2d(const async_memcpy_dma2d_config_t *c, async_memcpy_dma2d_handle_t *h)
+esp_err_t mock_dma_install(const mock_dma_config_t *c, mock_dma_handle_t *h)
 {
     assert(c->backlog == 1);
-    *h = (void *)2;
+#if PRESENT_IDF_COLOR_CONVERT_DMA2D_API
+    assert(c->dma_burst_size == 128);
+#endif
+    *h = (void *)create_client();
     return ESP_OK;
 }
-esp_err_t esp_async_memcpy_uninstall_dma2d(async_memcpy_dma2d_handle_t h)
+esp_err_t mock_dma_uninstall(mock_dma_handle_t h)
 {
-    assert(h);
-    return unregister_error;
+    return destroy_client((void *)h, unregister_error);
 }
-esp_err_t esp_async_memcpy_dma2d(async_memcpy_dma2d_handle_t h, const async_memcpy_dma2d_trans_desc_t *o,
-                                 async_memcpy_dma2d_isr_cb_t cb, void *user)
+esp_err_t mock_dma_submit(mock_dma_handle_t h, const mock_dma_request_t *o,
+                          mock_dma_callback_t cb, void *user)
 {
     submissions++;
     if (dma_busy_count) {
@@ -267,9 +379,22 @@ esp_err_t esp_async_memcpy_dma2d(async_memcpy_dma2d_handle_t h, const async_memc
         return ESP_OK;
     }
     pthread_mutex_unlock(&dma_lock);
+    begin_driver_copy((void *)h);
+#if PRESENT_IDF_COLOR_CONVERT_DMA2D_API
+    assert(o->src_color_format == o->dst_color_format);
+    assert(o->src_y == 0 && o->src_height == o->copy_height);
+    unsigned bpp = o->src_color_format == ESP_COLOR_FOURCC_RGB16 ? 2 : 3;
+    /* The actual driver synchronizes this whole picture with INVALIDATE and
+     * without UNALIGNED. An unsafe descriptor must fail this strict fixture. */
+    assert((uintptr_t)o->dst_buffer % cache_line == 0);
+    assert((o->dst_stride * bpp * o->dst_height) % cache_line == 0);
+    assert(o->dst_y + o->copy_height <= o->dst_height);
+#else
     unsigned bpp = o->pixel_format == ESP_COLOR_FOURCC_RGB16 ? 2 : 3;
+#endif
     paint(o->src_buffer, o->src_stride * bpp, o->dst_buffer, o->dst_stride * bpp,
           o->src_x, o->src_y, o->copy_width, o->copy_height, o->dst_x, o->dst_y, 0, bpp, false);
+    end_driver_copy((void *)h);
     cb(h, NULL, user);
     return ESP_OK;
 }
@@ -357,7 +482,44 @@ static void verify_cache_bands(esp_display_present_executor_t *executor, bool is
     free(dst);
 }
 
-static void verify_cache_failures(esp_display_present_executor_t *executor)
+#if PRESENT_HOST_DMA2D && PRESENT_IDF_COLOR_CONVERT_DMA2D_API
+static void verify_color_destination_rows(esp_display_present_executor_t *executor, esp_display_present_executor_t *cpu)
+{
+    uint8_t *src = aligned_alloc(128, 768), *dst = aligned_alloc(128, 768), expected[768];
+    assert(src && dst);
+    for (size_t i = 0; i < 768; ++i) {
+        src[i] = (uint8_t)i;
+    }
+    for (unsigned variant = 0; variant < 3; ++variant) {
+        size_t stride = variant == 0 ? 96 : 18;
+        size_t capacity = variant == 1 ? 192 : 768;
+        esp_display_present_layout_t layout = {4, 8, stride, ESP_DISPLAY_PRESENT_FORMAT_RGB888, ESP_DISPLAY_PRESENT_ORDER_NATIVE};
+        esp_display_present_copy_request_t request = {
+            .src = {src, 768, layout}, .dst = {dst, capacity, layout},
+            .src_area = {1, 1, 3, 1}, .dst_x = 1, .dst_y = 7,
+        };
+        memset(dst, 0xa5, 768);
+        memset(expected, 0xa5, 768);
+        paint(src, stride, expected, stride, 1, 1, 3, 1, 1, 7, 0, 3, false);
+        esp_display_present_executor_dispatch_t dispatch = {executor, cpu};
+        esp_display_present_executor_selection_t selected;
+        unsigned before = submissions, before_sync = syncs;
+        assert(esp_display_present_executor_select(&dispatch, &request, &selected) == ESP_OK);
+        assert(submissions == before && syncs == before_sync);
+        assert(selected.used_fallback == (variant == 1));
+        if (variant == 1) {
+            assert(selected.primary_reason == ESP_DISPLAY_PRESENT_EXEC_CAPACITY);
+        }
+        assert(esp_display_present_executor_run(&dispatch, &request, &selected) == ESP_OK);
+        assert(submissions == before + (variant == 1 ? 0u : 1u));
+        assert(!memcmp(dst, expected, 768));
+    }
+    free(src);
+    free(dst);
+}
+#endif
+
+static void verify_cache_failures(esp_display_present_executor_t *executor, esp_display_present_executor_t *cpu)
 {
     uint8_t *src = aligned_alloc(64, 64), *dst = aligned_alloc(64, 64);
     assert(src && dst);
@@ -386,35 +548,219 @@ static void verify_cache_failures(esp_display_present_executor_t *executor)
         assert(esp_display_present_executor_execute(executor, &request) == ESP_OK);
         assert(submissions == before + 1);
     }
+    const esp_display_present_executor_dispatch_t dispatch = {executor, cpu};
+    esp_display_present_executor_selection_t selected;
+    memset(src, 0x38, 32);
+    memset(dst, 0, 64);
+    cache_error = ESP_FAIL;
+    cache_error_flags = ESP_CACHE_MSYNC_FLAG_DIR_M2C;
+    poison_on_invalidate_failure = true;
+    assert(esp_display_present_executor_run(&dispatch, &request, &selected) == ESP_FAIL);
+    assert(selected.executor == executor && !selected.used_fallback && dst[0] == 0xef);
+    assert(!memcmp(src + 1, dst + 1, 31));
+    poison_on_invalidate_failure = false;
     cache_error = ESP_OK;
     cache_error_flags = 0;
     free(src);
     free(dst);
 }
 
-static void verify_instance_isolation(bool is_dma)
+#if !PRESENT_IDF_DMA2D_ALIGNMENT_API
+static void verify_legacy_memory(esp_display_present_executor_t *executor, esp_display_present_executor_t *cpu)
 {
-    esp_display_present_executor_t *a = NULL, *b = NULL;
-    esp_err_t (*create)(esp_display_present_executor_t **) = is_dma ?
-                                                             esp_display_present_executor_dma2d_create : esp_display_present_executor_ppa_create;
-    assert(create(&a) == ESP_OK && create(&b) == ESP_OK);
-    uint8_t *src = aligned_alloc(64, 64), *dst = aligned_alloc(64, 64);
+    uint8_t *src = aligned_alloc(64, 128), *dst = aligned_alloc(64, 128);
     assert(src && dst);
-    memset(src, 0x5a, 32);
-    esp_display_present_layout_t layout = {4, 4, 8, ESP_DISPLAY_PRESENT_FORMAT_RGB565,
-                                           ESP_DISPLAY_PRESENT_ORDER_NATIVE
-                                          };
+    memset(src, 0x79, 128);
+    const esp_display_present_layout_t layout = {32, 2, 64, ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+                                                 ESP_DISPLAY_PRESENT_ORDER_NATIVE
+                                                };
     esp_display_present_copy_request_t request = {
-        .src = {src, 32, layout}, .dst = {dst, 64, layout}, .src_area = {0, 0, 4, 4},
+        .src = {src, 128, layout}, .dst = {dst, 128, layout}, .src_area = {0, 0, 32, 2},
     };
-    assert(esp_display_present_executor_execute(a, &request) == ESP_OK);
-    assert(esp_display_present_executor_execute(b, &request) == ESP_OK);
-    assert(esp_display_present_executor_destroy(a) == ESP_OK);
-    memset(dst, 0, 32);
-    assert(esp_display_present_executor_execute(b, &request) == ESP_OK && !memcmp(src, dst, 32));
-    assert(esp_display_present_executor_destroy(b) == ESP_OK);
+    const esp_display_present_executor_dispatch_t dispatch = {executor, cpu};
+    esp_display_present_executor_selection_t selected;
+    psram_source = src;
+    psram_destination = dst;
+    unsigned before = submissions, before_sync = syncs;
+    assert(esp_display_present_executor_run(&dispatch, &request, &selected) == ESP_OK);
+#if CONFIG_SPIRAM_ECC_ENABLE
+    assert(selected.used_fallback && selected.primary_reason == ESP_DISPLAY_PRESENT_EXEC_MEMORY);
+    assert(submissions == before && syncs == before_sync);
+#else
+    assert(!selected.used_fallback && submissions == before + 1 && syncs > before_sync);
+#endif
+    assert(!memcmp(src, dst, 128));
+
+    /* Strict external memory is rejected before either cache or DMA access,
+     * even if this individual rectangle happens to be aligned. */
+    flash_encrypted = true;
+    before = submissions;
+    before_sync = syncs;
+    assert(esp_display_present_executor_run(&dispatch, &request, &selected) == ESP_OK);
+    assert(selected.used_fallback && selected.primary_reason == ESP_DISPLAY_PRESENT_EXEC_MEMORY);
+    assert(submissions == before && syncs == before_sync);
+    flash_encrypted = false;
+    psram_source = psram_destination = NULL;
+
+    unmapped_pointer = src;
+    assert(esp_display_present_executor_run(&dispatch, &request, &selected) == ESP_OK);
+    assert(selected.used_fallback && selected.primary_reason == ESP_DISPLAY_PRESENT_EXEC_MEMORY);
+    assert(submissions == before && syncs == before_sync);
+    unmapped_pointer = NULL;
+    assert(esp_display_present_executor_run(&dispatch, &request, &selected) == ESP_OK);
+    assert(!selected.used_fallback && submissions == before + 1);
     free(src);
     free(dst);
+}
+#endif
+
+typedef struct {
+    esp_display_present_executor_t *executor;
+    esp_display_present_copy_request_t request;
+    esp_err_t result;
+} copy_thread_t;
+
+typedef struct {
+    esp_display_present_pixel_engine_t *engine;
+    unsigned calls;
+    esp_err_t result;
+} inline_observer_t;
+
+static bool inline_completed(void *context, esp_display_present_copy_ticket_t ticket,
+                             const esp_display_present_copy_status_t *status, bool isr)
+{
+    inline_observer_t *observer = context;
+    esp_display_present_copy_status_t current;
+    assert(!isr);
+    assert(esp_display_present_pixel_query(observer->engine, ticket, &current) == ESP_OK);
+    assert(current.state == status->state && current.result == status->result);
+    observer->calls++;
+    observer->result = status->result;
+    return false;
+}
+
+static void verify_inline_hardware(esp_display_present_executor_t *executor)
+{
+    uint8_t *src = aligned_alloc(64, 128), *dst = aligned_alloc(64, 128);
+    assert(src && dst);
+    memset(src, 0x47, 128);
+    const esp_display_present_layout_t layout = {32, 2, 64, ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+                                                 ESP_DISPLAY_PRESENT_ORDER_NATIVE
+                                                };
+    const esp_display_present_copy_request_t request = {
+        .src = {src, 128, layout}, .dst = {dst, 128, layout}, .src_area = {0, 0, 32, 2},
+    };
+    inline_observer_t observer = {0};
+    const esp_display_present_pixel_config_t config = {
+        .max_jobs = 1, .asynchronous = false,
+        .execute = esp_display_present_executor_execute, .execute_user = executor,
+        .on_event = inline_completed, .user = &observer,
+    };
+    assert(esp_display_present_pixel_create(&config, &observer.engine) == ESP_OK);
+    esp_display_present_copy_ticket_t ticket;
+    esp_display_present_copy_status_t status;
+    assert(esp_display_present_pixel_submit(observer.engine, &request, &ticket) == ESP_OK);
+    assert(observer.calls == 1 && observer.result == ESP_OK && !memcmp(src, dst, 128));
+    assert(esp_display_present_pixel_wait(observer.engine, ticket, 0, &status) == ESP_OK);
+    assert(status.state == ESP_DISPLAY_PRESENT_COPY_SUCCEEDED);
+    assert(esp_display_present_pixel_release(observer.engine, ticket) == ESP_OK);
+    driver_error = ESP_FAIL;
+    assert(esp_display_present_pixel_submit(observer.engine, &request, &ticket) == ESP_OK);
+    assert(observer.calls == 2 && observer.result == ESP_FAIL);
+    assert(esp_display_present_pixel_wait(observer.engine, ticket, 0, &status) == ESP_OK);
+    assert(status.state == ESP_DISPLAY_PRESENT_COPY_FAILED && status.result == ESP_FAIL);
+    driver_error = ESP_OK;
+    assert(esp_display_present_pixel_release(observer.engine, ticket) == ESP_OK);
+    assert(esp_display_present_pixel_stop(observer.engine, 0) == ESP_OK);
+    assert(esp_display_present_pixel_destroy(observer.engine) == ESP_OK);
+    free(src);
+    free(dst);
+}
+
+static void *execute_copy(void *context)
+{
+    copy_thread_t *copy = context;
+    copy->result = esp_display_present_executor_execute(copy->executor, &copy->request);
+    assert(cache_stage == 0);
+    return NULL;
+}
+
+static void verify_instance_isolation(bool is_dma, esp_display_present_executor_t *cpu)
+{
+    esp_err_t (*create)(esp_display_present_executor_t **) = is_dma ?
+                                                             esp_display_present_executor_dma2d_create : esp_display_present_executor_ppa_create;
+    copy_thread_t copies[2] = {0};
+    for (unsigned i = 0; i < 2; ++i) {
+        assert(create(&copies[i].executor) == ESP_OK);
+        uint8_t *src = aligned_alloc(64, 128), *dst = aligned_alloc(64, 128);
+        assert(src && dst);
+        memset(src, 0x5a + i, 128);
+        memset(dst, 0, 128);
+        esp_display_present_layout_t layout = {32, 2, 64, ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+                                               ESP_DISPLAY_PRESENT_ORDER_NATIVE
+                                              };
+        copies[i].request = (esp_display_present_copy_request_t) {
+            .src = {src, 128, layout}, .dst = {dst, 128, layout}, .src_area = {0, 0, 32, 2},
+        };
+    }
+
+    psram_source = copies[1].request.src.pixels;
+    psram_destination = copies[1].request.dst.pixels;
+    bool expect_fallback = !is_dma;
+#if !PRESENT_IDF_DMA2D_ALIGNMENT_API
+    expect_fallback = false;
+#if CONFIG_SPIRAM_ECC_ENABLE
+    expect_fallback = true;
+#endif
+#endif
+    if (expect_fallback) {
+        esp_display_present_executor_dispatch_t dispatch = {copies[1].executor, cpu};
+        esp_display_present_executor_selection_t selected;
+        unsigned before = submissions, before_sync = syncs;
+        assert(esp_display_present_executor_run(&dispatch, &copies[1].request, &selected) == ESP_OK);
+        assert(selected.used_fallback && selected.primary_reason == ESP_DISPLAY_PRESENT_EXEC_MEMORY);
+        assert(submissions == before && syncs == before_sync);
+        assert(!memcmp(psram_source, psram_destination, 128));
+        memset(copies[1].request.dst.pixels, 0, 128);
+        psram_source = psram_destination = NULL;
+    }
+
+    /* B enters the driver first and stays active while A executes and unregisters. */
+    hold_client = last_client;
+    release_client = false;
+    check_cache_order = true;
+    pthread_t thread;
+    assert(!pthread_create(&thread, NULL, execute_copy, &copies[1]));
+    pthread_mutex_lock(&clients_lock);
+    while (!hold_client->active) {
+        pthread_cond_wait(&clients_changed, &clients_lock);
+    }
+    pthread_mutex_unlock(&clients_lock);
+    (void)execute_copy(&copies[0]);
+    assert(copies[0].result == ESP_OK);
+    assert(!memcmp(copies[0].request.src.pixels, copies[0].request.dst.pixels, 128));
+    assert(esp_display_present_executor_destroy(copies[0].executor) == ESP_OK);
+    assert(((uint8_t *)copies[1].request.dst.pixels)[0] == 0);
+
+    pthread_mutex_lock(&clients_lock);
+    release_client = true;
+    pthread_cond_broadcast(&clients_changed);
+    pthread_mutex_unlock(&clients_lock);
+    assert(!pthread_join(thread, NULL));
+    assert(copies[1].result == ESP_OK);
+    assert(!memcmp(copies[1].request.src.pixels, copies[1].request.dst.pixels, 128));
+    hold_client = NULL;
+    memset(copies[1].request.dst.pixels, 0, 128);
+    (void)execute_copy(&copies[1]);
+    assert(copies[1].result == ESP_OK);
+    assert(!memcmp(copies[1].request.src.pixels, copies[1].request.dst.pixels, 128));
+    assert(esp_display_present_executor_destroy(copies[1].executor) == ESP_OK);
+    psram_source = psram_destination = NULL;
+    check_cache_order = false;
+    for (unsigned i = 0; i < 2; ++i) {
+        free((void *)copies[i].request.src.pixels);
+        free(copies[i].request.dst.pixels);
+    }
 }
 #endif
 
@@ -457,9 +803,9 @@ static void verify_dma_retry_and_drain(esp_display_present_executor_t *executor)
     while (!dma_entered) {
         pthread_cond_wait(&dma_changed, &dma_lock);
     }
-    async_memcpy_dma2d_trans_desc_t pending = dma_pending;
-    async_memcpy_dma2d_isr_cb_t callback = dma_pending_cb;
-    async_memcpy_dma2d_handle_t handle = dma_pending_handle;
+    mock_dma_request_t pending = dma_pending;
+    mock_dma_callback_t callback = dma_pending_cb;
+    mock_dma_handle_t handle = dma_pending_handle;
     void *user = dma_pending_user;
     dma_deferred = false;
     pthread_mutex_unlock(&dma_lock);
@@ -514,9 +860,18 @@ static void verify(esp_display_present_executor_t *e, esp_display_present_execut
 #if PRESENT_HOST_PPA || PRESENT_HOST_DMA2D
             unsigned before = submissions, before_sync = syncs;
 #endif
+            bool unsupported_transform = is_dma && rot;
+            bool unsupported_capacity = false;
+#if PRESENT_IDF_COLOR_CONVERT_DMA2D_API
+            /* An 18-byte RGB888 stride needs a 32-row aligned driver picture,
+             * which cannot fit this 192-byte borrowed destination. */
+            unsupported_capacity = is_dma && !rot && bpp == 3;
+#endif
+            bool fallback = unsupported_transform || unsupported_capacity;
             esp_err_t error = esp_display_present_executor_probe(e, &r, &why);
-            assert(error == (is_dma && rot ? ESP_ERR_NOT_SUPPORTED : ESP_OK));
-            assert(why == (is_dma && rot ? ESP_DISPLAY_PRESENT_EXEC_TRANSFORM : ESP_DISPLAY_PRESENT_EXEC_SUPPORTED));
+            assert(error == (fallback ? ESP_ERR_NOT_SUPPORTED : ESP_OK));
+            assert(why == (unsupported_transform ? ESP_DISPLAY_PRESENT_EXEC_TRANSFORM :
+                           unsupported_capacity ? ESP_DISPLAY_PRESENT_EXEC_CAPACITY : ESP_DISPLAY_PRESENT_EXEC_SUPPORTED));
             assert(!memcmp(dst, expected, 192));
 #if PRESENT_HOST_PPA || PRESENT_HOST_DMA2D
             assert(submissions == before && syncs == before_sync);
@@ -529,8 +884,8 @@ static void verify(esp_display_present_executor_t *e, esp_display_present_execut
             }
             dispatch.fallback = cpu;
             assert(esp_display_present_executor_run(&dispatch, &r, &selected) == ESP_OK);
-            assert(selected.executor == (is_dma && rot ? cpu : e));
-            assert(selected.used_fallback == (is_dma && rot != 0));
+            assert(selected.executor == (fallback ? cpu : e));
+            assert(selected.used_fallback == fallback);
             paint(src, layout.stride_bytes, expected, layout.stride_bytes, 1, 1, 3, 2, 1, 1, rot, bpp, bpp == 2 && !is_dma);
             assert(!memcmp(dst, expected, 192));
             r.src_area.width = 100;
@@ -554,7 +909,11 @@ static void verify(esp_display_present_executor_t *e, esp_display_present_execut
         driver_error = ESP_OK;
         strict_alignment = 16;
         assert(esp_display_present_executor_select(&d, &r, &selected) == ESP_OK && selected.used_fallback);
+#if PRESENT_IDF_DMA2D_ALIGNMENT_API
         assert(selected.primary_reason == (is_dma ? ESP_DISPLAY_PRESENT_EXEC_ALIGNMENT : ESP_DISPLAY_PRESENT_EXEC_MEMORY));
+#else
+        assert(selected.primary_reason == ESP_DISPLAY_PRESENT_EXEC_MEMORY);
+#endif
         if (!is_dma) {
             /* IDF PPA SRM rejects strict MSPI memory even when every row and
              * the complete window are individually aligned: macroblocks
@@ -641,11 +1000,15 @@ int main(void)
     assert(esp_display_present_executor_ppa_create(&e) == ESP_OK);
     verify(e, cpu, false);
     verify_cache_bands(e, false);
-    verify_cache_failures(e);
+    verify_cache_failures(e, cpu);
+#if !PRESENT_IDF_DMA2D_ALIGNMENT_API
+    verify_legacy_memory(e, cpu);
+#endif
     verify_fifo_boundary(e, cpu);
     verify_rotated_fifo_tail(e, cpu);
+    verify_inline_hardware(e);
     assert(esp_display_present_executor_destroy(e) == ESP_OK);
-    verify_instance_isolation(false);
+    verify_instance_isolation(false, cpu);
 #else
     assert(esp_display_present_executor_ppa_create(&e) == ESP_ERR_NOT_SUPPORTED && !e);
 #endif
@@ -654,10 +1017,17 @@ int main(void)
     assert(esp_display_present_executor_dma2d_create(&e) == ESP_OK);
     verify(e, cpu, true);
     verify_cache_bands(e, true);
-    verify_cache_failures(e);
+#if PRESENT_IDF_COLOR_CONVERT_DMA2D_API
+    verify_color_destination_rows(e, cpu);
+#endif
+    verify_cache_failures(e, cpu);
+#if !PRESENT_IDF_DMA2D_ALIGNMENT_API
+    verify_legacy_memory(e, cpu);
+#endif
     verify_dma_retry_and_drain(e);
+    verify_inline_hardware(e);
     assert(esp_display_present_executor_destroy(e) == ESP_OK);
-    verify_instance_isolation(true);
+    verify_instance_isolation(true, cpu);
 #else
     assert(esp_display_present_executor_dma2d_create(&e) == ESP_ERR_NOT_SUPPORTED && !e);
 #endif

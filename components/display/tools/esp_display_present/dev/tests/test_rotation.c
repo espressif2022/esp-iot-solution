@@ -294,8 +294,8 @@ static void exercise_swapped_fb(esp_display_present_render_contract_t contract, 
     pthread_mutex_destroy(&n.lock);
 }
 /* REGION conversion allocation accounting. Peak plan budget is separate:
- * identity allocates no conversion tile, runtime rotation allocates one per
- * TX slot actually used, and switching back allocates nothing new. */
+ * identity allocates no conversion tile, runtime rotation reserves one per
+ * TX slot before committing, and switching back allocates nothing new. */
 static void run_region_frame(present_backend_t *b, test_panel_t *io, notifications_t *n, unsigned tiles)
 {
     esp_display_present_frame_request_t req = {.full_redraw = true};
@@ -353,7 +353,7 @@ static void region_conversion_allocation(void)
     run_region_frame(b, &io, &n, 2);
     assert(pixel_bytes == before + 24);
     OK(present_region_backend.set_rotation(b, ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90));
-    /* Both TX slots are used by this frame, so both conversion tiles appear. */
+    assert(pixel_bytes == before + 48); /* Both conversion tiles already exist. */
     esp_display_present_frame_request_t req = {.full_redraw = true};
     esp_display_present_frame_t f;
     OK(present_region_backend.begin(b, &req, &f));
@@ -390,8 +390,8 @@ static void region_conversion_allocation(void)
     OK(present_region_backend.destroy(b));
     assert(pixel_bytes == before);
 
-    /* Lazy allocation failure on a fresh backend: submit reports NO_MEM and
-     * the lease stays with the producer, so it can still be cancelled. */
+    /* Packing a non-tight source still allocates lazily. A failed submit
+     * leaves the old lease with the producer so it can be cancelled. */
     io = (test_panel_t) {
         .width = 3, .height = 2, .bpp = 2
     };
@@ -405,12 +405,12 @@ static void region_conversion_allocation(void)
     cfg.progress_user = &n;
     OK(present_region_backend.create(&cfg, &b));
     assert(pixel_bytes == before + 24);
-    OK(present_region_backend.set_rotation(b, ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90));
     OK(present_region_backend.begin(b, &req, &f));
     esp_display_present_lease_t lease;
     OK(present_region_backend.acquire(b, f, NULL, 0, &lease));
+    const esp_display_present_region_submit_t packed = {{0, 0, 2, 2}, 6};
     fail_next_pixel_alloc = true;
-    assert(present_region_backend.submit_region(b, f, lease.id) == ESP_ERR_NO_MEM);
+    assert(present_region_backend.submit_region_ex(b, f, lease.id, &packed) == ESP_ERR_NO_MEM);
     OK(present_region_backend.cancel_region(b, f, lease.id));
     OK(present_region_backend.cancel_frame(b, f, 0));
     OK(present_region_backend.stop(b, 1000));

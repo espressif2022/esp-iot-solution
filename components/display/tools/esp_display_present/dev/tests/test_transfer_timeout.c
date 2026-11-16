@@ -1,6 +1,7 @@
 /* SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0 */
 #include "core/present_engine.h"
+#include "core/present_control.h"
 #include "platform/present_os.h"
 #include "test_panel.h"
 #include "scan_panel.h"
@@ -9,11 +10,16 @@
 #include <time.h>
 #define OK(x) assert((x) == ESP_OK)
 static bool fake_clock = true;
-static uint64_t clock_us;
+static uint64_t clock_us, clock_step_us;
 uint64_t __real_present_now_us(void);
 uint64_t __wrap_present_now_us(void)
 {
-    return fake_clock ? clock_us : __real_present_now_us();
+    if (!fake_clock) {
+        return __real_present_now_us();
+    }
+    uint64_t now = clock_us;
+    clock_us += clock_step_us;
+    return now;
 }
 static size_t allocation_count, fail_allocation;
 void *__real_present_alloc(size_t);
@@ -476,9 +482,173 @@ static void partially_completed_cancel(void)
     }
 }
 
+typedef struct {
+    test_panel_t panel;
+    bool hardware_idle;
+} recovery_panel_t;
+
+static esp_err_t recovery_quiesce(void *context, uint32_t timeout)
+{
+    recovery_panel_t *fixture = context;
+    if (fixture->hardware_idle) {
+        /* The fixture explicitly stopped all reads with no completion event. */
+        fixture->panel.count = 0;
+    }
+    return test_panel_stop(&fixture->panel, timeout);
+}
+
+static void stop_and_rebuild_after_timeout(bool late_callback)
+{
+    clock_us = 500000;
+    recovery_panel_t fixture = {.panel = {.width = 4, .height = 4, .bpp = 2}};
+    test_panel_t *panel = &fixture.panel;
+    esp_display_present_panel_adapter_t adapter = test_panel_interface(panel);
+    adapter.context = &fixture;
+    adapter.quiesce = recovery_quiesce;
+    esp_display_present_engine_t *engine = create_adapter(adapter, 5);
+    OK(send(engine, 0));
+    esp_display_present_engine_receipt_t receipt = seal(engine);
+    esp_display_present_frame_status_t observed;
+    assert(esp_display_present_engine_wait_frame(engine, receipt, ESP_DISPLAY_PRESENT_COMPLETION_SOURCE_RELEASED, 0, &observed) == ESP_ERR_TIMEOUT);
+    assert(!observed.terminal && observed.result == ESP_OK);
+    test_panel_complete(panel);
+    OK(esp_display_present_engine_drain(engine, 0));
+    OK(esp_display_present_engine_release_receipt(engine, receipt));
+
+    const esp_display_present_frame_request_t request = {.full_redraw = true};
+    OK(esp_display_present_engine_begin_next_frame(engine, &request)); /* Observation timeout was retryable. */
+    OK(send(engine, 0));
+    receipt = seal(engine);
+    const uint8_t *source = panel->pending[0].surface.pixels;
+    const esp_display_present_backend_event_t wrong_completion = {
+        .kind = ESP_DISPLAY_PRESENT_EVENT_SCANOUT_CONFIRMED,
+        .transaction_cookie = panel->pending[0].cookie,
+    };
+    (void)panel->callback(panel->user, &wrong_completion, false);
+    clock_us += 5000;
+    assert(esp_display_present_engine_rebind_producer(engine, 0) == ESP_ERR_TIMEOUT);
+
+    for (unsigned attempt = 0; attempt < 3; ++attempt) {
+        assert(esp_display_present_engine_stop(engine, 0) == ESP_ERR_TIMEOUT);
+        assert(esp_display_present_engine_destroy(engine) == ESP_ERR_INVALID_STATE);
+        assert(esp_display_present_engine_begin_next_frame(engine, &request) == ESP_ERR_INVALID_STATE);
+        OK(esp_display_present_engine_query_frame(engine, receipt, &observed));
+        assert(!observed.terminal && !observed.src_released && observed.result == ESP_ERR_TIMEOUT);
+        assert(esp_display_present_engine_release_receipt(engine, receipt) == ESP_ERR_INVALID_STATE);
+        assert(panel->callback && panel->count == 1 && panel->submitted == 2);
+        for (size_t byte = 0; byte < 16; ++byte) {
+            assert(source[byte] == 0xab);
+        }
+    }
+    if (late_callback) {
+        test_panel_complete(panel);
+        assert(esp_display_present_engine_begin_next_frame(engine, &request) == ESP_ERR_INVALID_STATE);
+    } else {
+        fixture.hardware_idle = true;
+    }
+    OK(esp_display_present_engine_stop(engine, 0));
+    OK(esp_display_present_engine_stop(engine, 0));
+    OK(esp_display_present_engine_query_frame(engine, receipt, &observed));
+    assert(observed.terminal && observed.src_released && observed.result == ESP_ERR_TIMEOUT);
+    assert(!panel->count && !panel->callback);
+    OK(esp_display_present_engine_release_receipt(engine, receipt));
+    OK(esp_display_present_engine_destroy(engine));
+
+    engine = create_adapter(adapter, 5);
+    panel->immediate = true;
+    OK(send(engine, 0));
+    receipt = seal(engine);
+    OK(esp_display_present_engine_query_frame(engine, receipt, &observed));
+    assert(observed.terminal && observed.src_released && observed.result == ESP_OK);
+    OK(esp_display_present_engine_release_receipt(engine, receipt));
+    destroy(engine);
+}
+
+static void first_fault_follows_event_order(void)
+{
+    clock_us = 700000;
+    test_panel_t panel = {.width = 4, .height = 4, .bpp = 2};
+    esp_display_present_engine_t *engine = create(&panel, 5);
+    OK(send(engine, 0));
+    esp_display_present_engine_receipt_t older = seal(engine);
+    const esp_display_present_frame_request_t request = {.full_redraw = true};
+    OK(esp_display_present_engine_begin_next_frame(engine, &request));
+    OK(send(engine, 2));
+    esp_display_present_engine_receipt_t newer = seal(engine);
+
+    esp_display_present_backend_event_t fault = {
+        .kind = ESP_DISPLAY_PRESENT_EVENT_FAULT,
+        .transaction_cookie = panel.pending[1].cookie,
+        .result = ESP_FAIL,
+    };
+    (void)panel.callback(panel.user, &fault, false);
+    fault.transaction_cookie = panel.pending[0].cookie;
+    fault.result = ESP_ERR_INVALID_SIZE;
+    (void)panel.callback(panel.user, &fault, false);
+    test_panel_complete(&panel);
+    test_panel_complete(&panel);
+
+    esp_display_present_engine_status_t status;
+    OK(esp_display_present_engine_get_status(engine, &status));
+    assert(status.completed_frames == 2 && status.first_error == ESP_FAIL);
+    esp_display_present_frame_status_t observed;
+    OK(esp_display_present_engine_query_frame(engine, older, &observed));
+    assert(observed.terminal && observed.result == ESP_ERR_INVALID_SIZE);
+    OK(esp_display_present_engine_query_frame(engine, newer, &observed));
+    assert(observed.terminal && observed.result == ESP_FAIL);
+    OK(esp_display_present_engine_release_receipt(engine, older));
+    OK(esp_display_present_engine_release_receipt(engine, newer));
+    destroy(engine);
+}
+
+static void producer_metrics(void)
+{
+    clock_us = 0;
+    test_panel_t panel = {.width = 4, .height = 4, .bpp = 2};
+    esp_display_present_engine_t *engine = create(&panel, 0);
+    esp_display_presenter_metrics_t metrics;
+    assert(present_presenter_control_get_metrics(engine, &metrics) == ESP_ERR_INVALID_STATE);
+    OK(present_presenter_control_reset_metrics(engine));
+    OK(send(engine, 0));
+    OK(send(engine, 2));
+    esp_display_present_lease_t unavailable;
+    clock_step_us = 100;
+    assert(esp_display_present_engine_acquire_buffer(engine, &unavailable) == ESP_ERR_TIMEOUT);
+    clock_step_us = 0;
+    test_panel_complete(&panel);
+    test_panel_complete(&panel);
+    OK(esp_display_present_engine_commit_frame(engine, NULL)); /* Active when reset, excluded. */
+
+    const esp_display_present_frame_request_t request = {.full_redraw = true};
+    panel.immediate = true;
+    for (unsigned i = 0; i < 100; ++i) {
+        OK(esp_display_present_engine_begin_next_frame(engine, &request));
+        OK(send(engine, 0));
+        clock_us += i == 99 ? 200000 : i == 98 ? 23500 : 1500;
+        OK(esp_display_present_engine_commit_frame(engine, NULL));
+    }
+    OK(present_presenter_control_get_metrics(engine, &metrics));
+    assert(metrics.frame_samples == 100 && metrics.frame_p99_us == 24000);
+    assert(metrics.buffer_waits == 1 && metrics.buffer_wait_timeouts == 1);
+    assert(metrics.buffer_wait_us == 100 && metrics.buffer_wait_max_us == 100);
+    assert(!metrics.scanout_available && !metrics.scanout_vsyncs && !metrics.scanout_supply_misses);
+
+    OK(present_presenter_control_reset_metrics(engine));
+    OK(esp_display_present_engine_begin_next_frame(engine, &request));
+    OK(send(engine, 0));
+    clock_us += 240000;
+    OK(esp_display_present_engine_commit_frame(engine, NULL));
+    OK(present_presenter_control_get_metrics(engine, &metrics));
+    assert(metrics.frame_samples == 1 && metrics.frame_p99_us == 240000 && !metrics.buffer_waits);
+    destroy(engine);
+}
+
 int main(void)
 {
     exhausted_deadline_boundaries();
+    stop_and_rebuild_after_timeout(false);
+    stop_and_rebuild_after_timeout(true);
+    first_fault_follows_event_order();
     partially_completed_cancel();
     allocation_rollback();
     unsealed_and_late(false);
@@ -489,6 +659,7 @@ int main(void)
     late_scanout_confirmation(false);
     late_scanout_confirmation(true);
     te_wait_is_not_transfer_time();
+    producer_metrics();
     automatic_backend_worker();
     puts("transfer deadlines: physical-submit origin, retained DMA, per-push isolation, retry, early/late completion and backend worker wake passed");
 }

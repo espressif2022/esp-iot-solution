@@ -21,6 +21,9 @@ typedef struct {
     /** Task-context progress, under the engine gate when engine-owned.
      * Advances existing work without manufacturing completion events. */
     esp_err_t (*service)(present_backend_t *backend);
+    /** Optional blocking copy execution on the background worker, outside the
+     * engine gate. Stop joins that worker before backend cleanup. */
+    bool (*copy_work)(present_backend_t *backend);
     esp_err_t (*get_caps)(present_backend_t *backend, esp_display_present_backend_caps_t *caps);
     esp_err_t (*begin)(present_backend_t *backend, const esp_display_present_frame_request_t *request, esp_display_present_frame_t *frame);
     esp_err_t (*acquire)(present_backend_t *backend, esp_display_present_frame_t frame, const esp_display_present_rect_t *area, uint32_t timeout_ms, esp_display_present_lease_t *lease);
@@ -32,6 +35,9 @@ typedef struct {
     esp_err_t (*end_ex)(present_backend_t *backend, esp_display_present_frame_t frame, const esp_display_present_frame_coverage_t *coverage, esp_display_present_receipt_t *out_receipt);
     esp_err_t (*cancel_frame)(present_backend_t *backend, esp_display_present_frame_t frame, uint32_t timeout_ms);
     esp_err_t (*query)(present_backend_t *backend, esp_display_present_receipt_t receipt, esp_display_present_frame_status_t *status);
+    /* Receipt operations that never service the backend or call the driver. */
+    esp_err_t (*peek)(present_backend_t *backend, esp_display_present_receipt_t receipt, esp_display_present_frame_status_t *status);
+    esp_err_t (*forget)(present_backend_t *backend, esp_display_present_receipt_t receipt);
     esp_err_t (*get_fault)(present_backend_t *backend, esp_display_present_backend_fault_t *fault);
     esp_err_t (*wait)(present_backend_t *backend, esp_display_present_receipt_t receipt, esp_display_present_completion_point_t point, uint32_t timeout_ms, esp_display_present_frame_status_t *status);
     esp_err_t (*release_receipt)(present_backend_t *backend, esp_display_present_receipt_t receipt);

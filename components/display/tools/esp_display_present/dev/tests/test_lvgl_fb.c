@@ -95,31 +95,25 @@ typedef struct {
     void *buffers[16];
     size_t count;
     unsigned seen, deferred_bands;
-    void *submitted;
 } pool_observer_t;
-static void assert_borrowed(lv_event_t *event)
+static void assert_pool_ownership(lv_event_t *event)
 {
     pool_observer_t *observer = lv_event_get_user_data(event);
     lv_display_t *display = lv_event_get_target(event);
     void *active = lv_display_get_buf_active(display)->data;
-    if (lv_event_get_code(event) == LV_EVENT_FLUSH_START) {
-        observer->submitted = active;
-        return;
-    }
-    if (lv_event_get_code(event) == LV_EVENT_FLUSH_FINISH) {
-        if (!lv_display_flush_is_last(display)) {
-            /* The next tile is not acquired or rebound inside flush. */
-            assert(active == observer->submitted);
-            observer->deferred_bands++;
-        }
-        return;
-    }
     bool found = false;
     for (size_t i = 0; i < observer->count; ++i) {
         found |= observer->buffers[i] == active;
     }
-    assert(found);
-    observer->seen++;
+    if (lv_event_get_code(event) == LV_EVENT_FLUSH_START) {
+        assert(found); /* Rendering used the acquired lease. */
+        observer->seen++;
+    } else {
+        assert(active && !found); /* Before acquire and after submit, use the owned tile. */
+        if (lv_event_get_code(event) == LV_EVENT_FLUSH_FINISH && !lv_display_flush_is_last(display)) {
+            observer->deferred_bands++;
+        }
+    }
 }
 
 typedef struct {
@@ -188,9 +182,9 @@ static void exercise(esp_display_present_present_mode_t mode, size_t bpp, bool a
     }
     lv_display_t *display = esp_lv_present_native_get_display(binding);
     if (pooled) {
-        lv_display_add_event_cb(display, assert_borrowed, LV_EVENT_RENDER_START, &observer);
-        lv_display_add_event_cb(display, assert_borrowed, LV_EVENT_FLUSH_START, &observer);
-        lv_display_add_event_cb(display, assert_borrowed, LV_EVENT_FLUSH_FINISH, &observer);
+        lv_display_add_event_cb(display, assert_pool_ownership, LV_EVENT_RENDER_START, &observer);
+        lv_display_add_event_cb(display, assert_pool_ownership, LV_EVENT_FLUSH_START, &observer);
+        lv_display_add_event_cb(display, assert_pool_ownership, LV_EVENT_FLUSH_FINISH, &observer);
     }
     lv_obj_t *screen = lv_display_get_screen_active(display);
     lv_obj_remove_style_all(screen);

@@ -34,21 +34,22 @@ int main(void)
     present_completion_tracker_t tracker = {.limit = 2, .count = 2, .committed = 2,
     .receipts = {{1}, {2}}, .observers = {{.token = 55, .backend = {1}}}
                                            };
-    assert(present_completion_reap(&tracker, &ops, backend) == ESP_OK);
+    assert(present_completion_reap(&tracker, &ops, backend, true) == ESP_OK);
     assert(tracker.count == 2 && !fixture.releases); /* Preserve FIFO when a later frame is already terminal. */
     fixture.status[0].terminal = true;
     fixture.status[0].result = ESP_ERR_TIMEOUT;
     fixture.query_error = ESP_FAIL;
-    assert(present_completion_reap(&tracker, &ops, backend) == ESP_FAIL);
+    assert(present_completion_reap(&tracker, &ops, backend, true) == ESP_FAIL);
     assert(tracker.count == 2 && !tracker.observers[0].status.terminal);
     fixture.query_error = ESP_OK;
     fixture.release_error = ESP_FAIL;
-    assert(present_completion_reap(&tracker, &ops, backend) == ESP_FAIL);
+    assert(present_completion_reap(&tracker, &ops, backend, true) == ESP_FAIL);
     assert(tracker.count == 2 && !fixture.releases && !tracker.observers[0].status.terminal);
     fixture.release_error = ESP_OK;
-    assert(present_completion_reap(&tracker, &ops, backend) == ESP_OK);
+    assert(present_completion_reap(&tracker, &ops, backend, true) == ESP_OK);
     assert(!tracker.count && tracker.head == 0 && tracker.completed == 2 && fixture.releases == 2);
-    assert(tracker.first_error == ESP_ERR_TIMEOUT);
+    assert(tracker.first_error == ESP_OK);
+    present_completion_record_error(&tracker, ESP_ERR_TIMEOUT);
     present_completion_record_error(&tracker, ESP_FAIL);
     assert(tracker.first_error == ESP_ERR_TIMEOUT);
     present_completion_observer_t *observer = present_completion_find(&tracker, (esp_display_present_engine_receipt_t) {
@@ -57,11 +58,11 @@ int main(void)
     assert(observer);
     unsigned queries = fixture.queries;
     esp_display_present_frame_status_t status;
-    assert(present_completion_query(observer, &ops, backend, &status) == ESP_OK);
+    assert(present_completion_query(observer, &ops, backend, &status, true) == ESP_OK);
     assert(status.terminal && status.result == ESP_ERR_TIMEOUT && fixture.queries == queries); /* Cache survives backend receipt release. */
     assert(!present_completion_find(&tracker, (esp_display_present_engine_receipt_t) {
         56
     }));
-    assert(present_completion_query(NULL, &ops, backend, &status) == ESP_ERR_INVALID_STATE);
+    assert(present_completion_query(NULL, &ops, backend, &status, true) == ESP_ERR_INVALID_STATE);
     return 0;
 }

@@ -19,4 +19,4 @@ if(TARGET ${lvgl_lib})
 endif()
 
 idf_component_get_property(_present_dir esp_display_present COMPONENT_DIR)
-target_include_directories(${COMPONENT_LIB} PRIVATE "${_present_dir}/src")
+target_include_directories(${COMPONENT_LIB} PRIVATE "${_present_dir}/private_include")

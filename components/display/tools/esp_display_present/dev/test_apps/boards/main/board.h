@@ -8,6 +8,9 @@
 esp_err_t board_panel_create(esp_lcd_panel_handle_t *panel, size_t buffer_count);
 /* Called only after the presenter has stopped and deleted the panel. */
 esp_err_t board_resources_destroy(void);
+#ifdef PRESENT_BOARD_EXECUTOR_CHECK
+void present_board_test_executors(void);
+#endif
 #if defined(PRESENT_BOARD_S31_RGB)
 #define BOARD_NAME "S31-Korvo stock RGB 800x480"
 #define WIDTH 800

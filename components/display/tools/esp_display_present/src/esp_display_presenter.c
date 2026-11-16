@@ -2,9 +2,9 @@
  * SPDX-License-Identifier: Apache-2.0 */
 #include "core/present_producer.h"
 #include "core/present_control.h"
-#include "core/present_session.h"
 #include "esp_display_present.h"
 #include "config/present_geometry.h"
+#include "backend/present_records.h"
 #include "resources/present_resources.h"
 #include "config/present_mode.h"
 #include "core/present_engine.h"
@@ -58,7 +58,7 @@ struct esp_display_presenter {
         present_task_t task;
         present_lease_identity_t lease;
         uint32_t next_lease;
-        bool active, full_next, lvgl_bound, cancel_pending;
+        bool active, full_next, lvgl_bound, cancel_pending, released;
     } producer; /* Facade admission and public lease identity, not backend state. */
     struct {
         present_observation_t timeline;
@@ -70,6 +70,7 @@ struct esp_display_presenter {
     struct {
         present_lock_t lock;
         uint64_t count;
+        esp_display_present_engine_t *metrics_engine;
     } vsync; /* ISR-shared; protected by its own lock, not gate. */
     esp_display_presenter_state_t state; /* Facade lifecycle, not engine life. */
 };
@@ -85,6 +86,9 @@ static bool PRESENT_ISR_ATTR vsync(void *user, uint64_t timestamp, bool isr)
     present_lock_enter(&presenter->vsync.lock, isr);
     if (presenter->vsync.count != UINT64_MAX) {
         ++presenter->vsync.count;
+    }
+    if (presenter->vsync.metrics_engine) {
+        present_presenter_metrics_vsync(presenter->vsync.metrics_engine, isr);
     }
     present_lock_exit(&presenter->vsync.lock, isr);
     return false;
@@ -122,13 +126,12 @@ static uint32_t budget(esp_display_presenter_t *presenter)
 }
 static uint32_t remaining_budget(esp_display_presenter_t *presenter, uint64_t start)
 {
-    uint32_t timeout = budget(presenter);
-    uint64_t elapsed = present_now_ms() - start;
-    return timeout == UINT32_MAX ? timeout : elapsed >= timeout ? 0 : timeout - (uint32_t)elapsed;
+    return present_remaining_ms(start, budget(presenter));
 }
 static esp_err_t producer(esp_display_presenter_t *presenter)
 {
-    if (!present_same_task(presenter->producer.task, present_current_task()) || presenter->producer.lvgl_bound) {
+    if (presenter->producer.released || presenter->producer.lvgl_bound ||
+            !present_same_task(presenter->producer.task, present_current_task())) {
         return ESP_ERR_INVALID_STATE;
     }
     return ESP_OK;
@@ -173,6 +176,18 @@ static esp_err_t observe_core_timeline(esp_display_presenter_t *presenter)
     return error;
 }
 
+static void observe_tracking_terminal(esp_display_presenter_t *presenter, const esp_display_present_frame_status_t *observed)
+{
+    if (observed->result == ESP_OK && observed->present_confirmed && presenter->observer.public_id && !presenter->observer.confirm_after &&
+            presenter->observer.timeline.fault_reason == ESP_DISPLAY_PRESENT_FAULT_NONE) {
+        uint64_t n = edges(presenter);
+        presenter->observer.confirm_after = n <= UINT64_MAX - 2 ? n + 2 : UINT64_MAX;
+    } else if (observed->result != ESP_OK) {
+        fault(presenter, fault_reason_for(observed->result), observed->result);
+        presenter->observer.public_id = presenter->observer.confirm_after = 0;
+    }
+}
+
 static esp_err_t collect_tracking_receipt(esp_display_presenter_t *presenter)
 {
     if (!presenter->observer.receipt.value) {
@@ -183,14 +198,7 @@ static esp_err_t collect_tracking_receipt(esp_display_presenter_t *presenter)
     if (error != ESP_OK || !observed.terminal) {
         return error;
     }
-    if (observed.result == ESP_OK && observed.present_confirmed && presenter->observer.public_id && !presenter->observer.confirm_after &&
-            presenter->observer.timeline.fault_reason == ESP_DISPLAY_PRESENT_FAULT_NONE) {
-        uint64_t n = edges(presenter);
-        presenter->observer.confirm_after = n <= UINT64_MAX - 2 ? n + 2 : UINT64_MAX;
-    } else if (observed.result != ESP_OK) {
-        fault(presenter, fault_reason_for(observed.result), observed.result);
-        presenter->observer.public_id = presenter->observer.confirm_after = 0;
-    }
+    observe_tracking_terminal(presenter, &observed);
     error = present_presenter_control_release(core(presenter), presenter->observer.receipt);
     if (error == ESP_OK) {
         presenter->observer.receipt.value = 0;
@@ -233,6 +241,37 @@ esp_err_t esp_display_present_get_required_frame_buffer_count(const esp_display_
         *out = mode.frame_buffers;
     }
     return error;
+}
+
+esp_err_t esp_display_presenter_open(const esp_display_presenter_panel_config_t *panel,
+                                     esp_display_present_mode_t mode, esp_display_presenter_t **out)
+{
+    return esp_display_presenter_open_ex(panel, mode, NULL, out);
+}
+
+esp_err_t esp_display_presenter_open_ex(const esp_display_presenter_panel_config_t *panel,
+                                        esp_display_present_mode_t mode,
+                                        const esp_display_present_drawbuf_config_t *drawbuf,
+                                        esp_display_presenter_t **out)
+{
+    if (!panel) {
+        if (out) {
+            *out = NULL;
+        }
+        return ESP_ERR_INVALID_ARG;
+    }
+    bool quarter_turn = panel->hw.rotation == ESP_DISPLAY_PRESENT_ROTATE_90 ||
+                        panel->hw.rotation == ESP_DISPLAY_PRESENT_ROTATE_270;
+    esp_display_presenter_config_t cfg = {
+        .width = quarter_turn ? panel->height : panel->width,
+        .height = quarter_turn ? panel->width : panel->height,
+        .pixel_format = panel->hw.input_pixel_format,
+        .target = {.hw = panel->hw, .fb = {.mode = mode}},
+    };
+    if (drawbuf) {
+        cfg.target.drawbuf = *drawbuf;
+    }
+    return esp_display_presenter_create(&cfg, out);
 }
 
 esp_err_t esp_display_presenter_create(const esp_display_presenter_config_t *cfg, esp_display_presenter_t **out)
@@ -330,6 +369,70 @@ esp_err_t esp_display_presenter_get_caps(const esp_display_presenter_t *input, e
     present_mutex_give(presenter->gate);
     return ESP_OK;
 }
+esp_err_t esp_display_presenter_get_effective_config(const esp_display_presenter_t *input,
+                                                     esp_display_presenter_effective_config_t *out)
+{
+    if (!input || !out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    esp_display_presenter_t *presenter = (esp_display_presenter_t *)input;
+    (void)present_mutex_take(presenter->gate, UINT32_MAX);
+    const esp_display_present_backend_caps_t *caps = &presenter->geometry.caps;
+    bool quarter = presenter->geometry.rotation == ESP_DISPLAY_PRESENT_ROTATE_90 ||
+                   presenter->geometry.rotation == ESP_DISPLAY_PRESENT_ROTATE_270;
+    size_t bpp = presenter->policy.pixel_format == ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 ? 2 : 3;
+    *out = (esp_display_presenter_effective_config_t) {
+        .requested_mode = presenter->policy.mode,
+        .rotation = presenter->geometry.rotation,
+        .width = caps->draw_layout.width,
+        .height = caps->draw_layout.height,
+        .draw_stride_bytes = caps->draw_layout.stride_bytes,
+        .output_stride_bytes = (quarter ? caps->draw_layout.height : caps->draw_layout.width) * bpp,
+        .draw_buffer_count = caps->draw_buffer_count,
+        .tile_count = caps->tile_count,
+        .image_count = caps->image_count,
+        .draw_memory = caps->draw_memory,
+        .image_memory = caps->image_memory,
+    };
+    present_resources_get_selection(presenter->resources, &out->effective_mode, &out->degradation_flags);
+    if (out->effective_mode == ESP_DISPLAY_PRESENT_MODE_TE_SYNC && out->image_memory == ESP_DISPLAY_PRESENT_MEMORY_INTERNAL) {
+        out->degradation_flags |= ESP_DISPLAY_PRESENT_DEGRADE_COMPOSE_PSRAM;
+    }
+    if (!out->tile_count && out->draw_buffer_count == 1 && out->draw_memory == ESP_DISPLAY_PRESENT_MEMORY_INTERNAL) {
+        out->degradation_flags |= ESP_DISPLAY_PRESENT_DEGRADE_CANVAS_PSRAM;
+    }
+    present_mutex_give(presenter->gate);
+    return ESP_OK;
+}
+esp_err_t esp_display_presenter_reset_metrics(esp_display_presenter_t *presenter)
+{
+    if (!presenter) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    (void)present_mutex_take(presenter->gate, UINT32_MAX);
+    esp_err_t error = presenter->state == ESP_DISPLAY_PRESENTER_STATE_OPEN ?
+                      present_presenter_control_reset_metrics(core(presenter)) : ESP_ERR_INVALID_STATE;
+    if (error == ESP_OK && presenter->geometry.caps.supports_present_confirmation) {
+        present_lock_enter(&presenter->vsync.lock, false);
+        presenter->vsync.metrics_engine = core(presenter);
+        present_lock_exit(&presenter->vsync.lock, false);
+    }
+    present_mutex_give(presenter->gate);
+    return error;
+}
+
+esp_err_t esp_display_presenter_get_metrics(const esp_display_presenter_t *input, esp_display_presenter_metrics_t *out)
+{
+    if (!input || !out) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    esp_display_presenter_t *presenter = (esp_display_presenter_t *)input;
+    (void)present_mutex_take(presenter->gate, UINT32_MAX);
+    esp_err_t error = present_presenter_control_get_metrics(core(presenter), out);
+    present_mutex_give(presenter->gate);
+    return error;
+}
+
 esp_err_t esp_display_presenter_get_drawbuf(const esp_display_presenter_t *input, esp_display_presenter_drawbuf_t *out)
 {
     if (!input || !out) {
@@ -443,10 +546,31 @@ esp_err_t esp_display_presenter_rebind_producer(esp_display_presenter_t *present
     }
     if (error == ESP_OK) {
         presenter->producer.task = present_current_task();
+        presenter->producer.released = false;
     }
     present_mutex_give(presenter->gate);
     return error;
 }
+
+esp_err_t esp_display_presenter_release_producer(esp_display_presenter_t *presenter)
+{
+    if (!presenter) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    (void)present_mutex_take(presenter->gate, UINT32_MAX);
+    esp_err_t error = producer(presenter);
+    if (error == ESP_OK && (presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN ||
+                            presenter->producer.active || presenter->producer.cancel_pending)) {
+        error = ESP_ERR_INVALID_STATE;
+    }
+    if (error == ESP_OK) {
+        presenter->producer.released = true;
+        presenter->producer.full_next = true;
+    }
+    present_mutex_give(presenter->gate);
+    return error;
+}
+
 static esp_err_t rectangle(const esp_display_present_area_t *a, uint32_t width, uint32_t height, esp_display_present_rect_t *r)
 {
     if (!esp_display_present_geometry_area_is_valid(a, width, height)) {
@@ -534,7 +658,8 @@ esp_err_t esp_display_presenter_begin_next_frame(esp_display_presenter_t *presen
         return ESP_ERR_INVALID_ARG;
     }
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
-    esp_err_t error = producer(presenter);
+    bool claim = presenter->producer.released;
+    esp_err_t error = claim ? ESP_OK : producer(presenter);
     if (error == ESP_OK && (presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN || presenter->producer.active)) {
         error = ESP_ERR_INVALID_STATE;
     }
@@ -565,8 +690,9 @@ esp_err_t esp_display_presenter_begin_next_frame(esp_display_presenter_t *presen
         present_mutex_give(presenter->gate);
         present_pause();
         (void)present_mutex_take(presenter->gate, UINT32_MAX);
-        error = producer(presenter);
-        if (error == ESP_OK && presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN) {
+        error = claim && presenter->producer.released ? ESP_OK : producer(presenter);
+        if (error == ESP_OK && (presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN ||
+                                presenter->producer.active)) {
             error = ESP_ERR_INVALID_STATE;
         }
         if (error == ESP_OK) {
@@ -575,6 +701,9 @@ esp_err_t esp_display_presenter_begin_next_frame(esp_display_presenter_t *presen
     }
     if (error == ESP_OK) {
         error = present_resources_prepare(presenter->resources, remaining_budget(presenter, start));
+    }
+    if (error == ESP_OK && claim) {
+        error = esp_display_present_engine_rebind_producer(core(presenter), remaining_budget(presenter, start));
     }
     esp_display_present_frame_request_t req = {
         .damage = areas,
@@ -585,6 +714,10 @@ esp_err_t esp_display_presenter_begin_next_frame(esp_display_presenter_t *presen
         error = present_presenter_begin_budget(core(presenter), &req, remaining_budget(presenter, start));
     }
     if (error == ESP_OK) {
+        if (claim) {
+            presenter->producer.task = present_current_task();
+            presenter->producer.released = false;
+        }
         presenter->producer.active = true;
         presenter->geometry.alignment = request ? request->render_alignment : (esp_display_present_render_alignment_t) {
             0
@@ -800,35 +933,45 @@ esp_err_t esp_display_presenter_quiesce(esp_display_presenter_t *presenter, uint
     if (!presenter || !timeout) {
         return ESP_ERR_INVALID_ARG;
     }
-    (void)present_mutex_take(presenter->gate, UINT32_MAX);
-    esp_err_t error = presenter->producer.active || presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN ? ESP_ERR_INVALID_STATE : ESP_OK;
     uint64_t start = present_now_ms();
-    esp_display_present_engine_status_t status;
-    if (error == ESP_OK) {
-        error = finish_cancel(presenter, timeout);
-    }
-    if (error == ESP_OK) {
-        error = present_presenter_control_get_status(core(presenter), &status);
-        if (error == ESP_OK && (status.frame_active || status.cancel_pending)) {
-            error = ESP_ERR_INVALID_STATE;
+    for (;;) {
+        if (!present_mutex_take(presenter->gate, present_remaining_ms(start, timeout))) {
+            return ESP_ERR_TIMEOUT;
         }
-    }
-    while (error == ESP_OK) {
-        error = poll(presenter);
-        if (error == ESP_OK && presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN) {
-            error = ESP_ERR_INVALID_STATE;
+        esp_err_t error = presenter->producer.active || presenter->state != ESP_DISPLAY_PRESENTER_STATE_OPEN ?
+                          ESP_ERR_INVALID_STATE : finish_cancel(presenter, 0);
+        if (error == ESP_OK) {
+            esp_display_present_engine_status_t status = {0};
+            esp_display_present_frame_status_t tracked;
+            error = present_presenter_control_poll_quiesce(core(presenter), present_remaining_ms(start, timeout),
+                                                           presenter->observer.receipt, &status, &tracked);
+            if (status.first_error != ESP_OK) {
+                fault(presenter, fault_reason_for(status.first_error), status.first_error);
+                present_mutex_give(presenter->gate);
+                return error;
+            }
+            if (error == ESP_OK) {
+                presenter->observer.timeline.last_submitted_frame = status.committed_frames;
+                presenter->observer.timeline.completed_transfer_frame = status.completed_frames;
+                if (presenter->observer.receipt.value) {
+                    observe_tracking_terminal(presenter, &tracked);
+                    presenter->observer.receipt.value = 0;
+                }
+                publish_tracking_watermark(presenter);
+                if (presenter->observer.public_id) {
+                    error = ESP_ERR_TIMEOUT;
+                }
+            }
         }
-        if (error != ESP_OK || presenter->observer.timeline.completed_transfer_frame >= presenter->observer.timeline.last_submitted_frame) {
-            break;
-        }
-        if (present_expired(start, timeout)) {
-            error = ESP_ERR_TIMEOUT;
-            break;
+        present_mutex_give(presenter->gate);
+        if (error != ESP_ERR_TIMEOUT || present_expired(start, timeout)) {
+            return error;
         }
         present_pause();
+        if (present_expired(start, timeout)) {
+            return ESP_ERR_TIMEOUT;
+        }
     }
-    present_mutex_give(presenter->gate);
-    return error;
 }
 esp_err_t esp_display_presenter_set_rotation(esp_display_presenter_t *presenter, esp_display_present_rotation_t rotation)
 {
@@ -891,8 +1034,14 @@ esp_err_t esp_display_presenter_stop(esp_display_presenter_t *presenter)
     if (!presenter) {
         return ESP_ERR_INVALID_ARG;
     }
-    (void)present_mutex_take(presenter->gate, UINT32_MAX);
     uint64_t start = present_now_ms();
+    if (!present_mutex_take(presenter->gate, budget(presenter))) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    if (presenter->state == ESP_DISPLAY_PRESENTER_STATE_STOPPED) {
+        present_mutex_give(presenter->gate);
+        return ESP_OK;
+    }
     esp_err_t error = presenter->producer.lease.public_id || presenter->producer.lvgl_bound ? ESP_ERR_INVALID_STATE : ESP_OK;
     if (error == ESP_OK) {
         presenter->state = ESP_DISPLAY_PRESENTER_STATE_CLOSING;
@@ -966,6 +1115,7 @@ esp_err_t present_session_bind(esp_display_presenter_t *presenter, esp_display_p
     }
     if (error == ESP_OK) {
         presenter->producer.task = present_current_task();
+        presenter->producer.released = false;
         presenter->producer.lvgl_bound = true;
         *out = core(presenter);
     }

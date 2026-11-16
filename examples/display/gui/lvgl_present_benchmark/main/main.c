@@ -212,6 +212,12 @@ static esp_err_t run_case(
         (void)esp_display_presenter_delete(presenter);
         return ret;
     }
+    ret = esp_display_presenter_reset_metrics(presenter);
+    if (ret != ESP_OK) {
+        ESP_ERROR_CHECK(esp_lv_present_stop());
+        ESP_ERROR_CHECK(esp_display_presenter_delete(presenter));
+        return ret;
+    }
     s_result = (benchmark_result_t) {
         0
     };
@@ -229,6 +235,8 @@ static esp_err_t run_case(
     const bool complete = pump_lvgl_until_complete(
                               CONFIG_APP_LVGL_BENCH_TIMEOUT_SECONDS * 1000U);
     const int64_t elapsed_us = esp_timer_get_time() - start_us;
+    esp_display_presenter_metrics_t metrics;
+    ESP_ERROR_CHECK(esp_display_presenter_get_metrics(presenter, &metrics));
     const uint32_t frames = esp_lv_present_get_frame_count();
 
     if (!complete) {
@@ -244,6 +252,15 @@ static esp_err_t run_case(
         return ESP_ERR_TIMEOUT;
     }
 
+    ESP_LOGI(TAG, "METRICS mode=%s te_buffers=%u rotation=%d "
+             "frame_samples=%" PRIu64 " begin_commit_p99_us=%" PRIu64
+             " buffer_waits=%" PRIu64 " buffer_wait_us=%" PRIu64 " buffer_wait_max_us=%" PRIu64
+             " buffer_wait_timeouts=%" PRIu64 " scanout_available=%u"
+             " scanout_vsyncs=%" PRIu64 " scanout_supply_misses=%" PRIu64,
+             mode_name(test->mode), test->te_compose_buffers, (int)rotation,
+             metrics.frame_samples, metrics.frame_p99_us, metrics.buffer_waits, metrics.buffer_wait_us,
+             metrics.buffer_wait_max_us, metrics.buffer_wait_timeouts, (unsigned)metrics.scanout_available,
+             metrics.scanout_vsyncs, metrics.scanout_supply_misses);
     const double fps = elapsed_us > 0
                        ? (double)frames * 1000000.0 / (double)elapsed_us : 0.0;
     ESP_LOGI(TAG,

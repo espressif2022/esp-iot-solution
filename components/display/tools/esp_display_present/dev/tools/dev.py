@@ -19,6 +19,7 @@ def main():
     parser.add_argument('--target', default='esp32s3', help='ESP-IDF compile target')
     parser.add_argument('--with-lvgl', action='store_true', help='Use existing local LVGL source; never download')
     parser.add_argument('--lvgl-dir', type=Path, help='Explicit LVGL 9 source directory (implies --with-lvgl)')
+    parser.add_argument('--gsp-dir', type=Path, help='Existing GSP source checkout for the Host handoff test')
     parser.add_argument('--jobs', type=int, default=min(os.cpu_count() or 1, 8))
     parser.add_argument('--check', action='store_true', help='Check formatting without writing (format action only)')
     args = parser.parse_args()
@@ -26,13 +27,15 @@ def main():
         parser.error('--jobs must be positive')
     if args.check and args.action != 'format':
         parser.error('--check requires format')
+    if args.gsp_dir and args.action not in ('build', 'test'):
+        parser.error('--gsp-dir requires a Host build or test')
     if args.action == 'format':
         formatter = shutil.which('astyle_py')
         if not formatter:
             parser.error('astyle_py not found; install the repository formatting tool')
         subprocess.run([formatter, '--astyle-version=3.4.7', '--version'], check=True)
         rules = ROOT.parents[4] / 'tools/ci/astyle-rules.yml'
-        files = sorted(p for directory in ('../src', '../include', '../../esp_lv_present/src', '../../esp_lv_present/include', 'tests', 'test_apps/smoke/main', 'test_apps/benchmark/main', 'test_apps/benchmark/components/hw_init', 'test_apps/te_lifecycle/main', 'test_apps/rgb_events/main')
+        files = sorted(p for directory in ('../src', '../include', '../private_include', '../../esp_lv_present/src', '../../esp_lv_present/include', 'tests', 'test_apps/smoke/main', 'test_apps/benchmark/main', 'test_apps/benchmark/components/hw_init', 'test_apps/te_lifecycle/main', 'test_apps/rgb_events/main')
                        for p in (ROOT / directory).rglob('*') if p.suffix in ('.c', '.h', '.cpp'))
         # Preserve the five stable application headers byte-for-byte on writes;
         # check mode still checks them against the repository rules.
@@ -45,7 +48,7 @@ def main():
         subprocess.run([*command, *(str(p) for p in files)], check=True)
         return
     lvgl = None
-    if args.with_lvgl or args.lvgl_dir:
+    if args.with_lvgl or args.lvgl_dir or args.gsp_dir:
         candidates = [args.lvgl_dir] if args.lvgl_dir else [
             ROOT.parents[4] / 'examples/display/gui/lvgl_present_benchmark/managed_components/lvgl__lvgl',
             ROOT.parents[1] / 'esp_lvgl_adapter/test_apps/lvgl9/managed_components/lvgl__lvgl',
@@ -71,10 +74,13 @@ def main():
                         '-D', f"SDKCONFIG={build / 'sdkconfig'}", 'build'], check=True, env=env)
         return
     mode = ('sanitize' if args.sanitize else 'host') + ('-lvgl' if lvgl else '')
+    if args.gsp_dir:
+        mode += '-gsp'
     build = (args.build_dir or Path(os.environ.get('PRESENT_TEST_WORK_ROOT', '/tmp/esp-display-present-tests')) / mode).resolve()
     subprocess.run(['cmake', '-S', str(ROOT), '-B', str(build),
                     '-DCMAKE_BUILD_TYPE=Debug',
                     f"-DPRESENT_LVGL_DIR={lvgl or ''}",
+                    f"-DPRESENT_GSP_DIR={args.gsp_dir.resolve() if args.gsp_dir else ''}",
                     f"-DPRESENT_SANITIZE={'ON' if args.sanitize else 'OFF'}"], check=True)
     subprocess.run(['cmake', '--build', str(build), '--parallel', str(args.jobs)], check=True)
     if args.action == 'test':

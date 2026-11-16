@@ -46,7 +46,9 @@ typedef struct {
     esp_display_present_pixel_event_fn on_event; /* Optional completion/fault notification. */
     void *user;
     bool asynchronous; /* FIFO worker; false preserves synchronous CPU behavior. */
-    esp_display_present_pixel_execute_fn execute; /* Requires asynchronous == true. */
+    bool external_worker; /* Queue without a dedicated task; requires asynchronous and on_work. */
+    void (*on_work)(void *user); /* Wake the external consumer; must not execute or block. */
+    esp_display_present_pixel_execute_fn execute; /* Blocking executor, on submitter or worker. */
     void *execute_user;
 } esp_display_present_pixel_config_t;
 
@@ -67,6 +69,12 @@ typedef struct {
  * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
  */
 esp_err_t esp_display_present_pixel_create(const esp_display_present_pixel_config_t *config, esp_display_present_pixel_engine_t **out_engine);
+
+/** Execute at most one queued job on an external worker. May block in hardware;
+ * call outside the presenter gate. Concurrent consumers are serialized. The
+ * owner must join its external worker before destroying this engine. Returns
+ * true if a queued job was completed (including cancellation). */
+bool present_pixel_run_one(esp_display_present_pixel_engine_t *engine);
 
 /**
  * @brief ESP_OK consumes an access borrow, not ownership of the allocations.
@@ -140,6 +148,8 @@ esp_err_t esp_display_present_pixel_release(esp_display_present_pixel_engine_t *
 /**
  * @brief Reject new submits, drain accepted work AND notification callbacks.
  * Timeout retains all resources. Calling from this engine's callback is rejected.
+ * External-worker queues cancel jobs that have not started, without accessing
+ * their buffers; a running job still owns its buffers until executor return.
  * Other terminal ticket query/release operations remain available. Lifecycle
  * calls (stop/destroy) must be serialized by the owner; one waiter per ticket.
  *

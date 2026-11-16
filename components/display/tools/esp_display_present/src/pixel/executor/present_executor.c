@@ -71,6 +71,8 @@ esp_err_t esp_display_present_executor_run(const esp_display_present_executor_di
     esp_display_present_executor_selection_t local;
     esp_display_present_executor_selection_t *selection = out ? out : &local;
     esp_err_t error = esp_display_present_executor_select(dispatch, request, selection);
+    /* Fallback belongs to probe/selection. Once execute is entered, return its
+     * result verbatim: hardware may have written the destination already. */
     return error == ESP_OK ? esp_display_present_executor_execute(selection->executor, request) : error;
 }
 esp_err_t esp_display_present_executor_dispatch_execute(void *context, const esp_display_present_copy_request_t *request)

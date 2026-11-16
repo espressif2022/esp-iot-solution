@@ -871,6 +871,47 @@ static void gate_checked_after_pin(void)
     OK(ops->destroy(backend));
 }
 
+static esp_err_t gate_result(void *user, size_t bytes, uint64_t after, uint64_t *edge_out)
+{
+    (void)bytes;
+    (void)after;
+    (void)edge_out;
+    return *(esp_err_t *)user;
+}
+
+static void unsupported_window_retires_queue(void)
+{
+    fixture_t fixture = {0};
+    fixture.panel.width = fixture.panel.height = 4;
+    fixture.panel.bpp = 2;
+    esp_err_t admission = ESP_ERR_TIMEOUT;
+    esp_display_present_backend_config_t config = {
+        .width = 4, .height = 4, .tile_rows = 2, .buffer_count = 2, .max_frames = 2,
+        .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = {&fixture, test_panel_attach, submit, stop},
+        .compose_count = 2, .te_gate = {.admit = gate_result, .user = &admission}
+    };
+    present_backend_t *backend;
+    OK(ops->create(&config, &backend));
+    esp_display_present_receipt_t receipts[2];
+    receipts[0] = full(backend, true);
+    receipts[1] = full(backend, true);
+    esp_display_present_frame_status_t status;
+
+    OK(ops->service(backend));
+    OK(ops->query(backend, receipts[0], &status));
+    assert(!status.terminal && status.result == ESP_OK);
+
+    admission = ESP_ERR_NOT_SUPPORTED;
+    OK(ops->service(backend));
+    for (size_t i = 0; i < sizeof(receipts) / sizeof(receipts[0]); ++i) {
+        OK(ops->query(backend, receipts[i], &status));
+        assert(status.terminal && status.src_released && status.result == ESP_ERR_NOT_SUPPORTED);
+        OK(ops->release_receipt(backend, receipts[i]));
+    }
+    assert(fixture.panel.submitted == 0);
+    destroy(backend);
+}
+
 static void reject_mixed_policies(void)
 {
     fixture_t fixture = {0};
@@ -958,6 +999,7 @@ static void native_phase_wakeup(void)
 int main(void)
 {
     gate_checked_after_pin();
+    unsupported_window_retires_queue();
     reject_mixed_policies();
     native_reject_during_edge_change();
     phase_timer_lifetime();

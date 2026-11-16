@@ -32,15 +32,49 @@ GRAM NONE 与 TE 的边界保留。新增 TRANSFER_FAILED 不能继续按 TIMEOU
 
 本表说明不承诺 ABI 兼容；旧外部应用应重新编译并验证，不能仅替换组件二进制。
 
+## LVGL 与 GSP
+
+`esp_lv_present` 只编译依赖 Present 的私有 renderer 接口。LVGL 9.5 起，
+符合像素格式与布局条件时可以借用缓冲；较早的 LVGL 9 通过独立绘制缓冲
+完成 flush。Host 实际运行过的版本见 [验证记录](dev/VALIDATION.md#host-gsp--lvgl-handoff)。
+
+共享 Presenter 时，若下一渲染任务的 adapter 不提供显式重绑，由当前所有者在
+帧间调用 `esp_display_presenter_release_producer()`，再启动下一渲染任务。
+首次成功开始的帧取得任务所有权。GSP 暂停后，LVGL 可以用
+`esp_lv_present_start()` 接手；LVGL quiesce 并 stop 后再释放所有权，
+随后使用同一个 pause token 恢复 GSP，成功后丢弃 token。
+
 ## SDK capability and optional acceleration
 
-The minimum supported SDK remains ESP-IDF 6.0. PPA and DMA2D executors also
-require the SDK's private buffer-alignment API; DMA2D additionally requires the
-async memcpy DMA2D header. CMake checks these APIs instead of assuming their
-presence from SoC capabilities. Released IDF 6.0/6.1 lack these APIs: explicit
-accelerator creation returns `ESP_ERR_NOT_SUPPORTED`, and resources use the
-existing CPU executor fallback. No SDK patch is installed. Performance recorded
-with an SDK providing the acceleration APIs must not be attributed to older SDKs.
+The minimum supported SDK remains ESP-IDF 6.0. CMake detects the available
+DMA2D APIs independently of the SoC capabilities; a missing private alignment
+helper no longer disables both accelerators. No SDK patch is installed.
+
+| Available SDK capability | Present executor path |
+|---|---|
+| DMA2D SoC and `esp_async_color_convert.h` | Public asynchronous color-convert API, with equal source/destination formats for 2D copies |
+| DMA2D SoC and legacy `esp_private/async_memcpy_dma2d.h` only | Legacy asynchronous 2D memcpy API |
+| PPA SoC and the PPA driver | PPA SRM for copy, rotation and supported byte-order conversion |
+| Missing accelerator/API, or a request rejected by its probe | CPU fallback before hardware execution |
+
+When available, `dma2d_get_buffer_alignment_constraint()` supplies the memory
+constraints. Without it, the executor admits ordinary internal RAM and
+unencrypted, non-ECC PSRAM; unsupported external-memory constraints are rejected
+before submission. Cache-line, stride, capacity and transform checks still apply.
+The public DMA2D driver synchronizes the declared destination picture, so its
+picture window is restricted to the affected rows where alignment permits it.
+Entering hardware execution never authorizes CPU fallback on an error or a
+missing callback: its buffers must remain borrowed until completion is proven.
+
+The facade creates accelerator clients only when its mode/rotation needs pixel
+copies, with one pending hardware transaction per client. Eligible FB paths
+reuse the existing backend worker for asynchronous copies outside the engine
+gate, avoiding an additional pixel-worker stack. Advanced configurations retain
+the dedicated pixel worker. Neither choice changes the pixel-buffer count or
+the requirement to retain in-flight storage on a stop timeout. SDK revisions,
+actual hardware execution and measured memory costs are recorded with the
+[validation results](dev/VALIDATION.md); successful compilation alone is not
+evidence that an accelerator ran.
 
 DSI scanout additionally requires DPI `on_frame_buf_complete` and `on_vsync`
 callbacks. IDF 6.0 does not provide them: DSI scanout creation returns
