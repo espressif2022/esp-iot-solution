@@ -7,7 +7,7 @@ if(NOT EXISTS "${gsp_adapter}/src/esp_gsp_esp_lcd.c" OR
    NOT EXISTS "${gsp_runtime}/esp_gsp_idf_runtime.c" OR
    NOT EXISTS "${gsp_bundle}" OR
    NOT EXISTS "${PRESENT_GSP_DIR}/cmake/gsp_portable_targets.cmake")
-    message(FATAL_ERROR "PRESENT_GSP_DIR must point to a GSP source checkout with the split adapter and Host fixtures. See VALIDATION.md.")
+    message(FATAL_ERROR "PRESENT_GSP_DIR must point to a GSP source checkout with the split adapter and Host fixtures. See dev/README.md.")
 endif()
 include("${PRESENT_GSP_DIR}/cmake/gsp_portable_targets.cmake")
 gsp_add_portable_targets("${PRESENT_GSP_DIR}")

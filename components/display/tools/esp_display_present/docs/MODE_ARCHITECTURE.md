@@ -44,7 +44,7 @@ RGB / DSI 不支持 TE_SYNC；Panel IO 不支持这些 FB FULL / DIRECT / PARTIA
 | lcd_io | IO color transfer done | 本次传输的源像素 | 面板已经扫描显示完整图像 |
 | lcd_fb_scanout | 经验证的 framebuffer 完成协议 | 在 backend 确认交接后退休的旧 FB | 不能用普通源拷贝完成或任意 VSYNC 替代 |
 
-FB 路径中 tile 可以在复制完成后归还，但 framebuffer 仍必须留到扫描退休。RGB bounce、S31 请求式切链与 DSI 的具体协议由 scanout 适配器内部解析，用户不选择 `rgb.scanout`；详见 [RGB handoff](../dev/test_apps/rgb_handoff/README.md)。
+FB 路径中 tile 可以在复制完成后归还，但 framebuffer 仍必须留到扫描退休。RGB bounce、S31 请求式切链与 DSI 的具体协议由 scanout 适配器内部解析，用户不选择 `rgb.scanout`；详见 [扫描交接与锁域](../STATE_MACHINE.md)。
 
 ## 命名边界
 
@@ -79,7 +79,7 @@ FULL 零拷贝及原生双缓冲 DIRECT 先取得租约，再挂载 LVGL 描述�
 
 旋转 DIRECT 的复制路径仍持有实际增量绘图画布。PARTIAL 的小块回退 tile 保留用于帧中途准入失败；LVGL 的 FLUSH_WAIT_START 回调失败不能中断当前绘图分段，因此不能按 FULL 的方式直接置空该存储。运行时旋转在这两种所有权方式之间创建或释放真实画布；关闭先撤销 LVGL 引用再取消租约。
 
-此前性能网页记录的是相应历史提交；本次 0°/90° 的定向回归和内存变化见[回归记录 (archive)](../dev/ARCHIVE.md)，不把旧成绩标成新的完整性能矩阵。
+性能与板级验证数据随 MR 附件维护，并绑定测试提交与实际配置；不能把历史成绩当成当前版本的完整性能矩阵。
 
 ## PPA 请求准入
 

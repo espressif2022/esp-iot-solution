@@ -1,6 +1,6 @@
 # State machines
 
-The component uses one presentation engine. See the historical [flows (archive)](dev/ARCHIVE.md) and [ownership sequences (archive)](dev/ARCHIVE.md); the current transition and validation status is linked from [migration status](MIGRATION_STATUS.md). The earlier implementation is available in Git history (`41b0c9b9b`).
+The component uses one presentation engine. See [mode contracts](docs/MODE_ARCHITECTURE.md), [compatibility](COMPATIBILITY.md) and [regression instructions](dev/README.md).
 
 
 ## GRAM cancellation, deadlines and retirement
@@ -181,7 +181,7 @@ Source audit (2026-11-12):
 
 | ESP-IDF revision | Basis | Audited implementation |
 | --- | --- | --- |
-| `7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe` | Revision recorded in `dev/evidence/s31-adapter-te-baselines-20261107/manifest.json` | LCD SPI IO and SPI master queue/ISR |
+| `7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe` | Audited SDK revision | LCD SPI IO and SPI master queue/ISR |
 | `80c8922480b5aad5038a61d38f6b3d0de5727602` | Local `esp-idf-gitlab` HEAD; the two audited files have no working-tree edits | Same completion-ordering mechanism |
 
 In both revisions, `components/esp_lcd/spi/esp_lcd_panel_io_spi.c`:

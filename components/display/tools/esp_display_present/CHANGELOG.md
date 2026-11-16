@@ -24,8 +24,8 @@
 - Remove full-screen placeholder canvases for LVGL FULL/native DIRECT.
 - Move the former public geometry interfaces to internal headers; consumers of
   those interfaces require migration.
-- See `COMPATIBILITY.md`, `docs/MODE_ARCHITECTURE.md` and `MIGRATION_STATUS.md`
-  for current contracts. Historical migration records and report tools are external attachments linked in `dev/ARCHIVE.md`.
+- See `COMPATIBILITY.md`, `docs/MODE_ARCHITECTURE.md` and `STATE_MACHINE.md`
+  for current contracts.
 
 ## 1.2.2 - 2026-11-10
 

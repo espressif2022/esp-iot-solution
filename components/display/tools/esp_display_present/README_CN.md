@@ -6,7 +6,7 @@
 
 公开应用头位于 `include`；`src` 内头文件均为内部实现，不作为应用 API 导出。当前版本不再公开旧几何头和其中的坐标／尺寸类型；依赖这些接口的应用需单独迁移，不能将其视为完全源码兼容。
 
-本地依赖只需 `esp_display_present`，LVGL 场景再加入 `esp_lv_present`，不再需要 V2 组件。源码合并不代表已发布 Registry 包或确认全部外部兼容。开发和验证入口见 [迁移状态](MIGRATION_STATUS.md)，历史设计见 [交接设计 (archive)](dev/ARCHIVE.md)。
+本地依赖只需 `esp_display_present`，LVGL 场景再加入 `esp_lv_present`，不再需要 V2 组件。源码合并不代表已发布 Registry 包或确认全部外部兼容。兼容范围见 [迁移说明](COMPATIBILITY.md)，回归入口见 [开发说明](dev/README.md)。
 
 ## 一键初始化
 
@@ -73,7 +73,7 @@ flowchart TD
 | `AUTO` | RGB / MIPI DPI | 根据驱动 FB 池选 PARTIAL | 3 FB 选 `TRIPLE_PARTIAL`，2 FB 选 `DOUBLE_PARTIAL`，少于 2 FB 返回不支持 |
 | `AUTO` | Panel IO | 根据 TE 配置选 PARTITION 路径 | 有效 TE 配置选 `TE_SYNC`，其余选 `NONE` |
 
-RGB/MIPI 准入还要校验格式、物理尺寸和旧 FB 的扫描退休能力。驱动适配层负责确定 RGB bounce 或切链协议。MIPI DPI 路径需要 SDK 提供相应的帧完成和 VSYNC 回调。Panel IO 的板测记录覆盖 SPI/QSPI。`TE_SYNC` 的公开头文件也列出了 I80。[模式与 LCD 适配](docs/MODE_ARCHITECTURE.md#公开模式实际走向) · [兼容范围](COMPATIBILITY.md) · [板测记录](dev/VALIDATION.md)
+RGB/MIPI 准入还要校验格式、物理尺寸和旧 FB 的扫描退休能力。驱动适配层负责确定 RGB bounce 或切链协议。MIPI DPI 路径需要 SDK 提供相应的帧完成和 VSYNC 回调。Panel IO 的板测记录覆盖 SPI/QSPI。`TE_SYNC` 的公开头文件也列出了 I80。[模式与 LCD 适配](docs/MODE_ARCHITECTURE.md#公开模式实际走向) · [兼容范围](COMPATIBILITY.md)
 
 S31 无 bounce RGB 在构建时核验过驱动和 cache 实现，且 BSP 确认没有显式重启、SDK 未开启 VSYNC 周期重启时，由 RGB 驱动执行一次整帧 cache 写回。其他扫描路径由 Present 写回。[扫描适配器](src/platform/lcd/present_lcd_fb_scanout.c)
 
@@ -86,7 +86,7 @@ S31 无 bounce RGB 在构建时核验过驱动和 cache 实现，且 BSP 确认�
 | T1C2 | 1 | 2 | 合成下一帧与发送上一帧 |
 | T2C2 | 2 | 2 | tile 处理和整帧合成都可重叠 |
 
-`buffers = 0` 自动选 T1/T2，允许在自动选出的 T2 分配失败时尝试 T1。`te_compose_buffers = 0` 等同 C1。C2 增加一块合成缓冲，Panel IO 仍逐帧发送。实际发帧取决于面板 TE 窗口和总线预算。[公开缓冲配置](include/esp_display_present_config.h) · [TE 时序](docs/TE_TIMING.md) · [QSPI 跑分矩阵](dev/tools/run.py)
+`buffers = 0` 自动选 T1/T2，允许在自动选出的 T2 分配失败时尝试 T1。`te_compose_buffers = 0` 等同 C1。C2 增加一块合成缓冲，Panel IO 仍逐帧发送。实际发帧取决于面板 TE 窗口和总线预算。[公开缓冲配置](include/esp_display_present_config.h) · [TE 时序](docs/TE_TIMING.md)
 
 ## 创建时资源
 
@@ -135,7 +135,7 @@ flowchart TD
     gram -->|否| zero["0 个 worker<br/>调用任务推进 REGION"]
 ```
 
-每个 worker 默认 **4 KiB 栈**。`CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND` 默认关闭。开启后，内部 tile 的普通 GRAM 路径用 backend worker 在引擎 gate 外提交，优先级由 `CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY` 设置，默认 7。TE 另用 GPIO 中断，在支持的 SDK 上用系统 `esp_timer` 任务处理定时器回调。RGB 驱动的 bounce buffer、LVGL 自己的绘制或备用缓冲、应用任务均单独计入整机 RAM。[GRAM 后台配置](Kconfig) · [GRAM 首版条件与实测（归档）](dev/ARCHIVE.md) · [TE 定时器](src/platform/te/present_te_timer.c)
+每个 worker 默认 **4 KiB 栈**。`CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND` 默认关闭。开启后，内部 tile 的普通 GRAM 路径用 backend worker 在引擎 gate 外提交，优先级由 `CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY` 设置，默认 7。TE 另用 GPIO 中断，在支持的 SDK 上用系统 `esp_timer` 任务处理定时器回调。RGB 驱动的 bounce buffer、LVGL 自己的绘制或备用缓冲、应用任务均单独计入整机 RAM。[GRAM 后台配置](Kconfig) · [TE 定时器](src/platform/te/present_te_timer.c)
 
 **480×480 RGB565 的额外成本示例。** FULL/DIRECT 新增一块逻辑画布为 **450 KiB**。TE 从 C1 到 C2 同样多 **450 KiB**。两块 50 行绘制 tile 的 `NONE` 从 `0°` 普通路径改为创建时启用旋转，多两块发送转换 tile（约 **94 KiB**）和 **8 KiB** worker 栈。以上是对应项目的增量，整机预算还需纳入元数据、对齐和驱动或渲染器资源。
 
@@ -188,10 +188,6 @@ RGB/MIPI 的 FB 数量在创建面板时确定。可以先用 `esp_display_prese
 
 LVGL FULL 和原生 0° DIRECT 先取得可写租约再绑定像素，提交／取消前撤销引用，不再分配全屏占位画布；旋转 DIRECT 的实际绘图画布、PARTIAL 的 tile 兜底保留。不要在 LVGL 绑定尚存活时停止或删除 presenter。
 
-`CONFIG_ESP_DISPLAY_PRESENT_FB_IRAM` 及整组对象链接映射已移除；显式 ISR/pixel 的 IRAM_ATTR 保留。当前性能网页及各轮配置、SRAM 口径见[测试入口](dev/README.md)，2026-11-11 的生命周期变更单独验证，不将旧成绩标成新版本。串口完成及交接检查不能单独证明光学无撕裂。
+`CONFIG_ESP_DISPLAY_PRESENT_FB_IRAM` 及整组对象链接映射已移除；显式 ISR/pixel 的 `IRAM_ATTR` 保留。panel 物理尺寸固定，backend 维护逻辑宽高；运行时旋转后应重新查询 caps。S31 GRAM 缺少旋转目标存储时仍可能拒绝运行时旋转。
 
-2026-11-06 的架构检查修复了公开接口运行时跨轴旋转的尺寸冲突。panel 物理尺寸固定，由 backend 更新逻辑宽高，旋转后需重新查询 caps。Host 覆盖 RGB、DSI、GRAM 的创建回滚和旋转。S3 Function EV 和 S31 Korvo 还验证了全部 RGB 模式的四种初始角度和运行时半圈旋转。[架构检查存档](dev/ARCHIVE.md) · [上板像素验证](dev/VALIDATION.md#one-call-setup-and-rgb-board-verification)
-
-各接口的 LVGL 帧率、缓冲等待、Host 测试项和上板覆盖分别记录。S31 GRAM 缺少旋转目标存储时仍可能拒绝运行时旋转。[验证记录](dev/VALIDATION.md) · [组件状态](MIGRATION_STATUS.md) · [TE 时序](docs/TE_TIMING.md)
-
-测试工程、板级配置、LVGL benchmark 与 adapter 对比统一入口：[dev/README.md](dev/README.md)。
+[Host 回归与目标 smoke](dev/README.md) 覆盖生产代码的所有权、失败恢复、预算及绑定行为。板级 benchmark、adapter 对比、详细内存数据和实验日志由 MR 验证附件单独维护，不纳入组件源码。数据应绑定测试版本与实际配置，不能把历史成绩当成新版本结果；串口完成及交接检查不能单独证明光学无撕裂。

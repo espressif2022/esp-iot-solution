@@ -11,11 +11,8 @@
 
 当前行为以 [模式与缓冲合同](docs/MODE_ARCHITECTURE.md)、
 [TE 时序](docs/TE_TIMING.md) 和 [生命周期规则](STATE_MACHINE.md) 为准。
-构建/测试入口见 [开发说明](dev/README.md)，板测来源见
-[最新五板记录](dev/VALIDATION.md)。
+构建/测试入口见 [开发说明](dev/README.md)。板测数据和实际 SDK 配置随 MR 验证附件维护。
 
-迁移阶段的 C1/C2、旧目录布局、旧默认模式和阶段性缺口保存在
-[历史兼容记录 (archive)](dev/ARCHIVE.md)，不作为当前 API 清单。
 源码迁移不代表 Registry 发布或全部外部应用兼容性已经验收。
 
 ## 2.0.0 候选的迁移边界
@@ -36,7 +33,7 @@ GRAM NONE 与 TE 的边界保留。新增 TRANSFER_FAILED 不能继续按 TIMEOU
 
 `esp_lv_present` 只编译依赖 Present 的私有 renderer 接口。LVGL 9.5 起，
 符合像素格式与布局条件时可以借用缓冲；较早的 LVGL 9 通过独立绘制缓冲
-完成 flush。Host 实际运行过的版本见 [验证记录](dev/VALIDATION.md#host-gsp--lvgl-handoff)。
+完成 flush。Host 及可选 GSP 集成测试的依赖见 [回归说明](dev/README.md)。
 
 共享 Presenter 时，若下一渲染任务的 adapter 不提供显式重绑，由当前所有者在
 帧间调用 `esp_display_presenter_release_producer()`，再启动下一渲染任务。
@@ -71,10 +68,9 @@ copies, with one pending hardware transaction per client. Eligible FB paths
 reuse the existing backend worker for asynchronous copies outside the engine
 gate, avoiding an additional pixel-worker stack. Advanced configurations retain
 the dedicated pixel worker. Neither choice changes the pixel-buffer count or
-the requirement to retain in-flight storage on a stop timeout. SDK revisions,
-actual hardware execution and measured memory costs are recorded with the
-[validation results](dev/VALIDATION.md); successful compilation alone is not
-evidence that an accelerator ran.
+the requirement to retain in-flight storage on a stop timeout. Hardware evidence
+must identify the SDK revision and effective configuration; successful compilation
+alone is not evidence that an accelerator ran.
 
 DSI scanout additionally requires DPI `on_frame_buf_complete` and `on_vsync`
 callbacks. IDF 6.0 does not provide them: DSI scanout creation returns

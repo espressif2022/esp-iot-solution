@@ -6,7 +6,5 @@
 /dev/**/managed_components/
 /dev/**/sdkconfig
 /dev/**/sdkconfig.old
-/dev/test_apps/boards/deps/
 # Measurement outputs are MR attachments, not source assets.
 /dev/evidence/
-/dev/archive-index.json

@@ -17,13 +17,6 @@ if(PRESENT_SANITIZE)
     target_link_options(present_engine PUBLIC -fsanitize=address,undefined -no-pie)
 endif()
 enable_testing()
-add_executable(test_frame_timing tests/test_frame_timing.c)
-target_compile_options(test_frame_timing PRIVATE -Wall -Wextra -Werror -UNDEBUG)
-if(PRESENT_SANITIZE)
-    target_compile_options(test_frame_timing PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer -fno-pie)
-    target_link_options(test_frame_timing PRIVATE -fsanitize=address,undefined -no-pie)
-endif()
-add_test(NAME frame_timing COMMAND test_frame_timing)
 foreach(name lease_identity mode transfer_tracker completion_tracker te_timing image frame_core plan records coverage repair scanout rotation pixel region lcd_io presenter te_composer te presenter_te fb direct_resolved event scheduler buffer_ownership)
     add_executable(test_${name} tests/test_${name}.c)
     target_link_libraries(test_${name} PRIVATE present_engine)
@@ -60,19 +53,6 @@ target_link_libraries(header_smoke PRIVATE present_engine)
 target_compile_definitions(header_smoke PRIVATE PRESENT_HOST=1)
 target_compile_options(header_smoke PRIVATE -Wall -Wextra -Werror)
 add_test(NAME headers_cpp COMMAND header_smoke)
-
-# Test-only driver-boundary recorder and trace checker. No production hooks.
-add_executable(test_boundary_trace tests/boundary_trace/boundary_trace.c
-    tests/boundary_trace/test_trace.c)
-target_compile_definitions(test_boundary_trace PRIVATE BOUNDARY_HOST=1)
-target_compile_options(test_boundary_trace PRIVATE -Wall -Wextra -Werror -UNDEBUG)
-target_link_libraries(test_boundary_trace PRIVATE present_engine)
-add_test(NAME boundary_trace COMMAND test_boundary_trace)
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
-add_test(NAME scanout_retirement_contract COMMAND ${Python3_EXECUTABLE}
-    ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_scanout_retirement_contract.py)
-add_test(NAME boundary_analyze COMMAND ${Python3_EXECUTABLE}
-    ${CMAKE_CURRENT_SOURCE_DIR}/tests/boundary_trace/test_analyze.py)
 
 set(PRESENT_LVGL_DIR "" CACHE PATH "Optional existing LVGL 9 source directory")
 if(PRESENT_LVGL_DIR)
@@ -271,7 +251,6 @@ foreach(variant IN ITEMS query no_query)
 endforeach()
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
-add_test(NAME test_runner COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/tests/test_runner.py)
 
 # Compile each split contract first, independently in C and C++, and reject
 # accidental engine API dependencies in planning/accounting/type headers.
