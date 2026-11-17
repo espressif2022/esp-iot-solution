@@ -819,8 +819,51 @@ static void synchronous_repair_retry(void)
     }
 }
 
+static esp_err_t count_sync_copy(void *user, const esp_display_present_copy_request_t *request)
+{
+    unsigned *calls = user;
+    (*calls)++;
+    return esp_display_present_pixel_execute_cpu(request);
+}
+
+static void synchronous_copy_validation_rejects_bad_request(void)
+{
+    scan_panel_t panel = {0};
+    unsigned calls = 0;
+    esp_display_present_backend_config_t cfg = config(&panel, 2, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION);
+    cfg.copy_execute = count_sync_copy;
+    cfg.copy_user = &calls;
+    present_backend_t *backend = NULL;
+    OK(ops->create(&cfg, &backend));
+
+    esp_display_present_frame_t frame = begin(backend);
+    esp_display_present_lease_t lease;
+    OK(ops->acquire(backend, frame, NULL, 0, &lease));
+    assert(lease.surface.capacity_bytes == 16);
+
+    /* Insufficient tile capacity (needs 32 bytes for 4x4 RGB565 on a 16-byte tile). */
+    esp_display_present_region_submit_t oversized = {{0, 0, 4, 4}, 0};
+    assert(ops->submit_region_ex(backend, frame, lease.id, &oversized) == ESP_ERR_INVALID_ARG);
+    assert(calls == 0);
+
+    /* Invalid stride smaller than tight row width (4 < 4 * 2). */
+    esp_display_present_region_submit_t short_stride = {{0, 0, 4, 2}, 4};
+    assert(ops->submit_region_ex(backend, frame, lease.id, &short_stride) == ESP_ERR_INVALID_ARG);
+    assert(calls == 0);
+
+    /* Lease must still be valid and accept a well-formed submission. */
+    esp_display_present_region_submit_t valid = {{0, 0, 4, 2}, 8};
+    OK(ops->submit_region_ex(backend, frame, lease.id, &valid));
+    assert(calls == 1);
+
+    OK(ops->cancel_frame(backend, frame, 0));
+    OK(ops->stop(backend, UINT32_MAX));
+    OK(ops->destroy(backend));
+}
+
 int main(void)
 {
+    synchronous_copy_validation_rejects_bad_request();
     synchronous_repair_retry();
     direct_full_redraw_skips_prefill();
     independent_tiles();

@@ -66,7 +66,7 @@ static void region_policy(void)
                         assert(plan.presenter.backend.tx_staging == ((flags & STAGED) != 0));
                         assert(plan.presenter.backend.async_copy == asynchronous);
                         assert(plan.presenter.backend.in_place == ((flags & IN_PLACE) != 0));
-                        assert(!plan.presenter.backend.shared_copy_worker);
+                        assert(!plan.presenter.backend.copy_on_backend_worker);
                         bool deferred = !asynchronous && background[submit];
                         assert(plan.presenter.backend.deferred_submit == deferred);
                         assert(plan.presenter.background_service == (asynchronous || deferred));
@@ -131,11 +131,11 @@ static void framebuffer_and_te_workers(void)
                                        modes[m] == ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL;
                         size_t tiles = partial ? count ? count : 2 : 0;
                         assert(plan.resources.tile_count == tiles);
-                        assert(plan.presenter.backend.shared_copy_worker == (te ? images == 1 : tiles <= 1));
+                        assert(plan.presenter.backend.copy_on_backend_worker == (te ? images == 1 : tiles <= 1));
                         assert(plan.presenter.backend.async_copy && plan.presenter.background_service);
                         assert(!plan.presenter.backend.tx_staging && !plan.presenter.backend.in_place);
                         assert(!plan.presenter.backend.deferred_submit);
-                        assert(plan.presenter.worker_priority == (te && images == 2 ? 7 : 0));
+                        assert(plan.presenter.worker_priority == ((!te || images == 2) ? 7 : 0));
                     }
                 }
             }

@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "pixel/present_pixel_engine.h"
+#include "pixel/present_copy_queue.h"
 #include "pixel/present_pixel_ops.h"
 #include "backend/present_backend_config.h"
 #include "backend/present_backend_validate.h"
@@ -107,14 +107,14 @@ typedef present_core_frame_t fb_record_t;
 typedef struct {
     void *pixels;
     esp_display_present_lease_t lease;
-    esp_display_present_copy_ticket_t copy;
+    present_copy_handle_t copy;
     esp_display_present_rect_t area;
 } fb_tile_t;
 
 struct present_backend {
     present_lock_t lock;
     esp_display_present_backend_config_t config;
-    esp_display_present_pixel_engine_t *pixel;
+    present_copy_queue_t *copy_queue;
     fb_slot_t slots[FB_LIMIT];
     present_frame_core_t core;
     size_t active;
@@ -129,7 +129,7 @@ struct present_backend {
     size_t tile_count;
     size_t next_tile;
     esp_display_present_lease_t lease;
-    esp_display_present_copy_ticket_t copy;
+    present_copy_handle_t copy;
     esp_display_present_rect_t copy_area;
     bool copy_is_tile;
     size_t repair_pos;
@@ -266,18 +266,28 @@ static void copy_work_ready(void *context)
     }
 }
 
-static bool copy_done(void *context, esp_display_present_copy_ticket_t ticket, const esp_display_present_copy_status_t *status, bool isr)
+static bool copy_done(void *context, present_copy_handle_t handle, esp_err_t result, bool isr)
 {
-    (void)ticket;
-    (void)status;
+    (void)handle;
+    (void)result;
     present_backend_t *backend = context;
     return backend->config.on_progress ? backend->config.on_progress(backend->config.progress_user, isr) : false;
+}
+
+static esp_err_t run_sync_copy(present_backend_t *backend, const esp_display_present_copy_request_t *copy)
+{
+    esp_err_t error = esp_display_present_pixel_validate_request(copy);
+    if (error != ESP_OK) {
+        return error;
+    }
+    return backend->config.copy_execute ? backend->config.copy_execute(backend->config.copy_user, copy)
+           : esp_display_present_pixel_execute_cpu(copy);
 }
 
 static bool tiles_pending(const present_backend_t *backend)
 {
     for (size_t i = 0; i < backend->tile_count; i++)
-        if (backend->tiles[i].copy.value) {
+        if (backend->tiles[i].copy.slot) {
             return true;
         }
     return false;
@@ -308,38 +318,39 @@ static esp_display_present_lease_t *find_draw_lease(present_backend_t *backend, 
 }
 
 /* Owner task only. Scratch and candidate remain pinned through terminal copy. */
-static void progress_copy(present_backend_t *backend, uint32_t timeout)
+static void progress_copy(present_backend_t *backend)
 {
+    if (!backend->copy_queue) {
+        return;
+    }
     for (size_t i = 0; i < backend->tile_count; i++) {
         fb_tile_t *tile = &backend->tiles[i];
-        if (!tile->copy.value) {
+        if (!tile->copy.slot) {
             continue;
         }
-        esp_display_present_copy_status_t status;
-        if (esp_display_present_pixel_wait(backend->pixel, tile->copy, timeout, &status) != ESP_OK) {
+        esp_err_t result = ESP_OK;
+        if (present_copy_queue_take(backend->copy_queue, tile->copy, &result) != ESP_OK) {
             continue;
         }
-        (void)esp_display_present_pixel_release(backend->pixel, tile->copy);
-        tile->copy.value = 0;
-        if (status.result == ESP_OK) {
+        tile->copy.slot = 0;
+        if (result == ESP_OK) {
             cover(backend, tile->area);
             backend->submitted = true;
         } else {
             present_lock_enter(&backend->lock, false);
-            fault(backend, backend->active, status.result);
+            fault(backend, backend->active, result);
             present_lock_exit(&backend->lock, false);
         }
     }
-    if (!backend->copy.value) {
+    if (!backend->copy.slot) {
         return;
     }
-    esp_display_present_copy_status_t status;
-    if (esp_display_present_pixel_wait(backend->pixel, backend->copy, 0, &status) != ESP_OK) {
+    esp_err_t result = ESP_OK;
+    if (present_copy_queue_take(backend->copy_queue, backend->copy, &result) != ESP_OK) {
         return;
     }
-    (void)esp_display_present_pixel_release(backend->pixel, backend->copy);
-    backend->copy.value = 0;
-    if (status.result == ESP_OK) {
+    backend->copy.slot = 0;
+    if (result == ESP_OK) {
         if (backend->copy_is_tile) {
             cover(backend, backend->copy_area);
             backend->submitted = true;
@@ -348,7 +359,7 @@ static void progress_copy(present_backend_t *backend, uint32_t timeout)
         }
     } else {
         present_lock_enter(&backend->lock, false);
-        fault(backend, backend->active, status.result);
+        fault(backend, backend->active, result);
         present_lock_exit(&backend->lock, false);
     }
 }
@@ -394,7 +405,7 @@ typedef enum {
 
 static fb_advance_result_t advance_build_pipeline(present_backend_t *backend, fb_seal_context_t context)
 {
-    progress_copy(backend, 0);
+    progress_copy(backend);
     if (backend->active == SIZE_MAX) {
         return (fb_advance_result_t) {
             FB_ADVANCE_IDLE, ESP_OK
@@ -402,7 +413,7 @@ static fb_advance_result_t advance_build_pipeline(present_backend_t *backend, fb
     }
     fb_slot_t *slot = &backend->slots[backend->active];
     if (slot->state == FB_SLOT_CANCELING) {
-        if (backend->copy.value || tiles_pending(backend)) {
+        if (backend->copy.slot || tiles_pending(backend)) {
             return (fb_advance_result_t) {
                 FB_ADVANCE_PENDING, ESP_OK
             };
@@ -430,7 +441,7 @@ static fb_advance_result_t advance_build_pipeline(present_backend_t *backend, fb
         };
     }
 
-    if (backend->copy.value || tiles_pending(backend)) {
+    if (backend->copy.slot || tiles_pending(backend)) {
         return (fb_advance_result_t) {
             FB_ADVANCE_PENDING, ESP_OK
         };
@@ -496,7 +507,7 @@ static fb_advance_result_t advance_build_pipeline(present_backend_t *backend, fb
                     present_image_mark_repaired(&backend->image, &area);
                     continue;
                 }
-                error = esp_display_present_pixel_submit(backend->pixel, &copy, &backend->copy);
+                error = present_copy_queue_submit(backend->copy_queue, &copy, &backend->copy);
                 if (error != ESP_OK) {
                     if (context == FB_SEAL_ACCEPTED) {
                         fail_active_build(backend, error);
@@ -525,32 +536,31 @@ static fb_advance_result_t advance_build_pipeline(present_backend_t *backend, fb
                 .src_area = {0, 0, backend->config.width, backend->config.height},
                 .rotation = backend->config.rotation
             };
-            error = esp_display_present_pixel_submit(backend->pixel, &copy, &backend->copy);
-            if (error != ESP_OK) {
-                if (context == FB_SEAL_ACCEPTED) {
-                    fail_active_build(backend, error);
+            if (!backend->config.async_copy) {
+                error = run_sync_copy(backend, &copy);
+                if (error != ESP_OK) {
+                    if (context == FB_SEAL_ACCEPTED) {
+                        fail_active_build(backend, error);
+                    }
+                    return (fb_advance_result_t) {
+                        FB_ADVANCE_FAILED, error
+                    };
                 }
-                return (fb_advance_result_t) {
-                    FB_ADVANCE_FAILED, error
-                };
-            }
-            backend->copy_is_tile = false;
-            backend->converted = true;
-            if (backend->config.async_copy) {
+                backend->converted = true;
+            } else {
+                error = present_copy_queue_submit(backend->copy_queue, &copy, &backend->copy);
+                if (error != ESP_OK) {
+                    if (context == FB_SEAL_ACCEPTED) {
+                        fail_active_build(backend, error);
+                    }
+                    return (fb_advance_result_t) {
+                        FB_ADVANCE_FAILED, error
+                    };
+                }
+                backend->copy_is_tile = false;
+                backend->converted = true;
                 return (fb_advance_result_t) {
                     FB_ADVANCE_PENDING, ESP_OK
-                };
-            }
-            progress_copy(backend, 0);
-            present_lock_enter(&backend->lock, false);
-            error = backend->core.fault.result;
-            present_lock_exit(&backend->lock, false);
-            if (error != ESP_OK) {
-                if (context == FB_SEAL_ACCEPTED) {
-                    fail_active_build(backend, error);
-                }
-                return (fb_advance_result_t) {
-                    FB_ADVANCE_FAILED, error
                 };
             }
         }
@@ -667,8 +677,8 @@ static esp_err_t present_fb_service(present_backend_t *backend)
 
 static void free_backend(present_backend_t *backend)
 {
-    if (backend->pixel) {
-        (void)esp_display_present_pixel_stop(backend->pixel, UINT32_MAX);
+    if (backend->copy_queue) {
+        (void)present_copy_queue_stop(backend->copy_queue, UINT32_MAX);
     }
     for (size_t i = 0; i < backend->config.buffer_count; i++) {
         if (backend->slots[i].draw_owned) {
@@ -678,9 +688,9 @@ static void free_backend(present_backend_t *backend)
             present_free(backend->slots[i].scan.pixels);
         }
     }
-    if (backend->pixel) {
-        (void)esp_display_present_pixel_stop(backend->pixel, 0);
-        (void)esp_display_present_pixel_destroy(backend->pixel);
+    if (backend->copy_queue) {
+        (void)present_copy_queue_stop(backend->copy_queue, 0);
+        (void)present_copy_queue_destroy(backend->copy_queue);
     }
     present_frame_core_deinit(&backend->core);
     if (backend->tile_pool) {
@@ -696,26 +706,26 @@ static void free_backend(present_backend_t *backend)
     present_free(backend);
 }
 
-static esp_err_t create_pixel_engine(present_backend_t *backend)
+static esp_err_t create_copy_queue(present_backend_t *backend)
 {
     const esp_display_present_backend_config_t *config = &backend->config;
-    esp_display_present_pixel_config_t pc = {
+    present_copy_queue_config_t qc = {
         .max_jobs = backend->tile_count ? backend->tile_count : 1,
-        .asynchronous = config->async_copy,
-        .external_worker = config->shared_copy_worker,
+        .external_worker = config->copy_on_backend_worker,
         .on_work = copy_work_ready,
+        .on_done = copy_done,
         .execute = config->copy_execute,
+        .work_user = backend,
+        .done_user = backend,
         .execute_user = config->copy_user,
-        .on_event = config->async_copy ? copy_done : NULL,
-        .user = backend,
     };
-    esp_display_present_pixel_engine_t *pixel = NULL;
-    esp_err_t result = esp_display_present_pixel_create(&pc, &pixel);
+    present_copy_queue_t *queue = NULL;
+    esp_err_t result = present_copy_queue_create(&qc, &queue);
     if (result == ESP_OK) {
-        /* Runtime rotation can create the first pixel engine while the shared
+        /* Runtime rotation can create the first copy queue while the shared
          * worker is awake. Publish once; stop joins it before pointer cleanup. */
         present_lock_enter(&backend->lock, false);
-        backend->pixel = pixel;
+        backend->copy_queue = queue;
         present_lock_exit(&backend->lock, false);
     }
     return result;
@@ -724,9 +734,9 @@ static esp_err_t create_pixel_engine(present_backend_t *backend)
 static bool fb_copy_work(present_backend_t *backend)
 {
     present_lock_enter(&backend->lock, false);
-    esp_display_present_pixel_engine_t *pixel = backend->config.shared_copy_worker ? backend->pixel : NULL;
+    present_copy_queue_t *queue = backend->config.copy_on_backend_worker ? backend->copy_queue : NULL;
     present_lock_exit(&backend->lock, false);
-    return present_pixel_run_one(pixel);
+    return present_copy_queue_run_one(queue);
 }
 
 static esp_err_t fb_create(const esp_display_present_backend_config_t *config, present_backend_t **out)
@@ -738,7 +748,7 @@ static esp_err_t fb_create(const esp_display_present_backend_config_t *config, p
     if (!config || !config->panel.attach || !config->panel.submit || !config->panel.quiesce) {
         return ESP_ERR_INVALID_ARG;
     }
-    if ((config->shared_copy_worker && !config->async_copy) ||
+    if ((config->copy_on_backend_worker && !config->async_copy) ||
             config->tile_count > PRESENT_MAX_TILE_BUFFERS || !config->width || !config->height || !config->buffer_count || config->buffer_count > FB_LIMIT ||
             !config->max_frames || config->max_frames > RECORD_LIMIT) {
         return ESP_ERR_INVALID_ARG;
@@ -876,7 +886,7 @@ static esp_err_t fb_create(const esp_display_present_backend_config_t *config, p
             return ESP_ERR_INVALID_ARG;
         }
     }
-    esp_err_t error = present_fb_needs_pixel_engine(config) ? create_pixel_engine(backend) : ESP_OK;
+    esp_err_t error = (config->async_copy && present_fb_needs_pixel_engine(config)) ? create_copy_queue(backend) : ESP_OK;
     if (error == ESP_OK) {
         error = config->panel.attach(config->panel.context, dispatch, backend);
     }
@@ -1070,7 +1080,7 @@ static esp_err_t fb_begin(present_backend_t *backend, const esp_display_present_
     backend->damage_declared = selective_direct || resolved;
     if (prefill && backend->config.async_copy) {
         esp_display_present_copy_request_t copy = baseline_copy(backend, slot, prefill_area);
-        error = esp_display_present_pixel_submit(backend->pixel, &copy, &backend->copy);
+        error = present_copy_queue_submit(backend->copy_queue, &copy, &backend->copy);
         if (error != ESP_OK) {
             present_lock_enter(&backend->lock, false);
             present_image_cancel(&backend->image);
@@ -1110,21 +1120,21 @@ static esp_err_t fb_acquire(present_backend_t *backend, esp_display_present_fram
     if (!building(backend, frame)) {
         return ESP_ERR_INVALID_STATE;
     }
-    progress_copy(backend, 0);
+    progress_copy(backend);
     present_lock_enter(&backend->lock, false);
     bool failed = backend->core.fault.result != ESP_OK;
     present_lock_exit(&backend->lock, false);
     if (failed) {
         return ESP_ERR_INVALID_STATE;
     }
-    if (backend->slots[backend->active].state == FB_SLOT_PREFILL || backend->lease.id.value || backend->copy.value) {
+    if (backend->slots[backend->active].state == FB_SLOT_PREFILL || backend->lease.id.value || backend->copy.slot) {
         return ESP_ERR_TIMEOUT;
     }
     fb_tile_t *tile = NULL;
     if (backend->tile_count) {
         for (size_t i = 0; i < backend->tile_count; i++) {
             size_t idx = (backend->next_tile + i) % backend->tile_count;
-            if (!backend->tiles[idx].lease.id.value && !backend->tiles[idx].copy.value) {
+            if (!backend->tiles[idx].lease.id.value && !backend->tiles[idx].copy.slot) {
                 tile = &backend->tiles[idx];
                 backend->next_tile = (idx + 1) % backend->tile_count;
                 break;
@@ -1183,25 +1193,23 @@ static esp_err_t submit_resolved_region(present_backend_t *backend, esp_display_
         .dst = slot->scan, .src_area = area,
         .dst_x = physical.x, .dst_y = physical.y, .rotation = backend->config.rotation
     };
-    esp_display_present_copy_ticket_t ticket;
-    error = esp_display_present_pixel_submit(backend->pixel, &copy, &ticket);
+    if (!backend->config.async_copy) {
+        error = run_sync_copy(backend, &copy);
+        if (error != ESP_OK) {
+            return error;
+        }
+        cover(backend, physical);
+        backend->submitted = true;
+        return ESP_OK;
+    }
+    present_copy_handle_t handle;
+    error = present_copy_queue_submit(backend->copy_queue, &copy, &handle);
     if (error != ESP_OK) {
         return error;
     }
-    if (backend->config.async_copy) {
-        backend->copy = ticket;
-        backend->copy_is_tile = true;
-        backend->copy_area = physical;
-        return ESP_OK;
-    }
-    esp_display_present_copy_status_t status;
-    error = esp_display_present_pixel_wait(backend->pixel, ticket, UINT32_MAX, &status);
-    (void)esp_display_present_pixel_release(backend->pixel, ticket);
-    if (error != ESP_OK || status.result != ESP_OK) {
-        return error != ESP_OK ? error : status.result;
-    }
-    cover(backend, physical);
-    backend->submitted = true;
+    backend->copy = handle;
+    backend->copy_is_tile = true;
+    backend->copy_area = physical;
     return ESP_OK;
 }
 
@@ -1242,24 +1250,23 @@ static esp_err_t fb_submit_region_ex(present_backend_t *backend, esp_display_pre
             .dst_y = physical.y,
             .rotation = backend->config.rotation
         };
-        esp_display_present_copy_ticket_t ticket;
-        esp_err_t error = esp_display_present_pixel_submit(backend->pixel, &copy, &ticket);
-        if (error != ESP_OK) {
-            return error;
-        }
-        if (backend->config.async_copy) {
-            tile->copy = ticket;
+        if (!backend->config.async_copy) {
+            esp_err_t error = run_sync_copy(backend, &copy);
+            if (error != ESP_OK) {
+                return error;
+            }
+            cover(backend, physical);
+        } else {
+            present_copy_handle_t handle;
+            esp_err_t error = present_copy_queue_submit(backend->copy_queue, &copy, &handle);
+            if (error != ESP_OK) {
+                return error;
+            }
+            tile->copy = handle;
             tile->area = physical;
             draw->id.value = 0;
             return ESP_OK;
         }
-        esp_display_present_copy_status_t status;
-        error = esp_display_present_pixel_wait(backend->pixel, ticket, UINT32_MAX, &status);
-        (void)esp_display_present_pixel_release(backend->pixel, ticket);
-        if (error != ESP_OK || status.result != ESP_OK) {
-            return error != ESP_OK ? error : status.result;
-        }
-        cover(backend, physical);
     } else {
         if (submit && submit->stride_bytes && submit->stride_bytes != draw->surface.layout.stride_bytes) {
             return ESP_ERR_INVALID_ARG;
@@ -1444,11 +1451,11 @@ static esp_err_t fb_stop(present_backend_t *backend, uint32_t timeout)
     }
     backend->core.life = PRESENT_CORE_CLOSING;
     uint64_t start = present_now_ms();
-    esp_err_t error = backend->pixel ? esp_display_present_pixel_stop(backend->pixel, timeout) : ESP_OK;
+    esp_err_t error = backend->copy_queue ? present_copy_queue_stop(backend->copy_queue, timeout) : ESP_OK;
     if (error != ESP_OK) {
         return error;
     }
-    progress_copy(backend, 0);
+    progress_copy(backend);
     uint32_t left = present_remaining_ms(start, timeout);
     error = backend->config.panel.quiesce(backend->config.panel.context, left);
     if (error != ESP_OK) {
@@ -1555,8 +1562,8 @@ static esp_err_t fb_set_rotation(present_backend_t *backend, esp_display_present
         /* A native FULL backend starts without a pixel engine. Make both
          * allocations before publishing the new producer layout. Once created,
          * the engine stays available for future rotations until stop. */
-        if (!backend->pixel) {
-            esp_err_t error = create_pixel_engine(backend);
+        if (backend->config.async_copy && !backend->copy_queue) {
+            esp_err_t error = create_copy_queue(backend);
             if (error != ESP_OK) {
                 present_free(draw);
                 return error;
@@ -1624,7 +1631,7 @@ const present_backend_ops_t present_fb_backend = {
 size_t present_fb_memory(const esp_display_present_backend_config_t *config)
 {
     size_t tiles = config->render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION ? (config->tile_count ? config->tile_count : 1) : 0;
-    /* Runtime rotation may create and retain the initially absent pixel engine. */
+    /* Runtime rotation may create and retain the initially absent copy queue. */
     return sizeof(present_backend_t) + tiles * sizeof(fb_tile_t) + config->max_frames * sizeof(present_core_frame_t) +
-           present_pixel_memory(tiles ? tiles : 1, config->async_copy && !config->shared_copy_worker);
+           (config->async_copy ? present_copy_queue_memory(tiles ? tiles : 1, !config->copy_on_backend_worker) : 0);
 }

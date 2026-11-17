@@ -37,9 +37,9 @@ struct esp_display_present_engine {
         present_task_t task;
         bool ready;
     } backend_worker;
-    bool background_region;
-    bool worker_submit_only;
-    bool shared_copy_worker;
+    bool deferred_region;
+    bool backend_only_submit;
+    bool copy_on_backend_worker;
     present_lock_t control;
     present_metrics_t *metrics; /* Opt-in sampler protected by control. */
     present_transfer_tracker_t transfer;
@@ -133,7 +133,7 @@ static bool pixel_progress(void *user, bool isr)
 {
     esp_display_present_engine_t *presenter = user;
     bool yield = present_event_signal(presenter->changed, isr);
-    if (!(presenter->shared_copy_worker && !isr && presenter->backend_worker.ready &&
+    if (!(presenter->copy_on_backend_worker && !isr && presenter->backend_worker.ready &&
             present_same_task(presenter->backend_worker.task, present_current_task()))) {
         yield |= present_event_signal(presenter->work, isr);
     }
@@ -193,7 +193,7 @@ static esp_display_present_tx_result_t execute_panel_submit(esp_display_present_
                                                             const esp_display_present_surface_t *surface,
                                                             const esp_display_present_rect_t *area, uint64_t cookie)
 {
-    if (presenter->worker_submit_only) {
+    if (presenter->backend_only_submit) {
         present_mutex_give(presenter->gate);
     }
     present_metrics_t *scanout_metrics = presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_FB ? presenter->metrics : NULL;
@@ -208,7 +208,7 @@ static esp_display_present_tx_result_t execute_panel_submit(esp_display_present_
         scanout_metrics->scanout_cookie = 0;
         present_lock_exit(&presenter->control, false);
     }
-    if (presenter->worker_submit_only) {
+    if (presenter->backend_only_submit) {
         (void)present_mutex_take(presenter->gate, UINT32_MAX);
     }
     return result;
@@ -238,8 +238,8 @@ static esp_display_present_tx_result_t panel_submit(void *context, const esp_dis
             ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_STATE
         };
     }
-    if (presenter->worker_submit_only && (!presenter->backend_worker.ready ||
-                                          !present_same_task(presenter->backend_worker.task, present_current_task()))) {
+    if (presenter->backend_only_submit && (!presenter->backend_worker.ready ||
+                                           !present_same_task(presenter->backend_worker.task, present_current_task()))) {
         (void)present_event_signal(presenter->work, false);
         return (esp_display_present_tx_result_t) {
             ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_NO_MEM
@@ -488,7 +488,7 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
         return resolution;
     }
     config = &resolved;
-    if (config->backend.shared_copy_worker &&
+    if (config->backend.copy_on_backend_worker &&
             (config->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION || !config->backend.async_copy || !config->background_service ||
              (config->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_TE && config->backend.compose_count != 1))) {
         return ESP_ERR_INVALID_ARG;
@@ -516,10 +516,33 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
         return ESP_ERR_NO_MEM;
     }
     presenter->kind = config->backend_kind;
-    presenter->background_region = config->background_service && config->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION && config->backend.deferred_submit;
-    presenter->worker_submit_only = presenter->background_region ||
-                                    (config->background_service && config->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_TE);
-    presenter->shared_copy_worker = config->backend.shared_copy_worker;
+    switch (esp_display_present_resolve_exec_mode(config)) {
+    case ESP_DISPLAY_PRESENT_EXEC_REGION_DEFERRED:
+        presenter->deferred_region = true;
+        presenter->backend_only_submit = true;
+        presenter->copy_on_backend_worker = false;
+        break;
+    case ESP_DISPLAY_PRESENT_EXEC_TE_SHARED:
+        presenter->deferred_region = false;
+        presenter->backend_only_submit = true;
+        presenter->copy_on_backend_worker = true;
+        break;
+    case ESP_DISPLAY_PRESENT_EXEC_TE_SPLIT:
+        presenter->deferred_region = false;
+        presenter->backend_only_submit = true;
+        presenter->copy_on_backend_worker = false;
+        break;
+    case ESP_DISPLAY_PRESENT_EXEC_FB_SHARED:
+        presenter->deferred_region = false;
+        presenter->backend_only_submit = false;
+        presenter->copy_on_backend_worker = true;
+        break;
+    default:
+        presenter->deferred_region = false;
+        presenter->backend_only_submit = false;
+        presenter->copy_on_backend_worker = false;
+        break;
+    }
     presenter->output = config->output_caps;
     if (!presenter->output.x_alignment) {
         presenter->output.x_alignment = 1;
@@ -558,8 +581,8 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
         }
     }
     esp_display_present_backend_config_t backend = config->backend;
-    backend.deferred_submit = presenter->background_region;
-    if (presenter->worker_submit_only && presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_TE) {
+    backend.deferred_submit = presenter->deferred_region;
+    if (presenter->backend_only_submit && presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_TE) {
         backend.can_submit = panel_can_submit;
         backend.submit_user = presenter;
     }

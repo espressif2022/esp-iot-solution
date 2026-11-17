@@ -7,11 +7,17 @@ import shlex
 import subprocess
 import tempfile
 
+PUBLIC_HEADERS = (
+    'esp_display_present_types.h',
+    'esp_display_present_config.h',
+    'esp_display_present.h',
+)
 HEADERS = (
     'pixel/present_pixel_types.h',
     'pixel/present_pixel_ops.h',
     'pixel/present_pixel_ops_internal.h',
     'pixel/present_pixel_engine.h',
+    'pixel/present_copy_queue.h',
     'pixel/present_executor.h',
     'backend/present_backend_types.h',
     'backend/present_backend_config.h',
@@ -38,6 +44,7 @@ FORBIDDEN = {
     'pixel/present_pixel_types.h': ('pixel/present_pixel_engine.h', 'pixel/present_pixel_ops.h', 'platform/present_os.h', 'resources/present_memory.h'),
     'pixel/present_pixel_ops.h': ('pixel/present_pixel_engine.h', 'platform/present_os.h', 'resources/present_memory.h'),
     'pixel/present_pixel_ops_internal.h': ('pixel/present_pixel_engine.h', 'platform/present_os.h'),
+    'pixel/present_copy_queue.h': ('pixel/present_pixel_engine.h',),
     'pixel/present_executor.h': ('pixel/present_pixel_engine.h',),
     'backend/present_backend_types.h': ('pixel/present_pixel_engine.h', 'pixel/present_pixel_ops.h', 'backend/present_backend.h', 'backend/present_backend_config.h', 'platform/te/present_te_timing.h'),
     'backend/present_backend_config.h': ('backend/present_backend.h',),
@@ -68,6 +75,16 @@ def main():
     flags = ['-DPRESENT_HOST=1', '-I' + str(component / 'private_include'),
              '-I' + str(component / 'include'), '-I' + str(component / 'tests/host/support')]
     with tempfile.TemporaryDirectory(prefix='present-header-contract-') as temp:
+        for header in PUBLIC_HEADERS:
+            for compiler, suffix, standard in ((args.cc, '.c', 'c11'), (args.cxx, '.cpp', 'c++17')):
+                source = pathlib.Path(temp) / ('public_header' + suffix)
+                source.write_text('#include "' + header + '"\n')
+                command = [compiler, '-std=' + standard, '-Wall', '-Wextra', '-Werror', *flags]
+                subprocess.run([*command, '-fsyntax-only', str(source)], check=True)
+                output = subprocess.check_output([*command, '-M', str(source)], text=True)
+                dependencies = {pathlib.Path(p).resolve() for p in shlex.split(output.replace('\\\n', ' '))[1:]}
+                assert all(component / 'src' not in dependency.parents for dependency in dependencies), (header, suffix)
+                assert all(component / 'private_include' not in dependency.parents for dependency in dependencies), (header, suffix)
         for header in HEADERS:
             internal = [] if (component / 'private_include' / header).exists() else ['-I' + str(component / 'src')]
             for compiler, suffix, standard in ((args.cc, '.c', 'c11'), (args.cxx, '.cpp', 'c++17')):
@@ -82,7 +99,7 @@ def main():
                 for forbidden in FORBIDDEN.get(header, ()):
                     search = 'include' if forbidden == 'esp_display_present.h' else 'src'
                     assert component / search / forbidden not in dependencies, (header, forbidden, suffix)
-    print(f'{len(HEADERS)} private headers compile independently in C/C++; dependency boundaries hold')
+    print(f'{len(PUBLIC_HEADERS)} public and {len(HEADERS)} private headers compile independently in C/C++; dependency boundaries hold')
 
 
 if __name__ == '__main__':

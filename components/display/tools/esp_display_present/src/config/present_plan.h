@@ -48,18 +48,6 @@ typedef struct {
     esp_display_present_plan_memory_t memory;
     bool borrowed;
 } esp_display_present_plan_pool_t;
-/* Bits indicate missing runtime paths, not malformed configurations. */
-enum {
-    ESP_DISPLAY_PRESENT_PLAN_NEEDS_FB_TILE_POOL = 1u << 0,
-    ESP_DISPLAY_PRESENT_PLAN_NEEDS_ROTATION_TOPOLOGY = 1u << 1,
-    ESP_DISPLAY_PRESENT_PLAN_NEEDS_TE_POOL = 1u << 2,
-    ESP_DISPLAY_PRESENT_PLAN_NEEDS_MEMORY_PATH = 1u << 3,
-    ESP_DISPLAY_PRESENT_PLAN_NEEDS_PADDED_LAYOUT = 1u << 4,
-    ESP_DISPLAY_PRESENT_PLAN_NEEDS_REGION_CONTRACT = 1u << 5,
-    ESP_DISPLAY_PRESENT_PLAN_NEEDS_DYNAMIC_TE = 1u << 6,
-    ESP_DISPLAY_PRESENT_PLAN_NEEDS_TE_PIPELINE = 1u << 7,
-    ESP_DISPLAY_PRESENT_PLAN_NEEDS_TX_LIMIT = 1u << 8,
-};
 /* Memory accounting uses three distinct quantities; do not conflate them.
  * - Peak resource budget (pixel_bytes / required_bytes): an estimate over
  *   every supported path, including borrowed buffers and the caller
@@ -90,19 +78,16 @@ typedef struct {
     const esp_display_present_executor_t *preferred_executor;
     esp_display_present_executor_reason_t executor_reason;
     bool probe_addrs;
-    uint32_t pending_runtime;
 } esp_display_present_resolved_plan_t;
 
 /* Pure planning: no allocation/attach/driver calls; get_caps only. Invalid or
- * unsupported physical constraints return errors; valid future topologies are
- * described with pending_runtime bits and cannot be created by today's bridge. */
+ * unsupported physical constraints return errors. */
 esp_err_t esp_display_present_plan_resolve(const esp_display_present_plan_config_t *config, esp_display_present_resolved_plan_t *plan);
 /* Dirty L -> aligned P -> required render L, before rasterization. No clipping
  * of an expanded physical edge that would violate alignment. No pixel reads. */
 esp_err_t esp_display_present_plan_render_area(const esp_display_present_resolved_plan_t *plan, const esp_display_present_rect_t *dirty,
                                                esp_display_present_rect_t *render, esp_display_present_rect_t *physical);
-/* Re-resolves rather than trusting a caller-mutated plan. Pending runtime paths
- * reject BEFORE any allocation or callback attachment; no legacy fallback. */
+/** Re-resolves rather than trusting a caller-mutated plan before allocation or attachment. */
 esp_err_t esp_display_present_engine_create_planned(const esp_display_present_plan_config_t *config, esp_display_present_engine_t **out);
 /* Internal single-resolve entry: resolves once, reports the exact plan that
  * was used for creation in out_plan (set after a successful resolve, before

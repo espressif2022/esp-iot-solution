@@ -396,7 +396,7 @@ static void framebuffer_shared_worker_tile(void)
         .width = WIDTH, .height = HEIGHT, .tile_rows = TILE_ROWS,
         .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = 2, .max_frames = 4,
         .render_contract = ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION,
-        .tile_count = 1, .async_copy = true, .shared_copy_worker = true,
+        .tile_count = 1, .async_copy = true, .copy_on_backend_worker = true,
         .panel = {&f, attach, submit, quiesce},
     };
     OK(f.ops->create(&config, &f.backend));

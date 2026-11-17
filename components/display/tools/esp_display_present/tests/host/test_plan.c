@@ -88,7 +88,7 @@ static void modes(void)
     c.te_enabled = true;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_ERR_NOT_SUPPORTED);
     c.presenter.backend.te_window_us = 1000;
-    assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.images.count == 1 && !p.pending_runtime);
+    assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.images.count == 1);
     c = config(ESP_DISPLAY_PRESENT_ENGINE_FB);
     c.presenter.mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_AUTO;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.images.count == 2);
@@ -103,7 +103,7 @@ static void modes(void)
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.conversion.count == p.tiles.count);
 }
 
-static void shared_copy_worker_budget(void)
+static void copy_on_backend_worker_budget(void)
 {
     esp_display_present_plan_config_t c = config(ESP_DISPLAY_PRESENT_ENGINE_FB);
     c.presenter.mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_PARTIAL;
@@ -112,7 +112,7 @@ static void shared_copy_worker_budget(void)
     c.resources.tile_count = 1;
     esp_display_present_resolved_plan_t worker, shared_plan;
     assert(esp_display_present_plan_resolve(&c, &worker) == ESP_OK);
-    c.presenter.backend.shared_copy_worker = true;
+    c.presenter.backend.copy_on_backend_worker = true;
     assert(esp_display_present_plan_resolve(&c, &shared_plan) == ESP_OK);
     assert(worker.stack_bytes == shared_plan.stack_bytes + 4096);
     assert(worker.metadata_bytes > shared_plan.metadata_bytes);
@@ -127,7 +127,7 @@ static void shared_copy_worker_budget(void)
     assert(esp_display_present_plan_resolve(&c, &shared_plan) == ESP_ERR_INVALID_ARG);
     c = config(ESP_DISPLAY_PRESENT_ENGINE_REGION);
     c.presenter.backend.async_copy = true;
-    c.presenter.backend.shared_copy_worker = true;
+    c.presenter.backend.copy_on_backend_worker = true;
     assert(esp_display_present_plan_resolve(&c, &shared_plan) == ESP_ERR_INVALID_ARG);
 }
 /* Golden cases for the constraints shared by plan and backend create.
@@ -205,7 +205,6 @@ static void topology_and_budget(void)
     assert(p.physical_layout.width == 600 && p.physical_layout.height == 1024);
     assert(p.topology == ESP_DISPLAY_PRESENT_TOPOLOGY_TILE_TO_PHYSICAL && p.logical.count == 0);
     assert(p.images.total_bytes == 3686400 && p.tiles.total_bytes == 65536 && p.coverage_bytes == 76800);
-    assert(!(p.pending_runtime & ESP_DISPLAY_PRESENT_PLAN_NEEDS_ROTATION_TOPOLOGY));
     c.presenter.mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_FULL;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.logical.count == 1 && !p.tiles.count);
     assert(p.pixel_bytes == 4915200 && p.logical.total_bytes == 1228800);
@@ -219,7 +218,7 @@ static void topology_and_budget(void)
     c.presenter.backend.rotation = ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0;
     c.presenter.backend.draw_order = ESP_DISPLAY_PRESENT_ORDER_NATIVE;
     c.presenter.backend.panel_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED;
-    assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.topology == ESP_DISPLAY_PRESENT_TOPOLOGY_LOGICAL_TO_PHYSICAL && p.logical.count == 1 && !p.pending_runtime);
+    assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.topology == ESP_DISPLAY_PRESENT_TOPOLOGY_LOGICAL_TO_PHYSICAL && p.logical.count == 1);
     c = config(ESP_DISPLAY_PRESENT_ENGINE_REGION);
     c.presenter.backend.width = INT_MAX;
     c.presenter.backend.height = INT_MAX;
@@ -470,7 +469,7 @@ static void executor(void)
 }
 int main(void)
 {
-    shared_copy_worker_budget();
+    copy_on_backend_worker_budget();
     reverse_band_alignment();
     external_dma_alignment();
     timing_model();

@@ -1711,13 +1711,13 @@ static void rotation_reference(void)
                 if (full_mode) {
                     unsigned scanout_calls = panel.calls;
                     const void *scanning = panel.source;
-                    /* Inline conversion still allocates its completion events. */
+                    /* Inline conversion still allocates its copy-queue idle event. */
                     allocation_kind = 3;
                     allocation_index = 0;
                     allocation_target = 1;
                     assert(esp_display_presenter_set_rotation(presenter, ESP_DISPLAY_PRESENT_ROTATE_90) == ESP_ERR_NO_MEM);
                     allocation_target = 0;
-                    assert(allocation_index == 2 && pixel_workers_created == pixels_before);
+                    assert(allocation_index == 1 && pixel_workers_created == pixels_before);
                     assert(panel.calls == scanout_calls && panel.source == scanning);
                 }
                 esp_display_presenter_caps_t retained;

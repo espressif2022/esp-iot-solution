@@ -324,7 +324,7 @@ static void shared_copy_bounded_stop(void)
         .backend = {
             .width = 4, .height = 4, .tile_rows = 2, .buffer_count = 2, .tile_count = 1, .max_frames = 4,
             .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
-            .async_copy = true, .shared_copy_worker = true,
+            .async_copy = true, .copy_on_backend_worker = true,
             .copy_execute = stalled_copy, .copy_user = &panel,
             .panel = {&panel, attach, submit, quiesce},
         },
@@ -513,7 +513,7 @@ static esp_display_present_engine_t *create_shared_te(panel_t *panel, unsigned t
         .backend = {
             .width = 4, .height = 4, .tile_rows = 2, .buffer_count = tiles,
             .compose_count = 1, .max_frames = 4, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
-            .async_copy = true, .shared_copy_worker = true,
+            .async_copy = true, .copy_on_backend_worker = true,
             .copy_execute = stalled ? stalled_copy : NULL, .copy_user = panel,
             .te_window_us = 1000000, .te_budget_us = 1000,
             .panel = {panel, attach, submit, quiesce, request_abort},
@@ -661,7 +661,7 @@ static void shared_fb_multi_repair_drain_and_stop(void)
         .backend = {
             .width = 4, .height = 4, .tile_rows = 1, .buffer_count = 2, .tile_count = 1, .max_frames = 4,
             .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
-            .async_copy = true, .shared_copy_worker = true,
+            .async_copy = true, .copy_on_backend_worker = true,
             .copy_execute = probe_repair_copy, .copy_user = &probe,
             .panel = {&probe.panel, attach, submit, quiesce},
         },
@@ -752,6 +752,98 @@ static void shared_te_cancel_midframe(void)
     }
 }
 
+static void split_te_repair_stalled_stop(void)
+{
+    fb_repair_probe_t probe = {0};
+    init_panel(&probe.panel);
+    esp_display_present_engine_config_t config = {
+        .backend_kind = ESP_DISPLAY_PRESENT_ENGINE_TE,
+        .backend = {
+            .width = 4, .height = 4, .tile_rows = 2, .buffer_count = 1,
+            .compose_count = 2, .max_frames = 4, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+            .async_copy = true, .copy_on_backend_worker = false,
+            .copy_execute = probe_repair_copy, .copy_user = &probe,
+            .te_window_us = 1000000, .te_budget_us = 1000,
+            .panel = {&probe.panel, attach, submit, quiesce, request_abort},
+        },
+        .timeout_ms = 5, .background_service = true, .worker_priority = 7,
+    };
+    esp_display_present_engine_t *engine = NULL;
+    OK(esp_display_present_engine_create(&config, &engine));
+    frame(engine);
+    esp_display_present_engine_notify_te_isr(engine, present_now_us());
+    wait_shared_te_submit(engine, &probe.panel, 1);
+    complete(&probe.panel);
+    OK(esp_display_present_engine_drain(engine, 1000));
+
+    /* Frame 2 writes only top half into candidate #1; sequential repair from baseline #0 stalls. */
+    pthread_mutex_lock(&probe.panel.lock);
+    probe.stall_on_call = probe.copy_calls + 2;
+    probe.copy_stalled = false;
+    probe.panel.release = false;
+    pthread_mutex_unlock(&probe.panel.lock);
+    esp_display_present_frame_request_t req = {0};
+    OK(esp_display_present_engine_begin_next_frame(engine, &req));
+    (void)gram_tile(engine, 0);
+    OK(esp_display_present_engine_commit_frame(engine, NULL));
+
+    struct timespec deadline;
+    clock_gettime(CLOCK_MONOTONIC, &deadline);
+    deadline.tv_sec += 2;
+    pthread_mutex_lock(&probe.panel.lock);
+    while (!probe.copy_stalled) {
+        assert(pthread_cond_timedwait(&probe.panel.condition, &probe.panel.lock, &deadline) == 0);
+    }
+    pthread_mutex_unlock(&probe.panel.lock);
+    assert(esp_display_present_engine_drain(engine, 5) == ESP_ERR_TIMEOUT);
+    assert(esp_display_present_engine_stop(engine, 5) == ESP_ERR_TIMEOUT);
+    assert(esp_display_present_engine_destroy(engine) == ESP_ERR_INVALID_STATE);
+    pthread_mutex_lock(&probe.panel.lock);
+    probe.panel.release = true;
+    probe.panel.immediate = true;
+    pthread_cond_broadcast(&probe.panel.condition);
+    pthread_mutex_unlock(&probe.panel.lock);
+    destroy(engine, &probe.panel);
+}
+
+static void fb_full_runtime_rotation_roundtrip(void)
+{
+    panel_t panel;
+    init_panel(&panel);
+    panel.fb = true;
+    esp_display_present_engine_config_t config = {
+        .backend_kind = ESP_DISPLAY_PRESENT_ENGINE_FB,
+        .mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_FULL,
+        .backend = {
+            .width = 4, .height = 4, .tile_rows = 4, .buffer_count = 2, .max_frames = 4,
+            .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .active_writes = true,
+            .async_copy = true, .panel = {&panel, attach, submit, quiesce, request_abort},
+        },
+        .timeout_ms = 1000, .background_service = true, .worker_priority = 7,
+    };
+    esp_display_present_engine_t *p = NULL;
+    OK(esp_display_present_engine_create(&config, &p));
+    for (unsigned step = 0; step < 3; ++step) {
+        if (step == 1) {
+            OK(esp_display_present_engine_set_rotation(p, ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90, 1000));
+        } else if (step == 2) {
+            OK(esp_display_present_engine_set_rotation(p, ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0, 1000));
+        }
+        esp_display_present_frame_request_t req = {.full_redraw = true};
+        OK(esp_display_present_engine_begin_next_frame(p, &req));
+        esp_display_present_lease_t lease;
+        OK(esp_display_present_engine_acquire_buffer(p, &lease));
+        memset(lease.surface.pixels, 0xab, 32);
+        esp_display_present_engine_area_t full = {0, 0, 3, 3};
+        OK(esp_display_present_engine_submit_buffer(p, &lease, &full, 8));
+        OK(esp_display_present_engine_commit_frame(p, NULL));
+        wait_submit(&panel, step + 1);
+        complete(&panel);
+        OK(esp_display_present_engine_drain(p, 1000));
+    }
+    destroy(p, &panel);
+}
+
 int main(void)
 {
     autonomous(false);
@@ -760,6 +852,7 @@ int main(void)
     rejection();
     shared_copy_bounded_stop();
     shared_fb_multi_repair_drain_and_stop();
+    fb_full_runtime_rotation_roundtrip();
     gram_driver_block_and_stop();
     gram_zero_copy_backpressure();
     gram_uncertain_keeps_pixels();
@@ -767,6 +860,7 @@ int main(void)
     te_driver_block_and_stop();
     shared_te_pipeline();
     shared_te_cancel_midframe();
+    split_te_repair_stalled_stop();
     shared_te_cancel_copy_stop();
     wait_te_stop();
     failure_cleanup();

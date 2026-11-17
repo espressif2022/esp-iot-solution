@@ -66,7 +66,7 @@ static void optional_tile_fallback(void)
                 assert(status.plan.tiles.count == 1);
                 /* Retry must update policy as well as buffer counts. In
                  * particular FB's automatic pair now shares its copy worker. */
-                assert(status.plan.normalized.backend.shared_copy_worker == (kind >= 2));
+                assert(status.plan.normalized.backend.copy_on_backend_worker == (kind >= 2));
                 assert(status.plan.normalized.backend.tx_staging == (kind == 1));
                 assert(status.plan.normalized.backend.async_copy == (kind != 0));
                 size_t stack_bytes = kind == 1 ? 8192u : kind >= 2 ? 4096u : 0;
@@ -541,7 +541,7 @@ static void submission_policy_and_te_workers(void)
             esp_display_present_plan_config_t plan;
             OK(present_resources_plan(&input, false, &plan));
             assert(plan.presenter.backend.async_copy && plan.presenter.background_service);
-            assert(plan.presenter.backend.shared_copy_worker == (images == 1));
+            assert(plan.presenter.backend.copy_on_backend_worker == (images == 1));
             assert(plan.presenter.worker_priority == (images == 2 ? 7 : 0));
             plan.output = (esp_display_present_output_caps_t) {
                 .internal_dma = true, .ext_mem = true, .tight_stride = true
@@ -551,7 +551,7 @@ static void submission_policy_and_te_workers(void)
             assert(resolved.stack_bytes == (images == 1 ? 4096 : 8192));
             if (images == 1) {
                 size_t shared_bytes = resolved.required_bytes;
-                plan.presenter.backend.shared_copy_worker = false;
+                plan.presenter.backend.copy_on_backend_worker = false;
                 OK(esp_display_present_plan_resolve(&plan, &resolved));
                 assert(resolved.required_bytes == shared_bytes + 4096 + present_worker_memory());
             }

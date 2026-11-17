@@ -174,24 +174,25 @@ static void resolve_pixel_path(esp_display_present_plan_config_t *plan, bool pre
 static void resolve_worker_policy(esp_display_present_plan_config_t *plan, const submission_policy_t *submission)
 {
     esp_display_present_backend_config_t *backend = &plan->presenter.backend;
-    backend->shared_copy_worker = false;
+    backend->copy_on_backend_worker = false;
     if (plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB) {
-        backend->shared_copy_worker = plan->resources.tile_count <= 1;
+        backend->copy_on_backend_worker = plan->resources.tile_count <= 1;
     } else if (plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_TE) {
-        backend->shared_copy_worker = plan->resources.image_count == 1;
+        backend->copy_on_backend_worker = plan->resources.image_count == 1;
     }
 
     bool synchronous_region = plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION && !backend->async_copy;
     backend->deferred_submit = synchronous_region && submission->background;
     plan->presenter.background_service = backend->async_copy || backend->deferred_submit;
 
-    /* Zero keeps the engine's default priority (5). Only deferred REGION and
-     * concurrent TE output override it. C2's dedicated pixel worker inherits
-     * its first submitter's priority; output 7 precedes producers below 7. */
+    /* Zero keeps the engine's default priority (5). FB scanout and concurrent TE
+     * output (7) preempt producers below 7 so scanout submission is never starved
+     * behind continuous UI rendering; deferred REGION uses submission->priority. */
     plan->presenter.worker_priority = 0;
     if (backend->deferred_submit) {
         plan->presenter.worker_priority = submission->priority;
-    } else if (plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_TE && !backend->shared_copy_worker) {
+    } else if (plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB ||
+               (plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_TE && !backend->copy_on_backend_worker)) {
         plan->presenter.worker_priority = 7;
     }
 }
@@ -324,9 +325,6 @@ static esp_err_t plan_resources(const esp_display_presenter_config_t *input, boo
     };
     const submission_policy_t submission = read_submission_policy(input->target.io_submit);
     resolve_pixel_path(out, input->target.drawbuf.in_psram);
-    /* Only background_service is needed to choose the automatic tile count.
-     * Final task sharing is resolved again once that count is known. */
-    resolve_worker_policy(out, &submission);
     size_t slot_bytes = tile_bytes;
     if (!framebuffer && !te && out->presenter.backend.async_copy) {
         if (tile_memory == ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA) {
@@ -342,8 +340,9 @@ static esp_err_t plan_resources(const esp_display_presenter_config_t *input, boo
         }
     }
     if (partial) {
+        bool overlap = out->presenter.backend.async_copy || (!framebuffer && !te && submission.background);
         out->resources.tile_count = input->target.drawbuf.buffers ? input->target.drawbuf.buffers :
-                                    default_tiles(out->presenter.background_service, tile_memory, slot_bytes, reserved, degradation);
+                                    default_tiles(overlap, tile_memory, slot_bytes, reserved, degradation);
         if (!framebuffer) {
             out->presenter.backend.buffer_count = out->resources.tile_count;
         }

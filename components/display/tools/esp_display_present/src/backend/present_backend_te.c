@@ -485,7 +485,7 @@ static void copy_work_ready(void *context)
 static bool te_copy_work(present_backend_t *backend)
 {
     present_lock_enter(&backend->lock, false);
-    present_te_composer_t *composer = backend->config.shared_copy_worker ? backend->composer : NULL;
+    present_te_composer_t *composer = backend->config.copy_on_backend_worker ? backend->composer : NULL;
     present_lock_exit(&backend->lock, false);
     return present_te_composer_run_one(composer);
 }
@@ -499,7 +499,7 @@ static esp_err_t te_create_common(const esp_display_present_backend_config_t *co
     if (!config || !config->panel.attach || !config->panel.submit || !config->panel.quiesce) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (config->shared_copy_worker && (!autonomous || !config->async_copy || config->compose_count != 1)) {
+    if (config->copy_on_backend_worker && (!autonomous || !config->async_copy || config->compose_count != 1)) {
         return ESP_ERR_INVALID_ARG;
     }
     if (config->copy_execute && !config->async_copy) {
@@ -548,7 +548,7 @@ static esp_err_t te_create_common(const esp_display_present_backend_config_t *co
         .pixel = {
             .max_jobs = config->buffer_count,
             .asynchronous = config->async_copy,
-            .external_worker = config->shared_copy_worker,
+            .external_worker = config->copy_on_backend_worker,
             .on_work = copy_work_ready,
             .execute = config->copy_execute,
             .execute_user = config->copy_user,
@@ -1116,6 +1116,6 @@ size_t present_te_memory(const esp_display_present_backend_config_t *config)
 {
     return sizeof(present_backend_t) + config->buffer_count * sizeof(te_tile_t) +
            config->max_frames * (sizeof(present_core_frame_t) + sizeof(te_job_t)) + present_composer_memory() +
-           present_pixel_memory(config->buffer_count, config->async_copy && !config->shared_copy_worker) +
+           (config->async_copy ? present_copy_queue_memory(config->buffer_count, !config->copy_on_backend_worker) : 0) +
            (config->te_timing.period_us && !config->te_gate.admit ? present_te_timer_memory() : 0);
 }

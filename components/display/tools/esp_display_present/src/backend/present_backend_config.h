@@ -58,8 +58,8 @@ struct esp_display_present_backend_config {
     bool async_copy;
     /** FB or single-image TE: service queued copies on the existing backend
      * worker, outside the engine gate. Requires async_copy and background service.
-     * C2 TE keeps a dedicated pixel worker for copy/transfer overlap. */
-    bool shared_copy_worker;
+     * Dual-image TE keeps a dedicated copy worker for copy/transfer overlap. */
+    bool copy_on_backend_worker;
     esp_display_present_pixel_execute_fn copy_execute;
     void *copy_user;
     /** Optional wake only, outside locks; cannot reenter backend task APIs.
@@ -86,11 +86,6 @@ static inline bool present_fb_needs_pixel_engine(const esp_display_present_backe
 {
     return config->render_contract != ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL ||
            config->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || config->draw_order != config->panel_order;
-}
-
-static inline bool present_fb_uses_pixel_worker(const esp_display_present_backend_config_t *config)
-{
-    return config->async_copy && !config->shared_copy_worker && present_fb_needs_pixel_engine(config);
 }
 
 #ifdef __cplusplus

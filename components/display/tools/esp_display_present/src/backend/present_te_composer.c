@@ -2,7 +2,8 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "pixel/present_pixel_engine.h"
+#include "pixel/present_copy_queue.h"
+#include "pixel/present_pixel_ops.h"
 #include "resources/present_memory.h"
 #include "backend/present_te_composer.h"
 #include "platform/present_os.h"
@@ -24,7 +25,11 @@ typedef struct {
 } compose_job_t;
 
 struct present_te_composer {
-    esp_display_present_pixel_engine_t *pixel;
+    present_copy_queue_t *queue;
+    esp_display_present_pixel_execute_fn execute;
+    void *execute_user;
+    esp_display_present_pixel_event_fn on_event;
+    void *user;
     esp_display_present_surface_t buffers[2];
     present_image_builder_t image;
     int baseline;
@@ -34,12 +39,14 @@ struct present_te_composer {
     struct {
         esp_display_present_copy_ticket_t ticket;
         esp_display_present_rect_t area;
+        bool sync_done;
+        esp_err_t sync_result;
     } writes[PRESENT_MAX_COPY_JOBS];
     size_t pending;
     bool asynchronous;
     esp_display_present_engine_rotation_t rotation;
     size_t repair_pos;
-    esp_display_present_copy_ticket_t repair;
+    present_copy_handle_t repair;
 };
 
 static compose_job_t *find_job(present_te_composer_t *composer, present_te_frame_t f)
@@ -54,6 +61,30 @@ static compose_job_t *find_job(present_te_composer_t *composer, present_te_frame
     return NULL;
 }
 
+static esp_err_t run_sync_copy(const present_te_composer_t *composer, const esp_display_present_copy_request_t *request)
+{
+    esp_err_t err = esp_display_present_pixel_validate_request(request);
+    if (err != ESP_OK) {
+        return err;
+    }
+    return composer->execute ? composer->execute(composer->execute_user, request)
+           : esp_display_present_pixel_execute_cpu(request);
+}
+
+static bool on_queue_done(void *user, present_copy_handle_t handle, esp_err_t result, bool isr)
+{
+    present_te_composer_t *composer = user;
+    if (!composer->on_event) {
+        return false;
+    }
+    esp_display_present_copy_ticket_t ticket = {handle.slot};
+    esp_display_present_copy_status_t status = {
+        .state = result == ESP_OK ? ESP_DISPLAY_PRESENT_COPY_SUCCEEDED : ESP_DISPLAY_PRESENT_COPY_FAILED,
+        .result = result,
+    };
+    return composer->on_event(composer->user, ticket, &status, isr);
+}
+
 static esp_err_t copy(present_te_composer_t *composer, compose_job_t *job, const esp_display_present_source_t *source,
                       const esp_display_present_rect_t *area, uint32_t x, uint32_t y)
 {
@@ -65,20 +96,16 @@ static esp_err_t copy(present_te_composer_t *composer, compose_job_t *job, const
         .dst_y = y,
         .rotation = ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0,
     };
-    esp_display_present_copy_ticket_t ticket;
-    esp_err_t err = esp_display_present_pixel_submit(composer->pixel, &request, &ticket);
+    if (!composer->asynchronous) {
+        return run_sync_copy(composer, &request);
+    }
+    present_copy_handle_t handle;
+    esp_err_t err = present_copy_queue_submit(composer->queue, &request, &handle);
     if (err != ESP_OK) {
         return err;
     }
-    if (composer->asynchronous) {
-        composer->repair = ticket;
-        return ESP_ERR_TIMEOUT;
-    }
-    /* Synchronous compatibility path. */
-    esp_display_present_copy_status_t status;
-    err = esp_display_present_pixel_wait(composer->pixel, ticket, UINT32_MAX, &status);
-    esp_err_t release = esp_display_present_pixel_release(composer->pixel, ticket);
-    return err != ESP_OK ? err : status.result != ESP_OK ? status.result : release;
+    composer->repair = handle;
+    return ESP_ERR_TIMEOUT;
 }
 
 esp_err_t present_te_composer_create(const present_te_composer_config_t *cfg, present_te_composer_t **out)
@@ -110,6 +137,10 @@ esp_err_t present_te_composer_create(const present_te_composer_config_t *cfg, pr
     composer->pipelined = cfg->image_count != 0;
     composer->rotation = cfg->rotation;
     composer->asynchronous = cfg->pixel.asynchronous;
+    composer->execute = cfg->pixel.execute;
+    composer->execute_user = cfg->pixel.execute_user;
+    composer->on_event = cfg->pixel.on_event;
+    composer->user = cfg->pixel.user;
     esp_err_t image_error = present_image_init(&composer->image, cfg->width, cfg->height);
     for (size_t i = 0; i < composer->image_count; i++) {
         composer->buffers[i] = (esp_display_present_surface_t) {
@@ -122,13 +153,21 @@ esp_err_t present_te_composer_create(const present_te_composer_config_t *cfg, pr
     if (image_error != ESP_OK || !composer->buffers[0].pixels || (composer->image_count == 2 && !composer->buffers[1].pixels)) {
         goto fail;
     }
-    esp_display_present_pixel_config_t pc = cfg->pixel;
-    if (!pc.max_jobs) {
-        pc.max_jobs = 1;
-    }
-    err = esp_display_present_pixel_create(&pc, &composer->pixel);
-    if (err != ESP_OK) {
-        goto fail;
+    if (composer->asynchronous) {
+        present_copy_queue_config_t qc = {
+            .max_jobs = cfg->pixel.max_jobs ? cfg->pixel.max_jobs : 1,
+            .external_worker = cfg->pixel.external_worker,
+            .on_work = cfg->pixel.on_work,
+            .on_done = on_queue_done,
+            .execute = cfg->pixel.execute,
+            .work_user = cfg->pixel.user,
+            .done_user = composer,
+            .execute_user = cfg->pixel.execute_user,
+        };
+        err = present_copy_queue_create(&qc, &composer->queue);
+        if (err != ESP_OK) {
+            goto fail;
+        }
     }
     *out = composer;
     return ESP_OK;
@@ -142,7 +181,7 @@ fail:
 
 bool present_te_composer_run_one(present_te_composer_t *composer)
 {
-    return composer && present_pixel_run_one(composer->pixel);
+    return composer && present_copy_queue_run_one(composer->queue);
 }
 
 esp_err_t present_te_composer_begin(present_te_composer_t *composer, present_te_frame_t *out)
@@ -218,9 +257,22 @@ esp_err_t present_te_composer_queue_write(present_te_composer_t *composer, prese
         .dst_y = y,
         .rotation = composer->rotation,
     };
-    esp_err_t error = esp_display_present_pixel_submit(composer->pixel, &r, ticket);
-    if (error != ESP_OK) {
-        return error;
+    if (!composer->asynchronous) {
+        esp_err_t err = esp_display_present_pixel_validate_request(&r);
+        if (err != ESP_OK) {
+            return err;
+        }
+        composer->writes[slot].sync_result = composer->execute ? composer->execute(composer->execute_user, &r)
+                                             : esp_display_present_pixel_execute_cpu(&r);
+        composer->writes[slot].sync_done = true;
+        ticket->value = (uint64_t)(slot + 1);
+    } else {
+        present_copy_handle_t handle;
+        esp_err_t error = present_copy_queue_submit(composer->queue, &r, &handle);
+        if (error != ESP_OK) {
+            return error;
+        }
+        ticket->value = handle.slot;
     }
     composer->writes[slot].ticket = *ticket;
     bool quarter = composer->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90 || composer->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270;
@@ -244,19 +296,25 @@ esp_err_t present_te_composer_finish_write(present_te_composer_t *composer, esp_
     if (slot == PRESENT_MAX_COPY_JOBS) {
         return ESP_ERR_INVALID_STATE;
     }
-    esp_display_present_copy_status_t status;
-    esp_err_t error = esp_display_present_pixel_wait(composer->pixel, ticket, 0, &status);
-    if (error != ESP_OK) {
-        return error;
+    esp_err_t copy_result = ESP_OK;
+    if (!composer->asynchronous) {
+        if (!composer->writes[slot].sync_done) {
+            return ESP_ERR_INVALID_STATE;
+        }
+        copy_result = composer->writes[slot].sync_result;
+        composer->writes[slot].sync_done = false;
+    } else {
+        esp_err_t error = present_copy_queue_take(composer->queue, (present_copy_handle_t) {
+            (uint8_t)ticket.value
+        }, &copy_result);
+        if (error != ESP_OK) {
+            return error;
+        }
     }
-    *result = status.result;
-    if (status.result == ESP_OK) {
+    *result = copy_result;
+    if (copy_result == ESP_OK) {
         esp_display_present_rect_t a = composer->writes[slot].area;
         *result = present_image_cover(&composer->image, a);
-    }
-    error = esp_display_present_pixel_release(composer->pixel, ticket);
-    if (error != ESP_OK) {
-        return error;
     }
     composer->writes[slot].ticket.value = 0;
     composer->pending--;
@@ -271,14 +329,14 @@ esp_err_t present_te_composer_write(present_te_composer_t *composer, present_te_
     if (error != ESP_OK) {
         return error;
     }
-    esp_display_present_copy_status_t status;
-    error = esp_display_present_pixel_wait(composer->pixel, ticket, UINT32_MAX, &status);
-    if (error != ESP_OK) {
-        return error;
+    esp_err_t result = ESP_OK;
+    for (;;) {
+        error = present_te_composer_finish_write(composer, ticket, &result);
+        if (error != ESP_ERR_TIMEOUT) {
+            return error == ESP_OK ? result : error;
+        }
+        present_pause();
     }
-    esp_err_t result;
-    error = present_te_composer_finish_write(composer, ticket, &result);
-    return error == ESP_OK ? result : error;
 }
 
 esp_err_t present_te_composer_stop(present_te_composer_t *composer, uint32_t timeout)
@@ -286,11 +344,15 @@ esp_err_t present_te_composer_stop(present_te_composer_t *composer, uint32_t tim
     if (!composer) {
         return ESP_ERR_INVALID_ARG;
     }
-    esp_err_t error = esp_display_present_pixel_stop(composer->pixel, timeout);
-    if (error == ESP_OK && composer->repair.value) {
-        error = esp_display_present_pixel_release(composer->pixel, composer->repair);
+    if (!composer->queue) {
+        return ESP_OK;
+    }
+    esp_err_t error = present_copy_queue_stop(composer->queue, timeout);
+    if (error == ESP_OK && composer->repair.slot) {
+        esp_err_t unused = ESP_OK;
+        error = present_copy_queue_take(composer->queue, composer->repair, &unused);
         if (error == ESP_OK) {
-            composer->repair.value = 0;
+            composer->repair.slot = 0;
         }
     }
     return error;
@@ -305,16 +367,15 @@ esp_err_t present_te_composer_seal(present_te_composer_t *composer, present_te_f
     if (composer->pending) {
         return ESP_ERR_TIMEOUT;
     }
-    if (composer->repair.value) {
-        esp_display_present_copy_status_t status;
-        esp_err_t error = esp_display_present_pixel_wait(composer->pixel, composer->repair, 0, &status);
+    if (composer->repair.slot) {
+        esp_err_t result = ESP_OK;
+        esp_err_t error = present_copy_queue_take(composer->queue, composer->repair, &result);
         if (error != ESP_OK) {
             return error;
         }
-        (void)esp_display_present_pixel_release(composer->pixel, composer->repair);
-        composer->repair.value = 0;
-        if (status.result != ESP_OK) {
-            return status.result;
+        composer->repair.slot = 0;
+        if (result != ESP_OK) {
+            return result;
         }
     }
     esp_display_present_surface_t *surface = &composer->buffers[job->candidate];
@@ -331,7 +392,7 @@ esp_err_t present_te_composer_seal(present_te_composer_t *composer, present_te_f
         esp_display_present_rect_t area;
         while (present_image_next_repair(&composer->image, &area)) {
             esp_err_t error = copy(composer, job, &source, &area, area.x, area.y);
-            if (error == ESP_OK || (error == ESP_ERR_TIMEOUT && composer->repair.value)) {
+            if (error == ESP_OK || (error == ESP_ERR_TIMEOUT && composer->repair.slot)) {
                 present_image_mark_repaired(&composer->image, &area);
             }
             if (error != ESP_OK) {
@@ -418,14 +479,13 @@ esp_err_t present_te_composer_cancel(present_te_composer_t *composer, present_te
     if (composer->pending) {
         return ESP_ERR_TIMEOUT;
     }
-    if (composer->repair.value) {
-        esp_display_present_copy_status_t status;
-        esp_err_t error = esp_display_present_pixel_cancel(composer->pixel, composer->repair, 0, &status);
+    if (composer->repair.slot) {
+        esp_err_t result = ESP_OK;
+        esp_err_t error = present_copy_queue_cancel(composer->queue, composer->repair, &result);
         if (error != ESP_OK) {
             return error;
         }
-        (void)esp_display_present_pixel_release(composer->pixel, composer->repair);
-        composer->repair.value = 0;
+        composer->repair.slot = 0;
     }
     if (job->state == BUILDING || job->state == REPAIR || !composer->pipelined) {
         present_image_cancel(&composer->image);
@@ -447,13 +507,15 @@ esp_err_t present_te_composer_destroy(present_te_composer_t *composer)
     if (composer->jobs[0].state != IDLE || composer->jobs[1].state != IDLE || composer->pending) {
         return ESP_ERR_INVALID_STATE;
     }
-    esp_err_t err = esp_display_present_pixel_stop(composer->pixel, 0);
-    if (err != ESP_OK) {
-        return err;
-    }
-    err = esp_display_present_pixel_destroy(composer->pixel);
-    if (err != ESP_OK) {
-        return err;
+    if (composer->queue) {
+        esp_err_t err = present_copy_queue_stop(composer->queue, 0);
+        if (err != ESP_OK) {
+            return err;
+        }
+        err = present_copy_queue_destroy(composer->queue);
+        if (err != ESP_OK) {
+            return err;
+        }
     }
     present_image_deinit(&composer->image);
     present_free(composer->buffers[0].pixels);

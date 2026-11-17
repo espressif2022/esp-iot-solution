@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include "pixel/present_pixel_engine.h"
+#include "pixel/present_pixel_ops.h"
+#include "pixel/present_copy_queue.h"
+#include "platform/present_limits.h"
 #include "platform/present_os.h"
 #include <assert.h>
 #include <pthread.h>
@@ -35,6 +38,26 @@ void __wrap_present_task_set_priority(unsigned priority)
     }
     pthread_mutex_unlock(&priority_gate_lock);
     __real_present_task_set_priority(priority);
+}
+
+static pthread_mutex_t signal_gate_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t signal_gate_changed = PTHREAD_COND_INITIALIZER;
+static bool signal_gate_armed, signal_gate_entered, signal_gate_leave;
+static pthread_t signal_gate_target;
+bool __real_present_event_signal(present_os_event_t *event, bool from_isr);
+bool __wrap_present_event_signal(present_os_event_t *event, bool from_isr)
+{
+    pthread_mutex_lock(&signal_gate_lock);
+    if (signal_gate_armed && pthread_equal(pthread_self(), signal_gate_target)) {
+        signal_gate_armed = false;
+        signal_gate_entered = true;
+        pthread_cond_broadcast(&signal_gate_changed);
+        while (!signal_gate_leave) {
+            pthread_cond_wait(&signal_gate_changed, &signal_gate_lock);
+        }
+    }
+    pthread_mutex_unlock(&signal_gate_lock);
+    return __real_present_event_signal(event, from_isr);
 }
 
 typedef struct {
@@ -661,6 +684,378 @@ static void concurrent_priority_submit(void)
     pthread_mutex_destroy(&ctx.lock);
 }
 
+typedef struct {
+    pthread_mutex_t lock;
+    pthread_cond_t changed;
+    present_copy_queue_t *queue;
+    bool block_execute;
+    bool entered_execute;
+    bool release_execute;
+    unsigned execute_calls;
+    unsigned work_calls;
+    unsigned done_calls;
+    esp_err_t last_done_error;
+    present_copy_handle_t last_done_handle;
+} copy_queue_test_ctx_t;
+
+static void cq_on_work(void *user)
+{
+    copy_queue_test_ctx_t *ctx = user;
+    pthread_mutex_lock(&ctx->lock);
+    ctx->work_calls++;
+    pthread_cond_broadcast(&ctx->changed);
+    pthread_mutex_unlock(&ctx->lock);
+}
+
+static bool cq_on_done(void *user, present_copy_handle_t handle, esp_err_t result, bool isr)
+{
+    (void)isr;
+    copy_queue_test_ctx_t *ctx = user;
+    pthread_mutex_lock(&ctx->lock);
+    ctx->done_calls++;
+    ctx->last_done_handle = handle;
+    ctx->last_done_error = result;
+    pthread_cond_broadcast(&ctx->changed);
+    pthread_mutex_unlock(&ctx->lock);
+    return false;
+}
+
+static esp_err_t cq_execute(void *user, const esp_display_present_copy_request_t *request)
+{
+    copy_queue_test_ctx_t *ctx = user;
+    pthread_mutex_lock(&ctx->lock);
+    ctx->execute_calls++;
+    if (ctx->block_execute) {
+        ctx->entered_execute = true;
+        pthread_cond_broadcast(&ctx->changed);
+        while (!ctx->release_execute) {
+            pthread_cond_wait(&ctx->changed, &ctx->lock);
+        }
+    }
+    pthread_mutex_unlock(&ctx->lock);
+    return esp_display_present_pixel_execute_cpu(request);
+}
+
+static void *cq_external_runner(void *arg)
+{
+    copy_queue_test_ctx_t *ctx = arg;
+    assert(present_copy_queue_run_one(ctx->queue));
+    return NULL;
+}
+
+static void copy_queue_lifecycle_and_cancellation(void)
+{
+    present_copy_queue_t *queue = NULL;
+    assert(present_copy_queue_create(NULL, NULL) == ESP_ERR_INVALID_ARG);
+    assert(present_copy_queue_create(NULL, &queue) == ESP_ERR_INVALID_ARG);
+    present_copy_queue_config_t bad = {.max_jobs = 0};
+    assert(present_copy_queue_create(&bad, &queue) == ESP_ERR_INVALID_ARG);
+    bad.max_jobs = PRESENT_MAX_COPY_JOBS + 1;
+    assert(present_copy_queue_create(&bad, &queue) == ESP_ERR_INVALID_ARG);
+    bad = (present_copy_queue_config_t) {
+        .max_jobs = 1, .external_worker = true
+    };
+    assert(present_copy_queue_create(&bad, &queue) == ESP_ERR_INVALID_ARG);
+
+    copy_queue_test_ctx_t ctx = {
+        .lock = PTHREAD_MUTEX_INITIALIZER,
+        .changed = PTHREAD_COND_INITIALIZER,
+    };
+    present_copy_queue_config_t ext_cfg = {
+        .max_jobs = 2,
+        .external_worker = true,
+        .on_work = cq_on_work,
+        .on_done = cq_on_done,
+        .execute = cq_execute,
+        .work_user = &ctx,
+        .done_user = &ctx,
+        .execute_user = &ctx,
+    };
+    assert(present_copy_queue_create(&ext_cfg, &ctx.queue) == ESP_OK);
+
+    uint8_t src1[2] = {0x12, 0x34}, dst1[2] = {0};
+    uint8_t src2[2] = {0x56, 0x78}, dst2[2] = {0};
+    esp_display_present_copy_request_t r1 = {
+        .src = {src1, 2, {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+        .dst = {dst1, 2, {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+        .src_area = {0, 0, 1, 1},
+    };
+    esp_display_present_copy_request_t r2 = r1;
+    r2.src.pixels = src2;
+    r2.dst.pixels = dst2;
+
+    present_copy_handle_t h1 = {0}, h2 = {0}, h3 = {0};
+    assert(present_copy_queue_submit(ctx.queue, &r1, &h1) == ESP_OK && h1.slot == 1);
+    assert(present_copy_queue_submit(ctx.queue, &r2, &h2) == ESP_OK && h2.slot == 2);
+    assert(present_copy_queue_submit(ctx.queue, &r1, &h3) == ESP_ERR_NO_MEM && h3.slot == 0);
+    assert(ctx.work_calls == 2);
+
+    esp_err_t res = ESP_OK;
+    assert(present_copy_queue_take(ctx.queue, h1, &res) == ESP_ERR_TIMEOUT);
+    assert(present_copy_queue_cancel(ctx.queue, h2, &res) == ESP_ERR_TIMEOUT);
+
+    assert(present_copy_queue_run_one(ctx.queue));
+    assert(ctx.execute_calls == 1 && ctx.done_calls == 1 && ctx.last_done_error == ESP_OK &&
+           ctx.last_done_handle.slot == h1.slot);
+    assert(memcmp(src1, dst1, 2) == 0);
+
+    assert(present_copy_queue_run_one(ctx.queue));
+    assert(ctx.execute_calls == 1 && ctx.done_calls == 2 && ctx.last_done_error == ESP_ERR_INVALID_STATE &&
+           ctx.last_done_handle.slot == h2.slot);
+    assert(!present_copy_queue_run_one(ctx.queue));
+
+    assert(present_copy_queue_take(ctx.queue, h1, &res) == ESP_OK && res == ESP_OK);
+    assert(present_copy_queue_take(ctx.queue, h1, &res) == ESP_ERR_INVALID_STATE);
+    assert(present_copy_queue_cancel(ctx.queue, h2, &res) == ESP_OK && res == ESP_ERR_INVALID_STATE);
+    assert(present_copy_queue_destroy(ctx.queue) == ESP_ERR_INVALID_STATE);
+
+    /* Stalled external executor must reject stop(0) and destroy() until it finishes. */
+    memset(dst1, 0, sizeof(dst1));
+    memset(dst2, 0, sizeof(dst2));
+    ctx.block_execute = true;
+    assert(present_copy_queue_submit(ctx.queue, &r1, &h1) == ESP_OK);
+    pthread_t runner;
+    assert(pthread_create(&runner, NULL, cq_external_runner, &ctx) == 0);
+    pthread_mutex_lock(&ctx.lock);
+    while (!ctx.entered_execute) {
+        pthread_cond_wait(&ctx.changed, &ctx.lock);
+    }
+    pthread_mutex_unlock(&ctx.lock);
+
+    assert(present_copy_queue_submit(ctx.queue, &r2, &h2) == ESP_OK);
+    assert(present_copy_queue_cancel(ctx.queue, h1, &res) == ESP_ERR_TIMEOUT);
+    assert(present_copy_queue_stop(ctx.queue, 0) == ESP_ERR_TIMEOUT);
+    assert(present_copy_queue_destroy(ctx.queue) == ESP_ERR_INVALID_STATE);
+
+    pthread_mutex_lock(&ctx.lock);
+    ctx.release_execute = true;
+    pthread_cond_broadcast(&ctx.changed);
+    pthread_mutex_unlock(&ctx.lock);
+    assert(pthread_join(runner, NULL) == 0);
+
+    assert(present_copy_queue_stop(ctx.queue, 2000) == ESP_OK);
+    assert(present_copy_queue_submit(ctx.queue, &r1, &h3) == ESP_ERR_INVALID_STATE);
+    assert(present_copy_queue_destroy(ctx.queue) == ESP_ERR_INVALID_STATE);
+    assert(present_copy_queue_take(ctx.queue, h1, &res) == ESP_OK && res == ESP_OK);
+    assert(present_copy_queue_take(ctx.queue, h2, &res) == ESP_OK && res == ESP_ERR_INVALID_STATE);
+    assert(present_copy_queue_destroy(ctx.queue) == ESP_OK);
+
+    /* Dedicated worker path inherits submitter priority on first submit. */
+    atomic_store(&priority_set_calls, 0);
+    atomic_store(&priority_set_value, 0);
+    simulated_priority = 7;
+    present_copy_queue_config_t split_cfg = {
+        .max_jobs = 1,
+        .external_worker = false,
+        .on_done = cq_on_done,
+        .done_user = &ctx,
+    };
+    assert(present_copy_queue_create(&split_cfg, &ctx.queue) == ESP_OK);
+    memset(dst1, 0, sizeof(dst1));
+    ctx.done_calls = 0;
+    assert(present_copy_queue_submit(ctx.queue, &r1, &h1) == ESP_OK);
+    pthread_mutex_lock(&ctx.lock);
+    while (ctx.done_calls == 0) {
+        pthread_cond_wait(&ctx.changed, &ctx.lock);
+    }
+    pthread_mutex_unlock(&ctx.lock);
+    assert(atomic_load(&priority_set_calls) == 1 && atomic_load(&priority_set_value) == 7);
+    assert(memcmp(src1, dst1, 2) == 0);
+    assert(present_copy_queue_take(ctx.queue, h1, &res) == ESP_OK && res == ESP_OK);
+    assert(present_copy_queue_stop(ctx.queue, 2000) == ESP_OK);
+    assert(present_copy_queue_destroy(ctx.queue) == ESP_OK);
+
+    pthread_cond_destroy(&ctx.changed);
+    pthread_mutex_destroy(&ctx.lock);
+}
+
+typedef struct {
+    pthread_mutex_t lock;
+    pthread_cond_t changed;
+    bool entered;
+    bool leave;
+    present_copy_queue_t *queue;
+    esp_display_present_copy_request_t request;
+} cq_callback_gate_t;
+
+static bool cq_blocking_done(void *user, present_copy_handle_t handle, esp_err_t result, bool isr)
+{
+    cq_callback_gate_t *gate = user;
+    assert(!isr && result == ESP_OK);
+    present_copy_handle_t nested = {0};
+    assert(present_copy_queue_submit(gate->queue, &gate->request, &nested) == ESP_ERR_NO_MEM);
+    esp_err_t take_res = ESP_FAIL;
+    assert(present_copy_queue_take(gate->queue, handle, &take_res) == ESP_OK && take_res == ESP_OK);
+    /* Self-stop from inside callback must fail cleanly without deadlocking. */
+    assert(present_copy_queue_stop(gate->queue, UINT32_MAX) == ESP_ERR_INVALID_STATE);
+    pthread_mutex_lock(&gate->lock);
+    gate->entered = true;
+    pthread_cond_broadcast(&gate->changed);
+    while (!gate->leave) {
+        pthread_cond_wait(&gate->changed, &gate->lock);
+    }
+    pthread_mutex_unlock(&gate->lock);
+    return false;
+}
+
+static void cq_noop_work(void *user)
+{
+    (void)user;
+}
+
+static void *cq_callback_runner(void *arg)
+{
+    cq_callback_gate_t *gate = arg;
+    if (gate->queue) {
+        while (!present_copy_queue_run_one(gate->queue)) {
+            present_pause();
+        }
+    }
+    return NULL;
+}
+
+static void copy_queue_callback_lifetime(bool external_worker)
+{
+    uint8_t src[2] = {0x12, 0x34}, dst[2] = {0};
+    cq_callback_gate_t gate = {
+        .lock = PTHREAD_MUTEX_INITIALIZER,
+        .changed = PTHREAD_COND_INITIALIZER,
+        .request = {
+            .src = {src, 2, {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+            .dst = {dst, 2, {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+            .src_area = {0, 0, 1, 1},
+        },
+    };
+    present_copy_queue_config_t cfg = {
+        .max_jobs = 1,
+        .external_worker = external_worker,
+        .on_work = external_worker ? cq_noop_work : NULL,
+        .on_done = cq_blocking_done,
+        .done_user = &gate,
+    };
+    assert(present_copy_queue_create(&cfg, &gate.queue) == ESP_OK);
+
+    present_copy_handle_t handle = {0};
+    assert(present_copy_queue_submit(gate.queue, &gate.request, &handle) == ESP_OK);
+    pthread_t runner;
+    if (external_worker) {
+        assert(pthread_create(&runner, NULL, cq_callback_runner, &gate) == 0);
+    }
+
+    pthread_mutex_lock(&gate.lock);
+    while (!gate.entered) {
+        pthread_cond_wait(&gate.changed, &gate.lock);
+    }
+    pthread_mutex_unlock(&gate.lock);
+
+    /* Slot was already recycled by take() in callback, yet callback still owns context. */
+    assert(present_copy_queue_stop(gate.queue, 0) == ESP_ERR_TIMEOUT);
+    assert(present_copy_queue_destroy(gate.queue) == ESP_ERR_INVALID_STATE);
+
+    pthread_mutex_lock(&gate.lock);
+    gate.leave = true;
+    pthread_cond_broadcast(&gate.changed);
+    pthread_mutex_unlock(&gate.lock);
+
+    if (external_worker) {
+        assert(pthread_join(runner, NULL) == 0);
+    }
+    assert(memcmp(src, dst, 2) == 0);
+    assert(present_copy_queue_stop(gate.queue, 2000) == ESP_OK);
+    assert(present_copy_queue_destroy(gate.queue) == ESP_OK);
+    pthread_cond_destroy(&gate.changed);
+    pthread_mutex_destroy(&gate.lock);
+}
+
+static void *cq_release_signal_gate_delayed(void *arg)
+{
+    (void)arg;
+    present_pause();
+    pthread_mutex_lock(&signal_gate_lock);
+    signal_gate_leave = true;
+    pthread_cond_broadcast(&signal_gate_changed);
+    pthread_mutex_unlock(&signal_gate_lock);
+    return NULL;
+}
+
+static void copy_queue_idle_signal_retirement(void)
+{
+    executor_gate_t exec_gate = {
+        .lock = PTHREAD_MUTEX_INITIALIZER,
+        .changed = PTHREAD_COND_INITIALIZER,
+    };
+    copy_queue_test_ctx_t ctx = {
+        .lock = PTHREAD_MUTEX_INITIALIZER,
+        .changed = PTHREAD_COND_INITIALIZER,
+    };
+    present_copy_queue_config_t cfg = {
+        .max_jobs = 1,
+        .external_worker = true,
+        .on_work = cq_on_work,
+        .execute = delayed_executor,
+        .work_user = &ctx,
+        .execute_user = &exec_gate,
+    };
+    assert(present_copy_queue_create(&cfg, &ctx.queue) == ESP_OK);
+
+    uint8_t src[2] = {0xaa, 0xbb}, dst[2] = {0};
+    esp_display_present_copy_request_t req = {
+        .src = {src, 2, {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+        .dst = {dst, 2, {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+        .src_area = {0, 0, 1, 1},
+    };
+    present_copy_handle_t h = {0};
+    assert(present_copy_queue_submit(ctx.queue, &req, &h) == ESP_OK);
+
+    pthread_t runner;
+    assert(pthread_create(&runner, NULL, cq_external_runner, &ctx) == 0);
+    pthread_mutex_lock(&exec_gate.lock);
+    while (!exec_gate.entered) {
+        pthread_cond_wait(&exec_gate.changed, &exec_gate.lock);
+    }
+    pthread_mutex_unlock(&exec_gate.lock);
+
+    /* Arm closing before the worker enters the idle-notification window. */
+    assert(present_copy_queue_stop(ctx.queue, 0) == ESP_ERR_TIMEOUT);
+
+    pthread_mutex_lock(&signal_gate_lock);
+    signal_gate_target = runner;
+    signal_gate_entered = false;
+    signal_gate_leave = false;
+    signal_gate_armed = true;
+    pthread_mutex_unlock(&signal_gate_lock);
+
+    pthread_mutex_lock(&exec_gate.lock);
+    exec_gate.leave = true;
+    pthread_cond_broadcast(&exec_gate.changed);
+    pthread_mutex_unlock(&exec_gate.lock);
+
+    pthread_mutex_lock(&signal_gate_lock);
+    while (!signal_gate_entered) {
+        pthread_cond_wait(&signal_gate_changed, &signal_gate_lock);
+    }
+    pthread_mutex_unlock(&signal_gate_lock);
+
+    /* Even after take() recycles the slot, stop(0)/destroy() must wait until idle signal finishes. */
+    esp_err_t res = ESP_FAIL;
+    assert(present_copy_queue_take(ctx.queue, h, &res) == ESP_OK && res == ESP_OK);
+    assert(present_copy_queue_stop(ctx.queue, 0) == ESP_ERR_TIMEOUT);
+    assert(present_copy_queue_destroy(ctx.queue) == ESP_ERR_INVALID_STATE);
+
+    pthread_t releaser;
+    assert(pthread_create(&releaser, NULL, cq_release_signal_gate_delayed, NULL) == 0);
+    assert(present_copy_queue_stop(ctx.queue, 2000) == ESP_OK);
+    assert(pthread_join(releaser, NULL) == 0);
+    assert(pthread_join(runner, NULL) == 0);
+    assert(present_copy_queue_destroy(ctx.queue) == ESP_OK);
+    assert(memcmp(src, dst, 2) == 0);
+
+    pthread_cond_destroy(&ctx.changed);
+    pthread_mutex_destroy(&ctx.lock);
+    pthread_cond_destroy(&exec_gate.changed);
+    pthread_mutex_destroy(&exec_gate.lock);
+}
+
 int main(void)
 {
     async_worker_priority();
@@ -673,6 +1068,10 @@ int main(void)
     wait_finish_interleaving(true);
     stop_finish_interleaving();
     concurrent_priority_submit();
+    copy_queue_lifecycle_and_cancellation();
+    copy_queue_callback_lifetime(false);
+    copy_queue_callback_lifetime(true);
+    copy_queue_idle_signal_retirement();
     validation_and_records();
     in_place_and_events();
     callback_lifetime(false);

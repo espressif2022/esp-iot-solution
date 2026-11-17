@@ -100,8 +100,25 @@ static bool valid_memory(esp_display_present_plan_memory_t m)
     return m == ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA || m == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL;
 }
 
-static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_display_present_resolved_plan_t *plan)
+typedef struct {
+    const esp_display_present_plan_config_t *config;
+    esp_display_present_resolved_plan_t *plan;
+    esp_display_present_backend_config_t *backend;
+    esp_display_present_engine_backend_t kind;
+    bool partial;
+    size_t bpp;
+    size_t images;
+    size_t tiles;
+    esp_display_present_plan_memory_t transport_memory;
+    bool external_tx;
+    size_t length_alignment;
+    esp_display_present_executor_caps_t caps;
+} plan_resolve_ctx_t;
+
+static esp_err_t resolve_backend_policy(plan_resolve_ctx_t *ctx)
 {
+    const esp_display_present_plan_config_t *config = ctx->config;
+    esp_display_present_resolved_plan_t *plan = ctx->plan;
     if (!config || config->defaults < ESP_DISPLAY_PRESENT_PLAN_CURRENT_DEFAULTS || config->defaults > ESP_DISPLAY_PRESENT_PLAN_LEGACY_DEFAULTS ||
             !valid_memory(config->resources.tile_memory) || !valid_memory(config->resources.image_memory) || !valid_memory(config->resources.logical_memory)) {
         return ESP_ERR_INVALID_ARG;
@@ -131,8 +148,8 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
     if (backend_config->copy_execute && !backend_config->async_copy) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (backend_config->shared_copy_worker && (kind == ESP_DISPLAY_PRESENT_ENGINE_REGION || !backend_config->async_copy ||
-                                               !plan->normalized.background_service)) {
+    if (backend_config->copy_on_backend_worker && (kind == ESP_DISPLAY_PRESENT_ENGINE_REGION || !backend_config->async_copy ||
+                                                   !plan->normalized.background_service)) {
         return ESP_ERR_INVALID_ARG;
     }
     if ((backend_config->deferred_submit && (kind != ESP_DISPLAY_PRESENT_ENGINE_REGION || !plan->normalized.background_service)) ||
@@ -146,6 +163,20 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
             (config->output.ext_bufs_required && !backend_config->ext_bufs)) {
         return ESP_ERR_INVALID_ARG;
     }
+    ctx->backend = backend_config;
+    ctx->kind = kind;
+    ctx->partial = partial;
+    return ESP_OK;
+}
+
+static esp_err_t resolve_counts_and_output(plan_resolve_ctx_t *ctx)
+{
+    const esp_display_present_plan_config_t *config = ctx->config;
+    esp_display_present_resolved_plan_t *plan = ctx->plan;
+    esp_display_present_backend_config_t *backend_config = ctx->backend;
+    esp_display_present_engine_backend_t kind = ctx->kind;
+    bool partial = ctx->partial;
+
     size_t images = kind == ESP_DISPLAY_PRESENT_ENGINE_FB ? backend_config->buffer_count : kind == ESP_DISPLAY_PRESENT_ENGINE_TE ?
                     (config->defaults == ESP_DISPLAY_PRESENT_PLAN_LEGACY_DEFAULTS ? 1 : 2) : 0;
     if (config->resources.image_count) {
@@ -154,7 +185,7 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
         }
         images = config->resources.image_count;
     }
-    if (kind == ESP_DISPLAY_PRESENT_ENGINE_TE && backend_config->shared_copy_worker && images != 1) {
+    if (kind == ESP_DISPLAY_PRESENT_ENGINE_TE && backend_config->copy_on_backend_worker && images != 1) {
         return ESP_ERR_INVALID_ARG;
     }
     if ((kind == ESP_DISPLAY_PRESENT_ENGINE_TE && (images < 1 || images > 2)) ||
@@ -233,42 +264,66 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
         plan->output.w_align = wa;
         plan->output.h_align = ha;
     }
-    esp_display_present_executor_caps_t caps = {
-        .base_alignment = 1,
-        .dst_cap_align = 1,
-        .stride_align = 1,
-    };
+    ctx->images = images;
+    ctx->tiles = tiles;
+    ctx->bpp = bpp;
+    ctx->transport_memory = transport_memory;
+    ctx->external_tx = external_tx;
+    ctx->length_alignment = length_alignment;
+    return ESP_OK;
+}
+
+static esp_err_t resolve_executor(plan_resolve_ctx_t *ctx)
+{
+    const esp_display_present_plan_config_t *config = ctx->config;
+    esp_display_present_resolved_plan_t *plan = ctx->plan;
+    esp_display_present_backend_config_t *backend_config = ctx->backend;
+
     plan->executor_reason = ESP_DISPLAY_PRESENT_EXEC_SUPPORTED;
-    if (config->executor) {
-        if (!backend_config->async_copy || backend_config->copy_execute) {
-            return ESP_ERR_INVALID_ARG;
+    if (!config->executor) {
+        return ESP_OK;
+    }
+    if (!backend_config->async_copy || backend_config->copy_execute) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    esp_err_t e = esp_display_present_executor_get_caps(config->executor->primary, &ctx->caps);
+    if (e != ESP_OK) {
+        return e;
+    }
+    plan->preferred_executor = config->executor->primary;
+    if (!executor_supports(&ctx->caps, backend_config)) {
+        plan->executor_reason = ESP_DISPLAY_PRESENT_EXEC_TRANSFORM;
+        if (!config->executor->fallback) {
+            return ESP_ERR_NOT_SUPPORTED;
         }
-        e = esp_display_present_executor_get_caps(config->executor->primary, &caps);
+        e = esp_display_present_executor_get_caps(config->executor->fallback, &ctx->caps);
         if (e != ESP_OK) {
             return e;
         }
-        plan->preferred_executor = config->executor->primary;
-        if (!executor_supports(&caps, backend_config)) {
-            plan->executor_reason = ESP_DISPLAY_PRESENT_EXEC_TRANSFORM;
-            if (!config->executor->fallback) {
-                return ESP_ERR_NOT_SUPPORTED;
-            }
-            e = esp_display_present_executor_get_caps(config->executor->fallback, &caps);
-            if (e != ESP_OK) {
-                return e;
-            }
-            if (!executor_supports(&caps, backend_config)) {
-                return ESP_ERR_NOT_SUPPORTED;
-            }
-            plan->preferred_executor = config->executor->fallback;
+        if (!executor_supports(&ctx->caps, backend_config)) {
+            return ESP_ERR_NOT_SUPPORTED;
         }
-        plan->probe_addrs = true;
-        backend_config->copy_execute = esp_display_present_executor_dispatch_execute;
-        backend_config->copy_user = (void *)config->executor;
+        plan->preferred_executor = config->executor->fallback;
     }
+    plan->probe_addrs = true;
+    backend_config->copy_execute = esp_display_present_executor_dispatch_execute;
+    backend_config->copy_user = (void *)config->executor;
+    return ESP_OK;
+}
+
+static esp_err_t resolve_layouts_and_pools(plan_resolve_ctx_t *ctx)
+{
+    const esp_display_present_plan_config_t *config = ctx->config;
+    esp_display_present_resolved_plan_t *plan = ctx->plan;
+    esp_display_present_backend_config_t *backend_config = ctx->backend;
+    esp_display_present_engine_backend_t kind = ctx->kind;
+    size_t bpp = ctx->bpp;
+    size_t images = ctx->images;
+    size_t tiles = ctx->tiles;
+
     size_t alignment;
     if (!lcm(plan->output.base_alignment, PRESENT_BUFFER_ALIGNMENT, &alignment) ||
-            !lcm(alignment, caps.base_alignment, &alignment) || !lcm(alignment, caps.dst_cap_align, &alignment)) {
+            !lcm(alignment, ctx->caps.base_alignment, &alignment) || !lcm(alignment, ctx->caps.dst_cap_align, &alignment)) {
         return ESP_ERR_INVALID_SIZE;
     }
     if (!power_two(alignment)) {
@@ -276,21 +331,21 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
     }
     plan->base_alignment = alignment;
     size_t stride_align;
-    if (!lcm(plan->output.stride_align, caps.stride_align, &stride_align)) {
+    if (!lcm(plan->output.stride_align, ctx->caps.stride_align, &stride_align)) {
         return ESP_ERR_INVALID_SIZE;
     }
     bool quarter = backend_config->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90 || backend_config->rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270;
     uint32_t pw = quarter ? backend_config->height : backend_config->width, ph = quarter ? backend_config->width : backend_config->height;
-    if (!layout(backend_config->width, backend_config->height, bpp, caps.stride_align, backend_config->format, backend_config->draw_order, &plan->logical_layout) ||
+    if (!layout(backend_config->width, backend_config->height, bpp, ctx->caps.stride_align, backend_config->format, backend_config->draw_order, &plan->logical_layout) ||
             !layout(pw, ph, bpp, stride_align, backend_config->format, backend_config->panel_order, &plan->physical_layout)) {
         return ESP_ERR_INVALID_SIZE;
     }
-    if (external_tx && images) {
+    if (ctx->external_tx && images) {
         size_t transfer_bytes;
         if (!mul(plan->physical_layout.stride_bytes, ph, &transfer_bytes)) {
             return ESP_ERR_INVALID_SIZE;
         }
-        if (transfer_bytes % length_alignment) {
+        if (transfer_bytes % ctx->length_alignment) {
             return ESP_ERR_NOT_SUPPORTED;
         }
     }
@@ -300,14 +355,14 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
     if (pw % plan->output.w_align || ph % plan->output.h_align) {
         return ESP_ERR_NOT_SUPPORTED;
     }
-    if ((caps.max_stride_pixels && (plan->logical_layout.stride_bytes / bpp > caps.max_stride_pixels || plan->physical_layout.stride_bytes / bpp > caps.max_stride_pixels)) ||
-            (caps.max_height && (backend_config->height > caps.max_height || ph > caps.max_height))) {
+    if ((ctx->caps.max_stride_pixels && (plan->logical_layout.stride_bytes / bpp > ctx->caps.max_stride_pixels || plan->physical_layout.stride_bytes / bpp > ctx->caps.max_stride_pixels)) ||
+            (ctx->caps.max_height && (backend_config->height > ctx->caps.max_height || ph > ctx->caps.max_height))) {
         return ESP_ERR_NOT_SUPPORTED;
     }
     size_t logical = 0;
     if (kind == ESP_DISPLAY_PRESENT_ENGINE_REGION) {
         plan->topology = ESP_DISPLAY_PRESENT_TOPOLOGY_REGION;
-    } else if (partial) {
+    } else if (ctx->partial) {
         plan->topology = ESP_DISPLAY_PRESENT_TOPOLOGY_TILE_TO_PHYSICAL;
     } else if (backend_config->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || backend_config->draw_order != backend_config->panel_order) {
         plan->topology = ESP_DISPLAY_PRESENT_TOPOLOGY_LOGICAL_TO_PHYSICAL;
@@ -325,7 +380,7 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
         return ESP_ERR_NOT_SUPPORTED;
     }
     esp_display_present_layout_t tile = plan->logical_layout;
-    tile.height = partial ? backend_config->tile_rows : 0;
+    tile.height = ctx->partial ? backend_config->tile_rows : 0;
     if (!pool(&plan->tiles, tiles, tile, alignment, config->resources.tile_memory, false) ||
             !pool(&plan->images, images, plan->physical_layout, alignment, config->resources.image_memory, backend_config->ext_bufs != NULL) ||
             !pool(&plan->logical, logical, plan->logical_layout, alignment, config->resources.logical_memory, false)) {
@@ -342,7 +397,7 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
     if (!pool(&plan->conversion, convert ? tiles : 0, converted, alignment, backend_config->tx_staging ? ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA : config->resources.tile_memory, false)) {
         return ESP_ERR_INVALID_SIZE;
     }
-    esp_display_present_plan_memory_t tx_memory = transport_memory;
+    esp_display_present_plan_memory_t tx_memory = ctx->transport_memory;
     if ((tx_memory == ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA && !plan->output.internal_dma) || (tx_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL && !plan->output.ext_mem)) {
         return ESP_ERR_NOT_SUPPORTED;
     }
@@ -360,7 +415,6 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
         if (!add(plan->pixel_bytes, pools[i]->total_bytes, &plan->pixel_bytes)) {
             return ESP_ERR_INVALID_SIZE;
         }
-
     }
     size_t pixels;
     if (!mul(backend_config->width, backend_config->height, &pixels)) {
@@ -382,12 +436,24 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
             backend_config->compose_count = images;
         }
     }
+    return ESP_OK;
+}
+
+static esp_err_t resolve_ext_bufs_and_te(const plan_resolve_ctx_t *ctx)
+{
+    const esp_display_present_resolved_plan_t *plan = ctx->plan;
+    const esp_display_present_backend_config_t *backend_config = ctx->backend;
+    esp_display_present_engine_backend_t kind = ctx->kind;
+    size_t alignment = plan->base_alignment;
+    size_t bpp = ctx->bpp;
+    uint32_t pw = plan->physical_layout.width;
+
     if (backend_config->ext_bufs) {
         bool found = backend_config->scan_buf == NULL;
         if (backend_config->ext_bytes < plan->images.bytes_each) {
             return ESP_ERR_INVALID_ARG;
         }
-        for (size_t i = 0; i < images; i++) {
+        for (size_t i = 0; i < ctx->images; i++) {
             uintptr_t base = (uintptr_t)backend_config->ext_bufs[i];
             if (!base || base % alignment || base > UINTPTR_MAX - backend_config->ext_bytes) {
                 return ESP_ERR_INVALID_ARG;
@@ -421,6 +487,16 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
     if (plan->physical_layout.stride_bytes != (size_t)pw * bpp || plan->logical_layout.stride_bytes != (size_t)backend_config->width * bpp || alignment != PRESENT_BUFFER_ALIGNMENT) {
         return ESP_ERR_NOT_SUPPORTED;
     }
+    return ESP_OK;
+}
+
+static esp_err_t resolve_budget(plan_resolve_ctx_t *ctx)
+{
+    const esp_display_present_plan_config_t *config = ctx->config;
+    esp_display_present_resolved_plan_t *plan = ctx->plan;
+    esp_display_present_backend_config_t *backend_config = ctx->backend;
+    esp_display_present_engine_backend_t kind = ctx->kind;
+
     backend_config->tile_in_psram = config->resources.tile_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL;
     backend_config->image_in_psram = config->resources.image_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL;
     backend_config->logical_in_psram = config->resources.logical_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL;
@@ -429,7 +505,7 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
     plan->metadata_bytes = present_presenter_memory(&plan->normalized) +
                            (kind == ESP_DISPLAY_PRESENT_ENGINE_REGION ? present_region_memory(backend_config) : kind == ESP_DISPLAY_PRESENT_ENGINE_TE ? present_te_memory(backend_config) : present_fb_memory(backend_config));
     /* Reserve the peak worker stack even when native FULL allocates lazily. */
-    bool pixel_worker = backend_config->async_copy && !backend_config->shared_copy_worker;
+    bool pixel_worker = backend_config->async_copy && !backend_config->copy_on_backend_worker;
     plan->stack_bytes = pixel_worker ? 4096 : 0;
     if (plan->normalized.background_service && !add(plan->stack_bytes,
                                                     plan->normalized.worker_stack_bytes ? plan->normalized.worker_stack_bytes : 4096, &plan->stack_bytes)) {
@@ -449,6 +525,36 @@ static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_di
         return ESP_ERR_NO_MEM;
     }
     return ESP_OK;
+}
+
+static esp_err_t resolve(const esp_display_present_plan_config_t *config, esp_display_present_resolved_plan_t *plan)
+{
+    plan_resolve_ctx_t ctx = {
+        .config = config,
+        .plan = plan,
+        .caps = {
+            .base_alignment = 1,
+            .dst_cap_align = 1,
+            .stride_align = 1,
+        },
+    };
+    esp_err_t err = resolve_backend_policy(&ctx);
+    if (err == ESP_OK) {
+        err = resolve_counts_and_output(&ctx);
+    }
+    if (err == ESP_OK) {
+        err = resolve_executor(&ctx);
+    }
+    if (err == ESP_OK) {
+        err = resolve_layouts_and_pools(&ctx);
+    }
+    if (err == ESP_OK) {
+        err = resolve_ext_bufs_and_te(&ctx);
+    }
+    if (err == ESP_OK) {
+        err = resolve_budget(&ctx);
+    }
+    return err;
 }
 esp_err_t esp_display_present_plan_resolve(const esp_display_present_plan_config_t *config, esp_display_present_resolved_plan_t *out)
 {
@@ -529,9 +635,6 @@ esp_err_t present_engine_create_with_plan(const esp_display_present_plan_config_
         return e;
     }
     *out_plan = plan;
-    if (plan.pending_runtime) {
-        return ESP_ERR_NOT_SUPPORTED;
-    }
     /* DEFAULT prevents applying the named preset a second time. */
     plan.normalized.mode = ESP_DISPLAY_PRESENT_MODE_DEFAULT;
     return esp_display_present_engine_create(&plan.normalized, out);
