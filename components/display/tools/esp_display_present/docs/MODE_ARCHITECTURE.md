@@ -50,7 +50,7 @@ FB 路径中 tile 可以在复制完成后归还，但 framebuffer 仍必须留�
 
 region 与 FB、TE 的职责保持分离；删除 fb_update 后，输出适配器只保留 lcd_io 和 lcd_fb_scanout。历史命名与性能记录保留当时源码和哈希。
 
-`CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND` 及其 PRIORITY 配置键保留，避免既有 sdkconfig 失效；它们是沿用的配置名字，不表示第四种策略。历史性能报告和证据保留当时名称与哈希。LCD 适配器统一为 lcd_io、lcd_fb_scanout；这些内部改名不扩展硬件支持范围。
+同步 Panel-IO `NONE` 的提交任务由实例配置 `target.io_submit` 决定，不通过 Kconfig 配置。历史性能报告和证据保留当时名称与哈希。LCD 适配器统一为 lcd_io、lcd_fb_scanout；这些内部改名不扩展硬件支持范围。
 
 ## 平台模块分组与 TE 边界
 

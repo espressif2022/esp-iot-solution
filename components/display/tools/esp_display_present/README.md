@@ -131,7 +131,7 @@ Use the `drawbuf` argument of `open_ex()`, or `target.drawbuf` in `create()`:
 
 The table describes tasks selected **at creation**. IO `NONE` selects asynchronous pixel processing for an initial nonzero rotation, PSRAM-tile-to-internal-DMA staging, or an out-of-place byte swap with a PSRAM preference. These factory entry points have no independent `async_copy` switch.
 
-For synchronous IO `NONE`, select `target.io_submit` per instance: `CALLER` submits on the calling task, `BACKGROUND` uses the display-progress task, and `DEFAULT` (zero) follows `CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND`, disabled by default. Set this field through `create()`; `open()` / `open_ex()` use `DEFAULT`. Other modes and asynchronous pixel processing require `DEFAULT`; an explicit override returns `ESP_ERR_INVALID_ARG`.
+For synchronous IO `NONE`, select `target.io_submit` per instance: `CALLER` or `DEFAULT` (zero) submits on the calling task, while `BACKGROUND` uses the display-progress task (default priority 7). Set this field through `create()`; `open()` / `open_ex()` use `DEFAULT`. Other modes and asynchronous pixel processing require `DEFAULT`; an explicit override returns `ESP_ERR_INVALID_ARG`.
 
 Runtime `set_rotation()` preserves the existing background task count and sharing policy. An initially synchronous IO path remains synchronous after rotation; its in-place byte-swap path rejects nonzero rotation. Rotations of 90°/270° exchange logical width and height. Drain before switching, query the layout afterwards, and handle geometry or memory allocation failures.
 

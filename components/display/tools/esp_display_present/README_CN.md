@@ -99,7 +99,7 @@ RGB/MIPI 不支持 `NONE` 和 `TE_SYNC`。`mode` 清零得到 `NONE`，需要自
 
 表格描述**创建时**的任务配置。IO `NONE` 初始旋转非 0°、需要将 PSRAM tile 搬到内部 DMA 缓冲，或开启 PSRAM 偏好且需要非原地字节交换时，会选择异步像素处理；这些工厂入口没有独立的 `async_copy` 开关。
 
-同步像素处理的 IO `NONE` 可用 `target.io_submit` 按实例选择：`CALLER` 在调用任务提交，`BACKGROUND` 由显示推进任务提交，`DEFAULT`（零值）沿用 `CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND` 的默认值，默认关闭。该字段通过 `create()` 配置；`open()` / `open_ex()` 使用 `DEFAULT`。其他模式或异步像素处理须保持 `DEFAULT`，显式覆盖会返回 `ESP_ERR_INVALID_ARG`。
+同步像素处理的 IO `NONE` 可用 `target.io_submit` 按实例选择：`CALLER` 或 `DEFAULT`（零值）在调用任务提交，`BACKGROUND` 由显示推进任务提交（默认优先级 7）。该字段通过 `create()` 配置；`open()` / `open_ex()` 使用 `DEFAULT`。其他模式或异步像素处理须保持 `DEFAULT`，显式覆盖会返回 `ESP_ERR_INVALID_ARG`。
 
 运行时 `set_rotation()` 保持原有后台任务数量和共享方式。初始同步的 IO 路径旋转后仍同步处理；原地字节交换路径不支持切到非 0°。90°／270° 会交换逻辑宽高，切换前须排空，切换后重新查询布局，并处理尺寸或内存不足导致的失败。
 

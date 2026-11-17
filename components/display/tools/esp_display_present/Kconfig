@@ -1,26 +1,4 @@
 menu "Display presenter"
-config ESP_DISPLAY_PRESENT_GRAM_BACKGROUND
-    bool "Default synchronous GRAM submission to background task"
-    default n
-    help
-        Compatibility default when an instance uses IO_SUBMIT_DEFAULT.
-        Instances can explicitly choose CALLER or BACKGROUND without menuconfig.
-        Use the existing engine backend worker for synchronous internal DMA tile paths.
-        Rotated and PSRAM tiles retain their existing async-copy scheduling.
-        Adds the backend worker task when the synchronous GRAM path would not have one.
-        Source tiles remain borrowed until real transfer completion.
-
-config ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY
-    int "GRAM backend worker task priority"
-    depends on ESP_DISPLAY_PRESENT_GRAM_BACKGROUND
-    range 1 24
-    default 7
-    help
-        Priority of the existing engine backend worker for background GRAM submission.
-        Choose relative to the producer: a lower-priority backend worker can introduce
-        command refill gaps while rendering continues. The board comparison
-        uses producer priority 6 and backend worker priority 7.
-
 config ESP_DISPLAY_PRESENT_DEFAULT_TILE_BYTES
     int "Default input tile byte target"
     range 64 1048576

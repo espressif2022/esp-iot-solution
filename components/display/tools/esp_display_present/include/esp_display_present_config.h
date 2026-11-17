@@ -100,9 +100,9 @@ typedef struct {
 
 /** @brief Driver submission context for synchronous Panel-IO NONE only. */
 typedef enum {
-    ESP_DISPLAY_PRESENT_IO_SUBMIT_DEFAULT = 0, /**< Use the build's compatibility default. */
+    ESP_DISPLAY_PRESENT_IO_SUBMIT_DEFAULT = 0, /**< Default synchronous caller submission (same as CALLER). */
     ESP_DISPLAY_PRESENT_IO_SUBMIT_CALLER,      /**< Submit from the producer task; may block. */
-    ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND,  /**< Submit from the display-progress task. */
+    ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND,  /**< Submit from the display-progress task (default priority 7). */
 } esp_display_present_io_submit_t;
 
 /** @brief Target hardware, presentation policy and endpoint memory configuration. */

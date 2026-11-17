@@ -70,11 +70,6 @@ static void optional_tile_fallback(void)
                 assert(status.plan.normalized.backend.tx_staging == (kind == 1));
                 assert(status.plan.normalized.backend.async_copy == (kind != 0));
                 size_t stack_bytes = kind == 1 ? 8192u : kind >= 2 ? 4096u : 0;
-#ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND
-                if (kind == 0 && CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND) {
-                    stack_bytes = 4096;
-                }
-#endif
                 assert(status.plan.stack_bytes == stack_bytes);
                 if (kind != 3) {
                     assert(status.plan.normalized.backend.buffer_count == 1);
@@ -513,16 +508,9 @@ static void submission_policy_and_te_workers(void)
         OK(present_resources_plan(&input, false, &plan));
         assert(!plan.presenter.backend.async_copy);
         bool expected = policy == ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND;
-#ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND
-        expected |= policy == ESP_DISPLAY_PRESENT_IO_SUBMIT_DEFAULT && CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND;
-#endif
         assert(plan.presenter.backend.deferred_submit == expected);
         assert(plan.presenter.background_service == expected);
-#ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY
-        assert(plan.presenter.worker_priority == (expected ? CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY : 0));
-#else
         assert(plan.presenter.worker_priority == (expected ? 7 : 0));
-#endif
         input.target.hw.rotation = 90;
         assert(present_resources_plan(&input, false, &plan) ==
                (policy ? ESP_ERR_INVALID_ARG : ESP_OK));

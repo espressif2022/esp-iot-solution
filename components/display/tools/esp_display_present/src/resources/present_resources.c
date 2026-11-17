@@ -129,19 +129,10 @@ typedef struct {
 
 static submission_policy_t read_submission_policy(esp_display_present_io_submit_t request)
 {
-    submission_policy_t policy = {
+    return (submission_policy_t) {
         .background = request == ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND,
         .priority = 7,
     };
-#ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND
-    if (request == ESP_DISPLAY_PRESENT_IO_SUBMIT_DEFAULT) {
-        policy.background = CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND;
-    }
-#endif
-#ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY
-    policy.priority = CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY;
-#endif
-    return policy;
 }
 
 /* Memory and layout are already selected. No IO/heap query or task creation.

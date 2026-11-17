@@ -29,11 +29,7 @@ static const struct {
 static void region_policy(void)
 {
     const bool background[] = {
-#ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND
-        CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND,
-#else
         false,
-#endif
         false, true,
     };
     for (size_t c = 0; c < sizeof(pixel_cases) / sizeof(pixel_cases[0]); ++c) {
@@ -70,11 +66,7 @@ static void region_policy(void)
                         bool deferred = !asynchronous && background[submit];
                         assert(plan.presenter.backend.deferred_submit == deferred);
                         assert(plan.presenter.background_service == (asynchronous || deferred));
-#ifdef CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY
-                        const unsigned priority = CONFIG_ESP_DISPLAY_PRESENT_GRAM_BACKGROUND_PRIORITY;
-#else
                         const unsigned priority = 7;
-#endif
                         assert(plan.presenter.worker_priority == (deferred ? priority : 0));
                         size_t tiles = count ? count : 2;
                         assert(plan.resources.tile_count == tiles);
