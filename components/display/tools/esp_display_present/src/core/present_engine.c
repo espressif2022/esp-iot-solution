@@ -39,6 +39,7 @@ struct esp_display_present_engine {
     } backend_worker;
     bool background_region;
     bool worker_submit_only;
+    bool shared_copy_worker;
     present_lock_t control;
     present_metrics_t *metrics; /* Opt-in sampler protected by control. */
     present_transfer_tracker_t transfer;
@@ -122,10 +123,20 @@ static uint32_t transfer_wait_ms(esp_display_present_engine_t *presenter)
     return present_transfer_wait_ms(&presenter->transfer, &presenter->control);
 }
 
+static void pixel_work_ready(void *user)
+{
+    esp_display_present_engine_t *presenter = user;
+    (void)present_event_signal(presenter->work, false);
+}
+
 static bool pixel_progress(void *user, bool isr)
 {
     esp_display_present_engine_t *presenter = user;
-    bool yield = notify(presenter, isr);
+    bool yield = present_event_signal(presenter->changed, isr);
+    if (!(presenter->shared_copy_worker && !isr && presenter->backend_worker.ready &&
+            present_same_task(presenter->backend_worker.task, present_current_task()))) {
+        yield |= present_event_signal(presenter->work, isr);
+    }
     if (presenter->user_progress) {
         yield |= presenter->user_progress(presenter->progress_user, isr);
     }
@@ -307,29 +318,38 @@ static void backend_worker(void *context)
     /* Creation holds the gate until backend publication (or exit on failure).
      * The blocking copy phase below cannot rely on the per-iteration gate. */
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
-    if (presenter->worker_submit_only) {
-        presenter->backend_worker.task = present_current_task();
-        presenter->backend_worker.ready = true;
-    }
+    presenter->backend_worker.task = present_current_task();
+    presenter->backend_worker.ready = true;
     present_mutex_give(presenter->gate);
     for (;;) {
         (void)present_event_wait(presenter->work, transfer_wait_ms(presenter));
-        if (exiting(presenter)) {
-            return;
-        }
-        /* A hardware callback may be delayed indefinitely. Keep the owner
-         * gate available so cancellation and bounded stop can retain ownership
-         * and return TIMEOUT while this worker is still using the buffers. */
-        if (presenter->ops->copy_work) {
-            (void)presenter->ops->copy_work(presenter->backend);
-        }
-        (void)present_mutex_take(presenter->gate, UINT32_MAX);
-        if (exiting(presenter)) {
+        for (;;) {
+            if (exiting(presenter)) {
+                return;
+            }
+            /* A hardware callback may be delayed indefinitely. Keep the owner
+             * gate available so cancellation and bounded stop can retain ownership
+             * and return TIMEOUT while this worker is still using the buffers. */
+            while (presenter->ops->copy_work && presenter->ops->copy_work(presenter->backend)) {
+                if (exiting(presenter)) {
+                    return;
+                }
+            }
+            (void)present_mutex_take(presenter->gate, UINT32_MAX);
+            if (exiting(presenter)) {
+                present_mutex_give(presenter->gate);
+                return;
+            }
+            presenter->last_service_error = pump_backend(presenter);
             present_mutex_give(presenter->gate);
+            if (!presenter->ops->copy_work || exiting(presenter) ||
+                    !presenter->ops->copy_work(presenter->backend)) {
+                break;
+            }
+        }
+        if (exiting(presenter)) {
             return;
         }
-        presenter->last_service_error = pump_backend(presenter);
-        present_mutex_give(presenter->gate);
         /* Wake owner only; signaling work here would cause a busy loop. */
         (void)present_event_signal(presenter->changed, false);
     }
@@ -499,6 +519,7 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
     presenter->background_region = config->background_service && config->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION && config->backend.deferred_submit;
     presenter->worker_submit_only = presenter->background_region ||
                                     (config->background_service && config->backend_kind == ESP_DISPLAY_PRESENT_ENGINE_TE);
+    presenter->shared_copy_worker = config->backend.shared_copy_worker;
     presenter->output = config->output_caps;
     if (!presenter->output.x_alignment) {
         presenter->output.x_alignment = 1;
@@ -547,6 +568,8 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
     };
     backend.on_progress = pixel_progress;
     backend.progress_user = presenter;
+    backend.on_work = pixel_work_ready;
+    backend.work_user = presenter;
     esp_err_t ret = presenter->ops->create_scheduled ?
                     presenter->ops->create_scheduled(&backend, &presenter->backend, config->background_service) :
                     presenter->ops->create(&backend, &presenter->backend);

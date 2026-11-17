@@ -66,6 +66,8 @@ struct esp_display_present_backend_config {
      * Caller context remains valid through successful stop. */
     esp_display_present_progress_fn on_progress;
     void *progress_user;
+    void (*on_work)(void *user);
+    void *work_user;
     bool tile_in_psram, image_in_psram, logical_in_psram;
     bool fixed_rotation; /* Runtime rotation preserves producer dimensions; physical view may transpose. */
     bool tx_staging; /* region async copies from external tiles to internal DMA conversion slots. */

@@ -177,6 +177,11 @@ static void round_area(lv_event_t *event)
     if (!area || area->x1 < 0 || area->y1 < 0 || area->x2 < area->x1 || area->y2 < area->y1) {
         return;
     }
+    if (binding->caps.image_count && binding->caps.contract != ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL &&
+            (uint32_t)area->x2 < binding->caps.draw_layout.width &&
+            (uint32_t)area->y2 < binding->caps.draw_layout.height) {
+        return;
+    }
     esp_display_present_rect_t dirty = {area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1}, render;
     esp_err_t error = esp_display_present_engine_resolve_render_area(binding->presenter, &dirty, &render);
     if (error != ESP_OK) {

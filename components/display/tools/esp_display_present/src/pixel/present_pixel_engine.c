@@ -76,17 +76,22 @@ static void finish_copy(esp_display_present_pixel_engine_t *engine, copy_record_
         engine->notification.task = present_current_task();
     }
     /* Publish while record ownership is stable, before callback can release it. */
-    present_os_event_t *changed = record->changed;
+    present_os_event_t *changed = record->waiting ? record->changed : NULL;
     present_lock_exit(&engine->sync.lock, false);
-    (void)present_event_signal(changed, false);
+    if (changed) {
+        (void)present_event_signal(changed, false);
+    }
     if (cb) {
         (void)cb(engine->notification.user, ticket, &status, false);
     }
     present_lock_enter(&engine->sync.lock, false);
     engine->notification.active = false;
     engine->lifecycle.executing = false;
+    bool signal_idle = engine->lifecycle.closing;
     present_lock_exit(&engine->sync.lock, false);
-    (void)present_event_signal(engine->sync.idle, false);
+    if (signal_idle) {
+        (void)present_event_signal(engine->sync.idle, false);
+    }
 }
 
 static void wake_worker(esp_display_present_pixel_engine_t *engine)
@@ -245,7 +250,9 @@ esp_err_t esp_display_present_pixel_submit(esp_display_present_pixel_engine_t *e
     if (result != ESP_OK) {
         return result;
     }
-    unsigned priority = engine->worker.asynchronous ? present_task_priority() : 0;
+    bool need_priority = engine->worker.asynchronous && !engine->worker.external &&
+                         !engine->worker.priority.initialized;
+    unsigned priority = need_priority ? present_task_priority() : 0;
     present_lock_enter(&engine->sync.lock, false);
     if (engine->lifecycle.closing) {
         present_lock_exit(&engine->sync.lock, false);

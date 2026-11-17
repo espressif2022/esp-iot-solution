@@ -259,7 +259,9 @@ static esp_display_present_copy_request_t baseline_copy(present_backend_t *backe
 static void copy_work_ready(void *context)
 {
     present_backend_t *backend = context;
-    if (backend->config.on_progress) {
+    if (backend->config.on_work) {
+        backend->config.on_work(backend->config.work_user);
+    } else if (backend->config.on_progress) {
         (void)backend->config.on_progress(backend->config.progress_user, false);
     }
 }
