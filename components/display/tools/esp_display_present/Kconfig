@@ -19,7 +19,7 @@ config ESP_DISPLAY_PRESENT_TE_STAGING_SLOT_BYTES
         to 64 bytes; account for both slots, their event and adapter metadata.
         Internal DMA compose images and direct PSRAM DMA allocate no slots.
 
-config PV2_LEGACY_CALLBACK_JOIN
+config ESP_DISPLAY_PRESENT_CALLBACK_JOIN
     bool
     default y
     select ESP_IPC_ENABLE if !ESP_SYSTEM_SINGLE_CORE_MODE
@@ -27,7 +27,7 @@ config PV2_LEGACY_CALLBACK_JOIN
         Borrowed display callbacks require a cross-core join before freeing
         their context. Enable the IDF IPC dependency as part of this component.
 
-config PV2_LEGACY_RGB_BOUNCE_CONFIRMED
+config ESP_DISPLAY_PRESENT_RGB_BOUNCE_CONFIRMED
     bool "Application confirms borrowed RGB panel uses bounce buffers"
     default n
     help

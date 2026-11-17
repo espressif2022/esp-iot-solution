@@ -307,8 +307,8 @@ esp_err_t esp_display_presenter_create(const esp_display_presenter_config_t *cfg
     presenter->producer.next_lease = 1;
     presenter->observer.timeline.generation = 1;
     bool bounce = false;
-#ifdef CONFIG_PV2_LEGACY_RGB_BOUNCE_CONFIRMED
-    bounce = CONFIG_PV2_LEGACY_RGB_BOUNCE_CONFIRMED;
+#ifdef CONFIG_ESP_DISPLAY_PRESENT_RGB_BOUNCE_CONFIRMED
+    bounce = CONFIG_ESP_DISPLAY_PRESENT_RGB_BOUNCE_CONFIRMED;
 #endif
     esp_err_t error = present_resources_create(cfg, bounce, vsync, presenter, &presenter->resources);
     if (error == ESP_OK) {
