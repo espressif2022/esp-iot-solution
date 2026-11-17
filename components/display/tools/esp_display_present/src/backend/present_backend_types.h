@@ -10,139 +10,135 @@
 extern "C" {
 #endif
 
+/** @brief Opaque normalized backend configuration forward declaration. */
 typedef struct esp_display_present_backend_config esp_display_present_backend_config_t;
+
+/** @brief Instance-scoped active frame handle (0 is invalid). */
 typedef struct {
-    uint64_t value;
+    uint64_t value; /**< Frame token value. */
 } esp_display_present_frame_t;
+
+/** @brief Instance-scoped sealed frame receipt handle (0 is invalid). */
 typedef struct {
-    uint64_t value;
+    uint64_t value; /**< Receipt token value. */
 } esp_display_present_receipt_t;
 
-/** Optional override when submitting a leased buffer.
- * - logical_area {0,0,0,0} uses the lease's acquired logical_area.
- * - non-zero logical_area must fit within the lease's capacity and screen
- *   bounds (supports acquire_buffer without a pre-chosen sub-rect).
- *   x/y are SCREEN coordinates. Pixel (0,0) always starts at buffer.pixels;
- *   this is not a crop of an already rendered larger surface for PARTITION.
- *   FB FULL/DIRECT instead use screen x/y as offsets in the full leased surface;
- *   their stride must equal the full surface stride.
- * - stride_bytes == 0 uses the tight row stride (logical_area.width *bpp) for
- *   PARTITION or the lease's surface.layout.stride_bytes for FULL/DIRECT. */
+/**
+ * @brief Optional area and stride override when submitting a leased buffer.
+ *
+ * - @c logical_area {0,0,0,0} uses the lease's acquired area; non-zero uses
+ *   screen coordinates and must fit capacity/bounds (offset in FULL/DIRECT).
+ * - @c stride_bytes == 0 selects tight stride (logical_area.width * bpp) for
+ *   PARTITION or the lease stride for FULL/DIRECT.
+ */
 typedef struct {
-    esp_display_present_rect_t logical_area;
-    size_t stride_bytes;
+    esp_display_present_rect_t logical_area; /**< Target logical screen area (or zero for lease default). */
+    size_t stride_bytes;                     /**< Row stride in bytes (or zero for default). */
 } esp_display_present_region_submit_t;
 
+/** @brief Completion guarantee requested when waiting on a frame receipt. */
 typedef enum {
-    ESP_DISPLAY_PRESENT_COMPLETION_SOURCE_RELEASED,
-    ESP_DISPLAY_PRESENT_COMPLETION_PRESENT_CONFIRMED,
+    ESP_DISPLAY_PRESENT_COMPLETION_SOURCE_RELEASED,   /**< Source buffers are no longer read by copy or panel transfer. */
+    ESP_DISPLAY_PRESENT_COMPLETION_PRESENT_CONFIRMED, /**< Panel confirmed presentation (VSYNC/scanout switch). */
 } esp_display_present_completion_point_t;
 
+/** @brief Backend frame receipt completion snapshot. */
 typedef struct {
-    bool sealed;
-    /** Conservative frame-source completion: accepted frame work has drained.
-     * May lag individual tile reuse; does not grant permission to write a
-     * retained scanout/baseline allocation. Acquire a new lease before writes.
-     * Terminal failure may release sources without confirming presentation. */
-    bool src_released;
-    bool present_confirmed;
-    bool terminal; /* No further progress for this frame receipt. */
-    esp_err_t result;
+    bool sealed;            /**< True once the frame has been sealed by end()/end_ex(). */
+    bool src_released;      /**< Accepted frame work drained; does not grant write access to retained scanout/baseline buffers. */
+    bool present_confirmed; /**< True once presentation was confirmed by hardware scanout/VSYNC. */
+    bool terminal;          /**< No further progress will occur for this frame receipt. */
+    esp_err_t result;       /**< First latched error or ESP_OK. */
 } esp_display_present_frame_status_t;
 
-/** Sticky first accepted-operation failure, retained until backend destruction,
- * including fire-and-forget frames. ESP_OK means no failure observed. */
+/** @brief Sticky first accepted-operation backend fault retained until destruction. */
 typedef struct {
-    esp_err_t result;
-    esp_display_present_frame_t frame;
-    uint64_t transaction_cookie;
+    esp_err_t result;              /**< First error observed (ESP_OK means no fault). */
+    esp_display_present_frame_t frame; /**< Frame associated with the fault, if any. */
+    uint64_t transaction_cookie;   /**< Panel transaction cookie associated with the fault, if any. */
 } esp_display_present_backend_fault_t;
 
-/** Adapter-normalized event. Platforms must define cookie correlation, event
- * ordering, and the precise buffer-retirement meaning. A raw VSYNC is not
- * automatically a scanout retirement event. */
+/**
+ * @brief Adapter-normalized panel/hardware event kind.
+ *
+ * Platforms must define cookie correlation and retirement semantics; raw VSYNC
+ * alone is not automatically a scanout retirement event.
+ */
 typedef enum {
-    ESP_DISPLAY_PRESENT_EVENT_TRANSFER_DONE,
-    ESP_DISPLAY_PRESENT_EVENT_SCANOUT_CONFIRMED,
-    ESP_DISPLAY_PRESENT_EVENT_TE_EDGE,
-    ESP_DISPLAY_PRESENT_EVENT_FAULT,
+    ESP_DISPLAY_PRESENT_EVENT_TRANSFER_DONE,     /**< Panel DMA/IO transfer completed. */
+    ESP_DISPLAY_PRESENT_EVENT_SCANOUT_CONFIRMED, /**< New framebuffer scanout activation and old retirement confirmed. */
+    ESP_DISPLAY_PRESENT_EVENT_TE_EDGE,           /**< Panel tearing-effect edge observed. */
+    ESP_DISPLAY_PRESENT_EVENT_FAULT,             /**< Asynchronous hardware/driver fault observed. */
 } esp_display_present_event_kind_t;
 
+/** @brief Normalized event delivered from a panel adapter. */
 typedef struct {
-    esp_display_present_event_kind_t kind;
-    uint64_t transaction_cookie;
-    uint64_t timestamp_us;
-    esp_err_t result;
+    esp_display_present_event_kind_t kind; /**< Normalized event kind. */
+    uint64_t transaction_cookie;           /**< Correlated hardware transaction cookie. */
+    uint64_t timestamp_us;                 /**< Event timestamp in monotonic microseconds. */
+    esp_err_t result;                      /**< Event status code. */
 } esp_display_present_backend_event_t;
 
-/** Driver adapter: rejected means no access and no callback; accepted/uncertain
- * consumes the source until completion or successful quiesce. */
+/** @brief Driver submission acceptance state returned by panel.submit(). */
 typedef enum {
-    ESP_DISPLAY_PRESENT_TX_REJECTED,
-    ESP_DISPLAY_PRESENT_TX_ACCEPTED,
-    ESP_DISPLAY_PRESENT_TX_UNCERTAIN,
+    ESP_DISPLAY_PRESENT_TX_REJECTED,  /**< Not accepted; no hardware access and no callback will fire. */
+    ESP_DISPLAY_PRESENT_TX_ACCEPTED,  /**< Accepted; source remains borrowed until completion or quiesce. */
+    ESP_DISPLAY_PRESENT_TX_UNCERTAIN, /**< Uncertain failure; source remains borrowed until completion or quiesce. */
 } esp_display_present_tx_acceptance_t;
 
+/** @brief Return value of panel.submit() combining acceptance and error status. */
 typedef struct {
-    esp_display_present_tx_acceptance_t acceptance;
-    esp_err_t result;
+    esp_display_present_tx_acceptance_t acceptance; /**< Driver acceptance status. */
+    esp_err_t result;                               /**< Driver error code (ESP_OK when accepted). */
 } esp_display_present_tx_result_t;
 
+/** @brief Panel adapter event callback invoked from ISR or task context. */
 typedef bool (*esp_display_present_panel_event_fn)(void *user, const esp_display_present_backend_event_t *event, bool from_isr);
 
+/**
+ * @brief Panel driver adapter interface borrowed by backends until successful stop.
+ */
 typedef struct {
-    void *context;
+    void *context; /**< Borrowed adapter context. */
     /**
-     * @brief Failure guarantees no callback registration remains.
+     * @brief Register panel event callback; failure guarantees no callback registration remains.
      *
      * @param context Borrowed implementation context.
-     * @param callback Completion callback, retained until successful quiesce.
+     * @param callback Completion callback retained until successful quiesce.
      * @param user Borrowed callback context.
-     * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
+     * @return ESP_OK on success, or an error code.
      */
     esp_err_t (*attach)(void *context, esp_display_present_panel_event_fn callback, void *user);
     /**
-     * @brief Descriptor valid during call. region/TE pixels until completion; FB pixels
-     * through continuous scanout until confirmed replacement or quiesce.
-     * Contract for region/IO panels: surface must be tightly packed
-     * (surface->layout.stride_bytes == area->width *bpp).
-     * Adapter performs peripheral DMA cache writeback on the tx buffer,
-     * associates cookies in strict FIFO/ID order, and may invoke completion
-     * before submit returns.
+     * @brief Submit a pixel surface region to the panel driver.
+     *
+     * Region/TE panels require packed stride and retain the buffer until completion;
+     * FB adapters retain the surface continuously until SCANOUT_CONFIRMED for its
+     * replacement proves old retirement (or quiesce succeeds).
      *
      * @param context Borrowed implementation context.
      * @param surface Borrowed pixel surface descriptor.
-     * @param area Input rectangle; see the coordinate and ownership contract above.
+     * @param area Target rectangle.
      * @param cookie Unique hardware transaction cookie.
-     * @return Acceptance and result; uncertain access remains borrowed.
+     * @return Acceptance and result; accepted/uncertain borrows the surface.
      */
     esp_display_present_tx_result_t (*submit)(void *context, const esp_display_present_surface_t *surface, const esp_display_present_rect_t *area, uint64_t cookie);
     /**
-     * @brief Success guarantees no accesses to framework-owned pixels and no
-     * active/future callbacks. An explicitly retained, immutable driver-owned
-     * external FB may continue scanout until its panel owner deletes it; it
-     * must never be freed by this backend. All other accesses must end.
-     * Failure leaves registration/resources valid for retry. Must honor total
-     * timeout budget; may safely abort hardware rather than finish display.
+     * @brief Drain in-flight accesses and callbacks within @p timeout_ms before unregistering.
      *
      * @param context Borrowed implementation context.
-     * @param timeout_ms Total wait budget in milliseconds; zero polls and UINT32_MAX waits indefinitely.
-     * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
+     * @param timeout_ms Total wait budget in milliseconds (0 polls, UINT32_MAX waits indefinitely).
+     * @return ESP_OK on success, or ESP_ERR_TIMEOUT / error.
      */
     esp_err_t (*quiesce)(void *context, uint32_t timeout_ms);
-    /* Task-only, nonblocking and idempotent. Stops future bands, never aborts DMA. */
+    /** @brief Optional nonblocking, idempotent abort hint stopping future bands (never aborts DMA). */
     void (*request_abort)(void *context);
 } esp_display_present_panel_adapter_t;
 
+/** @brief Backend progress/wakeup callback invoked outside locks (ISR-aware). */
 typedef bool (*esp_display_present_progress_fn)(void *user, bool from_isr);
 
-/** FB adapters borrow the current surface continuously until a successful
- * SCANOUT_CONFIRMED for its replacement proves BOTH new activation and old
- * retirement, or quiesce succeeds. TRANSFER_DONE/raw VSYNC is insufficient.
- * Completion receipt releases producer access, never the scanout allocation;
- * only a new lease grants write permission. External buffers must be exclusively
- * handed off, 64-byte aligned, disjoint, and live until successful stop. */
-
+/** @brief Opaque backend instance handle. */
 typedef struct present_backend present_backend_t;
 
 #ifdef __cplusplus
