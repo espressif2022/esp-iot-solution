@@ -14,95 +14,88 @@
 extern "C" {
 #endif
 
+/** @brief Clockwise logical-to-physical display rotation in degrees. */
 typedef enum {
-    ESP_DISPLAY_PRESENT_ROTATE_0 = 0,
-    ESP_DISPLAY_PRESENT_ROTATE_90 = 90,
-    ESP_DISPLAY_PRESENT_ROTATE_180 = 180,
-    ESP_DISPLAY_PRESENT_ROTATE_270 = 270,
+    ESP_DISPLAY_PRESENT_ROTATE_0 = 0,   /**< No rotation. */
+    ESP_DISPLAY_PRESENT_ROTATE_90 = 90, /**< 90 degrees clockwise. */
+    ESP_DISPLAY_PRESENT_ROTATE_180 = 180, /**< 180 degrees clockwise. */
+    ESP_DISPLAY_PRESENT_ROTATE_270 = 270, /**< 270 degrees clockwise. */
 } esp_display_present_rotation_t;
 
+/** @brief Pixel storage format. */
 typedef enum {
-    ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 = 0,
-    ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB888,
+    ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 = 0, /**< 16-bit RGB565. */
+    ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB888,     /**< 24-bit RGB888. */
 } esp_display_present_pixel_format_t;
 
 /**
- * Why a presenter latched a fault. A transfer timeout is a hardware-level
- * condition (for example bus jitter or a slow panel) that the application
- * may recover from by deleting and recreating the presenter; a producer
- * protocol fault is a producer-side bug and has no in-place recovery.
+ * @brief Why a presenter latched a fault.
+ *
+ * A transfer timeout is a hardware-level condition recoverable by deleting and
+ * recreating the presenter; a producer protocol fault is a producer bug with no
+ * in-place recovery.
  */
 typedef enum {
-    ESP_DISPLAY_PRESENT_FAULT_NONE = 0,
-    /** Ticket/order violation in the producer build or fence protocol. */
-    ESP_DISPLAY_PRESENT_FAULT_PRODUCER_PROTOCOL,
-    /** A panel transfer failed to complete within the configured budget.
-     * Reserved for an original error of ESP_ERR_TIMEOUT. */
-    ESP_DISPLAY_PRESENT_FAULT_TRANSFER_TIMEOUT,
-    /** An accepted transfer or copy failed for a non-timeout reason.
-     * Query esp_display_presenter_get_fault_error() for the original error. */
-    ESP_DISPLAY_PRESENT_FAULT_TRANSFER_FAILED,
+    ESP_DISPLAY_PRESENT_FAULT_NONE = 0,            /**< No fault recorded. */
+    ESP_DISPLAY_PRESENT_FAULT_PRODUCER_PROTOCOL,   /**< Ticket/order violation in producer build or fence protocol. */
+    ESP_DISPLAY_PRESENT_FAULT_TRANSFER_TIMEOUT,    /**< Panel transfer exceeded budget (original error ESP_ERR_TIMEOUT). */
+    ESP_DISPLAY_PRESENT_FAULT_TRANSFER_FAILED,     /**< Accepted transfer or copy failed for a non-timeout reason. */
 } esp_display_present_fault_reason_t;
 
-/** Memory domain of the active pixel storage. */
+/** @brief Memory domain of the active pixel storage. */
 typedef enum {
     ESP_DISPLAY_PRESENT_MEMORY_NONE = 0, /**< This pool is absent. */
-    ESP_DISPLAY_PRESENT_MEMORY_INTERNAL,
-    ESP_DISPLAY_PRESENT_MEMORY_PSRAM,
-    ESP_DISPLAY_PRESENT_MEMORY_MIXED,   /**< Driver framebuffers span both domains. */
-    ESP_DISPLAY_PRESENT_MEMORY_UNKNOWN, /**< The platform cannot identify borrowed storage. */
+    ESP_DISPLAY_PRESENT_MEMORY_INTERNAL, /**< Internal DMA-capable RAM. */
+    ESP_DISPLAY_PRESENT_MEMORY_PSRAM,    /**< External PSRAM. */
+    ESP_DISPLAY_PRESENT_MEMORY_MIXED,    /**< Driver framebuffers span both domains. */
+    ESP_DISPLAY_PRESENT_MEMORY_UNKNOWN,  /**< Platform cannot identify borrowed storage. */
 } esp_display_present_memory_domain_t;
 
-/** Opt-in performance statistics since the last reset. Durations are in microseconds. */
+/** @brief Opt-in performance statistics since the last reset (durations in microseconds). */
 typedef struct {
-    uint64_t frame_samples;       /**< Successful commits with a measured begin. */
-    uint64_t frame_p99_us;        /**< Begin-to-commit P99 upper bound (1 ms buckets, max for overflow). */
-    uint64_t buffer_waits;        /**< Begin/acquire calls that encountered buffer backpressure. */
-    uint64_t buffer_wait_timeouts;
-    uint64_t buffer_wait_us;      /**< Total time from first buffer denial to call return. */
-    uint64_t buffer_wait_max_us;
-    bool scanout_available;       /**< RGB/DPI scanout VSYNC counters are supported. */
-    uint64_t scanout_vsyncs;
+    uint64_t frame_samples;        /**< Successful commits with a measured begin. */
+    uint64_t frame_p99_us;         /**< Begin-to-commit P99 upper bound (1 ms buckets, max for overflow). */
+    uint64_t buffer_waits;         /**< Begin/acquire calls that encountered buffer backpressure. */
+    uint64_t buffer_wait_timeouts; /**< Begin/acquire calls that timed out waiting for a buffer. */
+    uint64_t buffer_wait_us;       /**< Total time from first buffer denial to call return. */
+    uint64_t buffer_wait_max_us;   /**< Maximum single buffer-wait duration in microseconds. */
+    bool scanout_available;        /**< RGB/DPI scanout VSYNC counters are supported. */
+    uint64_t scanout_vsyncs;       /**< Observed panel VSYNC count. */
     uint64_t scanout_supply_misses; /**< VSYNC intervals with backlog at the previous VSYNC and no confirmed switch. */
 } esp_display_presenter_metrics_t;
 
-/** Driver completion feedback. */
+/** @brief Driver completion feedback granularity. */
 typedef enum {
-    /** All frame transfers completed; no scanout event is available. */
-    ESP_DISPLAY_PRESENT_COMPLETION_TRANSFER = 0,
-    /** Hardware VSYNC available; confirmed_present_frame tracks display confirmation. */
-    ESP_DISPLAY_PRESENT_COMPLETION_FRAMEBUFFER,
+    ESP_DISPLAY_PRESENT_COMPLETION_TRANSFER = 0, /**< All frame transfers completed; no scanout event available. */
+    ESP_DISPLAY_PRESENT_COMPLETION_FRAMEBUFFER,  /**< Hardware VSYNC available; confirmed_present_frame tracks display confirmation. */
 } esp_display_present_completion_t;
 
-/** Frame and binding identity. Rotation changes generation; frame_id=0 means
- * commit failed. IDs are valid only during this presenter's lifetime. */
+/** @brief Frame and binding identity; rotation changes generation and frame_id=0 means commit failed. */
 typedef struct {
-    uint64_t frame_id; /**< Committed frame ID; zero on failure. */
+    uint64_t frame_id;   /**< Committed frame ID; zero on failure. */
     uint32_t generation; /**< Binding generation that issued this receipt. */
     bool display_tracked; /**< Only tracked receipts use confirmed_present_frame. */
 } esp_display_presenter_frame_receipt_t;
 
-/** Coherent frame timeline; zero means no frame has reached that point. */
+/** @brief Coherent frame timeline snapshot; zero means no frame has reached that point. */
 typedef struct {
-    uint32_t generation; /**< Current binding generation. */
-    uint64_t last_submitted_frame; /**< Latest submitted frame ID. */
-    uint64_t completed_transfer_frame; /**< Latest frame with completed transfers. */
-    /** Ownership fence; coalesced submissions do not prove every frame was displayed. */
-    uint64_t completed_present_frame;
-    /** Tracked frames only: switch fence plus two later RGB/MIPI VSYNCs. */
-    uint64_t confirmed_present_frame;
-    esp_display_present_completion_t completion; /**< Available driver completion feedback. */
+    uint32_t generation;                          /**< Current binding generation. */
+    uint64_t last_submitted_frame;                /**< Latest submitted frame ID. */
+    uint64_t completed_transfer_frame;            /**< Latest frame with completed transfers. */
+    uint64_t completed_present_frame;             /**< Ownership fence; coalesced submissions do not prove every frame was displayed. */
+    uint64_t confirmed_present_frame;             /**< Tracked frames only: switch fence plus two later RGB/MIPI VSYNCs. */
+    esp_display_present_completion_t completion;  /**< Available driver completion feedback. */
     esp_display_present_fault_reason_t fault_reason; /**< Latched transfer or protocol fault. */
-    /** Separate transfer queue; otherwise transfer follows the present fence. */
-    bool tracks_transfer;
-    bool accepting_callbacks; /**< Whether completion callbacks are currently accepted. */
+    bool tracks_transfer;                         /**< Separate transfer queue; otherwise transfer follows the present fence. */
+    bool accepting_callbacks;                     /**< Whether completion callbacks are currently accepted. */
 } esp_display_presenter_frame_status_t;
 
-/** Inclusive logical pixel area. */
+/**
+ * @brief Inclusive logical pixel area (closed interval [x1, x2] x [y1, y2]).
+ *
+ * Unlike GSP's open-interval gsp_rect_t, x2 and y2 name the last affected pixel.
+ */
 typedef struct {
-    /** Inclusive logical coordinates (closed interval): x2/y2 name the
-     *  last affected pixel. The GSP-side counterpart gsp_rect_t
-     *  (gsp_types.h) is open-interval [x1, x2) x [y1, y2). */
     int x1; /**< Left coordinate. */
     int y1; /**< Top coordinate. */
     int x2; /**< Right coordinate. */
@@ -110,9 +103,7 @@ typedef struct {
 } esp_display_present_area_t;
 
 /**
- * Producer raster-area requirements. Zero fields mean no extra alignment.
- * The presenter expands damage conservatively and clips it to the logical
- * display before returning render areas.
+ * @brief Producer raster-area alignment requirements (0 means no extra alignment).
  */
 typedef struct {
     uint16_t x_pixels;      /**< Required X-origin alignment in pixels. */
@@ -122,11 +113,7 @@ typedef struct {
 } esp_display_present_render_alignment_t;
 
 /**
- * Logical damage supplied when preparing a surface frame.
- *
- * The presenter may copy the previous displayed surface into the new draw
- * surface and may conservatively request a full raster when scroll state or
- * buffer history cannot be reused safely.
+ * @brief Logical damage supplied when preparing a surface frame.
  */
 typedef struct {
     const esp_display_present_area_t *dirty_areas; /**< Logical dirty areas. */

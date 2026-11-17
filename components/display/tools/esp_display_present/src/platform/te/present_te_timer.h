@@ -8,12 +8,15 @@
 #include <stdint.h>
 #include <stddef.h>
 
+/** @brief Opaque platform timer handle. */
 typedef struct present_te_timer present_te_timer_t;
+/** @brief Timer expiration callback invoked on the timer task/thread. */
 typedef void (*present_te_timer_callback_t)(void *user);
+/** @brief Create a platform TE phase timer. */
 esp_err_t present_te_timer_create(present_te_timer_callback_t callback, void *user, present_te_timer_t **out);
+/** @brief Arm @p timer for absolute monotonic deadline @p deadline_us. */
 esp_err_t present_te_timer_arm(present_te_timer_t *timer, uint64_t deadline_us);
-/* On failure the timer and callback context remain alive for a retry. */
+/** @brief Stop and destroy @p timer after joining callbacks within @p timeout_ms (retryable on failure). */
 esp_err_t present_te_timer_destroy(present_te_timer_t *timer, uint32_t timeout_ms);
-
-/* Framework-owned wrapper only; excludes esp_timer and host thread stack. */
+/** @brief Return framework-owned wrapper metadata bytes (excludes esp_timer and host thread stack). */
 size_t present_te_timer_memory(void);

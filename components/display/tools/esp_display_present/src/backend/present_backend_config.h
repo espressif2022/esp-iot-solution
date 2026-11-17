@@ -10,78 +10,63 @@
 extern "C" {
 #endif
 
-/* Advanced override. The default presenter_create path does not use this: it
- * binds the internal GPIO sampler after create and then clears any placeholder
- * window. Borrowed until stop; task-side admit
- * runs outside backend locks and may wait for a bounded hardware window.
- * TIMEOUT means no admission (retry), never sticky fault. A successful return
- * supplies the actual selected edge; rejected transfers must wait for a newer
- * edge. done is ISR-safe and observes real completion, or definite rejection.
- * No source ownership, image pools or frame lifecycle belongs to this policy. */
+/**
+ * @brief Advanced TE admission/completion gate override (borrowed until stop).
+ *
+ * Task-side @c admit runs outside backend locks; ESP_ERR_TIMEOUT retries on
+ * a newer edge without latching a fault. @c done is ISR-safe.
+ */
 typedef struct {
-    esp_err_t (*admit)(void *, size_t transfer_bytes, uint64_t after_edge, uint64_t *edge);
-    void (*start)(void *);
-    void (*done)(void *, esp_err_t);
-    void *user;
+    esp_err_t (*admit)(void *, size_t transfer_bytes, uint64_t after_edge, uint64_t *edge); /**< Admit transfer for the current TE window. */
+    void (*start)(void *);                                                                 /**< Notify transfer start. */
+    void (*done)(void *, esp_err_t);                                                       /**< Notify ISR/task transfer completion or definite rejection. */
+    void *user;                                                                            /**< Borrowed gate user context. */
 } esp_display_present_te_gate_t;
 
+/** @brief Normalized backend creation configuration. */
 struct esp_display_present_backend_config {
-    uint32_t width, height;     /* Logical dimensions seen by the producer. */
-    uint32_t tile_rows;         /* Presenter input tile height in PARTITION modes. */
-    size_t buffer_count;        /* 1..16 draw/frame buffers. */
-    size_t max_frames;          /* 1..32 bounded frame/receipt records. */
-    esp_display_present_engine_pixel_format_t format;
-    esp_display_present_byte_order_t draw_order;
-    esp_display_present_byte_order_t panel_order;
-    esp_display_present_engine_rotation_t rotation;    /* Logical-to-physical clockwise rotation. */
-    bool in_place;      /* True: swap byte order in-place on tight stride and revert on rejection. */
-    void *const *ext_bufs; /* Optional caller/driver-owned FB array (TE/FB). */
-    void *scan_buf; /* Optional member of ext_bufs already scanning; not writable until retired. */
-    size_t ext_bytes;  /* Capacity of each external buffer. */
-    esp_display_present_panel_adapter_t panel;  /* Borrowed until successful stop. */
-    /** TE only: measured safe window from edge and worst-case whole-frame
-     * transfer budget (including dispatch overhead). Both nonzero, budget < window.
-     * region ignores these fields. No hardware timing is inferred automatically. */
-    uint32_t te_window_us;
-    uint32_t te_budget_us;
-    /** FB: 1..3 framebuffers in buffer_count; PARTITION uses the input tile pool.
-     * FULL/DIRECT leases expose the whole candidate; submit coordinates index
-     * that full surface (not scratch origin). Zero defaults to PARTITION. */
-    esp_display_present_render_contract_t render_contract;
-    /** Single-FB is permitted only with explicit acceptance of active scanout
-     * writes/tearing. Cancel cannot roll back pixels already visible. */
-    bool active_writes;
-    /** Runs copy, repair and conversion jobs on the pixel worker.
-     * Defaults retain synchronous CPU operation.
-     * Executor must obey pixel_execute's return-means-access-ended contract.
-     * region async_copy requires separate conversion storage (no in_place). */
-    bool async_copy;
-    /** FB or single-image TE: service queued copies on the existing backend
-     * worker, outside the engine gate. Requires async_copy and background service.
-     * Dual-image TE keeps a dedicated copy worker for copy/transfer overlap. */
-    bool copy_on_backend_worker;
-    esp_display_present_pixel_execute_fn copy_execute;
-    void *copy_user;
-    /** Optional wake only, outside locks; cannot reenter backend task APIs.
-     * Caller context remains valid through successful stop. */
-    esp_display_present_progress_fn on_progress;
-    void *progress_user;
-    void (*on_work)(void *user);
-    void *work_user;
-    bool tile_in_psram, image_in_psram, logical_in_psram;
-    bool fixed_rotation; /* Runtime rotation preserves producer dimensions; physical view may transpose. */
-    bool tx_staging; /* region async copies from external tiles to internal DMA conversion slots. */
-    size_t transfer_capacity; /* region: 0 uses tile count. */
-    bool deferred_submit; /* Engine-owned region backend worker; READY slots retain pixels. */
-    /* TE: gate-held scheduling check before pin/admit; NULL keeps cooperative submit. */
-    bool (*can_submit)(void *user);
-    void *submit_user;
-    esp_display_present_te_gate_t te_gate; /* Explicit injection; default retains native timing model. */
-    esp_display_present_te_timing_t te_timing; /* period_us=0 retains the explicit fixed edge window. */
-    size_t tile_count; /* FB PARTIAL input tiles; 0 retains the legacy default of one. */
-    size_t compose_count; /* TE: 0 legacy serialized dual-image, explicit 1/2 enables pool scheduling. */
+    uint32_t width;                                    /**< Logical width seen by the producer. */
+    uint32_t height;                                   /**< Logical height seen by the producer. */
+    uint32_t tile_rows;                                /**< Input tile height in PARTITION modes. */
+    size_t buffer_count;                               /**< Draw or frame buffer count (1..16). */
+    size_t max_frames;                                 /**< Bounded frame/receipt record capacity (1..32). */
+    esp_display_present_engine_pixel_format_t format;  /**< Pixel format. */
+    esp_display_present_byte_order_t draw_order;       /**< Producer surface byte order. */
+    esp_display_present_byte_order_t panel_order;      /**< Panel hardware byte order. */
+    esp_display_present_engine_rotation_t rotation;    /**< Logical-to-physical clockwise rotation. */
+    bool in_place;                                     /**< Swap byte order in-place on tight stride and revert on rejection. */
+    void *const *ext_bufs;                             /**< Optional caller/driver-owned FB array (TE/FB). */
+    void *scan_buf;                                    /**< Optional member of @c ext_bufs currently scanning out. */
+    size_t ext_bytes;                                  /**< Capacity in bytes of each external buffer. */
+    esp_display_present_panel_adapter_t panel;         /**< Panel transport adapter (borrowed until successful stop). */
+    uint32_t te_window_us;                             /**< TE only: safe transfer window from edge in us. */
+    uint32_t te_budget_us;                             /**< TE only: worst-case full-frame transfer budget in us (< te_window_us). */
+    esp_display_present_render_contract_t render_contract; /**< Active contract (0 selects PARTITION). */
+    bool active_writes;                                /**< Permit active scanout writes (single-FB only). */
+    bool async_copy;                                   /**< Run copy/repair/conversion asynchronously via worker/queue. */
+    bool copy_on_backend_worker;                       /**< FB or single-image TE: drain copy queue on backend_worker outside engine gate. */
+    esp_display_present_pixel_execute_fn copy_execute; /**< Optional custom blocking pixel executor. */
+    void *copy_user;                                   /**< User context passed to @c copy_execute. */
+    esp_display_present_progress_fn on_progress;       /**< Optional wake callback invoked outside locks (cannot reenter APIs). */
+    void *progress_user;                               /**< User context passed to @c on_progress. */
+    void (*on_work)(void *user);                       /**< Optional wake callback when external copy work is queued. */
+    void *work_user;                                   /**< User context passed to @c on_work. */
+    bool tile_in_psram;                                /**< Prefer PSRAM for input tiles. */
+    bool image_in_psram;                               /**< Prefer PSRAM for compose images. */
+    bool logical_in_psram;                             /**< Prefer PSRAM for FULL logical staging canvas. */
+    bool fixed_rotation;                               /**< Preserve producer dimensions across runtime rotation (physical transposes). */
+    bool tx_staging;                                   /**< REGION: copy external tiles into internal DMA conversion slots. */
+    size_t transfer_capacity;                          /**< REGION: max in-flight transfers (0 uses tile count). */
+    bool deferred_submit;                              /**< REGION: defer READY slot submission to backend_worker. */
+    bool (*can_submit)(void *user);                    /**< TE: gate-held scheduling check before pin/admit. */
+    void *submit_user;                                 /**< User context passed to @c can_submit. */
+    esp_display_present_te_gate_t te_gate;             /**< Explicit TE gate override (zero uses native timing model). */
+    esp_display_present_te_timing_t te_timing;         /**< Native TE timing parameters (period_us=0 uses fixed window). */
+    size_t tile_count;                                 /**< FB PARTIAL input tile count (0 uses legacy 1). */
+    size_t compose_count;                              /**< TE compose image count (0 legacy serialized 2; explicit 1/2 pool). */
 };
 
+/** @brief Return true when an FB configuration requires a conversion/repair copy path. */
 static inline bool present_fb_needs_pixel_engine(const esp_display_present_backend_config_t *config)
 {
     return config->render_contract != ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL ||

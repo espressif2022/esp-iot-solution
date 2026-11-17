@@ -12,90 +12,101 @@
 extern "C" {
 #endif
 
+/** @brief Memory domain preference for a planned buffer pool. */
 typedef enum {
-    ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA,
-    ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL,
+    ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA, /**< Internal DMA-capable RAM. */
+    ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL,     /**< External PSRAM. */
 } esp_display_present_plan_memory_t;
+
+/** @brief Resolved buffer-dataflow topology. */
 typedef enum {
-    ESP_DISPLAY_PRESENT_TOPOLOGY_REGION,
-    ESP_DISPLAY_PRESENT_TOPOLOGY_TILE_TO_PHYSICAL,
-    ESP_DISPLAY_PRESENT_TOPOLOGY_DIRECT_SURFACE,
-    ESP_DISPLAY_PRESENT_TOPOLOGY_LOGICAL_TO_PHYSICAL,
+    ESP_DISPLAY_PRESENT_TOPOLOGY_REGION,             /**< Partial tiles directly to panel-IO (with optional conversion). */
+    ESP_DISPLAY_PRESENT_TOPOLOGY_TILE_TO_PHYSICAL,   /**< Partial tiles composed/copied into physical target frames. */
+    ESP_DISPLAY_PRESENT_TOPOLOGY_DIRECT_SURFACE,     /**< Direct rendering into physical framebuffers. */
+    ESP_DISPLAY_PRESENT_TOPOLOGY_LOGICAL_TO_PHYSICAL,/**< Full logical staging canvas converted to physical framebuffers. */
 } esp_display_present_plan_topology_t;
-/* tiles are presenter input buffers, not frontend buffers or TE compose images.
- * Independent pool quantities; zero selects defaults. Explicit overrides must
- * agree with named mode image counts. Memory kind is explicit; no implicit staging allocation. */
+
+/**
+ * @brief Planned pool counts and memory domains (zero selects defaults).
+ *
+ * @c tiles are presenter input buffers (distinct from TE compose images or FBs).
+ * Explicit overrides must agree with named mode counts.
+ */
 typedef struct {
-    size_t tile_count, image_count, logical_count, tx_capacity;
-    esp_display_present_plan_memory_t tile_memory, image_memory, logical_memory;
+    size_t tile_count;    /**< Partial input tile count (0 selects default). */
+    size_t image_count;   /**< Physical FB or TE compose image count (0 selects default). */
+    size_t logical_count; /**< Logical full-frame staging canvas count (0 selects default). */
+    size_t tx_capacity;   /**< Maximum in-flight panel transfers (0 selects default). */
+    esp_display_present_plan_memory_t tile_memory;    /**< Memory preference for tile pool. */
+    esp_display_present_plan_memory_t image_memory;   /**< Memory preference for image/FB pool. */
+    esp_display_present_plan_memory_t logical_memory; /**< Memory preference for logical staging canvas. */
 } esp_display_present_plan_resources_t;
+
+/** @brief Input configuration for planning a presentation engine. */
 typedef struct {
-    esp_display_present_engine_config_t presenter;
-    esp_display_present_plan_defaults_t defaults;
-    bool te_enabled; /* V1 AUTO only; does not invent TE timing measurements. */
-    esp_display_present_plan_resources_t resources;
-    esp_display_present_output_caps_t output;
-    /* Borrowed dispatcher and executors must outlive the created presenter.
-     * Resolve queries caps only; actual address probe remains mandatory. */
-    const esp_display_present_executor_dispatch_t *executor;
-    size_t extra_bytes; /* Driver, renderer and allocator overhead reservation. */
-    size_t total_budget_bytes; /* 0 unlimited; framework requests + caller reservation. */
-    size_t pixel_budget_bytes; /* 0 unlimited; includes borrowed pixel buffers. */
+    esp_display_present_engine_config_t presenter;  /**< Engine and backend base configuration. */
+    esp_display_present_plan_defaults_t defaults;   /**< Compatibility default policy. */
+    bool te_enabled;                                /**< Legacy AUTO hint; does not invent TE timing. */
+    esp_display_present_plan_resources_t resources; /**< Pool counts and memory domains. */
+    esp_display_present_output_caps_t output;       /**< Target output alignments and memory capabilities. */
+    const esp_display_present_executor_dispatch_t *executor; /**< Optional borrowed hardware/fallback executor dispatch. */
+    size_t extra_bytes;                             /**< Caller reservation for driver/renderer/allocator overhead. */
+    size_t total_budget_bytes;                      /**< Total budget ceiling in bytes (0 unlimited). */
+    size_t pixel_budget_bytes;                      /**< Pixel pool budget ceiling in bytes (0 unlimited, includes borrowed buffers). */
 } esp_display_present_plan_config_t;
+
+/** @brief Planned capacity and memory domain for a single buffer pool. */
 typedef struct {
-    size_t count, bytes_each, total_bytes;
-    esp_display_present_layout_t layout;
-    esp_display_present_plan_memory_t memory;
-    bool borrowed;
+    size_t count;       /**< Number of buffers in this pool. */
+    size_t bytes_each;  /**< Aligned capacity of each buffer in bytes. */
+    size_t total_bytes; /**< Total planned bytes across all buffers in this pool. */
+    esp_display_present_layout_t layout;       /**< Buffer surface layout. */
+    esp_display_present_plan_memory_t memory;  /**< Memory domain selected for this pool. */
+    bool borrowed;                             /**< True when buffers are driver/caller-owned. */
 } esp_display_present_plan_pool_t;
-/* Memory accounting uses three distinct quantities; do not conflate them.
- * - Peak resource budget (pixel_bytes / required_bytes): an estimate over
- *   every supported path, including borrowed buffers and the caller
- *   reservation. An async REGION plan counts the full conversion pool even
- *   when the identity path has not allocated any of it.
- * - Pool planned capacity (each pool's count / bytes_each / total_bytes):
- *   how many buffers of what size in which memory a path may need at most.
- * - Current actual allocation: what a backend has allocated and holds right
- *   now. Lazy paths (e.g. packing a non-tight REGION source) can be below
- *   planned capacity. Runtime rotation reserves its required conversion
- *   storage before committing the new layout.
- * Passing a budget check reserves no heap memory. */
+
+/**
+ * @brief Resolved plan with normalized engine config, pools, and peak memory budgets.
+ *
+ * Distinguishes peak resource budget (@c pixel_bytes / @c required_bytes),
+ * pool planned capacity, and actual runtime allocation; passing resolution
+ * reserves no heap memory.
+ */
 typedef struct {
-    esp_display_present_engine_config_t normalized;
-    esp_display_present_plan_topology_t topology;
-    esp_display_present_layout_t logical_layout, physical_layout;
-    esp_display_present_plan_pool_t tiles, images, logical, conversion;
-    esp_display_present_output_caps_t output;
-    size_t tx_capacity, record_capacity, base_alignment;
-    size_t pixel_bytes, coverage_bytes; /* Peak pixel budget. coverage_bytes budgets a worst-case lazy bitmap, not a resident allocation. */
-    size_t metadata_bytes, stack_bytes, reserved_bytes, required_bytes;
-    /* reserved_bytes is exactly the caller's extra_bytes from the plan
-     * config; it is not a conversion-pool or heap reservation.
-     * required_bytes is the peak budget: pixel + coverage + framework
-     * metadata + requested task stacks + caller reservation. Add
-     * driver/renderer/allocator overhead through extra_bytes. Host pthread
-     * stack size is OS-defined. */
-    const esp_display_present_executor_t *preferred_executor;
-    esp_display_present_executor_reason_t executor_reason;
-    bool probe_addrs;
+    esp_display_present_engine_config_t normalized; /**< Normalized engine configuration ready for creation. */
+    esp_display_present_plan_topology_t topology;   /**< Selected buffer-flow topology. */
+    esp_display_present_layout_t logical_layout;    /**< Logical producer layout. */
+    esp_display_present_layout_t physical_layout;   /**< Physical panel layout. */
+    esp_display_present_plan_pool_t tiles;          /**< Planned partial input tile pool. */
+    esp_display_present_plan_pool_t images;         /**< Planned FB or TE compose pool. */
+    esp_display_present_plan_pool_t logical;        /**< Planned logical staging canvas pool. */
+    esp_display_present_plan_pool_t conversion;     /**< Planned REGION conversion/staging pool. */
+    esp_display_present_output_caps_t output;       /**< Resolved output capabilities and alignments. */
+    size_t tx_capacity;                             /**< Resolved max in-flight transfers. */
+    size_t record_capacity;                         /**< Frame record capacity. */
+    size_t base_alignment;                          /**< Required power-of-two buffer base alignment in bytes. */
+    size_t pixel_bytes;                             /**< Peak pixel pool budget across all planned pools. */
+    size_t coverage_bytes;                          /**< Worst-case lazy coverage bitmap budget in bytes. */
+    size_t metadata_bytes;                          /**< Framework metadata allocation estimate in bytes. */
+    size_t stack_bytes;                             /**< Peak worker task stack budget in bytes. */
+    size_t reserved_bytes;                          /**< Caller @c extra_bytes reservation (not heap-allocated). */
+    size_t required_bytes;                          /**< Total peak budget: pixel + coverage + metadata + stack + reserved. */
+    const esp_display_present_executor_t *preferred_executor; /**< Executor selected during capability check. */
+    esp_display_present_executor_reason_t executor_reason;    /**< Primary executor selection or fallback reason. */
+    bool probe_addrs;                               /**< True when runtime address probing is required. */
 } esp_display_present_resolved_plan_t;
 
-/* Pure planning: no allocation/attach/driver calls; get_caps only. Invalid or
- * unsupported physical constraints return errors. */
+/** @brief Resolve and validate a plan configuration without allocating memory or calling drivers. */
 esp_err_t esp_display_present_plan_resolve(const esp_display_present_plan_config_t *config, esp_display_present_resolved_plan_t *plan);
-/* Dirty L -> aligned P -> required render L, before rasterization. No clipping
- * of an expanded physical edge that would violate alignment. No pixel reads. */
+
+/** @brief Map dirty logical area @p dirty to aligned @p physical and expanded @p render logical area without clipping. */
 esp_err_t esp_display_present_plan_render_area(const esp_display_present_resolved_plan_t *plan, const esp_display_present_rect_t *dirty,
                                                esp_display_present_rect_t *render, esp_display_present_rect_t *physical);
-/** Re-resolves rather than trusting a caller-mutated plan before allocation or attachment. */
+
+/** @brief Re-resolve @p config and create a presentation engine before any allocation or attachment. */
 esp_err_t esp_display_present_engine_create_planned(const esp_display_present_plan_config_t *config, esp_display_present_engine_t **out);
-/* Internal single-resolve entry: resolves once, reports the exact plan that
- * was used for creation in out_plan (set after a successful resolve, before
- * creation is attempted), and creates from it. Callers that retry with a
- * mutated config must call again so out_plan always matches the final
- * attempt. This does not remove the re-validation in
- * esp_display_present_engine_create_planned(), which stays the external
- * boundary for untrusted plan configs. */
+
+/** @brief Internal single-resolve creation entry returning the resolved @p out_plan used for creation. */
 esp_err_t present_engine_create_with_plan(const esp_display_present_plan_config_t *config,
                                           esp_display_present_resolved_plan_t *out_plan,
                                           esp_display_present_engine_t **out);

@@ -9,9 +9,9 @@
 extern "C" {
 #endif
 
-/* Engine-only fast path. Submit validated this unchanged request before
- * queueing; caller keeps both surfaces alive and serializes overlapping writes.
- * Executes synchronously without validation, allocation, tickets or callbacks. */
+/**
+ * @brief Internal validated CPU fast-path copy (caller guarantees pre-validated, serialized surfaces).
+ */
 void present_pixel_copy_cpu_validated(const esp_display_present_copy_request_t *request);
 
 #ifdef __cplusplus

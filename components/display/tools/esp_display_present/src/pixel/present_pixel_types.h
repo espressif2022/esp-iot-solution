@@ -10,25 +10,29 @@
 extern "C" {
 #endif
 
+/** @brief Read-only pixel source descriptor. */
 typedef struct {
-    const void *pixels;
-    size_t capacity_bytes;
-    esp_display_present_layout_t layout;
+    const void *pixels;                  /**< Source pixel buffer base pointer. */
+    size_t capacity_bytes;               /**< Total readable capacity in bytes. */
+    esp_display_present_layout_t layout; /**< Source dimensions, stride, format, and byte order. */
 } esp_display_present_source_t;
 
+/** @brief Bounded pixel copy/rotate/byte-swap operation descriptor. */
 typedef struct {
-    esp_display_present_source_t src;
-    esp_display_present_surface_t dst;
-    esp_display_present_rect_t src_area;
-    uint32_t dst_x, dst_y;
-    esp_display_present_engine_rotation_t rotation; /* Clockwise around src_area, then translate. */
+    esp_display_present_source_t src;  /**< Read-only source surface. */
+    esp_display_present_surface_t dst; /**< Writable destination surface. */
+    esp_display_present_rect_t src_area; /**< Source sub-rectangle to copy. */
+    uint32_t dst_x;                      /**< Destination X origin in pixels. */
+    uint32_t dst_y;                      /**< Destination Y origin in pixels. */
+    esp_display_present_engine_rotation_t rotation; /**< Clockwise rotation around @c src_area before placing at dst. */
 } esp_display_present_copy_request_t;
 
-/** Optional blocking executor, called only by the engine worker. On return
- * ALL reads/writes must have ended, even on failure. Hardware implementations
- * must drain/abort safely before returning; an uncertain DMA error cannot be
- * returned as terminal failure while hardware still owns memory. Borrowed
- * context stays valid until successful stop. NULL executes the CPU reference. */
+/**
+ * @brief Optional blocking pixel executor callback.
+ *
+ * On return, all hardware/CPU reads and writes must have ended even on failure.
+ * NULL uses the CPU reference implementation.
+ */
 typedef esp_err_t (*esp_display_present_pixel_execute_fn)(void *user, const esp_display_present_copy_request_t *request);
 
 #ifdef __cplusplus

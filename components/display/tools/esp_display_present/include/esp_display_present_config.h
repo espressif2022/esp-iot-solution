@@ -18,81 +18,69 @@
 extern "C" {
 #endif
 
+/** @brief Maximum supported driver framebuffers per panel. */
 #define ESP_DISPLAY_PRESENT_MAX_FRAME_BUFFERS 3U
 
+/** @brief Panel transport category. */
 typedef enum {
-    ESP_DISPLAY_PRESENT_PANEL_AUTO = 0,
-    ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI,
-    ESP_DISPLAY_PRESENT_PANEL_RGB,
-    ESP_DISPLAY_PRESENT_PANEL_IO,
+    ESP_DISPLAY_PRESENT_PANEL_AUTO = 0,  /**< Infer panel transport from handles (Panel-IO when io is set). */
+    ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI,  /**< MIPI-DSI video-mode framebuffer panel. */
+    ESP_DISPLAY_PRESENT_PANEL_RGB,       /**< RGB interface framebuffer panel. */
+    ESP_DISPLAY_PRESENT_PANEL_IO,        /**< Panel-IO / GRAM command-interface panel (SPI, QSPI, I80). */
 } esp_display_present_panel_t;
 
+/** @brief Public presentation mode requested by the caller. */
 typedef enum {
-    /** Panel-IO direct transfer without tearing avoidance. Unsupported for RGB/MIPI scanout. */
-    ESP_DISPLAY_PRESENT_MODE_NONE = 0,
-    /** Double buffering with full frame buffers. */
-    ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL,
-    /** Triple buffering with full frame buffers. */
-    ESP_DISPLAY_PRESENT_MODE_TRIPLE_FULL,
-    /** Double buffering with direct dirty-area rendering into full buffers. */
-    ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT,
-    /** Triple buffering with partial/partition refresh. */
-    ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL,
-    /** TE GPIO synchronized direct transfer for SPI/I80/QSPI panels. */
-    ESP_DISPLAY_PRESENT_MODE_TE_SYNC,
-    /** Double buffering with partial/partition refresh. */
-    ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL,
-    /** RGB/MIPI: prefer TRIPLE_PARTIAL with 3 FBs, DOUBLE_PARTIAL with 2; reject 1.
-     * Panel IO retains selection from valid TE configuration. */
-    ESP_DISPLAY_PRESENT_MODE_AUTO,
+    ESP_DISPLAY_PRESENT_MODE_NONE = 0,       /**< Panel-IO direct transfer without tearing avoidance. */
+    ESP_DISPLAY_PRESENT_MODE_DOUBLE_FULL,    /**< Double buffering with full frame buffers. */
+    ESP_DISPLAY_PRESENT_MODE_TRIPLE_FULL,    /**< Triple buffering with full frame buffers. */
+    ESP_DISPLAY_PRESENT_MODE_DOUBLE_DIRECT,  /**< Double buffering with direct dirty-area rendering into full buffers. */
+    ESP_DISPLAY_PRESENT_MODE_TRIPLE_PARTIAL, /**< Triple buffering with partial/partition refresh. */
+    ESP_DISPLAY_PRESENT_MODE_TE_SYNC,        /**< TE GPIO synchronized transfer for SPI/I80/QSPI panels. */
+    ESP_DISPLAY_PRESENT_MODE_DOUBLE_PARTIAL, /**< Double buffering with partial/partition refresh. */
+    ESP_DISPLAY_PRESENT_MODE_AUTO,           /**< Resolve FB 2/3 buffers to PARTIAL, or Panel-IO by TE config. */
 } esp_display_present_mode_t;
 
-/** Optional panel TE sync. A zeroed config is disabled; gpio 0 is valid, so
- *  set @c te_enabled when a TE line is wired.
+/**
+ * @brief Optional panel TE synchronization settings.
  *
- *  Frame/blanking/transfer timing is measured at runtime. @c bus_freq_hz and
- *  @c data_lines only seed the first-frame transfer estimate before a real
- *  transfer duration has been observed. */
+ * A zeroed config is disabled; GPIO 0 is valid, so set @c te_enabled when a TE
+ * line is wired. Frame/blanking/transfer timing is measured at runtime; @c
+ * bus_freq_hz and @c data_lines only seed the first-frame estimate.
+ */
 typedef struct {
     int gpio_num;         /**< TE input GPIO number, or -1 when disabled. */
     uint32_t bus_freq_hz; /**< Initial panel-bus frequency estimate in hertz. */
     uint8_t data_lines;   /**< Number of panel-bus data lines. */
 } esp_display_present_te_sync_config_t;
 
+/** @brief Initializer for a disabled TE sync configuration. */
 #define ESP_DISPLAY_PRESENT_TE_SYNC_DISABLED() \
     (esp_display_present_te_sync_config_t) { .gpio_num = -1 }
 
 /**
- * Panel / bus hardware fact. Borrowed handles stay valid until presenter
- * deletion.
+ * @brief Panel and bus hardware descriptor (borrowed handles must outlive presenter deletion).
  *
- * RGB and MIPI-DPI have no distinct generic handle shape, so set
- * @c panel_type explicitly for them. Panel-IO/GRAM may use AUTO when @c io
- * is supplied.
+ * RGB and MIPI-DSI share generic handle shapes, so set @c panel_type explicitly
+ * for them; Panel-IO may use AUTO when @c io is supplied.
  */
 typedef struct {
     esp_lcd_panel_handle_t panel; /**< Borrowed initialized panel handle. */
-    /** Required for panel-IO/GRAM transfers; otherwise optional. */
-    esp_lcd_panel_io_handle_t io;
+    esp_lcd_panel_io_handle_t io; /**< Required for panel-IO/GRAM transfers; otherwise optional. */
     esp_display_present_panel_t panel_type; /**< Panel transport category. */
-    /** Pixel format accepted by the initialized panel data path. */
-    esp_display_present_pixel_format_t input_pixel_format;
+    esp_display_present_pixel_format_t input_pixel_format; /**< Pixel format accepted by the initialized panel data path. */
     esp_display_present_rotation_t rotation; /**< Logical-to-physical rotation. */
-    /** Panel-IO RGB565 wire byte swap. Leave false for native RGB/MIPI
-     * framebuffer layouts. */
-    bool swap_bytes;
+    bool swap_bytes; /**< Panel-IO RGB565 wire byte swap; leave false for native RGB/MIPI layouts. */
     bool te_enabled; /**< Whether TE synchronization is enabled. */
     esp_display_present_te_sync_config_t te_sync; /**< TE synchronization settings. */
-    bool spi_psram_dma_direct; /**< Must match the SPI IO creation flag. Fallback when driver memory query is unavailable; a successful query takes precedence. */
+    bool spi_psram_dma_direct; /**< Must match SPI IO creation flag; fallback when driver memory query is unavailable. */
 } esp_display_present_hw_config_t;
 
 /**
- * Frame-buffer present profile (RGB / MIPI paths).
+ * @brief Frame-buffer presentation profile for RGB and MIPI-DSI paths.
  *
- * frame_buffers are borrowed for the presenter's lifetime; each buffer must
- * hold the resolved physical frame and satisfy the panel driver's DMA/cache
- * alignment contract. A zero frame_buffer_count asks the component to fetch
- * driver-owned RGB/MIPI framebuffers. Ignored for GRAM partition targets.
+ * Borrowed @c frame_buffers must outlive the presenter and satisfy the driver's
+ * DMA/cache alignment contract; a zero @c frame_buffer_count queries the driver pool.
  */
 typedef struct {
     esp_display_present_mode_t mode; /**< Requested presentation mode. */
@@ -101,38 +89,23 @@ typedef struct {
 } esp_display_present_fb_config_t;
 
 /**
- * Producer input-buffer policy. In PARTITION modes each draw buffer is one
- * presenter tile; lines, buffers and in_psram configure that tile pool.
- * A frontend may borrow the tiles or use its own separate draw buffer.
- * TE compose images and panel framebuffers are separate from the tile pool.
+ * @brief Producer draw-buffer policy (tile pool in PARTITION modes, plus TE compose count).
  */
 typedef struct {
-    uint16_t lines; /**< Input tile rows; 0 uses the configured default byte target. */
-    /**
-     * Number of input tiles (1 or 2). 0 selects an automatic count based on
-     * the mode, target and available internal DMA memory. Creation may retry
-     * with one tile when an automatically selected pair cannot be allocated.
-     */
-    uint8_t buffers;
-    bool in_psram; /**< Prefer PSRAM for input tiles when available. */
-    /**
-     * TE_SYNC full-screen compose buffers. 0/1 selects one compose image;
-     * it cannot be rewritten while its transfer is in flight. 2 allows
-     * composition into the next image during an in-flight GRAM transfer.
-     * This count does not select synchronous/asynchronous pixel processing.
-     */
-    uint8_t te_compose_buffers;
+    uint16_t lines;   /**< Input tile rows; 0 uses the configured default byte target. */
+    uint8_t buffers;  /**< Input tile count (1 or 2; 0 selects automatically with 2->1 fallback). */
+    bool in_psram;    /**< Prefer PSRAM for input tiles when available. */
+    uint8_t te_compose_buffers; /**< TE_SYNC full-screen compose buffers (0/1 single, 2 pipelined). */
 } esp_display_present_drawbuf_config_t;
 
-/** Driver submission context for synchronous Panel-IO NONE only.
- * Other paths require DEFAULT; their scheduling is selected internally. */
+/** @brief Driver submission context for synchronous Panel-IO NONE only. */
 typedef enum {
     ESP_DISPLAY_PRESENT_IO_SUBMIT_DEFAULT = 0, /**< Use the build's compatibility default. */
     ESP_DISPLAY_PRESENT_IO_SUBMIT_CALLER,      /**< Submit from the producer task; may block. */
     ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND,  /**< Submit from the display-progress task. */
 } esp_display_present_io_submit_t;
 
-/** Target hardware, presentation policy and endpoint memory configuration. */
+/** @brief Target hardware, presentation policy and endpoint memory configuration. */
 typedef struct {
     esp_display_present_hw_config_t hw; /**< Panel and bus configuration. */
     esp_display_present_fb_config_t fb; /**< Framebuffer presentation policy. */

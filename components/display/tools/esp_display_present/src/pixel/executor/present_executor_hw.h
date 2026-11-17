@@ -24,8 +24,7 @@
 #endif
 #endif
 
-/* Earlier SDKs lack a per-address MSPI alignment query. Admit ordinary RAM
- * only; strict external-memory modes retain pre-submission CPU fallback. */
+/** @brief Query required MSPI/DMA alignment constraint for @p pixels (SIZE_MAX when unsupported). */
 static inline size_t hw_memory_alignment(const void *pixels)
 {
 #if PRESENT_IDF_DMA2D_ALIGNMENT_API
@@ -46,8 +45,7 @@ static inline size_t hw_memory_alignment(const void *pixels)
 #endif
 #endif
 }
-/* Match the driver's extended destination rows, including quarter-turn height.
- * The allocation is exclusively borrowed; aligned edge lines remain inside it. */
+/** @brief Compute aligned destination cache-sync band covering transformed @p request rows. */
 static bool destination_band(const esp_display_present_copy_request_t *request, size_t alignment,
                              void **address, size_t *bytes)
 {
@@ -80,9 +78,7 @@ static inline esp_err_t hw_sync(void *pixels, size_t bytes, int flags)
     return e == ESP_ERR_NOT_SUPPORTED ? ESP_OK : e;
 }
 
-/* Hardware reads complete source rows. Keep the request inside the declared
- * surface and let the cache API handle unaligned first/last lines instead of
- * extending into allocator padding that is not part of the surface contract. */
+/** @brief Writeback cache lines for declared source rows without reading outside surface bounds. */
 static inline esp_err_t hw_sync_source(const esp_display_present_copy_request_t *request)
 {
     size_t stride = request->src.layout.stride_bytes;
@@ -96,6 +92,7 @@ static inline esp_err_t unsupported(esp_display_present_executor_reason_t *reaso
     *reason = why;
     return ESP_ERR_NOT_SUPPORTED;
 }
+/** @brief Common pre-execution probe checks shared by DMA2D and PPA hardware executors. */
 static inline esp_err_t hw_probe(const esp_display_present_copy_request_t *request, esp_display_present_executor_reason_t *reason,
                                  void **band, size_t *band_bytes)
 {

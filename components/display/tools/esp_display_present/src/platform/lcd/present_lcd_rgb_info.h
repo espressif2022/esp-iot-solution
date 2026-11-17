@@ -7,23 +7,28 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "esp_lcd_panel_ops.h"
-/* Private platform/BSP boundary, not a presenter application configuration.
- * Describe the initialized panel, never a preferred completion protocol. */
+/**
+ * @brief Private platform/BSP RGB panel description (never encodes policy preferences).
+ */
 typedef struct {
-    uint32_t width, height;
-    size_t frame_buffer_count, frame_buffer_bytes, bounce_buffer_bytes;
-    unsigned bits_per_pixel;
-    bool continuous_refresh, custom_bounce_callback, transformed;
+    uint32_t width;                 /**< Panel width in pixels. */
+    uint32_t height;                /**< Panel height in pixels. */
+    size_t frame_buffer_count;      /**< Driver-allocated framebuffer count. */
+    size_t frame_buffer_bytes;      /**< Size of each framebuffer in bytes. */
+    size_t bounce_buffer_bytes;     /**< Bounce buffer size in bytes (0 when unused). */
+    unsigned bits_per_pixel;        /**< Panel bits per pixel. */
+    bool continuous_refresh;        /**< True when continuous RGB scanout is active. */
+    bool custom_bounce_callback;    /**< True when custom bounce callback is registered. */
+    bool transformed;               /**< True when driver-level transform is enabled. */
 } present_lcd_rgb_info_t;
+
+/** @brief Authoritative RGB panel facts paired with safe-retirement support flag. */
 typedef struct {
-    present_lcd_rgb_info_t panel;
-    bool retirement;
+    present_lcd_rgb_info_t panel; /**< Initialized RGB panel parameters. */
+    bool retirement;              /**< True if safe framebuffer retirement semantics are guaranteed. */
 } present_lcd_rgb_facts_t;
-/* Driver query has precedence. NOT_FOUND means no facts are available, not
- * that a known configuration is unsupported. Other errors fail closed. */
+
+/** @brief Query RGB panel facts (driver query takes precedence; ESP_ERR_NOT_FOUND when unavailable). */
 esp_err_t present_lcd_rgb_get_facts(esp_lcd_panel_handle_t panel, present_lcd_rgb_facts_t *facts);
-/* Optional private BSP binding for IDF versions without a driver query.
- * Default returns NOT_FOUND. A binding must match the handle and panel lifetime,
- * report actual initialization and subsequent transforms, and return NOT_FOUND
- * for handles it does not own. It does not intercept or alter LCD APIs. */
+/** @brief Optional BSP hook providing RGB panel info when driver query is unavailable. */
 esp_err_t present_lcd_rgb_get_board_info(esp_lcd_panel_handle_t panel, present_lcd_rgb_info_t *info);

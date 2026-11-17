@@ -11,36 +11,41 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* Explicit linear full-frame model: panel scan and writer traverse rows in the
- * same physical direction. transfer_us is the exact modeled duration for the
- * full transfer, not a bound sufficient to prove safety for all other speeds:
- * a faster writer can catch up with the scan. Callers must establish the scan
- * timing, phase and duration envelope and account for their uncertainty when
- * deciding whether this model applies. A single observation, estimate, or
- * transfer-duration upper bound alone does not prove a tear-free window.
- * Scan starts edge_to_scan_us after the selected TE edge. No implicit polarity.
- * A segmented/burst writer must NOT use this model without a proven envelope. */
+/**
+ * @brief Linear full-frame TE scan/transfer model parameters (pure arithmetic, no GPIO/timer).
+ */
 typedef struct {
-    uint64_t period_us, scan_us, edge_to_scan_us, guard_us, jitter_us;
+    uint64_t period_us;       /**< Full TE period in microseconds (0 disables model). */
+    uint64_t scan_us;         /**< Active panel scan duration in microseconds. */
+    uint64_t edge_to_scan_us; /**< Delay from selected TE edge to scan start in microseconds. */
+    uint64_t guard_us;        /**< Safety margin in microseconds. */
+    uint64_t jitter_us;       /**< Expected edge/dispatch jitter in microseconds. */
 } esp_display_present_te_timing_t;
+
+/** @brief TE transfer window admission outcome. */
 typedef enum {
-    ESP_DISPLAY_PRESENT_TE_ALLOW,
-    ESP_DISPLAY_PRESENT_TE_WAIT,
-    ESP_DISPLAY_PRESENT_TE_UNPROVEN,
-    ESP_DISPLAY_PRESENT_TE_UNSUPPORTED,
+    ESP_DISPLAY_PRESENT_TE_ALLOW,       /**< Transfer fits safely within the current TE window. */
+    ESP_DISPLAY_PRESENT_TE_WAIT,        /**< Wait for window opening or next TE edge. */
+    ESP_DISPLAY_PRESENT_TE_UNPROVEN,    /**< Insufficient measured evidence to admit transfer safely. */
+    ESP_DISPLAY_PRESENT_TE_UNSUPPORTED, /**< Modeled transfer cannot fit in the TE window. */
 } esp_display_present_te_admission_t;
+
+/** @brief Evaluated TE transfer admission result and safe phase bounds. */
 typedef struct {
-    esp_display_present_te_admission_t admission;
-    uint64_t earliest_phase_us, latest_phase_us;
+    esp_display_present_te_admission_t admission; /**< Admission decision. */
+    uint64_t earliest_phase_us;                   /**< Earliest safe start phase from edge in us. */
+    uint64_t latest_phase_us;                     /**< Latest safe start phase from edge in us. */
 } esp_display_present_te_window_t;
+
+/** @brief Evaluate TE window admission for @p transfer_us at @p now_us relative to @p edge_us. */
 esp_display_present_te_window_t esp_display_present_te_window(const esp_display_present_te_timing_t *, uint64_t transfer_us,
                                                               uint64_t edge_us, uint64_t now_us, bool measured);
 
-/* Return the next opening of this measured edge's window, if it lies later
- * in the same edge-to-edge period. If false, wait for a real subsequent edge:
- * a predicted future period must not be treated as a measured edge. The
- * absolute timestamp is written only on success. `window` must be the WAIT
- * result returned for these same timing, edge and now values. */
+/**
+ * @brief Compute the next opening timestamp inside the current measured edge-to-edge period.
+ *
+ * Returns false if the caller must wait for a real subsequent TE edge.
+ */
 bool present_te_next_open(const esp_display_present_te_timing_t *timing,
                           const esp_display_present_te_window_t *window,
                           uint64_t edge_us, uint64_t now_us, uint64_t *next_us);

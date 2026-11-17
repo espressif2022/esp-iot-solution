@@ -37,19 +37,27 @@ typedef struct {
     bool repair_ready, full_covered, bitmap_dirty;
     size_t repaired_pixels;
 } present_image_builder_t;
+/** @brief Initialize image coverage/repair bookkeeping for @p width x @p height. */
 esp_err_t present_image_init(present_image_builder_t *, uint32_t, uint32_t);
+/** @brief Release image bookkeeping resources. */
 void present_image_deinit(present_image_builder_t *);
+/** @brief Reset image bookkeeping and baselines for new dimensions. */
 void present_image_reset(present_image_builder_t *, uint32_t, uint32_t);
+/** @brief Start building @p candidate relative to @p baseline. */
 esp_err_t present_image_begin(present_image_builder_t *, size_t candidate, size_t baseline);
+/** @brief Record application-written coverage rectangle. */
 esp_err_t present_image_cover(present_image_builder_t *, esp_display_present_rect_t);
-/* Pixels already copied from the baseline. Repair will not copy them again.
- * This is not application coverage: full-frame checks and commit history ignore it. */
+/** @brief Record baseline-seeded pixels without counting them as application coverage. */
 esp_err_t present_image_seed(present_image_builder_t *, esp_display_present_rect_t);
+/** @brief Return true if the candidate has full effective coverage. */
 bool present_image_full(const present_image_builder_t *);
+/** @brief Compute missing repair spans relative to the active baseline. */
 void present_image_prepare_repair(present_image_builder_t *, bool defensive_direct);
-/* Peek a span; only mark_repaired after successful synchronous copy or accepted
- * async submission. Rejection leaves the same span available for retry. */
+/** @brief Peek the next pending repair span without marking it repaired yet. */
 bool present_image_next_repair(present_image_builder_t *, esp_display_present_rect_t *);
+/** @brief Advance repair state after synchronous copy or accepted async submission of @p span. */
 esp_err_t present_image_mark_repaired(present_image_builder_t *, const esp_display_present_rect_t *);
+/** @brief Commit completed candidate coverage and publish new image history version. */
 esp_err_t present_image_commit(present_image_builder_t *);
+/** @brief Abort active candidate build without publishing history. */
 void present_image_cancel(present_image_builder_t *);

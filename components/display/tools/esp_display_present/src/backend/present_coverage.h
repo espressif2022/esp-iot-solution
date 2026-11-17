@@ -8,8 +8,9 @@
 #include <stdint.h>
 #include <string.h>
 
-/* Caller has validated the range against its allocation. Bit zero is the LSB.
- * Do not touch unused tail bits: adjacent rows may share the same byte. */
+/**
+ * @brief Set @p count coverage bits starting at @p start without touching unused tail bits.
+ */
 static inline void present_coverage_set(uint8_t *bits, size_t start, size_t count)
 {
     if (start % 8 && count) {
@@ -30,6 +31,7 @@ static inline void present_coverage_set(uint8_t *bits, size_t start, size_t coun
     }
 }
 
+/** @brief Return true if all @p count bits starting at @p start are zero. */
 static inline bool present_coverage_all_zero(const uint8_t *bits, size_t start, size_t count)
 {
     if (start % 8 && count) {
@@ -59,6 +61,7 @@ static inline bool present_coverage_all_zero(const uint8_t *bits, size_t start, 
     return true;
 }
 
+/** @brief Return true if all @p count bits starting at bit 0 are set. */
 static inline bool present_coverage_full(const uint8_t *bits, size_t count)
 {
     size_t bytes = count / 8;

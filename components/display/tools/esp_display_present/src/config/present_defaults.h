@@ -16,7 +16,7 @@
 #define CONFIG_ESP_DISPLAY_PRESENT_TE_STAGING_SLOT_BYTES 16384
 #endif
 
-/* Input target is soft: one logical row is the minimum usable tile. */
+/** @brief Compute default tile row count from row stride and screen height (minimum 1 usable row). */
 static inline size_t present_default_tile_rows(size_t row_bytes, size_t height)
 {
     if (!row_bytes || !height) {
@@ -29,7 +29,7 @@ static inline size_t present_default_tile_rows(size_t row_bytes, size_t height)
     return rows < height ? rows : height;
 }
 
-/* Transport limit is hard: never silently enlarge a staging slot. */
+/** @brief Compute bounded TE staging slot size in whole physical rows (0 if one row exceeds budget). */
 static inline size_t present_default_te_stage_bytes(size_t row_bytes, size_t height)
 {
     if (!row_bytes) {

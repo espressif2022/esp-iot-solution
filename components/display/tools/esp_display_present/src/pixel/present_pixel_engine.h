@@ -9,47 +9,47 @@
 extern "C" {
 #endif
 
+/** @brief Opaque asynchronous/synchronous pixel engine handle. */
 typedef struct esp_display_present_pixel_engine esp_display_present_pixel_engine_t;
 
-/** Opaque, instance-scoped generation token. Zero is invalid. */
+/** @brief Opaque instance-scoped copy generation token (0 is invalid). */
 typedef struct {
-    uint64_t value;
+    uint64_t value; /**< Token value. */
 } esp_display_present_copy_ticket_t;
 
+/** @brief Copy job lifecycle state. */
 typedef enum {
-    ESP_DISPLAY_PRESENT_COPY_QUEUED,
-    ESP_DISPLAY_PRESENT_COPY_RUNNING,
-    ESP_DISPLAY_PRESENT_COPY_SUCCEEDED,
-    ESP_DISPLAY_PRESENT_COPY_FAILED,
+    ESP_DISPLAY_PRESENT_COPY_QUEUED,    /**< Waiting in queue for worker execution. */
+    ESP_DISPLAY_PRESENT_COPY_RUNNING,   /**< Currently executing on worker/submitter. */
+    ESP_DISPLAY_PRESENT_COPY_SUCCEEDED, /**< Completed with ESP_OK. */
+    ESP_DISPLAY_PRESENT_COPY_FAILED,    /**< Completed with a non-OK error or canceled. */
 } esp_display_present_copy_state_t;
 
+/** @brief Observed copy job state and completion result. */
 typedef struct {
-    esp_display_present_copy_state_t state;
-    esp_err_t result; /* Operation result; meaningful only in terminal states. */
-    bool fault_pending; /* Hardware failure detected, access may still continue. */
+    esp_display_present_copy_state_t state; /**< Current job state. */
+    esp_err_t result;                       /**< Operation result (valid in terminal states). */
+    bool fault_pending;                     /**< Hardware failure detected while access may continue. */
 } esp_display_present_copy_status_t;
 
-/** Invoked outside engine spinlock when an accepted ticket reaches a terminal
- * state (SUCCEEDED/FAILED) or records a non-terminal fault_pending. Returning
- * true from ISR context requests a context switch. Current CPU notifications
- * run on the submitter in synchronous mode, or the worker in queued mode. The status pointer is valid only
- * during the callback. Callback may query/release the terminal ticket; in that
- * case submit returns an already released token. Pick exactly one record owner.
- * Reentrant submit returns backpressure. Blocking wait on unfinished work and
- * destruction are prohibited. stop from this callback returns INVALID_STATE
- * without changing lifecycle; stop from another task waits for callback exit.
- * Callback user context must stay valid until successful stop and caller join. */
+/**
+ * @brief Completion/fault callback invoked outside engine spinlocks.
+ *
+ * Callback may query/release the terminal ticket; stop() from inside this
+ * callback returns ESP_ERR_INVALID_STATE.
+ */
 typedef bool (*esp_display_present_pixel_event_fn)(void *user, esp_display_present_copy_ticket_t ticket, const esp_display_present_copy_status_t *status, bool from_isr);
 
+/** @brief Pixel engine creation configuration. */
 typedef struct {
-    size_t max_jobs; /* Bounded completion records, 1..64. */
-    esp_display_present_pixel_event_fn on_event; /* Optional completion/fault notification. */
-    void *user;
-    bool asynchronous; /* FIFO worker; false preserves synchronous CPU behavior. */
-    bool external_worker; /* Queue without a dedicated task; requires asynchronous and on_work. */
-    void (*on_work)(void *user); /* Wake the external consumer; must not execute or block. */
-    esp_display_present_pixel_execute_fn execute; /* Blocking executor, on submitter or worker. */
-    void *execute_user;
+    size_t max_jobs;                              /**< Bounded completion records (1..64). */
+    esp_display_present_pixel_event_fn on_event;  /**< Optional completion/fault notification. */
+    void *user;                                   /**< User context passed to @c on_event / @c on_work. */
+    bool asynchronous;                            /**< True for FIFO queued execution; false for synchronous CPU execution. */
+    bool external_worker;                         /**< True for queue without dedicated task (requires asynchronous and on_work). */
+    void (*on_work)(void *user);                  /**< Wake external consumer (must not execute or block). */
+    esp_display_present_pixel_execute_fn execute; /**< Optional blocking executor on submitter or worker. */
+    void *execute_user;                           /**< User context passed to @c execute. */
 } esp_display_present_pixel_config_t;
 
 /**
@@ -70,10 +70,7 @@ typedef struct {
  */
 esp_err_t esp_display_present_pixel_create(const esp_display_present_pixel_config_t *config, esp_display_present_pixel_engine_t **out_engine);
 
-/** Execute at most one queued job on an external worker. May block in hardware;
- * call outside the presenter gate. Concurrent consumers are serialized. The
- * owner must join its external worker before destroying this engine. Returns
- * true if a queued job was completed (including cancellation). */
+/** @brief Execute at most one queued job on an external worker outside the presenter gate. */
 bool present_pixel_run_one(esp_display_present_pixel_engine_t *engine);
 
 /**

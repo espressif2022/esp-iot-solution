@@ -6,23 +6,29 @@
 #pragma once
 #include "platform/present_os.h"
 #include "backend/present_backend_types.h"
-/* Acceptance and completion are independent facts. Caller holds its short
- * lock; no callbacks, allocation or driver calls here. Rejection is retryable
- * only when no completion has proved access. Fault alone never proves drain. */
+/**
+ * @brief Per-submission acceptance and early-completion state under the owning backend lock.
+ */
 typedef struct {
-    bool done;
-    esp_err_t result;
+    bool done;        /**< True once a completion callback has arrived. */
+    esp_err_t result; /**< Completion result latched from the first error. */
 } present_transaction_t;
+
+/** @brief Resolved outcome combining driver acceptance with any early completion callback. */
 typedef struct {
-    bool rejected, complete;
-    esp_err_t result;
+    bool rejected;    /**< True only when REJECTED and no completion callback arrived. */
+    bool complete;    /**< True when completion callback already ran during submit(). */
+    esp_err_t result; /**< Authoritative error code. */
 } present_transaction_resolution_t;
+
+/** @brief Reset transaction state before invoking panel.submit(). */
 static inline void present_transaction_prepare(present_transaction_t *transaction)
 {
     *transaction = (present_transaction_t) {
         0
     };
 }
+/** @brief Latch transaction completion from ISR or task callback; returns true on first completion. */
 static inline bool PRESENT_ISR_ATTR present_transaction_done(present_transaction_t *transaction, esp_err_t error)
 {
     if (transaction->done) {
@@ -34,6 +40,7 @@ static inline bool PRESENT_ISR_ATTR present_transaction_done(present_transaction
     }
     return true;
 }
+/** @brief Combine panel.submit() acceptance with early callback state. */
 static inline present_transaction_resolution_t present_transaction_resolve(
     const present_transaction_t *transaction, esp_display_present_tx_result_t result)
 {

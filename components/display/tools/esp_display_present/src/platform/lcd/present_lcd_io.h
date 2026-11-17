@@ -13,17 +13,19 @@
 extern "C" {
 #endif
 
+/** @brief Opaque Panel-IO adapter handle. */
 typedef struct esp_display_present_lcd_io esp_display_present_lcd_io_t;
 
+/** @brief Panel-IO adapter creation configuration. */
 typedef struct {
-    esp_lcd_panel_handle_t panel;
-    esp_lcd_panel_io_handle_t io;
-    esp_display_present_engine_pixel_format_t format; /* Must match the panel driver's input format. */
-    esp_display_present_byte_order_t byte_order; /* Wire byte order; adapter does not convert. */
-    size_t max_inflight; /* 1..16; independent of the SPI driver's queue size. */
-    size_t staging_bytes; /* Bytes per staging slot; allocates two. Zero selects direct submission. */
-    uint32_t staging_timeout_ms; /* Per transaction; 0 uses 1000 ms. Failure retains in-flight storage. */
-    bool psram_dma_direct; /* Opt-in: underlying LCD SPI IO must enable the same flag on a capable SPI host. */
+    esp_lcd_panel_handle_t panel;                    /**< Borrowed initialized panel handle. */
+    esp_lcd_panel_io_handle_t io;                    /**< Borrowed initialized panel IO handle. */
+    esp_display_present_engine_pixel_format_t format;/**< Panel driver input pixel format. */
+    esp_display_present_byte_order_t byte_order;     /**< Panel wire byte order (adapter does not convert). */
+    size_t max_inflight;                             /**< Maximum in-flight transactions (1..16). */
+    size_t staging_bytes;                            /**< Per-slot staging size in bytes (allocates two slots; 0 selects direct). */
+    uint32_t staging_timeout_ms;                     /**< Per-transaction staging wait budget in ms (0 uses 1000). */
+    bool psram_dma_direct;                           /**< Opt-in direct DMA from PSRAM (must match SPI IO flag). */
 } esp_display_present_lcd_io_config_t;
 
 /**
@@ -89,10 +91,10 @@ esp_err_t esp_display_present_lcd_io_get_interface(esp_display_present_lcd_io_t 
  */
 esp_err_t esp_display_present_lcd_io_destroy(esp_display_present_lcd_io_t *adapter);
 
-/* Adapter metadata plus two aligned stages and their notification event. */
+/** @brief Return metadata, two aligned staging buffers, and notification event bytes. */
 size_t esp_display_present_lcd_io_memory(size_t staging_bytes);
 
-/* Transport constraints only; panel command alignment may be stricter. */
+/** @brief Query Panel-IO transport output alignment and memory constraints. */
 esp_err_t esp_display_present_lcd_io_get_output_caps(esp_display_present_lcd_io_t *adapter, esp_display_present_output_caps_t *caps);
 
 #ifdef __cplusplus

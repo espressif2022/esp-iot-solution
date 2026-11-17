@@ -9,43 +9,37 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+/** @brief Opaque framebuffer scanout adapter handle. */
 typedef struct esp_display_present_lcd_fb_scanout esp_display_present_lcd_fb_scanout_t;
+
+/** @brief Scanout panel transport kind. */
 typedef enum {
-    ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_DSI,
-    ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_RGB,
+    ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_DSI, /**< MIPI-DSI video-mode panel. */
+    ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_RGB, /**< RGB interface panel. */
 } esp_display_present_lcd_fb_scanout_kind_t;
+
+/** @brief Raw VSYNC observation callback (ISR-safe, nonblocking; never implies retirement). */
 typedef bool (*esp_display_present_scanout_vsync_fn)(void *user, uint64_t timestamp_us, bool from_isr);
+/** @brief Optional board-owned safe scanout stop callback. */
 typedef esp_err_t (*esp_display_present_stop_scanout_fn)(void *user, uint32_t timeout_ms);
 
+/** @brief Framebuffer scanout adapter creation configuration. */
 typedef struct {
-    esp_lcd_panel_handle_t panel;
-    esp_display_present_lcd_fb_scanout_kind_t kind;
-    uint32_t width, height;
-    esp_display_present_engine_pixel_format_t format;
-    size_t buffer_count; /* 1..3 driver-owned framebuffers; one permits active writes. */
-    esp_display_present_byte_order_t byte_order; /* Driver-visible representation; no conversion here. */
-    /* Legacy confirmed-bounce fallback only when driver/BSP facts are absent.
-     * Protocol selection is private and follows actual panel facts. */
-    bool bounce;
-    bool single_retire; /* Single-FB exposure only; unsupported for multiple FBs. */
-    bool delete_panel; /* Alternative safe stop: transfers panel ownership on attach. */
-    /** Unless delete_panel or retain_scanout: required board-owned safe stop: successful return guarantees scanning
-     * stopped AND all registered callbacks exited; framebuffer allocations
-     * may be freed after stopping DMA; backend stop does not read them again.
-     * May return TIMEOUT and retry.
-     * Not a display-off/backlight hook. Driver deletion may block independently
-     * of timeout_ms; a bounded board stop hook is needed for a hard deadline. */
-    esp_display_present_stop_scanout_fn stop_scanout;
-    void *user;
-    /** FB external driver pool only: final stop drains the pending switch and
-     * detaches/joins callbacks, but leaves immutable driver-owned FBs scanning.
-     * Mutually exclusive with delete_panel and stop_scanout. Panel and
-     * its FB pool must outlive this adapter/backend. No backend-owned pixels
-     * may remain visible. Normal presenter drain / V1 quiesce must not call
-     * this final-stop path. */
-    bool retain_scanout;
-    esp_display_present_scanout_vsync_fn on_vsync; /* Raw observation only; ISR-safe, nonblocking; never retirement. */
-    void *vsync_user;
+    esp_lcd_panel_handle_t panel;                    /**< Borrowed initialized panel handle. */
+    esp_display_present_lcd_fb_scanout_kind_t kind;  /**< Panel scanout transport kind. */
+    uint32_t width;                                  /**< Physical panel width in pixels. */
+    uint32_t height;                                 /**< Physical panel height in pixels. */
+    esp_display_present_engine_pixel_format_t format;/**< Panel pixel format. */
+    size_t buffer_count;                             /**< Driver-owned framebuffer count (1..3). */
+    esp_display_present_byte_order_t byte_order;     /**< Driver-visible byte order (no conversion). */
+    bool bounce;                                     /**< Legacy confirmed-bounce fallback when driver facts are absent. */
+    bool single_retire;                              /**< Single-FB exposure only; unsupported for multiple FBs. */
+    bool delete_panel;                               /**< Alternative safe stop: transfer panel ownership on attach. */
+    esp_display_present_stop_scanout_fn stop_scanout;/**< Board-owned safe stop hook unless @c delete_panel or @c retain_scanout is set. */
+    void *user;                                      /**< User context passed to @c stop_scanout. */
+    bool retain_scanout;                             /**< Keep immutable driver-owned FBs scanning after final stop (exclusive with delete_panel/stop_scanout). */
+    esp_display_present_scanout_vsync_fn on_vsync;   /**< Optional raw VSYNC observation callback. */
+    void *vsync_user;                                /**< User context passed to @c on_vsync. */
 } esp_display_present_lcd_fb_scanout_config_t;
 
 /**
@@ -95,14 +89,13 @@ esp_err_t esp_display_present_lcd_fb_scanout_get_interface(esp_display_present_l
  * @return ESP_OK on success, or an error as specified by the lifecycle contract above.
  */
 esp_err_t esp_display_present_lcd_fb_scanout_destroy(esp_display_present_lcd_fb_scanout_t *adapter);
-/* Transport constraints only; panel command alignment may be stricter. */
+/** @brief Query transport alignment and memory constraints for the scanout adapter. */
 esp_err_t esp_display_present_lcd_fb_scanout_get_output_caps(esp_display_present_lcd_fb_scanout_t *adapter, esp_display_present_output_caps_t *caps);
 
-/* Before any producer frame; attaches through the existing presenter and
- * fences FB0 selection. Only the factory may submit while this is pending. */
+/** @brief Fence initial FB0 selection before any producer frame is admitted. */
 esp_err_t present_lcd_fb_scanout_initialize(esp_display_present_lcd_fb_scanout_t *, uint32_t timeout_ms);
 
-/* Read existing driver buffers only: no callbacks, DMA submission or allocation. */
+/** @brief Read existing driver framebuffers without registering callbacks, submitting DMA, or allocating. */
 esp_err_t present_lcd_fb_scanout_probe_buffers(esp_lcd_panel_handle_t panel,
                                                esp_display_present_lcd_fb_scanout_kind_t kind,
                                                void **buffers, size_t *count);
