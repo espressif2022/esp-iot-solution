@@ -988,11 +988,94 @@ static void injection(esp_display_present_executor_t *cpu)
     assert(esp_display_present_executor_run(&d, &r, &selected) == ESP_OK && selected.used_fallback && dst == src);
     assert(esp_display_present_executor_destroy(&e) == ESP_OK);
 }
+
+#if PRESENT_HOST_PPA || PRESENT_HOST_DMA2D
+#define CPU_CONCURRENT_INCLUDE_PTHREAD 1
+#endif
+#ifndef CPU_CONCURRENT_INCLUDE_PTHREAD
+#include <pthread.h>
+#endif
+
+typedef struct {
+    esp_display_present_executor_t *cpu;
+    unsigned tid;
+} cpu_worker_arg_t;
+
+static void *cpu_concurrent_worker(void *arg)
+{
+    cpu_worker_arg_t *w = arg;
+    uint8_t src[192], dst[192], expected[192];
+    for (size_t i = 0; i < sizeof(src); ++i) {
+        src[i] = (uint8_t)(i + w->tid * 17u);
+    }
+    esp_display_present_executor_dispatch_t dispatch = {w->cpu, NULL};
+    for (unsigned iter = 0; iter < 32; ++iter) {
+        for (unsigned bpp = 2; bpp <= 3; ++bpp) {
+            for (unsigned rot = 0; rot < 4; ++rot) {
+                bool swap = (bpp == 2) && ((iter + rot) & 1);
+                esp_display_present_layout_t sl = {5, 5, 6 * bpp, bpp == 2 ? ESP_DISPLAY_PRESENT_FORMAT_RGB565 : ESP_DISPLAY_PRESENT_FORMAT_RGB888, ESP_DISPLAY_PRESENT_ORDER_NATIVE};
+                esp_display_present_layout_t dl = sl;
+                dl.byte_order = swap ? ESP_DISPLAY_PRESENT_ORDER_SWAPPED : ESP_DISPLAY_PRESENT_ORDER_NATIVE;
+                esp_display_present_copy_request_t r = {
+                    .src = {src, sizeof(src), sl}, .dst = {dst, sizeof(dst), dl},
+                    .src_area = {1, 1, 3, 2}, .dst_x = 1, .dst_y = 1, .rotation = rot,
+                };
+                memset(dst, 0xa5, sizeof(dst));
+                memset(expected, 0xa5, sizeof(expected));
+                esp_display_present_executor_selection_t sel;
+                if ((iter + w->tid) & 1) {
+                    assert(esp_display_present_executor_run(&dispatch, &r, &sel) == ESP_OK);
+                    assert(sel.executor == w->cpu && !sel.used_fallback);
+                } else {
+                    assert(esp_display_present_executor_execute(w->cpu, &r) == ESP_OK);
+                }
+                paint(src, sl.stride_bytes, expected, dl.stride_bytes, 1, 1, 3, 2, 1, 1, rot, bpp, swap);
+                assert(memcmp(dst, expected, sizeof(dst)) == 0);
+            }
+        }
+    }
+    return NULL;
+}
+
+static void cpu_concurrent_and_validation(esp_display_present_executor_t *cpu)
+{
+    pthread_t threads[4];
+    cpu_worker_arg_t args[4];
+    for (unsigned i = 0; i < 4; ++i) {
+        args[i] = (cpu_worker_arg_t) {
+            cpu, i
+        };
+        assert(pthread_create(&threads[i], NULL, cpu_concurrent_worker, &args[i]) == 0);
+    }
+    for (unsigned i = 0; i < 4; ++i) {
+        assert(pthread_join(threads[i], NULL) == 0);
+    }
+    uint8_t src[32] = {0x12, 0x34}, dst[32];
+    memset(dst, 0xb6, sizeof(dst));
+    esp_display_present_layout_t l = {2, 2, 4, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE};
+    esp_display_present_copy_request_t bad = {.src = {src, sizeof(src), l}, .dst = {dst, sizeof(dst), l}, .src_area = {0, 0, 5, 2}};
+    assert(esp_display_present_executor_execute(cpu, &bad) == ESP_ERR_INVALID_ARG);
+    bad.src_area.width = 2;
+    bad.src.pixels = NULL;
+    assert(esp_display_present_executor_execute(cpu, &bad) == ESP_ERR_INVALID_ARG);
+    bad.src.pixels = src;
+    bad.dst.pixels = src;
+    bad.rotation = ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90;
+    assert(esp_display_present_executor_execute(cpu, &bad) == ESP_ERR_INVALID_ARG);
+    assert(cpu->ops->execute(cpu->context, &bad) == ESP_ERR_INVALID_ARG);
+    bad.src.pixels = NULL;
+    assert(cpu->ops->execute(cpu->context, &bad) == ESP_ERR_INVALID_ARG);
+    for (size_t i = 0; i < sizeof(dst); ++i) {
+        assert(dst[i] == 0xb6);
+    }
+}
+
 int main(void)
 {
     esp_display_present_executor_t *cpu, *e;
     assert(esp_display_present_executor_cpu_create(&cpu) == ESP_OK);
     verify(cpu, cpu, false);
+    cpu_concurrent_and_validation(cpu);
     injection(cpu);
     assert(esp_display_present_executor_ppa_create(NULL) == ESP_ERR_INVALID_ARG);
     e = NULL;

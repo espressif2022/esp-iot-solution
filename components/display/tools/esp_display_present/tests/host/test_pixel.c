@@ -497,6 +497,170 @@ static void queued_lifetime(bool external)
     pthread_mutex_destroy(&gate.lock);
 }
 
+typedef struct {
+    esp_display_present_pixel_engine_t *engine;
+    _Atomic bool stop;
+} external_runner_t;
+
+static void *external_runner_loop(void *user)
+{
+    external_runner_t *runner = user;
+    while (!atomic_load(&runner->stop)) {
+        if (!present_pixel_run_one(runner->engine)) {
+            present_pause();
+        }
+    }
+    while (present_pixel_run_one(runner->engine)) {
+    }
+    return NULL;
+}
+
+static void wait_finish_interleaving(bool external)
+{
+    uint8_t src[2] = {0x34, 0x12}, dst[2] = {0};
+    esp_display_present_pixel_engine_t *engine;
+    external_runner_t runner = {0};
+    esp_display_present_pixel_config_t cfg = {
+        .max_jobs = 1, .asynchronous = true,
+        .external_worker = external,
+        .on_work = external ? count_external_work : NULL,
+        .user = &runner,
+    };
+    _Atomic unsigned wakes = 0;
+    if (external) {
+        cfg.user = &wakes;
+    }
+    assert(esp_display_present_pixel_create(&cfg, &engine) == ESP_OK);
+    runner.engine = engine;
+    pthread_t consumer;
+    if (external) {
+        assert(pthread_create(&consumer, NULL, external_runner_loop, &runner) == 0);
+    }
+    esp_display_present_copy_request_t req = {
+        .src = {src, sizeof(src), {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+        .dst = {dst, sizeof(dst), {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+        .src_area = {0, 0, 1, 1},
+    };
+    for (unsigned i = 0; i < 400; ++i) {
+        dst[0] = 0;
+        dst[1] = 0;
+        esp_display_present_copy_ticket_t ticket;
+        esp_display_present_copy_status_t status;
+        assert(esp_display_present_pixel_submit(engine, &req, &ticket) == ESP_OK);
+        assert(esp_display_present_pixel_wait(engine, ticket, 2000, &status) == ESP_OK);
+        assert(status.state == ESP_DISPLAY_PRESENT_COPY_SUCCEEDED && status.result == ESP_OK);
+        assert(memcmp(src, dst, sizeof(src)) == 0);
+        assert(esp_display_present_pixel_release(engine, ticket) == ESP_OK);
+    }
+    if (external) {
+        atomic_store(&runner.stop, true);
+        assert(pthread_join(consumer, NULL) == 0);
+    }
+    assert(esp_display_present_pixel_stop(engine, 2000) == ESP_OK);
+    assert(esp_display_present_pixel_destroy(engine) == ESP_OK);
+}
+
+static void *run_external_copy_maybe(void *user)
+{
+    (void)present_pixel_run_one(user);
+    return NULL;
+}
+
+static void stop_finish_interleaving(void)
+{
+    uint8_t src[2] = {0x56, 0x78}, dst[2] = {0};
+    esp_display_present_copy_request_t req = {
+        .src = {src, sizeof(src), {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+        .dst = {dst, sizeof(dst), {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+        .src_area = {0, 0, 1, 1},
+    };
+    for (unsigned i = 0; i < 200; ++i) {
+        _Atomic unsigned wakes = 0;
+        esp_display_present_pixel_engine_t *engine;
+        esp_display_present_pixel_config_t cfg = {
+            .max_jobs = 1, .asynchronous = true, .external_worker = true,
+            .on_work = count_external_work, .user = &wakes,
+        };
+        assert(esp_display_present_pixel_create(&cfg, &engine) == ESP_OK);
+        esp_display_present_copy_ticket_t ticket;
+        assert(esp_display_present_pixel_submit(engine, &req, &ticket) == ESP_OK);
+        pthread_t consumer;
+        assert(pthread_create(&consumer, NULL, run_external_copy_maybe, engine) == 0);
+        assert(esp_display_present_pixel_stop(engine, 2000) == ESP_OK);
+        assert(pthread_join(consumer, NULL) == 0);
+        esp_display_present_copy_status_t status;
+        assert(esp_display_present_pixel_wait(engine, ticket, 0, &status) == ESP_OK);
+        assert(esp_display_present_pixel_release(engine, ticket) == ESP_OK);
+        assert(esp_display_present_pixel_destroy(engine) == ESP_OK);
+    }
+}
+
+typedef struct {
+    pthread_mutex_t lock;
+    pthread_cond_t start;
+    unsigned ready;
+    bool go;
+    esp_display_present_pixel_engine_t *engine;
+    uint8_t src[4][2];
+    uint8_t dst[4][2];
+    esp_display_present_copy_ticket_t tickets[4];
+    unsigned index;
+} concurrent_submit_t;
+
+static void *concurrent_submit_worker(void *arg)
+{
+    concurrent_submit_t *ctx = arg;
+    pthread_mutex_lock(&ctx->lock);
+    unsigned idx = ctx->index++;
+    ctx->ready++;
+    pthread_cond_broadcast(&ctx->start);
+    while (!ctx->go) {
+        pthread_cond_wait(&ctx->start, &ctx->lock);
+    }
+    pthread_mutex_unlock(&ctx->lock);
+    simulated_priority = 4 + idx;
+    esp_display_present_copy_request_t req = {
+        .src = {ctx->src[idx], 2, {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+        .dst = {ctx->dst[idx], 2, {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+        .src_area = {0, 0, 1, 1},
+    };
+    assert(esp_display_present_pixel_submit(ctx->engine, &req, &ctx->tickets[idx]) == ESP_OK);
+    return NULL;
+}
+
+static void concurrent_priority_submit(void)
+{
+    concurrent_submit_t ctx = {.lock = PTHREAD_MUTEX_INITIALIZER, .start = PTHREAD_COND_INITIALIZER};
+    esp_display_present_pixel_config_t cfg = {.max_jobs = 4, .asynchronous = true};
+    assert(esp_display_present_pixel_create(&cfg, &ctx.engine) == ESP_OK);
+    pthread_t threads[4];
+    for (unsigned i = 0; i < 4; ++i) {
+        ctx.src[i][0] = (uint8_t)(0x10 + i);
+        ctx.src[i][1] = 0x55;
+        assert(pthread_create(&threads[i], NULL, concurrent_submit_worker, &ctx) == 0);
+    }
+    pthread_mutex_lock(&ctx.lock);
+    while (ctx.ready < 4) {
+        pthread_cond_wait(&ctx.start, &ctx.lock);
+    }
+    ctx.go = true;
+    pthread_cond_broadcast(&ctx.start);
+    pthread_mutex_unlock(&ctx.lock);
+    for (unsigned i = 0; i < 4; ++i) {
+        assert(pthread_join(threads[i], NULL) == 0);
+    }
+    for (unsigned i = 0; i < 4; ++i) {
+        esp_display_present_copy_status_t status;
+        assert(esp_display_present_pixel_wait(ctx.engine, ctx.tickets[i], 2000, &status) == ESP_OK);
+        assert(memcmp(ctx.src[i], ctx.dst[i], 2) == 0);
+        assert(esp_display_present_pixel_release(ctx.engine, ctx.tickets[i]) == ESP_OK);
+    }
+    assert(esp_display_present_pixel_stop(ctx.engine, 2000) == ESP_OK);
+    assert(esp_display_present_pixel_destroy(ctx.engine) == ESP_OK);
+    pthread_cond_destroy(&ctx.start);
+    pthread_mutex_destroy(&ctx.lock);
+}
+
 int main(void)
 {
     async_worker_priority();
@@ -505,6 +669,10 @@ int main(void)
     pixels_and_padding(true);
     queued_lifetime(false);
     queued_lifetime(true);
+    wait_finish_interleaving(false);
+    wait_finish_interleaving(true);
+    stop_finish_interleaving();
+    concurrent_priority_submit();
     validation_and_records();
     in_place_and_events();
     callback_lifetime(false);

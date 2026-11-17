@@ -250,35 +250,52 @@ esp_err_t esp_display_present_pixel_submit(esp_display_present_pixel_engine_t *e
     if (result != ESP_OK) {
         return result;
     }
-    bool need_priority = engine->worker.asynchronous && !engine->worker.external &&
-                         !engine->worker.priority.initialized;
-    unsigned priority = need_priority ? present_task_priority() : 0;
-    present_lock_enter(&engine->sync.lock, false);
-    if (engine->lifecycle.closing) {
-        present_lock_exit(&engine->sync.lock, false);
-        return ESP_ERR_INVALID_STATE;
-    }
-    if ((!engine->worker.asynchronous && engine->lifecycle.executing) ||
-            (engine->notification.active && present_same_task(engine->notification.task, present_current_task()))) {
-        present_lock_exit(&engine->sync.lock, false);
-        return ESP_ERR_NO_MEM;
-    }
+    unsigned priority = 0;
+    bool have_priority = false;
     copy_record_t *record = NULL;
-    for (size_t i = 0; i < engine->count; i++) {
-        if (!engine->records[i].token) {
-            record = &engine->records[i];
-            break;
+    uint64_t token = 0;
+    present_lock_enter(&engine->sync.lock, false);
+    for (;;) {
+        if (engine->lifecycle.closing) {
+            present_lock_exit(&engine->sync.lock, false);
+            return ESP_ERR_INVALID_STATE;
         }
-    }
-    uint64_t token = record ? present_new_token() : 0;
-    if (!token) {
-        present_lock_exit(&engine->sync.lock, false);
-        return ESP_ERR_NO_MEM;
-    }
-    bool inherit_priority = engine->worker.asynchronous && !engine->worker.priority.initialized;
-    if (inherit_priority) {
-        engine->worker.priority.value = priority;
-        engine->worker.priority.initialized = true;
+        if ((!engine->worker.asynchronous && engine->lifecycle.executing) ||
+                (engine->notification.active && present_same_task(engine->notification.task, present_current_task()))) {
+            present_lock_exit(&engine->sync.lock, false);
+            return ESP_ERR_NO_MEM;
+        }
+        record = NULL;
+        for (size_t i = 0; i < engine->count; i++) {
+            if (!engine->records[i].token) {
+                record = &engine->records[i];
+                break;
+            }
+        }
+        if (!record) {
+            present_lock_exit(&engine->sync.lock, false);
+            return ESP_ERR_NO_MEM;
+        }
+        if (engine->worker.asynchronous && !engine->worker.external &&
+                !engine->worker.priority.initialized && !have_priority) {
+            /* Read caller priority outside the spinlock; recheck state on reentry. */
+            present_lock_exit(&engine->sync.lock, false);
+            priority = present_task_priority();
+            have_priority = true;
+            present_lock_enter(&engine->sync.lock, false);
+            continue;
+        }
+        token = present_new_token();
+        if (!token) {
+            present_lock_exit(&engine->sync.lock, false);
+            return ESP_ERR_NO_MEM;
+        }
+        if (engine->worker.asynchronous && !engine->worker.external &&
+                !engine->worker.priority.initialized) {
+            engine->worker.priority.value = priority;
+            engine->worker.priority.initialized = true;
+        }
+        break;
     }
     record->token = token;
     record->status = (esp_display_present_copy_status_t) {

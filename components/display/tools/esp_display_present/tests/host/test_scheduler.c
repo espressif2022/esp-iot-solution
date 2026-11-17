@@ -627,6 +627,131 @@ static void failure_cleanup(void)
     pthread_cond_destroy(&panel.condition);
     pthread_mutex_destroy(&panel.lock);
 }
+typedef struct {
+    panel_t panel;
+    unsigned copy_calls;
+    unsigned stall_on_call;
+    bool copy_stalled;
+} fb_repair_probe_t;
+
+static esp_err_t probe_repair_copy(void *context, const esp_display_present_copy_request_t *request)
+{
+    fb_repair_probe_t *probe = context;
+    pthread_mutex_lock(&probe->panel.lock);
+    unsigned call = ++probe->copy_calls;
+    if (probe->stall_on_call && call == probe->stall_on_call) {
+        probe->copy_stalled = true;
+        pthread_cond_broadcast(&probe->panel.condition);
+        while (!probe->panel.release) {
+            pthread_cond_wait(&probe->panel.condition, &probe->panel.lock);
+        }
+    }
+    pthread_mutex_unlock(&probe->panel.lock);
+    return esp_display_present_pixel_execute_cpu(request);
+}
+
+static void shared_fb_multi_repair_drain_and_stop(void)
+{
+    fb_repair_probe_t probe = {0};
+    init_panel(&probe.panel);
+    probe.panel.fb = true;
+    esp_display_present_engine_config_t config = {
+        .backend_kind = ESP_DISPLAY_PRESENT_ENGINE_FB,
+        .mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL,
+        .backend = {
+            .width = 4, .height = 4, .tile_rows = 1, .buffer_count = 2, .tile_count = 1, .max_frames = 4,
+            .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+            .async_copy = true, .shared_copy_worker = true,
+            .copy_execute = probe_repair_copy, .copy_user = &probe,
+            .panel = {&probe.panel, attach, submit, quiesce},
+        },
+        .timeout_ms = 5, .background_service = true,
+    };
+    esp_display_present_engine_t *p = NULL;
+    OK(esp_display_present_engine_create(&config, &p));
+
+    /* Frame 1: full redraw establishes baseline coverage. */
+    esp_display_present_frame_request_t full_req = {.full_redraw = true};
+    OK(esp_display_present_engine_begin_next_frame(p, &full_req));
+    for (int y = 0; y < 4; ++y) {
+        esp_display_present_lease_t lease;
+        OK(esp_display_present_engine_acquire_buffer(p, &lease));
+        memset(lease.surface.pixels, 0xab, 8);
+        esp_display_present_engine_area_t area = {0, y, 3, y};
+        OK(esp_display_present_engine_submit_buffer(p, &lease, &area, 8));
+    }
+    OK(esp_display_present_engine_commit_frame(p, NULL));
+    wait_submit(&probe.panel, 1);
+    complete(&probe.panel);
+    OK(esp_display_present_engine_drain(p, 1000));
+
+    /* Frame 2: center 1x1 update leaves 4 separate repair spans to drain. */
+    unsigned before_copies = probe.copy_calls;
+    esp_display_present_frame_request_t partial_req = {0};
+    OK(esp_display_present_engine_begin_next_frame(p, &partial_req));
+    esp_display_present_lease_t lease;
+    OK(esp_display_present_engine_acquire_buffer(p, &lease));
+    memset(lease.surface.pixels, 0xab, 8);
+    esp_display_present_engine_area_t center = {1, 1, 1, 1};
+    OK(esp_display_present_engine_submit_buffer(p, &lease, &center, 8));
+    OK(esp_display_present_engine_commit_frame(p, NULL));
+    wait_submit(&probe.panel, 2);
+    complete(&probe.panel);
+    OK(esp_display_present_engine_drain(p, 1000));
+    assert(probe.copy_calls - before_copies >= 4);
+
+    /* Frame 3: write a different pixel so slot 0 still needs Frame 2's
+     * center pixel repaired, then stall mid-repair and verify cancel/stop. */
+    pthread_mutex_lock(&probe.panel.lock);
+    probe.stall_on_call = probe.copy_calls + 2; /* 1 tile copy + 1st repair */
+    probe.copy_stalled = false;
+    probe.panel.release = false;
+    pthread_mutex_unlock(&probe.panel.lock);
+    OK(esp_display_present_engine_begin_next_frame(p, &partial_req));
+    OK(esp_display_present_engine_acquire_buffer(p, &lease));
+    memset(lease.surface.pixels, 0xab, 8);
+    esp_display_present_engine_area_t corner = {0, 0, 0, 0};
+    OK(esp_display_present_engine_submit_buffer(p, &lease, &corner, 8));
+    OK(esp_display_present_engine_commit_frame(p, NULL));
+    struct timespec deadline;
+    clock_gettime(CLOCK_MONOTONIC, &deadline);
+    deadline.tv_sec += 2;
+    pthread_mutex_lock(&probe.panel.lock);
+    while (!probe.copy_stalled) {
+        assert(pthread_cond_timedwait(&probe.panel.condition, &probe.panel.lock, &deadline) == 0);
+    }
+    pthread_mutex_unlock(&probe.panel.lock);
+    assert(esp_display_present_engine_drain(p, 5) == ESP_ERR_TIMEOUT);
+    assert(esp_display_present_engine_stop(p, 5) == ESP_ERR_TIMEOUT);
+    assert(esp_display_present_engine_destroy(p) == ESP_ERR_INVALID_STATE);
+    pthread_mutex_lock(&probe.panel.lock);
+    probe.panel.release = true;
+    probe.panel.immediate = true;
+    pthread_cond_broadcast(&probe.panel.condition);
+    pthread_mutex_unlock(&probe.panel.lock);
+    destroy(p, &probe.panel);
+}
+
+static void shared_te_cancel_midframe(void)
+{
+    for (unsigned tiles = 1; tiles <= 2; ++tiles) {
+        panel_t panel;
+        init_panel(&panel);
+        esp_display_present_engine_t *engine = create_shared_te(&panel, tiles, false);
+        /* Partial frame canceled before commit: worker stays clean for next frame. */
+        esp_display_present_frame_request_t req = {0};
+        OK(esp_display_present_engine_begin_next_frame(engine, &req));
+        (void)gram_tile(engine, 0);
+        OK(esp_display_present_engine_cancel_frame(engine));
+        frame(engine);
+        esp_display_present_engine_notify_te_isr(engine, present_now_us());
+        wait_shared_te_submit(engine, &panel, 1);
+        complete(&panel);
+        OK(esp_display_present_engine_drain(engine, 1000));
+        destroy(engine, &panel);
+    }
+}
+
 int main(void)
 {
     autonomous(false);
@@ -634,12 +759,14 @@ int main(void)
     bounded_join();
     rejection();
     shared_copy_bounded_stop();
+    shared_fb_multi_repair_drain_and_stop();
     gram_driver_block_and_stop();
     gram_zero_copy_backpressure();
     gram_uncertain_keeps_pixels();
     gram_timeout_during_driver_call();
     te_driver_block_and_stop();
     shared_te_pipeline();
+    shared_te_cancel_midframe();
     shared_te_cancel_copy_stop();
     wait_te_stop();
     failure_cleanup();

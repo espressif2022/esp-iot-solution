@@ -244,6 +244,51 @@ static void exercise(esp_display_present_present_mode_t mode, size_t bpp, bool a
     pthread_cond_destroy(&n.changed);
     pthread_mutex_destroy(&n.lock);
 }
+
+static void round_area_semantics(void)
+{
+    const esp_display_present_present_mode_t modes[] = {
+        ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL,
+        ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT,
+        ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_FULL,
+    };
+    for (size_t i = 0; i < sizeof(modes) / sizeof(*modes); ++i) {
+        for (unsigned rot = 0; rot <= 1; ++rot) {
+            notifications_t n = {.lock = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER};
+            scan_panel_t panel = {0};
+            esp_display_present_engine_config_t cfg = {.backend = {
+                    .width = W, .height = H, .tile_rows = 2, .buffer_count = 2, .max_frames = 4, .rotation = rot,
+                    .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .active_writes = true,
+                    .panel = scan_interface(&panel), .on_progress = progress, .progress_user = &n
+                },
+                .timeout_ms = 1000, .backend_kind = ESP_DISPLAY_PRESENT_ENGINE_FB, .mode = modes[i]
+            };
+            esp_display_present_engine_t *p = NULL;
+            OK(esp_display_present_engine_create(&cfg, &p));
+            esp_lv_present_native_t *binding = NULL;
+            OK(esp_lv_present_native_create(p, 4, &binding));
+            lv_display_t *display = esp_lv_present_native_get_display(binding);
+            lv_area_t in = {1, 2, 3, 4};
+            lv_display_send_event(display, LV_EVENT_INVALIDATE_AREA, &in);
+            OK(esp_lv_present_native_get_error(binding));
+            if (modes[i] == ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_FULL) {
+                assert(in.x1 == 0 && in.y1 == 0 && in.x2 == W - 1 && in.y2 == H - 1);
+            } else {
+                assert(in.x1 == 1 && in.y1 == 2 && in.x2 == 3 && in.y2 == 4);
+                /* Out-of-bounds area must NOT fast-return; resolve_render_area must reject it. */
+                lv_area_t oob = {0, 0, W, 2};
+                lv_display_send_event(display, LV_EVENT_INVALIDATE_AREA, &oob);
+                assert(esp_lv_present_native_get_error(binding) == ESP_ERR_INVALID_ARG);
+            }
+            OK(esp_lv_present_native_destroy(binding));
+            OK(esp_display_present_engine_stop(p, 1000));
+            OK(esp_display_present_engine_destroy(p));
+            pthread_cond_destroy(&n.changed);
+            pthread_mutex_destroy(&n.lock);
+        }
+    }
+}
+
 int main(void)
 {
     const esp_display_present_present_mode_t modes[] = {ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_FULL, ESP_DISPLAY_PRESENT_ENGINE_MODE_TRIPLE_FULL,
@@ -265,7 +310,10 @@ int main(void)
         exercise(ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT, 3, false, false, rotation);
         exercise(ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT, 2, true, false, rotation);
         exercise(ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT, 3, true, false, rotation);
+        exercise(ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL, 2, false, false, rotation);
+        exercise(ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_PARTIAL, 2, true, true, rotation);
     }
+    round_area_semantics();
     lv_deinit();
     puts("LVGL FB modes: FULL/DIRECT/PARTIAL, RGB565/888, dirty offsets and scanout lifetime passed");
     return 0;

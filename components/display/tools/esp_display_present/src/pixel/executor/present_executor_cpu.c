@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include "pixel/present_pixel_ops.h"
-#include "pixel/present_pixel_ops_internal.h"
 #include "pixel/present_executor.h"
 #include "platform/present_os.h"
 typedef struct {
@@ -35,8 +34,7 @@ static esp_err_t cpu_probe(void *context, const esp_display_present_copy_request
 static esp_err_t cpu_execute(void *context, const esp_display_present_copy_request_t *request)
 {
     (void)context;
-    present_pixel_copy_cpu_validated(request);
-    return ESP_OK;
+    return esp_display_present_pixel_execute_cpu(request);
 }
 static esp_err_t cpu_destroy(void *context)
 {
