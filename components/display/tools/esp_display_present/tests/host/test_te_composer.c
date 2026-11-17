@@ -184,8 +184,54 @@ static void synchronous_repair_retry(void)
     }
 }
 
+static esp_err_t count_sync_write(void *user, const esp_display_present_copy_request_t *request)
+{
+    unsigned *calls = user;
+    (*calls)++;
+    return esp_display_present_pixel_execute_cpu(request);
+}
+
+static void synchronous_write_validation_rejects_bad_request(void)
+{
+    unsigned calls = 0;
+    present_te_composer_config_t cfg = {
+        .width = 4, .height = 4, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+        .pixel = {.max_jobs = 1, .execute = count_sync_write, .execute_user = &calls},
+    };
+    present_te_composer_t *composer = NULL;
+    OK(present_te_composer_create(&cfg, &composer));
+
+    present_te_frame_t frame;
+    OK(present_te_composer_begin(composer, &frame));
+
+    uint16_t pixels[4] = {0x1111, 0x2222, 0x3333, 0x4444};
+    esp_display_present_source_t bad_cap = {
+        pixels, sizeof(pixels), {4, 2, 8, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}
+    };
+    esp_display_present_rect_t full = {0, 0, 4, 2};
+    assert(present_te_composer_write(composer, frame, &bad_cap, &full, 0, 0) == ESP_ERR_INVALID_ARG);
+    assert(calls == 0);
+
+    esp_display_present_source_t bad_stride = {
+        pixels, sizeof(pixels), {2, 2, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}
+    };
+    esp_display_present_rect_t sub = {0, 0, 2, 2};
+    assert(present_te_composer_write(composer, frame, &bad_stride, &sub, 0, 0) == ESP_ERR_INVALID_ARG);
+    assert(calls == 0);
+
+    esp_display_present_source_t valid = {
+        pixels, sizeof(pixels), {2, 2, 4, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}
+    };
+    OK(present_te_composer_write(composer, frame, &valid, &sub, 0, 0));
+    assert(calls == 1);
+
+    OK(present_te_composer_cancel(composer, frame));
+    OK(present_te_composer_destroy(composer));
+}
+
 int main(void)
 {
+    synchronous_write_validation_rejects_bad_request();
     synchronous_repair_retry();
     coverage();
     exercise(ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE);

@@ -1056,6 +1056,87 @@ static void copy_queue_idle_signal_retirement(void)
     pthread_mutex_destroy(&exec_gate.lock);
 }
 
+static void copy_queue_split_stalled_and_invalid_args(void)
+{
+    uint8_t src[4] = {1, 2, 3, 4}, dst[4] = {0};
+    esp_display_present_copy_request_t valid = {
+        .src = {src, 2, {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+        .dst = {dst, 2, {1, 1, 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}},
+        .src_area = {0, 0, 1, 1},
+    };
+    present_copy_handle_t h1 = {99}, h2 = {0};
+    esp_err_t res = ESP_OK;
+
+    assert(present_copy_queue_submit(NULL, &valid, NULL) == ESP_ERR_INVALID_ARG);
+    assert(present_copy_queue_submit(NULL, &valid, &h1) == ESP_ERR_INVALID_ARG && h1.slot == 0);
+    assert(present_copy_queue_take(NULL, h1, &res) == ESP_ERR_INVALID_ARG);
+    assert(present_copy_queue_cancel(NULL, h1, &res) == ESP_ERR_INVALID_ARG);
+    assert(present_copy_queue_stop(NULL, 0) == ESP_ERR_INVALID_ARG);
+    assert(present_copy_queue_destroy(NULL) == ESP_ERR_INVALID_ARG);
+
+    executor_gate_t gate = {
+        .lock = PTHREAD_MUTEX_INITIALIZER,
+        .changed = PTHREAD_COND_INITIALIZER,
+    };
+    present_copy_queue_config_t cfg = {
+        .max_jobs = 2,
+        .external_worker = false,
+        .execute = delayed_executor,
+        .execute_user = &gate,
+    };
+    present_copy_queue_t *queue = NULL;
+    assert(present_copy_queue_create(&cfg, &queue) == ESP_OK);
+
+    assert(present_copy_queue_submit(queue, NULL, &h1) == ESP_ERR_INVALID_ARG && h1.slot == 0);
+    esp_display_present_copy_request_t bad = valid;
+    bad.src.layout.stride_bytes = 1;
+    assert(present_copy_queue_submit(queue, &bad, &h1) == ESP_ERR_INVALID_ARG && h1.slot == 0);
+    assert(present_copy_queue_take(queue, (present_copy_handle_t) {
+        0
+    }, &res) == ESP_ERR_INVALID_ARG);
+    assert(present_copy_queue_take(queue, (present_copy_handle_t) {
+        3
+    }, &res) == ESP_ERR_INVALID_ARG);
+    assert(present_copy_queue_take(queue, (present_copy_handle_t) {
+        1
+    }, NULL) == ESP_ERR_INVALID_ARG);
+    assert(present_copy_queue_cancel(queue, (present_copy_handle_t) {
+        0
+    }, &res) == ESP_ERR_INVALID_ARG);
+    assert(present_copy_queue_cancel(queue, (present_copy_handle_t) {
+        3
+    }, &res) == ESP_ERR_INVALID_ARG);
+    assert(present_copy_queue_cancel(queue, (present_copy_handle_t) {
+        1
+    }, NULL) == ESP_ERR_INVALID_ARG);
+
+    assert(present_copy_queue_submit(queue, &valid, &h1) == ESP_OK);
+    pthread_mutex_lock(&gate.lock);
+    while (!gate.entered) {
+        pthread_cond_wait(&gate.changed, &gate.lock);
+    }
+    pthread_mutex_unlock(&gate.lock);
+
+    assert(present_copy_queue_submit(queue, &valid, &h2) == ESP_OK);
+    assert(present_copy_queue_cancel(queue, h2, &res) == ESP_ERR_TIMEOUT);
+    assert(present_copy_queue_stop(queue, 0) == ESP_ERR_TIMEOUT);
+    assert(present_copy_queue_destroy(queue) == ESP_ERR_INVALID_STATE);
+
+    pthread_mutex_lock(&gate.lock);
+    gate.leave = true;
+    pthread_cond_broadcast(&gate.changed);
+    pthread_mutex_unlock(&gate.lock);
+
+    assert(present_copy_queue_stop(queue, 2000) == ESP_OK);
+    assert(gate.calls == 1);
+    assert(present_copy_queue_take(queue, h1, &res) == ESP_OK && res == ESP_OK);
+    assert(present_copy_queue_take(queue, h2, &res) == ESP_OK && res == ESP_ERR_INVALID_STATE);
+    assert(present_copy_queue_destroy(queue) == ESP_OK);
+
+    pthread_cond_destroy(&gate.changed);
+    pthread_mutex_destroy(&gate.lock);
+}
+
 int main(void)
 {
     async_worker_priority();
@@ -1072,6 +1153,7 @@ int main(void)
     copy_queue_callback_lifetime(false);
     copy_queue_callback_lifetime(true);
     copy_queue_idle_signal_retirement();
+    copy_queue_split_stalled_and_invalid_args();
     validation_and_records();
     in_place_and_events();
     callback_lifetime(false);

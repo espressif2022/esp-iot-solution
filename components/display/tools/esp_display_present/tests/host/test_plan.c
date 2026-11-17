@@ -467,8 +467,41 @@ static void executor(void)
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_ERR_NOT_SUPPORTED);
     assert(esp_display_present_executor_destroy(cpu) == ESP_OK);
 }
+static void exec_mode_resolution(void)
+{
+    assert(esp_display_present_resolve_exec_mode(NULL) == ESP_DISPLAY_PRESENT_EXEC_COOPERATIVE);
+    const struct {
+        esp_display_present_engine_backend_t kind;
+        bool bg;
+        bool deferred;
+        bool copy_on_bg;
+        esp_display_present_exec_mode_t expected;
+    } cases[] = {
+        {ESP_DISPLAY_PRESENT_ENGINE_REGION, false, true, false, ESP_DISPLAY_PRESENT_EXEC_COOPERATIVE},
+        {ESP_DISPLAY_PRESENT_ENGINE_FB, false, false, true, ESP_DISPLAY_PRESENT_EXEC_COOPERATIVE},
+        {ESP_DISPLAY_PRESENT_ENGINE_REGION, true, true, false, ESP_DISPLAY_PRESENT_EXEC_REGION_DEFERRED},
+        {ESP_DISPLAY_PRESENT_ENGINE_REGION, true, false, false, ESP_DISPLAY_PRESENT_EXEC_REGION_ASYNC},
+        {ESP_DISPLAY_PRESENT_ENGINE_TE, true, false, true, ESP_DISPLAY_PRESENT_EXEC_TE_SHARED},
+        {ESP_DISPLAY_PRESENT_ENGINE_TE, true, false, false, ESP_DISPLAY_PRESENT_EXEC_TE_SPLIT},
+        {ESP_DISPLAY_PRESENT_ENGINE_FB, true, false, true, ESP_DISPLAY_PRESENT_EXEC_FB_SHARED},
+        {ESP_DISPLAY_PRESENT_ENGINE_FB, true, false, false, ESP_DISPLAY_PRESENT_EXEC_FB_SPLIT},
+        {(esp_display_present_engine_backend_t)99, true, false, false, ESP_DISPLAY_PRESENT_EXEC_COOPERATIVE},
+    };
+    for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+        esp_display_present_engine_config_t cfg = {
+            .backend_kind = cases[i].kind,
+            .background_service = cases[i].bg,
+            .backend = {
+                .deferred_submit = cases[i].deferred,
+                .copy_on_backend_worker = cases[i].copy_on_bg,
+            },
+        };
+        assert(esp_display_present_resolve_exec_mode(&cfg) == cases[i].expected);
+    }
+}
 int main(void)
 {
+    exec_mode_resolution();
     copy_on_backend_worker_budget();
     reverse_band_alignment();
     external_dma_alignment();

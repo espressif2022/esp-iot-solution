@@ -861,9 +861,60 @@ static void synchronous_copy_validation_rejects_bad_request(void)
     OK(ops->destroy(backend));
 }
 
+static void synchronous_full_rotation_90(void)
+{
+    scan_panel_t panel = {0};
+    unsigned calls = 0;
+    esp_display_present_backend_config_t cfg = config(&panel, 2, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL);
+    cfg.rotation = ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90;
+    cfg.copy_execute = count_sync_copy;
+    cfg.copy_user = &calls;
+    present_backend_t *backend = NULL;
+    OK(ops->create(&cfg, &backend));
+
+    esp_display_present_frame_t frame = begin(backend);
+    esp_display_present_lease_t lease;
+    OK(ops->acquire(backend, frame, NULL, 0, &lease));
+    for (uint16_t y = 0; y < 4; ++y) {
+        for (uint16_t x = 0; x < 4; ++x) {
+            uint16_t val = (uint16_t)(0x1000u + y * 4u + x);
+            memcpy((uint8_t *)lease.surface.pixels + y * lease.surface.layout.stride_bytes + x * 2, &val, 2);
+        }
+    }
+
+    esp_display_present_region_submit_t bad_stride = {{0, 0, 4, 4}, 4};
+    assert(ops->submit_region_ex(backend, frame, lease.id, &bad_stride) == ESP_ERR_INVALID_ARG);
+    assert(calls == 0);
+
+    esp_display_present_region_submit_t valid = {{0, 0, 4, 4}, lease.surface.layout.stride_bytes};
+    OK(ops->submit_region_ex(backend, frame, lease.id, &valid));
+    assert(calls == 0);
+
+    esp_display_present_receipt_t receipt;
+    OK(ops->end(backend, frame, &receipt));
+    assert(calls == 1);
+    OK(ops->service(backend));
+    finish(backend, &panel, receipt);
+
+    /* Verify clockwise 90 deg rotation: logical (x, y) -> physical (3 - y, x). */
+    for (uint16_t y = 0; y < 4; ++y) {
+        for (uint16_t x = 0; x < 4; ++x) {
+            uint16_t got = 0;
+            uint32_t px = 3u - y;
+            uint32_t py = x;
+            memcpy(&got, (uint8_t *)panel.current.pixels + (py * 4u + px) * 2, 2);
+            assert(got == (uint16_t)(0x1000u + y * 4u + x));
+        }
+    }
+
+    OK(ops->stop(backend, UINT32_MAX));
+    OK(ops->destroy(backend));
+}
+
 int main(void)
 {
     synchronous_copy_validation_rejects_bad_request();
+    synchronous_full_rotation_90();
     synchronous_repair_retry();
     direct_full_redraw_skips_prefill();
     independent_tiles();

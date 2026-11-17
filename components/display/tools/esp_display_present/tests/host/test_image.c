@@ -167,6 +167,55 @@ static void band_reference(void)
     }
     present_image_deinit(&image);
 }
+static void mid_repair_bitmap_fallback(void)
+{
+    enum { W = 64, H = 64, N = W * H };
+    present_image_builder_t image;
+    assert(present_image_init(&image, W, H) == ESP_OK);
+    assert(present_image_begin(&image, 0, SIZE_MAX) == ESP_OK);
+    assert(present_image_cover(&image, (esp_display_present_rect_t) {
+        0, 0, W, H
+    }) == ESP_OK);
+    assert(present_image_commit(&image) == ESP_OK);
+
+    bool initialized[N] = {0}, repaired[N] = {0};
+    assert(present_image_begin(&image, 1, 0) == ESP_OK);
+    /* Write 30 disjoint 1x1 pixels (< PRESENT_MAX_DAMAGE_AREAS) so exact stays
+     * in rectangle mode before repair starts, then crosses 32 mid-repair. */
+    for (unsigned i = 0; i < 30; ++i) {
+        uint32_t x = (i * 2) % W;
+        uint32_t y = (i / 10) * 4;
+        esp_display_present_rect_t a = {x, y, 1, 1};
+        assert((i & 1 ? present_image_seed(&image, a) : present_image_cover(&image, a)) == ESP_OK);
+        initialized[y * W + x] = true;
+    }
+    assert(!image.coverage);
+
+    present_image_prepare_repair(&image, true);
+    esp_display_present_rect_t area;
+    bool saw_bitmap_switch = false;
+    unsigned steps = 0;
+    while (present_image_next_repair(&image, &area)) {
+        assert(++steps <= N);
+        assert(area.width && area.height && area.x + area.width <= W && area.y + area.height <= H);
+        for (unsigned yy = area.y; yy < area.y + area.height; ++yy) {
+            for (unsigned xx = area.x; xx < area.x + area.width; ++xx) {
+                assert(!initialized[yy * W + xx] && !repaired[yy * W + xx]);
+                repaired[yy * W + xx] = true;
+            }
+        }
+        assert(present_image_mark_repaired(&image, &area) == ESP_OK);
+        if (image.coverage) {
+            saw_bitmap_switch = true;
+        }
+    }
+    assert(saw_bitmap_switch);
+    for (unsigned i = 0; i < N; ++i) {
+        assert(initialized[i] != repaired[i]);
+    }
+    present_image_cancel(&image);
+    present_image_deinit(&image);
+}
 static unsigned rect_pixels(esp_display_present_rect_t area)
 {
     return area.width * area.height;
@@ -251,6 +300,7 @@ int main(void)
     lazy_coverage();
     rectangle_reference();
     band_reference();
+    mid_repair_bitmap_fallback();
     seeded_baseline();
     enum { W = 17, H = 9, N = W * H };
     present_image_builder_t b;
