@@ -5,7 +5,10 @@
  */
 #pragma once
 
-/* Pure window calculation: no GPIO, OS timer, allocation or worker lifecycle. */
+/**
+ * @file
+ * @brief Pure arithmetic TE window evaluation (no GPIO, OS timer, allocation, or worker lifecycle).
+ */
 #include <stdint.h>
 #include <stdbool.h>
 #ifdef __cplusplus

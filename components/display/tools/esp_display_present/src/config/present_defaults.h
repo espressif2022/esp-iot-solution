@@ -8,10 +8,11 @@
 #ifndef PRESENT_HOST
 #include "sdkconfig.h"
 #endif
-/* Host defaults match Kconfig. Explicit build definitions override these. */
+/** @brief Default partition input tile byte target (matches Kconfig; overridden by explicit builds). */
 #ifndef CONFIG_ESP_DISPLAY_PRESENT_DEFAULT_TILE_BYTES
 #define CONFIG_ESP_DISPLAY_PRESENT_DEFAULT_TILE_BYTES 32768
 #endif
+/** @brief Default TE staging slot byte budget (hard limit). */
 #ifndef CONFIG_ESP_DISPLAY_PRESENT_TE_STAGING_SLOT_BYTES
 #define CONFIG_ESP_DISPLAY_PRESENT_TE_STAGING_SLOT_BYTES 16384
 #endif

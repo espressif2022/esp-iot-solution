@@ -6,8 +6,10 @@
 
 #pragma once
 
-/* GPIO TE measurement and admission coordinator; composes timing and timer.
- * This service does not submit LCD pixels. */
+/**
+ * @file
+ * @brief GPIO TE measurement and admission coordinator (composes timing and timer; never submits LCD pixels).
+ */
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -20,6 +22,7 @@
 extern "C" {
 #endif
 
+/** @brief Default panel-bus data-line count used when unspecified. */
 #define ESP_DISPLAY_PRESENT_TE_DATA_LINES_DEFAULT         1
 
 /** @brief Opaque GPIO TE synchronization context. */

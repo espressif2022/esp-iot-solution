@@ -6,9 +6,10 @@
 
 #pragma once
 
-/* Renderer-facing public entry point: the presenter draw contract and
- * lifecycle API. Low-level surface/partition APIs require explicit includes
- * and are implementation details for most integrations. */
+/**
+ * @file
+ * @brief Renderer-facing public entry point for the presenter draw contract and lifecycle API.
+ */
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -22,13 +23,13 @@
 extern "C" {
 #endif
 
-/** Default per-push panel transfer completion budget. */
+/** @brief Default per-push panel transfer completion budget in milliseconds. */
 #define ESP_DISPLAY_PRESENT_DEFAULT_TRANSFER_TIMEOUT_MS 1000U
 
-/** Default FB pipeline free-buffer acquire budget. */
+/** @brief Default FB pipeline free-buffer acquire budget in milliseconds. */
 #define ESP_DISPLAY_PRESENT_DEFAULT_PIPELINE_ACQUIRE_TIMEOUT_MS 1000U
 
-/** Frame receipt API version. */
+/** @brief Frame receipt API version. */
 #define ESP_DISPLAY_PRESENT_FRAME_COMPLETION_API_VERSION 1U
 
 /**

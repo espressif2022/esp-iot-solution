@@ -9,11 +9,11 @@
 extern "C" {
 #endif
 
-/** Optional, bounded observer records (32 per presenter), independent of backend
- * buffer ownership. Tokens are instance-scoped; callers explicitly release a
- * terminal observer or cancel tracking. Untracked commit remains unchanged. */
+/**
+ * @brief Optional bounded completion observer token (32 per presenter, independent of buffer ownership).
+ */
 typedef struct {
-    uint64_t value;
+    uint64_t value; /**< Instance-scoped receipt token (0 is invalid). */
 } esp_display_present_engine_receipt_t;
 
 #ifdef __cplusplus

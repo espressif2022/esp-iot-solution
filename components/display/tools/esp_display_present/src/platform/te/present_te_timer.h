@@ -2,8 +2,10 @@
  * SPDX-License-Identifier: Apache-2.0 */
 #pragma once
 
-/* Platform timer lifecycle: arm a deadline and join callbacks on destruction.
- * Used by both TE backend and GPIO synchronization; no TE window arithmetic. */
+/**
+ * @file
+ * @brief Platform timer lifecycle for TE backend and GPIO synchronization.
+ */
 #include "esp_err.h"
 #include <stdint.h>
 #include <stddef.h>
