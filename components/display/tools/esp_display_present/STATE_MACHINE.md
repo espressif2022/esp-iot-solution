@@ -106,18 +106,22 @@ excluded, and callback/reentrancy analysis must assume the gate is held. ISR-con
 panel/TE events do not take the gate; they update the ISR-safe trackers
 and, as above, mutate backend state under the backend's own lock.
 
-The pixel-copy queue is a separate, narrower domain per pixel engine instance
-(not a global queue shared across instances). It dispatches queued copies
-strictly by ascending token, one at a time. Advanced asynchronous configurations
-use a dedicated pixel worker. The facade's FB paths with at most one input tile and TE paths with one
-compose image instead let the existing backend worker consume this queue
-outside the engine gate; this avoids a separate 4096-byte stack and preserves bounded owner waits.
+The pixel-copy queue is a separate, narrower domain per backend/pixel instance
+(not a global queue shared across instances). `REGION` uses
+`present_pixel_engine` (token-indexed), while `FB` and `TE` use the lightweight
+slot-indexed `present_copy_queue`; both dispatch queued copies strictly in FIFO
+submission order, one at a time. Advanced asynchronous configurations use a
+dedicated pixel worker. The facade's FB paths with at most one input tile and TE
+paths with one compose image (`copy_on_backend_worker`) instead let the existing
+backend worker consume this queue outside the engine gate; this avoids a
+separate 4096-byte stack and preserves bounded owner waits.
 The backend worker retains its own priority. Stop cancels unstarted shared
-copies without entering the hardware executor; an already-running copy must
-finish before its storage is released.
+copies without entering the hardware executor; an already-running copy, its
+completion callback, and any idle notification must finish before storage is
+released or the queue is destroyed.
 A queued copy therefore waits for every copy ahead of it and for the
 completion callback each of those copies invokes synchronously on the
-worker (`finish_copy` runs the notification callback before the next
+worker (`finish_copy` / `on_done` runs the notification callback before the next
 copy starts). No hard bound on that wait is established: it grows with
 queue depth, copy sizes and callback duration. Synchronous pixel
 engines run the copy on the submitting caller instead. Do not add priorities
@@ -283,14 +287,17 @@ then supplied to clean up the fixture. This verifies retention during the test;
 it is not an infinite-duration test, a hard driver-call deadline, a target-IDF
 compatibility test, or proof of physical DMA/scanout behavior.
 
-### Concurrent TE output priority
+### Output worker priority (FB and concurrent TE)
 
-For factory-created C2 TE presenters, the backend output worker defaults to
-priority 7. The dedicated pixel worker is created at 5, then adopts its first
-accepted submitter's priority. With producers below 7 (the benchmark uses 6),
-output therefore precedes composition and can refill bounded DMA bands promptly.
-Producers at or above 7 do not have that precedence guarantee. C1 shares pixel
-processing on its backend worker and retains priority 5.
+For factory-created FB scanout presenters (`DOUBLE`/`TRIPLE_FULL`,
+`DOUBLE_DIRECT`, `DOUBLE`/`TRIPLE_PARTIAL`) and C2 TE presenters, the backend
+output worker defaults to priority 7. Any dedicated pixel worker starts at 5,
+then adopts its first accepted submitter's priority. With producers below 7
+(the benchmark uses 6), output therefore precedes composition/rendering and can
+submit scanout switches or refill bounded DMA bands promptly, avoiding
+`scanout_supply_misses` spikes under producer backlog. Producers at or above 7
+do not have that precedence guarantee. C1 TE shares pixel processing on its
+backend worker and retains priority 5.
 The change affects scheduling precedence, not gate ownership, callback or
 cancellation rules. It adds no task, stack or pixel buffer. It does not promise
 a safe window under arbitrary application priorities or memory/bus contention.

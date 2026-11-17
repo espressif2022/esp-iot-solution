@@ -141,7 +141,7 @@ Two input tiles can alternate, allowing application rendering to overlap backgro
 
 Asynchronous pixel processing can advance in the background using PPA/DMA2D or the CPU. Pixel requests are still processed serially. Whether bus transfers are asynchronous is determined by the output path.
 
-With two TE compose images, the display-progress task defaults to priority 7. The dedicated pixel task adopts its first submitter's priority; output takes precedence when that priority is below 7, reducing inter-band refill delays. Application priorities, XIP, bus bandwidth and measured transfer duration still determine whether the TE window is feasible.
+For RGB/MIPI scanout modes and two-image `TE_SYNC`, the display-progress task defaults to priority 7. Dedicated pixel tasks adopt their first submitter's priority; display output takes precedence when that priority is below 7, reducing scanout supply misses and TE inter-band refill delays. Single-image `TE_SYNC` retains default priority 5. Application priorities, XIP, bus bandwidth and measured transfer duration still determine whether the TE window is feasible.
 
 ### TE setup and limits
 
