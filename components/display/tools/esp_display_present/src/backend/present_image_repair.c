@@ -334,6 +334,47 @@ static bool row_uncovered(const present_image_builder_t *builder, uint32_t y, ui
     }
     return true;
 }
+/* A historical rectangle fully initialized by one exact write/seed needs no
+ * row scan. A bounding box or bitmap fallback is not proof of coverage. */
+static bool rectangle_initialized(const present_image_builder_t *builder, esp_display_present_rect_t area)
+{
+    if (builder->full_covered || builder->seeded.full) {
+        return true;
+    }
+    if (!builder->coverage) {
+        for (size_t i = 0; i < builder->exact.count; ++i) {
+            if (contains(builder->exact.areas[i], area)) {
+                return true;
+            }
+        }
+    }
+    for (size_t i = 0; i < builder->seeded.count; ++i) {
+        if (contains(builder->seeded.areas[i], area)) {
+            return true;
+        }
+    }
+    return false;
+}
+/* Rectangle coverage is constant between successive vertical edges. Recompute
+ * after each accepted repair, since mark_repaired may add an edge or switch to
+ * the bitmap representation. This helper is only used without a bitmap. */
+static uint32_t coverage_band_end(const present_image_builder_t *builder, uint32_t y, uint32_t limit)
+{
+    const present_damage_set_t *sets[] = { &builder->exact, &builder->seeded };
+    for (size_t set = 0; set < sizeof(sets) / sizeof(sets[0]); ++set) {
+        for (size_t i = 0; i < sets[set]->count; ++i) {
+            esp_display_present_rect_t area = sets[set]->areas[i];
+            uint32_t bottom = area.y + area.height;
+            if (area.y > y && area.y < limit) {
+                limit = area.y;
+            }
+            if (bottom > y && bottom < limit) {
+                limit = bottom;
+            }
+        }
+    }
+    return limit;
+}
 bool present_image_next_repair(present_image_builder_t *builder, esp_display_present_rect_t *out)
 {
     assert(builder->repair_ready);
@@ -342,6 +383,11 @@ bool present_image_next_repair(present_image_builder_t *builder, esp_display_pre
     }
     while (builder->rect < builder->repair.count) {
         esp_display_present_rect_t a = builder->repair.areas[builder->rect];
+        if (rectangle_initialized(builder, a)) {
+            builder->rect++;
+            builder->offset = 0;
+            continue;
+        }
         size_t count = (size_t)a.width * a.height;
         uint32_t ry = (uint32_t)(builder->offset / a.width);
         uint32_t rx = (uint32_t)(builder->offset % a.width);
@@ -373,7 +419,7 @@ bool present_image_next_repair(present_image_builder_t *builder, esp_display_pre
                 rx++;
             }
             if (rx >= a.width) {
-                ry++;
+                ry = builder->coverage ? ry + 1 : coverage_band_end(builder, y, a.y + a.height) - a.y;
                 rx = 0;
                 continue;
             }
@@ -410,10 +456,10 @@ bool present_image_next_repair(present_image_builder_t *builder, esp_display_pre
                 end++;
             }
             uint32_t span_w = end - x;
-            uint32_t rows = 1;
+            uint32_t rows = builder->coverage ? 1 : coverage_band_end(builder, y, a.y + a.height) - y;
             while (ry + rows < a.height &&
                     row_uncovered(builder, y + rows, x, span_w)) {
-                rows++;
+                rows = builder->coverage ? rows + 1 : coverage_band_end(builder, y + rows, a.y + a.height) - y;
             }
             /* Peek only: an executor rejection must leave this span retryable.
              * mark_repaired commits coverage and advances after acceptance. */

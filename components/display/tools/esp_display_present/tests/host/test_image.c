@@ -115,6 +115,58 @@ static void rectangle_reference(void)
     }
     present_image_deinit(&image);
 }
+/* Compare tall coverage bands against independent per-pixel membership. Include
+ * a hole, unions of writes/seeds, offset resumes, and rejected repair retries. */
+static void band_reference(void)
+{
+    enum { W = 19, H = 137, N = W * H };
+    present_image_builder_t image;
+    assert(present_image_init(&image, W, H) == ESP_OK);
+    assert(present_image_begin(&image, 0, SIZE_MAX) == ESP_OK);
+    assert(present_image_cover(&image, (esp_display_present_rect_t) {
+        0, 0, W, H
+    }) == ESP_OK);
+    assert(present_image_commit(&image) == ESP_OK);
+    for (unsigned trial = 0; trial < 128; ++trial) {
+        bool initialized[N] = {0}, repaired[N] = {0};
+        assert(present_image_begin(&image, 1, 0) == ESP_OK);
+        unsigned count = trial == 0 ? 2 : 1 + random_u(24);
+        for (unsigned i = 0; i < count; ++i) {
+            unsigned x = random_u(W), y = random_u(H);
+            esp_display_present_rect_t a = {x, y, 1 + random_u(W - x), 1 + random_u(H - y)};
+            if (trial == 0) {
+                a = (esp_display_present_rect_t) {
+                    0, i ? 70 : 0, W, i ? H - 70 : 69
+                };
+            }
+            assert((i & 1 ? present_image_seed(&image, a) : present_image_cover(&image, a)) == ESP_OK);
+            for (unsigned yy = a.y; yy < a.y + a.height; ++yy)
+                for (unsigned xx = a.x; xx < a.x + a.width; ++xx) {
+                    initialized[yy * W + xx] = true;
+                }
+        }
+        present_image_prepare_repair(&image, true);
+        esp_display_present_rect_t area, retry;
+        unsigned steps = 0;
+        while (present_image_next_repair(&image, &area)) {
+            assert(++steps <= N);
+            assert(present_image_next_repair(&image, &retry));
+            assert(memcmp(&area, &retry, sizeof(area)) == 0);
+            assert(area.width && area.height && area.x + area.width <= W && area.y + area.height <= H);
+            for (unsigned yy = area.y; yy < area.y + area.height; ++yy)
+                for (unsigned xx = area.x; xx < area.x + area.width; ++xx) {
+                    assert(!initialized[yy * W + xx] && !repaired[yy * W + xx]);
+                    repaired[yy * W + xx] = true;
+                }
+            assert(present_image_mark_repaired(&image, &area) == ESP_OK);
+        }
+        for (unsigned i = 0; i < N; ++i) {
+            assert(initialized[i] != repaired[i]);
+        }
+        present_image_cancel(&image);
+    }
+    present_image_deinit(&image);
+}
 static unsigned rect_pixels(esp_display_present_rect_t area)
 {
     return area.width * area.height;
@@ -198,6 +250,7 @@ int main(void)
 {
     lazy_coverage();
     rectangle_reference();
+    band_reference();
     seeded_baseline();
     enum { W = 17, H = 9, N = W * H };
     present_image_builder_t b;
