@@ -2,39 +2,38 @@
 
 [中文](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/README_CN.md)
 
-`esp_display_present` manages frame submission, buffer ownership and display
-synchronization for ESP LCD panels. It provides one renderer-facing API for
-RGB/MIPI scanout and panel-IO transfers. Applications own panel and bus setup;
-Present owns the lifetime of the pixel work submitted through it.
+`esp_display_present` manages frame submission, buffer ownership and display synchronization for ESP LCD panels. The application initializes the panel and bus; Present manages the lifetime of the pixel work submitted by a renderer.
 
-Use [esp_lv_present](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_lv_present/README.md) to connect LVGL 9. Custom
-renderers use the public API in [include/esp_display_present.h](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/include/esp_display_present.h).
+Connect LVGL 9 through [esp_lv_present](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_lv_present/README.md). Custom renderers use the [Presenter API](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/include/esp_display_present.h).
 
-## Requirements
+## Choose a mode and pipeline combination
 
-- ESP-IDF 6.0 or newer; RGB565 or RGB888 input matching the panel configuration.
-- An initialized panel. RGB/MIPI require at least two driver framebuffers and a
-  supported buffer-retirement protocol. DSI also requires DPI frame-complete
-  and VSYNC callbacks, which ESP-IDF 6.0 does not provide.
-- Panel IO requires the panel and IO handles. TE additionally needs a wired,
-  enabled TE signal and enough bus time for the composed frame. For PSRAM compose
-  images without direct DMA, Present sends bands through two bounded internal DMA
-  staging buffers. Internal DMA images and confirmed direct-PSRAM-DMA images use
-  direct submission. When driver facts cannot be queried, `hw.spi_psram_dma_direct`
-  must match the actual IO creation flag.
+Choose the panel and rendering path first, then configure buffer counts. Mode names below omit the `ESP_DISPLAY_PRESENT_MODE_` prefix.
 
-For ESP32-S3 RGB, enable bounce buffers in the panel driver. RGB uses continuous
-refresh and untransformed driver coordinates; apply logical rotation through
-Present. The SDK/BSP must provide the actual framebuffer facts. With older
-drivers lacking these facts, the [compatibility option in Kconfig](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/Kconfig)
-may confirm an **actual bounce-buffer** setup; it does not enable non-bounce
-retirement on an unsupported chip.
+| Panel and use | Mode | Renderer input |
+|---|---|---|
+| Panel IO, ordinary area updates | `NONE` | PARTITION: submit areas in tiles |
+| Panel IO, transmission within TE windows | `TE_SYNC` | PARTITION: compose tiles, then send a complete image |
+| RGB/MIPI, tiled rendering | `DOUBLE_PARTIAL` / `TRIPLE_PARTIAL` | PARTITION: copy tiles into a candidate framebuffer |
+| RGB/MIPI, complete redraw each frame | `DOUBLE_FULL` / `TRIPLE_FULL` | FULL: submit a complete frame |
+| RGB/MIPI, dirty updates within a complete image | `DOUBLE_DIRECT` | DIRECT: submit dirty regions in a full-frame buffer |
 
-This checkout declares Present 2.0.0 and LVGL binding 0.2.0. To use the local
-source, add the following to your application's `main/idf_component.yml` and
-replace the path. The version declaration alone does not establish Registry
-availability; LVGL users should select both local components as shown in the
-[binding guide](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_lv_present/README.md).
+`AUTO` resolves as follows:
+
+- RGB/MIPI: `TRIPLE_PARTIAL` with three driver framebuffers, `DOUBLE_PARTIAL` with two.
+- Panel IO: `TE_SYNC` with a valid TE configuration, otherwise `NONE`.
+
+**A zero-initialized mode selects `NONE`, not `AUTO`.** RGB/MIPI do not support `NONE` or `TE_SYNC`. Panel IO does not support the FB FULL, DIRECT or PARTIAL modes.
+
+## Requirements and dependencies
+
+- ESP-IDF 6.0 or newer; RGB565 or RGB888 input matching the initialized panel configuration.
+- RGB/MIPI require at least two driver framebuffers and a supported scanout-retirement protocol. DSI additionally needs DPI frame-complete and VSYNC callbacks, which ESP-IDF 6.0 does not provide.
+- Panel IO requires both panel and IO handles. The current transfer adapter implements SPI/QSPI completion-callback semantics.
+
+Enable driver bounce buffers for ESP32-S3 RGB. RGB uses continuous refresh and untransformed driver coordinates; apply logical rotation through Present. When an older driver cannot report its actual configuration, use the [Kconfig compatibility option](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/Kconfig) only for a panel actually configured with bounce buffers. See [mode and output adaptation](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/docs/MODE_ARCHITECTURE.md) for other scanout protocols.
+
+To use this checkout, add the dependency to the application's `main/idf_component.yml` and replace the path:
 
 ```yaml
 dependencies:
@@ -43,16 +42,17 @@ dependencies:
     override_path: /path/to/esp-iot-solution/components/display/tools/esp_display_present
 ```
 
+A source version declaration does not establish Registry availability. LVGL users must select both local components as shown in the [binding guide](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_lv_present/README.md).
+
 ## Create a presenter
 
-Initialize the panel with the BSP or `esp_lcd` first. This example borrows an
-RGB panel and resolves AUTO against its actual driver framebuffer pool:
+### RGB/MIPI: borrow the driver framebuffers
+
+Initialize the panel through the BSP or `esp_lcd`, then create the presenter:
 
 ```c
 #include "esp_display_present.h"
 
-// Call after the BSP has initialized a supported 480x480 RGB panel
-// with at least two driver-owned framebuffers.
 esp_err_t create_presenter(esp_lcd_panel_handle_t panel,
                            esp_display_presenter_t **out_presenter)
 {
@@ -70,140 +70,165 @@ esp_err_t create_presenter(esp_lcd_panel_handle_t panel,
 }
 ```
 
-For MIPI use `ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI`; for panel IO use
-`ESP_DISPLAY_PRESENT_PANEL_IO` and set `hw.io`. For TE also set
-`hw.te_enabled` and `hw.te_sync` to match the wiring and bus configuration.
-Keep the panel, IO and their storage valid until presenter deletion succeeds;
-let Present manage the completion callbacks it registers.
+Use `ESP_DISPLAY_PRESENT_PANEL_MIPI_DSI` for MIPI. Before initializing the driver, `esp_display_present_get_required_frame_buffer_count()` can query the recommended framebuffer count; it allocates no storage.
 
-`open()` takes **physical** panel dimensions; `hw.rotation` determines the
-logical orientation. Use `open_ex()` to select tile rows, one/two input tiles,
-PSRAM preference or one/two TE compose buffers. Use `create()` for explicit
-framebuffers, damage limits or timeout overrides. Its `width` and `height` are
-**logical** dimensions. Query `get_caps()` and `get_effective_config()` for the
-resulting layout, mode and buffer pools.
+### Panel IO: two internal draw buffers and background output
 
-Before creating an RGB/MIPI panel, `esp_display_present_get_required_frame_buffer_count()`
-can recommend its framebuffer count. This query does not allocate buffers.
+This example configures ordinary SPI/QSPI RGB565 updates. Set `swap_bytes` to match the wire byte order required by the panel driver.
 
-## Choose a mode and pipeline combination
+```c
+#include "esp_display_present.h"
 
-This table covers **one Presenter instance** created by `open()` / `open_ex()` / `create()`. An input tile is a buffer for rendering part of a frame. A full-screen draw buffer holds renderer output; a full-frame compose image holds composed TE output.
+esp_err_t create_io_presenter(esp_lcd_panel_handle_t panel,
+                              esp_lcd_panel_io_handle_t io,
+                              esp_display_presenter_t **out_presenter)
+{
+    const esp_display_presenter_config_t config = {
+        .width = 480,
+        .height = 480,
+        .pixel_format = ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565,
+        .target = {
+            .hw = {
+                .panel = panel,
+                .io = io,
+                .panel_type = ESP_DISPLAY_PRESENT_PANEL_IO,
+                .input_pixel_format = ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565,
+                .swap_bytes = true,
+            },
+            .fb.mode = ESP_DISPLAY_PRESENT_MODE_NONE,
+            .drawbuf = {.lines = 32, .buffers = 2, .in_psram = false},
+            .io_submit = ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND,
+        },
+    };
+    return esp_display_presenter_create(&config, out_presenter);
+}
+```
 
-**Driver framebuffers remain driver-owned. Present pixel buffers are separate allocations; account for both columns.** Background task counts exclude application/LVGL and driver tasks, ISRs and timer callbacks. In code, `backend` advances display progress and `pixel` processes pixels; the table states how many tasks perform these roles.
+| Entry point | Dimensions | Use |
+|---|---|---|
+| `open()` | Physical width and height | Default buffer policy |
+| `open_ex()` | Physical width and height | Custom tile rows/count, PSRAM preference and TE compose count |
+| `create()` | Logical width and height | Also configure `io_submit`, timeouts, damage limits and explicit framebuffers |
 
-RGB/MIPI use native framebuffer pixel layouts and need no software RGB565 byte swap; their paths below differ by rotation. Panel IO wire byte order follows the panel requirements. Byte swapping is separate from RGB/BGR component order.
+Set rotation through `hw.rotation`. After creation, query `get_caps()` for the render contract and `get_effective_config()` for the actual mode, buffer counts, memory domains and degradation flags. Keep panel, IO and driver storage alive until presenter deletion succeeds; Present manages its registered completion callbacks during that lifetime.
 
-| Panel / mode | Rotation | Driver framebuffers | Pixel buffers allocated by Present | Present background tasks |
+## Panel IO NONE: rendering and transmission
+
+**D is the renderer's draw buffer; S is an internal DMA staging buffer for a band of pixels.** The three profiles below are recommended starting points. D count (1/2) and memory domain can also be selected independently.
+
+| Profile | `io_submit` | `drawbuf.buffers` | `drawbuf.in_psram` | Present background tasks |
 |---|---|---|---|---|
-| RGB/MIPI `DOUBLE_FULL` / `TRIPLE_FULL` | 0° | 2 or 3 frames | No additional pixel storage; draw directly into driver framebuffers | 1 display-progress task |
-| RGB/MIPI `DOUBLE_FULL` / `TRIPLE_FULL` | 90° / 180° / 270° | 2 or 3 frames, retained | Add 1 full-screen draw buffer, shared by these driver framebuffers | 1 task advances display and processes pixels |
-| RGB/MIPI `DOUBLE_DIRECT` | 0° | 2 frames | No additional pixel storage; draw dirty regions directly into driver framebuffers | 1 task advances display and repairs content |
-| RGB/MIPI `DOUBLE_DIRECT` | 90° / 180° / 270° | 2 frames, retained | Add 1 full-screen draw buffer, shared by both driver framebuffers | 1 task advances display and processes pixels |
-| RGB/MIPI `DOUBLE_PARTIAL` / `TRIPLE_PARTIAL` | 0° / 90° / 180° / 270° | 2 or 3 frames | 1 input tile; copy/rotate directly into driver framebuffers, without another full frame | 1 task advances display and processes pixels |
-| RGB/MIPI `DOUBLE_PARTIAL` / `TRIPLE_PARTIAL` | 0° / 90° / 180° / 270° | 2 or 3 frames | 2 input tiles; copy/rotate directly into driver framebuffers, without another full frame | 2 tasks: 1 for display progress, 1 for pixel processing |
-| IO `NONE`, `CALLER` / `DEFAULT` | 0° / 90° / 180° / 270° | None | T=1/2 internal or PSRAM D; lazily add 2 bounded internal S slots for conversion or non-DMA source¹ | 0; caller processes pixels and submits |
-| IO `NONE`, `BACKGROUND` (WORKER) | 0° / 90° / 180° / 270° | None | T=1/2 internal or PSRAM D; same bounded S, no input-sized X | 1 backend task for conversion, band filling and submission |
-| IO `TE_SYNC` | 0° / 90° / 180° / 270° | None | 1 input tile, 1 full-frame compose image; see transfer staging¹ | 1 task: display progress and pixel processing |
-| IO `TE_SYNC` | 0° / 90° / 180° / 270° | None | 2 input tiles, 1 full-frame compose image; see transfer staging¹ | 1 task: display progress and pixel processing |
-| IO `TE_SYNC` | 0° / 90° / 180° / 270° | None | 1 input tile, 2 full-frame compose images; see transfer staging¹ | 2 tasks: 1 for display progress, 1 for pixel processing |
-| IO `TE_SYNC` | 0° / 90° / 180° / 270° | None | 2 input tiles, 2 full-frame compose images; see transfer staging¹ | 2 tasks: 1 for display progress, 1 for pixel processing |
+| Simple small tiles, minimum task overhead | `CALLER` | 1 | `false` | 0 |
+| Ordinary tiles, overlapping rendering and output | `BACKGROUND` | 2 | `false` | 1 backend |
+| Large tiles/full-screen D, conserving internal draw memory | `BACKGROUND` | 2 | `true` | 1 backend |
 
-¹ NONE and TE use `CONFIG_ESP_DISPLAY_PRESENT_IO_STAGING_SLOT_BYTES`, default 16 KiB per slot rounded down to physical whole rows, with a separate pair per instance. `sdkconfig.rename` migrates the old TE setting. NONE allocates lazily; TE allocates at creation for non-direct PSRAM compose images. Alternate filling and sending with at most one DMA band in flight. Tails send real pixels without wire padding. Reject a physical row exceeding the budget. Stacks, metadata and driver buffers are additional.
+`CALLER` and `BACKGROUND` omit the `ESP_DISPLAY_PRESENT_IO_SUBMIT_` prefix. `DEFAULT` equals `CALLER`; `open()` and `open_ex()` use `DEFAULT`. Only `NONE` accepts an explicit submission policy.
 
-### Automatic selection
+CALLER processes pixels and submits on the calling task, which may block. BACKGROUND moves this work to one backend task. Swap, rotation and D memory location never add a pixel task.
 
-`AUTO` resolves to a concrete mode before following the table: RGB/MIPI selects `TRIPLE_PARTIAL` with three driver FBs or `DOUBLE_PARTIAL` with two. Panel IO selects `TE_SYNC` with a valid TE configuration, otherwise `NONE`.
+### Output selection for each submission
 
-RGB/MIPI do not support `NONE` or `TE_SYNC`. A zero-initialized `mode` selects `NONE`; request `AUTO` explicitly. TE effectiveness depends on panel timing and transfer budget; it cannot eliminate tearing in every configuration.
+| Input conditions | Pixel processing | DMA source |
+|---|---|---|
+| 0°, packed rows, actual address and length satisfy DMA constraints | No copy; apply in-place RGB565 swap16 when required, then cache writeback | D |
+| Rotation, padded source rows, or source unsuitable for direct DMA | Read D and fuse copy/rotation/swap into physical rows in S | S |
 
-### Buffer configuration
+Allocate two S buffers on first use, each with a default budget of at most 16 KiB. Fill the next slot while the current band sends, with at most one DMA band in flight. The tail sends real pixels without expanding damage or padding wire data to DMA alignment. **Internal staging capacity does not grow with D; there is no input-sized conversion pool.**
 
-Use the `drawbuf` argument of `open_ex()`, or `target.drawbuf` in `create()`:
+Direct PSRAM DMA requires matching SoC and IO support plus a legal actual address and length for this request; otherwise use S. When the driver cannot report its capability, `hw.spi_psram_dma_direct` must match the actual IO creation flag. RGB565 byte swapping and RGB/BGR component order are separate settings.
 
-- `lines`: rows per input tile. Zero uses `CONFIG_ESP_DISPLAY_PRESENT_DEFAULT_TILE_BYTES` (default 32 KiB), rounded to whole logical rows, with at least one row and at most the logical height. Explicit rows override this default; the budget is not a hard limit on a single row.
-- `buffers`: input tile count T, either 1 or 2. Zero selects automatically; only an automatically selected pair can retry allocation with one tile. FULL/DIRECT do not use this pool.
-- `in_psram`: prefer PSRAM for input tiles; allocation may fall back to internal DMA memory.
-- `te_compose_buffers`: TE compose-image count C. Values 0/1 select one image; 2 selects two. Applies only to `TE_SYNC`, independently of tile count.
+### When D can be drawn again
 
-### Asynchronous processing and rotation
+```text
+Render D → submit → send D directly, or send bands through S
+                              ↓
+                    complete the entire area → D can be acquired again
+```
 
-IO `NONE` selects only the execution task. `target.io_submit = CALLER` or `DEFAULT` (zero) processes pixels, fills bands and submits on the caller; `BACKGROUND` uses one backend output task with the backend priority policy below. Memory location, swap and rotation never add tasks. Set this field through `create()`; `open()` / `open_ex()` use `DEFAULT`. Other modes still require `DEFAULT`.
+Function return does not establish DMA completion. Do not write D after submission, and do not overwrite S before its own DMA completes. Two D buffers allow rendering into the other buffer; slower output still creates backpressure.
 
-Recommended profiles are CALLER + one internal D, BACKGROUND + two internal D, and BACKGROUND + two PSRAM D. Both counts and memory domains use the same implementation. NONE retains PARTITION semantics; D may cover the whole screen without introducing FB FULL persistent-canvas semantics.
+D may cover the full screen, for example with `drawbuf.lines = height`. It still uses PARTITION leases, so do not rely on retained content across frames. Two 480×480 RGB565 D buffers occupy 900 KiB, excluding S, metadata and task stacks.
 
-Direct PSRAM DMA requires matching SoC/IO support and legal actual source address and length. A direct swap uses in-place RGB565 swap16. Rotation generates physical rows in S; alignment failures fall back to S without expanding damage or padding wire pixels to 64 bytes. Source-stride handling is a read detail, not another execution mode.
+## Panel IO TE_SYNC: compose first, then send within a window
 
-Runtime `set_rotation()` preserves task count and allocates no input-sized X. An instance using in-place swap may switch to rotated staged output. Quarter-turns exchange logical width and height. Drain first, query the new layout, and handle geometry errors such as a tile too small for one row.
+TE composes D into physical full-frame images C before admitting output against TE timing. D and C counts are independent:
 
-With one TE compose image, the display-progress task also runs the asynchronous pixel queue; no separate pixel task is created. Two compose images retain a dedicated pixel task to overlap composition and transmission. Sharing the task preserves asynchronous requests, completion callbacks and buffer ownership.
+| D count | `te_compose_buffers` | Compose images | Present background tasks |
+|---|---|---|---|
+| 1 or 2 | 0 / 1 | 1 C | 1 backend, also performing pixel composition |
+| 1 or 2 | 2 | 2 C | 1 backend + 1 pixel task |
 
-Two input tiles can alternate, allowing application rendering to overlap background pixel processing. Two TE compose images allow composition of the next frame while the previous frame transfers; one image must wait for transfer retirement before being overwritten. More buffers do not automatically add background tasks or guarantee higher frame rates.
+One C must wait for its transmission to finish before being rewritten. Two allow composition of the next image while the previous one sends. Rotation writes directly into C, without another rotation frame.
 
-Asynchronous pixel processing can advance in the background using PPA/DMA2D or the CPU. Pixel requests are still processed serially. Whether bus transfers are asynchronous is determined by the output path.
+C prefers PSRAM and may fall back to internal DMA memory. Internal DMA C or confirmed direct-DMA PSRAM C submits directly. Non-direct PSRAM C adds two S buffers at creation, using the same byte-budget setting as NONE but separate buffers per instance.
 
-All backend tasks use `CONFIG_ESP_DISPLAY_PRESENT_BACKEND_TASK_PRIORITY`
-(`Display presenter` in menuconfig). The default, 0, snapshots the creating
-producer task's priority, and selects the new producer's current priority on a
-successful rebind or LVGL session bind. This avoids inheriting the setup task's
-priority for a later LVGL producer. A nonzero value fixes the application-selected
-priority across sessions. Submit, commit, completions and scene changes never
-retune it; changing the producer task's priority alone does not retune an active
-session. Dedicated pixel workers keep their existing first-submit priority policy.
+First enable and wire TE output in the panel driver. Set `hw.te_enabled`, `hw.te_sync.gpio_num`, `bus_freq_hz` and `data_lines` to match the hardware. Bus parameters seed the first estimate; subsequent admission uses measured timing, including band gaps. Startup polarity detection assumes short blanking pulses and a longer idle level; other waveforms need validation. **TE configuration and buffer counts alone cannot guarantee tear-free output.** See [TE timing and admission](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/docs/TE_TIMING.md).
 
-An application needing display output to precede rendering should select an
-explicit priority relative to its own tasks. Neither a fixed number nor matching
-the producer guarantees a scanout/TE deadline; verify scheduling, XIP, bus
-bandwidth and measured transfer duration for the application.
+## RGB/MIPI: frame construction and scanout retirement
 
-### TE setup and limits
+The driver owns two or three framebuffers (FBs). Present buffers below are additional to those FBs. RGB/MIPI use native pixel byte order without software RGB565 swap.
 
-Enable TE output in the panel driver, connect its signal, and set `te_enabled`, `te_sync.gpio_num`, `bus_freq_hz` and `data_lines` to match the hardware. Bus settings seed the first transfer estimate; subsequent admission uses measured timing, including gaps between staged bands.
+| Mode and rotation | Additional Present pixel buffers | Present background tasks |
+|---|---|---|
+| FULL / DIRECT, 0° | None; render directly into driver FBs | 1 backend |
+| FULL / DIRECT, 90° / 180° / 270° | 1 shared logical full-frame canvas | 1 backend, also processing pixels |
+| PARTIAL, any rotation, one D | 1 D, copied/rotated into the candidate FB | 1 backend, also processing pixels |
+| PARTIAL, any rotation, two D | 2 D, copied/rotated into the candidate FB | 1 backend + 1 pixel task |
 
-Startup polarity detection samples the GPIO for approximately 9 ms and assumes a short blanking pulse with a longer idle level. It adds no background task or periodic sampling. A different TE waveform needs separate validation. Buffer count alone does not guarantee that transmission fits the TE window; see [TE timing and admission](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/docs/TE_TIMING.md).
+FULL means `DOUBLE_FULL` / `TRIPLE_FULL`; DIRECT means `DOUBLE_DIRECT`; PARTIAL means `DOUBLE_PARTIAL` / `TRIPLE_PARTIAL`. Rotated FULL/DIRECT share one logical canvas, preferring PSRAM and releasing it on return to 0°. PARTIAL adds no logical full-frame canvas.
 
-### Memory and effective configuration
+**Copy completion and scanout retirement are different events.** D can return after its copy completes; a driver FB must retire through the scanout protocol before it can be rendered again. Background-task counts exclude application/LVGL tasks, driver tasks, ISRs and timer callbacks. Acceleration depends on SDK, SoC and layout; background pixel work may also use the CPU.
 
-Input tiles (T), TE compose images (C), driver FBs and additional pixel buffers consume **separate storage**. Driver and Present pixel storage are listed separately in the table. Allocation and release follow these rules:
+## Shared buffer and task configuration
 
-- RGB/MIPI FULL/DIRECT: 0° borrows driver FBs directly. A rotation of 90°/180°/270° adds **one shared logical frame**, not one per driver FB. This frame prefers PSRAM and may fall back to internal DMA memory. Returning to 0° releases it.
-- PARTIAL: allocate T input tiles and copy/rotate directly into the candidate driver FB. Rotation adds neither a full-frame canvas nor a separate conversion-tile pool.
-- IO NONE: allocate only T draw buffers D. Directly send a tight 0° source when its actual DMA constraints pass; apply in-place RGB565 swap16 and cache writeback when needed, restoring pixels on rejection. Otherwise fuse rotation, swap and source-stride reading into physical bands in two bounded S slots. Retain D until the entire logical transfer completes; reuse each S only after its DMA completes. No input-sized X or pixel task.
-- TE_SYNC: allocate T input tiles and C physical full-frame compose images. Rotation writes directly into those images without another rotation frame. Compose images prefer PSRAM and may fall back to internal DMA memory. Non-direct PSRAM images add the two staging buffers above, independently of T and C. The compose image remains pinned until logical transfer completion. Stop or timeout prevents later bands from being submitted; an in-driver band still requires its real completion callback before retirement. A timed-out stop retains the instance for retry; pixels already written to the panel cannot be rolled back.
+Use `target.drawbuf` with `create()`, or the `drawbuf` argument of `open_ex()`:
 
-These counts do not cover all application memory. Driver-owned RGB bounce buffers, DMA descriptors, frontend-owned draw buffers (for example LVGL buffers), task stacks, metadata and alignment cost extra. One 480×480 RGB565 image costs 450 KiB; one 480×32 RGB565 tile costs 30 KiB.
+| Field | Meaning |
+|---|---|
+| `lines` | Logical rows per D; zero uses the default tile-byte target, with at least one row and at most the logical height |
+| `buffers` | D count: 1 or 2; zero selects automatically, and only an automatically selected pair may fall back to one after allocation failure |
+| `in_psram` | Prefer PSRAM for D; actual allocation may fall back to internal DMA memory |
+| `te_compose_buffers` | TE_SYNC only: 0/1 selects one C, 2 selects two |
 
-After creation, inspect `get_effective_config()` for the actual mode, `tile_count`, `image_count`, memory domains and degradation flags. Use `get_caps()` for the render contract. These APIs do not enumerate every lazily allocated buffer; measure runtime memory for the actual path. See [mode and buffer contracts](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/docs/MODE_ARCHITECTURE.md).
+FULL/DIRECT do not use the input tile pool. A 480×32 RGB565 D costs 30 KiB. Frontend-owned buffers, driver bounce buffers, DMA descriptors, alignment, stacks and metadata cost extra. `get_effective_config()` does not enumerate every lazy allocation.
 
-## Render and release safely
+The `Display presenter` menu in menuconfig provides:
 
-For a custom renderer, the normal sequence is `begin_next_frame()` →
-`acquire_buffer()` → draw/`submit_buffer()` → `commit_frame()`. PARTITION
-renderers may acquire and submit multiple regions within one frame. Follow the
-returned contract and lease capacity; a submitted buffer is no longer writable.
-LVGL users should let the binding perform these operations.
+| Kconfig | Default | Purpose |
+|---|---|---|
+| `CONFIG_ESP_DISPLAY_PRESENT_DEFAULT_TILE_BYTES` | 32 KiB | D byte target when `lines = 0`; a single row may exceed the target |
+| `CONFIG_ESP_DISPLAY_PRESENT_IO_STAGING_SLOT_BYTES` | 16 KiB | Byte limit per S, rounded to physical whole rows; reject a path whose physical row exceeds it |
+| `CONFIG_ESP_DISPLAY_PRESENT_BACKEND_TASK_PRIORITY` | 0 | Backend priority: zero snapshots the current producer priority at creation/successful binding; nonzero fixes the application-selected priority |
 
-Keep renderer calls on the owning producer task; `open()` initially binds its
-calling task. To move a custom renderer to another task, use
-`rebind_producer()` between frames. If the next adapter cannot rebind itself,
-the current owner should quiesce and `release_producer()` before launching it;
-its first admitted frame then claims ownership. LVGL `start()` binds automatically.
+NONE and TE share the S budget setting, with separate buffers per instance. `sdkconfig.rename` migrates the former TE setting. Backend priority does not change per submission, completion or scene; dedicated pixel tasks retain their first submitter's priority. Priority and buffer counts do not replace scheduling and bandwidth validation.
 
-Before changing rotation or handing the presenter to another renderer, pause
-production and `quiesce()`; for LVGL, stop the binding first as described in the
-[binding guide](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_lv_present/README.md).
-After rotation, query the layout again. Stop/destroy a renderer binding before
-deleting its presenter, then release the application-owned panel/IO resources.
+## Render, hand off and release
 
-A timeout or cancellation does not prove that hardware has stopped reading.
-If stop/delete cannot complete, retain the object and borrowed storage for a
-retry; do not free them on that error path. A latched fault requires safe teardown
-and recreation; query `get_fault_error()` for the original cause. Hardware
-acceleration is optional and depends on the SDK, SoC and pixel layout. See [ownership and recovery](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/STATE_MACHINE.md).
+The basic custom-renderer sequence is:
+
+```text
+begin_next_frame()
+    → acquire_buffer() → render → submit_buffer()   // repeat for PARTITION
+    → commit_frame()
+```
+
+Follow the returned contract, stride and lease capacity. The lease's `resolve_rows` callback computes how many rows fit the chosen stride; never exceed `capacity_bytes` or write after submission. The LVGL binding performs these operations for LVGL.
+
+Renderer calls belong to the presenter's producer task. Creation initially binds the calling task. To move a custom renderer, call `rebind_producer()` between frames. If the next adapter cannot rebind itself, the current owner should quiesce and `release_producer()` before starting it. LVGL `start()` binds automatically.
+
+Pause production and `quiesce()` before rotation or renderer changes; stop the LVGL binding first as described in its guide. Quarter-turns exchange logical dimensions, so query the layout again afterwards. NONE rotation adds no tasks or input-sized conversion pool; see the relevant tables for other modes' canvas changes.
+
+Error handling and shutdown rules:
+
+- A rejected NONE CALLER submission retains the original lease and pixels for an explicit retry after correcting the cause.
+- Staging OOM fails an already accepted NONE worker request with `NO_MEM` and safely returns D. Driver backpressure waits for genuine completion without busy retries.
+- Timeout or cancellation does not establish hardware retirement. If stop/delete cannot complete, retain the object and borrowed storage for retry. A latched fault requires safe teardown and recreation; use `get_fault_error()` for the original error.
+- Stop/destroy the renderer binding before deleting the presenter. Release application-owned panel and IO resources only after deletion succeeds.
 
 ## Examples and reference
 
-- [LVGL benchmark](https://github.com/espressif/esp-iot-solution/tree/master/examples/display/gui/lvgl_present_benchmark): panel setup and LVGL integration.
-- [GSP/LVGL handoff](https://github.com/espressif/esp-iot-solution/tree/master/examples/display/gui/gsp_lvgl_present_handoff): producer ownership and retryable recovery.
-- [Compatibility and migration](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/COMPATIBILITY.md), [TE timing](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/docs/TE_TIMING.md), [public API](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/include/esp_display_present.h).
-- [Host regression and target smoke](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/tests/host/README.md): maintained test entry points.
+- [LVGL benchmark](https://github.com/espressif/esp-iot-solution/tree/master/examples/display/gui/lvgl_present_benchmark): panel initialization and LVGL integration.
+- [GSP/LVGL handoff](https://github.com/espressif/esp-iot-solution/tree/master/examples/display/gui/gsp_lvgl_present_handoff): producer handoff and retryable recovery.
+- [Mode and buffer contracts](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/docs/MODE_ARCHITECTURE.md): mode mapping, output protocols and internal responsibilities.
+- [Ownership and recovery](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/STATE_MACHINE.md), [compatibility and migration](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/COMPATIBILITY.md).
+- [Host regression and target smoke](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/tests/host/README.md): maintained test entry points; performance evidence must identify its revision and board configuration.
