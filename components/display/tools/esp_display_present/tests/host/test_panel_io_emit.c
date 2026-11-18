@@ -7,6 +7,7 @@
 #include "esp_cache.h"
 #include <assert.h>
 #include <pthread.h>
+#include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,9 +36,30 @@ static bool internal_memory;
 static esp_err_t cache_error;
 static unsigned allocation_attempts, fail_allocation;
 static void *allocated_slots[2];
+static struct {
+    pthread_mutex_t lock;
+    pthread_cond_t changed;
+    bool enabled, entered, release, first_succeeds;
+    unsigned calls;
+} oom_gate = {.lock = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER};
 void *__real_present_alloc_pixels(size_t);
 void *__wrap_present_alloc_pixels(size_t bytes)
 {
+    pthread_mutex_lock(&oom_gate.lock);
+    bool deny = false;
+    if (oom_gate.enabled) {
+        ++oom_gate.calls;
+        oom_gate.entered = true;
+        pthread_cond_broadcast(&oom_gate.changed);
+        while (!oom_gate.release) {
+            pthread_cond_wait(&oom_gate.changed, &oom_gate.lock);
+        }
+        deny = !oom_gate.first_succeeds || oom_gate.calls > 1;
+    }
+    pthread_mutex_unlock(&oom_gate.lock);
+    if (deny) {
+        return NULL;
+    }
     if (++allocation_attempts == fail_allocation) {
         return NULL;
     }
@@ -431,6 +453,149 @@ static void worker_full_screen(unsigned rotation)
     pthread_mutex_destroy(&panel.lock); pthread_cond_destroy(&panel.changed);
 }
 
+/* Persistent failure must terminate accepted work without another allocation
+ * attempt, including when the transfer deadline is disabled. Gate allocation
+ * until the frame is sealed so failure/commit ordering is deterministic. */
+static void worker_staging_oom(bool first_succeeds, uint32_t transfer_timeout)
+{
+    allocations = max_allocation = live_allocations = allocation_attempts = 0;
+    internal_memory = false;
+    struct fake_lcd panel = {.lock = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER};
+    esp_display_present_lcd_io_config_t io = {.panel = &panel, .io = &panel, .max_inflight = 1,
+                                              .staging_bytes = 64, .region_mode = true, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565
+                                             };
+    esp_display_present_lcd_io_t *adapter;
+    assert(esp_display_present_lcd_io_create(&io, &adapter) == ESP_OK);
+    esp_display_present_engine_config_t cfg = {.backend = {.width = 4, .height = 4, .tile_rows = 4,
+                                                           .buffer_count = 1, .max_frames = 2, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+                                                           .deferred_submit = true
+                                                          }, .background_service = true, .timeout_ms = 1000,
+                                               .transfer_timeout_ms = transfer_timeout
+                                              };
+    assert(esp_display_present_lcd_io_get_interface(adapter, &cfg.backend.panel) == ESP_OK);
+    esp_display_present_engine_t *engine;
+    assert(esp_display_present_engine_create(&cfg, &engine) == ESP_OK);
+    esp_display_present_frame_request_t request = {.full_redraw = true};
+    assert(esp_display_present_engine_begin_next_frame(engine, &request) == ESP_OK);
+    esp_display_present_lease_t lease;
+    assert(esp_display_present_engine_acquire_buffer(engine, &lease) == ESP_OK);
+    memset(lease.surface.pixels, 0x21, 32);
+    pthread_mutex_lock(&oom_gate.lock);
+    oom_gate.enabled = true; oom_gate.entered = oom_gate.release = false;
+    oom_gate.first_succeeds = first_succeeds; oom_gate.calls = 0;
+    pthread_mutex_unlock(&oom_gate.lock);
+    esp_display_present_engine_area_t area = {0, 0, 3, 3};
+    assert(esp_display_present_engine_submit_buffer(engine, &lease, &area, 8) == ESP_OK);
+    pthread_mutex_lock(&oom_gate.lock);
+    while (!oom_gate.entered) {
+        pthread_cond_wait(&oom_gate.changed, &oom_gate.lock);
+    }
+    pthread_mutex_unlock(&oom_gate.lock);
+    esp_display_present_engine_receipt_t receipt;
+    assert(esp_display_present_engine_commit_with_receipt(engine, NULL, &receipt) == ESP_OK);
+    pthread_mutex_lock(&oom_gate.lock);
+    oom_gate.release = true; pthread_cond_broadcast(&oom_gate.changed);
+    pthread_mutex_unlock(&oom_gate.lock);
+    esp_display_present_frame_status_t status;
+    assert(esp_display_present_engine_wait_frame(engine, receipt, ESP_DISPLAY_PRESENT_COMPLETION_SOURCE_RELEASED, 1000, &status) == ESP_OK);
+    assert(status.result == ESP_ERR_NO_MEM && status.terminal && status.src_released);
+    assert(esp_display_present_engine_release_receipt(engine, receipt) == ESP_OK);
+    assert(esp_display_present_engine_stop(engine, 1000) == ESP_OK);
+    assert(esp_display_present_engine_destroy(engine) == ESP_OK);
+    assert(oom_gate.calls == 2 && !panel.draws && !live_allocations);
+    assert(allocations == (first_succeeds ? 1u : 0u));
+    oom_gate.enabled = false;
+    assert(esp_display_present_lcd_io_destroy(adapter) == ESP_OK);
+    pthread_mutex_destroy(&panel.lock); pthread_cond_destroy(&panel.changed);
+}
+
+static esp_display_present_tx_result_t (*real_emit)(void *, const esp_display_present_surface_t *,
+                                                    const esp_display_present_rect_t *, esp_display_present_engine_rotation_t, uint64_t);
+static atomic_uint busy_attempts;
+static present_os_event_t *busy_seen;
+static esp_display_present_tx_result_t count_busy_emit(void *context, const esp_display_present_surface_t *surface,
+                                                       const esp_display_present_rect_t *area, esp_display_present_engine_rotation_t rotation, uint64_t cookie)
+{
+    esp_display_present_tx_result_t result = real_emit(context, surface, area, rotation, cookie);
+    if (result.acceptance == ESP_DISPLAY_PRESENT_TX_REJECTED && result.result == ESP_ERR_NOT_FINISHED) {
+        atomic_fetch_add(&busy_attempts, 1);
+        present_event_signal(busy_seen, false);
+    }
+    return result;
+}
+
+/* A direct DMA keeps the S pair unavailable. Repeated service must wait for
+ * its real completion instead of scheduling itself in a tight loop. */
+static void worker_backpressure(void)
+{
+    allocations = max_allocation = live_allocations = allocation_attempts = 0;
+    internal_memory = false;
+    uint8_t expected[64], seen[32] = {0}; memset(expected, 0x21, sizeof(expected));
+    transform_t transform = {.expected = expected, .seen = seen, .out_w = 32, .bpp = 2};
+    struct fake_lcd panel = {.lock = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER,
+               .transform = &transform, .area = {0, 0, 32, 1}
+    };
+    esp_display_present_lcd_io_config_t io = {.panel = &panel, .io = &panel, .max_inflight = 2,
+                                              .staging_bytes = 64, .region_mode = true, .psram_dma_direct = true, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565
+                                             };
+    esp_display_present_lcd_io_t *adapter;
+    assert(esp_display_present_lcd_io_create(&io, &adapter) == ESP_OK);
+    esp_display_present_engine_config_t cfg = {.backend = {.width = 32, .height = 2, .tile_rows = 1,
+                                                           .buffer_count = 2, .max_frames = 2, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+                                                           .deferred_submit = true
+                                                          }, .background_service = true, .timeout_ms = 1000, .transfer_timeout_ms = 1000
+                                              };
+    assert(esp_display_present_lcd_io_get_interface(adapter, &cfg.backend.panel) == ESP_OK);
+    real_emit = cfg.backend.panel.emit; cfg.backend.panel.emit = count_busy_emit;
+    busy_seen = present_event_create(); assert(busy_seen); atomic_store(&busy_attempts, 0);
+    esp_display_present_engine_t *engine;
+    assert(esp_display_present_engine_create(&cfg, &engine) == ESP_OK);
+    esp_display_present_frame_request_t request = {.full_redraw = true};
+    assert(esp_display_present_engine_begin_next_frame(engine, &request) == ESP_OK);
+    esp_display_present_lease_t first, second;
+    assert(esp_display_present_engine_acquire_buffer(engine, &first) == ESP_OK);
+    memset(first.surface.pixels, 0x21, 64);
+    esp_display_present_engine_area_t area = {0, 0, 31, 0};
+    assert(esp_display_present_engine_submit_buffer(engine, &first, &area, 64) == ESP_OK);
+    pthread_mutex_lock(&panel.lock);
+    while (!panel.pending) {
+        pthread_cond_wait(&panel.changed, &panel.lock);
+    }
+    pthread_mutex_unlock(&panel.lock);
+    assert(esp_display_present_engine_acquire_buffer(engine, &second) == ESP_OK);
+    memset(second.surface.pixels, 0x21, 64);
+    area = (esp_display_present_engine_area_t) {
+        0, 1, 30, 1
+    };
+    assert(esp_display_present_engine_submit_buffer(engine, &second, &area, 62) == ESP_OK);
+    esp_display_present_engine_receipt_t receipt;
+    assert(esp_display_present_engine_commit_with_receipt(engine, NULL, &receipt) == ESP_OK);
+    assert(present_event_wait(busy_seen, 1000));
+    /* Use an event timeout as a bounded observation window, not a success race. */
+    present_os_event_t *quiet = present_event_create(); assert(quiet);
+    assert(!present_event_wait(quiet, 20)); present_event_destroy(quiet);
+    assert(atomic_load(&busy_attempts) <= 3);
+    pthread_mutex_lock(&panel.lock);
+    assert(panel.draws == 1 && panel.pending && !allocations);
+    check_band(&panel); panel.pending = false; ++panel.callbacks;
+    panel.area = (esp_display_present_rect_t) {
+        0, 1, 31, 1
+    }; transform.out_w = 31;
+    memset(seen, 0, sizeof(seen)); panel.early = true;
+    pthread_mutex_unlock(&panel.lock);
+    (void)panel.callback(&panel, NULL, panel.user);
+    esp_display_present_frame_status_t status;
+    assert(esp_display_present_engine_wait_frame(engine, receipt, ESP_DISPLAY_PRESENT_COMPLETION_SOURCE_RELEASED, 1000, &status) == ESP_OK);
+    assert(status.result == ESP_OK && status.terminal && status.src_released);
+    assert(esp_display_present_engine_release_receipt(engine, receipt) == ESP_OK);
+    assert(esp_display_present_engine_stop(engine, 1000) == ESP_OK);
+    assert(esp_display_present_engine_destroy(engine) == ESP_OK);
+    assert(panel.draws == 2 && live_allocations == 2);
+    assert(esp_display_present_lcd_io_destroy(adapter) == ESP_OK && !live_allocations);
+    present_event_destroy(busy_seen);
+    pthread_mutex_destroy(&panel.lock); pthread_cond_destroy(&panel.changed);
+}
+
 int main(void)
 {
     const unsigned shapes[][2] = {{480, 480}, {101, 83}, {320, 241}, {17, 19}, {32, 257}, {1, 1}};
@@ -441,6 +606,11 @@ int main(void)
                         exercise(shapes[shape][0], shapes[shape][1], format == 2 ? 3 : 2, rot, format == 1, pad ? 4 : 0, early);
                         ++cases;
                     }
+    for (unsigned first = 0; first < 2; ++first) {
+        worker_staging_oom(first, 0);
+        worker_staging_oom(first, 10);
+    }
+    worker_backpressure();
     overwide_row();
     routing_and_retry();
     mixed_requests();

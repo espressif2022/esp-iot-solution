@@ -391,7 +391,7 @@ static esp_display_present_tx_result_t submit_pixels(void *context, const esp_di
     if (spi->count == spi->config.max_inflight || (staged && spi->count)) {
         present_lock_exit(&spi->lock, false);
         return (esp_display_present_tx_result_t) {
-            ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_NO_MEM
+            ESP_DISPLAY_PRESENT_TX_REJECTED, spi->config.region_mode ? ESP_ERR_NOT_FINISHED : ESP_ERR_NO_MEM
         };
     }
     present_lock_exit(&spi->lock, false);

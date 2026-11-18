@@ -97,5 +97,5 @@ NONE 与 TE 共享 IO_STAGING_SLOT_BYTES 配置，各实例持有自己的缓冲
 
 REGION 的 acquire/query 不推进发送；后台正常发送仅由 worker 的 service 执行。
 D 从提交起保留至整个逻辑 TRANSFER_DONE；READY 被取消可立即释放，已进入驱动的传输必须等真实完成或 quiesce。
-调用任务收到 REJECTED 时保留原租约和原像素；后台已接收的 READY 遇到 NO_MEM 背压时保持 FIFO 排队；永久预检错误记为失败并安全释放，不无限等待。
+调用任务收到 REJECTED 时保留原租约和原像素；后台已接收的 READY 仅在内部 ESP_ERR_NOT_FINISHED（通道背压）时保持 FIFO 排队，等待真实完成唤醒；S 分配失败 ESP_ERR_NO_MEM 和其他预检错误记为失败并安全释放，不自唤醒重试。CALLER 的背压对外仍返回 ESP_ERR_NO_MEM，并保留原租约供显式重试。
 PSRAM 整屏 D 使用相同 PARTITION 路径，不能把租用缓冲当作内容持久的 FULL 画布。

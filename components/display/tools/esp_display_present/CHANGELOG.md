@@ -2,6 +2,11 @@
 
 ## 2.0.0 — Unreleased
 
+- Fail worker-owned Panel IO requests on staging OOM and safely return their D
+  buffers. Distinguish driver backpressure from allocation failure, wait for
+  genuine completion to retry, and avoid rejected submissions self-waking in a
+  busy loop. CALLER rejection retains its original lease for explicit retry.
+
 - Converge non-TE Panel IO on CALLER or one BACKGROUND output worker. Choose
   direct DMA per request (including in-place RGB565 swap), otherwise generate
   physical rotated/swapped bands in two bounded internal staging slots. Remove

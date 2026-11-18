@@ -246,7 +246,7 @@ static esp_display_present_tx_result_t submit_to_panel(void *context, const esp_
                                            !present_same_task(presenter->backend_worker.task, present_current_task()))) {
         (void)present_event_signal(presenter->work, false);
         return (esp_display_present_tx_result_t) {
-            ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_NO_MEM
+            ESP_DISPLAY_PRESENT_TX_REJECTED, presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_REGION ? ESP_ERR_NOT_FINISHED : ESP_ERR_NO_MEM
         };
     }
     if (area->x % presenter->output.x_alignment || area->y % presenter->output.y_alignment ||
@@ -268,7 +268,7 @@ static esp_display_present_tx_result_t submit_to_panel(void *context, const esp_
     size_t index = present_transfer_begin(&presenter->transfer, &presenter->control, cookie);
     if (index == PRESENT_MAX_FRAMES) {
         return (esp_display_present_tx_result_t) {
-            ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_NO_MEM
+            ESP_DISPLAY_PRESENT_TX_REJECTED, presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_REGION ? ESP_ERR_NOT_FINISHED : ESP_ERR_NO_MEM
         };
     }
     esp_display_present_tx_result_t result = execute_panel_submit(presenter, surface, area, cookie, emit, rotation);
@@ -276,7 +276,11 @@ static esp_display_present_tx_result_t submit_to_panel(void *context, const esp_
         present_transfer_rejected(&presenter->transfer, &presenter->control, index, cookie);
     }
     expire_transfers(presenter);
-    (void)present_event_signal(presenter->work, false);
+    /* REGION backpressure waits for a real completion (or an existing deadline).
+     * A rejected request has no new transfer to progress; self-waking spins. */
+    if (presenter->kind != ESP_DISPLAY_PRESENT_ENGINE_REGION || result.acceptance != ESP_DISPLAY_PRESENT_TX_REJECTED) {
+        (void)present_event_signal(presenter->work, false);
+    }
     return result;
 }
 

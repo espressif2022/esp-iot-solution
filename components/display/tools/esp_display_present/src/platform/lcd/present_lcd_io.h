@@ -57,6 +57,9 @@ typedef struct {
  * Direct color-done proves DMA source retirement; the driver's eventual return
  * remains authoritative for submission errors even after an early callback.
  *
+ * REGION emit reports driver backpressure as REJECTED/ESP_ERR_NOT_FINISHED;
+ * lazy staging allocation failure is REJECTED/ESP_ERR_NO_MEM. Neither borrows
+ * the source. Worker-owned OOM must fail the logical request without retrying.
  * Staged failures before any driver submission are REJECTED with no callback,
  * so a preflight/cache failure can be retried. draw_bitmap errors are
  * UNCERTAIN, not a rollback promise. New submits then

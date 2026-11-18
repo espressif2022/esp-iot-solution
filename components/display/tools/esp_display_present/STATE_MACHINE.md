@@ -109,9 +109,14 @@ and, as above, mutate backend state under the backend's own lock.
 REGION has no pixel-copy queue or pixel worker. It retains D until logical
 TRANSFER_DONE and emits direct pixels or bounded physical-row bands through
 `lcd_io.emit`. CALLER performs this work synchronously; BACKGROUND uses only
-the backend worker. REGION acquire/query never advance sending. A worker rejection with NO_MEM
-retains READY for retry; other preflight failures terminate accepted work with
-a sticky fault, safely releasing D because explicit rejection proves no DMA borrow.
+the backend worker. REGION acquire/query never advance sending. Only a worker
+rejection with ESP_ERR_NOT_FINISHED retains READY for retry after a real
+completion makes room. Allocation failure (ESP_ERR_NO_MEM) and other preflight
+failures terminate accepted work with a sticky fault, safely releasing D because
+explicit rejection proves no DMA borrow. Rejected REGION emits do not self-wake
+service; the outstanding transfer completion/deadline or a new submission wakes it.
+CALLER keeps its original lease on rejection and sees ESP_ERR_NO_MEM for either
+backpressure or allocation failure, so an application can explicitly retry.
 The FB/TE pixel-copy queue is a separate domain per instance, using the
 lightweight slot-indexed `present_copy_queue` in FIFO order, one copy at a time. Advanced asynchronous configurations use a
 dedicated pixel worker. The facade's FB paths with at most one input tile and TE

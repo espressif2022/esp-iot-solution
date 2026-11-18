@@ -206,6 +206,7 @@ static void immediate_and_retry(void)
         f = begin(g);
         lease = acquire(g, f);
         for (int retry = 0; retry < 3; ++retry) {
+            p.response.result = retry == 1 ? ESP_ERR_NOT_FINISHED : ESP_ERR_NO_MEM;
             assert(ops->submit_region(g, f, lease.id) == ESP_ERR_NO_MEM);
             for (size_t i = 0; i < 16; ++i) {
                 assert(((uint8_t *)lease.surface.pixels)[i] == i);
@@ -566,7 +567,7 @@ static void deferred_source_lifetime(void)
         assert(ops->acquire(g, f, NULL, 0, &unavailable) == ESP_ERR_TIMEOUT);
         /* Rejected worker submission keeps its source and FIFO order. */
         p.response = (esp_display_present_tx_result_t) {
-            ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_NO_MEM
+            ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_NOT_FINISHED
         };
         assert(ops->service(g) == ESP_ERR_NO_MEM);
         assert(!p.count);
@@ -585,11 +586,53 @@ static void deferred_source_lifetime(void)
     }
 }
 
-static void deferred_preflight_failure(void)
+/* The previous DMA may complete after the adapter observed a busy channel,
+ * before the rejected submit returns. Retryability comes from the explicit
+ * transport result, never a racy count of remaining backend transfers. */
+static esp_display_present_tx_result_t busy_with_racing_completion(void *context,
+                                                                   const esp_display_present_surface_t *source, const esp_display_present_rect_t *rect,
+                                                                   esp_display_present_engine_rotation_t rotation, uint64_t cookie)
+{
+    panel_t *p = context;
+    if (p->submits == 1) {
+        complete(p);
+        p->response = (esp_display_present_tx_result_t) {
+            ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_NOT_FINISHED
+        };
+    } else {
+        p->response = (esp_display_present_tx_result_t) {
+            ESP_DISPLAY_PRESENT_TX_ACCEPTED, ESP_OK
+        };
+    }
+    return emit_pixels(context, source, rect, rotation, cookie);
+}
+
+static void deferred_backpressure_completion_race(void)
+{
+    panel_t p = normal_panel();
+    esp_display_present_backend_config_t cfg = config(&p, false);
+    cfg.buffer_count = 2; cfg.deferred_submit = true;
+    cfg.panel.emit = busy_with_racing_completion;
+    present_backend_t *g;
+    assert(ops->create(&cfg, &g) == ESP_OK);
+    esp_display_present_frame_t f = begin(g);
+    for (unsigned i = 0; i < 2; ++i) {
+        esp_display_present_lease_t l = acquire(g, f);
+        assert(ops->submit_region(g, f, l.id) == ESP_OK);
+    }
+    esp_display_present_receipt_t r = end(g, f);
+    assert(ops->service(g) == ESP_ERR_NO_MEM && !p.count);
+    esp_display_present_frame_status_t status;
+    assert(ops->query(g, r, &status) == ESP_OK && !status.terminal && status.result == ESP_OK);
+    assert(ops->service(g) == ESP_OK && p.count == 1);
+    complete(&p); release(g, r, ESP_OK); destroy(g);
+}
+
+static void deferred_preflight_failure(esp_err_t error)
 {
     panel_t p = normal_panel();
     p.response = (esp_display_present_tx_result_t) {
-        ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_SIZE
+        ESP_DISPLAY_PRESENT_TX_REJECTED, error
     };
     esp_display_present_backend_config_t cfg = config(&p, false);
     cfg.deferred_submit = true;
@@ -600,14 +643,16 @@ static void deferred_preflight_failure(void)
     assert(ops->submit_region(g, f, l.id) == ESP_OK);
     esp_display_present_receipt_t r = end(g, f);
     assert(ops->service(g) == ESP_OK && !p.count);
-    release(g, r, ESP_ERR_INVALID_SIZE);
+    release(g, r, error);
     destroy(g);
 }
 
 int main(void)
 {
     deferred_source_lifetime();
-    deferred_preflight_failure();
+    deferred_backpressure_completion_race();
+    deferred_preflight_failure(ESP_ERR_INVALID_SIZE);
+    deferred_preflight_failure(ESP_ERR_NO_MEM);
     immediate_and_retry();
     delayed_and_stale();
     faults_and_uncertain();

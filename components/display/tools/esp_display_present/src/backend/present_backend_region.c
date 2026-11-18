@@ -213,10 +213,10 @@ static esp_err_t service_regions(present_backend_t *backend, frame_record_t *can
         present_transaction_resolution_t resolved = present_transaction_resolve(&tx->transaction, result);
         if (resolved.rejected) {
             esp_err_t error = result.result == ESP_OK ? ESP_FAIL : result.result;
-            if (error == ESP_ERR_NO_MEM) {
-                tx->state = TX_READY; /* Backpressure/OOM keeps accepted pixels for retry. */
+            if (error == ESP_ERR_NOT_FINISHED) {
+                tx->state = TX_READY; /* Retry only when the driver reports backpressure. */
                 present_lock_exit(&backend->lock, false);
-                return error;
+                return ESP_ERR_NO_MEM;
             }
             /* The producer already transferred its lease. A permanent preflight
              * error must terminate that accepted work, not leave READY forever. */
@@ -602,7 +602,8 @@ static esp_err_t region_submit_region_ex(present_backend_t *backend, esp_display
         ctx.draw->state = DRAW_LEASED;
         abandon_tx(tx);
         present_lock_exit(&backend->lock, false);
-        return result.result != ESP_OK ? result.result : ESP_FAIL;
+        /* Keep the producer-facing backpressure result stable. */
+        return result.result == ESP_ERR_NOT_FINISHED ? ESP_ERR_NO_MEM : result.result != ESP_OK ? result.result : ESP_FAIL;
     }
     --ctx.record->leased;
     settle_submit(backend, tx, ctx.record, resolved);

@@ -135,7 +135,10 @@ typedef struct {
     void (*request_abort)(void *context);
     /** REGION input: adapter converts borrowed source into physical output bands.
      * Explicit rejection leaves source contents unchanged; accepted/uncertain
-     * retains the source until logical TRANSFER_DONE or successful quiesce. */
+     * retains the source until logical TRANSFER_DONE or successful quiesce.
+     * REJECTED/ESP_ERR_NOT_FINISHED denotes driver backpressure: retry after
+     * completion makes room. REJECTED/ESP_ERR_NO_MEM denotes allocation failure;
+     * a backend-owned request fails instead of retrying indefinitely. */
     esp_display_present_tx_result_t (*emit)(void *context, const esp_display_present_surface_t *source,
                                             const esp_display_present_rect_t *physical_area,
                                             esp_display_present_engine_rotation_t rotation, uint64_t cookie);
