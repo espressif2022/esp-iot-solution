@@ -92,7 +92,14 @@ static esp_err_t copy_flush(esp_lv_present_native_t *binding, const lv_area_t *a
     }
     for (uint32_t offset = 0; offset < height;) {
         esp_display_present_lease_t lease;
-        esp_err_t ret = esp_display_present_engine_acquire_buffer(binding->presenter, &lease);
+        esp_display_present_rect_t write_area = {
+            (uint32_t)area->x1, (uint32_t)area->y1 + offset, (uint32_t)width, height - offset
+        };
+        bool bounded_canvas = binding->caps.contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT &&
+                              !binding->caps.writes_active_scanout;
+        esp_err_t ret = bounded_canvas ?
+                        esp_display_present_engine_acquire_region(binding->presenter, &write_area, &lease) :
+                        esp_display_present_engine_acquire_buffer(binding->presenter, &lease);
         if (ret != ESP_OK) {
             return ret;
         }

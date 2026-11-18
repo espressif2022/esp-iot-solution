@@ -303,6 +303,54 @@ esp_err_t present_copy_queue_take(present_copy_queue_t *queue, present_copy_hand
     return ESP_OK;
 }
 
+esp_err_t present_copy_queue_take_next(present_copy_queue_t *queue,
+                                       esp_display_present_copy_request_t *out_request, esp_err_t *out_result)
+{
+    if (!queue || !out_request || !out_result) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    present_lock_enter(&queue->lock, false);
+    copy_slot_t *next = NULL;
+    for (size_t i = 0; i < queue->count; ++i) {
+        copy_slot_t *slot = &queue->slots[i];
+        if (slot->state == COPY_SLOT_DONE && (!next || slot->seq < next->seq)) {
+            next = slot;
+        }
+    }
+    if (next) {
+        *out_request = next->request;
+        *out_result = next->result;
+        next->state = COPY_SLOT_FREE;
+    }
+    present_lock_exit(&queue->lock, false);
+    return next ? ESP_OK : ESP_ERR_TIMEOUT;
+}
+
+bool present_copy_queue_source_busy(present_copy_queue_t *queue, const void *pixels,
+                                    const esp_display_present_rect_t *area)
+{
+    if (!queue || !pixels) {
+        return false;
+    }
+    present_lock_enter(&queue->lock, false);
+    bool busy = false;
+    for (size_t i = 0; i < queue->count; ++i) {
+        const copy_slot_t *slot = &queue->slots[i];
+        const esp_display_present_rect_t *read = &slot->request.src_area;
+        if ((slot->state == COPY_SLOT_QUEUED || slot->state == COPY_SLOT_RUNNING) &&
+                slot->request.src.pixels == pixels && (!area ||
+                                                       ((uint64_t)area->x < (uint64_t)read->x + read->width &&
+                                                        (uint64_t)read->x < (uint64_t)area->x + area->width &&
+                                                        (uint64_t)area->y < (uint64_t)read->y + read->height &&
+                                                        (uint64_t)read->y < (uint64_t)area->y + area->height))) {
+            busy = true;
+            break;
+        }
+    }
+    present_lock_exit(&queue->lock, false);
+    return busy;
+}
+
 esp_err_t present_copy_queue_cancel(present_copy_queue_t *queue, present_copy_handle_t handle, esp_err_t *out_result)
 {
     if (!queue || !out_result || !handle.slot || handle.slot > queue->count) {

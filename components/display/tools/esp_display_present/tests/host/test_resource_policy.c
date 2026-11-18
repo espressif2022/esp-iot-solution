@@ -1,6 +1,7 @@
 /* SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0 */
 #include "support/legacy_panel.h"
+#include "config/present_defaults.h"
 
 static bool psram_available = true;
 bool __wrap_present_psram_can_fit(size_t bytes, size_t count)
@@ -56,7 +57,7 @@ static void region_policy(void)
                         bool deferred = background[submit];
                         assert(plan.presenter.backend.deferred_submit == deferred);
                         assert(plan.presenter.background_service == deferred);
-                        const unsigned priority = 7;
+                        const unsigned priority = CONFIG_ESP_DISPLAY_PRESENT_BACKEND_TASK_PRIORITY;
                         assert(plan.presenter.worker_priority == (deferred ? priority : 0));
                         size_t tiles = count ? count : 2;
                         assert(plan.resources.tile_count == tiles);
@@ -144,7 +145,7 @@ static void framebuffer_and_te_workers(void)
                         assert(plan.presenter.backend.async_copy && plan.presenter.background_service);
                         assert(!plan.presenter.backend.tx_staging && !plan.presenter.backend.in_place);
                         assert(!plan.presenter.backend.deferred_submit);
-                        assert(plan.presenter.worker_priority == ((!te || images == 2) ? 7 : 0));
+                        assert(plan.presenter.worker_priority == CONFIG_ESP_DISPLAY_PRESENT_BACKEND_TASK_PRIORITY);
                     }
                 }
             }

@@ -8,6 +8,10 @@
 #ifndef PRESENT_HOST
 #include "sdkconfig.h"
 #endif
+/** @brief Fixed backend priority override; zero snapshots the bound producer priority. */
+#ifndef CONFIG_ESP_DISPLAY_PRESENT_BACKEND_TASK_PRIORITY
+#define CONFIG_ESP_DISPLAY_PRESENT_BACKEND_TASK_PRIORITY 0
+#endif
 /** @brief Default partition input tile byte target (matches Kconfig; overridden by explicit builds). */
 #ifndef CONFIG_ESP_DISPLAY_PRESENT_DEFAULT_TILE_BYTES
 #define CONFIG_ESP_DISPLAY_PRESENT_DEFAULT_TILE_BYTES 32768

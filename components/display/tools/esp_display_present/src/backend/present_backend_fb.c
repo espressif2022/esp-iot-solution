@@ -14,6 +14,7 @@
 #include "backend/present_transaction.h"
 #include "backend/present_image_repair.h"
 #include <string.h>
+#include <stdatomic.h>
 #ifndef PRESENT_HOST
 #include "esp_memory_utils.h"
 #endif
@@ -93,7 +94,7 @@ typedef struct {
     esp_display_present_surface_t scan;
     bool draw_owned;
     bool scan_owned;
-    fb_state_t state;
+    _Atomic fb_state_t state;
     size_t record;
     uint64_t sequence;
     uint64_t cookie;
@@ -132,7 +133,7 @@ struct present_backend {
     present_copy_handle_t copy;
     esp_display_present_rect_t copy_area;
     bool copy_is_tile;
-    size_t repair_pos;
+    size_t resolved_jobs;
     bool scan_storage;
     bool converted;
     bool damage_declared;
@@ -269,8 +270,14 @@ static void copy_work_ready(void *context)
 static bool copy_done(void *context, present_copy_handle_t handle, esp_err_t result, bool isr)
 {
     (void)handle;
-    (void)result;
     present_backend_t *backend = context;
+    if (result != ESP_OK) {
+        present_lock_enter(&backend->lock, isr);
+        if (backend->core.life == PRESENT_CORE_RUNNING) {
+            fault(backend, backend->active, result);
+        }
+        present_lock_exit(&backend->lock, isr);
+    }
     return backend->config.on_progress ? backend->config.on_progress(backend->config.progress_user, isr) : false;
 }
 
@@ -335,6 +342,29 @@ static void progress_copy(present_backend_t *backend)
         tile->copy.slot = 0;
         if (result == ESP_OK) {
             cover(backend, tile->area);
+            backend->submitted = true;
+        } else {
+            present_lock_enter(&backend->lock, false);
+            fault(backend, backend->active, result);
+            present_lock_exit(&backend->lock, false);
+        }
+    }
+    /* Region descriptors never coexist with prefill/repair/conversion tickets.
+     * Reuse queue-owned source/destination metadata rather than a second array. */
+    while (backend->resolved_jobs) {
+        esp_display_present_copy_request_t request;
+        esp_err_t result = ESP_OK;
+        if (present_copy_queue_take_next(backend->copy_queue, &request, &result) != ESP_OK) {
+            break;
+        }
+        --backend->resolved_jobs;
+        if (result == ESP_OK) {
+            esp_display_present_rect_t physical = {
+                request.dst_x, request.dst_y,
+                request.rotation & 1 ? request.src_area.height : request.src_area.width,
+                request.rotation & 1 ? request.src_area.width : request.src_area.height
+            };
+            cover(backend, physical);
             backend->submitted = true;
         } else {
             present_lock_enter(&backend->lock, false);
@@ -413,7 +443,7 @@ static fb_advance_result_t advance_build_pipeline(present_backend_t *backend, fb
     }
     fb_slot_t *slot = &backend->slots[backend->active];
     if (slot->state == FB_SLOT_CANCELING) {
-        if (backend->copy.slot || tiles_pending(backend)) {
+        if (backend->copy.slot || backend->resolved_jobs || tiles_pending(backend)) {
             return (fb_advance_result_t) {
                 FB_ADVANCE_PENDING, ESP_OK
             };
@@ -441,7 +471,7 @@ static fb_advance_result_t advance_build_pipeline(present_backend_t *backend, fb
         };
     }
 
-    if (backend->copy.slot || tiles_pending(backend)) {
+    if (backend->copy.slot || backend->resolved_jobs || tiles_pending(backend)) {
         return (fb_advance_result_t) {
             FB_ADVANCE_PENDING, ESP_OK
         };
@@ -706,11 +736,40 @@ static void free_backend(present_backend_t *backend)
     present_free(backend);
 }
 
+/* Capacity follows the retained-canvas contract, not rotation or scene type. */
+static size_t copy_job_count(const esp_display_present_backend_config_t *config)
+{
+    if (config->render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION) {
+        return config->tile_count ? config->tile_count : 1;
+    }
+    return config->render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT ? PRESENT_MAX_DAMAGE_AREAS : 1;
+}
+
+/* Task snapshot outside the engine gate. Slot stages are atomic; identity,
+ * confirmation and life/fault publication use the existing backend lock. */
+static bool fb_can_defer_service(present_backend_t *backend)
+{
+    present_lock_enter(&backend->lock, false);
+    bool defer = backend->core.life == PRESENT_CORE_RUNNING &&
+                 backend->core.fault.result == ESP_OK && backend->active != SIZE_MAX &&
+                 backend->slots[backend->active].state == FB_SLOT_DRAWING;
+    if (defer && backend->pending != SIZE_MAX && backend->slots[backend->pending].confirmed) {
+        defer = false;
+    }
+    for (size_t i = 0; defer && i < backend->config.buffer_count; ++i) {
+        if (backend->slots[i].state == FB_SLOT_READY) {
+            defer = false;
+        }
+    }
+    present_lock_exit(&backend->lock, false);
+    return defer;
+}
+
 static esp_err_t create_copy_queue(present_backend_t *backend)
 {
     const esp_display_present_backend_config_t *config = &backend->config;
     present_copy_queue_config_t qc = {
-        .max_jobs = backend->tile_count ? backend->tile_count : 1,
+        .max_jobs = copy_job_count(config),
         .external_worker = config->copy_on_backend_worker,
         .on_work = copy_work_ready,
         .on_done = copy_done,
@@ -1075,7 +1134,7 @@ static esp_err_t fb_begin(present_backend_t *backend, const esp_display_present_
     };
     present_lock_exit(&backend->lock, false);
     backend->submitted = false;
-    backend->repair_pos = 0;
+    backend->resolved_jobs = 0;
     backend->converted = false;
     backend->damage_declared = selective_direct || resolved;
     if (prefill && backend->config.async_copy) {
@@ -1130,6 +1189,13 @@ static esp_err_t fb_acquire(present_backend_t *backend, esp_display_present_fram
     if (backend->slots[backend->active].state == FB_SLOT_PREFILL || backend->lease.id.value || backend->copy.slot) {
         return ESP_ERR_TIMEOUT;
     }
+    if (area && !valid_area(backend, area)) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (backend->resolved_jobs && present_copy_queue_source_busy(backend->copy_queue,
+                                                                 backend->slots[backend->active].surface.pixels, area)) {
+        return ESP_ERR_TIMEOUT;
+    }
     fb_tile_t *tile = NULL;
     if (backend->tile_count) {
         for (size_t i = 0; i < backend->tile_count; i++) {
@@ -1144,7 +1210,10 @@ static esp_err_t fb_acquire(present_backend_t *backend, esp_display_present_fram
             return ESP_ERR_TIMEOUT;
         }
     }
-    esp_display_present_rect_t actual = {0, 0, backend->config.width, backend->config.height};
+    esp_display_present_rect_t actual = area && backend->resolved_direct && backend->scan_storage ? *area :
+    (esp_display_present_rect_t) {
+        0, 0, backend->config.width, backend->config.height
+    };
     esp_display_present_surface_t surface = backend->slots[backend->active].surface;
     if (area && !valid_area(backend, area)) {
         return ESP_ERR_INVALID_ARG;
@@ -1176,9 +1245,9 @@ static esp_err_t fb_acquire(present_backend_t *backend, esp_display_present_fram
     return ESP_OK;
 }
 
-/* Copy only resolved damage out of the logical staging canvas. The single
- * ticket pins that canvas until completion; acquire must not reuse it sooner.
- * Both output coverage and image history use the mapped physical coordinates. */
+/* Enqueue resolved regions immediately. Each descriptor pins its source
+ * rectangle, so disjoint later writes can overlap execution. The shared canvas
+ * stays frame-owned until every descriptor has actually completed. */
 static esp_err_t submit_resolved_region(present_backend_t *backend, esp_display_present_rect_t area)
 {
     fb_slot_t *slot = &backend->slots[backend->active];
@@ -1207,15 +1276,16 @@ static esp_err_t submit_resolved_region(present_backend_t *backend, esp_display_
     if (error != ESP_OK) {
         return error;
     }
-    backend->copy = handle;
-    backend->copy_is_tile = true;
-    backend->copy_area = physical;
+    ++backend->resolved_jobs;
     return ESP_OK;
 }
 
 static esp_err_t fb_submit_region_ex(present_backend_t *backend, esp_display_present_frame_t frame,
                                      esp_display_present_lease_id_t lease, const esp_display_present_region_submit_t *submit)
 {
+    if (backend) {
+        progress_copy(backend);
+    }
     fb_tile_t *tile = NULL;
     esp_display_present_lease_t *draw = backend ? find_draw_lease(backend, lease.value, &tile) : NULL;
     if (!building(backend, frame) || !draw) {
@@ -1276,6 +1346,12 @@ static esp_err_t fb_submit_region_ex(present_backend_t *backend, esp_display_pre
             return ESP_ERR_INVALID_ARG;
         }
         if (backend->resolved_direct && backend->scan_storage) {
+            const esp_display_present_rect_t *allowed = &draw->logical_area;
+            if (area.x < allowed->x || area.y < allowed->y ||
+                    (uint64_t)area.x + area.width > (uint64_t)allowed->x + allowed->width ||
+                    (uint64_t)area.y + area.height > (uint64_t)allowed->y + allowed->height) {
+                return ESP_ERR_INVALID_ARG;
+            }
             esp_err_t error = submit_resolved_region(backend, area);
             if (error != ESP_OK) {
                 return error;
@@ -1449,7 +1525,9 @@ static esp_err_t fb_stop(present_backend_t *backend, uint32_t timeout)
     if ((backend->core.life == PRESENT_CORE_QUIESCENT)) {
         return ESP_OK;
     }
+    present_lock_enter(&backend->lock, false);
     backend->core.life = PRESENT_CORE_CLOSING;
+    present_lock_exit(&backend->lock, false);
     uint64_t start = present_now_ms();
     esp_err_t error = backend->copy_queue ? present_copy_queue_stop(backend->copy_queue, timeout) : ESP_OK;
     if (error != ESP_OK) {
@@ -1604,6 +1682,7 @@ const present_backend_ops_t present_fb_backend = {
     .name = "fb",
     .service = present_fb_service,
     .copy_work = fb_copy_work,
+    .can_defer_service = fb_can_defer_service,
     .create = fb_create,
     .get_caps = fb_get_caps,
     .begin = fb_begin,
@@ -1633,5 +1712,5 @@ size_t present_fb_memory(const esp_display_present_backend_config_t *config)
     size_t tiles = config->render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION ? (config->tile_count ? config->tile_count : 1) : 0;
     /* Runtime rotation may create and retain the initially absent copy queue. */
     return sizeof(present_backend_t) + tiles * sizeof(fb_tile_t) + config->max_frames * sizeof(present_core_frame_t) +
-           (config->async_copy ? present_copy_queue_memory(tiles ? tiles : 1, !config->copy_on_backend_worker) : 0);
+           (config->async_copy ? present_copy_queue_memory(copy_job_count(config), !config->copy_on_backend_worker) : 0);
 }

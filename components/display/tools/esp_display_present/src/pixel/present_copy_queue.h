@@ -84,6 +84,13 @@ bool present_copy_queue_run_one(present_copy_queue_t *queue);
  */
 esp_err_t present_copy_queue_take(present_copy_queue_t *queue, present_copy_handle_t handle, esp_err_t *out_result);
 
+/** @brief Recycle the oldest completed descriptor and return its request. */
+esp_err_t present_copy_queue_take_next(present_copy_queue_t *queue,
+                                       esp_display_present_copy_request_t *out_request, esp_err_t *out_result);
+/** @brief True while a queued/running job reads this rectangle of the same source canvas. */
+bool present_copy_queue_source_busy(present_copy_queue_t *queue, const void *pixels,
+                                    const esp_display_present_rect_t *area);
+
 /**
  * @brief Request cancellation of a queued job, or recycle it immediately if already finished.
  *

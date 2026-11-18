@@ -93,6 +93,9 @@ present_worker_t *present_worker_create(const char *name, present_worker_entry_f
 unsigned present_task_priority(void);
 /** @brief Set the calling task's scheduling priority (no-op on Host). */
 void present_task_set_priority(unsigned priority);
+/** @brief Set a known-live worker priority from task context (no-op on Host).
+ * Caller excludes worker exit/destruction; never call from an ISR. */
+void present_worker_set_priority(present_worker_t *worker, unsigned priority);
 /** @brief Join an exiting worker within @p timeout_ms; timeout preserves the worker for retry. */
 bool present_worker_join(present_worker_t *worker, uint32_t timeout_ms);
 /** @brief Free a joined worker handle. */

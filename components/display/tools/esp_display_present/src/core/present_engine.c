@@ -36,7 +36,10 @@ struct esp_display_present_engine {
         present_worker_t *handle;
         present_task_t task;
         bool ready;
+        bool inherit_priority;
     } backend_worker;
+    bool copy_kick;
+    bool service_kick;
     bool deferred_region;
     bool backend_only_submit;
     bool copy_on_backend_worker;
@@ -64,6 +67,32 @@ struct esp_display_present_engine {
     bool canceling;
     _Atomic esp_display_present_engine_state_t state;
 };
+
+static bool deferred_service_enabled(const esp_display_present_engine_t *presenter)
+{
+    return presenter->backend && presenter->backend_worker.handle &&
+           presenter->ops->can_defer_service;
+}
+
+static void give_engine_gate(esp_display_present_engine_t *presenter)
+{
+    bool wake = presenter->copy_kick || presenter->service_kick;
+    presenter->copy_kick = presenter->service_kick = false;
+    present_mutex_give(presenter->gate);
+    if (wake) {
+        (void)present_event_signal(presenter->work, false);
+    }
+}
+
+/* Synchronous task-side service requests are published with the gate held. */
+static void schedule_service(esp_display_present_engine_t *presenter)
+{
+    if (deferred_service_enabled(presenter)) {
+        presenter->service_kick = true;
+    } else {
+        (void)present_event_signal(presenter->work, false);
+    }
+}
 
 static bool PRESENT_ISR_ATTR notify(esp_display_present_engine_t *presenter, bool isr)
 {
@@ -126,7 +155,11 @@ static uint32_t transfer_wait_ms(esp_display_present_engine_t *presenter)
 static void pixel_work_ready(void *user)
 {
     esp_display_present_engine_t *presenter = user;
-    (void)present_event_signal(presenter->work, false);
+    if (deferred_service_enabled(presenter)) {
+        presenter->copy_kick = true;
+    } else {
+        (void)present_event_signal(presenter->work, false);
+    }
 }
 
 static bool pixel_progress(void *user, bool isr)
@@ -195,7 +228,7 @@ static esp_display_present_tx_result_t execute_panel_submit(esp_display_present_
                                                             bool emit, esp_display_present_engine_rotation_t rotation)
 {
     if (presenter->backend_only_submit) {
-        present_mutex_give(presenter->gate);
+        give_engine_gate(presenter);
     }
     present_metrics_t *scanout_metrics = presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_FB ? presenter->metrics : NULL;
     if (scanout_metrics) {
@@ -225,7 +258,7 @@ static bool panel_can_submit(void *context)
                    presenter->backend_worker.ready &&
                    present_same_task(presenter->backend_worker.task, present_current_task());
     if (!allowed && presenter->state == ESP_DISPLAY_PRESENT_ENGINE_RUNNING) {
-        (void)present_event_signal(presenter->work, false);
+        schedule_service(presenter);
     }
     return allowed;
 }
@@ -244,7 +277,7 @@ static esp_display_present_tx_result_t submit_to_panel(void *context, const esp_
     }
     if (presenter->backend_only_submit && (!presenter->backend_worker.ready ||
                                            !present_same_task(presenter->backend_worker.task, present_current_task()))) {
-        (void)present_event_signal(presenter->work, false);
+        schedule_service(presenter);
         return (esp_display_present_tx_result_t) {
             ESP_DISPLAY_PRESENT_TX_REJECTED, presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_REGION ? ESP_ERR_NOT_FINISHED : ESP_ERR_NO_MEM
         };
@@ -279,7 +312,7 @@ static esp_display_present_tx_result_t submit_to_panel(void *context, const esp_
     /* REGION backpressure waits for a real completion (or an existing deadline).
      * A rejected request has no new transfer to progress; self-waking spins. */
     if (presenter->kind != ESP_DISPLAY_PRESENT_ENGINE_REGION || result.acceptance != ESP_DISPLAY_PRESENT_TX_REJECTED) {
-        (void)present_event_signal(presenter->work, false);
+        schedule_service(presenter);
     }
     return result;
 }
@@ -332,6 +365,39 @@ static esp_err_t pump_backend(esp_display_present_engine_t *presenter)
     return presenter->ops->service(presenter->backend);
 }
 
+static void deferred_service_worker(esp_display_present_engine_t *presenter)
+{
+    for (;;) {
+        uint32_t budget = transfer_wait_ms(presenter);
+        bool signaled = present_event_wait(presenter->work, budget);
+        bool deadline = !signaled && budget != UINT32_MAX;
+        for (;;) {
+            if (exiting(presenter)) {
+                return;
+            }
+            deadline |= transfer_wait_ms(presenter) == 0;
+            bool defer = presenter->ops->can_defer_service(presenter->backend);
+            if (!defer || deadline) {
+                (void)present_mutex_take(presenter->gate, UINT32_MAX);
+                if (exiting(presenter)) {
+                    give_engine_gate(presenter);
+                    return;
+                }
+                presenter->last_service_error = pump_backend(presenter);
+                give_engine_gate(presenter);
+                deadline = false;
+            }
+            if (exiting(presenter)) {
+                return;
+            }
+            if (!presenter->ops->copy_work(presenter->backend)) {
+                break;
+            }
+        }
+        (void)present_event_signal(presenter->changed, false);
+    }
+}
+
 /* Advances backend state and transfer deadlines; not limited to sending. */
 static void backend_worker(void *context)
 {
@@ -341,7 +407,11 @@ static void backend_worker(void *context)
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
     presenter->backend_worker.task = present_current_task();
     presenter->backend_worker.ready = true;
-    present_mutex_give(presenter->gate);
+    give_engine_gate(presenter);
+    if (deferred_service_enabled(presenter)) {
+        deferred_service_worker(presenter);
+        return;
+    }
     for (;;) {
         (void)present_event_wait(presenter->work, transfer_wait_ms(presenter));
         for (;;) {
@@ -358,11 +428,11 @@ static void backend_worker(void *context)
             }
             (void)present_mutex_take(presenter->gate, UINT32_MAX);
             if (exiting(presenter)) {
-                present_mutex_give(presenter->gate);
+                give_engine_gate(presenter);
                 return;
             }
             presenter->last_service_error = pump_backend(presenter);
-            present_mutex_give(presenter->gate);
+            give_engine_gate(presenter);
             if (!presenter->ops->copy_work || exiting(presenter) ||
                     !presenter->ops->copy_work(presenter->backend)) {
                 break;
@@ -445,7 +515,7 @@ static esp_err_t wait_change(esp_display_present_engine_t *presenter, uint64_t s
         budget = transfer_budget;
     }
     uint32_t slice = (presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_TE && budget > 1) ? 1 : budget;
-    present_mutex_give(presenter->gate);
+    give_engine_gate(presenter);
     (void)present_event_wait(presenter->changed, slice);
     *gate_held = present_mutex_take(presenter->gate, remaining(start, timeout));
     if (!*gate_held) {
@@ -467,6 +537,10 @@ esp_err_t esp_display_present_engine_rebind_producer(esp_display_present_engine_
     if (!presenter) {
         return ESP_ERR_INVALID_ARG;
     }
+    /* Snapshot before taking the engine gate, avoiding its priority inheritance.
+     * An explicit priority remains fixed across producer handoffs. */
+    bool inherit = presenter->backend_worker.inherit_priority && presenter->backend_worker.handle;
+    unsigned priority = inherit ? present_task_priority() : 0;
     if (!present_mutex_take(presenter->gate, timeout)) {
         return ESP_ERR_TIMEOUT;
     }
@@ -480,7 +554,10 @@ esp_err_t esp_display_present_engine_rebind_producer(esp_display_present_engine_
             presenter->owner = present_current_task();
         }
     }
-    present_mutex_give(presenter->gate);
+    give_engine_gate(presenter);
+    if (error == ESP_OK && inherit) {
+        present_worker_set_priority(presenter->backend_worker.handle, priority);
+    }
     return error;
 }
 
@@ -493,7 +570,7 @@ esp_err_t esp_display_present_engine_get_draw_buffers(esp_display_present_engine
     }
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
     error = presenter->ops->get_draw_buffers(presenter->backend, buffers, capacity, count, bytes);
-    present_mutex_give(presenter->gate);
+    give_engine_gate(presenter);
     return error;
 }
 
@@ -582,6 +659,7 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
                      presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_FB ? &present_fb_backend : &present_region_backend;
     presenter->event_isr = presenter->ops->on_event_isr;
     presenter->owner = present_current_task();
+    presenter->backend_worker.inherit_priority = config->worker_priority == 0;
     presenter->timeout = config->timeout_ms;
     if (present_transfer_init(&presenter->transfer, config->transfer_timeout_ms) != ESP_OK) {
         free_presenter(presenter);
@@ -591,12 +669,16 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
     presenter->panel = config->backend.panel;
     presenter->user_progress = config->backend.on_progress;
     presenter->progress_user = config->backend.progress_user;
+    unsigned worker_priority = config->worker_priority;
+    if (config->background_service && !worker_priority) {
+        worker_priority = present_task_priority();
+    }
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
     if (config->background_service) {
         presenter->backend_worker.handle = present_worker_create("present_backend", backend_worker, presenter, config->worker_stack_bytes ? config->worker_stack_bytes : 4096,
-                                                                 config->worker_priority ? config->worker_priority : 5);
+                                                                 worker_priority);
         if (!presenter->backend_worker.handle) {
-            present_mutex_give(presenter->gate);
+            give_engine_gate(presenter);
             free_presenter(presenter);
             return ESP_ERR_NO_MEM;
         }
@@ -619,7 +701,7 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
                     presenter->ops->create(&backend, &presenter->backend);
     if (ret != ESP_OK) {
         request_exit(presenter);
-        present_mutex_give(presenter->gate);
+        give_engine_gate(presenter);
         if (presenter->backend_worker.handle) {
             (void)present_worker_join(presenter->backend_worker.handle, UINT32_MAX);
         }
@@ -627,7 +709,7 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
         return ret;
     }
     (void)presenter->ops->get_caps(presenter->backend, &presenter->caps);
-    present_mutex_give(presenter->gate);
+    give_engine_gate(presenter);
     *out = presenter;
     return ESP_OK;
 }
@@ -756,7 +838,8 @@ static esp_err_t begin_next_frame_impl(esp_display_present_engine_t *presenter, 
     }
 }
 
-static esp_err_t acquire_buffer_impl(esp_display_present_engine_t *presenter, esp_display_present_lease_t *out, uint32_t timeout, bool *gate_held, uint64_t *buffer_wait)
+static esp_err_t acquire_buffer_impl(esp_display_present_engine_t *presenter, esp_display_present_lease_t *out,
+                                     const esp_display_present_rect_t *area, uint32_t timeout, bool *gate_held, uint64_t *buffer_wait)
 {
     esp_err_t ret = check_owner(presenter);
     if (ret != ESP_OK) {
@@ -774,7 +857,7 @@ static esp_err_t acquire_buffer_impl(esp_display_present_engine_t *presenter, es
         if (ret != ESP_OK || presenter->completion.first_error != ESP_OK) {
             return ret != ESP_OK ? ret : presenter->completion.first_error;
         }
-        ret = presenter->ops->acquire(presenter->backend, presenter->frame, NULL, 0, &presenter->held);
+        ret = presenter->ops->acquire(presenter->backend, presenter->frame, area, 0, &presenter->held);
         if (ret != ESP_ERR_TIMEOUT) {
             break;
         }
@@ -907,7 +990,7 @@ static esp_err_t commit_frame_impl(esp_display_present_engine_t *presenter, cons
         present_lock_exit(&presenter->control, false);
     }
     presenter->frame.value = 0;
-    (void)present_event_signal(presenter->work, false);
+    schedule_service(presenter);
     return ESP_OK;
 }
 
@@ -949,7 +1032,7 @@ static esp_err_t drain_impl(esp_display_present_engine_t *presenter, uint32_t ti
     }
     uint64_t start = present_now_ms();
     if (presenter->completion.count) {
-        (void)present_event_signal(presenter->work, false);
+        schedule_service(presenter);
     }
     for (;;) {
         esp_err_t error = reap_ready(presenter, service_during_wait(presenter));
@@ -1025,7 +1108,7 @@ esp_err_t esp_display_present_engine_service(esp_display_present_engine_t *prese
     }
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
     ret = service_impl(presenter);
-    present_mutex_give(presenter->gate);
+    give_engine_gate(presenter);
     return ret;
 }
 
@@ -1037,7 +1120,7 @@ esp_err_t esp_display_present_engine_get_caps(esp_display_present_engine_t *pres
     }
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
     ret = get_caps_impl(presenter, out);
-    present_mutex_give(presenter->gate);
+    give_engine_gate(presenter);
     return ret;
 }
 
@@ -1065,7 +1148,7 @@ esp_err_t present_presenter_begin_budget(esp_display_present_engine_t *presenter
         present_lock_exit(&presenter->control, false);
     }
     if (gate_held) {
-        present_mutex_give(presenter->gate);
+        give_engine_gate(presenter);
     }
     return ret;
 }
@@ -1075,7 +1158,8 @@ esp_err_t esp_display_present_engine_begin_next_frame(esp_display_present_engine
     return presenter ? present_presenter_begin_budget(presenter, request, presenter->timeout) : ESP_ERR_INVALID_ARG;
 }
 
-esp_err_t esp_display_present_engine_acquire_buffer(esp_display_present_engine_t *presenter, esp_display_present_lease_t *out)
+static esp_err_t acquire_area(esp_display_present_engine_t *presenter, const esp_display_present_rect_t *area,
+                              esp_display_present_lease_t *out)
 {
     if (out) {
         *out = (esp_display_present_lease_t) {
@@ -1095,12 +1179,32 @@ esp_err_t esp_display_present_engine_acquire_buffer(esp_display_present_engine_t
     }
     bool gate_held = true;
     uint64_t buffer_wait = 0;
-    ret = acquire_buffer_impl(presenter, out, remaining(start, presenter->timeout), &gate_held, &buffer_wait);
+    ret = acquire_buffer_impl(presenter, out, area, remaining(start, presenter->timeout), &gate_held, &buffer_wait);
     record_buffer_wait(presenter, buffer_wait, ret);
     if (gate_held) {
-        present_mutex_give(presenter->gate);
+        give_engine_gate(presenter);
     }
     return ret;
+}
+
+esp_err_t esp_display_present_engine_acquire_buffer(esp_display_present_engine_t *presenter, esp_display_present_lease_t *out)
+{
+    return acquire_area(presenter, NULL, out);
+}
+
+esp_err_t esp_display_present_engine_acquire_region(esp_display_present_engine_t *presenter,
+                                                    const esp_display_present_rect_t *area,
+                                                    esp_display_present_lease_t *out)
+{
+    if (!area || !area->width || !area->height) {
+        if (out) {
+            *out = (esp_display_present_lease_t) {
+                0
+            };
+        }
+        return ESP_ERR_INVALID_ARG;
+    }
+    return acquire_area(presenter, area, out);
 }
 
 esp_err_t esp_display_present_engine_resolve_rows(esp_display_present_engine_t *presenter, const esp_display_present_lease_t *lease, size_t stride, uint32_t requested, uint32_t *out)
@@ -1111,7 +1215,7 @@ esp_err_t esp_display_present_engine_resolve_rows(esp_display_present_engine_t *
     }
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
     ret = resolve_rows_impl(presenter, lease, stride, requested, out);
-    present_mutex_give(presenter->gate);
+    give_engine_gate(presenter);
     return ret;
 }
 
@@ -1128,7 +1232,7 @@ esp_err_t esp_display_present_engine_submit_buffer(esp_display_present_engine_t 
     bool gate_held = true;
     ret = submit_buffer_impl(presenter, lease, area, stride, start, &gate_held);
     if (gate_held) {
-        present_mutex_give(presenter->gate);
+        give_engine_gate(presenter);
     }
     return ret;
 }
@@ -1145,7 +1249,7 @@ esp_err_t present_presenter_resolve_lease_rows(esp_display_present_engine_t *pre
      * The caller's token still passes valid_lease; no implicit reacquisition. */
     const esp_display_present_lease_t lease = {.id = id, .surface = presenter->held.surface};
     ret = resolve_rows_impl(presenter, &lease, stride, requested, out);
-    present_mutex_give(presenter->gate);
+    give_engine_gate(presenter);
     return ret;
 }
 
@@ -1167,7 +1271,7 @@ esp_err_t present_presenter_submit_lease(esp_display_present_engine_t *presenter
     bool gate_held = true;
     ret = submit_buffer_impl(presenter, &lease, area, stride, start, &gate_held);
     if (gate_held) {
-        present_mutex_give(presenter->gate);
+        give_engine_gate(presenter);
     }
     return ret;
 }
@@ -1180,7 +1284,7 @@ esp_err_t esp_display_present_engine_commit_frame(esp_display_present_engine_t *
     }
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
     ret = commit_frame_impl(presenter, coverage);
-    present_mutex_give(presenter->gate);
+    give_engine_gate(presenter);
     return ret;
 }
 
@@ -1197,7 +1301,7 @@ esp_err_t present_presenter_cancel_budget(esp_display_present_engine_t *presente
     bool gate_held = true;
     ret = cancel_frame_impl(presenter, remaining(start, timeout), &gate_held);
     if (gate_held) {
-        present_mutex_give(presenter->gate);
+        give_engine_gate(presenter);
     }
     return ret;
 }
@@ -1219,7 +1323,7 @@ esp_err_t present_presenter_control_finish_cancel(esp_display_present_engine_t *
     bool gate_held = true;
     esp_err_t error = cancel_frame_impl(presenter, remaining(start, timeout), &gate_held);
     if (gate_held) {
-        present_mutex_give(presenter->gate);
+        give_engine_gate(presenter);
     }
     return error;
 }
@@ -1237,7 +1341,7 @@ esp_err_t esp_display_present_engine_drain(esp_display_present_engine_t *present
     bool gate_held = true;
     ret = drain_impl(presenter, remaining(start, timeout), &gate_held);
     if (gate_held) {
-        present_mutex_give(presenter->gate);
+        give_engine_gate(presenter);
     }
     return ret;
 }
@@ -1247,6 +1351,10 @@ esp_err_t present_presenter_control_bind_producer(esp_display_present_engine_t *
     if (!presenter) {
         return ESP_ERR_INVALID_ARG;
     }
+    /* Snapshot before taking the engine gate, avoiding its priority inheritance.
+     * An explicit priority remains fixed across producer handoffs. */
+    bool inherit = presenter->backend_worker.inherit_priority && presenter->backend_worker.handle;
+    unsigned priority = inherit ? present_task_priority() : 0;
     uint64_t start = present_now_ms();
     if (!present_mutex_take(presenter->gate, timeout)) {
         return ESP_ERR_TIMEOUT;
@@ -1265,7 +1373,10 @@ esp_err_t present_presenter_control_bind_producer(esp_display_present_engine_t *
         }
     }
     if (gate_held) {
-        present_mutex_give(presenter->gate);
+        give_engine_gate(presenter);
+    }
+    if (error == ESP_OK && inherit) {
+        present_worker_set_priority(presenter->backend_worker.handle, priority);
     }
     return error;
 }
@@ -1289,7 +1400,7 @@ esp_err_t present_presenter_control_poll_quiesce(esp_display_present_engine_t *p
         error = ESP_ERR_INVALID_STATE;
     }
     if (error == ESP_OK && out->pending_frames) {
-        (void)present_event_signal(presenter->work, false);
+        schedule_service(presenter);
         error = ESP_ERR_TIMEOUT;
     }
     if (error == ESP_OK && receipt.value) {
@@ -1301,7 +1412,7 @@ esp_err_t present_presenter_control_poll_quiesce(esp_display_present_engine_t *p
             observer->token = 0;
         }
     }
-    present_mutex_give(presenter->gate);
+    give_engine_gate(presenter);
     return error;
 }
 
@@ -1310,14 +1421,14 @@ esp_err_t present_presenter_control_reset_metrics(esp_display_present_engine_t *
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
     esp_err_t error = reap_ready(presenter, false);
     if (error != ESP_OK || presenter->completion.count || presenter->completion.first_error != ESP_OK) {
-        present_mutex_give(presenter->gate);
+        give_engine_gate(presenter);
         return error != ESP_OK ? error : ESP_ERR_INVALID_STATE;
     }
     present_metrics_t *metrics = presenter->metrics;
     if (!metrics) {
         metrics = present_alloc(sizeof(*metrics));
         if (!metrics) {
-            present_mutex_give(presenter->gate);
+            give_engine_gate(presenter);
             return ESP_ERR_NO_MEM;
         }
     }
@@ -1326,7 +1437,7 @@ esp_err_t present_presenter_control_reset_metrics(esp_display_present_engine_t *
     metrics->summary.scanout_available = presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_FB;
     presenter->metrics = metrics;
     present_lock_exit(&presenter->control, false);
-    present_mutex_give(presenter->gate);
+    give_engine_gate(presenter);
     return ESP_OK;
 }
 
@@ -1370,7 +1481,7 @@ esp_err_t present_presenter_control_get_status_snapshot(esp_display_present_engi
     }
     esp_err_t ret = get_status_impl(presenter, out, true);
     *valid = true; /* get_status_impl always fills out, including reap failure. */
-    present_mutex_give(presenter->gate);
+    give_engine_gate(presenter);
     return ret;
 }
 
@@ -1414,7 +1525,7 @@ esp_err_t present_presenter_control_stop(esp_display_present_engine_t *presenter
     ret = presenter->state == ESP_DISPLAY_PRESENT_ENGINE_STOPPED ? ESP_OK :
           stop_impl(presenter, remaining(start, timeout));
     (void)present_event_signal(presenter->changed, false);
-    present_mutex_give(presenter->gate);
+    give_engine_gate(presenter);
     return ret;
 }
 
@@ -1435,7 +1546,7 @@ esp_err_t present_presenter_control_destroy(esp_display_present_engine_t *presen
     }
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
     ret = destroy_impl(presenter);
-    present_mutex_give(presenter->gate);
+    give_engine_gate(presenter);
     if (ret == ESP_OK) {
         free_presenter(presenter);
     }
@@ -1480,7 +1591,7 @@ esp_err_t esp_display_present_engine_commit_with_receipt(esp_display_present_eng
             receipt->value = token;
         }
     }
-    present_mutex_give(presenter->gate);
+    give_engine_gate(presenter);
     return error;
 }
 
@@ -1501,7 +1612,7 @@ esp_err_t present_presenter_control_query_frame(esp_display_present_engine_t *pr
     }
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
     error = query_observer(presenter, present_completion_find(&presenter->completion, receipt), out, true);
-    present_mutex_give(presenter->gate);
+    give_engine_gate(presenter);
     return error;
 }
 
@@ -1541,7 +1652,7 @@ esp_err_t esp_display_present_engine_wait_frame(esp_display_present_engine_t *pr
         error = wait_change(presenter, start, timeout, &gate_held);
     } while (error == ESP_OK);
     if (gate_held) {
-        present_mutex_give(presenter->gate);
+        give_engine_gate(presenter);
     }
     return error;
 }
@@ -1569,7 +1680,7 @@ static esp_err_t untrack(esp_display_present_engine_t *presenter, esp_display_pr
     if (error == ESP_OK) {
         observer->token = 0;
     }
-    present_mutex_give(presenter->gate);
+    give_engine_gate(presenter);
     return error;
 }
 
@@ -1618,7 +1729,7 @@ esp_err_t esp_display_present_engine_set_rotation(esp_display_present_engine_t *
         error = presenter->ops->get_caps(presenter->backend, &presenter->caps);
     }
     if (gate_held) {
-        present_mutex_give(presenter->gate);
+        give_engine_gate(presenter);
     }
     return error;
 }
@@ -1644,7 +1755,7 @@ esp_err_t esp_display_present_engine_resolve_render_area(esp_display_present_eng
     }
     esp_display_present_rect_t physical;
     error = esp_display_present_plan_render_area(&plan, dirty, render, &physical);
-    present_mutex_give(presenter->gate);
+    give_engine_gate(presenter);
     return error;
 }
 
@@ -1665,7 +1776,7 @@ esp_err_t esp_display_present_engine_get_rotation(esp_display_present_engine_t *
     }
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
     *out = presenter->rotation;
-    present_mutex_give(presenter->gate);
+    give_engine_gate(presenter);
     return ESP_OK;
 }
 
@@ -1688,6 +1799,6 @@ void present_presenter_test_gate_lock(esp_display_present_engine_t *presenter)
 
 void present_presenter_test_gate_unlock(esp_display_present_engine_t *presenter)
 {
-    present_mutex_give(presenter->gate);
+    give_engine_gate(presenter);
 }
 #endif

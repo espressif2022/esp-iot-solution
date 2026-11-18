@@ -1,4 +1,18 @@
 menu "Display presenter"
+config ESP_DISPLAY_PRESENT_BACKEND_TASK_PRIORITY
+    int "Backend task priority (0 inherits producer at binding)"
+    range 0 24
+    default 0
+    help
+        Applies to backend tasks created by the public presenter for RGB, DSI,
+        TE and background Panel IO. Zero snapshots the creating task priority,
+        then snapshots the producer priority on each successful producer bind.
+        Nonzero selects one fixed FreeRTOS task priority across all sessions.
+        No priority changes occur on submit, commit, completion or scene changes.
+        Choose an explicit value when the application needs a particular ordering
+        relative to rendering and other tasks. This does not configure dedicated
+        pixel workers, which retain their first-submit priority policy.
+
 config ESP_DISPLAY_PRESENT_DEFAULT_TILE_BYTES
     int "Default input tile byte target"
     range 64 1048576

@@ -39,6 +39,13 @@ esp_err_t esp_display_present_engine_begin_next_frame(esp_display_present_engine
                                                       const esp_display_present_frame_request_t *request);
 /** @brief Acquire a writable surface lease for the active frame. */
 esp_err_t esp_display_present_engine_acquire_buffer(esp_display_present_engine_t *presenter, esp_display_present_lease_t *lease);
+/** @brief Acquire a bounded write region of the retained frame canvas.
+ * The renderer may modify only this region until submit/cancel. Disjoint
+ * descriptors may still read the same canvas. Other renderer paths should use
+ * acquire_buffer(), which protects the entire writable surface. */
+esp_err_t esp_display_present_engine_acquire_region(esp_display_present_engine_t *presenter,
+                                                    const esp_display_present_rect_t *area,
+                                                    esp_display_present_lease_t *lease);
 /** @brief Resolve how many rows fit for a chosen stride in an unconsumed lease. */
 esp_err_t esp_display_present_engine_resolve_rows(esp_display_present_engine_t *presenter, const esp_display_present_lease_t *lease,
                                                   size_t stride_bytes, uint32_t requested_rows, uint32_t *out_rows);

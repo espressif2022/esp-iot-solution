@@ -96,7 +96,7 @@ RGB/MIPI 不支持 `NONE` 和 `TE_SYNC`。`mode` 清零得到 `NONE`，需要自
 
 ### 异步处理与旋转
 
-IO `NONE` 只选择执行任务：`target.io_submit = CALLER` 或 `DEFAULT`（零值）在调用任务执行转换、分片与发送；`BACKGROUND` 使用一个 backend 输出任务，默认优先级 7。内部／PSRAM、swap、旋转都不再改变任务数。该字段通过 `create()` 配置；`open()` / `open_ex()` 使用 `DEFAULT`。其他模式仍须保持 `DEFAULT`。
+IO `NONE` 只选择执行任务：`target.io_submit = CALLER` 或 `DEFAULT`（零值）在调用任务执行转换、分片与发送；`BACKGROUND` 使用一个 backend 输出任务，优先级遵循下述统一规则。内部／PSRAM、swap、旋转都不再改变任务数。该字段通过 `create()` 配置；`open()` / `open_ex()` 使用 `DEFAULT`。其他模式仍须保持 `DEFAULT`。
 
 推荐三个组合：CALLER＋单内部 D；BACKGROUND＋双内部 D；BACKGROUND＋双 PSRAM D。1/2 个 D 和两种内存位置均可使用相同实现。NONE 仍使用 PARTITION 合同：D 可覆盖整屏，但不提供 FB 的 FULL 持久画布语义。
 
@@ -110,7 +110,9 @@ TE 单合成帧共用显示推进任务执行异步像素队列，不另建像�
 
 异步表示像素工作可交给后台推进，不表示一定使用 PPA／DMA2D；CPU 也可执行。像素请求仍逐笔处理，总线传输是否异步由输出路径决定。
 
-RGB/MIPI 扫描输出模式和 TE 双合成帧的显示推进任务默认优先级均为 7；独立像素任务会继承首个提交者的优先级。提交者优先级低于 7 时，显示输出可优先推进，减少错失切帧窗口和并行合成下的续传间隙；TE 单合成帧保留默认优先级 5。仍须结合应用优先级、XIP、总线带宽和实测传输时长核对 TE 窗口。
+所有 backend 任务统一使用 `CONFIG_ESP_DISPLAY_PRESENT_BACKEND_TASK_PRIORITY`（menuconfig 的 `Display presenter` 菜单）。默认 0：创建时取创建者作为初始生产者的当前优先级，成功换绑生产者或绑定 LVGL 会话时，重新取新生产者的当前优先级，避免把初始化任务的优先级误当成后续 LVGL 绘制任务的优先级。非零值：使用应用指定的固定优先级，跨会话也不改变。
+
+submit、commit、完成回调和场景切换都不再调整 backend 优先级；只修改生产任务自身的优先级，也不会自动调整当前会话。独立 pixel 任务保留首个提交者优先级的既有规则。若应用需要显示推进优先于绘制，应按自己的任务关系显式配置；固定某个数值或与生产者同级都不保证扫描／TE 截止时间，仍须结合实际调度、XIP、总线带宽与传输时间验证。
 
 ### TE 接入条件与限制
 

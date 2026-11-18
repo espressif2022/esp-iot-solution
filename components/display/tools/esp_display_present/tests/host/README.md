@@ -46,6 +46,23 @@ fixture. It is not a panel benchmark and does not access a real display.
 DSI scanout requires SDK callbacks newer than those available in ESP-IDF 6.0;
 a successful P4 smoke build does not establish DSI runtime support.
 
+## Dependency scheduling regression
+
+`dependency` exercises bounded writes to a retained canvas while copy descriptors
+are queued or running. Disjoint writes may proceed; overlapping and full-canvas
+leases remain pinned until real copy completion. The descriptor pool is bounded
+by `PRESENT_MAX_DAMAGE_AREAS`; queue exhaustion is retryable backpressure.
+
+The worker distinguishes construction from scanout/deadline work, independently
+of rotation and scene content. Tests assert post-unlock notifications,
+no worker gate acquisition for construction-only copies, prior scanout
+retirement, FIFO pixel results, cancellation, and late completion after bounded
+STOP. Priority is fixed within a producer session: tests use priorities 3/6/9,
+check creator and cross-thread producer binding, failed binding, explicit fixed
+overrides, and no changes on begin/submit/commit. `resource_priority_override`
+repeats the policy matrix with a nonzero component override for FB/TE/REGION.
+Host priority hooks validate selection and ordering, not FreeRTOS timing or FPS.
+
 ### Panel IO NONE convergence
 
 `panel_io_emit` exercises the production `lcd_io.emit` entry with 288 independent

@@ -124,14 +124,12 @@ static size_t default_tiles(bool overlap, esp_display_present_plan_memory_t memo
 /* Creation-only input policy, not another stored execution plan. */
 typedef struct {
     bool background;
-    unsigned priority;
 } submission_policy_t;
 
 static submission_policy_t read_submission_policy(esp_display_present_io_submit_t request)
 {
     return (submission_policy_t) {
         .background = request == ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND,
-        .priority = 7,
     };
 }
 
@@ -167,16 +165,10 @@ static void resolve_worker_policy(esp_display_present_plan_config_t *plan, const
     backend->deferred_submit = region && submission->background;
     plan->presenter.background_service = backend->async_copy || backend->deferred_submit;
 
-    /* Zero keeps the engine's default priority (5). FB scanout and concurrent TE
-     * output (7) preempt producers below 7 so scanout submission is never starved
-     * behind continuous UI rendering; deferred REGION uses submission->priority. */
-    plan->presenter.worker_priority = 0;
-    if (backend->deferred_submit) {
-        plan->presenter.worker_priority = submission->priority;
-    } else if (plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_FB ||
-               (plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_TE && !backend->copy_on_backend_worker)) {
-        plan->presenter.worker_priority = 7;
-    }
+    /* All backend topologies share one application override. Zero snapshots
+     * producer priority at creation/bind; frame processing never changes it. */
+    plan->presenter.worker_priority = plan->presenter.background_service ?
+                                      CONFIG_ESP_DISPLAY_PRESENT_BACKEND_TASK_PRIORITY : 0;
 }
 
 static esp_err_t plan_resources(const esp_display_presenter_config_t *input, bool bounce,

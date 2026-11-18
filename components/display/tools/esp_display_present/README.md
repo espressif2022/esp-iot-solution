@@ -128,7 +128,7 @@ Use the `drawbuf` argument of `open_ex()`, or `target.drawbuf` in `create()`:
 
 ### Asynchronous processing and rotation
 
-IO `NONE` selects only the execution task. `target.io_submit = CALLER` or `DEFAULT` (zero) processes pixels, fills bands and submits on the caller; `BACKGROUND` uses one backend output task, default priority 7. Memory location, swap and rotation never add tasks. Set this field through `create()`; `open()` / `open_ex()` use `DEFAULT`. Other modes still require `DEFAULT`.
+IO `NONE` selects only the execution task. `target.io_submit = CALLER` or `DEFAULT` (zero) processes pixels, fills bands and submits on the caller; `BACKGROUND` uses one backend output task with the backend priority policy below. Memory location, swap and rotation never add tasks. Set this field through `create()`; `open()` / `open_ex()` use `DEFAULT`. Other modes still require `DEFAULT`.
 
 Recommended profiles are CALLER + one internal D, BACKGROUND + two internal D, and BACKGROUND + two PSRAM D. Both counts and memory domains use the same implementation. NONE retains PARTITION semantics; D may cover the whole screen without introducing FB FULL persistent-canvas semantics.
 
@@ -142,7 +142,19 @@ Two input tiles can alternate, allowing application rendering to overlap backgro
 
 Asynchronous pixel processing can advance in the background using PPA/DMA2D or the CPU. Pixel requests are still processed serially. Whether bus transfers are asynchronous is determined by the output path.
 
-For RGB/MIPI scanout modes and two-image `TE_SYNC`, the display-progress task defaults to priority 7. Dedicated pixel tasks adopt their first submitter's priority; display output takes precedence when that priority is below 7, reducing scanout supply misses and TE inter-band refill delays. Single-image `TE_SYNC` retains default priority 5. Application priorities, XIP, bus bandwidth and measured transfer duration still determine whether the TE window is feasible.
+All backend tasks use `CONFIG_ESP_DISPLAY_PRESENT_BACKEND_TASK_PRIORITY`
+(`Display presenter` in menuconfig). The default, 0, snapshots the creating
+producer task's priority, and selects the new producer's current priority on a
+successful rebind or LVGL session bind. This avoids inheriting the setup task's
+priority for a later LVGL producer. A nonzero value fixes the application-selected
+priority across sessions. Submit, commit, completions and scene changes never
+retune it; changing the producer task's priority alone does not retune an active
+session. Dedicated pixel workers keep their existing first-submit priority policy.
+
+An application needing display output to precede rendering should select an
+explicit priority relative to its own tasks. Neither a fixed number nor matching
+the producer guarantees a scanout/TE deadline; verify scheduling, XIP, bus
+bandwidth and measured transfer duration for the application.
 
 ### TE setup and limits
 

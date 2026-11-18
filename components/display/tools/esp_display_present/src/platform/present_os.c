@@ -518,6 +518,18 @@ present_worker_t *present_worker_create(const char *name, present_worker_entry_f
     return worker;
 }
 
+void present_worker_set_priority(present_worker_t *worker, unsigned priority)
+{
+#ifdef PRESENT_HOST
+    (void)worker;
+    (void)priority;
+#else
+    if (worker && priority < configMAX_PRIORITIES) {
+        vTaskPrioritySet(worker->task, priority);
+    }
+#endif
+}
+
 bool present_worker_join(present_worker_t *worker, uint32_t timeout)
 {
     if (worker->joined) {

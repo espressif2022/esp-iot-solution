@@ -56,7 +56,7 @@ typedef struct esp_display_present_engine_config {
     esp_display_present_present_mode_t mode;          /**< Named preset mode; FB requires >= 2 buffers and rejects NONE/active_writes. */
     bool background_service;                          /**< Enable backend worker task; required by deferred_submit and copy_on_backend_worker. */
     uint32_t worker_stack_bytes;                      /**< Backend worker stack size in bytes (0 uses 4096; ignored on Host). */
-    unsigned worker_priority;                         /**< Backend worker priority (0 uses 5; ignored on Host). */
+    unsigned worker_priority;                         /**< Fixed backend worker priority (0 inherits creator/producer-bind priority; Host ignores scheduling). */
     esp_display_present_output_caps_t output_caps;    /**< Output alignment and memory constraints (0 alignment means 1). */
     uint32_t transfer_timeout_ms;                     /**< Per panel.submit completion deadline in ms (0 disables); timeout latches a sticky fault. */
 } esp_display_present_engine_config_t;

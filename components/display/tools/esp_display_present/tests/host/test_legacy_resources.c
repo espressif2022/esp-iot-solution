@@ -4,6 +4,7 @@
 #include "core/present_engine.h"
 #include "resources/present_memory.h"
 #include "support/legacy_panel.h"
+#include "config/present_defaults.h"
 /* Fail a real pixel-pool allocation, not the planning function. */
 static unsigned fail_pixel_at, pixel_calls;
 static bool fail_combined_fb_tiles, count_pixel_calls;
@@ -510,7 +511,7 @@ static void submission_policy_and_te_workers(void)
         bool expected = policy == ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND;
         assert(plan.presenter.backend.deferred_submit == expected);
         assert(plan.presenter.background_service == expected);
-        assert(plan.presenter.worker_priority == (expected ? 7 : 0));
+        assert(plan.presenter.worker_priority == (expected ? CONFIG_ESP_DISPLAY_PRESENT_BACKEND_TASK_PRIORITY : 0));
         input.target.hw.rotation = 90;
         assert(present_resources_plan(&input, false, &plan) ==
                ESP_OK);
@@ -530,7 +531,7 @@ static void submission_policy_and_te_workers(void)
             OK(present_resources_plan(&input, false, &plan));
             assert(plan.presenter.backend.async_copy && plan.presenter.background_service);
             assert(plan.presenter.backend.copy_on_backend_worker == (images == 1));
-            assert(plan.presenter.worker_priority == (images == 2 ? 7 : 0));
+            assert(plan.presenter.worker_priority == CONFIG_ESP_DISPLAY_PRESENT_BACKEND_TASK_PRIORITY);
             plan.output = (esp_display_present_output_caps_t) {
                 .internal_dma = true, .ext_mem = true, .tight_stride = true
             };

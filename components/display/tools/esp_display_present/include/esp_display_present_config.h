@@ -102,7 +102,7 @@ typedef struct {
 typedef enum {
     ESP_DISPLAY_PRESENT_IO_SUBMIT_DEFAULT = 0, /**< Caller processing/submission (same as CALLER). */
     ESP_DISPLAY_PRESENT_IO_SUBMIT_CALLER,      /**< Process pixels and submit from the producer task; may block. */
-    ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND,  /**< Process pixels and submit from one backend task (default priority 7). */
+    ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND,  /**< Process pixels and submit from one backend task; priority follows component task policy. */
 } esp_display_present_io_submit_t;
 
 /** @brief Target hardware, presentation policy and endpoint memory configuration. */
