@@ -40,7 +40,6 @@ typedef enum {
 typedef enum {
     ESP_DISPLAY_PRESENT_EXEC_COOPERATIVE = 0, /**< No backend worker task; async_copy may still create a pixel worker. */
     ESP_DISPLAY_PRESENT_EXEC_REGION_DEFERRED, /**< REGION with backend worker; READY tiles submit only from backend worker. */
-    ESP_DISPLAY_PRESENT_EXEC_REGION_ASYNC,    /**< REGION with backend worker and cooperative submission enabled. */
     ESP_DISPLAY_PRESENT_EXEC_TE_SHARED,       /**< TE with copy_on_backend_worker; backend worker drains copy queue and submits. */
     ESP_DISPLAY_PRESENT_EXEC_TE_SPLIT,        /**< TE with dedicated copy queue worker and backend-only submission. */
     ESP_DISPLAY_PRESENT_EXEC_FB_SHARED,       /**< FB with copy_on_backend_worker; backend worker drains copy queue and advances scanout. */
@@ -75,7 +74,7 @@ static inline esp_display_present_exec_mode_t esp_display_present_resolve_exec_m
     }
     switch (config->backend_kind) {
     case ESP_DISPLAY_PRESENT_ENGINE_REGION:
-        return config->backend.deferred_submit ? ESP_DISPLAY_PRESENT_EXEC_REGION_DEFERRED : ESP_DISPLAY_PRESENT_EXEC_REGION_ASYNC;
+        return ESP_DISPLAY_PRESENT_EXEC_REGION_DEFERRED;
     case ESP_DISPLAY_PRESENT_ENGINE_TE:
         return config->backend.copy_on_backend_worker ? ESP_DISPLAY_PRESENT_EXEC_TE_SHARED : ESP_DISPLAY_PRESENT_EXEC_TE_SPLIT;
     case ESP_DISPLAY_PRESENT_ENGINE_FB:

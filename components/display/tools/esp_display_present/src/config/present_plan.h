@@ -80,7 +80,7 @@ typedef struct {
     esp_display_present_plan_pool_t tiles;          /**< Planned partial input tile pool. */
     esp_display_present_plan_pool_t images;         /**< Planned FB or TE compose pool. */
     esp_display_present_plan_pool_t logical;        /**< Planned logical staging canvas pool. */
-    esp_display_present_plan_pool_t conversion;     /**< Planned REGION conversion/staging pool. */
+    esp_display_present_plan_pool_t conversion;     /**< Reserved compatibility field; REGION has no conversion pool (count=0). */
     esp_display_present_output_caps_t output;       /**< Resolved output capabilities and alignments. */
     size_t tx_capacity;                             /**< Resolved max in-flight transfers. */
     size_t record_capacity;                         /**< Frame record capacity. */

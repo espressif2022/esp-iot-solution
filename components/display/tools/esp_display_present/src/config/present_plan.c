@@ -142,6 +142,9 @@ static esp_err_t resolve_backend_policy(plan_resolve_ctx_t *ctx)
     if (kind != ESP_DISPLAY_PRESENT_ENGINE_FB && !partial) {
         return ESP_ERR_NOT_SUPPORTED;
     }
+    if (kind == ESP_DISPLAY_PRESENT_ENGINE_REGION && (backend_config->async_copy || backend_config->copy_execute || backend_config->tx_staging)) {
+        return ESP_ERR_INVALID_ARG;
+    }
     if (backend_config->in_place && (kind != ESP_DISPLAY_PRESENT_ENGINE_REGION || backend_config->async_copy || backend_config->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0)) {
         return ESP_ERR_INVALID_ARG;
     }
@@ -152,9 +155,11 @@ static esp_err_t resolve_backend_policy(plan_resolve_ctx_t *ctx)
                                                    !plan->normalized.background_service)) {
         return ESP_ERR_INVALID_ARG;
     }
-    if ((backend_config->deferred_submit && (kind != ESP_DISPLAY_PRESENT_ENGINE_REGION || !plan->normalized.background_service)) ||
-            (plan->normalized.background_service && kind == ESP_DISPLAY_PRESENT_ENGINE_REGION && !backend_config->async_copy && !backend_config->deferred_submit)) {
+    if (backend_config->deferred_submit && (kind != ESP_DISPLAY_PRESENT_ENGINE_REGION || !plan->normalized.background_service)) {
         return ESP_ERR_INVALID_ARG;
+    }
+    if (kind == ESP_DISPLAY_PRESENT_ENGINE_REGION) {
+        backend_config->deferred_submit = plan->normalized.background_service;
     }
     if (kind != ESP_DISPLAY_PRESENT_ENGINE_FB && (backend_config->ext_bufs || backend_config->ext_bytes || backend_config->scan_buf)) {
         return ESP_ERR_INVALID_ARG;
@@ -239,14 +244,14 @@ static esp_err_t resolve_counts_and_output(plan_resolve_ctx_t *ctx)
     if (plan->output.full_only && kind == ESP_DISPLAY_PRESENT_ENGINE_REGION) {
         return ESP_ERR_NOT_SUPPORTED;
     }
-    if (backend_config->tx_staging && (kind != ESP_DISPLAY_PRESENT_ENGINE_REGION || !backend_config->async_copy)) {
+    if (backend_config->tx_staging) {
         return ESP_ERR_INVALID_ARG;
     }
     esp_display_present_plan_memory_t transport_memory = images ? config->resources.image_memory :
-                                                         backend_config->tx_staging ? ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA : config->resources.tile_memory;
+                                                         config->resources.tile_memory;
     bool external_tx = transport_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL;
     size_t length_alignment = plan->output.ext_len_align ? plan->output.ext_len_align : 1;
-    if (external_tx && kind == ESP_DISPLAY_PRESENT_ENGINE_REGION) {
+    if (external_tx && kind == ESP_DISPLAY_PRESENT_ENGINE_REGION && !backend_config->panel.emit) {
         /* Tight rows with this width make every rendered band DMA-legal,
          * including the last short band. Negotiate before rasterization. */
         size_t w_align;
@@ -386,19 +391,13 @@ static esp_err_t resolve_layouts_and_pools(plan_resolve_ctx_t *ctx)
             !pool(&plan->logical, logical, plan->logical_layout, alignment, config->resources.logical_memory, false)) {
         return ESP_ERR_INVALID_SIZE;
     }
-    bool convert = kind == ESP_DISPLAY_PRESENT_ENGINE_REGION && (backend_config->async_copy || backend_config->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || (backend_config->draw_order != backend_config->panel_order && !backend_config->in_place));
-    esp_display_present_layout_t converted = tile;
-    converted.byte_order = backend_config->panel_order;
-    if (quarter) {
-        if (!layout(tile.height, tile.width, bpp, stride_align, backend_config->format, backend_config->panel_order, &converted)) {
-            return ESP_ERR_INVALID_SIZE;
-        }
-    }
-    if (!pool(&plan->conversion, convert ? tiles : 0, converted, alignment, backend_config->tx_staging ? ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA : config->resources.tile_memory, false)) {
+    /* REGION owns only D. The adapter budgets its shared, bounded S pair
+     * through extra_bytes; there is no input-sized conversion pool. */
+    if (!pool(&plan->conversion, 0, tile, alignment, ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA, false)) {
         return ESP_ERR_INVALID_SIZE;
     }
     esp_display_present_plan_memory_t tx_memory = ctx->transport_memory;
-    if ((tx_memory == ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA && !plan->output.internal_dma) || (tx_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL && !plan->output.ext_mem)) {
+    if ((tx_memory == ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA && !plan->output.internal_dma) || (tx_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL && !plan->output.ext_mem && !backend_config->panel.emit)) {
         return ESP_ERR_NOT_SUPPORTED;
     }
     plan->tx_capacity = config->resources.tx_capacity ? config->resources.tx_capacity : kind == ESP_DISPLAY_PRESENT_ENGINE_REGION ? tiles : 1;
@@ -505,7 +504,7 @@ static esp_err_t resolve_budget(plan_resolve_ctx_t *ctx)
     plan->metadata_bytes = present_presenter_memory(&plan->normalized) +
                            (kind == ESP_DISPLAY_PRESENT_ENGINE_REGION ? present_region_memory(backend_config) : kind == ESP_DISPLAY_PRESENT_ENGINE_TE ? present_te_memory(backend_config) : present_fb_memory(backend_config));
     /* Reserve the peak worker stack even when native FULL allocates lazily. */
-    bool pixel_worker = backend_config->async_copy && !backend_config->copy_on_backend_worker;
+    bool pixel_worker = kind != ESP_DISPLAY_PRESENT_ENGINE_REGION && backend_config->async_copy && !backend_config->copy_on_backend_worker;
     plan->stack_bytes = pixel_worker ? 4096 : 0;
     if (plan->normalized.background_service && !add(plan->stack_bytes,
                                                     plan->normalized.worker_stack_bytes ? plan->normalized.worker_stack_bytes : 4096, &plan->stack_bytes)) {

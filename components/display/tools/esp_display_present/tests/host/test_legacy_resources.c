@@ -49,7 +49,7 @@ static void optional_tile_fallback(void)
             input.target.drawbuf.buffers = explicit_count ? 2 : 0;
             /* GRAM async: draw+converted before the second slot. TE: compose
              * before two tiles. FB borrows images; only tiles allocate here. */
-            fail_pixel_at = kind == 1 || kind == 2 ? 3 : 2;
+            fail_pixel_at = kind == 2 ? 3 : 2;
             fail_combined_fb_tiles = kind == 3;
             pixel_calls = 0;
             present_resources_t *resources = NULL;
@@ -67,9 +67,9 @@ static void optional_tile_fallback(void)
                 /* Retry must update policy as well as buffer counts. In
                  * particular FB's automatic pair now shares its copy worker. */
                 assert(status.plan.normalized.backend.copy_on_backend_worker == (kind >= 2));
-                assert(status.plan.normalized.backend.tx_staging == (kind == 1));
-                assert(status.plan.normalized.backend.async_copy == (kind != 0));
-                size_t stack_bytes = kind == 1 ? 8192u : kind >= 2 ? 4096u : 0;
+                assert(!status.plan.normalized.backend.tx_staging);
+                assert(status.plan.normalized.backend.async_copy == (kind >= 2));
+                size_t stack_bytes = kind >= 2 ? 4096u : 0;
                 assert(status.plan.stack_bytes == stack_bytes);
                 if (kind != 3) {
                     assert(status.plan.normalized.backend.buffer_count == 1);
@@ -513,7 +513,7 @@ static void submission_policy_and_te_workers(void)
         assert(plan.presenter.worker_priority == (expected ? 7 : 0));
         input.target.hw.rotation = 90;
         assert(present_resources_plan(&input, false, &plan) ==
-               (policy ? ESP_ERR_INVALID_ARG : ESP_OK));
+               ESP_OK);
     }
     esp_display_presenter_config_t input = config(NULL, false);
     input.target.hw.panel_type = ESP_DISPLAY_PRESENT_PANEL_IO;

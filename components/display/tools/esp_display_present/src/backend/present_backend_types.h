@@ -133,6 +133,12 @@ typedef struct {
     esp_err_t (*quiesce)(void *context, uint32_t timeout_ms);
     /** @brief Optional nonblocking, idempotent abort hint stopping future bands (never aborts DMA). */
     void (*request_abort)(void *context);
+    /** REGION input: adapter converts borrowed source into physical output bands.
+     * Explicit rejection leaves source contents unchanged; accepted/uncertain
+     * retains the source until logical TRANSFER_DONE or successful quiesce. */
+    esp_display_present_tx_result_t (*emit)(void *context, const esp_display_present_surface_t *source,
+                                            const esp_display_present_rect_t *physical_area,
+                                            esp_display_present_engine_rotation_t rotation, uint64_t cookie);
 } esp_display_present_panel_adapter_t;
 
 /** @brief Backend progress/wakeup callback invoked outside locks (ISR-aware). */

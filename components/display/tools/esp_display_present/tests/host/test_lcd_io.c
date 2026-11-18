@@ -304,7 +304,13 @@ static void gram_integration(void)
 {
     struct fake_lcd lcd = {0};
     esp_display_present_panel_adapter_t api;
-    esp_display_present_lcd_io_t *adapter = make(&lcd, 2, &api);
+    esp_display_present_lcd_io_t *adapter;
+    esp_display_present_lcd_io_config_t config = {.panel = &lcd, .io = &lcd, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+                                                  .region_mode = true, .staging_bytes = 64, .max_inflight = 2
+                                                 };
+    assert(esp_display_present_lcd_io_create(&config, &adapter) == ESP_OK);
+    assert(esp_display_present_lcd_io_get_interface(adapter, &api) == ESP_OK);
+    lcd.early = true;
     esp_display_present_backend_config_t c = { .width = 4, .height = 4, .tile_rows = 2,
                                                .buffer_count = 2, .max_frames = 2, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = api
                                              };
@@ -324,7 +330,7 @@ static void gram_integration(void)
     const uint8_t expected[] = {0, 1, 2, 3, 8, 9, 10, 11};
     assert(memcmp(lcd.bytes, expected, sizeof(expected)) == 0 && lcd.x0 == 1 && lcd.y0 == 2);
     assert(ops->end(g, f, NULL) == ESP_OK);
-    complete(&lcd);
+    lcd.early = false;
     /* Partial driver failure must propagate through backend's sticky fault. */
     assert(ops->begin(g, &request, &f) == ESP_OK);
     assert(ops->acquire(g, f, NULL, 0, &lease) == ESP_OK);

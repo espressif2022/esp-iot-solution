@@ -106,11 +106,14 @@ excluded, and callback/reentrancy analysis must assume the gate is held. ISR-con
 panel/TE events do not take the gate; they update the ISR-safe trackers
 and, as above, mutate backend state under the backend's own lock.
 
-The pixel-copy queue is a separate, narrower domain per backend/pixel instance
-(not a global queue shared across instances). `REGION` uses
-`present_pixel_engine` (token-indexed), while `FB` and `TE` use the lightweight
-slot-indexed `present_copy_queue`; both dispatch queued copies strictly in FIFO
-submission order, one at a time. Advanced asynchronous configurations use a
+REGION has no pixel-copy queue or pixel worker. It retains D until logical
+TRANSFER_DONE and emits direct pixels or bounded physical-row bands through
+`lcd_io.emit`. CALLER performs this work synchronously; BACKGROUND uses only
+the backend worker. REGION acquire/query never advance sending. A worker rejection with NO_MEM
+retains READY for retry; other preflight failures terminate accepted work with
+a sticky fault, safely releasing D because explicit rejection proves no DMA borrow.
+The FB/TE pixel-copy queue is a separate domain per instance, using the
+lightweight slot-indexed `present_copy_queue` in FIFO order, one copy at a time. Advanced asynchronous configurations use a
 dedicated pixel worker. The facade's FB paths with at most one input tile and TE
 paths with one compose image (`copy_on_backend_worker`) instead let the existing
 backend worker consume this queue outside the engine gate; this avoids a
@@ -147,7 +150,7 @@ in side effects, not just in lines:
 | Op | Actual per-backend behavior | Disposition |
 |---|---|---|
 | `get_fault` | All three are the same one-line delegation to `present_frame_core_get_fault` | Keep the thin wrappers |
-| `query` | All three run their backend `service` first, then the core query; FB passes `supports_present=true`, REGION/TE pass `false` | Keep each backend's advance step |
+| `query` | FB/TE run `service` first; REGION observes without sending. FB passes `supports_present=true`, REGION/TE pass `false` | Preserve per-backend scheduling |
 | `wait` | All three share `present_frame_core_wait`, parameterized by their own query callback and the `supports_present` flag | Already shared; nothing further to extract |
 | `release_receipt` | FB and TE run `service` first; REGION does not service before releasing | Must not be unified; the ordering difference is observable |
 | `get_caps` | Layout, capabilities and buffer policy are computed from different per-backend state | Keep per-backend implementations |
@@ -213,12 +216,14 @@ There are two distinct levels of splitting:
 1. **Driver chunks:** one successful `tx_color` produces one color-done
    callback after its last SPI chunk. The source must remain valid until
    that callback, even if `draw_bitmap` has already returned.
-2. **Present staging bands:** the public TE factory selects two internal DMA
-   slots for PSRAM compose images without direct DMA. Each slot uses the
-   configured `ESP_DISPLAY_PRESENT_TE_STAGING_SLOT_BYTES` budget (default
+2. **Present staging bands:** TE selects two internal DMA slots for PSRAM
+   compose images without direct DMA. NONE lazily selects the same bounded
+   pair for conversion, source-stride handling or actual DMA constraint failures.
+   Each instance owns its pair, sharing only the configured
+   `ESP_DISPLAY_PRESENT_IO_STAGING_SLOT_BYTES` budget (default
    16 KiB), rounded down to physical whole rows. Internal images and direct PSRAM
-   DMA use no stages. The adapter allows one logical transaction and one DMA
-   band at a time. The existing backend worker fills the other slot while the
+   DMA can bypass stages. Staged output allows one logical transaction and one DMA
+   band at a time; direct NONE requests may queue up to the D/channel count. The existing backend worker fills the other slot while the
    current band sends; it never rewrites a submitted slot until `draw_bitmap`
    has returned AND that band's real color-done has arrived. Final wire length
    is the actual pixel length, independent of allocation/cache alignment.

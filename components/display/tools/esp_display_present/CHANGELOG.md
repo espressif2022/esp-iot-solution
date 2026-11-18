@@ -2,8 +2,13 @@
 
 ## 2.0.0 — Unreleased
 
-- Allow synchronous Panel-IO NONE submission to select CALLER or BACKGROUND
-  per presenter; DEFAULT preserves the existing Kconfig policy.
+- Converge non-TE Panel IO on CALLER or one BACKGROUND output worker. Choose
+  direct DMA per request (including in-place RGB565 swap), otherwise generate
+  physical rotated/swapped bands in two bounded internal staging slots. Remove
+  REGION pixel workers and input-sized conversion pools; retain D until logical
+  transfer completion. PSRAM full-screen D uses the same PARTITION contract.
+- Share IO_STAGING_SLOT_BYTES between NONE and TE, migrating the old TE Kconfig
+  name; NONE allocates staging lazily and DEFAULT selects CALLER.
 - Run single-image TE composition on the existing backend worker while
   retaining asynchronous copy ownership; dual-image TE keeps its pixel worker.
 - Detect TE short-pulse polarity after enabling the input, using a bounded

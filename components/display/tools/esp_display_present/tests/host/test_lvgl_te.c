@@ -258,7 +258,9 @@ static void background_backend_worker(bool async, esp_display_present_engine_bac
     esp_display_present_engine_config_t config = {.backend = {
             .width = 4, .height = 4, .tile_rows = 2, .buffer_count = 2, .max_frames = 2,
             .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = sync_panel_interface(&panel),
-            .async_copy = async, .on_progress = copy_notification, .progress_user = &n,
+            .async_copy = async && kind != ESP_DISPLAY_PRESENT_ENGINE_REGION,
+            .deferred_submit = kind == ESP_DISPLAY_PRESENT_ENGINE_REGION,
+            .on_progress = copy_notification, .progress_user = &n,
             .te_window_us = 1000000, .te_budget_us = 1000
         },
         .backend_kind = kind, .timeout_ms = 1000, .background_service = true
@@ -280,9 +282,8 @@ static void background_backend_worker(bool async, esp_display_present_engine_bac
     background(display, 0xffffff);
     lv_refr_now(display);
     if (async && kind == ESP_DISPLAY_PRESENT_ENGINE_TE) {
-        /* TE must finish both tile copies before the synthetic edge. GRAM's
-         * identity path borrows its draw tiles directly even with async_copy;
-         * there are no copy completions to wait for on that path. */
+        /* TE must finish both tile copies before the synthetic edge.
+         * REGION retains D directly and has no pixel-copy completion. */
         struct timespec copy_deadline;
         assert(clock_gettime(CLOCK_REALTIME, &copy_deadline) == 0);
         copy_deadline.tv_sec += 2;

@@ -16,7 +16,7 @@ GPIO 双边沿 + 传输完成时间 → 测量快照 → 窗口计算
 
 当前内部代码仍有三种准入输入：自动测量使用 `te_gate`，内部配置也可提供模型参数或历史固定 `te_window_us`。这些不属于当前公开应用接口；虽然窗口计算已共享，准入路径尚未完全合一。`te_gate` 和显式扫描模型同时设置属于歧义配置，会被拒绝。
 
-TE 准入仍按整张物理合成帧计算。内部 DMA 合成帧或已确认开启 PSRAM 直 DMA 时一次提交整帧；其余 PSRAM 合成帧使用两块内部 DMA staging，每块预算由 `CONFIG_ESP_DISPLAY_PRESENT_TE_STAGING_SLOT_BYTES` 指定（默认 16 KiB）、按物理整行取整。已有 backend worker 预填另一块，当前片完成后再提交下一片，最多一片 DMA 在途；每片重新设置面板窗口，尾片不补齐线上数据。前台 service 可推进合成和回收，但不能消费 TE 准入边沿或进入发送；worker 提交时借出 engine gate，便于状态查询和有界停止。
+TE 准入仍按整张物理合成帧计算。内部 DMA 合成帧或已确认开启 PSRAM 直 DMA 时一次提交整帧；其余 PSRAM 合成帧使用两块内部 DMA staging，每块预算由 `CONFIG_ESP_DISPLAY_PRESENT_IO_STAGING_SLOT_BYTES` 指定（默认 16 KiB）、按物理整行取整。已有 backend worker 预填另一块，当前片完成后再提交下一片，最多一片 DMA 在途；每片重新设置面板窗口，尾片不补齐线上数据。前台 service 可推进合成和回收，但不能消费 TE 准入边沿或进入发送；worker 提交时借出 engine gate，便于状态查询和有界停止。
 
 分片会增加开窗、调度和复制开销。整帧实测传输时间包含这些间隙，并反馈后续准入估算；首次按总线速率估计仍可能偏乐观。总耗时只是模型输入，不能证明每行写入相对扫描的相位，因此双 staging 的防撕裂效果仍需目标面板验证，不能用 host 正确性测试替代。
 
@@ -41,7 +41,7 @@ contracts; task sharing is not synchronous execution in the owner task.
 The default input-tile budget is configured by
 `CONFIG_ESP_DISPLAY_PRESENT_DEFAULT_TILE_BYTES` (32 KiB). Non-direct PSRAM TE
 uses two internal DMA stages, each bounded by
-`CONFIG_ESP_DISPLAY_PRESENT_TE_STAGING_SLOT_BYTES` (16 KiB by default), rounded
+`CONFIG_ESP_DISPLAY_PRESENT_IO_STAGING_SLOT_BYTES` (16 KiB by default), rounded
 to whole physical rows. Increasing stages may reduce inter-band overhead but
 consumes more internal memory; the complete measured transfer must still fit
 the TE timing model.

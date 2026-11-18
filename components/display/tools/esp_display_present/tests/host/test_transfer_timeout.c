@@ -198,6 +198,7 @@ static void uncertain_retains_sources(void)
     test_panel_t panel = {.width = 4, .height = 4, .bpp = 2};
     esp_display_present_panel_adapter_t adapter = test_panel_interface(&panel);
     adapter.submit = uncertain_submit;
+    adapter.emit = NULL;
     esp_display_present_engine_t *presenter = create_adapter(adapter, 5);
     OK(send(presenter, 0)); /* Accepted/uncertain consumes the lease. */
     esp_display_present_engine_receipt_t receipt = seal(presenter);
@@ -347,7 +348,7 @@ static void automatic_backend_worker(void)
     fake_clock = false;
     automatic_panel_t panel = {.lock = PTHREAD_MUTEX_INITIALIZER, .condition = PTHREAD_COND_INITIALIZER};
     esp_display_present_engine_config_t config = {.backend = {.width = 4, .height = 4, .tile_rows = 2,
-                                                              .buffer_count = 2, .max_frames = 4, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .async_copy = true,
+                                                              .buffer_count = 2, .max_frames = 4, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .deferred_submit = true,
                                                               .panel = {&panel, automatic_attach, automatic_submit, automatic_stop},
                                                               .on_progress = automatic_progress, .progress_user = &panel
                                                              },

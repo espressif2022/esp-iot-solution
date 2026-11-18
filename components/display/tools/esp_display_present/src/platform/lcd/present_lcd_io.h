@@ -21,10 +21,11 @@ typedef struct {
     esp_lcd_panel_handle_t panel;                    /**< Borrowed initialized panel handle. */
     esp_lcd_panel_io_handle_t io;                    /**< Borrowed initialized panel IO handle. */
     esp_display_present_engine_pixel_format_t format;/**< Panel driver input pixel format. */
-    esp_display_present_byte_order_t byte_order;     /**< Panel wire byte order (adapter does not convert). */
+    esp_display_present_byte_order_t byte_order;     /**< Panel wire byte order; emit converts RGB565 when needed. */
     size_t max_inflight;                             /**< Maximum in-flight transactions (1..16). */
-    size_t staging_bytes;                            /**< Per-slot staging size in bytes (allocates two slots; 0 selects direct). */
+    size_t staging_bytes;                            /**< Per-slot staging budget (two slots; REGION allocates lazily, 0 disables fallback). */
     uint32_t staging_timeout_ms;                     /**< Per-transaction staging wait budget in ms (0 uses 1000). */
+    bool region_mode;                               /**< REGION emit: lazy staging, per-request direct/transform choice. */
     bool psram_dma_direct;                           /**< Opt-in direct DMA from PSRAM (must match SPI IO flag). */
 } esp_display_present_lcd_io_config_t;
 
@@ -39,11 +40,13 @@ typedef struct {
  * - no other tx_color/draw_bitmap or callback registration on the same IO;
  * - format, byte order and area bounds match the panel configuration.
  *
- * Source must be 64-byte aligned. Without staging it must be DMA-capable.
+ * Direct sources must be 64-byte aligned and DMA-capable. REGION emit selects
+ * direct DMA per request, otherwise rotates/copies/swaps CPU-readable input
+ * into two bounded internal slots. Source stride may exceed its pixel width.
  * Internal RAM is the default.
  * PSRAM direct DMA is opt-in and requires a capable SoC/SPI host, the underlying
  * esp_lcd IO psram_dma_direct flag, and a transfer length divisible by 64.
- * Cache writeback occurs before draw_bitmap. Explicit staging_bytes allocates
+ * Cache writeback occurs before draw_bitmap. Explicit staging_bytes reserves
  * two internal DMA slots and accepts CPU-readable source memory. At most one
  * band is in DMA; the next slot can be filled concurrently. Actual wire bytes
  * are never padded to allocation alignment. Completion requires both driver
@@ -65,7 +68,7 @@ typedef struct {
  * draw_bitmap itself has the driver's blocking behavior (no timeout guarantee).
  *
  * request_abort closes future submissions and wakes staged waits, but does not
- * abort DMA. The caller must retain the compose source until logical completion.
+ * abort DMA. The caller must retain the source until logical completion.
  *
  * @param config Configuration; the pointer is not retained.
  * @param out_adapter Output adapter.

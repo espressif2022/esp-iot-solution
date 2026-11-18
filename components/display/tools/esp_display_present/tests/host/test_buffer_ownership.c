@@ -136,7 +136,7 @@ static void open_backend(fixture_t *f, bool staging)
         .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .buffer_count = fb ? 2 : 1, .max_frames = 4,
         .render_contract = fb ? ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL : ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION,
         .panel = {f, attach, submit, quiesce},
-        .tx_staging = staging,
+        .deferred_submit = staging,
     };
     if (te) {
         config.compose_count = 1;
@@ -144,7 +144,7 @@ static void open_backend(fixture_t *f, bool staging)
             .admit = admit_te, .user = f
         };
     }
-    if (te || staging) {
+    if (te) {
         f->copy_started = present_event_create();
         f->copy_resume = present_event_create();
         f->copy_done = present_event_create();
@@ -314,17 +314,19 @@ static void region_staged(void)
     fixture_t f = {.ops = &present_region_backend, .acceptance = ESP_DISPLAY_PRESENT_TX_ACCEPTED};
     open_backend(&f, true);
     esp_display_present_frame_t frame = begin(&f);
-    esp_display_present_lease_t first = start_tile_copy(&f, frame, &top, 0x55);
+    esp_display_present_lease_t first = lease(&f, frame, &top);
+    draw(first, 0x55);
+    OK(f.ops->submit_region(f.backend, frame, first.id));
     expect_no_lease(&f, frame, ESP_ERR_TIMEOUT);
     assert(!f.pending);
-    finish_copy(&f);
-    esp_display_present_lease_t second = lease(&f, frame, &bottom);
-    expect_released(first, second);
-    assert(f.pending == f.copy_destination && f.pending != second.surface.pixels);
-    draw(second, 0x66);
-    assert(f.ops->submit_region(f.backend, frame, second.id) == ESP_ERR_NO_MEM);
+    OK(f.ops->service(f.backend));
+    assert(f.pending == first.surface.pixels);
+    expect_no_lease(&f, frame, ESP_ERR_TIMEOUT);
     expect_bytes(f.pending, STRIDE * TILE_ROWS, 0x55);
     complete(&f);
+    esp_display_present_lease_t second = lease(&f, frame, &bottom);
+    expect_released(first, second);
+    draw(second, 0x66);
     OK(f.ops->cancel_region(f.backend, frame, second.id));
     release_receipt(&f, seal(&f, frame), ESP_OK);
     close_backend(&f);

@@ -38,13 +38,13 @@ struct esp_display_present_lcd_io {
     esp_display_present_panel_event_fn callback;
     void *user;
     uint64_t cookies[16];
-    size_t head, count, active_callbacks;
+    size_t head, count, active_callbacks, active_calls;
     bool attached, closing, submitting;
     struct {
         stage_slot_t slots[2];
         present_os_event_t *event;
         int active; /* At most one draw_bitmap/color transfer is in flight. */
-        bool abort, started, result_finalized;
+        bool abort, started, result_finalized, staged;
         esp_err_t result;
     } stage;
 };
@@ -66,7 +66,7 @@ static bool PRESENT_ISR_ATTR publish_color(esp_display_present_lcd_io_t *spi, bo
 {
     present_lock_enter(&spi->lock, isr);
     if (!spi->attached || !spi->count ||
-            (spi->config.staging_bytes && (spi->submitting || !stages_retired(spi)))) {
+            (spi->stage.staged && (spi->submitting || !stages_retired(spi)))) {
         present_lock_exit(&spi->lock, isr);
         return false;
     }
@@ -94,7 +94,7 @@ static bool PRESENT_ISR_ATTR publish_color(esp_display_present_lcd_io_t *spi, bo
  * A driver callback retires one band, not the logical frame. No ISR copy/submit. */
 static bool PRESENT_ISR_ATTR finish_color(esp_display_present_lcd_io_t *spi, bool isr)
 {
-    if (!spi->config.staging_bytes) {
+    if (!spi->stage.staged) {
         return publish_color(spi, isr);
     }
     present_lock_enter(&spi->lock, isr);
@@ -150,7 +150,7 @@ static esp_err_t spi_attach(void *context, esp_display_present_panel_event_fn ca
 }
 
 static esp_err_t validate_tx(esp_display_present_lcd_io_t *spi, const esp_display_present_surface_t *surface,
-                             const esp_display_present_rect_t *area, uint64_t cookie, size_t *bytes)
+                             const esp_display_present_rect_t *area, uint64_t cookie, size_t *bytes, bool staged)
 {
     if (!surface || !area || !surface->pixels || !cookie || !area->width || !area->height ||
             surface->layout.width != area->width || surface->layout.height != area->height ||
@@ -168,11 +168,11 @@ static esp_err_t validate_tx(esp_display_present_lcd_io_t *spi, const esp_displa
         return ESP_ERR_INVALID_SIZE;
     }
     *bytes = row * area->height;
-    if (*bytes > surface->capacity_bytes || (uintptr_t)surface->pixels % PRESENT_SPI_BASE_ALIGNMENT ||
+    if (*bytes > surface->capacity_bytes || (!staged && (uintptr_t)surface->pixels % PRESENT_SPI_BASE_ALIGNMENT) ||
             (uintptr_t)surface->pixels > UINTPTR_MAX - *bytes) {
         return ESP_ERR_INVALID_SIZE;
     }
-    if (spi->config.staging_bytes) {
+    if (staged) {
         return row <= spi->config.staging_bytes ? ESP_OK : ESP_ERR_INVALID_SIZE;
     }
     /* Check both ends: a valid base alone does not establish the entire range. */
@@ -191,7 +191,8 @@ static esp_err_t validate_tx(esp_display_present_lcd_io_t *spi, const esp_displa
 }
 
 static esp_err_t stage_fill(esp_display_present_lcd_io_t *spi, unsigned index,
-                            const esp_display_present_surface_t *surface, uint32_t row, uint32_t rows)
+                            const esp_display_present_surface_t *surface, uint32_t row, uint32_t rows,
+                            const esp_display_present_surface_t *source, esp_display_present_engine_rotation_t rotation)
 {
     present_lock_enter(&spi->lock, false);
     if (spi->stage.abort) {
@@ -205,7 +206,45 @@ static esp_err_t stage_fill(esp_display_present_lcd_io_t *spi, unsigned index,
     slot->rows = rows;
     present_lock_exit(&spi->lock, false);
     size_t bytes = (size_t)rows * surface->layout.stride_bytes;
-    memcpy(slot->pixels, (const uint8_t *)surface->pixels + (size_t)row * surface->layout.stride_bytes, bytes);
+    if (!source) {
+        memcpy(slot->pixels, (const uint8_t *)surface->pixels + (size_t)row * surface->layout.stride_bytes, bytes);
+    } else {
+        /* Generate physical packed rows directly; no full-size conversion pool.
+         * CPU is the fallback for arbitrary strides/quarter-turn tail windows. */
+        size_t bpp = source->layout.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
+        bool swap = source->layout.byte_order != spi->config.byte_order;
+        uint8_t *destination = slot->pixels;
+        for (uint32_t y = row; y < row + rows; ++y) {
+            if (rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 && !swap) {
+                memcpy(destination, (const uint8_t *)source->pixels + (size_t)y * source->layout.stride_bytes,
+                       surface->layout.stride_bytes);
+                destination += surface->layout.stride_bytes;
+                continue;
+            }
+            for (uint32_t x = 0; x < surface->layout.width; ++x) {
+                uint32_t sx, sy;
+                switch (rotation) {
+                case ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90:
+                    sx = y; sy = source->layout.height - 1 - x; break;
+                case ESP_DISPLAY_PRESENT_ENGINE_ROTATE_180:
+                    sx = source->layout.width - 1 - x; sy = source->layout.height - 1 - y; break;
+                case ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270:
+                    sx = source->layout.width - 1 - y; sy = x; break;
+                default:
+                    sx = x; sy = y; break;
+                }
+                const uint8_t *pixel = (const uint8_t *)source->pixels +
+                                       (size_t)sy * source->layout.stride_bytes + (size_t)sx * bpp;
+                if (swap) {
+                    *destination++ = pixel[1];
+                    *destination++ = pixel[0];
+                } else {
+                    memcpy(destination, pixel, bpp);
+                    destination += bpp;
+                }
+            }
+        }
+    }
     esp_err_t result = esp_cache_msync(slot->pixels, bytes,
                                        ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_UNALIGNED);
     present_lock_enter(&spi->lock, false);
@@ -235,13 +274,14 @@ static void spi_request_abort(void *context)
 /* One frame, two fixed scratch slots, one DMA band in flight. Fill the other
  * slot while the current band sends. Wire lengths always match real pixels. */
 static esp_err_t stage_transfer(esp_display_present_lcd_io_t *spi, const esp_display_present_surface_t *surface,
-                                const esp_display_present_rect_t *area)
+                                const esp_display_present_rect_t *area,
+                                const esp_display_present_surface_t *source, esp_display_present_engine_rotation_t rotation)
 {
     uint32_t band_rows = spi->config.staging_bytes / surface->layout.stride_bytes;
     uint64_t start = present_now_ms();
     uint32_t timeout = spi->config.staging_timeout_ms ? spi->config.staging_timeout_ms : 1000;
     uint32_t first = area->height < band_rows ? area->height : band_rows;
-    esp_err_t result = stage_fill(spi, 0, surface, 0, first);
+    esp_err_t result = stage_fill(spi, 0, surface, 0, first, source, rotation);
     unsigned current = 0;
     uint32_t next_row = first;
     while (result == ESP_OK) {
@@ -278,7 +318,7 @@ static esp_err_t stage_transfer(esp_display_present_lcd_io_t *spi, const esp_dis
             if (n > band_rows) {
                 n = band_rows;
             }
-            result = stage_fill(spi, current ^ 1, surface, next_row, n);
+            result = stage_fill(spi, current ^ 1, surface, next_row, n, source, rotation);
             next_row += n;
             if (result != ESP_OK) {
                 break;
@@ -324,8 +364,9 @@ static esp_err_t stage_transfer(esp_display_present_lcd_io_t *spi, const esp_dis
     return result;
 }
 
-static esp_display_present_tx_result_t spi_submit(void *context, const esp_display_present_surface_t *surface,
-                                                  const esp_display_present_rect_t *area, uint64_t cookie)
+static esp_display_present_tx_result_t submit_pixels(void *context, const esp_display_present_surface_t *surface,
+                                                     const esp_display_present_rect_t *area, uint64_t cookie, bool staged,
+                                                     const esp_display_present_surface_t *source, esp_display_present_engine_rotation_t rotation)
 {
     esp_display_present_lcd_io_t *spi = context;
     if (!spi) {
@@ -334,7 +375,7 @@ static esp_display_present_tx_result_t spi_submit(void *context, const esp_displ
         };
     }
     size_t bytes;
-    esp_err_t ret = validate_tx(spi, surface, area, cookie, &bytes);
+    esp_err_t ret = validate_tx(spi, surface, area, cookie, &bytes, staged);
     if (ret != ESP_OK) {
         return (esp_display_present_tx_result_t) {
             ESP_DISPLAY_PRESENT_TX_REJECTED, ret
@@ -347,7 +388,7 @@ static esp_display_present_tx_result_t spi_submit(void *context, const esp_displ
             ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_STATE
         };
     }
-    if (spi->count == spi->config.max_inflight) {
+    if (spi->count == spi->config.max_inflight || (staged && spi->count)) {
         present_lock_exit(&spi->lock, false);
         return (esp_display_present_tx_result_t) {
             ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_NO_MEM
@@ -355,8 +396,21 @@ static esp_display_present_tx_result_t spi_submit(void *context, const esp_displ
     }
     present_lock_exit(&spi->lock, false);
 
-    ret = spi->config.staging_bytes ? ESP_OK : esp_cache_msync(surface->pixels, bytes,
-                                                               ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_UNALIGNED);
+    if (staged && !spi->stage.slots[0].pixels) {
+        void *first = present_alloc_pixels(spi->config.staging_bytes);
+        void *second = present_alloc_pixels(spi->config.staging_bytes);
+        if (!first || !second) {
+            present_free(first);
+            present_free(second);
+            return (esp_display_present_tx_result_t) {
+                ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_NO_MEM
+            };
+        }
+        spi->stage.slots[0].pixels = first;
+        spi->stage.slots[1].pixels = second;
+    }
+    ret = staged ? ESP_OK : esp_cache_msync(surface->pixels, bytes,
+                                            ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_UNALIGNED);
     /* esp_cache_msync documents NOT_SUPPORTED for a non-cacheable range. */
     if (ret != ESP_OK && ret != ESP_ERR_NOT_SUPPORTED) {
         return (esp_display_present_tx_result_t) {
@@ -365,12 +419,13 @@ static esp_display_present_tx_result_t spi_submit(void *context, const esp_displ
     }
     present_lock_enter(&spi->lock, false);
     /* stop can race the cache operation above; never enqueue after detach/abort. */
-    if (!spi->attached || spi->closing || spi->submitting || spi->count == spi->config.max_inflight) {
+    if (!spi->attached || spi->closing || spi->submitting || spi->count == spi->config.max_inflight || (staged && spi->count)) {
         present_lock_exit(&spi->lock, false);
         return (esp_display_present_tx_result_t) {
             ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_STATE
         };
     }
+    spi->stage.staged = staged;
     spi->stage.result = ESP_OK;
     spi->stage.started = spi->stage.result_finalized = false;
     spi->cookies[(spi->head + spi->count) % spi->config.max_inflight] = cookie;
@@ -378,8 +433,8 @@ static esp_display_present_tx_result_t spi_submit(void *context, const esp_displ
     spi->submitting = true;
     present_lock_exit(&spi->lock, false);
 
-    if (spi->config.staging_bytes) {
-        ret = stage_transfer(spi, surface, area);
+    if (staged) {
+        ret = stage_transfer(spi, surface, area, source, rotation);
     } else {
         ret = esp_lcd_panel_draw_bitmap(spi->config.panel, (int)area->x, (int)area->y,
                                         (int)(area->x + area->width), (int)(area->y + area->height),
@@ -388,7 +443,7 @@ static esp_display_present_tx_result_t spi_submit(void *context, const esp_displ
     present_lock_enter(&spi->lock, false);
     /* Commit the transaction outcome with submitting, before publishing. A
      * later stop must not retroactively turn a completed success into failure. */
-    if (spi->config.staging_bytes) {
+    if (staged) {
         spi->stage.result = ret;
         spi->stage.result_finalized = true;
         if (ret != ESP_OK && !spi->stage.started) {
@@ -410,7 +465,7 @@ static esp_display_present_tx_result_t spi_submit(void *context, const esp_displ
         spi->closing = true;
     }
     present_lock_exit(&spi->lock, false);
-    if (spi->config.staging_bytes) {
+    if (staged) {
         (void)publish_color(spi, false);
         present_lock_enter(&spi->lock, false);
         --spi->active_callbacks;
@@ -420,6 +475,116 @@ static esp_display_present_tx_result_t spi_submit(void *context, const esp_displ
     return (esp_display_present_tx_result_t) {
         ret == ESP_OK ? ESP_DISPLAY_PRESENT_TX_ACCEPTED : ESP_DISPLAY_PRESENT_TX_UNCERTAIN, ret
     };
+}
+
+/* Pin task-side preflight/cache/allocation as well as the driver call. A
+ * concurrent quiesce must join this entire lifetime before returning success. */
+static bool begin_call(esp_display_present_lcd_io_t *spi)
+{
+    if (!spi) {
+        return false;
+    }
+    present_lock_enter(&spi->lock, false);
+    bool allowed = spi->attached && !spi->closing && !spi->active_calls;
+    if (allowed) {
+        ++spi->active_calls;
+    }
+    present_lock_exit(&spi->lock, false);
+    return allowed;
+}
+
+static esp_display_present_tx_result_t end_call(esp_display_present_lcd_io_t *spi, esp_display_present_tx_result_t result)
+{
+    present_lock_enter(&spi->lock, false);
+    --spi->active_calls;
+    present_lock_exit(&spi->lock, false);
+    return result;
+}
+
+static esp_display_present_tx_result_t spi_submit(void *context, const esp_display_present_surface_t *surface,
+                                                  const esp_display_present_rect_t *area, uint64_t cookie)
+{
+    esp_display_present_lcd_io_t *spi = context;
+    if (!begin_call(spi)) {
+        return (esp_display_present_tx_result_t) {
+            ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_STATE
+        };
+    }
+    return end_call(spi, submit_pixels(context, surface, area, cookie, spi->config.staging_bytes != 0,
+                                       NULL, ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0));
+}
+
+static void swap_rgb565(void *pixels, size_t bytes)
+{
+    uint8_t *p = pixels;
+    for (size_t i = 0; i < bytes; i += 2) {
+        uint8_t value = p[i]; p[i] = p[i + 1]; p[i + 1] = value;
+    }
+}
+
+static esp_display_present_tx_result_t emit_pixels(void *context, const esp_display_present_surface_t *source,
+                                                   const esp_display_present_rect_t *area,
+                                                   esp_display_present_engine_rotation_t rotation, uint64_t cookie)
+{
+    esp_display_present_lcd_io_t *spi = context;
+    if (!spi || !spi->config.region_mode || !source || !area || !source->pixels ||
+            !source->layout.width || !source->layout.height ||
+            source->layout.format != spi->config.format ||
+            rotation < ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || rotation > ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270 ||
+            (source->layout.byte_order != ESP_DISPLAY_PRESENT_ORDER_NATIVE && source->layout.byte_order != ESP_DISPLAY_PRESENT_ORDER_SWAPPED) ||
+            (spi->config.format == ESP_DISPLAY_PRESENT_FORMAT_RGB888 && source->layout.byte_order != ESP_DISPLAY_PRESENT_ORDER_NATIVE)) {
+        return (esp_display_present_tx_result_t) {
+            ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_ARG
+        };
+    }
+    size_t bpp = spi->config.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
+    if (source->layout.width > SIZE_MAX / bpp) {
+        return (esp_display_present_tx_result_t) {
+            ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_SIZE
+        };
+    }
+    size_t row = (size_t)source->layout.width * bpp;
+    size_t stride = source->layout.stride_bytes;
+    if (stride < row || row > source->capacity_bytes ||
+            source->layout.height - 1 > (source->capacity_bytes - row) / stride ||
+            (uintptr_t)source->pixels > UINTPTR_MAX - source->capacity_bytes) {
+        return (esp_display_present_tx_result_t) {
+            ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_SIZE
+        };
+    }
+    bool quarter = rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90 || rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270;
+    esp_display_present_surface_t wire = *source;
+    wire.layout.width = quarter ? source->layout.height : source->layout.width;
+    wire.layout.height = quarter ? source->layout.width : source->layout.height;
+    wire.layout.stride_bytes = (size_t)wire.layout.width * bpp;
+    wire.layout.byte_order = spi->config.byte_order;
+    size_t bytes = 0;
+    /* Direct legality is checked per request, never imposed on frontend dirties. */
+    bool direct = rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 && stride == row &&
+                  validate_tx(spi, &wire, area, cookie, &bytes, false) == ESP_OK;
+    bool swapped = direct && source->layout.byte_order != spi->config.byte_order;
+    if (swapped) {
+        swap_rgb565(source->pixels, bytes);
+    }
+    esp_display_present_tx_result_t result = submit_pixels(spi, &wire, area, cookie, !direct,
+                                                           direct ? NULL : source, rotation);
+    if (swapped && result.acceptance == ESP_DISPLAY_PRESENT_TX_REJECTED) {
+        swap_rgb565(source->pixels, bytes);
+    }
+    return result;
+}
+
+static esp_display_present_tx_result_t spi_emit(void *context, const esp_display_present_surface_t *source,
+                                                const esp_display_present_rect_t *area,
+                                                esp_display_present_engine_rotation_t rotation, uint64_t cookie)
+{
+    esp_display_present_lcd_io_t *spi = context;
+    if (!begin_call(spi)) {
+        return (esp_display_present_tx_result_t) {
+            ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_STATE
+        };
+    }
+    return end_call(spi, emit_pixels(context, source, area, rotation, cookie));
 }
 
 static esp_err_t spi_quiesce(void *context, uint32_t timeout)
@@ -433,7 +598,7 @@ static esp_err_t spi_quiesce(void *context, uint32_t timeout)
     for (;;) {
         present_lock_enter(&spi->lock, false);
         bool attached = spi->attached;
-        bool busy = spi->count || spi->active_callbacks || spi->submitting;
+        bool busy = spi->count || spi->active_callbacks || spi->active_calls || spi->submitting;
         present_lock_exit(&spi->lock, false);
         if (!attached) {
             return ESP_OK;
@@ -489,11 +654,15 @@ esp_err_t esp_display_present_lcd_io_create(const esp_display_present_lcd_io_con
     spi->config = *config;
     spi->stage.active = -1;
     if (config->staging_bytes) {
-        spi->config.max_inflight = 1;
-        spi->stage.slots[0].pixels = present_alloc_pixels(config->staging_bytes);
-        spi->stage.slots[1].pixels = present_alloc_pixels(config->staging_bytes);
+        if (!config->region_mode) {
+            spi->config.max_inflight = 1;
+        }
+        if (!config->region_mode) {
+            spi->stage.slots[0].pixels = present_alloc_pixels(config->staging_bytes);
+            spi->stage.slots[1].pixels = present_alloc_pixels(config->staging_bytes);
+        }
         spi->stage.event = present_event_create();
-        if (!spi->stage.slots[0].pixels || !spi->stage.slots[1].pixels || !spi->stage.event) {
+        if ((!config->region_mode && (!spi->stage.slots[0].pixels || !spi->stage.slots[1].pixels)) || !spi->stage.event) {
             present_free(spi->stage.slots[0].pixels);
             present_free(spi->stage.slots[1].pixels);
             present_event_destroy(spi->stage.event);
@@ -512,7 +681,7 @@ esp_err_t esp_display_present_lcd_io_get_interface(esp_display_present_lcd_io_t 
         return ESP_ERR_INVALID_ARG;
     }
     *out = (esp_display_present_panel_adapter_t) {
-        spi, spi_attach, spi_submit, spi_quiesce, spi_request_abort
+        spi, spi_attach, spi_submit, spi_quiesce, spi_request_abort, spi->config.region_mode ? spi_emit : NULL
     };
     return ESP_OK;
 }
@@ -522,7 +691,7 @@ esp_err_t esp_display_present_lcd_io_destroy(esp_display_present_lcd_io_t *spi)
     if (!spi) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (spi->attached || spi->count || spi->active_callbacks || spi->submitting) {
+    if (spi->attached || spi->count || spi->active_callbacks || spi->active_calls || spi->submitting) {
         return ESP_ERR_INVALID_STATE;
     }
     present_event_destroy(spi->stage.event);
@@ -538,7 +707,7 @@ esp_err_t esp_display_present_lcd_io_get_output_caps(esp_display_present_lcd_io_
     if (!spi || !out) {
         return ESP_ERR_INVALID_ARG;
     }
-    bool direct_external_dma = spi->config.psram_dma_direct && !spi->config.staging_bytes;
+    bool direct_external_dma = spi->config.psram_dma_direct && !spi->config.staging_bytes && !spi->config.region_mode;
     *out = (esp_display_present_output_caps_t) {
         .x_alignment = 1,
         .y_alignment = 1,

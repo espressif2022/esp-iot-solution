@@ -79,13 +79,13 @@ static bool io_direct_psram(const esp_display_present_hw_config_t *hw)
 }
 
 /* Per-slot budget, physical whole rows. Never grow beyond the fixed target. */
-static size_t te_band_bytes(const esp_display_presenter_config_t *input)
+static size_t io_band_bytes(const esp_display_presenter_config_t *input)
 {
     bool quarter = (input->target.hw.rotation / 90) & 1;
     size_t row = (size_t)(quarter ? input->height : input->width) *
                  (input->pixel_format == ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 ? 2 : 3);
     size_t height = quarter ? input->width : input->height;
-    return present_default_te_stage_bytes(row, height);
+    return present_default_io_stage_bytes(row, height);
 }
 
 static esp_display_present_plan_memory_t preferred_external_memory(size_t bytes, size_t count)
@@ -137,7 +137,7 @@ static submission_policy_t read_submission_policy(esp_display_present_io_submit_
 
 /* Memory and layout are already selected. No IO/heap query or task creation.
  * Keep transmission staging distinct from pixel conversion requirements. */
-static void resolve_pixel_path(esp_display_present_plan_config_t *plan, bool prefer_psram)
+static void resolve_pixel_path(esp_display_present_plan_config_t *plan)
 {
     esp_display_present_backend_config_t *backend = &plan->presenter.backend;
     backend->tx_staging = false;
@@ -147,21 +147,12 @@ static void resolve_pixel_path(esp_display_present_plan_config_t *plan, bool pre
         return;
     }
 
-    /* Compatibility policy: external REGION tiles always stage for now.
-     * Direct-PSRAM eligibility, including runtime rotation, is a separate change. */
-    backend->tx_staging = plan->resources.tile_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL;
-    bool needs_rotation = backend->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0;
-    bool needs_swap = backend->panel_order == ESP_DISPLAY_PRESENT_ORDER_SWAPPED;
-    /* Preserve out-of-place swap and runtime rotation even if the preferred
-     * PSRAM draw pool fell back to internal memory. */
-    bool out_of_place_swap = needs_swap && prefer_psram;
-    backend->async_copy = backend->tx_staging || needs_rotation || out_of_place_swap;
-    backend->in_place = needs_swap && !backend->async_copy;
+    /* REGION conversion is emitted by the IO adapter in bounded physical
+     * bands. Input memory/rotation no longer create a pixel task or X pool. */
+    backend->async_copy = false;
 }
 
-/* Derive task policy from the selected pixel path and resource counts.
- * Having a background service does not make submission worker-exclusive:
- * async REGION still permits task-side service to submit. */
+/* Derive FB/TE queue sharing and REGION output context from explicit policy. */
 static void resolve_worker_policy(esp_display_present_plan_config_t *plan, const submission_policy_t *submission)
 {
     esp_display_present_backend_config_t *backend = &plan->presenter.backend;
@@ -172,8 +163,8 @@ static void resolve_worker_policy(esp_display_present_plan_config_t *plan, const
         backend->copy_on_backend_worker = plan->resources.image_count == 1;
     }
 
-    bool synchronous_region = plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION && !backend->async_copy;
-    backend->deferred_submit = synchronous_region && submission->background;
+    bool region = plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION;
+    backend->deferred_submit = region && submission->background;
     plan->presenter.background_service = backend->async_copy || backend->deferred_submit;
 
     /* Zero keeps the engine's default priority (5). FB scanout and concurrent TE
@@ -261,8 +252,9 @@ static esp_err_t plan_resources(const esp_display_presenter_config_t *input, boo
     esp_display_present_plan_memory_t tile_memory = input->target.drawbuf.in_psram ? preferred_external_memory(tile_bytes, input->target.drawbuf.buffers ? input->target.drawbuf.buffers : 1) : ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA;
     esp_display_present_plan_memory_t image_memory = te ? preferred_external_memory((size_t)input->width * input->height * bytes_per_pixel, images) : ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL;
     bool staged_te = te && image_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL && !io_direct_psram(hw);
-    size_t staging = staged_te ? te_band_bytes(input) : 0;
-    if (staged_te && !staging) {
+    bool region = mode.kind == ESP_DISPLAY_PRESENT_ENGINE_REGION;
+    size_t staging = (staged_te || region) ? io_band_bytes(input) : 0;
+    if ((staged_te || region) && !staging) {
         return ESP_ERR_INVALID_SIZE; /* One physical row cannot fit the bounded staging slot. */
     }
     size_t io_bytes = framebuffer ? 0 : esp_display_present_lcd_io_memory(staging);
@@ -315,21 +307,8 @@ static esp_err_t plan_resources(const esp_display_presenter_config_t *input, boo
         },
     };
     const submission_policy_t submission = read_submission_policy(input->target.io_submit);
-    resolve_pixel_path(out, input->target.drawbuf.in_psram);
+    resolve_pixel_path(out);
     size_t slot_bytes = tile_bytes;
-    if (!framebuffer && !te && out->presenter.backend.async_copy) {
-        if (tile_memory == ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA) {
-            if (slot_bytes > SIZE_MAX / 2) {
-                return ESP_ERR_INVALID_SIZE;
-            }
-            slot_bytes *= 2;
-        } else {
-            if (tile_bytes > (SIZE_MAX - reserved) / 2) {
-                return ESP_ERR_INVALID_SIZE;
-            }
-            reserved += 2 * tile_bytes; /* PSRAM draw + internal DMA conversion. */
-        }
-    }
     if (partial) {
         bool overlap = out->presenter.backend.async_copy || (!framebuffer && !te && submission.background);
         out->resources.tile_count = input->target.drawbuf.buffers ? input->target.drawbuf.buffers :
@@ -340,7 +319,7 @@ static esp_err_t plan_resources(const esp_display_presenter_config_t *input, boo
     }
     resolve_worker_policy(out, &submission);
     if (input->target.io_submit != ESP_DISPLAY_PRESENT_IO_SUBMIT_DEFAULT &&
-            (mode.kind != ESP_DISPLAY_PRESENT_ENGINE_REGION || out->presenter.backend.async_copy)) {
+            mode.kind != ESP_DISPLAY_PRESENT_ENGINE_REGION) {
         return ESP_ERR_INVALID_ARG;
     }
     return ESP_OK;
@@ -495,11 +474,13 @@ static esp_err_t create_lcd_io_adapter(present_resources_t *resources, const esp
 {
     esp_err_t error;
     bool direct_psram = io_direct_psram(&input->target.hw);
-    size_t staging = resources->te_required && config->resources.image_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL && !direct_psram ? te_band_bytes(input) : 0;
+    bool region = config->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION;
+    size_t staging = region || (resources->te_required && config->resources.image_memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL && !direct_psram) ? io_band_bytes(input) : 0;
     esp_display_present_lcd_io_config_t spi = {
         .panel = input->target.hw.panel,
         .io = input->target.hw.io,
         .psram_dma_direct = direct_psram,
+        .region_mode = region,
         .staging_bytes = staging,
         .staging_timeout_ms = input->transfer_timeout_ms,
         .format = config->presenter.backend.format,
@@ -542,7 +523,7 @@ static esp_err_t create_planned_engine(present_resources_t *resources, const esp
     /* A retry may change both tile memory and count. Recompute each decision
      * from the final resources, without changing the submission policy. */
     const submission_policy_t submission = read_submission_policy(input->target.io_submit);
-    resolve_pixel_path(config, input->target.drawbuf.in_psram);
+    resolve_pixel_path(config);
     resolve_worker_policy(config, &submission);
     config->presenter.backend.copy_execute = config->presenter.backend.async_copy ? copy_execute : NULL;
     return present_engine_create_with_plan(config, &resources->status.plan, &resources->presenter);

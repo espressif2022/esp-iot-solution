@@ -122,7 +122,7 @@ static void exercise(unsigned kind, esp_display_present_render_contract_t contra
     esp_display_present_backend_config_t cfg = {.width = initial % 2 ? 2 : 3, .height = initial % 2 ? 3 : 2, .rotation = initial, .tile_rows = initial % 2 ? 3 : 2, .buffer_count = 2, .max_frames = 2,
                                                 .format = bpp == 2 ? ESP_DISPLAY_PRESENT_FORMAT_RGB565 : ESP_DISPLAY_PRESENT_FORMAT_RGB888, .render_contract = contract,
                                                 .panel = kind == 2 ? scan_interface(&scan) : test_panel_interface(&io),
-                                                .te_window_us = 1000000, .te_budget_us = 1, .async_copy = async,
+                                                .te_window_us = 1000000, .te_budget_us = 1, .async_copy = kind ? async : false,
                                                 .on_progress = notify, .progress_user = &n, .ext_bufs = external ? buffers : NULL,
                                                 .ext_bytes = external ? 64 : 0
                                                };
@@ -342,7 +342,7 @@ static void region_conversion_allocation(void)
     notifications_t n = {.lock = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER};
     esp_display_present_backend_config_t cfg = {.width = 3, .height = 2, .tile_rows = 2, .buffer_count = 2, .max_frames = 2,
                                                 .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
-                                                .panel = test_panel_interface(&io), .async_copy = true,
+                                                .panel = test_panel_interface(&io), .async_copy = false,
                                                 .on_progress = notify, .progress_user = &n
                                                };
     present_backend_t *b;
@@ -353,7 +353,7 @@ static void region_conversion_allocation(void)
     run_region_frame(b, &io, &n, 2);
     assert(pixel_bytes == before + 24);
     OK(present_region_backend.set_rotation(b, ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90));
-    assert(pixel_bytes == before + 48); /* Both conversion tiles already exist. */
+    assert(pixel_bytes == before + 24); /* Rotation allocates no conversion tile. */
     esp_display_present_frame_request_t req = {.full_redraw = true};
     esp_display_present_frame_t f;
     OK(present_region_backend.begin(b, &req, &f));
@@ -365,7 +365,7 @@ static void region_conversion_allocation(void)
     for (unsigned i = 0; i < 2; ++i) {
         OK(present_region_backend.submit_region(b, f, leases[i].id));
     }
-    assert(pixel_bytes == before + 48);
+    assert(pixel_bytes == before + 24);
     esp_display_present_receipt_t receipt;
     OK(present_region_backend.end(b, f, &receipt));
     for (;;) {
@@ -384,14 +384,14 @@ static void region_conversion_allocation(void)
     OK(present_region_backend.release_receipt(b, receipt));
     OK(present_region_backend.set_rotation(b, ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0));
     run_region_frame(b, &io, &n, 1);
-    /* Back to identity: no additional allocation, converted tiles retained. */
-    assert(pixel_bytes == before + 48);
+    /* Every orientation retains only the original two D. */
+    assert(pixel_bytes == before + 24);
     OK(present_region_backend.stop(b, 1000));
     OK(present_region_backend.destroy(b));
     assert(pixel_bytes == before);
 
-    /* Packing a non-tight source still allocates lazily. A failed submit
-     * leaves the old lease with the producer so it can be cancelled. */
+    /* Native-stride input adds no backend pixel allocation; adapter staging
+     * is bounded independently of D and tested through its real emit API. */
     io = (test_panel_t) {
         .width = 3, .height = 2, .bpp = 2
     };
@@ -410,8 +410,10 @@ static void region_conversion_allocation(void)
     OK(present_region_backend.acquire(b, f, NULL, 0, &lease));
     const esp_display_present_region_submit_t packed = {{0, 0, 2, 2}, 6};
     fail_next_pixel_alloc = true;
-    assert(present_region_backend.submit_region_ex(b, f, lease.id, &packed) == ESP_ERR_NO_MEM);
-    OK(present_region_backend.cancel_region(b, f, lease.id));
+    OK(present_region_backend.submit_region_ex(b, f, lease.id, &packed));
+    assert(pixel_bytes == before + 24 && fail_next_pixel_alloc);
+    fail_next_pixel_alloc = false;
+    test_panel_complete(&io);
     OK(present_region_backend.cancel_frame(b, f, 0));
     OK(present_region_backend.stop(b, 1000));
     OK(present_region_backend.destroy(b));

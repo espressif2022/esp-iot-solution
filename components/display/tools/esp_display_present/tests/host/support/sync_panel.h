@@ -80,7 +80,7 @@ static inline esp_err_t sync_stop(void *context, uint32_t timeout)
 static inline esp_display_present_panel_adapter_t sync_panel_interface(sync_panel_t *s)
 {
     return (esp_display_present_panel_adapter_t) {
-        s, sync_attach, sync_submit, sync_stop, NULL
+        s, sync_attach, sync_submit, sync_stop, NULL, NULL
     };
 }
 

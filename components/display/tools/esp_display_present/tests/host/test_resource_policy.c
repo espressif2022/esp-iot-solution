@@ -10,20 +10,13 @@ bool __wrap_present_psram_can_fit(size_t bytes, size_t count)
     return psram_available;
 }
 
-enum { STAGED = 1, ASYNC = 2, IN_PLACE = 4 };
-
-/* Baseline truth table, including preference surviving an internal fallback.
- * Entries are 0/90/180/270 degrees. Do not derive these from production rules. */
+/* Memory fallback and transform combinations all share the same two task
+ * policies. Actual direct-vs-staged routing is checked by panel_io_emit. */
 static const struct {
     bool prefer_psram, available, swap;
-    unsigned flags[4];
 } pixel_cases[] = {
-    {false, true,  false, {0, ASYNC, ASYNC, ASYNC}},
-    {false, true,  true,  {IN_PLACE, ASYNC, ASYNC, ASYNC}},
-    {true,  true,  false, {STAGED | ASYNC, STAGED | ASYNC, STAGED | ASYNC, STAGED | ASYNC}},
-    {true,  true,  true,  {STAGED | ASYNC, STAGED | ASYNC, STAGED | ASYNC, STAGED | ASYNC}},
-    {true,  false, false, {0, ASYNC, ASYNC, ASYNC}},
-    {true,  false, true,  {ASYNC, ASYNC, ASYNC, ASYNC}},
+    {false, true, false}, {false, true, true}, {true, true, false},
+    {true, true, true}, {true, false, false}, {true, false, true},
 };
 
 static void region_policy(void)
@@ -37,8 +30,7 @@ static void region_policy(void)
         for (unsigned rotation = 0; rotation < 4; ++rotation) {
             for (unsigned count = 0; count <= 2; ++count) {
                 for (unsigned submit = 0; submit < 3; ++submit) {
-                    /* Direct capability intentionally does not change the old
-                     * REGION staging policy; optimize it in a separate change. */
+                    /* Direct capability changes routing, never task or D/X counts. */
                     for (unsigned direct = 0; direct < 2; ++direct) {
                         esp_display_presenter_config_t input = config(NULL, false);
                         input.width = input.height = 480;
@@ -51,21 +43,19 @@ static void region_policy(void)
                         input.target.drawbuf.buffers = count;
                         input.target.drawbuf.in_psram = pixel_cases[c].prefer_psram;
                         input.target.io_submit = (esp_display_present_io_submit_t)submit;
-                        unsigned flags = pixel_cases[c].flags[rotation];
-                        bool asynchronous = (flags & ASYNC) != 0;
                         esp_display_present_plan_config_t plan;
                         esp_err_t error = present_resources_plan(&input, false, &plan);
-                        assert(error == (asynchronous && submit ? ESP_ERR_INVALID_ARG : ESP_OK));
+                        assert(error == ESP_OK);
                         if (error != ESP_OK) {
                             continue;
                         }
-                        assert(plan.presenter.backend.tx_staging == ((flags & STAGED) != 0));
-                        assert(plan.presenter.backend.async_copy == asynchronous);
-                        assert(plan.presenter.backend.in_place == ((flags & IN_PLACE) != 0));
+                        assert(!plan.presenter.backend.tx_staging);
+                        assert(!plan.presenter.backend.async_copy);
+                        assert(!plan.presenter.backend.in_place);
                         assert(!plan.presenter.backend.copy_on_backend_worker);
-                        bool deferred = !asynchronous && background[submit];
+                        bool deferred = background[submit];
                         assert(plan.presenter.backend.deferred_submit == deferred);
-                        assert(plan.presenter.background_service == (asynchronous || deferred));
+                        assert(plan.presenter.background_service == deferred);
                         const unsigned priority = 7;
                         assert(plan.presenter.worker_priority == (deferred ? priority : 0));
                         size_t tiles = count ? count : 2;
@@ -78,16 +68,43 @@ static void region_policy(void)
                         assert(resolved.tiles.bytes_each == 15360);
                         assert(resolved.tiles.memory == (pixel_cases[c].prefer_psram && psram_available ?
                                                          ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL : ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA));
-                        assert(resolved.conversion.count == (asynchronous ? tiles : 0));
+                        assert(resolved.conversion.count == 0);
                         assert(resolved.conversion.memory == ESP_DISPLAY_PRESENT_MEMORY_INTERNAL_DMA);
-                        assert(resolved.pixel_bytes == tiles * 15360 * (asynchronous ? 2 : 1));
-                        assert(resolved.stack_bytes == (asynchronous ? 8192u : deferred ? 4096u : 0));
+                        assert(resolved.pixel_bytes == tiles * 15360);
+                        assert(resolved.stack_bytes == (deferred ? 4096u : 0));
                     }
                 }
             }
         }
     }
     psram_available = true;
+}
+
+static void full_screen_partition_budget(void)
+{
+    esp_display_presenter_config_t input = config(NULL, false);
+    input.width = input.height = 480;
+    input.target.hw.panel_type = ESP_DISPLAY_PRESENT_PANEL_IO;
+    input.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_NONE;
+    input.target.drawbuf = (esp_display_present_drawbuf_config_t) {
+        .lines = 480, .buffers = 2, .in_psram = true
+    };
+    input.target.io_submit = ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND;
+    esp_display_present_plan_config_t plan;
+    OK(present_resources_plan(&input, false, &plan));
+    size_t reserved = plan.extra_bytes;
+    assert(reserved >= 2 * 16320 && reserved < 40 * 1024);
+    plan.output = (esp_display_present_output_caps_t) {
+        .internal_dma = true, .ext_mem = true, .tight_stride = true
+    };
+    esp_display_present_resolved_plan_t resolved;
+    OK(esp_display_present_plan_resolve(&plan, &resolved));
+    assert(resolved.tiles.count == 2 && resolved.tiles.bytes_each == 460800);
+    assert(resolved.tiles.memory == ESP_DISPLAY_PRESENT_MEMORY_EXTERNAL && !resolved.conversion.count);
+    assert(resolved.pixel_bytes == 921600 && resolved.stack_bytes == 4096);
+    input.target.drawbuf.lines = 16;
+    OK(present_resources_plan(&input, false, &plan));
+    assert(plan.extra_bytes == reserved); /* Internal S budget does not grow with D. */
 }
 
 static void framebuffer_and_te_workers(void)
@@ -138,6 +155,7 @@ static void framebuffer_and_te_workers(void)
 int main(void)
 {
     region_policy();
+    full_screen_partition_budget();
     framebuffer_and_te_workers();
     return 0;
 }

@@ -15,8 +15,8 @@ int main(void)
     assert(present_default_tile_rows(960, 480) == rows);
     assert(present_default_tile_rows(960, 4) == 4);
     assert(present_default_tile_rows(2 * 1024 * 1024, 2) == 1);
-    assert(present_default_te_stage_bytes(960, 480) == stage);
-    assert(present_default_te_stage_bytes(2 * 1024 * 1024, 2) == 0);
+    assert(present_default_io_stage_bytes(960, 480) == stage);
+    assert(present_default_io_stage_bytes(2 * 1024 * 1024, 2) == 0);
     (void)boundary; /* Planning only; no fake scanout events. */
     struct fake_lcd panel;
     init_panel(&panel);

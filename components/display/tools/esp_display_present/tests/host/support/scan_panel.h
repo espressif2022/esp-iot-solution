@@ -99,6 +99,6 @@ static inline esp_err_t scan_stop(void *context, uint32_t timeout)
 static inline esp_display_present_panel_adapter_t scan_interface(scan_panel_t *p)
 {
     return (esp_display_present_panel_adapter_t) {
-        p, scan_attach, scan_submit, scan_stop, NULL
+        p, scan_attach, scan_submit, scan_stop, NULL, NULL
     };
 }

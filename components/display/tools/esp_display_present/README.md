@@ -102,15 +102,14 @@ RGB/MIPI use native framebuffer pixel layouts and need no software RGB565 byte s
 | RGB/MIPI `DOUBLE_DIRECT` | 90° / 180° / 270° | 2 frames, retained | Add 1 full-screen draw buffer, shared by both driver framebuffers | 1 task advances display and processes pixels |
 | RGB/MIPI `DOUBLE_PARTIAL` / `TRIPLE_PARTIAL` | 0° / 90° / 180° / 270° | 2 or 3 frames | 1 input tile; copy/rotate directly into driver framebuffers, without another full frame | 1 task advances display and processes pixels |
 | RGB/MIPI `DOUBLE_PARTIAL` / `TRIPLE_PARTIAL` | 0° / 90° / 180° / 270° | 2 or 3 frames | 2 input tiles; copy/rotate directly into driver framebuffers, without another full frame | 2 tasks: 1 for display progress, 1 for pixel processing |
-| IO `NONE`, synchronous pixel processing, background submission off | Initially 0° | None | 1 or 2 input tiles; add conversion tiles on demand, up to the input tile count | No background task; execute in caller task |
-| IO `NONE`, synchronous pixel processing, background submission on | Initially 0° | None | 1 or 2 input tiles; add conversion tiles on demand, up to the input tile count | 1 display-progress task; caller processes pixels |
-| IO `NONE`, asynchronous pixel processing | 0° / 90° / 180° / 270° | None | 1 or 2 input tiles plus the same number of conversion tiles, also used as DMA transfer sources | 2 tasks: 1 for display progress, 1 for pixel processing |
+| IO `NONE`, `CALLER` / `DEFAULT` | 0° / 90° / 180° / 270° | None | T=1/2 internal or PSRAM D; lazily add 2 bounded internal S slots for conversion or non-DMA source¹ | 0; caller processes pixels and submits |
+| IO `NONE`, `BACKGROUND` (WORKER) | 0° / 90° / 180° / 270° | None | T=1/2 internal or PSRAM D; same bounded S, no input-sized X | 1 backend task for conversion, band filling and submission |
 | IO `TE_SYNC` | 0° / 90° / 180° / 270° | None | 1 input tile, 1 full-frame compose image; see transfer staging¹ | 1 task: display progress and pixel processing |
 | IO `TE_SYNC` | 0° / 90° / 180° / 270° | None | 2 input tiles, 1 full-frame compose image; see transfer staging¹ | 1 task: display progress and pixel processing |
 | IO `TE_SYNC` | 0° / 90° / 180° / 270° | None | 1 input tile, 2 full-frame compose images; see transfer staging¹ | 2 tasks: 1 for display progress, 1 for pixel processing |
 | IO `TE_SYNC` | 0° / 90° / 180° / 270° | None | 2 input tiles, 2 full-frame compose images; see transfer staging¹ | 2 tasks: 1 for display progress, 1 for pixel processing |
 
-¹ PSRAM compose images without direct DMA add **2 internal DMA staging buffers, each with a default 16 KiB budget, rounded down to physical whole rows**. The final band sends only real pixels. The existing display-progress task alternates filling and sending, with at most one DMA band in flight; no extra task is created. `CONFIG_ESP_DISPLAY_PRESENT_TE_STAGING_SLOT_BYTES` sets this budget; this path rejects a physical row larger than the configured budget. Internal DMA images and direct PSRAM DMA need no staging. Frontend-owned buffers, driver-internal bounce buffers, task stacks and metadata are excluded from the pixel-buffer column.
+¹ NONE and TE use `CONFIG_ESP_DISPLAY_PRESENT_IO_STAGING_SLOT_BYTES`, default 16 KiB per slot rounded down to physical whole rows, with a separate pair per instance. `sdkconfig.rename` migrates the old TE setting. NONE allocates lazily; TE allocates at creation for non-direct PSRAM compose images. Alternate filling and sending with at most one DMA band in flight. Tails send real pixels without wire padding. Reject a physical row exceeding the budget. Stacks, metadata and driver buffers are additional.
 
 ### Automatic selection
 
@@ -129,11 +128,13 @@ Use the `drawbuf` argument of `open_ex()`, or `target.drawbuf` in `create()`:
 
 ### Asynchronous processing and rotation
 
-The table describes tasks selected **at creation**. IO `NONE` selects asynchronous pixel processing for an initial nonzero rotation, PSRAM-tile-to-internal-DMA staging, or an out-of-place byte swap with a PSRAM preference. These factory entry points have no independent `async_copy` switch.
+IO `NONE` selects only the execution task. `target.io_submit = CALLER` or `DEFAULT` (zero) processes pixels, fills bands and submits on the caller; `BACKGROUND` uses one backend output task, default priority 7. Memory location, swap and rotation never add tasks. Set this field through `create()`; `open()` / `open_ex()` use `DEFAULT`. Other modes still require `DEFAULT`.
 
-For synchronous IO `NONE`, select `target.io_submit` per instance: `CALLER` or `DEFAULT` (zero) submits on the calling task, while `BACKGROUND` uses the display-progress task (default priority 7). Set this field through `create()`; `open()` / `open_ex()` use `DEFAULT`. Other modes and asynchronous pixel processing require `DEFAULT`; an explicit override returns `ESP_ERR_INVALID_ARG`.
+Recommended profiles are CALLER + one internal D, BACKGROUND + two internal D, and BACKGROUND + two PSRAM D. Both counts and memory domains use the same implementation. NONE retains PARTITION semantics; D may cover the whole screen without introducing FB FULL persistent-canvas semantics.
 
-Runtime `set_rotation()` preserves the existing background task count and sharing policy. An initially synchronous IO path remains synchronous after rotation; its in-place byte-swap path rejects nonzero rotation. Rotations of 90°/270° exchange logical width and height. Drain before switching, query the layout afterwards, and handle geometry or memory allocation failures.
+Direct PSRAM DMA requires matching SoC/IO support and legal actual source address and length. A direct swap uses in-place RGB565 swap16. Rotation generates physical rows in S; alignment failures fall back to S without expanding damage or padding wire pixels to 64 bytes. Source-stride handling is a read detail, not another execution mode.
+
+Runtime `set_rotation()` preserves task count and allocates no input-sized X. An instance using in-place swap may switch to rotated staged output. Quarter-turns exchange logical width and height. Drain first, query the new layout, and handle geometry errors such as a tile too small for one row.
 
 With one TE compose image, the display-progress task also runs the asynchronous pixel queue; no separate pixel task is created. Two compose images retain a dedicated pixel task to overlap composition and transmission. Sharing the task preserves asynchronous requests, completion callbacks and buffer ownership.
 
@@ -155,7 +156,7 @@ Input tiles (T), TE compose images (C), driver FBs and additional pixel buffers 
 
 - RGB/MIPI FULL/DIRECT: 0° borrows driver FBs directly. A rotation of 90°/180°/270° adds **one shared logical frame**, not one per driver FB. This frame prefers PSRAM and may fall back to internal DMA memory. Returning to 0° releases it.
 - PARTIAL: allocate T input tiles and copy/rotate directly into the candidate driver FB. Rotation adds neither a full-frame canvas nor a separate conversion-tile pool.
-- IO NONE: allocate T input tiles. An asynchronous path also allocates T internal DMA conversion tiles at creation; these are also the transfer sources. A synchronous path allocates up to T conversion tiles on demand for operations such as repacking padded rows. Runtime rotation can also allocate missing conversion tiles; they remain until destruction after returning to 0°. These are not full frames, nor separate conversion and staging pools.
+- IO NONE: allocate only T draw buffers D. Directly send a tight 0° source when its actual DMA constraints pass; apply in-place RGB565 swap16 and cache writeback when needed, restoring pixels on rejection. Otherwise fuse rotation, swap and source-stride reading into physical bands in two bounded S slots. Retain D until the entire logical transfer completes; reuse each S only after its DMA completes. No input-sized X or pixel task.
 - TE_SYNC: allocate T input tiles and C physical full-frame compose images. Rotation writes directly into those images without another rotation frame. Compose images prefer PSRAM and may fall back to internal DMA memory. Non-direct PSRAM images add the two staging buffers above, independently of T and C. The compose image remains pinned until logical transfer completion. Stop or timeout prevents later bands from being submitted; an in-driver band still requires its real completion callback before retirement. A timed-out stop retains the instance for retry; pixels already written to the panel cannot be rolled back.
 
 These counts do not cover all application memory. Driver-owned RGB bounce buffers, DMA descriptors, frontend-owned draw buffers (for example LVGL buffers), task stacks, metadata and alignment cost extra. One 480×480 RGB565 image costs 450 KiB; one 480×32 RGB565 tile costs 30 KiB.

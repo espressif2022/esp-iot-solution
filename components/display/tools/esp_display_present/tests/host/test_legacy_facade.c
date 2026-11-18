@@ -349,15 +349,14 @@ static void rotation_and_fault(void)
     delete_eventually(p);
     free_panel(&panel);
 
-    /* An in-place byte-swap instance really lacks a rotated destination:
-     * keep the backend rejection and the old successful zero-degree path. */
+    /* Direct swap may switch to bounded rotated output without adding X. */
     init_panel(&panel);
     cfg = io_config(&panel);
     cfg.target.hw.swap_bytes = true;
     OK(esp_display_presenter_create(&cfg, &p));
-    assert(esp_display_presenter_set_rotation(p, ESP_DISPLAY_PRESENT_ROTATE_180) == ESP_ERR_NOT_SUPPORTED);
+    OK(esp_display_presenter_set_rotation(p, ESP_DISPLAY_PRESENT_ROTATE_180));
     OK(esp_display_presenter_get_frame_status(p, &status));
-    assert(status.generation == 1);
+    assert(status.generation == 2);
     delete_eventually(p);
     free_panel(&panel);
 
@@ -1096,7 +1095,9 @@ static void resolve_alignment_contract(void)
     free_panel(&panel);
     init_panel(&panel);
     cfg = io_config(&panel);
-    cfg.width = 20000;
+    cfg.width = 8000;
+    cfg.height = 10;
+    cfg.target.drawbuf.lines = 10;
     OK(esp_display_presenter_create(&cfg, &presenter));
     size_t count;
     bool full;
@@ -1246,9 +1247,7 @@ static void gram_rotation_superset(void)
             OK(esp_display_presenter_commit_frame(presenter, NULL));
             OK(esp_display_presenter_quiesce(presenter, 1000));
             assert(!memcmp(image, expected, sizeof(expected)));
-            if (cfg.target.drawbuf.in_psram) {
-                assert(panel.source != buffer.surface.pixels);
-            }
+            assert((panel.source == buffer.surface.pixels) == (rotation == 0));
         }
         delete_eventually(presenter);
         free_panel(&panel);
@@ -1421,7 +1420,7 @@ static void effective_config_low_memory(void)
 
         allocation_kind = 1;
         allocation_index = 0;
-        allocation_target = fb || profile == 1 ? 2 : 3;
+        allocation_target = te ? 3 : 2;
         fail_combined_fb_tiles = fb;
         psram_available = profile == 0;
         esp_display_presenter_t *presenter;
@@ -1475,22 +1474,22 @@ static void region_psram_fallback_path(void)
         psram_lost_on_allocation_failure = profile == 2;
         allocation_kind = 1;
         allocation_index = 0;
-        allocation_target = profile == 2 ? 3 : UINT_MAX;
+        allocation_target = profile == 2 ? 2 : UINT_MAX;
         unsigned pixels_before = pixel_workers_created, backends_before = backend_workers_created;
         esp_display_presenter_t *presenter;
         OK(esp_display_presenter_create(&cfg, &presenter));
         if (profile == 2) {
             allocation_target = UINT_MAX;
         } else {
-            assert(allocation_index == (profile == 0 ? 2 : 1));
+            assert(allocation_index == 1);
         }
         esp_display_presenter_effective_config_t effective;
         OK(esp_display_presenter_get_effective_config(presenter, &effective));
         assert(effective.tile_count == 1 && effective.draw_memory == (profile == 0 ?
                                                                       ESP_DISPLAY_PRESENT_MEMORY_PSRAM : ESP_DISPLAY_PRESENT_MEMORY_INTERNAL));
-        assert(pixel_workers_created - pixels_before == (profile == 0));
-        /* The failed T2 attempt creates its backend worker before tiles. */
-        assert(backend_workers_created - backends_before == (profile != 1));
+        assert(pixel_workers_created == pixels_before);
+        /* DEFAULT remains CALLER even after PSRAM fallback. */
+        assert(backend_workers_created == backends_before);
         unsigned allocations_before = allocation_index;
         immediate = true;
         start_frame(presenter, false, true);
@@ -1498,7 +1497,7 @@ static void region_psram_fallback_path(void)
         OK(esp_display_presenter_commit_frame(presenter, NULL));
         OK(esp_display_presenter_quiesce(presenter, 100));
         assert(panel.calls == 1 && image[0] == 0x4821 && image[31] == 0x4821);
-        assert((panel.source == pixels) == (profile != 0));
+        assert(panel.source == pixels);
         assert(allocation_index == allocations_before);
         start_frame(presenter, false, false);
         esp_display_presenter_buffer_t next;
@@ -1513,7 +1512,7 @@ static void region_psram_fallback_path(void)
         assert(panel.calls == 2 && panel.source != pixels);
         assert(image[10] == padded[0] && image[11] == padded[1]);
         assert(image[18] == padded[3] && image[19] == padded[4]);
-        assert(allocation_index - allocations_before == (profile != 0));
+        assert(allocation_index == allocations_before);
         delete_eventually(presenter);
         free_panel(&panel);
         allocation_target = 0;
@@ -1522,7 +1521,7 @@ static void region_psram_fallback_path(void)
     }
 }
 
-static void region_rotation_allocation_failure(void)
+static void region_rotation_without_conversion_pool(void)
 {
     struct fake_lcd panel;
     init_panel(&panel);
@@ -1530,38 +1529,28 @@ static void region_rotation_allocation_failure(void)
     cfg.target.drawbuf.buffers = 2;
     esp_display_presenter_t *presenter;
     OK(esp_display_presenter_create(&cfg, &presenter));
-
-    /* The first conversion buffer succeeds, the second fails. Neither new
-     * storage nor geometry may be published by the failed rotation. */
     allocation_kind = 1;
     allocation_index = 0;
-    allocation_target = 2;
-    assert(esp_display_presenter_set_rotation(presenter, ESP_DISPLAY_PRESENT_ROTATE_90) == ESP_ERR_NO_MEM);
+    allocation_target = 1;
+    OK(esp_display_presenter_set_rotation(presenter, ESP_DISPLAY_PRESENT_ROTATE_90));
+    assert(allocation_index == 0); /* Orientation never allocates input-sized X. */
     allocation_target = 0;
     esp_display_presenter_effective_config_t effective;
     OK(esp_display_presenter_get_effective_config(presenter, &effective));
-    assert(effective.rotation == ESP_DISPLAY_PRESENT_ROTATE_0 && effective.width == 8 && effective.height == 4);
-    assert(effective.draw_stride_bytes == 16 && effective.output_stride_bytes == 16 && effective.tile_count == 2);
-    assert(effective.effective_mode == ESP_DISPLAY_PRESENT_MODE_NONE && !effective.degradation_flags);
-    esp_display_presenter_frame_status_t status;
-    OK(esp_display_presenter_get_frame_status(presenter, &status));
-    assert(status.generation == 1 && status.fault_reason == ESP_DISPLAY_PRESENT_FAULT_NONE);
-
+    assert(effective.rotation == ESP_DISPLAY_PRESENT_ROTATE_90 && effective.width == 4 && effective.height == 8);
+    assert(effective.draw_stride_bytes == 8 && effective.output_stride_bytes == 16 && effective.tile_count == 2);
     immediate = true;
     start_frame(presenter, false, true);
-    (void)draw(presenter, 0x1234);
+    esp_display_presenter_buffer_t buffer;
+    OK(esp_display_presenter_acquire_buffer(presenter, &buffer));
+    for (size_t i = 0; i < 32; ++i) {
+        ((uint16_t *)buffer.surface.pixels)[i] = 0x1234;
+    }
+    const esp_display_present_area_t area = {0, 0, 3, 7};
+    OK(esp_display_presenter_submit_buffer(presenter, &buffer, &area, 8));
     OK(esp_display_presenter_commit_frame(presenter, NULL));
     OK(esp_display_presenter_quiesce(presenter, 100));
     assert(panel.calls == 1 && image[31] == 0x1234);
-
-    allocation_index = 0;
-    allocation_target = UINT_MAX;
-    OK(esp_display_presenter_set_rotation(presenter, ESP_DISPLAY_PRESENT_ROTATE_90));
-    allocation_target = 0;
-    assert(allocation_index == 2); /* Failed attempt did not leave the first allocation installed. */
-    OK(esp_display_presenter_get_effective_config(presenter, &effective));
-    assert(effective.rotation == ESP_DISPLAY_PRESENT_ROTATE_90 && effective.width == 4 && effective.height == 8);
-    assert(effective.draw_stride_bytes == 8 && effective.output_stride_bytes == 16 && effective.tile_count == 2);
     delete_eventually(presenter);
     free_panel(&panel);
 }
@@ -2586,7 +2575,7 @@ int main(void)
     rotation_poll_failure();
     effective_config_low_memory();
     region_psram_fallback_path();
-    region_rotation_allocation_failure();
+    region_rotation_without_conversion_pool();
     te_rotation_capacity_failure();
     rotation_reference();
     direct_dirty_contract();

@@ -45,3 +45,16 @@ This application verifies target API and link integration using a loopback
 fixture. It is not a panel benchmark and does not access a real display.
 DSI scanout requires SDK callbacks newer than those available in ESP-IDF 6.0;
 a successful P4 smoke build does not establish DSI runtime support.
+
+### Panel IO NONE convergence
+
+`panel_io_emit` exercises the production `lcd_io.emit` entry with 288 independent
+wire-image comparisons: RGB565/native and swap, RGB888, all four rotations,
+packed/padded source rows, offset rectangles, tails, and early/delayed callbacks.
+It bounds staging to two allocations of at most 16 KiB and checks source bytes.
+Additional cases cover direct swap, PSRAM address/length fallback, allocation and
+cache rejection/retry, and real engine WORKER output from dual 480x480 PSRAM D
+at all rotations, while the producer draws D1 during D0 transmission.
+The existing LCD IO tests cover staged abort/timeout/late-callback retirement;
+REGION tests cover lease restoration, FIFO retry, faults, cancellation and stop.
+These are host lifecycle/pixel checks; hardware DMA throughput remains unmeasured.

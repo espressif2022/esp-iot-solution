@@ -34,7 +34,7 @@ struct esp_display_present_backend_config {
     esp_display_present_byte_order_t draw_order;       /**< Producer surface byte order. */
     esp_display_present_byte_order_t panel_order;      /**< Panel hardware byte order. */
     esp_display_present_engine_rotation_t rotation;    /**< Logical-to-physical clockwise rotation. */
-    bool in_place;                                     /**< Swap byte order in-place on tight stride and revert on rejection. */
+    bool in_place;                                     /**< Legacy REGION hint; emit chooses direct swap or staging per request. */
     void *const *ext_bufs;                             /**< Optional caller/driver-owned FB array (TE/FB). */
     void *scan_buf;                                    /**< Optional member of @c ext_bufs currently scanning out. */
     size_t ext_bytes;                                  /**< Capacity in bytes of each external buffer. */
@@ -43,7 +43,7 @@ struct esp_display_present_backend_config {
     uint32_t te_budget_us;                             /**< TE only: worst-case full-frame transfer budget in us (< te_window_us). */
     esp_display_present_render_contract_t render_contract; /**< Active contract (0 selects PARTITION). */
     bool active_writes;                                /**< Permit active scanout writes (single-FB only). */
-    bool async_copy;                                   /**< Run copy/repair/conversion asynchronously via worker/queue. */
+    bool async_copy;                                   /**< FB/TE only: run copy/repair asynchronously via worker/queue. */
     bool copy_on_backend_worker;                       /**< FB or single-image TE: drain copy queue on backend_worker outside engine gate. */
     esp_display_present_pixel_execute_fn copy_execute; /**< Optional custom blocking pixel executor. */
     void *copy_user;                                   /**< User context passed to @c copy_execute. */
@@ -55,7 +55,7 @@ struct esp_display_present_backend_config {
     bool image_in_psram;                               /**< Prefer PSRAM for compose images. */
     bool logical_in_psram;                             /**< Prefer PSRAM for FULL logical staging canvas. */
     bool fixed_rotation;                               /**< Preserve producer dimensions across runtime rotation (physical transposes). */
-    bool tx_staging;                                   /**< REGION: copy external tiles into internal DMA conversion slots. */
+    bool tx_staging;                                   /**< Legacy flag; REGION requires false (adapter owns bounded staging). */
     size_t transfer_capacity;                          /**< REGION: max in-flight transfers (0 uses tile count). */
     bool deferred_submit;                              /**< REGION: defer READY slot submission to backend_worker. */
     bool (*can_submit)(void *user);                    /**< TE: gate-held scheduling check before pin/admit. */

@@ -191,7 +191,8 @@ static esp_err_t panel_attach(void *context, esp_display_present_panel_event_fn 
  * before quiesce/destruction, so the adapter and callback context remain live. */
 static esp_display_present_tx_result_t execute_panel_submit(esp_display_present_engine_t *presenter,
                                                             const esp_display_present_surface_t *surface,
-                                                            const esp_display_present_rect_t *area, uint64_t cookie)
+                                                            const esp_display_present_rect_t *area, uint64_t cookie,
+                                                            bool emit, esp_display_present_engine_rotation_t rotation)
 {
     if (presenter->backend_only_submit) {
         present_mutex_give(presenter->gate);
@@ -202,7 +203,9 @@ static esp_display_present_tx_result_t execute_panel_submit(esp_display_present_
         scanout_metrics->scanout_cookie = cookie;
         present_lock_exit(&presenter->control, false);
     }
-    esp_display_present_tx_result_t result = presenter->panel.submit(presenter->panel.context, surface, area, cookie);
+    esp_display_present_tx_result_t result = emit ?
+                                             presenter->panel.emit(presenter->panel.context, surface, area, rotation, cookie) :
+                                             presenter->panel.submit(presenter->panel.context, surface, area, cookie);
     if (scanout_metrics && result.acceptance == ESP_DISPLAY_PRESENT_TX_REJECTED) {
         present_lock_enter(&presenter->control, false);
         scanout_metrics->scanout_cookie = 0;
@@ -227,8 +230,9 @@ static bool panel_can_submit(void *context)
     return allowed;
 }
 
-static esp_display_present_tx_result_t panel_submit(void *context, const esp_display_present_surface_t *surface,
-                                                    const esp_display_present_rect_t *area, uint64_t cookie)
+static esp_display_present_tx_result_t submit_to_panel(void *context, const esp_display_present_surface_t *surface,
+                                                       const esp_display_present_rect_t *area, uint64_t cookie,
+                                                       bool emit, esp_display_present_engine_rotation_t rotation)
 {
     esp_display_present_engine_t *presenter = context;
     /* Foreground query/acquire may service READY slots. Only the backend_worker can
@@ -251,7 +255,7 @@ static esp_display_present_tx_result_t panel_submit(void *context, const esp_dis
         ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_ARG
     };
     if (!presenter->transfer.timeout_us) {
-        return execute_panel_submit(presenter, surface, area, cookie);
+        return execute_panel_submit(presenter, surface, area, cookie, emit, rotation);
     }
     expire_transfers(presenter);
     esp_display_present_backend_fault_t fault;
@@ -267,13 +271,26 @@ static esp_display_present_tx_result_t panel_submit(void *context, const esp_dis
             ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_NO_MEM
         };
     }
-    esp_display_present_tx_result_t result = execute_panel_submit(presenter, surface, area, cookie);
+    esp_display_present_tx_result_t result = execute_panel_submit(presenter, surface, area, cookie, emit, rotation);
     if (result.acceptance == ESP_DISPLAY_PRESENT_TX_REJECTED) {
         present_transfer_rejected(&presenter->transfer, &presenter->control, index, cookie);
     }
     expire_transfers(presenter);
     (void)present_event_signal(presenter->work, false);
     return result;
+}
+
+static esp_display_present_tx_result_t panel_submit(void *context, const esp_display_present_surface_t *surface,
+                                                    const esp_display_present_rect_t *area, uint64_t cookie)
+{
+    return submit_to_panel(context, surface, area, cookie, false, ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0);
+}
+
+static esp_display_present_tx_result_t panel_emit(void *context, const esp_display_present_surface_t *source,
+                                                  const esp_display_present_rect_t *area,
+                                                  esp_display_present_engine_rotation_t rotation, uint64_t cookie)
+{
+    return submit_to_panel(context, source, area, cookie, true, rotation);
 }
 
 static esp_err_t panel_quiesce(void *context, uint32_t timeout)
@@ -587,7 +604,7 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
         backend.submit_user = presenter;
     }
     backend.panel = (esp_display_present_panel_adapter_t) {
-        presenter, panel_attach, panel_submit, panel_quiesce, NULL
+        presenter, panel_attach, panel_submit, panel_quiesce, NULL, presenter->panel.emit ? panel_emit : NULL
     };
     backend.on_progress = pixel_progress;
     backend.progress_user = presenter;
@@ -784,7 +801,7 @@ static esp_err_t resolve_rows_impl(esp_display_present_engine_t *presenter, cons
         return ESP_ERR_INVALID_STATE;
     }
     size_t bpp = presenter->caps.draw_layout.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
-    if (stride % bpp || stride > presenter->held.surface.capacity_bytes) {
+    if ((stride % bpp && (presenter->kind != ESP_DISPLAY_PRESENT_ENGINE_REGION || bpp != 3)) || stride > presenter->held.surface.capacity_bytes) {
         return ESP_ERR_INVALID_SIZE;
     }
     size_t rows = presenter->held.surface.capacity_bytes / stride;

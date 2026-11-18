@@ -1,6 +1,6 @@
 # Present 模式、缓冲策略与输出适配
 
-RGB/MIPI 统一走 scanout，并要求至少两张驱动 framebuffer。非防撕裂 NONE 更新路径及其专用 `lcd_fb_update` 模块已移除；GRAM/TE 保持现有行为。
+RGB/MIPI 统一走 scanout，并要求至少两张驱动 framebuffer。非防撕裂 NONE 更新路径及其专用 `lcd_fb_update` 模块已移除；Panel IO 的 NONE 和 TE 继续使用 PARTITION 输入合同。
 
 ## 三层各管什么
 
@@ -21,7 +21,7 @@ flowchart LR
     T[TE backend: 合成及 TE 窗口调度] --> S
 ```
 
-region 管 tile 租用、转换、传输排队和源回收，不假设硬件有 GRAM。FB 管完整图像、脏区补全及 framebuffer 轮转。TE 管图像合成、TE 窗口和发送预算；其策略不能简单合并为 region 加一个等待 GPIO。
+region 管 tile 租用、传输排队和源回收；lcd_io 的 emit 负责直传判断和有界转换分片，不假设硬件有 GRAM。FB 管完整图像、脏区补全及 framebuffer 轮转。TE 管图像合成、TE 窗口和发送预算；其策略不能简单合并为 region 加一个等待 GPIO。
 
 ## 公开模式实际走向
 
@@ -50,7 +50,7 @@ FB 路径中 tile 可以在复制完成后归还，但 framebuffer 仍必须留�
 
 region 与 FB、TE 的职责保持分离；删除 fb_update 后，输出适配器只保留 lcd_io 和 lcd_fb_scanout。历史命名与性能记录保留当时源码和哈希。
 
-同步 Panel-IO `NONE` 的提交任务由实例配置 `target.io_submit` 决定，不通过 Kconfig 配置。历史性能报告和证据保留当时名称与哈希。LCD 适配器统一为 lcd_io、lcd_fb_scanout；这些内部改名不扩展硬件支持范围。
+Panel-IO `NONE` 的像素处理与提交任务由实例配置 `target.io_submit` 决定，不通过 Kconfig 配置。历史性能报告和证据保留当时名称与哈希。LCD 适配器统一为 lcd_io、lcd_fb_scanout；这些内部改名不扩展硬件支持范围。
 
 ## 平台模块分组与 TE 边界
 
@@ -84,3 +84,18 @@ FULL 零拷贝及原生双缓冲 DIRECT 先取得租约，再挂载 LVGL 描述�
 ## PPA 请求准入
 
 执行器选择仍先 probe，再执行。P4 SRM 多宏块请求若尾部载荷等于 192-byte FIFO 边界，probe 返回不支持，由既有 CPU fallback 执行；已经交给硬件的任务不做 CPU 重试。该约束在干净 IDF 的 `131×352` RGB565 修补复制中复现挂起，邻近宽度正常，验证与计算依据见上述记录。宏块高度由当前编译的 P4 版本决定，Host 覆盖 16/32 两种情形；其他目标沿用原准入规则。没有新增配置、后台任务或像素存储。
+
+## Panel IO NONE 输出收敛
+
+只保留 CALLER（零后台任务）与 BACKGROUND/WORKER（一个 backend）两种执行上下文。
+T=1/2 和 D 的内部／PSRAM 位置独立选择；swap、旋转不创建 pixel 任务。
+
+0°、行连续且实际地址／长度满足 DMA 条件时，直接发送 D，需要时原地 swap16。
+其他请求由 lcd_io.emit 读取 D，融合旋转、swap 和源 stride，填入两块有界内部 S。
+S 默认每块不超过 16 KiB，按物理整行分片，尾部不补线上数据；首次需要时才分配。
+NONE 与 TE 共享 IO_STAGING_SLOT_BYTES 配置，各实例持有自己的缓冲，不分配等容量 X。
+
+REGION 的 acquire/query 不推进发送；后台正常发送仅由 worker 的 service 执行。
+D 从提交起保留至整个逻辑 TRANSFER_DONE；READY 被取消可立即释放，已进入驱动的传输必须等真实完成或 quiesce。
+调用任务收到 REJECTED 时保留原租约和原像素；后台已接收的 READY 遇到 NO_MEM 背压时保持 FIFO 排队；永久预检错误记为失败并安全释放，不无限等待。
+PSRAM 整屏 D 使用相同 PARTITION 路径，不能把租用缓冲当作内容持久的 FULL 画布。

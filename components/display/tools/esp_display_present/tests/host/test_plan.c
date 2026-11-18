@@ -100,7 +100,7 @@ static void modes(void)
     c = config(ESP_DISPLAY_PRESENT_ENGINE_REGION);
     c.defaults = ESP_DISPLAY_PRESENT_PLAN_LEGACY_DEFAULTS;
     c.presenter.backend.rotation = ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90;
-    assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.conversion.count == p.tiles.count);
+    assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK && p.conversion.count == 0);
 }
 
 static void copy_on_backend_worker_budget(void)
@@ -171,18 +171,17 @@ static void shared_backend_constraints(void)
     c.presenter.mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE;
     c.presenter.backend.max_frames = 33;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_ERR_INVALID_ARG);
-    /* Peak budget: async REGION plans a full conversion pool even when the
-     * identity path will not allocate it yet. These are fixed baseline
-     * numbers for this config (480x480, 16 tile rows, RGB565, 2 buffers):
-     * they must not shrink with the backend's current allocation. */
+    /* REGION plans only two D plus one output worker. Adapter S reservation
+     * is supplied separately through extra_bytes by the factory. */
     c = config(ESP_DISPLAY_PRESENT_ENGINE_REGION);
     c.presenter.mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE;
-    c.presenter.backend.async_copy = true;
+    c.presenter.backend.deferred_submit = true;
+    c.presenter.background_service = true;
     assert(esp_display_present_plan_resolve(&c, &p) == ESP_OK);
-    assert(p.conversion.count == p.tiles.count && p.conversion.count == 2);
+    assert(p.conversion.count == 0 && p.tiles.count == 2);
     assert(p.tiles.bytes_each == 15360 && p.tiles.total_bytes == 30720);
-    assert(p.conversion.bytes_each == 15360 && p.conversion.total_bytes == 30720);
-    assert(p.pixel_bytes == 61440 && p.coverage_bytes == 0);
+    assert(p.conversion.total_bytes == 0);
+    assert(p.pixel_bytes == 30720 && p.coverage_bytes == 0);
     assert(p.reserved_bytes == 0 && p.stack_bytes == 4096);
     assert(p.metadata_bytes == present_presenter_memory(&p.normalized) + present_region_memory(&p.normalized.backend));
     assert(p.required_bytes == p.pixel_bytes + p.coverage_bytes + p.metadata_bytes + p.stack_bytes + p.reserved_bytes);
@@ -480,7 +479,7 @@ static void exec_mode_resolution(void)
         {ESP_DISPLAY_PRESENT_ENGINE_REGION, false, true, false, ESP_DISPLAY_PRESENT_EXEC_COOPERATIVE},
         {ESP_DISPLAY_PRESENT_ENGINE_FB, false, false, true, ESP_DISPLAY_PRESENT_EXEC_COOPERATIVE},
         {ESP_DISPLAY_PRESENT_ENGINE_REGION, true, true, false, ESP_DISPLAY_PRESENT_EXEC_REGION_DEFERRED},
-        {ESP_DISPLAY_PRESENT_ENGINE_REGION, true, false, false, ESP_DISPLAY_PRESENT_EXEC_REGION_ASYNC},
+        {ESP_DISPLAY_PRESENT_ENGINE_REGION, true, false, false, ESP_DISPLAY_PRESENT_EXEC_REGION_DEFERRED},
         {ESP_DISPLAY_PRESENT_ENGINE_TE, true, false, true, ESP_DISPLAY_PRESENT_EXEC_TE_SHARED},
         {ESP_DISPLAY_PRESENT_ENGINE_TE, true, false, false, ESP_DISPLAY_PRESENT_EXEC_TE_SPLIT},
         {ESP_DISPLAY_PRESENT_ENGINE_FB, true, false, true, ESP_DISPLAY_PRESENT_EXEC_FB_SHARED},

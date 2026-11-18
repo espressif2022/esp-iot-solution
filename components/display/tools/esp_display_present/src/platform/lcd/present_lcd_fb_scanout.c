@@ -563,7 +563,7 @@ esp_err_t esp_display_present_lcd_fb_scanout_get_interface(esp_display_present_l
         return ESP_ERR_INVALID_ARG;
     }
     *out = (esp_display_present_panel_adapter_t) {
-        scanout, scanout_attach, scanout_submit, scanout_quiesce, NULL
+        scanout, scanout_attach, scanout_submit, scanout_quiesce, NULL, NULL
     };
     return ESP_OK;
 }

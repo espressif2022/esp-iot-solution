@@ -2,7 +2,6 @@
  * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "pixel/present_pixel_engine.h"
 #include "pixel/present_pixel_ops.h"
 #include "backend/present_backend_config.h"
 #include "backend/present_backend_validate.h"
@@ -14,12 +13,9 @@
 #include "backend/present_transaction.h"
 #include "platform/present_allocation.h"
 
-/* Region submission strategy, independent of panel GRAM vs driver framebuffer.
- * The panel adapter defines source-read completion, not scanout retirement.
- *
- * Draw tiles and transfer tiles have independent lifetimes. A finished copy
- * returns the draw tile while the transfer tile stays owned until the panel
- * transaction really completes. Direct DMA keeps the draw tile instead. */
+/* REGION retains each submitted draw lease until the adapter's logical
+ * TRANSFER_DONE. The IO adapter owns bounded conversion/staging, never an
+ * input-sized conversion pool or a dedicated pixel task. */
 typedef enum {
     DRAW_FREE = 0, /* present_alloc is calloc; zero means available. */
     DRAW_LEASED,
@@ -29,7 +25,6 @@ typedef enum {
 typedef enum {
     TX_FREE = 0,
     TX_RESERVED,
-    TX_COPYING,
     TX_READY,
     TX_SUBMITTING,
     TX_INFLIGHT,
@@ -46,34 +41,25 @@ typedef struct {
 } region_draw_t;
 
 typedef struct {
-    void *converted; /* Owned; NULL until eager or lazy allocation. */
-    present_allocation_t storage;
     size_t draw;
     size_t frame;
-    bool direct;
     bool draw_held;
     uint64_t cookie;
     region_tx_state_t state;
     present_transaction_t transaction;
-    esp_display_present_copy_ticket_t copy;
     esp_display_present_surface_t surface;
     esp_display_present_rect_t area;
+    esp_display_present_engine_rotation_t rotation;
 } region_tx_t;
 
 struct present_backend {
     present_lock_t lock;
     esp_display_present_backend_config_t config;
-    esp_display_present_pixel_engine_t *pixel;
     region_draw_t *draws;
     region_tx_t *txs;
     present_frame_core_t core;
     size_t tile_bytes, next_draw;
 };
-
-static bool converted_external(const esp_display_present_backend_config_t *config)
-{
-    return config->tile_in_psram && !config->tx_staging;
-}
 
 static bool valid_area(const present_backend_t *backend, const esp_display_present_rect_t *area)
 {
@@ -106,7 +92,7 @@ static void PRESENT_ISR_ATTR record_fault(present_backend_t *backend, frame_reco
     present_frame_core_fail(&backend->core, record, cookie, error);
 }
 
-/* Reservation only. converted and its allocation must survive reuse. */
+/* Reserve a transaction without changing the draw allocation. */
 static region_tx_t *claim_tx(present_backend_t *backend, size_t draw_index, size_t frame)
 {
     for (size_t i = 0; i < backend->config.buffer_count; ++i) {
@@ -116,10 +102,8 @@ static region_tx_t *claim_tx(present_backend_t *backend, size_t draw_index, size
         }
         tx->draw = draw_index;
         tx->frame = frame;
-        tx->direct = false;
         tx->draw_held = false;
         tx->cookie = 0;
-        tx->copy.value = 0;
         tx->state = TX_RESERVED;
         return tx;
     }
@@ -130,9 +114,7 @@ static void abandon_tx(region_tx_t *tx)
 {
     tx->state = TX_FREE;
     tx->cookie = 0;
-    tx->direct = false;
     tx->draw_held = false;
-    tx->copy.value = 0;
 }
 
 static void PRESENT_ISR_ATTR complete_tx(present_backend_t *backend, region_tx_t *tx)
@@ -140,22 +122,12 @@ static void PRESENT_ISR_ATTR complete_tx(present_backend_t *backend, region_tx_t
     frame_record_t *record = &backend->core.frames[tx->frame];
     if (tx->draw_held) {
         region_draw_t *draw = &backend->draws[tx->draw];
-        if (draw->storage.readers[PRESENT_REF_COPY]) {
-            present_allocation_drop(&draw->storage, PRESENT_REF_COPY);
-        }
-        if (tx->direct) {
-            present_allocation_drop(&draw->storage, PRESENT_REF_TRANSFER);
-        }
+        present_allocation_drop(&draw->storage, PRESENT_REF_TRANSFER);
         draw->state = DRAW_FREE;
         tx->draw_held = false;
     }
-    if (!tx->direct) {
-        present_allocation_drop(&tx->storage, PRESENT_REF_TRANSFER);
-    }
     tx->state = TX_FREE;
     tx->cookie = 0;
-    tx->direct = false;
-    tx->copy.value = 0;
     present_frame_core_complete(&backend->core, record);
 }
 
@@ -167,22 +139,28 @@ static void settle_submit(present_backend_t *backend, region_tx_t *tx, frame_rec
         complete_tx(backend, tx);
     } else {
         tx->state = TX_INFLIGHT;
-        if (!tx->direct && tx->draw_held) {
-            backend->draws[tx->draw].state = DRAW_FREE;
-            tx->draw_held = false;
-        }
     }
 }
 
-static bool copy_done(void *context, esp_display_present_copy_ticket_t ticket, const esp_display_present_copy_status_t *status, bool isr)
+static esp_display_present_tx_result_t emit_pixels(present_backend_t *backend, region_tx_t *tx)
 {
-    (void)ticket;
-    (void)status;
-    present_backend_t *backend = context;
-    return backend->config.on_progress ? backend->config.on_progress(backend->config.progress_user, isr) : false;
+    if (backend->config.panel.emit) {
+        return backend->config.panel.emit(backend->config.panel.context, &tx->surface,
+                                          &tx->area, tx->rotation, tx->cookie);
+    }
+    /* Packed wire-order sources remain usable with simple custom adapters. */
+    size_t bpp = backend->config.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
+    if (tx->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 ||
+            tx->surface.layout.byte_order != backend->config.panel_order ||
+            tx->surface.layout.stride_bytes != tx->area.width * bpp) {
+        return (esp_display_present_tx_result_t) {
+            ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_NOT_SUPPORTED
+        };
+    }
+    return backend->config.panel.submit(backend->config.panel.context, &tx->surface, &tx->area, tx->cookie);
 }
 
-/* Lock held; ready copies are not hardware transfers. */
+/* Lock held; queued regions do not consume a transport channel. */
 static bool channel_full(const present_backend_t *backend)
 {
     size_t used = 0, limit = backend->config.transfer_capacity ? backend->config.transfer_capacity : backend->config.buffer_count;
@@ -202,7 +180,7 @@ static esp_err_t service_regions(present_backend_t *backend, frame_record_t *can
         region_tx_t *tx = NULL;
         for (size_t i = 0; i < backend->config.buffer_count; ++i) {
             region_tx_t *candidate = &backend->txs[i];
-            if ((candidate->state == TX_COPYING || candidate->state == TX_READY) &&
+            if (candidate->state == TX_READY &&
                     (!canceled || &backend->core.frames[candidate->frame] == canceled) &&
                     (!tx || candidate->cookie < tx->cookie)) {
                 tx = candidate;
@@ -212,36 +190,7 @@ static esp_err_t service_regions(present_backend_t *backend, frame_record_t *can
             present_lock_exit(&backend->lock, false);
             return ESP_OK;
         }
-        bool copying = tx->state == TX_COPYING;
-        esp_display_present_copy_ticket_t ticket = tx->copy;
-        present_lock_exit(&backend->lock, false);
-        esp_err_t copy_result = ESP_OK;
-        if (copying) {
-            esp_display_present_copy_status_t status;
-            esp_err_t error = esp_display_present_pixel_wait(backend->pixel, ticket, 0, &status);
-            if (error == ESP_ERR_TIMEOUT) {
-                return ESP_OK; /* Keep submission order. Do not clear the ticket. */
-            }
-            if (error != ESP_OK) {
-                return error;
-            }
-            copy_result = status.result;
-            (void)esp_display_present_pixel_release(backend->pixel, ticket);
-        }
-        present_lock_enter(&backend->lock, false);
         frame_record_t *record = &backend->core.frames[tx->frame];
-        if (copying) {
-            region_draw_t *draw = &backend->draws[tx->draw];
-            if (draw->storage.readers[PRESENT_REF_COPY]) {
-                present_allocation_drop(&draw->storage, PRESENT_REF_COPY);
-            }
-            tx->copy.value = 0;
-            if (copy_result == ESP_OK && !tx->direct && tx->draw_held) {
-                draw->state = DRAW_FREE;
-                tx->draw_held = false;
-            }
-        }
-        record_fault(backend, record, tx->cookie, copy_result);
         if (record->canceled || backend->core.life != PRESENT_CORE_RUNNING || backend->core.fault.result != ESP_OK) {
             if (!record->canceled && record->common.result == ESP_OK) {
                 record_fault(backend, record, tx->cookie, backend->core.fault.result != ESP_OK ? backend->core.fault.result : ESP_ERR_INVALID_STATE);
@@ -257,16 +206,24 @@ static esp_err_t service_regions(present_backend_t *backend, frame_record_t *can
         }
         tx->state = TX_SUBMITTING;
         present_transaction_prepare(&tx->transaction);
-        uint64_t cookie = tx->cookie;
         present_lock_exit(&backend->lock, false);
-        esp_display_present_tx_result_t result = backend->config.panel.submit(backend->config.panel.context, &tx->surface, &tx->area, cookie);
+        esp_display_present_tx_result_t result = emit_pixels(backend, tx);
         present_lock_enter(&backend->lock, false);
         record = &backend->core.frames[tx->frame];
         present_transaction_resolution_t resolved = present_transaction_resolve(&tx->transaction, result);
         if (resolved.rejected) {
-            tx->state = TX_READY; /* Accepted pixels stay owned; retry by service. */
+            esp_err_t error = result.result == ESP_OK ? ESP_FAIL : result.result;
+            if (error == ESP_ERR_NO_MEM) {
+                tx->state = TX_READY; /* Backpressure/OOM keeps accepted pixels for retry. */
+                present_lock_exit(&backend->lock, false);
+                return error;
+            }
+            /* The producer already transferred its lease. A permanent preflight
+             * error must terminate that accepted work, not leave READY forever. */
+            record_fault(backend, record, tx->cookie, error);
+            complete_tx(backend, tx); /* Explicit REJECTED proves no DMA reference. */
             present_lock_exit(&backend->lock, false);
-            return result.result == ESP_OK ? ESP_FAIL : result.result;
+            continue;
         }
         settle_submit(backend, tx, record, resolved);
         present_lock_exit(&backend->lock, false);
@@ -334,15 +291,6 @@ static void free_backend(present_backend_t *backend)
             present_free(backend->draws[i].pixels);
         }
     }
-    if (backend->txs) {
-        for (size_t i = 0; i < backend->config.buffer_count; ++i) {
-            present_free(backend->txs[i].converted);
-        }
-    }
-    if (backend->pixel) {
-        (void)esp_display_present_pixel_stop(backend->pixel, UINT32_MAX);
-        (void)esp_display_present_pixel_destroy(backend->pixel);
-    }
     present_frame_core_deinit(&backend->core);
     present_free(backend->draws);
     present_free(backend->txs);
@@ -356,12 +304,8 @@ static esp_err_t region_create(const esp_display_present_backend_config_t *confi
         return ESP_ERR_INVALID_ARG;
     }
     *out = NULL;
-    if (config && config->copy_execute && !config->async_copy) {
+    if (config && (config->async_copy || config->copy_on_backend_worker || config->copy_execute || config->tx_staging)) {
         return ESP_ERR_INVALID_ARG;
-    }
-    if (config && ((config->tx_staging && !config->async_copy) ||
-                   ((config->async_copy || config->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0) && config->in_place))) {
-        return ESP_ERR_NOT_SUPPORTED;
     }
     if (!config || !config->panel.attach || !config->panel.submit || !config->panel.quiesce) {
         return ESP_ERR_INVALID_ARG;
@@ -399,32 +343,14 @@ static esp_err_t region_create(const esp_display_present_backend_config_t *confi
         free_backend(backend);
         return ESP_ERR_NO_MEM;
     }
-    /* async_copy alone does not allocate a conversion tile. Identity DMA reuses the draw. */
-    bool eager = config->rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || config->tx_staging ||
-                 (config->draw_order != config->panel_order && !config->in_place);
     for (size_t i = 0; i < config->buffer_count; ++i) {
-        backend->draws[i].pixels = present_alloc_pixels_in(backend->tile_bytes, backend->config.tile_in_psram);
-        if (eager) {
-            backend->txs[i].converted = present_alloc_pixels_in(backend->tile_bytes, converted_external(config));
-        }
-        if (!backend->draws[i].pixels || (eager && !backend->txs[i].converted)) {
+        backend->draws[i].pixels = present_alloc_pixels_in(backend->tile_bytes, config->tile_in_psram);
+        if (!backend->draws[i].pixels) {
             free_backend(backend);
             return ESP_ERR_NO_MEM;
         }
     }
-    esp_display_present_pixel_config_t pixel_config = {
-        .max_jobs = config->buffer_count,
-        .asynchronous = config->async_copy,
-        .execute = config->copy_execute,
-        .execute_user = config->copy_user,
-        .on_event = config->async_copy ? copy_done : NULL,
-        .user = backend,
-    };
-    esp_err_t ret = esp_display_present_pixel_create(&pixel_config, &backend->pixel);
-    if (ret != ESP_OK) {
-        free_backend(backend);
-        return ret;
-    }
+    esp_err_t ret;
     ret = config->panel.attach(config->panel.context, event_dispatch, backend);
     if (ret != ESP_OK) {
         free_backend(backend);
@@ -493,7 +419,6 @@ static esp_err_t region_acquire(present_backend_t *backend, esp_display_present_
     }
     uint64_t start = present_now_ms();
     for (;;) {
-        (void)present_region_service(backend);
         present_lock_enter(&backend->lock, false);
         frame_record_t *record = find_frame(backend, frame.value);
         if (backend->core.life != PRESENT_CORE_RUNNING || !record || record->sealed || record->common.result != ESP_OK) {
@@ -542,98 +467,6 @@ static esp_err_t region_acquire(present_backend_t *backend, esp_display_present_
     }
 }
 
-static void revert_in_place_swap(void *pixels, size_t byte_count)
-{
-    uint8_t *byte_data = pixels;
-    size_t i = 0;
-    if (((uintptr_t)byte_data & 3u) == 0) {
-        uint32_t *p32 = (uint32_t *)byte_data;
-        for (; i + 4 <= byte_count; i += 4, ++p32) {
-            uint32_t v = *p32;
-            *p32 = ((v & 0x00ff00ffu) << 8) | ((v & 0xff00ff00u) >> 8);
-        }
-    }
-    for (; i + 1 < byte_count; i += 2) {
-        uint8_t tmp = byte_data[i];
-        byte_data[i] = byte_data[i + 1];
-        byte_data[i + 1] = tmp;
-    }
-}
-
-static esp_err_t ensure_converted(present_backend_t *backend, region_tx_t *tx)
-{
-    if (tx->converted) {
-        return ESP_OK;
-    }
-    tx->converted = present_alloc_pixels_in(backend->tile_bytes, converted_external(&backend->config));
-    return tx->converted ? ESP_OK : ESP_ERR_NO_MEM;
-}
-
-static esp_err_t prepare_pixels(present_backend_t *backend, region_draw_t *draw, region_tx_t *tx,
-                                const esp_display_present_rect_t *area, size_t src_stride,
-                                esp_display_present_surface_t *out, bool *out_swapped_in_place)
-{
-    size_t bytes = backend->config.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
-    size_t tight_stride = area->width * bytes;
-    bool need_swap = backend->config.draw_order != backend->config.panel_order;
-    bool need_pack = src_stride != tight_stride;
-    bool quarter = backend->config.rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90 || backend->config.rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270;
-    uint32_t dw = quarter ? area->height : area->width, dh = quarter ? area->width : area->height;
-    *out_swapped_in_place = false;
-    *out = (esp_display_present_surface_t) {
-        .pixels = draw->pixels,
-        .capacity_bytes = backend->tile_bytes,
-        .layout = { dw, dh, dw * bytes,
-                    backend->config.format, backend->config.panel_order
-                  },
-    };
-    if (!need_swap && !need_pack && backend->config.rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0) {
-        return ESP_OK;
-    }
-    if (!need_pack && backend->config.in_place && backend->config.rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 && bytes == 2) {
-        revert_in_place_swap(draw->pixels, (size_t)area->height * tight_stride);
-        *out_swapped_in_place = true;
-        return ESP_OK;
-    }
-    if (need_pack || !backend->config.in_place || backend->config.rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0) {
-        esp_err_t alloc = ensure_converted(backend, tx);
-        if (alloc != ESP_OK) {
-            return alloc;
-        }
-        out->pixels = tx->converted;
-    }
-    esp_display_present_copy_request_t request = {
-        .src = {
-            .pixels = draw->pixels,
-            .capacity_bytes = backend->tile_bytes,
-            .layout = {
-                area->width, area->height, src_stride,
-                backend->config.format, backend->config.draw_order
-            },
-        },
-        .dst = *out,
-        .src_area = { 0, 0, area->width, area->height },
-        .dst_x = 0,
-        .dst_y = 0,
-        .rotation = backend->config.rotation,
-    };
-    esp_display_present_copy_ticket_t ticket;
-    esp_err_t ret = esp_display_present_pixel_submit(backend->pixel, &request, &ticket);
-    if (ret != ESP_OK) {
-        return ret;
-    }
-    esp_display_present_copy_status_t status;
-    ret = esp_display_present_pixel_wait(backend->pixel, ticket, UINT32_MAX, &status);
-    if (ret == ESP_OK) {
-        ret = status.result;
-    }
-    (void)esp_display_present_pixel_release(backend->pixel, ticket);
-    if (ret == ESP_OK && out->pixels == draw->pixels && need_swap) {
-        *out_swapped_in_place = true;
-    }
-    return ret;
-}
-
 typedef struct {
     frame_record_t *record;
     region_draw_t *draw;
@@ -641,27 +474,8 @@ typedef struct {
     size_t frame;
     esp_display_present_rect_t submit_area;
     esp_display_present_rect_t physical_area;
-    size_t bytes;
     size_t src_stride;
-    size_t row_bytes;
 } region_submit_context_t;
-
-static bool region_direct_dma(const present_backend_t *backend, size_t src_stride, size_t row_bytes)
-{
-    return !backend->config.tx_staging && backend->config.rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 &&
-           backend->config.draw_order == backend->config.panel_order && src_stride == row_bytes;
-}
-
-static void revert_uncommitted(present_backend_t *backend, region_draw_t *draw, region_tx_t *tx, bool swapped, size_t bytes)
-{
-    present_lock_enter(&backend->lock, false);
-    bool revert = swapped && draw->state == DRAW_LEASED;
-    abandon_tx(tx);
-    present_lock_exit(&backend->lock, false);
-    if (revert) {
-        revert_in_place_swap(draw->pixels, bytes);
-    }
-}
 
 /* Lock is not held on return. The direct-sync channel check stays here, before
  * unlock, so a full channel never reaches pixel preparation. */
@@ -691,13 +505,13 @@ static esp_err_t region_prepare_submit_context(present_backend_t *backend, esp_d
         }
     }
     size_t row_bytes = submit_area.width * bytes;
-    if (!valid_area(backend, &submit_area) || src_stride < row_bytes || src_stride % bytes ||
+    if (!valid_area(backend, &submit_area) || src_stride < row_bytes ||
             submit_area.height - 1 > (SIZE_MAX - row_bytes) / src_stride ||
             (submit_area.height - 1) * src_stride + row_bytes > backend->tile_bytes) {
         present_lock_exit(&backend->lock, false);
         return ESP_ERR_INVALID_ARG;
     }
-    if (!backend->config.async_copy && !backend->config.deferred_submit && channel_full(backend)) {
+    if (!backend->config.deferred_submit && channel_full(backend)) {
         present_lock_exit(&backend->lock, false);
         return ESP_ERR_NO_MEM;
     }
@@ -714,9 +528,7 @@ static esp_err_t region_prepare_submit_context(present_backend_t *backend, esp_d
         .frame = (size_t)(record - backend->core.frames),
         .submit_area = submit_area,
         .physical_area = physical_area,
-        .bytes = bytes,
         .src_stride = src_stride,
-        .row_bytes = row_bytes,
     };
     return ESP_OK;
 }
@@ -726,197 +538,8 @@ static bool submit_source_live(const present_backend_t *backend, const region_su
     return backend->core.life == PRESENT_CORE_RUNNING && ctx->draw->state == DRAW_LEASED && ctx->record->common.result == ESP_OK;
 }
 
-static esp_err_t region_submit_async_copy(present_backend_t *backend, const region_submit_context_t *ctx)
-{
-    uint64_t cookie = present_new_token();
-    if (!cookie) {
-        return ESP_ERR_NO_MEM;
-    }
-    present_lock_enter(&backend->lock, false);
-    if (!submit_source_live(backend, ctx)) {
-        present_lock_exit(&backend->lock, false);
-        return ESP_ERR_INVALID_STATE;
-    }
-    region_tx_t *tx = claim_tx(backend, ctx->draw_index, ctx->frame);
-    if (!tx) {
-        present_lock_exit(&backend->lock, false);
-        return ESP_ERR_NO_MEM;
-    }
-    present_lock_exit(&backend->lock, false);
-    if (ensure_converted(backend, tx) != ESP_OK) {
-        present_lock_enter(&backend->lock, false);
-        abandon_tx(tx);
-        present_lock_exit(&backend->lock, false);
-        return ESP_ERR_NO_MEM;
-    }
-    esp_display_present_surface_t target = {
-        .pixels = tx->converted,
-        .capacity_bytes = backend->tile_bytes,
-        .layout = {
-            ctx->physical_area.width, ctx->physical_area.height, ctx->physical_area.width * ctx->bytes,
-            backend->config.format, backend->config.panel_order
-        },
-    };
-    esp_display_present_copy_request_t request = {
-        .src = {
-            .pixels = ctx->draw->pixels,
-            .capacity_bytes = backend->tile_bytes,
-            .layout = {
-                ctx->submit_area.width, ctx->submit_area.height, ctx->src_stride,
-                backend->config.format, backend->config.draw_order
-            },
-        },
-        .dst = target,
-        .src_area = { 0, 0, ctx->submit_area.width, ctx->submit_area.height },
-        .dst_x = 0,
-        .dst_y = 0,
-        .rotation = backend->config.rotation,
-    };
-    esp_display_present_copy_ticket_t ticket;
-    esp_err_t error = esp_display_present_pixel_submit(backend->pixel, &request, &ticket);
-    if (error != ESP_OK) {
-        present_lock_enter(&backend->lock, false);
-        abandon_tx(tx);
-        present_lock_exit(&backend->lock, false);
-        return error;
-    }
-    present_lock_enter(&backend->lock, false);
-    if (!submit_source_live(backend, ctx)) {
-        present_lock_exit(&backend->lock, false);
-        esp_display_present_copy_status_t status;
-        (void)esp_display_present_pixel_wait(backend->pixel, ticket, UINT32_MAX, &status);
-        (void)esp_display_present_pixel_release(backend->pixel, ticket);
-        present_lock_enter(&backend->lock, false);
-        abandon_tx(tx);
-        present_lock_exit(&backend->lock, false);
-        return ESP_ERR_INVALID_STATE;
-    }
-    present_allocation_written(&ctx->draw->storage);
-    present_allocation_hold(&ctx->draw->storage, PRESENT_REF_COPY);
-    present_allocation_hold(&tx->storage, PRESENT_REF_TRANSFER);
-    ctx->draw->state = DRAW_HELD;
-    tx->draw_held = true;
-    tx->direct = false;
-    tx->surface = target;
-    tx->area = ctx->physical_area;
-    tx->cookie = cookie;
-    tx->copy = ticket;
-    tx->state = TX_COPYING;
-    --ctx->record->leased;
-    ++ctx->record->pending;
-    present_lock_exit(&backend->lock, false);
-    return ESP_OK;
-}
-
-/* TX is SUBMITTING and the lock is released. Driver rejection restores the
- * lease. An early callback is acceptance, not a retryable rejection. */
-static esp_err_t region_submit_panel(present_backend_t *backend, region_submit_context_t *ctx, region_tx_t *tx, bool swapped)
-{
-    esp_display_present_tx_result_t result = backend->config.panel.submit(backend->config.panel.context, &tx->surface, &tx->area, tx->cookie);
-    present_lock_enter(&backend->lock, false);
-    frame_record_t *record = &backend->core.frames[tx->frame];
-    region_draw_t *draw = &backend->draws[tx->draw];
-    present_transaction_resolution_t resolved = present_transaction_resolve(&tx->transaction, result);
-    if (resolved.rejected) {
-        --record->pending;
-        if (tx->direct) {
-            present_allocation_drop(&draw->storage, PRESENT_REF_TRANSFER);
-        } else {
-            present_allocation_drop(&tx->storage, PRESENT_REF_TRANSFER);
-        }
-        present_allocation_claim(&draw->storage);
-        draw->state = DRAW_LEASED;
-        abandon_tx(tx);
-        present_lock_exit(&backend->lock, false);
-        if (swapped) {
-            revert_in_place_swap(draw->pixels, ctx->submit_area.height * ctx->row_bytes);
-        }
-        return result.result != ESP_OK ? result.result : ESP_FAIL;
-    }
-    --record->leased;
-    settle_submit(backend, tx, record, resolved);
-    present_lock_exit(&backend->lock, false);
-    return ESP_OK;
-}
-
-static esp_err_t region_submit_sync_pixels(present_backend_t *backend, region_submit_context_t *ctx)
-{
-    present_lock_enter(&backend->lock, false);
-    if (!submit_source_live(backend, ctx)) {
-        present_lock_exit(&backend->lock, false);
-        return ESP_ERR_INVALID_STATE;
-    }
-    region_tx_t *tx = claim_tx(backend, ctx->draw_index, ctx->frame);
-    if (!tx) {
-        present_lock_exit(&backend->lock, false);
-        return ESP_ERR_NO_MEM;
-    }
-    present_lock_exit(&backend->lock, false);
-    esp_display_present_surface_t surface;
-    bool swapped = false;
-    size_t revert_bytes = ctx->submit_area.height * ctx->row_bytes;
-    esp_err_t ret = prepare_pixels(backend, ctx->draw, tx, &ctx->submit_area, ctx->src_stride, &surface, &swapped);
-    if (ret != ESP_OK) {
-        revert_uncommitted(backend, ctx->draw, tx, swapped, revert_bytes);
-        return ret;
-    }
-    uint64_t cookie = present_new_token();
-    if (!cookie) {
-        revert_uncommitted(backend, ctx->draw, tx, swapped, revert_bytes);
-        return ESP_ERR_NO_MEM;
-    }
-    present_lock_enter(&backend->lock, false);
-    if (!submit_source_live(backend, ctx)) {
-        bool revert = swapped && ctx->draw->state == DRAW_LEASED;
-        abandon_tx(tx);
-        present_lock_exit(&backend->lock, false);
-        if (revert) {
-            revert_in_place_swap(ctx->draw->pixels, revert_bytes);
-        }
-        return ESP_ERR_INVALID_STATE;
-    }
-    if (!backend->config.deferred_submit && channel_full(backend)) {
-        bool revert = swapped && ctx->draw->state == DRAW_LEASED;
-        abandon_tx(tx);
-        present_lock_exit(&backend->lock, false);
-        if (revert) {
-            revert_in_place_swap(ctx->draw->pixels, revert_bytes);
-        }
-        return ESP_ERR_NO_MEM;
-    }
-    bool direct = surface.pixels == ctx->draw->pixels;
-    present_allocation_written(&ctx->draw->storage);
-    if (direct) {
-        present_allocation_hold(&ctx->draw->storage, PRESENT_REF_TRANSFER);
-    } else {
-        present_allocation_hold(&tx->storage, PRESENT_REF_TRANSFER);
-    }
-    ctx->draw->state = DRAW_HELD;
-    tx->draw_held = true;
-    tx->direct = direct;
-    tx->surface = surface;
-    tx->area = ctx->physical_area;
-    tx->cookie = cookie;
-    present_transaction_prepare(&tx->transaction);
-    ++ctx->record->pending;
-    if (backend->config.deferred_submit) {
-        if (!direct) {
-            ctx->draw->state = DRAW_FREE;
-            tx->draw_held = false;
-        }
-        tx->state = TX_READY;
-        --ctx->record->leased;
-        present_lock_exit(&backend->lock, false);
-        if (backend->config.on_progress) {
-            (void)backend->config.on_progress(backend->config.progress_user, false);
-        }
-        return ESP_OK;
-    }
-    tx->state = TX_SUBMITTING;
-    present_lock_exit(&backend->lock, false);
-    return region_submit_panel(backend, ctx, tx, swapped);
-}
-
+/* A rejected CALLER submission restores its exact lease. WORKER submissions
+ * already transferred ownership; READY remains retained until retry/cancel. */
 static esp_err_t region_submit_region_ex(present_backend_t *backend, esp_display_present_frame_t frame,
                                          esp_display_present_lease_id_t lease,
                                          const esp_display_present_region_submit_t *sub)
@@ -929,12 +552,62 @@ static esp_err_t region_submit_region_ex(present_backend_t *backend, esp_display
     if (error != ESP_OK) {
         return error;
     }
-    /* Async identity stays on the sync path and does not call copy_execute.
-     * tx_staging still forces a copy into the internal transfer tile. */
-    if (backend->config.async_copy && !region_direct_dma(backend, ctx.src_stride, ctx.row_bytes)) {
-        return region_submit_async_copy(backend, &ctx);
+    uint64_t cookie = present_new_token();
+    if (!cookie) {
+        return ESP_ERR_NO_MEM;
     }
-    return region_submit_sync_pixels(backend, &ctx);
+    present_lock_enter(&backend->lock, false);
+    if (!submit_source_live(backend, &ctx)) {
+        present_lock_exit(&backend->lock, false);
+        return ESP_ERR_INVALID_STATE;
+    }
+    region_tx_t *tx = claim_tx(backend, ctx.draw_index, ctx.frame);
+    if (!tx) {
+        present_lock_exit(&backend->lock, false);
+        return ESP_ERR_NO_MEM;
+    }
+    tx->surface = (esp_display_present_surface_t) {
+        ctx.draw->pixels, backend->tile_bytes, {
+            ctx.submit_area.width, ctx.submit_area.height, ctx.src_stride,
+            backend->config.format, backend->config.draw_order
+        }
+    };
+    tx->area = ctx.physical_area;
+    tx->rotation = backend->config.rotation;
+    tx->cookie = cookie;
+    present_allocation_written(&ctx.draw->storage);
+    present_allocation_hold(&ctx.draw->storage, PRESENT_REF_TRANSFER);
+    ctx.draw->state = DRAW_HELD;
+    tx->draw_held = true;
+    ++ctx.record->pending;
+    if (backend->config.deferred_submit) {
+        tx->state = TX_READY;
+        --ctx.record->leased;
+        present_lock_exit(&backend->lock, false);
+        if (backend->config.on_progress) {
+            (void)backend->config.on_progress(backend->config.progress_user, false);
+        }
+        return ESP_OK;
+    }
+    tx->state = TX_SUBMITTING;
+    present_transaction_prepare(&tx->transaction);
+    present_lock_exit(&backend->lock, false);
+    esp_display_present_tx_result_t result = emit_pixels(backend, tx);
+    present_lock_enter(&backend->lock, false);
+    present_transaction_resolution_t resolved = present_transaction_resolve(&tx->transaction, result);
+    if (resolved.rejected) {
+        --ctx.record->pending;
+        present_allocation_drop(&ctx.draw->storage, PRESENT_REF_TRANSFER);
+        present_allocation_claim(&ctx.draw->storage);
+        ctx.draw->state = DRAW_LEASED;
+        abandon_tx(tx);
+        present_lock_exit(&backend->lock, false);
+        return result.result != ESP_OK ? result.result : ESP_FAIL;
+    }
+    --ctx.record->leased;
+    settle_submit(backend, tx, ctx.record, resolved);
+    present_lock_exit(&backend->lock, false);
+    return ESP_OK;
 }
 
 static esp_err_t region_submit_region(present_backend_t *backend, esp_display_present_frame_t frame, esp_display_present_lease_id_t lease)
@@ -1075,7 +748,6 @@ static esp_err_t region_query(present_backend_t *backend, esp_display_present_re
     if (!backend || !out) {
         return ESP_ERR_INVALID_ARG;
     }
-    (void)present_region_service(backend);
     return region_peek(backend, receipt, out);
 }
 
@@ -1114,13 +786,8 @@ static esp_err_t region_stop(present_backend_t *backend, uint32_t timeout)
     }
     present_lock_exit(&backend->lock, false);
     uint64_t start = present_now_ms();
-    esp_err_t ret = esp_display_present_pixel_stop(backend->pixel, timeout);
-    if (ret != ESP_OK) {
-        return ret;
-    }
-    (void)present_region_service(backend); /* Closing: only retire copies, never submit. */
-    uint32_t left = present_remaining_ms(start, timeout);
-    ret = backend->config.panel.quiesce(backend->config.panel.context, left);
+    (void)present_region_service(backend); /* Closing: retire READY, never submit. */
+    esp_err_t ret = backend->config.panel.quiesce(backend->config.panel.context, present_remaining_ms(start, timeout));
     if (ret != ESP_OK) {
         return ret;
     }
@@ -1165,9 +832,6 @@ static esp_err_t region_set_rotation(present_backend_t *backend, esp_display_pre
         if (backend->core.frames[i].common.token) {
             return ESP_ERR_INVALID_STATE;
         }
-    if (backend->config.in_place && rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0) {
-        return ESP_ERR_NOT_SUPPORTED;
-    }
     bool change_axes = !backend->config.fixed_rotation && (((unsigned)backend->config.rotation ^ (unsigned)rotation) & 1);
     uint32_t width = change_axes ? backend->config.height : backend->config.width;
     uint32_t height = change_axes ? backend->config.width : backend->config.height;
@@ -1175,27 +839,6 @@ static esp_err_t region_set_rotation(present_backend_t *backend, esp_display_pre
     size_t rows = backend->tile_bytes / ((size_t)width * bpp);
     if (!rows) {
         return ESP_ERR_INVALID_SIZE;
-    }
-    if (rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0) {
-        /* Reserve conversion storage before changing geometry. On failure,
-         * preserve both the old layout and any existing conversion tiles. */
-        void *converted[PRESENT_MAX_TILE_BUFFERS] = {0};
-        for (size_t i = 0; i < backend->config.buffer_count; ++i) {
-            if (!backend->txs[i].converted) {
-                converted[i] = present_alloc_pixels_in(backend->tile_bytes, converted_external(&backend->config));
-                if (!converted[i]) {
-                    for (size_t j = 0; j < i; ++j) {
-                        present_free(converted[j]);
-                    }
-                    return ESP_ERR_NO_MEM;
-                }
-            }
-        }
-        for (size_t i = 0; i < backend->config.buffer_count; ++i) {
-            if (converted[i]) {
-                backend->txs[i].converted = converted[i];
-            }
-        }
     }
     backend->config.width = width;
     backend->config.height = height;
@@ -1234,5 +877,5 @@ const present_backend_ops_t present_region_backend = {
 size_t present_region_memory(const esp_display_present_backend_config_t *config)
 {
     return sizeof(present_backend_t) + config->buffer_count * (sizeof(region_draw_t) + sizeof(region_tx_t)) +
-           config->max_frames * sizeof(present_core_frame_t) + present_pixel_memory(config->buffer_count, config->async_copy);
+           config->max_frames * sizeof(present_core_frame_t);
 }

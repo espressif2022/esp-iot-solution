@@ -8,16 +8,17 @@ config ESP_DISPLAY_PRESENT_DEFAULT_TILE_BYTES
         rows and capped by height. At least one row is allocated, so a single
         row may exceed this target. Explicit drawbuf.lines takes precedence.
 
-config ESP_DISPLAY_PRESENT_TE_STAGING_SLOT_BYTES
-    int "TE internal DMA staging byte limit per slot"
+config ESP_DISPLAY_PRESENT_IO_STAGING_SLOT_BYTES
+    int "Panel IO internal DMA staging byte limit per slot"
     range 64 65536
     default 16384
     help
-        PSRAM compose images without direct DMA use two slots. Each logical
+        REGION conversion and TE PSRAM images without direct DMA use two slots. Each logical
         capacity is rounded down to physical whole rows and capped by height.
         A row larger than this limit is rejected. Allocations are aligned up
         to 64 bytes; account for both slots, their event and adapter metadata.
-        Internal DMA compose images and direct PSRAM DMA allocate no slots.
+        REGION allocates the slots lazily on its first non-direct request.
+        TE internal DMA compose images and direct PSRAM DMA allocate no slots.
 
 config ESP_DISPLAY_PRESENT_CALLBACK_JOIN
     bool

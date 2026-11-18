@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include "pixel/present_pixel_ops.h"
 
 typedef struct {
     esp_display_present_panel_event_fn callback;
@@ -20,6 +21,7 @@ typedef struct {
     uint8_t last_pixels[128];
     esp_display_present_rect_t last_area;
     size_t last_size;
+    esp_display_present_byte_order_t order;
 } panel_t;
 
 static const present_backend_ops_t *ops = &present_region_backend;
@@ -64,6 +66,24 @@ static esp_display_present_tx_result_t submit(void *ctx, const esp_display_prese
     return p->response;
 }
 
+/* Transport mock converts on submission; source ownership is still retained
+ * until explicit completion. Real bounded staging is tested by test_panel_io_emit. */
+static esp_display_present_tx_result_t emit_pixels(void *ctx, const esp_display_present_surface_t *source,
+                                                   const esp_display_present_rect_t *rect,
+                                                   esp_display_present_engine_rotation_t rotation, uint64_t cookie)
+{
+    panel_t *p = ctx;
+    uint8_t pixels[128];
+    esp_display_present_surface_t wire = {pixels, sizeof(pixels),
+        {rect->width, rect->height, rect->width * 2, ESP_DISPLAY_PRESENT_FORMAT_RGB565, p->order}
+    };
+    esp_display_present_copy_request_t request = {.src = {source->pixels, source->capacity_bytes, source->layout}, .dst = wire,
+                                                  .src_area = {0, 0, source->layout.width, source->layout.height}, .rotation = rotation
+                                                 };
+    assert(esp_display_present_pixel_execute_cpu(&request) == ESP_OK);
+    return submit(ctx, &wire, rect, cookie);
+}
+
 static void complete(panel_t *p)
 {
     assert(p->count);
@@ -88,11 +108,12 @@ static esp_err_t quiesce(void *ctx, uint32_t timeout)
 
 static esp_display_present_backend_config_t config(panel_t *p, bool swap)
 {
+    p->order = swap ? ESP_DISPLAY_PRESENT_ORDER_SWAPPED : ESP_DISPLAY_PRESENT_ORDER_NATIVE;
     return (esp_display_present_backend_config_t) {
         .width = 4, .height = 4, .tile_rows = 2,
         .buffer_count = 1, .max_frames = 2, .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
         .panel_order = swap ? ESP_DISPLAY_PRESENT_ORDER_SWAPPED : ESP_DISPLAY_PRESENT_ORDER_NATIVE,
-        .panel = { p, attach, submit, quiesce }
+        .panel = { p, attach, submit, quiesce, NULL, emit_pixels }
     };
 }
 
@@ -353,11 +374,11 @@ static void invalid_configuration(void)
     /* Layer-specific couplings keep their own divergent error code here. */
     c = config(&p, false);
     c.tx_staging = true;
-    assert(ops->create(&c, &g) == ESP_ERR_NOT_SUPPORTED && !g);
+    assert(ops->create(&c, &g) == ESP_ERR_INVALID_ARG && !g);
     c = config(&p, false);
     c.async_copy = true;
     c.in_place = true;
-    assert(ops->create(&c, &g) == ESP_ERR_NOT_SUPPORTED && !g);
+    assert(ops->create(&c, &g) == ESP_ERR_INVALID_ARG && !g);
     c = config(&p, false);
     p.attach_fail = true;
     assert(ops->create(&c, &g) == ESP_FAIL && !g && !p.callback);
@@ -526,302 +547,67 @@ static void retained_fault_and_packing(void)
     }
 }
 
-typedef struct {
-    pthread_mutex_t mutex;
-    pthread_cond_t changed;
-    bool entered, release;
-    size_t completed;
-    bool fail;
-} copy_gate_t;
-static esp_err_t gated_copy(void *arg, const esp_display_present_copy_request_t *r)
+static void deferred_source_lifetime(void)
 {
-    copy_gate_t *g = arg;
-    pthread_mutex_lock(&g->mutex);
-    g->entered = true;
-    pthread_cond_broadcast(&g->changed);
-    while (!g->release) {
-        pthread_cond_wait(&g->changed, &g->mutex);
-    }
-    pthread_mutex_unlock(&g->mutex);
-    if (g->fail) {
-        return ESP_FAIL;
-    }
-    for (uint32_t y = 0; y < r->src_area.height; ++y) {
-        memcpy((uint8_t *)r->dst.pixels + (r->dst_y + y) * r->dst.layout.stride_bytes + r->dst_x * 2,
-               (const uint8_t *)r->src.pixels + (r->src_area.y + y) * r->src.layout.stride_bytes + r->src_area.x * 2,
-               r->src_area.width * 2);
-    }
-    return ESP_OK;
-}
-
-static bool copied(void *arg, bool isr)
-{
-    assert(!isr);
-    copy_gate_t *g = arg;
-    pthread_mutex_lock(&g->mutex);
-    g->completed++;
-    pthread_cond_broadcast(&g->changed);
-    pthread_mutex_unlock(&g->mutex);
-    return false;
-}
-
-static void queued_region(unsigned mode)
-{
-    copy_gate_t gate = {.mutex = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER, .fail = mode == 5};
-    panel_t panel = {.response = {ESP_DISPLAY_PRESENT_TX_ACCEPTED, ESP_OK}};
-    esp_display_present_backend_config_t cfg = config(&panel, false);
-    cfg.async_copy = true;
-    cfg.panel_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED;
-    cfg.copy_execute = gated_copy;
-    cfg.copy_user = &gate;
-    cfg.on_progress = copied;
-    cfg.progress_user = &gate;
-    present_backend_t *g;
-    assert(ops->create(&cfg, &g) == ESP_OK);
-    esp_display_present_frame_t f = begin(g);
-    esp_display_present_lease_t lease;
-    assert(ops->acquire(g, f, NULL, 0, &lease) == ESP_OK);
-    memset(lease.surface.pixels, 0x6a, lease.surface.capacity_bytes);
-    assert(ops->submit_region(g, f, lease.id) == ESP_OK);
-    pthread_mutex_lock(&gate.mutex);
-    while (!gate.entered) {
-        pthread_cond_wait(&gate.changed, &gate.mutex);
-    }
-    pthread_mutex_unlock(&gate.mutex);
-    assert(ops->acquire(g, f, NULL, 0, &lease) == ESP_ERR_TIMEOUT);
-    assert(present_region_backend.service(g) == ESP_OK && panel.submits == 0);
-    esp_display_present_receipt_t receipt = {0};
-    if (mode == 3) {
-        assert(ops->cancel_frame(g, f, 0) == ESP_ERR_TIMEOUT);
-    } else {
-        assert(ops->end(g, f, &receipt) == ESP_OK);
-    }
-    if (mode == 4) {
-        assert(ops->stop(g, 0) == ESP_ERR_TIMEOUT);
-        assert(ops->destroy(g) == ESP_ERR_INVALID_STATE);
-    }
-    pthread_mutex_lock(&gate.mutex);
-    gate.release = true;
-    pthread_cond_broadcast(&gate.changed);
-    while (!gate.completed) {
-        pthread_cond_wait(&gate.changed, &gate.mutex);
-    }
-    pthread_mutex_unlock(&gate.mutex);
-    if (mode == 1)
-        panel.response = (esp_display_present_tx_result_t) {
-        ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_FAIL
-    };
-    if (mode == 2)
-        panel.response = (esp_display_present_tx_result_t) {
-        ESP_DISPLAY_PRESENT_TX_UNCERTAIN, ESP_FAIL
-    };
-    assert(present_region_backend.service(g) == (mode == 1 ? ESP_FAIL : ESP_OK));
-    if (mode == 1) {
-        esp_display_present_backend_fault_t fault;
-        assert(ops->get_fault(g, &fault) == ESP_OK && fault.result == ESP_OK);
-        panel.response = (esp_display_present_tx_result_t) {
+    for (unsigned buffers = 1; buffers <= 2; ++buffers) {
+        panel_t p = normal_panel();
+        esp_display_present_backend_config_t cfg = config(&p, true);
+        cfg.buffer_count = buffers;
+        cfg.deferred_submit = true;
+        present_backend_t *g;
+        assert(ops->create(&cfg, &g) == ESP_OK);
+        esp_display_present_frame_t f = begin(g);
+        for (unsigned i = 0; i < buffers; ++i) {
+            esp_display_present_lease_t l = acquire(g, f);
+            assert(ops->submit_region(g, f, l.id) == ESP_OK);
+        }
+        assert(!p.submits);
+        esp_display_present_lease_t unavailable;
+        assert(ops->acquire(g, f, NULL, 0, &unavailable) == ESP_ERR_TIMEOUT);
+        /* Rejected worker submission keeps its source and FIFO order. */
+        p.response = (esp_display_present_tx_result_t) {
+            ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_NO_MEM
+        };
+        assert(ops->service(g) == ESP_ERR_NO_MEM);
+        assert(!p.count);
+        assert(ops->acquire(g, f, NULL, 0, &unavailable) == ESP_ERR_TIMEOUT);
+        p.response = (esp_display_present_tx_result_t) {
             ESP_DISPLAY_PRESENT_TX_ACCEPTED, ESP_OK
         };
-        assert(present_region_backend.service(g) == ESP_OK);
-    }
-    if (mode < 3) {
-        assert(panel.count == 1);
-        for (size_t i = 0; i < 16; ++i) {
-            assert(panel.last_pixels[i] == 0x6a);
+        assert(ops->service(g) == ESP_OK);
+        assert(p.count == buffers);
+        esp_display_present_receipt_t r = end(g, f);
+        while (p.count) {
+            complete(&p);
         }
-        complete(&panel);
-    } else {
-        assert(panel.submits == 0);
+        release(g, r, ESP_OK);
+        destroy(g);
     }
-    if (mode == 3) {
-        assert(ops->cancel_frame(g, f, 0) == ESP_OK);
-    }
-    if (receipt.value) {
-        esp_display_present_frame_status_t status;
-        assert(ops->query(g, receipt, &status) == ESP_OK && status.terminal);
-        assert(status.result == ((mode == 2 || mode == 5) ? ESP_FAIL : mode == 4 ? ESP_ERR_INVALID_STATE : ESP_OK));
-        assert(ops->release_receipt(g, receipt) == ESP_OK);
-    }
-    assert(ops->stop(g, 1000) == ESP_OK);
-    assert(ops->destroy(g) == ESP_OK);
-    pthread_cond_destroy(&gate.changed);
-    pthread_mutex_destroy(&gate.mutex);
 }
 
-static void queued_packing(void)
+static void deferred_preflight_failure(void)
 {
-    panel_t panel = {.response = {ESP_DISPLAY_PRESENT_TX_ACCEPTED, ESP_OK}, .early = true};
-    esp_display_present_backend_config_t cfg = config(&panel, true);
-    cfg.async_copy = true;
-    present_backend_t *g;
-    assert(ops->create(&cfg, &g) == ESP_OK);
-    esp_display_present_frame_t f = begin(g);
-    esp_display_present_lease_t lease;
-    assert(ops->acquire(g, f, NULL, 0, &lease) == ESP_OK);
-    const uint8_t source[12] = {1, 2, 3, 4, 0xaa, 0xbb, 5, 6, 7, 8, 0xcc, 0xdd};
-    memcpy(lease.surface.pixels, source, sizeof(source));
-    esp_display_present_region_submit_t sub = {{1, 1, 2, 2}, 6};
-    assert(ops->submit_region_ex(g, f, lease.id, &sub) == ESP_OK);
-    esp_display_present_receipt_t receipt;
-    assert(ops->end(g, f, &receipt) == ESP_OK);
-    esp_display_present_frame_status_t status;
-    assert(ops->wait(g, receipt, ESP_DISPLAY_PRESENT_COMPLETION_SOURCE_RELEASED, 1000, &status) == ESP_OK);
-    assert(status.result == ESP_OK);
-    const uint8_t expected[8] = {2, 1, 4, 3, 6, 5, 8, 7};
-    assert(panel.last_size == sizeof(expected) && !memcmp(panel.last_pixels, expected, sizeof(expected)));
-    assert(ops->release_receipt(g, receipt) == ESP_OK);
-    assert(ops->stop(g, 1000) == ESP_OK);
-    assert(ops->destroy(g) == ESP_OK);
-}
-
-static void queued_fifo(void)
-{
-    copy_gate_t gate = {.mutex = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER};
-    panel_t panel = {.response = {ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_FAIL}};
-    esp_display_present_backend_config_t cfg = config(&panel, false);
-    cfg.buffer_count = 2;
-    cfg.async_copy = true;
-    cfg.panel_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED;
-    cfg.on_progress = copied;
-    cfg.progress_user = &gate;
-    present_backend_t *g;
-    assert(ops->create(&cfg, &g) == ESP_OK);
-    esp_display_present_frame_t f = begin(g);
-    /* Acquire both before submitting, so acquire's pump cannot send either. */
-    esp_display_present_lease_t leases[2];
-    for (size_t i = 0; i < 2; ++i) {
-        assert(ops->acquire(g, f, NULL, 0, &leases[i]) == ESP_OK);
-    }
-    for (size_t i = 0; i < 2; ++i) {
-        memset(leases[i].surface.pixels, 0x20 + i, leases[i].surface.capacity_bytes);
-        assert(ops->submit_region(g, f, leases[i].id) == ESP_OK);
-    }
-    esp_display_present_receipt_t receipt;
-    assert(ops->end(g, f, &receipt) == ESP_OK);
-    pthread_mutex_lock(&gate.mutex);
-    while (gate.completed < 2) {
-        pthread_cond_wait(&gate.changed, &gate.mutex);
-    }
-    pthread_mutex_unlock(&gate.mutex);
-    assert(present_region_backend.service(g) == ESP_FAIL);
-    assert(panel.submits == 1 && panel.last_pixels[0] == 0x20);
-    panel.response = (esp_display_present_tx_result_t) {
-        ESP_DISPLAY_PRESENT_TX_ACCEPTED, ESP_OK
+    panel_t p = normal_panel();
+    p.response = (esp_display_present_tx_result_t) {
+        ESP_DISPLAY_PRESENT_TX_REJECTED, ESP_ERR_INVALID_SIZE
     };
-    assert(present_region_backend.service(g) == ESP_OK);
-    assert(panel.submits == 3 && panel.count == 2 && panel.last_pixels[0] == 0x21);
-    complete(&panel);
-    complete(&panel);
-    assert(ops->release_receipt(g, receipt) == ESP_OK);
-    assert(ops->stop(g, 1000) == ESP_OK);
-    assert(ops->destroy(g) == ESP_OK);
-    pthread_cond_destroy(&gate.changed);
-    pthread_mutex_destroy(&gate.mutex);
-}
-static esp_err_t fail_if_copy(void *arg, const esp_display_present_copy_request_t *request)
-{
-    (void)arg;
-    (void)request;
-    assert(0);
-    return ESP_FAIL;
-}
-
-static void direct_async_holds_draw(void)
-{
-    panel_t panel = {.response = {ESP_DISPLAY_PRESENT_TX_ACCEPTED, ESP_OK}};
-    esp_display_present_backend_config_t cfg = config(&panel, false);
-    cfg.async_copy = true;
-    cfg.copy_execute = fail_if_copy;
+    esp_display_present_backend_config_t cfg = config(&p, false);
+    cfg.deferred_submit = true;
     present_backend_t *g;
     assert(ops->create(&cfg, &g) == ESP_OK);
     esp_display_present_frame_t f = begin(g);
-    esp_display_present_lease_t lease;
-    assert(ops->acquire(g, f, NULL, 0, &lease) == ESP_OK);
-    void *pixels = lease.surface.pixels;
-    memset(pixels, 0x5a, lease.surface.capacity_bytes);
-    assert(ops->submit_region(g, f, lease.id) == ESP_OK);
-    assert(panel.submits == 1);
-    for (size_t i = 0; i < 16; ++i) {
-        assert(panel.last_pixels[i] == 0x5a);
-    }
-    esp_display_present_lease_t again;
-    assert(ops->acquire(g, f, NULL, 0, &again) == ESP_ERR_TIMEOUT);
-    complete(&panel);
-    assert(ops->acquire(g, f, NULL, 0, &again) == ESP_OK);
-    assert(again.surface.pixels == pixels);
-    assert(ops->cancel_region(g, f, again.id) == ESP_OK);
-    assert(ops->cancel_frame(g, f, 0) == ESP_OK);
-    assert(ops->stop(g, 1000) == ESP_OK);
-    assert(ops->destroy(g) == ESP_OK);
-}
-
-static void draw_reused_while_tx_inflight(void)
-{
-    copy_gate_t gate = {.mutex = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER};
-    panel_t panel = {.response = {ESP_DISPLAY_PRESENT_TX_ACCEPTED, ESP_OK}};
-    esp_display_present_backend_config_t cfg = config(&panel, false);
-    cfg.panel_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED;
-    cfg.async_copy = true;
-    cfg.copy_execute = gated_copy;
-    cfg.copy_user = &gate;
-    cfg.on_progress = copied;
-    cfg.progress_user = &gate;
-    present_backend_t *g;
-    assert(ops->create(&cfg, &g) == ESP_OK);
-    esp_display_present_frame_t f = begin(g);
-    esp_display_present_lease_t lease;
-    assert(ops->acquire(g, f, NULL, 0, &lease) == ESP_OK);
-    void *pixels = lease.surface.pixels;
-    memset(pixels, 0x11, lease.surface.capacity_bytes);
-    assert(ops->submit_region(g, f, lease.id) == ESP_OK);
-    pthread_mutex_lock(&gate.mutex);
-    while (!gate.entered) {
-        pthread_cond_wait(&gate.changed, &gate.mutex);
-    }
-    pthread_mutex_unlock(&gate.mutex);
-    esp_display_present_lease_t again;
-    assert(ops->acquire(g, f, NULL, 0, &again) == ESP_ERR_TIMEOUT);
-    pthread_mutex_lock(&gate.mutex);
-    gate.release = true;
-    pthread_cond_broadcast(&gate.changed);
-    while (!gate.completed) {
-        pthread_cond_wait(&gate.changed, &gate.mutex);
-    }
-    pthread_mutex_unlock(&gate.mutex);
-    assert(present_region_backend.service(g) == ESP_OK);
-    assert(panel.submits == 1);
-    for (size_t i = 0; i < 16; ++i) {
-        assert(panel.last_pixels[i] == 0x11);
-    }
-    assert(ops->acquire(g, f, NULL, 0, &again) == ESP_OK);
-    assert(again.surface.pixels == pixels);
-    memset(pixels, 0x22, lease.surface.capacity_bytes);
-    for (size_t i = 0; i < 16; ++i) {
-        assert(panel.last_pixels[i] == 0x11);
-    }
-    assert(ops->submit_region(g, f, again.id) == ESP_ERR_NO_MEM);
-    assert(ops->cancel_region(g, f, again.id) == ESP_OK);
-    esp_display_present_receipt_t receipt;
-    assert(ops->end(g, f, &receipt) == ESP_OK);
-    complete(&panel);
-    esp_display_present_frame_status_t status;
-    assert(ops->query(g, receipt, &status) == ESP_OK && status.terminal && status.result == ESP_OK);
-    assert(ops->release_receipt(g, receipt) == ESP_OK);
-    assert(ops->stop(g, 1000) == ESP_OK);
-    assert(ops->destroy(g) == ESP_OK);
-    pthread_cond_destroy(&gate.changed);
-    pthread_mutex_destroy(&gate.mutex);
+    esp_display_present_lease_t l = acquire(g, f);
+    assert(ops->submit_region(g, f, l.id) == ESP_OK);
+    esp_display_present_receipt_t r = end(g, f);
+    assert(ops->service(g) == ESP_OK && !p.count);
+    release(g, r, ESP_ERR_INVALID_SIZE);
+    destroy(g);
 }
 
 int main(void)
 {
-    for (unsigned mode = 0; mode < 6; ++mode) {
-        queued_region(mode);
-    }
-    queued_packing();
-    queued_fifo();
-    direct_async_holds_draw();
-    draw_reused_while_tx_inflight();
+    deferred_source_lifetime();
+    deferred_preflight_failure();
     immediate_and_retry();
     delayed_and_stale();
     faults_and_uncertain();
