@@ -8,6 +8,9 @@
   conservative repair on region overflow. Size TE write tickets to the configured
   in-flight input count and account for all dynamic metadata in resource plans.
 - Keep pre-seeded rows protected when bitmap coverage coalesces repair spans.
+- Extend CPU-only single-tile inline copies to 180-degree FB PARTIAL updates.
+  Inline FULL 180-degree CPU conversion of the shared logical canvas as well.
+  Retain queued hardware/unknown executors, transposed copies and async repair.
 
 - Defer physical two-buffer LVGL DIRECT refreshes under backpressure instead of
   blocking invalidation and animation timers. Preserve damage until an actual

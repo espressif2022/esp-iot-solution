@@ -46,7 +46,7 @@ struct esp_display_present_backend_config {
     bool async_copy;                                   /**< FB/TE only: run copy/repair asynchronously via worker/queue. */
     bool copy_on_backend_worker;                       /**< FB or single-image TE: drain copy queue on backend_worker outside engine gate. */
     esp_display_present_pixel_execute_fn copy_execute; /**< Optional custom blocking pixel executor. */
-    bool (*copy_is_cpu)(void *user);                   /**< Optional current-executor query; enables inline single-tile CPU copies at 0 degrees. */
+    bool (*copy_is_cpu)(void *user);                   /**< Optional current-executor query; enables CPU-only inline copies when drawing cannot overlap. */
     void *copy_user;                                   /**< User context passed to @c copy_execute. */
     esp_display_present_progress_fn on_progress;       /**< Optional wake callback invoked outside locks (cannot reenter APIs). */
     void *progress_user;                               /**< User context passed to @c on_progress. */

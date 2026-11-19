@@ -940,7 +940,7 @@ static void external_copy_ready(void *user)
 static void single_tile_cpu_inline(void)
 {
     for (unsigned hint = 0; hint < 3; ++hint) {
-        for (unsigned rotation = 0; rotation < 2; ++rotation) {
+        for (unsigned rotation = 0; rotation < 4; ++rotation) {
             for (unsigned tiles = 1; tiles <= 2; ++tiles) {
                 scan_panel_t panel = {0};
                 inline_copy_probe_t probe = {0};
@@ -956,7 +956,7 @@ static void single_tile_cpu_inline(void)
                 OK(ops->create(&cfg, &backend));
                 /* Query the current selection, not its value at creation. */
                 probe.cpu = hint == 2;
-                bool inline_copy = hint == 2 && !rotation && tiles == 1;
+                bool inline_copy = hint == 2 && !(rotation & 1) && tiles == 1;
                 esp_display_present_frame_t frame = begin(backend);
                 esp_display_present_lease_t lease;
                 OK(ops->acquire(backend, frame, NULL, 0, &lease));
@@ -1025,8 +1025,55 @@ static void single_tile_cpu_keeps_repair_queued(void)
     OK(ops->destroy(backend));
 }
 
+static void serial_full_conversion(void)
+{
+    for (unsigned rotation = 1; rotation < 4; ++rotation) {
+        for (unsigned cpu = 0; cpu < 2; ++cpu) {
+            scan_panel_t panel = {0};
+            inline_copy_probe_t probe = {.cpu = cpu};
+            esp_display_present_backend_config_t cfg = config(&panel, 2, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL);
+            cfg.rotation = rotation;
+            cfg.async_copy = cfg.copy_on_backend_worker = true;
+            cfg.on_work = external_copy_ready;
+            cfg.copy_execute = probe_copy;
+            cfg.copy_is_cpu = probe_cpu;
+            cfg.copy_user = &probe;
+            present_backend_t *b;
+            OK(ops->create(&cfg, &b));
+            esp_display_present_frame_t f = begin(b);
+            write_rect(b, f, (esp_display_present_rect_t) {
+                0, 0, 4, 4
+            }, 0x4567);
+            esp_display_present_receipt_t receipt;
+            bool serial = cpu && rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_180;
+            if (serial) {
+                probe.fail = true;
+                assert(ops->end(b, f, &receipt) == ESP_FAIL);
+                assert(!panel.cookie);
+                probe.fail = false;
+                probe.calls = 0;
+            }
+            OK(ops->end(b, f, &receipt));
+            assert(probe.calls == (serial ? 1u : 0u));
+            assert(ops->copy_work(b) == !serial);
+            OK(ops->service(b));
+            assert(probe.calls == 1 && panel.cookie);
+            esp_display_present_frame_status_t status;
+            OK(ops->query(b, receipt, &status));
+            assert(!status.terminal && !status.present_confirmed);
+            finish(b, &panel, receipt);
+            for (unsigned i = 0; i < 16; ++i) {
+                assert(((const uint16_t *)panel.current.pixels)[i] == 0x4567);
+            }
+            OK(ops->stop(b, 1000));
+            OK(ops->destroy(b));
+        }
+    }
+}
+
 int main(void)
 {
+    serial_full_conversion();
     single_tile_cpu_keeps_repair_queued();
     single_tile_cpu_inline();
     synchronous_copy_validation_rejects_bad_request();
