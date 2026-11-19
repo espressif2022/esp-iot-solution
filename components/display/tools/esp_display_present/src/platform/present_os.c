@@ -85,6 +85,13 @@ void PRESENT_ISR_ATTR present_lock_exit(present_lock_t *lock, bool isr)
 #endif
 }
 
+void PRESENT_ISR_ATTR present_yield_from_isr(void)
+{
+#ifndef PRESENT_HOST
+    portYIELD_FROM_ISR();
+#endif
+}
+
 void *present_alloc(size_t size)
 {
 #ifdef PRESENT_HOST

@@ -121,7 +121,13 @@ static bool PRESENT_ISR_ATTR color_done(esp_lcd_panel_io_handle_t io,
 {
     (void)io;
     (void)data;
-    return user ? finish_color(user, true) : false;
+    bool yield = user ? finish_color(user, true) : false;
+    /* SPI's void post-transaction callback discards this return value. Honor
+     * the wake request here so a blocked producer/stager need not wait a tick. */
+    if (yield) {
+        present_yield_from_isr();
+    }
+    return yield;
 }
 
 static esp_err_t spi_attach(void *context, esp_display_present_panel_event_fn callback, void *user)

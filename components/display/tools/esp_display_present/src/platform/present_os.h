@@ -32,6 +32,8 @@ void present_lock_destroy(present_lock_t *lock);
 void present_lock_enter(present_lock_t *lock, bool isr);
 /** @brief Exit critical-section lock. */
 void present_lock_exit(present_lock_t *lock, bool isr);
+/** @brief Request scheduling before returning from an ISR that woke a task. */
+void present_yield_from_isr(void);
 /** @brief Allocate zero-initialized internal metadata memory. */
 void *present_alloc(size_t size);
 /** @brief Allocate aligned internal DMA-capable pixel memory. */

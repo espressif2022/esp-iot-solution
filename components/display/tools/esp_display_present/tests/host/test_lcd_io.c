@@ -10,6 +10,7 @@
 #include "platform/present_os.h"
 #include <assert.h>
 #include <pthread.h>
+#include <stdatomic.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -35,6 +36,12 @@ static size_t fills;
 static const void *fill_source[8];
 static pthread_mutex_t stage_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t stage_changed = PTHREAD_COND_INITIALIZER;
+static atomic_uint yield_requests;
+
+void __wrap_present_yield_from_isr(void)
+{
+    atomic_fetch_add(&yield_requests, 1);
+}
 
 bool esp_ptr_internal(const void *p)
 {
@@ -178,6 +185,45 @@ static esp_display_present_lcd_io_t *make(struct fake_lcd *lcd, size_t depth, es
     assert(esp_display_present_lcd_io_create(&config, &adapter) == ESP_OK);
     assert(esp_display_present_lcd_io_get_interface(adapter, interface) == ESP_OK);
     return adapter;
+}
+
+static bool yield_event(void *context, const esp_display_present_backend_event_t *event, bool isr)
+{
+    bool *request = context;
+    assert(isr && event->kind == ESP_DISPLAY_PRESENT_EVENT_TRANSFER_DONE);
+    return *request;
+}
+
+static void completion_scheduling(void)
+{
+    for (unsigned early = 0; early < 2; ++early) {
+        for (unsigned requested = 0; requested < 2; ++requested) {
+            struct fake_lcd lcd = {.early = early};
+            esp_display_present_panel_adapter_t api;
+            esp_display_present_lcd_io_t *adapter = make(&lcd, 1, &api);
+            bool request = requested;
+            assert(api.attach(api.context, yield_event, &request) == ESP_OK);
+            _Alignas(64) uint8_t pixels[64] = {0};
+            esp_display_present_surface_t surface = {
+                pixels, sizeof(pixels), {2, 2, 4, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}
+            };
+            esp_display_present_rect_t area = {0, 0, 2, 2};
+            atomic_store(&yield_requests, 0);
+            assert(api.submit(api.context, &surface, &area, 1).acceptance == ESP_DISPLAY_PRESENT_TX_ACCEPTED);
+            if (!early) {
+                assert(!atomic_load(&yield_requests));
+                /* Like IDF's SPI post_cb, complete() ignores the bool result. */
+                complete(&lcd);
+            }
+            assert(atomic_load(&yield_requests) == requested);
+            /* An idle/spurious callback must not request another switch. */
+            (void)lcd.done(&lcd, NULL, lcd.user);
+            (void)lcd.done(&lcd, NULL, NULL);
+            assert(atomic_load(&yield_requests) == requested);
+            assert(api.quiesce(api.context, 0) == ESP_OK);
+            assert(esp_display_present_lcd_io_destroy(adapter) == ESP_OK);
+        }
+    }
 }
 
 static void fifo_and_validation(void)
@@ -721,6 +767,7 @@ static void staged_completion_quiesce_race(void)
 
 int main(void)
 {
+    completion_scheduling();
     external_dma();
     staged_transfer();
     staged_abort_and_overlap();

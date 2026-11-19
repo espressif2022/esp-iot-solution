@@ -32,6 +32,7 @@ target_compile_options(test_gsp_lvgl_handoff PRIVATE -Wall -Wextra -Werror -UNDE
 target_link_libraries(test_gsp_lvgl_handoff PRIVATE present_engine)
 add_test(NAME gsp_lvgl_handoff COMMAND test_gsp_lvgl_handoff)
 target_link_options(test_io_callback_race PRIVATE -Wl,--wrap=present_lock_enter)
+target_link_options(test_lcd_io PRIVATE -Wl,--wrap=present_yield_from_isr)
 target_link_options(test_transfer_tracker PRIVATE -Wl,--wrap=present_now_us)
 target_link_options(test_scheduler PRIVATE -Wl,--wrap=present_event_wait)
 target_link_options(test_dependency PRIVATE -Wl,--wrap=present_mutex_take -Wl,--wrap=present_mutex_give -Wl,--wrap=present_worker_set_priority -Wl,--wrap=present_worker_create -Wl,--wrap=present_task_priority -Wl,--wrap=present_event_wait -Wl,--wrap=present_event_signal)
