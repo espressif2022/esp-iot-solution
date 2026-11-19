@@ -28,9 +28,15 @@ Keep that example available when exporting the Host test tree. Its source is
 also covered by the Host CI change rules.
 
 An optional integration test accepts `--gsp-dir /path/to/gsp` together with
-`--lvgl-dir`. It requires the GSP split `components/esp_gsp_adapter`,
-`cmake/gsp_portable_targets.cmake`, the ESP-IDF runtime sources and the generated
-Host fixture `ci/host/data/out_nav/nav.gspb`. No GSP source or bundle is vendored.
+`--lvgl-dir`. It supports both the split `components/esp_gsp_adapter` layout and the
+monolithic `src/backend/esp_lcd` / `src/platform/esp_idf` layout. Both require
+`cmake/gsp_portable_targets.cmake` and the generated Host fixture
+`ci/host/data/out_nav/nav.gspb`. The test compiles the checkout's actual display,
+canvas and runtime sources. It checks GSP → LVGL → GSP pixel restoration and
+retrying a failed resume after acquiring a live Presenter lease. Host mocks
+cover task, panel, touch and accelerator boundaries; they do not validate
+hardware timing, touch input or hardware acceleration. No GSP source or bundle
+is vendored.
 
 ## ESP-IDF smoke
 

@@ -3,6 +3,11 @@
 set(gsp_adapter "${PRESENT_GSP_DIR}/components/esp_gsp_adapter")
 set(gsp_runtime "${PRESENT_GSP_DIR}/src/platform/esp_idf")
 set(gsp_bundle "${PRESENT_GSP_DIR}/ci/host/data/out_nav/nav.gspb")
+if(EXISTS "${gsp_runtime}/gsp_esp_runtime.c" AND
+   EXISTS "${PRESENT_GSP_DIR}/src/backend/esp_lcd/gsp_esp_lcd_canvas.c")
+    include("${CMAKE_CURRENT_LIST_DIR}/gsp_monolithic_integration.cmake")
+    return()
+endif()
 if(NOT EXISTS "${gsp_adapter}/src/esp_gsp_esp_lcd.c" OR
    NOT EXISTS "${gsp_runtime}/esp_gsp_idf_runtime.c" OR
    NOT EXISTS "${gsp_bundle}" OR

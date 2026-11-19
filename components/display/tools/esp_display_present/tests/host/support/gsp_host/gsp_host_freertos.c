@@ -168,7 +168,15 @@ TaskHandle_t xTaskGetCurrentTaskHandle(void)
 
 void vTaskDelete(TaskHandle_t task)
 {
-    /* The fixture selects the joinable worker path. */
+    if (task == NULL) {
+        /* Monolithic GSP workers delete themselves after signalling stop. */
+        assert(current_task);
+        assert(pthread_detach(pthread_self()) == 0);
+        free(current_task);
+        current_task = NULL;
+        pthread_exit(NULL);
+    }
+    /* Split-adapter workers select the joinable shutdown path. */
     assert(task && task != current_task);
     assert(pthread_join(task->thread, NULL) == 0);
     free(task);

@@ -7,7 +7,12 @@
 #undef esp_lcd_panel_draw_bitmap
 #include "esp_gsp_esp_lcd.h"
 #include "esp_lv_present.h"
+#ifndef PRESENT_GSP_MONOLITHIC
 #include "gsp/gsp_memory.h"
+#else
+#define __real_gsp_memory_free __real_free
+#define __wrap_gsp_memory_free __wrap_free
+#endif
 #include <stdatomic.h>
 
 enum { WIDTH = 320, HEIGHT = 240, TIMEOUT_MS = 1000 };
@@ -93,11 +98,17 @@ int main(int argc, char **argv)
 
     esp_gsp_config_t app = ESP_GSP_CONFIG_INIT();
     load_bundle(argv[1], &app);
+#ifdef PRESENT_GSP_MONOLITHIC
+    app.disable_image_cache = true;
+#else
     assert(esp_gsp_config_set(&app, ESP_GSP_FIELD_ENABLE_ASYNC_DECODE, 0) == ESP_GSP_CONFIG_SET_OK);
+#endif
     esp_gsp_esp_lcd_config_t gsp_config = ESP_GSP_ESP_LCD_CONFIG_INIT();
     gsp_config.presenter = presenter;
+#ifndef PRESENT_GSP_MONOLITHIC
     gsp_config.disable_accel = true;
     gsp_config.task_stack_psram = true; /* Selects the joinable shutdown path of the Host task shim. */
+#endif
     esp_gsp_handle_t gsp = NULL;
     OK(esp_display_presenter_release_producer(presenter));
     OK(esp_gsp_esp_lcd_start(&app, &gsp_config, &gsp));
@@ -130,7 +141,7 @@ int main(int argc, char **argv)
 
     atomic_store(&fail_acquire, true);
     esp_gsp_handle_t resumed = NULL;
-    assert(esp_gsp_esp_lcd_resume_paused(pause, &resumed) == ESP_FAIL);
+    assert(esp_gsp_esp_lcd_resume_paused(pause, &resumed) != ESP_OK);
     assert(!resumed && atomic_load(&failed_acquires) == 1 && atomic_load(&token_frees) == 0);
     size_t area_count = 0;
     bool full = false;
