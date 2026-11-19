@@ -812,7 +812,7 @@ static void record_buffer_wait(esp_display_present_engine_t *presenter, uint64_t
     present_lock_exit(&presenter->control, false);
 }
 
-static esp_err_t begin_next_frame_impl(esp_display_present_engine_t *presenter, const esp_display_present_frame_request_t *request, uint32_t timeout, bool *gate_held, uint64_t *buffer_wait)
+static esp_err_t begin_next_frame_impl(esp_display_present_engine_t *presenter, const esp_display_present_frame_request_t *request, uint32_t timeout, bool poll, bool *gate_held, uint64_t *buffer_wait)
 {
     esp_err_t ret = check_owner(presenter);
     if (ret != ESP_OK) {
@@ -839,6 +839,9 @@ static esp_err_t begin_next_frame_impl(esp_display_present_engine_t *presenter, 
                 return ret;
             }
         }
+        if (poll) {
+            return ESP_ERR_NOT_FINISHED;
+        }
         mark_buffer_wait(presenter, buffer_wait);
         /* Wake on any copy drain or VSYNC completion, not only head terminal:
          * post-seal async copy drain frees b->active in microseconds without
@@ -851,7 +854,7 @@ static esp_err_t begin_next_frame_impl(esp_display_present_engine_t *presenter, 
 }
 
 static esp_err_t acquire_buffer_impl(esp_display_present_engine_t *presenter, esp_display_present_lease_t *out,
-                                     const esp_display_present_rect_t *area, uint32_t timeout, bool *gate_held, uint64_t *buffer_wait)
+                                     const esp_display_present_rect_t *area, uint32_t timeout, bool poll, bool *gate_held, uint64_t *buffer_wait)
 {
     esp_err_t ret = check_owner(presenter);
     if (ret != ESP_OK) {
@@ -872,6 +875,9 @@ static esp_err_t acquire_buffer_impl(esp_display_present_engine_t *presenter, es
         ret = presenter->ops->acquire(presenter->backend, presenter->frame, area, 0, &presenter->held);
         if (ret != ESP_ERR_TIMEOUT) {
             break;
+        }
+        if (poll) {
+            return ESP_ERR_NOT_FINISHED;
         }
         mark_buffer_wait(presenter, buffer_wait);
         ret = wait_change(presenter, start, timeout, gate_held);
@@ -1151,7 +1157,7 @@ esp_err_t present_presenter_begin_budget(esp_display_present_engine_t *presenter
     }
     bool gate_held = true;
     uint64_t buffer_wait = 0;
-    ret = begin_next_frame_impl(presenter, request, remaining(start, timeout), &gate_held, &buffer_wait);
+    ret = begin_next_frame_impl(presenter, request, remaining(start, timeout), false, &gate_held, &buffer_wait);
     record_buffer_wait(presenter, buffer_wait, ret);
     if (ret == ESP_OK && presenter->metrics) {
         present_lock_enter(&presenter->control, false);
@@ -1168,6 +1174,66 @@ esp_err_t present_presenter_begin_budget(esp_display_present_engine_t *presenter
 esp_err_t esp_display_present_engine_begin_next_frame(esp_display_present_engine_t *presenter, const esp_display_present_frame_request_t *request)
 {
     return presenter ? present_presenter_begin_budget(presenter, request, presenter->timeout) : ESP_ERR_INVALID_ARG;
+}
+
+esp_err_t esp_display_present_engine_get_frame_timeout(esp_display_present_engine_t *presenter, uint32_t *timeout)
+{
+    esp_err_t error = check_owner(presenter);
+    if (error != ESP_OK || !timeout) {
+        return error != ESP_OK ? error : ESP_ERR_INVALID_ARG;
+    }
+    *timeout = presenter->timeout;
+    return ESP_OK;
+}
+
+esp_err_t esp_display_present_engine_try_begin_next_frame(esp_display_present_engine_t *presenter,
+                                                          const esp_display_present_frame_request_t *request)
+{
+    esp_err_t error = check_owner(presenter);
+    if (error != ESP_OK || !request) {
+        return error != ESP_OK ? error : ESP_ERR_INVALID_ARG;
+    }
+    if (!present_mutex_take(presenter->gate, 0)) {
+        return ESP_ERR_NOT_FINISHED;
+    }
+    bool gate_held = true;
+    uint64_t buffer_wait = 0;
+    error = begin_next_frame_impl(presenter, request, 0, true, &gate_held, &buffer_wait);
+    /* A zero-budget poll never sleeps. Do not count each retry as a timed-out
+     * blocking wait. Actual transfer faults still propagate from reap_ready. */
+    if (error == ESP_OK && presenter->metrics) {
+        present_lock_enter(&presenter->control, false);
+        presenter->metrics->frame_started_us = present_now_us();
+        presenter->metrics->frame_started = true;
+        present_lock_exit(&presenter->control, false);
+    }
+    if (gate_held) {
+        give_engine_gate(presenter);
+    }
+    return error;
+}
+
+esp_err_t esp_display_present_engine_try_acquire_buffer(esp_display_present_engine_t *presenter, esp_display_present_lease_t *out)
+{
+    if (out) {
+        *out = (esp_display_present_lease_t) {
+            0
+        };
+    }
+    esp_err_t error = check_owner(presenter);
+    if (error != ESP_OK || !out) {
+        return error != ESP_OK ? error : ESP_ERR_INVALID_ARG;
+    }
+    if (!present_mutex_take(presenter->gate, 0)) {
+        return ESP_ERR_NOT_FINISHED;
+    }
+    bool gate_held = true;
+    uint64_t buffer_wait = 0;
+    error = acquire_buffer_impl(presenter, out, NULL, 0, true, &gate_held, &buffer_wait);
+    if (gate_held) {
+        give_engine_gate(presenter);
+    }
+    return error;
 }
 
 static esp_err_t acquire_area(esp_display_present_engine_t *presenter, const esp_display_present_rect_t *area,
@@ -1191,7 +1257,7 @@ static esp_err_t acquire_area(esp_display_present_engine_t *presenter, const esp
     }
     bool gate_held = true;
     uint64_t buffer_wait = 0;
-    ret = acquire_buffer_impl(presenter, out, area, remaining(start, presenter->timeout), &gate_held, &buffer_wait);
+    ret = acquire_buffer_impl(presenter, out, area, remaining(start, presenter->timeout), false, &gate_held, &buffer_wait);
     record_buffer_wait(presenter, buffer_wait, ret);
     if (gate_held) {
         give_engine_gate(presenter);

@@ -31,11 +31,15 @@ esp_err_t esp_lv_present_native_create(esp_display_present_engine_t *presenter, 
 
 /**
  * @brief Opt-in zero-copy: FULL or two-physical-buffer DIRECT, RGB565/native
- * with LVGL-compatible stride only. DIRECT acquires before LVGL's historical
- * sync; the final flush submits the complete synchronized image once.
- * The next synchronization waits for actual scanout retirement.
- * Renderer leases a backend framebuffer before drawing, and detaches it before
- * refresh-ready. Keeps a private fallback buffer for safe failed admission.
+ * with LVGL-compatible stride only. DIRECT polls admission on invalidation;
+ * backpressure pauses display refresh while other LVGL timers keep running.
+ * An owner-task timer retries only while damage is pending, using one total
+ * configured frame timeout. Manual lv_refr_now() may defer: keep pumping
+ * lv_timer_handler() on the owner task. No framebuffer address is published
+ * without a lease. Historical sync and drawing run only after admission;
+ * the final flush submits the complete synchronized image once.
+ * Actual scanout retirement still controls the next writable lease.
+ * FULL keeps synchronous admission. No fallback pixel canvas is allocated.
  * Other layouts, including rotated DIRECT conversion canvases, use the copy
  * binding above. LVGL versions before 9.5 return ESP_ERR_NOT_SUPPORTED.
  *

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include "core/present_engine.h"
+#include "core/present_control.h"
 #include "present_lvgl.h"
 #include "pixel/present_pixel_ops.h"
 #if LVGL_VERSION_MINOR == 0
@@ -12,6 +13,8 @@
 #include "scan_panel.h"
 #include <time.h>
 #include <stdio.h>
+#include <pthread.h>
+#include "src/display/lv_display_private.h"
 #define OK(x) assert((x)==ESP_OK)
 static unsigned canvas_allocations;
 lv_draw_buf_t *__real_lv_draw_buf_create(uint32_t width, uint32_t height, lv_color_format_t format, uint32_t stride);
@@ -39,6 +42,32 @@ void __wrap_lv_draw_buf_destroy(lv_draw_buf_t *draw)
         ++watched_destroyed;
     }
     __real_lv_draw_buf_destroy(draw);
+}
+typedef struct present_os_event present_os_event_t;
+static bool forbid_wait;
+bool __real_present_event_wait(present_os_event_t *, uint32_t);
+bool __wrap_present_event_wait(present_os_event_t *event, uint32_t timeout)
+{
+    assert(!forbid_wait);
+    return __real_present_event_wait(event, timeout);
+}
+static unsigned admission_polls;
+static esp_err_t acquire_poll_result;
+esp_err_t __real_esp_display_present_engine_try_begin_next_frame(esp_display_present_engine_t *, const esp_display_present_frame_request_t *);
+esp_err_t __wrap_esp_display_present_engine_try_begin_next_frame(esp_display_present_engine_t *p, const esp_display_present_frame_request_t *r)
+{
+    ++admission_polls;
+    return __real_esp_display_present_engine_try_begin_next_frame(p, r);
+}
+esp_err_t __real_esp_display_present_engine_try_acquire_buffer(esp_display_present_engine_t *, esp_display_present_lease_t *);
+esp_err_t __wrap_esp_display_present_engine_try_acquire_buffer(esp_display_present_engine_t *p, esp_display_present_lease_t *out)
+{
+    if (acquire_poll_result) {
+        esp_err_t result = acquire_poll_result;
+        acquire_poll_result = ESP_OK;
+        return result;
+    }
+    return __real_esp_display_present_engine_try_acquire_buffer(p, out);
 }
 #define W 8
 #define H 6
@@ -359,11 +388,285 @@ static void rotation_borrow_failure(void)
 }
 #endif
 
+#if LVGL_VERSION_MINOR >= 5
+static void timer_step(unsigned ticks)
+{
+    for (unsigned i = 0; i < ticks; ++i) {
+        lv_tick_inc(1);
+        (void)lv_timer_handler();
+    }
+}
+
+static void pulse(lv_timer_t *timer)
+{
+    ++*(unsigned *)lv_timer_get_user_data(timer);
+}
+
+static lv_timer_t *admission_timer(esp_lv_present_native_t *binding)
+{
+    for (lv_timer_t *t = lv_timer_get_next(NULL); t; t = lv_timer_get_next(t)) {
+        if (lv_timer_get_user_data(t) == binding) {
+            return t;
+        }
+    }
+    assert(false);
+    return NULL;
+}
+
+static void *bind_other_owner(void *engine)
+{
+    OK(esp_display_present_engine_rebind_producer(engine, 0));
+    return NULL;
+}
+
+/* Real LVGL damage collection, timer scheduling and two physical scan buffers.
+ * Invalidate while both buffers are pinned: neither invalidation nor an
+ * explicit refresh may modify pending/scanning pixels or discard damage. */
+static void deferred_direct(unsigned action)
+{
+    scan_panel_t panel = {0};
+    esp_display_present_engine_config_t cfg = {
+        .backend = {
+            .width = W, .height = H, .tile_rows = 2, .buffer_count = 2, .max_frames = 4,
+            .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = scan_interface(&panel)
+        },
+        .backend_kind = ESP_DISPLAY_PRESENT_ENGINE_FB, .mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT,
+        .timeout_ms = action == 1 ? 5 : 1000
+    };
+    esp_display_present_engine_t *p;
+    OK(esp_display_present_engine_create(&cfg, &p));
+    OK(present_presenter_control_reset_metrics(p));
+    esp_lv_present_native_t *binding;
+    OK(esp_lv_present_native_create_zero_copy(p, &binding));
+    lv_display_t *d = esp_lv_present_native_get_display(binding);
+    lv_timer_t *retry = admission_timer(binding);
+    assert(lv_timer_get_paused(retry));
+    lv_obj_t *screen = lv_display_get_screen_active(d);
+    lv_obj_remove_style_all(screen);
+    lv_obj_set_style_bg_color(screen, lv_color_white(), 0);
+    lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, 0);
+    lv_obj_t *boxes[2];
+    for (unsigned i = 0; i < 2; ++i) {
+        boxes[i] = lv_obj_create(screen);
+        lv_obj_remove_style_all(boxes[i]);
+        lv_obj_set_pos(boxes[i], i ? 5 : 1, i ? 3 : 1);
+        lv_obj_set_size(boxes[i], 2, 2);
+        lv_obj_set_style_bg_color(boxes[i], lv_color_white(), 0);
+        lv_obj_set_style_bg_opa(boxes[i], LV_OPA_COVER, 0);
+    }
+    lv_refr_now(d);
+    assert(panel.cookie);
+    scan_confirm(&panel);
+    OK(esp_display_present_engine_drain(p, 0));
+    check_direct(&panel, 0, 0, false);
+    lv_obj_set_style_bg_color(boxes[0], lv_color_hex(0xff0000), 0);
+    lv_refr_now(d);
+    assert(panel.cookie && panel.current.pixels != panel.pending.pixels);
+    uint8_t current[W * H * 2], pending[W * H * 2];
+    memcpy(current, panel.current.pixels, sizeof(current));
+    memcpy(pending, panel.pending.pixels, sizeof(pending));
+    unsigned polls = admission_polls;
+    forbid_wait = true;
+    lv_obj_set_style_bg_color(boxes[1], lv_color_hex(0x0000ff), 0);
+    forbid_wait = false;
+    assert(admission_polls > polls && !lv_timer_get_paused(retry));
+    assert(lv_timer_get_paused(lv_display_get_refr_timer(d)));
+    assert(!lv_display_get_buf_active(d)->data && d->inv_p);
+    unsigned damage = d->inv_p;
+    lv_refr_now(d); /* Manual refresh bypasses timer pause, but not the null address guard. */
+    assert(d->inv_p == damage && !lv_display_get_buf_active(d)->data);
+    unsigned pulses = 0;
+    lv_timer_t *animation = lv_timer_create(pulse, 1, &pulses);
+    forbid_wait = true;
+    timer_step(3);
+    forbid_wait = false;
+    assert(pulses >= 3);
+    OK(esp_lv_present_native_get_error(binding));
+    lv_obj_set_style_bg_color(boxes[0], lv_color_white(), 0);
+    assert(!memcmp(current, panel.current.pixels, sizeof(current)));
+    assert(!memcmp(pending, panel.pending.pixels, sizeof(pending)));
+    if (action == 1) {
+        /* A second invalidation must not restart the total admission deadline. */
+        timer_step(2);
+        assert(esp_lv_present_native_get_error(binding) == ESP_ERR_TIMEOUT);
+        assert(lv_timer_get_paused(retry) && !lv_display_get_buf_active(d)->data);
+        polls = admission_polls;
+        scan_confirm(&panel); /* Late retirement cannot revive the faulted renderer. */
+        timer_step(3);
+        assert(admission_polls == polls);
+        OK(esp_lv_present_native_destroy(binding));
+    } else if (action == 2) {
+        /* Destroy an outstanding request before handing off the producer. */
+        lv_timer_delete(animation);
+        animation = NULL;
+        polls = admission_polls;
+        OK(esp_lv_present_native_destroy(binding));
+        pthread_t thread;
+        assert(!pthread_create(&thread, NULL, bind_other_owner, p));
+        assert(!pthread_join(thread, NULL));
+        timer_step(5);
+        assert(admission_polls == polls);
+        OK(esp_display_present_engine_rebind_producer(p, 0));
+        scan_confirm(&panel);
+    } else {
+        if (action == 3) {
+            assert(esp_lv_present_native_set_rotation(binding, ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90, 0) == ESP_ERR_TIMEOUT);
+            assert(!lv_timer_get_paused(retry));
+            OK(esp_lv_present_native_get_error(binding));
+        }
+        scan_confirm(&panel);
+        if (action == 4) {
+            /* A successful control transition cancels the stale retry before
+             * changing storage/geometry. The copy binding owns its new canvas. */
+            polls = admission_polls;
+            OK(esp_lv_present_native_set_rotation(binding, ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90, 1000));
+            assert(lv_timer_get_paused(retry));
+            lv_refr_now(d);
+            timer_step(1);
+            assert(admission_polls == polls);
+        } else {
+            timer_step(1);
+            if (!panel.cookie) {
+                lv_refr_now(d);
+            }
+        }
+        OK(esp_lv_present_native_get_error(binding));
+        assert(panel.cookie);
+        scan_confirm(&panel);
+        OK(esp_display_present_engine_drain(p, 0));
+        if (action != 4) {
+            check_direct(&panel, 0, 2, false); /* Both outstanding changes survived. */
+        }
+        lv_timer_delete(animation);
+        animation = NULL;
+        polls = admission_polls;
+        timer_step(5);
+        assert(lv_timer_get_paused(retry) && admission_polls == polls); /* No idle polling. */
+        OK(esp_lv_present_native_destroy(binding));
+    }
+    if (animation) {
+        lv_timer_delete(animation);
+    }
+    OK(esp_display_present_engine_drain(p, 1000));
+    OK(esp_display_present_engine_stop(p, 1000));
+    OK(esp_display_present_engine_destroy(p));
+}
+
+/* Rollback also works when an unrendered full invalidation already holds a
+ * lease. LVGL coalesces the repeated invalidation without emitting a request. */
+static void leased_rotation_timeout(void)
+{
+    scan_panel_t panel = {0};
+    esp_display_present_engine_config_t cfg = {
+        .backend = {
+            .width = W, .height = H, .tile_rows = 2, .buffer_count = 2, .max_frames = 4,
+            .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = scan_interface(&panel)
+        },
+        .backend_kind = ESP_DISPLAY_PRESENT_ENGINE_FB, .mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT, .timeout_ms = 1000
+    };
+    esp_display_present_engine_t *p;
+    OK(esp_display_present_engine_create(&cfg, &p));
+    esp_lv_present_native_t *b;
+    OK(esp_lv_present_native_create_zero_copy(p, &b));
+    lv_display_t *d = esp_lv_present_native_get_display(b);
+    lv_refr_now(d);
+    assert(panel.cookie);
+    lv_obj_set_style_bg_color(lv_display_get_screen_active(d), lv_color_hex(0x0000ff), 0);
+    assert(lv_display_get_buf_active(d)->data && d->inv_p);
+    assert(esp_lv_present_native_set_rotation(b, ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90, 0) == ESP_ERR_TIMEOUT);
+    assert(lv_display_get_buf_active(d)->data || !lv_timer_get_paused(admission_timer(b)));
+    scan_confirm(&panel);
+    timer_step(1);
+    lv_refr_now(d);
+    OK(esp_lv_present_native_get_error(b));
+    assert(panel.cookie);
+    scan_confirm(&panel);
+    OK(esp_lv_present_native_destroy(b));
+    OK(esp_display_present_engine_drain(p, 0));
+    OK(esp_display_present_engine_stop(p, 1000));
+    OK(esp_display_present_engine_destroy(p));
+}
+
+/* Hardware transfer expiry is a terminal fault, never admission backpressure. */
+static void deferred_transfer_fault(void)
+{
+    scan_panel_t panel = {0};
+    esp_display_present_engine_config_t cfg = {
+        .backend = {
+            .width = W, .height = H, .tile_rows = 2, .buffer_count = 2, .max_frames = 4,
+            .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = scan_interface(&panel)
+        },
+        .backend_kind = ESP_DISPLAY_PRESENT_ENGINE_FB, .mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT,
+        .timeout_ms = 1000, .transfer_timeout_ms = 1
+    };
+    esp_display_present_engine_t *p;
+    OK(esp_display_present_engine_create(&cfg, &p));
+    esp_lv_present_native_t *b;
+    OK(esp_lv_present_native_create_zero_copy(p, &b));
+    lv_display_t *d = esp_lv_present_native_get_display(b);
+    lv_refr_now(d);
+    assert(panel.cookie);
+    struct timespec delay = {.tv_nsec = 5000000};
+    nanosleep(&delay, NULL);
+    lv_obj_set_style_bg_color(lv_display_get_screen_active(d), lv_color_hex(0x0000ff), 0);
+    /* Check before get_error(), which can independently discover the fault. */
+    assert(lv_timer_get_paused(admission_timer(b)));
+    assert(esp_lv_present_native_get_error(b) == ESP_ERR_TIMEOUT);
+    OK(esp_lv_present_native_destroy(b));
+    scan_confirm(&panel);
+    esp_err_t drained = esp_display_present_engine_drain(p, 0);
+    assert(drained == ESP_OK || drained == ESP_ERR_TIMEOUT);
+    OK(esp_display_present_engine_stop(p, 1000));
+    OK(esp_display_present_engine_destroy(p));
+}
+
+static void deferred_acquire(esp_err_t injected)
+{
+    scan_panel_t panel = {.immediate = true};
+    esp_display_present_engine_config_t cfg = {
+        .backend = {
+            .width = W, .height = H, .tile_rows = 2, .buffer_count = 2, .max_frames = 4,
+            .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = scan_interface(&panel)
+        },
+        .backend_kind = ESP_DISPLAY_PRESENT_ENGINE_FB, .mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT, .timeout_ms = 1000
+    };
+    esp_display_present_engine_t *p;
+    OK(esp_display_present_engine_create(&cfg, &p));
+    esp_lv_present_native_t *b;
+    OK(esp_lv_present_native_create_zero_copy(p, &b));
+    lv_display_t *d = esp_lv_present_native_get_display(b);
+    lv_refr_now(d);
+    OK(esp_display_present_engine_drain(p, 0));
+    acquire_poll_result = injected;
+    lv_obj_set_style_bg_color(lv_display_get_screen_active(d), lv_color_hex(0x0000ff), 0);
+    assert(!acquire_poll_result);
+    if (injected == ESP_ERR_NOT_FINISHED) {
+        assert(!lv_timer_get_paused(admission_timer(b)));
+        timer_step(1);
+        lv_refr_now(d);
+        OK(esp_lv_present_native_get_error(b));
+    } else {
+        assert(esp_lv_present_native_get_error(b) == injected);
+    }
+    OK(esp_lv_present_native_destroy(b));
+    OK(esp_display_present_engine_drain(p, 0));
+    OK(esp_display_present_engine_stop(p, 1000));
+    OK(esp_display_present_engine_destroy(p));
+}
+#endif
+
 int main(void)
 {
     lv_init();
 #if LVGL_VERSION_MINOR >= 5
     rotation_borrow_failure();
+    for (unsigned action = 0; action < 5; ++action) {
+        deferred_direct(action);
+    }
+    leased_rotation_timeout();
+    deferred_transfer_fault();
+    deferred_acquire(ESP_ERR_NOT_FINISHED);
+    deferred_acquire(ESP_ERR_NO_MEM);
 #endif
     exercise(false, ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_FULL);
     exercise(true, ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_FULL);

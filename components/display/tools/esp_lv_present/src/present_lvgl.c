@@ -24,6 +24,12 @@ struct esp_lv_present_native {
     esp_display_present_backend_caps_t caps;
     size_t bpp;
     bool refreshing;
+    bool borrowed_ready;
+    struct {
+        lv_timer_t *retry;
+        uint32_t started, timeout;
+        bool pending;
+    } admission;
     struct {
         bool in_refresh, closing;
     } lifecycle;
@@ -151,6 +157,7 @@ static esp_err_t copy_flush(esp_lv_present_native_t *binding, const lv_area_t *a
 
 static void detach(esp_lv_present_native_t *binding)
 {
+    binding->borrowed_ready = false;
     if (binding->draw) {
         lv_display_set_draw_buffers(binding->display, binding->draw, NULL);
     } else {
@@ -168,6 +175,10 @@ static void fail_refresh(esp_lv_present_native_t *binding, esp_err_t error)
         binding->error = error;
     }
     lv_timer_pause(lv_display_get_refr_timer(binding->display));
+    if (binding->admission.retry) {
+        lv_timer_pause(binding->admission.retry);
+        binding->admission.pending = false;
+    }
     if (binding->zero_copy) {
         binding->need_tile = false;
         detach(binding);
@@ -238,20 +249,25 @@ static void acquire_before_draw(lv_event_t *event)
 
 /* Borrow before LVGL's entry buffer check, not only before RENDER_START.
  * No owned pixel canvas is needed for FULL or physical two-buffer DIRECT. */
-static esp_err_t borrow_refresh(esp_lv_present_native_t *binding)
+static esp_err_t borrow_refresh(esp_lv_present_native_t *binding, bool poll)
 {
-    if (binding->refreshing) {
+    if (binding->refreshing && binding->borrowed_ready) {
         return ESP_OK;
     }
     const esp_display_present_frame_request_t request = {
         .resolved_pixels = binding->caps.contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT
     };
-    esp_err_t error = esp_display_present_engine_begin_next_frame(binding->presenter, &request);
-    if (error != ESP_OK) {
-        return error;
+    esp_err_t error;
+    if (!binding->refreshing) {
+        error = poll ? esp_display_present_engine_try_begin_next_frame(binding->presenter, &request) :
+                esp_display_present_engine_begin_next_frame(binding->presenter, &request);
+        if (error != ESP_OK) {
+            return error;
+        }
+        binding->refreshing = true;
     }
-    binding->refreshing = true;
-    error = esp_display_present_engine_acquire_buffer(binding->presenter, &binding->lease);
+    error = poll ? esp_display_present_engine_try_acquire_buffer(binding->presenter, &binding->lease) :
+            esp_display_present_engine_acquire_buffer(binding->presenter, &binding->lease);
     if (error != ESP_OK) {
         return error;
     }
@@ -274,11 +290,61 @@ static esp_err_t borrow_refresh(esp_lv_present_native_t *binding)
             return ESP_ERR_INVALID_SIZE;
         }
     }
+    binding->borrowed_ready = true;
     if (binding->display) {
         lv_display_set_draw_buffers(binding->display, &binding->borrowed,
                                     binding->direct.count == 2 ? &binding->direct.peer : NULL);
     }
     return ESP_OK;
+}
+
+/* Deferred DIRECT admission runs only on the LVGL owner task. Invalidation
+ * records damage synchronously; waiting here would stall all animation timers.
+ * Keep the refresh timer paused until the borrowed address carries a lease. */
+static void admit_direct(esp_lv_present_native_t *binding)
+{
+    if (binding->admission.pending && binding->admission.timeout != UINT32_MAX &&
+            lv_tick_elaps(binding->admission.started) >= binding->admission.timeout) {
+        fail_refresh(binding, ESP_ERR_TIMEOUT);
+        return;
+    }
+    esp_err_t error = borrow_refresh(binding, true);
+    if (error == ESP_ERR_NOT_FINISHED) {
+        if (!binding->admission.pending) {
+            binding->admission.pending = true;
+            binding->admission.started = lv_tick_get();
+            lv_timer_reset(binding->admission.retry);
+        }
+        lv_timer_pause(lv_display_get_refr_timer(binding->display));
+        if (!binding->admission.timeout) {
+            fail_refresh(binding, ESP_ERR_TIMEOUT);
+        } else {
+            lv_timer_resume(binding->admission.retry);
+        }
+        return;
+    }
+    if (error != ESP_OK) {
+        fail_refresh(binding, error);
+        return;
+    }
+    bool deferred = binding->admission.pending;
+    binding->admission.pending = false;
+    lv_timer_pause(binding->admission.retry);
+    if (deferred) {
+        lv_timer_resume(lv_display_get_refr_timer(binding->display));
+        lv_timer_ready(lv_display_get_refr_timer(binding->display));
+    }
+}
+
+static void retry_admission(lv_timer_t *timer)
+{
+    esp_lv_present_native_t *binding = lv_timer_get_user_data(timer);
+    if (!binding->admission.pending || binding->lifecycle.closing || binding->error != ESP_OK ||
+            !binding->zero_copy || binding->direct.count != 2) {
+        lv_timer_pause(timer);
+        return;
+    }
+    admit_direct(binding);
 }
 
 static void refresh_event(lv_event_t *event)
@@ -291,9 +357,13 @@ static void refresh_event(lv_event_t *event)
     if (code == LV_EVENT_REFR_REQUEST) {
         binding->direct.requested = true;
         if (!binding->pooled_partial && !binding->lifecycle.in_refresh && binding->error == ESP_OK) {
-            esp_err_t error = borrow_refresh(binding);
-            if (error != ESP_OK) {
-                fail_refresh(binding, error);
+            if (binding->direct.count == 2 && binding->admission.retry) {
+                admit_direct(binding);
+            } else {
+                esp_err_t error = borrow_refresh(binding, false);
+                if (error != ESP_OK) {
+                    fail_refresh(binding, error);
+                }
             }
         }
         return;
@@ -499,7 +569,7 @@ static esp_err_t create_binding(esp_display_present_engine_t *presenter, uint32_
             return ESP_ERR_NO_MEM;
         }
     } else {
-        ret = borrow_refresh(binding);
+        ret = borrow_refresh(binding, false);
         if (ret != ESP_OK) {
             (void)esp_display_present_engine_cancel_frame(presenter);
             lv_free(binding);
@@ -516,6 +586,22 @@ static esp_err_t create_binding(esp_display_present_engine_t *presenter, uint32_
         }
         lv_free(binding);
         return ESP_ERR_NO_MEM;
+    }
+    if (binding->direct.preferred) {
+        ret = esp_display_present_engine_get_frame_timeout(presenter, &binding->admission.timeout);
+        if (ret == ESP_OK) {
+            binding->admission.retry = lv_timer_create(retry_admission, 1, binding);
+            if (!binding->admission.retry) {
+                ret = ESP_ERR_NO_MEM;
+            }
+        }
+        if (ret != ESP_OK) {
+            lv_display_delete(binding->display);
+            (void)esp_display_present_engine_cancel_frame(presenter);
+            lv_free(binding);
+            return ret;
+        }
+        lv_timer_pause(binding->admission.retry);
     }
     lv_display_set_color_format(binding->display, cf);
     lv_display_set_user_data(binding->display, binding);
@@ -625,11 +711,18 @@ esp_err_t esp_lv_present_native_destroy(esp_lv_present_native_t *binding)
         return ret;
     }
     binding->lifecycle.closing = true;
+    if (binding->admission.retry) {
+        lv_timer_pause(binding->admission.retry);
+        binding->admission.pending = false;
+    }
     lv_timer_pause(lv_display_get_refr_timer(binding->display));
     detach(binding);
     ret = esp_display_present_engine_cancel_frame(binding->presenter);
     if (ret != ESP_OK) {
         return ret;
+    }
+    if (binding->admission.retry) {
+        lv_timer_delete(binding->admission.retry);
     }
     lv_display_delete(binding->display);
     if (binding->draw) {
@@ -685,12 +778,18 @@ esp_err_t esp_lv_present_native_set_rotation(esp_lv_present_native_t *binding, e
     if (owned && !draw) {
         return ESP_ERR_NO_MEM;
     }
+    if (binding->admission.retry) {
+        lv_timer_pause(binding->admission.retry);
+    }
     if (binding->refreshing) {
         detach(binding);
         error = esp_display_present_engine_cancel_frame(binding->presenter);
         if (error != ESP_OK) {
             if (draw) {
                 lv_draw_buf_destroy(draw);
+            }
+            if (binding->admission.pending) {
+                lv_timer_resume(binding->admission.retry);
             }
             return error;
         }
@@ -701,9 +800,18 @@ esp_err_t esp_lv_present_native_set_rotation(esp_lv_present_native_t *binding, e
         if (draw) {
             lv_draw_buf_destroy(draw);
         }
+        if (binding->admission.pending) {
+            lv_timer_resume(binding->admission.retry);
+        }
         lv_obj_invalidate(lv_display_get_screen_active(binding->display));
+        /* A full invalidation may already be recorded: LVGL then emits no
+         * REFR_REQUEST. Restore admission explicitly after revoking a lease. */
+        if (binding->zero_copy && binding->direct.count == 2 && !binding->borrowed_ready && binding->error == ESP_OK) {
+            admit_direct(binding);
+        }
         return error;
     }
+    binding->admission.pending = false;
     error = esp_display_present_engine_get_caps(binding->presenter, &binding->caps);
     if (error != ESP_OK) {
         if (draw) {
@@ -735,7 +843,7 @@ esp_err_t esp_lv_present_native_set_rotation(esp_lv_present_native_t *binding, e
     if (draw) {
         lv_display_set_draw_buffers(binding->display, draw, NULL);
     } else {
-        error = borrow_refresh(binding);
+        error = borrow_refresh(binding, false);
         if (error != ESP_OK) {
             /* LVGL may still reference the old owned descriptor. Keep it alive
              * while faulted/paused; destroy releases it after display teardown.

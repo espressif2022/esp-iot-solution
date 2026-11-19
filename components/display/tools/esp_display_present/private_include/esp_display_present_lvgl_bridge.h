@@ -37,6 +37,15 @@ esp_err_t esp_display_present_engine_get_status(esp_display_present_engine_t *pr
 /** @brief Begin a new frame within the configured wait budget; timeout leaves prior state intact. */
 esp_err_t esp_display_present_engine_begin_next_frame(esp_display_present_engine_t *presenter,
                                                       const esp_display_present_frame_request_t *request);
+/** @brief Poll frame admission without sleeping. NOT_FINISHED is backpressure,
+ * not a timeout/fault. Exclusive producer use; does not change the default budget. */
+esp_err_t esp_display_present_engine_try_begin_next_frame(esp_display_present_engine_t *presenter,
+                                                          const esp_display_present_frame_request_t *request);
+/** @brief Poll the active frame's write lease; NOT_FINISHED retains the open frame. */
+esp_err_t esp_display_present_engine_try_acquire_buffer(esp_display_present_engine_t *presenter,
+                                                        esp_display_present_lease_t *lease);
+/** @brief Read the immutable frame admission budget on the bound producer task. */
+esp_err_t esp_display_present_engine_get_frame_timeout(esp_display_present_engine_t *presenter, uint32_t *timeout_ms);
 /** @brief Acquire a writable surface lease for the active frame. */
 esp_err_t esp_display_present_engine_acquire_buffer(esp_display_present_engine_t *presenter, esp_display_present_lease_t *lease);
 /** @brief Acquire a bounded write region of the retained frame canvas.

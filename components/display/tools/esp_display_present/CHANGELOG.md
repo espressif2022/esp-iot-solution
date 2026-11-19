@@ -2,6 +2,12 @@
 
 ## 2.0.0 — Unreleased
 
+- Defer physical two-buffer LVGL DIRECT refreshes under backpressure instead of
+  blocking invalidation and animation timers. Preserve damage until an actual
+  write lease is available, retry on the LVGL owner task with one total deadline,
+  and cancel retries before destruction or rotation. Scanout retirement and
+  FULL/PARTIAL scheduling remain unchanged.
+
 - Execute unrotated single-tile FB copies inline when the selected executor is
   CPU-only. Keep repair asynchronous and preserve queued hardware/custom
   executors, multi-tile overlap and scanout retirement.
