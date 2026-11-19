@@ -2,6 +2,13 @@
 
 ## 2.0.0 — Unreleased
 
+- Track missing regions per physical image instead of retaining eight frame
+  damage generations. FULL and single-image TE allocate no cross-frame history;
+  preserve exact current writes, seeded pixels, cancellation invalidation and
+  conservative repair on region overflow. Size TE write tickets to the configured
+  in-flight input count and account for all dynamic metadata in resource plans.
+- Keep pre-seeded rows protected when bitmap coverage coalesces repair spans.
+
 - Defer physical two-buffer LVGL DIRECT refreshes under backpressure instead of
   blocking invalidation and animation timers. Preserve damage until an actual
   write lease is available, retry on the LVGL owner task with one total deadline,

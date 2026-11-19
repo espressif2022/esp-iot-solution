@@ -72,9 +72,9 @@ static void damage_add(present_damage_set_t *damage, esp_display_present_rect_t 
     }
     damage->areas[damage->count++] = a;
 }
-esp_err_t present_image_init(present_image_builder_t *builder, uint32_t w, uint32_t h)
+esp_err_t present_image_init(present_image_builder_t *builder, uint32_t w, uint32_t h, size_t history_slots)
 {
-    if (!builder || !w || !h || (size_t)w > SIZE_MAX / h) {
+    if (!builder || !w || !h || (size_t)w > SIZE_MAX / h || history_slots > PRESENT_IMAGE_SLOTS) {
         return ESP_ERR_INVALID_ARG;
     }
     memset(builder, 0, sizeof(*builder));
@@ -84,12 +84,26 @@ esp_err_t present_image_init(present_image_builder_t *builder, uint32_t w, uint3
     builder->width = w;
     builder->height = h;
     builder->candidate = builder->baseline = builder->published_baseline = SIZE_MAX;
+    if (history_slots > 1) {
+        builder->stale = present_alloc(present_image_history_memory(history_slots));
+        if (!builder->stale) {
+            return ESP_ERR_NO_MEM;
+        }
+        builder->history_slots = history_slots;
+    }
     return ESP_OK;
+}
+size_t present_image_history_memory(size_t history_slots)
+{
+    return history_slots > 1 ? history_slots * sizeof(present_image_stale_t) : 0;
 }
 void present_image_deinit(present_image_builder_t *builder)
 {
     present_free(builder->coverage);
     builder->coverage = NULL;
+    present_free(builder->stale);
+    builder->stale = NULL;
+    builder->history_slots = 0;
 }
 void present_image_reset(present_image_builder_t *builder, uint32_t w, uint32_t h)
 {
@@ -102,7 +116,9 @@ void present_image_reset(present_image_builder_t *builder, uint32_t w, uint32_t 
     builder->height = h;
     builder->latest = 0;
     memset(builder->versions, 0, sizeof(builder->versions));
-    memset(builder->history, 0, sizeof(builder->history));
+    if (builder->stale) {
+        memset(builder->stale, 0, present_image_history_memory(builder->history_slots));
+    }
 }
 esp_err_t present_image_begin(present_image_builder_t *builder, size_t candidate, size_t baseline)
 {
@@ -280,20 +296,15 @@ void present_image_prepare_repair(present_image_builder_t *builder, bool direct)
         return;
     }
     uint64_t from = builder->versions[builder->candidate], to = builder->versions[builder->baseline];
-    if (direct || !from || !to || from > to || to - from > PRESENT_IMAGE_HISTORY) {
+    if (direct || !from || !to || from > to || !builder->stale || builder->candidate >= builder->history_slots ||
+            builder->stale[builder->candidate].full) {
         builder->repair.full = true;
-    } else
-        for (uint64_t v = from; v < to;) {
-            ++v;
-            present_image_delta_t *delta = &builder->history[v % PRESENT_IMAGE_HISTORY];
-            if (delta->version != v || delta->damage.full) {
-                builder->repair.full = true;
-                break;
-            }
-            for (size_t i = 0; i < delta->damage.count; i++) {
-                damage_add(&builder->repair, delta->damage.areas[i]);
-            }
+    } else {
+        const present_image_stale_t *stale = &builder->stale[builder->candidate];
+        for (size_t i = 0; i < stale->count; ++i) {
+            damage_add(&builder->repair, stale->areas[i]);
         }
+    }
     if (builder->repair.full) {
         builder->repair.count = 1;
         builder->repair.areas[0] = (esp_display_present_rect_t) {
@@ -317,10 +328,10 @@ static bool row_uncovered(const present_image_builder_t *builder, uint32_t y, ui
     if (builder->full_covered || builder->seeded.full) {
         return false;
     }
-    if (builder->coverage) {
-        return present_coverage_all_zero(builder->coverage, (size_t)y * builder->width + x, width);
+    if (builder->coverage && !present_coverage_all_zero(builder->coverage, (size_t)y * builder->width + x, width)) {
+        return false;
     }
-    for (size_t i = 0; i < builder->exact.count; ++i) {
+    for (size_t i = 0; !builder->coverage && i < builder->exact.count; ++i) {
         esp_display_present_rect_t a = builder->exact.areas[i];
         if (y >= a.y && y - a.y < a.height && a.x < x + width && x < a.x + a.width) {
             return false;
@@ -511,9 +522,35 @@ esp_err_t present_image_commit(present_image_builder_t *builder)
     builder->published_baseline = builder->candidate;
     uint64_t v = ++builder->latest;
     builder->versions[builder->candidate] = v;
-    builder->history[v % PRESENT_IMAGE_HISTORY] = (present_image_delta_t) {
-        v, builder->writes
-    };
+    for (size_t i = 0; i < builder->history_slots; ++i) {
+        present_image_stale_t *stale = &builder->stale[i];
+        if (i == builder->candidate) {
+            memset(stale, 0, sizeof(*stale));
+            continue;
+        }
+        if (stale->full) {
+            continue;
+        }
+        if (!builder->versions[i] || builder->writes.full) {
+            stale->full = true;
+            stale->count = 0;
+            continue;
+        }
+        /* Reuse the conservative merge algorithm without widening current
+         * frame coverage. Overflow affects this image only. */
+        present_damage_set_t merged = {0};
+        for (size_t j = 0; j < stale->count; ++j) {
+            damage_add(&merged, stale->areas[j]);
+        }
+        for (size_t j = 0; j < builder->writes.count; ++j) {
+            damage_add(&merged, builder->writes.areas[j]);
+        }
+        stale->full = merged.full || merged.count > PRESENT_IMAGE_STALE_AREAS;
+        stale->count = stale->full ? 0 : merged.count;
+        if (stale->count) {
+            memcpy(stale->areas, merged.areas, stale->count * sizeof(*stale->areas));
+        }
+    }
     return ESP_OK;
 }
 void present_image_cancel(present_image_builder_t *builder)
@@ -527,6 +564,10 @@ void present_image_cancel(present_image_builder_t *builder)
             builder->published_baseline = SIZE_MAX;
         }
         builder->versions[builder->candidate] = 0;
+        if (builder->candidate < builder->history_slots) {
+            builder->stale[builder->candidate].full = true;
+            builder->stale[builder->candidate].count = 0;
+        }
     }
     if (builder->baseline_borrow) {
         present_allocation_drop(&builder->allocations[builder->baseline], PRESENT_REF_COPY);

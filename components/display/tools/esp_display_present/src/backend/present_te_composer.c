@@ -24,6 +24,13 @@ typedef struct {
     size_t candidate;
 } compose_job_t;
 
+typedef struct {
+    esp_display_present_copy_ticket_t ticket;
+    esp_display_present_rect_t area;
+    bool sync_done;
+    esp_err_t sync_result;
+} compose_write_t;
+
 struct present_te_composer {
     present_copy_queue_t *queue;
     esp_display_present_pixel_execute_fn execute;
@@ -36,12 +43,8 @@ struct present_te_composer {
     size_t image_count;
     bool pipelined;
     compose_job_t jobs[2];
-    struct {
-        esp_display_present_copy_ticket_t ticket;
-        esp_display_present_rect_t area;
-        bool sync_done;
-        esp_err_t sync_result;
-    } writes[PRESENT_MAX_COPY_JOBS];
+    compose_write_t *writes;
+    size_t write_capacity;
     size_t pending;
     bool asynchronous;
     esp_display_present_engine_rotation_t rotation;
@@ -114,7 +117,7 @@ esp_err_t present_te_composer_create(const present_te_composer_config_t *cfg, pr
         return ESP_ERR_INVALID_ARG;
     }
     *out = NULL;
-    if (!cfg || cfg->image_count > 2 || !cfg->width || !cfg->height || cfg->rotation < ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || cfg->rotation > ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270 ||
+    if (!cfg || cfg->pixel.max_jobs > PRESENT_MAX_COPY_JOBS || cfg->image_count > 2 || !cfg->width || !cfg->height || cfg->rotation < ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || cfg->rotation > ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270 ||
             (cfg->format != ESP_DISPLAY_PRESENT_FORMAT_RGB565 && cfg->format != ESP_DISPLAY_PRESENT_FORMAT_RGB888) ||
             (cfg->panel_order != ESP_DISPLAY_PRESENT_ORDER_NATIVE && cfg->panel_order != ESP_DISPLAY_PRESENT_ORDER_SWAPPED) ||
             (cfg->format == ESP_DISPLAY_PRESENT_FORMAT_RGB888 && cfg->panel_order != ESP_DISPLAY_PRESENT_ORDER_NATIVE)) {
@@ -141,7 +144,10 @@ esp_err_t present_te_composer_create(const present_te_composer_config_t *cfg, pr
     composer->execute_user = cfg->pixel.execute_user;
     composer->on_event = cfg->pixel.on_event;
     composer->user = cfg->pixel.user;
-    esp_err_t image_error = present_image_init(&composer->image, cfg->width, cfg->height);
+    composer->write_capacity = cfg->pixel.max_jobs ? cfg->pixel.max_jobs :
+                               composer->asynchronous ? 1 : PRESENT_MAX_COPY_JOBS;
+    composer->writes = present_alloc(composer->write_capacity * sizeof(*composer->writes));
+    esp_err_t image_error = present_image_init(&composer->image, cfg->width, cfg->height, composer->image_count);
     for (size_t i = 0; i < composer->image_count; i++) {
         composer->buffers[i] = (esp_display_present_surface_t) {
             .pixels = present_alloc_pixels_in(pixels * bpp, cfg->image_in_psram),
@@ -150,7 +156,7 @@ esp_err_t present_te_composer_create(const present_te_composer_config_t *cfg, pr
         };
     }
     esp_err_t err = ESP_ERR_NO_MEM;
-    if (image_error != ESP_OK || !composer->buffers[0].pixels || (composer->image_count == 2 && !composer->buffers[1].pixels)) {
+    if (image_error != ESP_OK || !composer->writes || !composer->buffers[0].pixels || (composer->image_count == 2 && !composer->buffers[1].pixels)) {
         goto fail;
     }
     if (composer->asynchronous) {
@@ -175,6 +181,7 @@ fail:
     present_image_deinit(&composer->image);
     present_free(composer->buffers[0].pixels);
     present_free(composer->buffers[1].pixels);
+    present_free(composer->writes);
     present_free(composer);
     return err;
 }
@@ -243,10 +250,10 @@ esp_err_t present_te_composer_queue_write(present_te_composer_t *composer, prese
         return ESP_ERR_INVALID_ARG;
     }
     size_t slot = 0;
-    while (slot < PRESENT_MAX_COPY_JOBS && composer->writes[slot].ticket.value) {
+    while (slot < composer->write_capacity && composer->writes[slot].ticket.value) {
         slot++;
     }
-    if (slot == PRESENT_MAX_COPY_JOBS) {
+    if (slot == composer->write_capacity) {
         return ESP_ERR_NO_MEM;
     }
     esp_display_present_copy_request_t r = {
@@ -290,10 +297,10 @@ esp_err_t present_te_composer_finish_write(present_te_composer_t *composer, esp_
         return ESP_ERR_INVALID_ARG;
     }
     size_t slot = 0;
-    while (slot < PRESENT_MAX_COPY_JOBS && composer->writes[slot].ticket.value != ticket.value) {
+    while (slot < composer->write_capacity && composer->writes[slot].ticket.value != ticket.value) {
         slot++;
     }
-    if (slot == PRESENT_MAX_COPY_JOBS) {
+    if (slot == composer->write_capacity) {
         return ESP_ERR_INVALID_STATE;
     }
     esp_err_t copy_result = ESP_OK;
@@ -520,6 +527,7 @@ esp_err_t present_te_composer_destroy(present_te_composer_t *composer)
     present_image_deinit(&composer->image);
     present_free(composer->buffers[0].pixels);
     present_free(composer->buffers[1].pixels);
+    present_free(composer->writes);
     present_free(composer);
     return ESP_OK;
 }
@@ -551,7 +559,8 @@ esp_err_t present_te_composer_set_rotation(present_te_composer_t *composer, esp_
     return composer ? present_te_composer_reorient(composer, rotation, composer->image.width, composer->image.height) : ESP_ERR_INVALID_ARG;
 }
 
-size_t present_composer_memory(void)
+size_t present_composer_memory(size_t images, size_t jobs)
 {
-    return sizeof(present_te_composer_t);
+    return sizeof(present_te_composer_t) + present_image_history_memory(images ? images : 2) +
+           (jobs ? jobs : PRESENT_MAX_COPY_JOBS) * sizeof(compose_write_t);
 }

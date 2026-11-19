@@ -13,7 +13,7 @@
 /** @brief Image repair history and slot capacity constants. */
 enum {
     PRESENT_IMAGE_SLOTS = 3,   /**< Maximum tracked image slots. */
-    PRESENT_IMAGE_HISTORY = 8, /**< Ring depth for recent frame damage deltas. */
+    PRESENT_IMAGE_STALE_AREAS = PRESENT_MAX_DAMAGE_AREAS, /**< Bounded stale regions per physical image. */
 };
 
 /** @brief Bounded damage rectangle set or full-frame flag. */
@@ -23,11 +23,12 @@ typedef struct {
     bool full;                                                  /**< True when full-frame coverage applies. */
 } present_damage_set_t;
 
-/** @brief Versioned frame delta entry recorded at image commit. */
+/** @brief Conservative missing regions for one physical image; overflow repairs in full. */
 typedef struct {
-    uint64_t version;           /**< Published image version. */
-    present_damage_set_t damage;/**< Covered damage associated with @c version. */
-} present_image_delta_t;
+    esp_display_present_rect_t areas[PRESENT_IMAGE_STALE_AREAS];
+    size_t count;
+    bool full;
+} present_image_stale_t;
 
 /** @brief Multi-slot image coverage, repair cursor, and allocation reference state. */
 typedef struct {
@@ -41,7 +42,8 @@ typedef struct {
     size_t coverage_bytes;     /**< Byte size of @c coverage bitmap. */
     uint64_t versions[PRESENT_IMAGE_SLOTS]; /**< Per-slot published content versions. */
     uint64_t latest;           /**< Latest published monotonic content version. */
-    present_image_delta_t history[PRESENT_IMAGE_HISTORY]; /**< Recent published frame deltas. */
+    present_image_stale_t *stale; /**< Per-image missing regions; absent for FULL/single-image use. */
+    size_t history_slots; /**< Number of allocated per-image region tables. */
     present_damage_set_t writes; /**< Producer-written areas in active candidate. */
     present_damage_set_t repair; /**< Pending repair spans to copy from baseline. */
     present_damage_set_t exact;  /**< Exact rectangle coverage accumulated before bitmap fallback. */
@@ -57,7 +59,9 @@ typedef struct {
     size_t repaired_pixels;      /**< Count of pixels repaired for telemetry/testing. */
 } present_image_builder_t;
 /** @brief Initialize image coverage/repair bookkeeping for @p width x @p height. */
-esp_err_t present_image_init(present_image_builder_t *, uint32_t, uint32_t);
+esp_err_t present_image_init(present_image_builder_t *, uint32_t, uint32_t, size_t history_slots);
+/** @brief Return requested history metadata bytes (zero for fewer than two images). */
+size_t present_image_history_memory(size_t history_slots);
 /** @brief Release image bookkeeping resources. */
 void present_image_deinit(present_image_builder_t *);
 /** @brief Reset image bookkeeping and baselines for new dimensions. */

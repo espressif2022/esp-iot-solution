@@ -17,7 +17,7 @@ void *__wrap_present_alloc(size_t bytes)
 static void lazy_coverage(void)
 {
     present_image_builder_t image;
-    assert(present_image_init(&image, 1024, 600) == ESP_OK);
+    assert(present_image_init(&image, 1024, 600, 3) == ESP_OK);
     assert(!image.coverage && image.coverage_bytes == 76800);
     assert(present_image_begin(&image, 0, SIZE_MAX) == ESP_OK);
     assert(present_image_cover(&image, (esp_display_present_rect_t) {
@@ -68,7 +68,7 @@ static void rectangle_reference(void)
 {
     enum {W = 17, H = 9, N = W * H};
     present_image_builder_t image;
-    assert(present_image_init(&image, W, H) == ESP_OK);
+    assert(present_image_init(&image, W, H, 3) == ESP_OK);
     assert(present_image_begin(&image, 0, SIZE_MAX) == ESP_OK);
     assert(present_image_cover(&image, (esp_display_present_rect_t) {
         0, 0, W, H
@@ -121,7 +121,7 @@ static void band_reference(void)
 {
     enum { W = 19, H = 137, N = W * H };
     present_image_builder_t image;
-    assert(present_image_init(&image, W, H) == ESP_OK);
+    assert(present_image_init(&image, W, H, 3) == ESP_OK);
     assert(present_image_begin(&image, 0, SIZE_MAX) == ESP_OK);
     assert(present_image_cover(&image, (esp_display_present_rect_t) {
         0, 0, W, H
@@ -171,7 +171,7 @@ static void mid_repair_bitmap_fallback(void)
 {
     enum { W = 64, H = 64, N = W * H };
     present_image_builder_t image;
-    assert(present_image_init(&image, W, H) == ESP_OK);
+    assert(present_image_init(&image, W, H, 3) == ESP_OK);
     assert(present_image_begin(&image, 0, SIZE_MAX) == ESP_OK);
     assert(present_image_cover(&image, (esp_display_present_rect_t) {
         0, 0, W, H
@@ -226,7 +226,7 @@ static void seeded_baseline(void)
 {
     enum { W = 8, H = 4 };
     present_image_builder_t image;
-    assert(present_image_init(&image, W, H) == ESP_OK);
+    assert(present_image_init(&image, W, H, 3) == ESP_OK);
     assert(present_image_begin(&image, 0, SIZE_MAX) == ESP_OK);
     assert(present_image_cover(&image, (esp_display_present_rect_t) {
         0, 0, W, H
@@ -247,7 +247,7 @@ static void seeded_baseline(void)
     assert(!present_image_next_repair(&image, &area));
     assert(image.repaired_pixels == 0);
     assert(present_image_commit(&image) == ESP_OK);
-    assert(image.history[image.latest % PRESENT_IMAGE_HISTORY].damage.count == 1);
+    assert(image.stale[0].count == 1 && !image.stale[0].full);
 
     /* Replace that one-pixel publication with a wide historical write, then
      * seed only the opposite corner. Repair keeps the historical pixels. */
@@ -295,8 +295,103 @@ static void seeded_baseline(void)
     assert(repaired == 2);
     present_image_deinit(&image);
 }
+/* Bitmap row coalescing must also stop at a separately pre-seeded row. */
+static void seeded_bitmap_band(void)
+{
+    enum {W = 80, H = 8};
+    present_image_builder_t b;
+    assert(present_image_init(&b, W, H, 2) == ESP_OK);
+    assert(present_image_begin(&b, 0, SIZE_MAX) == ESP_OK);
+    assert(present_image_cover(&b, (esp_display_present_rect_t) {
+        0, 0, W, H
+    }) == ESP_OK);
+    assert(present_image_commit(&b) == ESP_OK);
+    assert(present_image_begin(&b, 1, 0) == ESP_OK);
+    for (unsigned x = 0; x <= PRESENT_MAX_DAMAGE_AREAS; ++x) {
+        assert(present_image_cover(&b, (esp_display_present_rect_t) {
+            x * 2, 0, 1, 1
+        }) == ESP_OK);
+    }
+    assert(b.coverage);
+    assert(present_image_seed(&b, (esp_display_present_rect_t) {
+        0, 4, W, 1
+    }) == ESP_OK);
+    present_image_prepare_repair(&b, false);
+    esp_display_present_rect_t area;
+    while (present_image_next_repair(&b, &area)) {
+        assert(area.y > 4 || area.y + area.height <= 4);
+        assert(present_image_mark_repaired(&b, &area) == ESP_OK);
+    }
+    assert(b.repaired_pixels == W * H - W - (PRESENT_MAX_DAMAGE_AREAS + 1));
+    present_image_cancel(&b);
+    present_image_deinit(&b);
+}
+
+/* Reuse arbitrarily old images, overflow conservative history, and cancel
+ * contaminated candidates. Compare every pixel with an independent model. */
+static void stale_slot_reference(void)
+{
+    enum {W = 19, H = 13, N = W * H};
+    uint32_t previous_rng = rng;
+    for (size_t slots = 2; slots <= 3; ++slots) {
+        present_image_builder_t b;
+        assert(present_image_init(&b, W, H, slots) == ESP_OK);
+        uint16_t pixels[3][N] = {{0}}, reference[N] = {0};
+        size_t baseline = SIZE_MAX;
+        unsigned overflows = 0;
+        for (unsigned frame = 0; frame < 1500; ++frame) {
+            size_t candidate = baseline == SIZE_MAX ? 0 : (baseline + 1 + random_u(slots - 1)) % slots;
+            assert(present_image_begin(&b, candidate, baseline) == ESP_OK);
+            uint16_t next[N];
+            memcpy(next, reference, sizeof(next));
+            unsigned writes = frame ? 1 + random_u(20) : N;
+            for (unsigned j = 0; j < writes; ++j) {
+                unsigned i = frame ? random_u(N) : j;
+                pixels[candidate][i] = next[i] = frame + 1;
+                assert(present_image_cover(&b, (esp_display_present_rect_t) {
+                    i % W, i / W, 1, 1
+                }) == ESP_OK);
+            }
+            if (frame && frame % 7 == 0) {
+                present_image_cancel(&b);
+                continue;
+            }
+            if (b.stale[candidate].full) {
+                ++overflows;
+            }
+            present_image_prepare_repair(&b, false);
+            esp_display_present_rect_t area;
+            while (present_image_next_repair(&b, &area)) {
+                assert(baseline != SIZE_MAX);
+                for (unsigned y = area.y; y < area.y + area.height; ++y) {
+                    memcpy(&pixels[candidate][y * W + area.x], &pixels[baseline][y * W + area.x], area.width * 2);
+                }
+                assert(present_image_mark_repaired(&b, &area) == ESP_OK);
+            }
+            assert(!memcmp(pixels[candidate], next, sizeof(next)));
+            assert(present_image_commit(&b) == ESP_OK);
+            memcpy(reference, next, sizeof(next));
+            assert(!b.stale[candidate].count && !b.stale[candidate].full);
+            baseline = candidate;
+        }
+        assert(overflows);
+        present_image_deinit(&b);
+    }
+    present_image_builder_t no_history;
+    fail_coverage_alloc = true;
+    assert(present_image_init(&no_history, W, H, 0) == ESP_OK);
+    assert(!no_history.stale && !no_history.history_slots);
+    present_image_deinit(&no_history);
+    assert(present_image_init(&no_history, W, H, 2) == ESP_ERR_NO_MEM);
+    present_image_deinit(&no_history);
+    fail_coverage_alloc = false;
+    rng = previous_rng;
+}
+
 int main(void)
 {
+    seeded_bitmap_band();
+    stale_slot_reference();
     lazy_coverage();
     rectangle_reference();
     band_reference();
@@ -304,7 +399,7 @@ int main(void)
     seeded_baseline();
     enum { W = 17, H = 9, N = W * H };
     present_image_builder_t b;
-    assert(present_image_init(&b, W, H) == ESP_OK);
+    assert(present_image_init(&b, W, H, 3) == ESP_OK);
     uint16_t buffers[3][N], reference[N];
     memset(buffers, 0xa5, sizeof(buffers));
     memset(reference, 0, sizeof(reference));

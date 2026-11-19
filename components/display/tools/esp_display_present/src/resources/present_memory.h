@@ -28,7 +28,7 @@ size_t present_pixel_memory(size_t jobs, bool async);
 /** @brief Return metadata bytes requested by a copy queue with @p jobs slots. */
 size_t present_copy_queue_memory(size_t jobs, bool dedicated_worker);
 /** @brief Return metadata bytes requested by a TE composer instance. */
-size_t present_composer_memory(void);
+size_t present_composer_memory(size_t images, size_t jobs);
 /** @brief Return metadata bytes requested by a REGION backend configuration. */
 size_t present_region_memory(const struct esp_display_present_backend_config *);
 /** @brief Return metadata bytes requested by a TE backend configuration. */

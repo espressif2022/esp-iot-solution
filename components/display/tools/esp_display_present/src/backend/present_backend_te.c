@@ -1115,7 +1115,7 @@ const present_backend_ops_t present_te_backend = {
 size_t present_te_memory(const esp_display_present_backend_config_t *config)
 {
     return sizeof(present_backend_t) + config->buffer_count * sizeof(te_tile_t) +
-           config->max_frames * (sizeof(present_core_frame_t) + sizeof(te_job_t)) + present_composer_memory() +
+           config->max_frames * (sizeof(present_core_frame_t) + sizeof(te_job_t)) + present_composer_memory(config->compose_count, config->buffer_count) +
            (config->async_copy ? present_copy_queue_memory(config->buffer_count, !config->copy_on_backend_worker) : 0) +
            (config->te_timing.period_us && !config->te_gate.admit ? present_te_timer_memory() : 0);
 }

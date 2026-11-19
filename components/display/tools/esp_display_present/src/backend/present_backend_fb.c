@@ -867,7 +867,8 @@ static esp_err_t fb_create(const esp_display_present_backend_config_t *config, p
     bool physical_partial = config->render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION;
     esp_err_t image_error = present_image_init(&backend->image,
                                                physical_partial && quarter ? config->height : config->width,
-                                               physical_partial && quarter ? config->width : config->height);
+                                               physical_partial && quarter ? config->width : config->height,
+                                               config->render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL ? 0 : config->buffer_count);
     backend->image.allow_scanout_writes = config->active_writes;
     backend->image_physical = physical_partial;
     if (config->render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION) {
@@ -1717,6 +1718,6 @@ size_t present_fb_memory(const esp_display_present_backend_config_t *config)
 {
     size_t tiles = config->render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION ? (config->tile_count ? config->tile_count : 1) : 0;
     /* Runtime rotation may create and retain the initially absent copy queue. */
-    return sizeof(present_backend_t) + tiles * sizeof(fb_tile_t) + config->max_frames * sizeof(present_core_frame_t) +
+    return sizeof(present_backend_t) + present_image_history_memory(config->render_contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL ? 0 : config->buffer_count) + tiles * sizeof(fb_tile_t) + config->max_frames * sizeof(present_core_frame_t) +
            (config->async_copy ? present_copy_queue_memory(copy_job_count(config), !config->copy_on_backend_worker) : 0);
 }
