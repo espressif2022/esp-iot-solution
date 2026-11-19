@@ -1320,7 +1320,13 @@ static esp_err_t fb_submit_region_ex(present_backend_t *backend, esp_display_pre
             .dst_y = physical.y,
             .rotation = backend->config.rotation
         };
-        if (!backend->config.async_copy) {
+        /* One tile cannot overlap its next draw with this copy. Avoid a
+         * worker round trip only when the selected executor is CPU-only;
+         * retain async repair, hardware/custom executors and rotated copies. */
+        bool inline_cpu = backend->tile_count == 1 &&
+                          backend->config.rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 &&
+                          backend->config.copy_is_cpu && backend->config.copy_is_cpu(backend->config.copy_user);
+        if (!backend->config.async_copy || inline_cpu) {
             esp_err_t error = run_sync_copy(backend, &copy);
             if (error != ESP_OK) {
                 return error;

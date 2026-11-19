@@ -911,8 +911,124 @@ static void synchronous_full_rotation_90(void)
     OK(ops->destroy(backend));
 }
 
+typedef struct {
+    bool cpu;
+    bool fail;
+    unsigned calls;
+} inline_copy_probe_t;
+
+static bool probe_cpu(void *user)
+{
+    return ((inline_copy_probe_t *)user)->cpu;
+}
+
+static esp_err_t probe_copy(void *user, const esp_display_present_copy_request_t *copy)
+{
+    inline_copy_probe_t *probe = user;
+    probe->calls++;
+    if (probe->fail) {
+        return ESP_FAIL;
+    }
+    return esp_display_present_pixel_execute_cpu(copy);
+}
+
+static void external_copy_ready(void *user)
+{
+    (void)user;
+}
+
+static void single_tile_cpu_inline(void)
+{
+    for (unsigned hint = 0; hint < 3; ++hint) {
+        for (unsigned rotation = 0; rotation < 2; ++rotation) {
+            for (unsigned tiles = 1; tiles <= 2; ++tiles) {
+                scan_panel_t panel = {0};
+                inline_copy_probe_t probe = {0};
+                esp_display_present_backend_config_t cfg = config(&panel, 2, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION);
+                cfg.tile_count = tiles;
+                cfg.rotation = rotation;
+                cfg.async_copy = cfg.copy_on_backend_worker = true;
+                cfg.on_work = external_copy_ready;
+                cfg.copy_execute = probe_copy;
+                cfg.copy_user = &probe;
+                cfg.copy_is_cpu = hint ? probe_cpu : NULL;
+                present_backend_t *backend;
+                OK(ops->create(&cfg, &backend));
+                /* Query the current selection, not its value at creation. */
+                probe.cpu = hint == 2;
+                bool inline_copy = hint == 2 && !rotation && tiles == 1;
+                esp_display_present_frame_t frame = begin(backend);
+                esp_display_present_lease_t lease;
+                OK(ops->acquire(backend, frame, NULL, 0, &lease));
+                memset(lease.surface.pixels, 0x5a, 16);
+                esp_display_present_region_submit_t sub = {{0, 0, 4, 2}, 8};
+                if (inline_copy) {
+                    /* A rejected inline copy keeps the same lease retryable. */
+                    probe.fail = true;
+                    assert(ops->submit_region_ex(backend, frame, lease.id, &sub) == ESP_FAIL);
+                    assert(probe.calls == 1);
+                    probe.fail = false;
+                    probe.calls = 0;
+                }
+                OK(ops->submit_region_ex(backend, frame, lease.id, &sub));
+                assert(probe.calls == (inline_copy ? 1u : 0u));
+                bool work = ops->copy_work(backend);
+                assert(work == !inline_copy);
+                assert(probe.calls == 1);
+                OK(ops->service(backend));
+                OK(ops->acquire(backend, frame, NULL, 0, &lease));
+                OK(ops->cancel_region(backend, frame, lease.id));
+                OK(ops->cancel_frame(backend, frame, 1000));
+                OK(ops->stop(backend, 1000));
+                OK(ops->destroy(backend));
+            }
+        }
+    }
+}
+
+static void single_tile_cpu_keeps_repair_queued(void)
+{
+    scan_panel_t panel = {0};
+    inline_copy_probe_t probe = {.cpu = true};
+    esp_display_present_backend_config_t cfg = config(&panel, 2, ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION);
+    cfg.tile_count = 1;
+    cfg.async_copy = cfg.copy_on_backend_worker = true;
+    cfg.on_work = external_copy_ready;
+    cfg.copy_execute = probe_copy;
+    cfg.copy_is_cpu = probe_cpu;
+    cfg.copy_user = &probe;
+    present_backend_t *backend;
+    OK(ops->create(&cfg, &backend));
+    esp_display_present_receipt_t first = full(backend, 0x1111);
+    finish(backend, &panel, first);
+    esp_display_present_frame_t frame = begin(backend);
+    write_rect(backend, frame, (esp_display_present_rect_t) {
+        0, 0, 1, 1
+    }, 0x3333);
+    unsigned before_repair = probe.calls;
+    esp_display_present_receipt_t second;
+    OK(ops->end(backend, frame, &second));
+    /* Tile returned immediately, but baseline repair still needs worker work. */
+    assert(probe.calls == before_repair && !panel.cookie);
+    assert(ops->copy_work(backend));
+    for (unsigned i = 0; !panel.cookie && i < 32; ++i) {
+        OK(ops->service(backend));
+        (void)ops->copy_work(backend);
+    }
+    assert(panel.cookie && probe.calls > before_repair);
+    finish(backend, &panel, second);
+    const uint16_t *pixels = panel.current.pixels;
+    for (unsigned i = 0; i < 16; ++i) {
+        assert(pixels[i] == (i ? 0x1111 : 0x3333));
+    }
+    OK(ops->stop(backend, 1000));
+    OK(ops->destroy(backend));
+}
+
 int main(void)
 {
+    single_tile_cpu_keeps_repair_queued();
+    single_tile_cpu_inline();
     synchronous_copy_validation_rejects_bad_request();
     synchronous_full_rotation_90();
     synchronous_repair_retry();

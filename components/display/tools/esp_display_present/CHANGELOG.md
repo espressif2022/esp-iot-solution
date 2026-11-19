@@ -2,6 +2,10 @@
 
 ## 2.0.0 — Unreleased
 
+- Execute unrotated single-tile FB copies inline when the selected executor is
+  CPU-only. Keep repair asynchronous and preserve queued hardware/custom
+  executors, multi-tile overlap and scanout retirement.
+
 - Remove the public `target.io_submit` field and `esp_display_present_io_submit_t`.
   Panel-IO NONE now derives submission context from the final input count: one
   buffer uses the caller, two use one backend worker. Automatic 2->1 allocation

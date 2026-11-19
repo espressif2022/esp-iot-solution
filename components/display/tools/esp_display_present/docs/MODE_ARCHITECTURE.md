@@ -44,6 +44,8 @@ RGB / DSI 不支持 TE_SYNC；Panel IO 不支持这些 FB FULL / DIRECT / PARTIA
 | lcd_io | IO color transfer done | 本次传输的源像素 | 面板已经扫描显示完整图像 |
 | lcd_fb_scanout | 经验证的 framebuffer 完成协议 | 在 backend 确认交接后退休的旧 FB | 不能用普通源拷贝完成或任意 VSYNC 替代 |
 
+FB PARTIAL 的单 tile、0° 路径在当前执行器明确为 CPU 时直接完成 tile 复制，避免无法形成绘制重叠的任务往返。执行器按运行时选择查询；硬件或未知执行器、旋转、双 tile 仍走原复制队列。repair 与 framebuffer 退休协议不变。
+
 FB 路径中 tile 可以在复制完成后归还，但 framebuffer 仍必须留到扫描退休。RGB bounce、S31 请求式切链与 DSI 的具体协议由 scanout 适配器内部解析，用户不选择 `rgb.scanout`；详见 [扫描交接与锁域](../STATE_MACHINE.md)。
 
 ## 命名边界

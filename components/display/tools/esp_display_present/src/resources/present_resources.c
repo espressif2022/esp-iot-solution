@@ -304,6 +304,17 @@ esp_err_t present_resources_plan(const esp_display_presenter_config_t *input, bo
     return plan_resources(input, bounce, out, &degradation);
 }
 
+/* Executor selection is refreshed on rotation changes; do not cache CPU
+ * eligibility in the backend configuration or infer it from chip names. */
+static bool copy_is_cpu(void *user)
+{
+    present_resources_t *resources = user;
+    present_lock_enter(&resources->lock, false);
+    bool cpu = resources->cpu && resources->dispatch.primary == resources->cpu;
+    present_lock_exit(&resources->lock, false);
+    return cpu;
+}
+
 static esp_err_t copy_execute(void *user, const esp_display_present_copy_request_t *request)
 {
     present_resources_t *resources = user;
@@ -476,6 +487,7 @@ static esp_err_t create_planned_engine(present_resources_t *resources, const esp
 {
     /* Single resolve per attempt: status.plan is the plan actually used. */
     config->presenter.backend.copy_execute = config->presenter.backend.async_copy ? copy_execute : NULL;
+    config->presenter.backend.copy_is_cpu = copy_is_cpu;
     esp_err_t error = present_engine_create_with_plan(config, &resources->status.plan, &resources->presenter);
     if (error != ESP_ERR_NO_MEM || input->target.drawbuf.buffers != 0 || config->resources.tile_count != 2) {
         return error;
@@ -498,6 +510,7 @@ static esp_err_t create_planned_engine(present_resources_t *resources, const esp
     resolve_pixel_path(config);
     resolve_worker_policy(config);
     config->presenter.backend.copy_execute = config->presenter.backend.async_copy ? copy_execute : NULL;
+    config->presenter.backend.copy_is_cpu = copy_is_cpu;
     return present_engine_create_with_plan(config, &resources->status.plan, &resources->presenter);
 }
 
