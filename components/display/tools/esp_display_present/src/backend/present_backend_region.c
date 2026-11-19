@@ -584,7 +584,9 @@ static esp_err_t region_submit_region_ex(present_backend_t *backend, esp_display
         tx->state = TX_READY;
         --ctx.record->leased;
         present_lock_exit(&backend->lock, false);
-        if (backend->config.on_progress) {
+        if (backend->config.on_work) {
+            backend->config.on_work(backend->config.work_user);
+        } else if (backend->config.on_progress) {
             (void)backend->config.on_progress(backend->config.progress_user, false);
         }
         return ESP_OK;

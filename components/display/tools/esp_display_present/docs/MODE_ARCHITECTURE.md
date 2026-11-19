@@ -50,7 +50,7 @@ FB 路径中 tile 可以在复制完成后归还，但 framebuffer 仍必须留�
 
 region 与 FB、TE 的职责保持分离；删除 fb_update 后，输出适配器只保留 lcd_io 和 lcd_fb_scanout。历史命名与性能记录保留当时源码和哈希。
 
-Panel-IO `NONE` 的像素处理与提交任务由实例配置 `target.io_submit` 决定，不通过 Kconfig 配置。历史性能报告和证据保留当时名称与哈希。LCD 适配器统一为 lcd_io、lcd_fb_scanout；这些内部改名不扩展硬件支持范围。
+Panel-IO `NONE` 的像素处理与提交任务由最终分配的输入缓冲数量决定：一块由调用任务执行，两块由 backend 任务执行，不通过 Kconfig 配置。历史性能报告和证据保留当时名称与哈希。LCD 适配器统一为 lcd_io、lcd_fb_scanout；这些内部改名不扩展硬件支持范围。
 
 ## 平台模块分组与 TE 边界
 
@@ -87,8 +87,9 @@ FULL 零拷贝及原生双缓冲 DIRECT 先取得租约，再挂载 LVGL 描述�
 
 ## Panel IO NONE 输出收敛
 
-只保留 CALLER（零后台任务）与 BACKGROUND/WORKER（一个 backend）两种执行上下文。
-T=1/2 和 D 的内部／PSRAM 位置独立选择；swap、旋转不创建 pixel 任务。
+按最终实际 D 数量派生执行上下文：D1 为 CALLER（零后台任务），D2 为 BACKGROUND/WORKER（一个 backend）。
+自动 D2 分配失败降至 D1 时重算任务与预算；没有独立的公开提交策略开关。
+D 的内部／PSRAM 位置仍可独立选择；swap、旋转不创建 pixel 任务。
 
 0°、行连续且实际地址／长度满足 DMA 条件时，直接发送 D，需要时原地 swap16。
 其他请求由 lcd_io.emit 读取 D，融合旋转、swap 和源 stride，填入两块有界内部 S。

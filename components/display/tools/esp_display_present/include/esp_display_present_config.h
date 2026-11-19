@@ -90,6 +90,8 @@ typedef struct {
 
 /**
  * @brief Producer draw-buffer policy (tile pool in PARTITION modes, plus TE compose count).
+ * Panel-IO NONE derives submission context from the final allocated count:
+ * one input buffer uses the caller; two use one backend task.
  */
 typedef struct {
     uint16_t lines;   /**< Input tile rows; 0 uses the configured default byte target. */
@@ -98,19 +100,11 @@ typedef struct {
     uint8_t te_compose_buffers; /**< TE_SYNC full-screen compose buffers (0/1 single, 2 pipelined). */
 } esp_display_present_drawbuf_config_t;
 
-/** @brief Pixel processing and driver submission context for Panel-IO NONE. */
-typedef enum {
-    ESP_DISPLAY_PRESENT_IO_SUBMIT_DEFAULT = 0, /**< Caller processing/submission (same as CALLER). */
-    ESP_DISPLAY_PRESENT_IO_SUBMIT_CALLER,      /**< Process pixels and submit from the producer task; may block. */
-    ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND,  /**< Process pixels and submit from one backend task; priority follows component task policy. */
-} esp_display_present_io_submit_t;
-
 /** @brief Target hardware, presentation policy and endpoint memory configuration. */
 typedef struct {
     esp_display_present_hw_config_t hw; /**< Panel and bus configuration. */
     esp_display_present_fb_config_t fb; /**< Framebuffer presentation policy. */
     esp_display_present_drawbuf_config_t drawbuf; /**< Partition draw-buffer policy. */
-    esp_display_present_io_submit_t io_submit; /**< Panel-IO NONE processing/submission task policy. */
 } esp_display_present_target_config_t;
 
 #ifdef __cplusplus

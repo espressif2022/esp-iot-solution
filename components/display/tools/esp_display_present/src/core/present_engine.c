@@ -87,7 +87,7 @@ static void give_engine_gate(esp_display_present_engine_t *presenter)
 /* Synchronous task-side service requests are published with the gate held. */
 static void schedule_service(esp_display_present_engine_t *presenter)
 {
-    if (deferred_service_enabled(presenter)) {
+    if (deferred_service_enabled(presenter) || presenter->deferred_region) {
         presenter->service_kick = true;
     } else {
         (void)present_event_signal(presenter->work, false);
@@ -159,6 +159,18 @@ static void pixel_work_ready(void *user)
         presenter->copy_kick = true;
     } else {
         (void)present_event_signal(presenter->work, false);
+    }
+}
+
+/* REGION READY is a synchronous enqueue notification under the engine gate.
+ * Completion callbacks keep using pixel_progress and never touch gate-owned kicks. */
+static void region_work_ready(void *user)
+{
+    esp_display_present_engine_t *presenter = user;
+    schedule_service(presenter);
+    (void)present_event_signal(presenter->changed, false);
+    if (presenter->user_progress) {
+        (void)presenter->user_progress(presenter->progress_user, false);
     }
 }
 
@@ -694,7 +706,7 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
     };
     backend.on_progress = pixel_progress;
     backend.progress_user = presenter;
-    backend.on_work = pixel_work_ready;
+    backend.on_work = presenter->kind == ESP_DISPLAY_PRESENT_ENGINE_REGION ? region_work_ready : pixel_work_ready;
     backend.work_user = presenter;
     esp_err_t ret = presenter->ops->create_scheduled ?
                     presenter->ops->create_scheduled(&backend, &presenter->backend, config->background_service) :

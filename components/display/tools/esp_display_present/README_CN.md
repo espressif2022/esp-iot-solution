@@ -97,7 +97,6 @@ esp_err_t create_io_presenter(esp_lcd_panel_handle_t panel,
             },
             .fb.mode = ESP_DISPLAY_PRESENT_MODE_NONE,
             .drawbuf = {.lines = 32, .buffers = 2, .in_psram = false},
-            .io_submit = ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND,
         },
     };
     return esp_display_presenter_create(&config, out_presenter);
@@ -108,23 +107,23 @@ esp_err_t create_io_presenter(esp_lcd_panel_handle_t panel,
 |---|---|---|
 | `open()` | 物理宽高 | 默认缓冲策略 |
 | `open_ex()` | 物理宽高 | 自定义 tile 行数、数量、PSRAM 偏好及 TE 合成帧数 |
-| `create()` | 逻辑宽高 | 还可设置 `io_submit`、超时、脏区上限及显式 framebuffer |
+| `create()` | 逻辑宽高 | 还可设置超时、脏区上限及显式 framebuffer |
 
 旋转由 `hw.rotation` 指定。创建后用 `get_caps()` 查询绘制合同，用 `get_effective_config()` 核对实际模式、缓冲数量、内存位置和降级标志。panel、IO 及驱动存储须保持有效，直到 Presenter 删除成功；其间由 Present 管理注册的完成回调。
 
 ## Panel IO NONE：绘制与发送
 
-**D 是渲染器绘制的缓冲，S 是内部 DMA 分片中转缓冲。** 推荐按下面三个组合选择；1/2 块 D 与两种内存位置也可独立搭配。
+**D 是渲染器绘制的缓冲，S 是内部 DMA 分片中转缓冲。** 推荐按下面两个组合选择；1/2 块 D 与两种内存位置也可独立搭配。
 
-| 组合 | `io_submit` | `drawbuf.buffers` | `drawbuf.in_psram` | Present 后台任务 |
+| 组合 | `drawbuf.buffers` | `drawbuf.in_psram` | 提交上下文 | Present 后台任务 |
 |---|---|---|---|---|
-| 简单小 tile，最低任务开销 | `CALLER` | 1 | `false` | 0 |
-| 常规 tile，绘制与输出重叠 | `BACKGROUND` | 2 | `false` | 1 个 backend |
-| 大 tile／整屏 D，节省内部绘制内存 | `BACKGROUND` | 2 | `true` | 1 个 backend |
+| 单块输入缓冲，最低任务开销 | 1 | `false` / `true` | 调用任务处理像素并提交，可能阻塞 | 0 |
+| 双块输入缓冲，绘制与输出重叠 | 2 | `false` / `true` | 一个 backend 任务处理并提交 | 1 个 backend |
 
-表中 `CALLER` / `BACKGROUND` 均省略 `ESP_DISPLAY_PRESENT_IO_SUBMIT_` 前缀。`DEFAULT` 等同 `CALLER`；`open()`、`open_ex()` 使用 `DEFAULT`。只有 `NONE` 允许显式设置此策略。
-
-CALLER 在调用任务中处理像素并提交驱动，可能阻塞。BACKGROUND 把这些工作交给一个 backend 任务。swap、旋转、D 的内存位置均不再增加 pixel 任务。
+`NONE` 按最终实际分配的 D 数量选择提交上下文，没有独立提交策略开关。
+`buffers=0` 自动尝试两块；资源不足降级为一块时，同时取消后台提交任务并重新计算预算。
+显式指定两块时，分配失败返回错误，不静默降级。`open()`、`open_ex()`、`create()` 使用相同规则。
+DMA 完成仍由真实回调确认。swap、旋转、D 的内存位置均不增加 pixel 任务；TE 和 framebuffer 的调度规则保持独立。
 
 ### 每次提交如何选择输出路径
 

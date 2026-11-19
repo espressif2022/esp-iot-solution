@@ -2,6 +2,12 @@
 
 ## 2.0.0 — Unreleased
 
+- Remove the public `target.io_submit` field and `esp_display_present_io_submit_t`.
+  Panel-IO NONE now derives submission context from the final input count: one
+  buffer uses the caller, two use one backend worker. Automatic 2->1 allocation
+  fallback also recomputes the worker and stack budget. Existing initializers
+  must remove `.io_submit`; TE/framebuffer scheduling and DMA retirement are unchanged.
+
 - Fail worker-owned Panel IO requests on staging OOM and safely return their D
   buffers. Distinguish driver backpressure from allocation failure, wait for
   genuine completion to retry, and avoid rejected submissions self-waking in a
@@ -13,7 +19,7 @@
   REGION pixel workers and input-sized conversion pools; retain D until logical
   transfer completion. PSRAM full-screen D uses the same PARTITION contract.
 - Share IO_STAGING_SLOT_BYTES between NONE and TE, migrating the old TE Kconfig
-  name; NONE allocates staging lazily and DEFAULT selects CALLER.
+  name; NONE allocates staging lazily and input count selects its submission context.
 - Run single-image TE composition on the existing backend worker while
   retaining asynchronous copy ownership; dual-image TE keeps its pixel worker.
 - Detect TE short-pulse polarity after enabling the input, using a bounded

@@ -44,8 +44,11 @@ typedef struct {
  * direct DMA per request, otherwise rotates/copies/swaps CPU-readable input
  * into two bounded internal slots. Source stride may exceed its pixel width.
  * Internal RAM is the default.
- * PSRAM direct DMA is opt-in and requires a capable SoC/SPI host, the underlying
- * esp_lcd IO psram_dma_direct flag, and a transfer length divisible by 64.
+ * PSRAM direct DMA is opt-in and requires a capable SoC/SPI host and the
+ * underlying esp_lcd IO psram_dma_direct flag. REGION delegates transfer-length
+ * alignment to IDF SPI, which may allocate a temporary aligned PSRAM buffer;
+ * bypassing adapter staging does not promise a zero-copy driver transaction.
+ * Non-REGION raw submit retains its 64-byte transfer-length contract.
  * Cache writeback occurs before draw_bitmap. Explicit staging_bytes reserves
  * two internal DMA slots and accepts CPU-readable source memory. At most one
  * band is in DMA; the next slot can be filled concurrently. Actual wire bytes

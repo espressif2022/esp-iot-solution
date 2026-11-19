@@ -149,6 +149,7 @@ esp_err_t esp_lcd_panel_draw_bitmap(esp_lcd_panel_handle_t panel, int x, int y, 
     unsigned width = panel->physical_width ? panel->physical_width : 8;
     unsigned height = panel->physical_height ? panel->physical_height : 4;
     assert(x >= 0 && y >= 0 && (unsigned)ex <= width && (unsigned)ey <= height);
+    pthread_mutex_lock(&panel->lock);
     panel->source = source;
     ++panel->calls;
     const uint16_t *pixels = source;
@@ -157,10 +158,21 @@ esp_err_t esp_lcd_panel_draw_bitmap(esp_lcd_panel_handle_t panel, int x, int y, 
             image[row * width + col] = *pixels++;
         }
     }
+    pthread_cond_broadcast(&panel->changed);
+    pthread_mutex_unlock(&panel->lock);
     if (immediate) {
         (void)panel->io(panel, NULL, panel->user);
     }
     return ESP_OK;
+}
+static void wait_panel_calls(struct fake_lcd *panel, unsigned count)
+{
+    pthread_mutex_lock(&panel->lock);
+    while (panel->calls < count) {
+        pthread_cond_wait(&panel->changed, &panel->lock);
+    }
+    assert(panel->calls == count);
+    pthread_mutex_unlock(&panel->lock);
 }
 static esp_display_presenter_config_t io_config(struct fake_lcd *panel)
 {
@@ -168,6 +180,8 @@ static esp_display_presenter_config_t io_config(struct fake_lcd *panel)
     cfg.target.hw.panel_type = ESP_DISPLAY_PRESENT_PANEL_IO;
     cfg.target.hw.io = panel;
     cfg.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_NONE;
+    /* Protocol/caller tests use D1; count-derived D2 is exercised separately. */
+    cfg.target.drawbuf.buffers = 1;
     cfg.transfer_timeout_ms = 20;
     cfg.pipeline_acquire_timeout_ms = 10;
     return cfg;
@@ -276,6 +290,7 @@ static void leases_and_stop(void)
     init_panel(&panel);
     unavailable = true;
     esp_display_presenter_config_t cfg = io_config(&panel);
+    cfg.target.drawbuf.buffers = 2;
     esp_display_presenter_t *p;
     OK(esp_display_presenter_create(&cfg, &p));
     esp_display_presenter_caps_t caps;
@@ -295,6 +310,7 @@ static void leases_and_stop(void)
     };
     assert(esp_display_presenter_submit_buffer(p, &unleased, &full_area, 16) == ESP_ERR_INVALID_STATE);
     esp_display_presenter_buffer_t old = draw(p, 0x4567);
+    wait_panel_calls(&panel, 1);
     assert(old.surface.pixels == pool.buffers[0] || old.surface.pixels == pool.buffers[1]);
     esp_display_presenter_frame_receipt_t receipt;
     assert(esp_display_presenter_commit_frame_with_receipt(p, NULL, true, &receipt) == ESP_ERR_NOT_SUPPORTED && !receipt.frame_id);
@@ -324,6 +340,39 @@ static void leases_and_stop(void)
     assert(!pthread_join(reader, NULL));
     free_panel(&panel);
 }
+/* Count-derived factory policy creates exactly the required submission task.
+ * This covers default D2 as well as explicit D1/D2, with real completion. */
+static void gram_count_selects_submission(void)
+{
+    for (unsigned memory = 0; memory < 2; ++memory) {
+        for (unsigned requested = 0; requested <= 2; ++requested) {
+            struct fake_lcd panel;
+            init_panel(&panel);
+            immediate = true;
+            esp_display_presenter_config_t cfg = io_config(&panel);
+            cfg.target.drawbuf.buffers = requested;
+            cfg.target.drawbuf.in_psram = memory;
+            cfg.transfer_timeout_ms = 1000;
+            unsigned backends_before = backend_workers_created, pixels_before = pixel_workers_created;
+            esp_display_presenter_t *presenter;
+            OK(esp_display_presenter_create(&cfg, &presenter));
+            unsigned expected = requested ? requested : 2;
+            esp_display_presenter_effective_config_t effective;
+            OK(esp_display_presenter_get_effective_config(presenter, &effective));
+            assert(effective.tile_count == expected && effective.draw_buffer_count == expected);
+            assert(backend_workers_created == backends_before + (expected == 2));
+            assert(pixel_workers_created == pixels_before);
+            start_frame(presenter, false, true);
+            (void)draw(presenter, 0x1234);
+            OK(esp_display_presenter_commit_frame(presenter, NULL));
+            OK(esp_display_presenter_quiesce(presenter, 1000));
+            assert(panel.calls == 1 && image[31] == 0x1234);
+            delete_eventually(presenter);
+            free_panel(&panel);
+        }
+    }
+}
+
 static void rotation_and_fault(void)
 {
     struct fake_lcd panel;
@@ -1408,6 +1457,7 @@ static void effective_config_low_memory(void)
         bool fb = profile == 3;
         esp_display_presenter_config_t cfg = fb ? config(&panel, false) : io_config(&panel);
         cfg.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_AUTO;
+        cfg.target.drawbuf.buffers = 0; /* Exercise real automatic allocation/fallback. */
         cfg.target.drawbuf.in_psram = !fb;
         if (fb) {
             panel.available_fbs = 2;
@@ -1489,7 +1539,8 @@ static void region_psram_fallback_path(void)
                                                                       ESP_DISPLAY_PRESENT_MEMORY_PSRAM : ESP_DISPLAY_PRESENT_MEMORY_INTERNAL));
         assert(pixel_workers_created == pixels_before);
         /* DEFAULT remains CALLER even after PSRAM fallback. */
-        assert(backend_workers_created == backends_before);
+        /* The failed automatic D2 attempt joins its worker; final D1 has none. */
+        assert(backend_workers_created == backends_before + (profile == 2));
         unsigned allocations_before = allocation_index;
         immediate = true;
         start_frame(presenter, false, true);
@@ -1526,6 +1577,7 @@ static void region_rotation_without_conversion_pool(void)
     struct fake_lcd panel;
     init_panel(&panel);
     esp_display_presenter_config_t cfg = io_config(&panel);
+    cfg.target.drawbuf.buffers = 2;
     cfg.target.drawbuf.buffers = 2;
     esp_display_presenter_t *presenter;
     OK(esp_display_presenter_create(&cfg, &presenter));
@@ -2435,6 +2487,7 @@ static void gram_exhaustion_and_stop(void)
                 esp_display_presenter_buffer_t old[2];
                 for (unsigned i = 0; i < tiles; ++i) {
                     old[i] = draw(presenter, 0x6a00 + i);
+                    wait_panel_calls(&panel, i + 1);
                     sources[i] = panel.source;
                     assert(sources[i] == old[i].surface.pixels);
                 }
@@ -2549,6 +2602,7 @@ static void status_projection(void)
 int main(void)
 {
     status_projection();
+    gram_count_selects_submission();
     gram_exhaustion_and_stop();
     session_handoff_failures();
     create_allocation_rollback();

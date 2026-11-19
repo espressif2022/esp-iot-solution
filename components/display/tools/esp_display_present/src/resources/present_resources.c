@@ -103,7 +103,7 @@ static size_t default_tiles(bool overlap, esp_display_present_plan_memory_t memo
     return 2;
 #else
     if (!overlap) {
-        return 2;    /* V1 plain region default. */
+        return 2;    /* REGION default; submission follows the final count. */
     }
     if (portNUM_PROCESSORS < 2) {
         *degradation |= ESP_DISPLAY_PRESENT_DEGRADE_TILE_SINGLE_CORE;
@@ -119,18 +119,6 @@ static size_t default_tiles(bool overlap, esp_display_present_plan_memory_t memo
     *degradation |= ESP_DISPLAY_PRESENT_DEGRADE_TILE_HEADROOM;
     return 1;
 #endif
-}
-
-/* Creation-only input policy, not another stored execution plan. */
-typedef struct {
-    bool background;
-} submission_policy_t;
-
-static submission_policy_t read_submission_policy(esp_display_present_io_submit_t request)
-{
-    return (submission_policy_t) {
-        .background = request == ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND,
-    };
 }
 
 /* Memory and layout are already selected. No IO/heap query or task creation.
@@ -150,8 +138,8 @@ static void resolve_pixel_path(esp_display_present_plan_config_t *plan)
     backend->async_copy = false;
 }
 
-/* Derive FB/TE queue sharing and REGION output context from explicit policy. */
-static void resolve_worker_policy(esp_display_present_plan_config_t *plan, const submission_policy_t *submission)
+/* Derive queue sharing and output context from the final resource counts. */
+static void resolve_worker_policy(esp_display_present_plan_config_t *plan)
 {
     esp_display_present_backend_config_t *backend = &plan->presenter.backend;
     backend->copy_on_backend_worker = false;
@@ -162,7 +150,7 @@ static void resolve_worker_policy(esp_display_present_plan_config_t *plan, const
     }
 
     bool region = plan->presenter.backend_kind == ESP_DISPLAY_PRESENT_ENGINE_REGION;
-    backend->deferred_submit = region && submission->background;
+    backend->deferred_submit = region && plan->resources.tile_count == 2;
     plan->presenter.background_service = backend->async_copy || backend->deferred_submit;
 
     /* All backend topologies share one application override. Zero snapshots
@@ -178,9 +166,7 @@ static esp_err_t plan_resources(const esp_display_presenter_config_t *input, boo
             input->pixel_format < ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB565 || input->pixel_format > ESP_DISPLAY_PRESENT_PIXEL_FORMAT_RGB888 ||
             input->pixel_format != input->target.hw.input_pixel_format || input->max_damage_areas > UINT16_MAX ||
             input->target.drawbuf.buffers > 2 || input->target.drawbuf.te_compose_buffers > 2 ||
-            input->target.fb.frame_buffer_count > 3 ||
-            input->target.io_submit < ESP_DISPLAY_PRESENT_IO_SUBMIT_DEFAULT ||
-            input->target.io_submit > ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND) {
+            input->target.fb.frame_buffer_count > 3) {
         return ESP_ERR_INVALID_ARG;
     }
     (void)bounce; /* Adapter queries authoritative RGB facts at creation. */
@@ -298,22 +284,17 @@ static esp_err_t plan_resources(const esp_display_presenter_config_t *input, boo
             .logical_memory = preferred_external_memory((size_t)input->width * input->height * bytes_per_pixel, 1),
         },
     };
-    const submission_policy_t submission = read_submission_policy(input->target.io_submit);
     resolve_pixel_path(out);
     size_t slot_bytes = tile_bytes;
     if (partial) {
-        bool overlap = out->presenter.backend.async_copy || (!framebuffer && !te && submission.background);
+        bool overlap = out->presenter.backend.async_copy;
         out->resources.tile_count = input->target.drawbuf.buffers ? input->target.drawbuf.buffers :
                                     default_tiles(overlap, tile_memory, slot_bytes, reserved, degradation);
         if (!framebuffer) {
             out->presenter.backend.buffer_count = out->resources.tile_count;
         }
     }
-    resolve_worker_policy(out, &submission);
-    if (input->target.io_submit != ESP_DISPLAY_PRESENT_IO_SUBMIT_DEFAULT &&
-            mode.kind != ESP_DISPLAY_PRESENT_ENGINE_REGION) {
-        return ESP_ERR_INVALID_ARG;
-    }
+    resolve_worker_policy(out);
     return ESP_OK;
 }
 
@@ -513,10 +494,9 @@ static esp_err_t create_planned_engine(present_resources_t *resources, const esp
         config->resources.tile_memory = preferred_external_memory(bytes, 1);
     }
     /* A retry may change both tile memory and count. Recompute each decision
-     * from the final resources, without changing the submission policy. */
-    const submission_policy_t submission = read_submission_policy(input->target.io_submit);
+     * from the final resources, including REGION submission context. */
     resolve_pixel_path(config);
-    resolve_worker_policy(config, &submission);
+    resolve_worker_policy(config);
     config->presenter.backend.copy_execute = config->presenter.backend.async_copy ? copy_execute : NULL;
     return present_engine_create_with_plan(config, &resources->status.plan, &resources->presenter);
 }

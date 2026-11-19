@@ -49,7 +49,7 @@ struct esp_display_present_backend_config {
     void *copy_user;                                   /**< User context passed to @c copy_execute. */
     esp_display_present_progress_fn on_progress;       /**< Optional wake callback invoked outside locks (cannot reenter APIs). */
     void *progress_user;                               /**< User context passed to @c on_progress. */
-    void (*on_work)(void *user);                       /**< Optional wake callback when external copy work is queued. */
+    void (*on_work)(void *user);                       /**< Optional synchronous wake callback for external copy work or REGION READY enqueue. */
     void *work_user;                                   /**< User context passed to @c on_work. */
     bool tile_in_psram;                                /**< Prefer PSRAM for input tiles. */
     bool image_in_psram;                               /**< Prefer PSRAM for compose images. */

@@ -97,7 +97,6 @@ esp_err_t create_io_presenter(esp_lcd_panel_handle_t panel,
             },
             .fb.mode = ESP_DISPLAY_PRESENT_MODE_NONE,
             .drawbuf = {.lines = 32, .buffers = 2, .in_psram = false},
-            .io_submit = ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND,
         },
     };
     return esp_display_presenter_create(&config, out_presenter);
@@ -108,23 +107,23 @@ esp_err_t create_io_presenter(esp_lcd_panel_handle_t panel,
 |---|---|---|
 | `open()` | Physical width and height | Default buffer policy |
 | `open_ex()` | Physical width and height | Custom tile rows/count, PSRAM preference and TE compose count |
-| `create()` | Logical width and height | Also configure `io_submit`, timeouts, damage limits and explicit framebuffers |
+| `create()` | Logical width and height | Also configure timeouts, damage limits and explicit framebuffers |
 
 Set rotation through `hw.rotation`. After creation, query `get_caps()` for the render contract and `get_effective_config()` for the actual mode, buffer counts, memory domains and degradation flags. Keep panel, IO and driver storage alive until presenter deletion succeeds; Present manages its registered completion callbacks during that lifetime.
 
 ## Panel IO NONE: rendering and transmission
 
-**D is the renderer's draw buffer; S is an internal DMA staging buffer for a band of pixels.** The three profiles below are recommended starting points. D count (1/2) and memory domain can also be selected independently.
+**D is the renderer's draw buffer; S is an internal DMA staging buffer for a band of pixels.** The two profiles below are recommended starting points. D count (1/2) and memory domain can also be selected independently.
 
-| Profile | `io_submit` | `drawbuf.buffers` | `drawbuf.in_psram` | Present background tasks |
+| Profile | `drawbuf.buffers` | `drawbuf.in_psram` | Submission context | Present background tasks |
 |---|---|---|---|---|
-| Simple small tiles, minimum task overhead | `CALLER` | 1 | `false` | 0 |
-| Ordinary tiles, overlapping rendering and output | `BACKGROUND` | 2 | `false` | 1 backend |
-| Large tiles/full-screen D, conserving internal draw memory | `BACKGROUND` | 2 | `true` | 1 backend |
+| One input buffer, minimum task overhead | 1 | `false` / `true` | Caller processes pixels and submits; may block | 0 |
+| Two input buffers, overlapping rendering and output | 2 | `false` / `true` | One backend task processes pixels and submits | 1 backend |
 
-`CALLER` and `BACKGROUND` omit the `ESP_DISPLAY_PRESENT_IO_SUBMIT_` prefix. `DEFAULT` equals `CALLER`; `open()` and `open_ex()` use `DEFAULT`. Only `NONE` accepts an explicit submission policy.
-
-CALLER processes pixels and submits on the calling task, which may block. BACKGROUND moves this work to one backend task. Swap, rotation and D memory location never add a pixel task.
+`NONE` derives submission context from the final allocated D count; there is no independent submission selector.
+`buffers=0` automatically attempts two buffers. Falling back to one also removes the submission worker and recomputes its budget.
+An explicit two-buffer request fails rather than silently shrinking. `open()`, `open_ex()` and `create()` share this rule.
+Actual callbacks still establish DMA completion. Swap, rotation and D memory location never add a pixel task; TE and framebuffer scheduling remain independent.
 
 ### Output selection for each submission
 

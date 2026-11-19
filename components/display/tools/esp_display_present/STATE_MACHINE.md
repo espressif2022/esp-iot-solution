@@ -108,8 +108,10 @@ and, as above, mutate backend state under the backend's own lock.
 
 REGION has no pixel-copy queue or pixel worker. It retains D until logical
 TRANSFER_DONE and emits direct pixels or bounded physical-row bands through
-`lcd_io.emit`. CALLER performs this work synchronously; BACKGROUND uses only
-the backend worker. REGION acquire/query never advance sending. Only a worker
+`lcd_io.emit`. The public factory derives submission context from the final
+input count: one D uses CALLER, two D use the backend worker (BACKGROUND).
+Automatic 2->1 fallback recomputes this policy before creating the final engine.
+REGION acquire/query never advance sending. Only a worker
 rejection with ESP_ERR_NOT_FINISHED retains READY for retry after a real
 completion makes room. Allocation failure (ESP_ERR_NO_MEM) and other preflight
 failures terminate accepted work with a sticky fault, safely releasing D because

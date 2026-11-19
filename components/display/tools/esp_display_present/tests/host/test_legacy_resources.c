@@ -48,8 +48,8 @@ static void optional_tile_fallback(void)
                 };
             }
             input.target.drawbuf.buffers = explicit_count ? 2 : 0;
-            /* GRAM async: draw+converted before the second slot. TE: compose
-             * before two tiles. FB borrows images; only tiles allocate here. */
+            /* GRAM: fail the second draw slot. TE: compose before two tiles.
+             * FB borrows images; only tiles allocate here. */
             fail_pixel_at = kind == 2 ? 3 : 2;
             fail_combined_fb_tiles = kind == 3;
             pixel_calls = 0;
@@ -70,6 +70,9 @@ static void optional_tile_fallback(void)
                 assert(status.plan.normalized.backend.copy_on_backend_worker == (kind >= 2));
                 assert(!status.plan.normalized.backend.tx_staging);
                 assert(status.plan.normalized.backend.async_copy == (kind >= 2));
+                if (kind < 2) {
+                    assert(!status.plan.normalized.background_service && !status.plan.normalized.backend.deferred_submit);
+                }
                 size_t stack_bytes = kind >= 2 ? 4096u : 0;
                 assert(status.plan.stack_bytes == stack_bytes);
                 if (kind != 3) {
@@ -220,7 +223,7 @@ static void io_path(void)
     input.target.hw.io = &panel;
     input.target.hw.swap_bytes = true;
     input.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_NONE;
-    input.target.io_submit = ESP_DISPLAY_PRESENT_IO_SUBMIT_CALLER; /* Assert inline submission below. */
+    input.target.drawbuf.buffers = 1; /* D1 submits inline. */
     present_resources_t *resources;
     OK(present_resources_create(&input, false, NULL, NULL, &resources));
     OK(present_resources_prepare(resources, 0));
@@ -498,17 +501,17 @@ static void automatic_te_memory_budget(void)
     free_panel(&panel);
 }
 
-static void submission_policy_and_te_workers(void)
+static void tile_count_and_te_workers(void)
 {
-    for (unsigned policy = 0; policy <= 2; ++policy) {
+    for (unsigned count = 0; count <= 2; ++count) {
         esp_display_presenter_config_t input = config(NULL, false);
         input.target.hw.panel_type = ESP_DISPLAY_PRESENT_PANEL_IO;
         input.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_NONE;
-        input.target.io_submit = (esp_display_present_io_submit_t)policy;
+        input.target.drawbuf.buffers = count;
         esp_display_present_plan_config_t plan;
         OK(present_resources_plan(&input, false, &plan));
         assert(!plan.presenter.backend.async_copy);
-        bool expected = policy == ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND;
+        bool expected = count != 1;
         assert(plan.presenter.backend.deferred_submit == expected);
         assert(plan.presenter.background_service == expected);
         assert(plan.presenter.worker_priority == (expected ? CONFIG_ESP_DISPLAY_PRESENT_BACKEND_TASK_PRIORITY : 0));
@@ -546,14 +549,11 @@ static void submission_policy_and_te_workers(void)
             }
         }
     }
-    input.target.io_submit = ESP_DISPLAY_PRESENT_IO_SUBMIT_BACKGROUND;
-    esp_display_present_plan_config_t plan;
-    assert(present_resources_plan(&input, false, &plan) == ESP_ERR_INVALID_ARG);
 }
 
 int main(void)
 {
-    submission_policy_and_te_workers();
+    tile_count_and_te_workers();
     automatic_te_memory_budget();
     optional_tile_fallback();
     fb_reopen_two_internal_tiles();

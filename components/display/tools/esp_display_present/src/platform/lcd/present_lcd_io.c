@@ -5,6 +5,7 @@
 #include "platform/lcd/present_lcd_io.h"
 #include "platform/present_os.h"
 #include "resources/present_memory.h"
+#include "pixel/present_pixel_ops_internal.h"
 #include "esp_cache.h"
 #include "esp_memory_utils.h"
 #include <limits.h>
@@ -94,10 +95,11 @@ static bool PRESENT_ISR_ATTR publish_color(esp_display_present_lcd_io_t *spi, bo
  * A driver callback retires one band, not the logical frame. No ISR copy/submit. */
 static bool PRESENT_ISR_ATTR finish_color(esp_display_present_lcd_io_t *spi, bool isr)
 {
+    present_lock_enter(&spi->lock, isr);
     if (!spi->stage.staged) {
+        present_lock_exit(&spi->lock, isr);
         return publish_color(spi, isr);
     }
-    present_lock_enter(&spi->lock, isr);
     if (!spi->attached || !spi->count || spi->stage.active < 0) {
         present_lock_exit(&spi->lock, isr);
         return false;
@@ -180,7 +182,11 @@ static esp_err_t validate_tx(esp_display_present_lcd_io_t *spi, const esp_displa
     bool valid = esp_ptr_internal(surface->pixels) && esp_ptr_internal(last) &&
                  esp_ptr_dma_capable(surface->pixels) && esp_ptr_dma_capable(last);
 #if PRESENT_SPI_EXTERNAL_DMA
-    if (!valid && spi->config.psram_dma_direct && *bytes % PRESENT_SPI_EXTERNAL_LENGTH_ALIGNMENT == 0) {
+    /* REGION delegates transaction-length alignment to IDF SPI, as native
+     * panel IO clients do. Its DMA/cache constraints and optional temporary
+     * buffer are checked per driver chunk. Keep the raw-submit contract. */
+    if (!valid && spi->config.psram_dma_direct &&
+            (spi->config.region_mode || *bytes % PRESENT_SPI_EXTERNAL_LENGTH_ALIGNMENT == 0)) {
         valid = esp_ptr_dma_ext_capable(surface->pixels) && esp_ptr_dma_ext_capable(last);
     }
 #endif
@@ -208,6 +214,22 @@ static esp_err_t stage_fill(esp_display_present_lcd_io_t *spi, unsigned index,
     size_t bytes = (size_t)rows * surface->layout.stride_bytes;
     if (!source) {
         memcpy(slot->pixels, (const uint8_t *)surface->pixels + (size_t)row * surface->layout.stride_bytes, bytes);
+    } else if (rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0) {
+        /* Reuse the packed/strided CPU fast path: RGB565 copy+swap processes
+         * aligned pixel pairs, with byte-safe fallback for odd source strides.
+         * The source stays borrowed and unchanged until logical completion. */
+        const esp_display_present_copy_request_t copy = {
+            .src = {source->pixels, source->capacity_bytes, source->layout},
+            .dst = {
+                slot->pixels, bytes, {
+                    surface->layout.width, rows, surface->layout.stride_bytes,
+                    surface->layout.format, surface->layout.byte_order
+                }
+            },
+            .src_area = {0, row, surface->layout.width, rows},
+            .rotation = ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0,
+        };
+        present_pixel_copy_cpu_validated(&copy);
     } else {
         /* Generate physical packed rows directly; no full-size conversion pool.
          * CPU is the fallback for arbitrary strides/quarter-turn tail windows. */
@@ -215,12 +237,6 @@ static esp_err_t stage_fill(esp_display_present_lcd_io_t *spi, unsigned index,
         bool swap = source->layout.byte_order != spi->config.byte_order;
         uint8_t *destination = slot->pixels;
         for (uint32_t y = row; y < row + rows; ++y) {
-            if (rotation == ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 && !swap) {
-                memcpy(destination, (const uint8_t *)source->pixels + (size_t)y * source->layout.stride_bytes,
-                       surface->layout.stride_bytes);
-                destination += surface->layout.stride_bytes;
-                continue;
-            }
             for (uint32_t x = 0; x < surface->layout.width; ++x) {
                 uint32_t sx, sy;
                 switch (rotation) {
@@ -514,11 +530,40 @@ static esp_display_present_tx_result_t spi_submit(void *context, const esp_displ
                                        NULL, ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0));
 }
 
+/* Direct buffers are word-aligned; may_alias permits access to pixel bytes. */
+static inline void swap_rgb565_word(uint8_t *pixels)
+{
+    typedef uint32_t pixel_word_t __attribute__((__may_alias__));
+    pixel_word_t *word = (pixel_word_t *)pixels;
+    uint32_t value = *word;
+    value = ((value & 0xff00ff00U) >> 8) | ((value & 0x00ff00ffU) << 8);
+    *word = value;
+}
+
 static void swap_rgb565(void *pixels, size_t bytes)
 {
+    /* Direct-buffer validation establishes alignment and an even byte count.
+     * Batch 16 pixels, then handle pairs and a possible final single pixel. */
     uint8_t *p = pixels;
-    for (size_t i = 0; i < bytes; i += 2) {
-        uint8_t value = p[i]; p[i] = p[i + 1]; p[i + 1] = value;
+    while (bytes >= 32) {
+        swap_rgb565_word(p);
+        swap_rgb565_word(p + 4);
+        swap_rgb565_word(p + 8);
+        swap_rgb565_word(p + 12);
+        swap_rgb565_word(p + 16);
+        swap_rgb565_word(p + 20);
+        swap_rgb565_word(p + 24);
+        swap_rgb565_word(p + 28);
+        p += 32;
+        bytes -= 32;
+    }
+    while (bytes >= 4) {
+        swap_rgb565_word(p);
+        p += 4;
+        bytes -= 4;
+    }
+    if (bytes) {
+        uint8_t value = p[0]; p[0] = p[1]; p[1] = value;
     }
 }
 

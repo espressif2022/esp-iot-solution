@@ -283,7 +283,7 @@ static void await_count(model_t *m, bool submitted, unsigned count)
     }
     pthread_mutex_unlock(&m->lock);
 }
-static esp_display_present_engine_t *create_with_priority(model_t *m, unsigned priority)
+static esp_display_present_engine_t *create_variant(model_t *m, unsigned priority, bool io)
 {
     owner_task = pthread_self();
     atomic_store(&owner_bound, true);
@@ -306,6 +306,18 @@ static esp_display_present_engine_t *create_with_priority(model_t *m, unsigned p
         },
         .timeout_ms = 10, .worker_priority = priority, .background_service = true
     };
+    if (io) {
+        cfg.backend_kind = ESP_DISPLAY_PRESENT_ENGINE_REGION;
+        cfg.mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_NONE;
+        cfg.backend.rotation = ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0;
+        cfg.backend.render_contract = ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION;
+        cfg.backend.async_copy = cfg.backend.copy_on_backend_worker = false;
+        cfg.backend.copy_execute = NULL;
+        cfg.backend.copy_user = NULL;
+        cfg.backend.deferred_submit = true;
+        cfg.backend.tile_rows = 2;
+        cfg.backend.transfer_capacity = 1;
+    }
     esp_display_present_engine_t *p;
     OK(esp_display_present_engine_create(&cfg, &p));
     uint64_t start = present_now_ms();
@@ -315,6 +327,10 @@ static esp_display_present_engine_t *create_with_priority(model_t *m, unsigned p
     }
     atomic_store(&check_work_signals, true);
     return p;
+}
+static esp_display_present_engine_t *create_with_priority(model_t *m, unsigned priority)
+{
+    return create_variant(m, priority, false);
 }
 static esp_display_present_engine_t *create(model_t *m)
 {
@@ -447,11 +463,63 @@ static void copy_failure_is_not_hidden(void)
     } while (st.first_error == ESP_OK);
     assert(st.first_error == ESP_FAIL && !m.submissions); free_model(p, &m);
 }
+static void *complete_region(void *user)
+{
+    model_t *m = user;
+    pthread_mutex_lock(&m->lock);
+    assert(m->cookie);
+    for (unsigned i = 0; i < 16; ++i) {
+        assert(((const uint8_t *)m->surface.pixels)[i] == 0xab);
+    }
+    esp_display_present_backend_event_t event = {
+        .kind = ESP_DISPLAY_PRESENT_EVENT_TRANSFER_DONE, .transaction_cookie = m->cookie
+    };
+    m->cookie = 0;
+    (void)m->callback(m->user, &event, false);
+    pthread_mutex_unlock(&m->lock);
+    return NULL;
+}
+static void submit_region_tile(esp_display_present_engine_t *p, unsigned y)
+{
+    esp_display_present_lease_t lease;
+    OK(esp_display_present_engine_acquire_buffer(p, &lease));
+    memset(lease.surface.pixels, 0xab, 16);
+    esp_display_present_engine_area_t area = {0, y, 3, y + 1};
+    OK(esp_display_present_engine_submit_buffer(p, &lease, &area, 8));
+}
+static void region_enqueue_notifications(void)
+{
+    for (unsigned stop = 0; stop < 2; ++stop) {
+        model_t m = {0}; esp_display_present_engine_t *p = create_variant(&m, 9, true);
+        esp_display_present_frame_request_t request = {0};
+        OK(esp_display_present_engine_begin_next_frame(p, &request));
+        submit_region_tile(p, 0); await_count(&m, true, 1);
+        submit_region_tile(p, 2); /* Queued behind the first DMA source. */
+        OK(esp_display_present_engine_commit_frame(p, NULL));
+        if (stop) {
+            atomic_store(&check_work_signals, false); /* STOP deliberately wakes immediately. */
+            assert(esp_display_present_engine_stop(p, 0) == ESP_ERR_TIMEOUT);
+            assert(esp_display_present_engine_destroy(p) == ESP_ERR_INVALID_STATE);
+        }
+        pthread_t completion;
+        assert(!pthread_create(&completion, NULL, complete_region, &m));
+        assert(!pthread_join(completion, NULL));
+        if (!stop) {
+            await_count(&m, true, 2); /* Real completion must wake queued output. */
+            assert(!pthread_create(&completion, NULL, complete_region, &m));
+            assert(!pthread_join(completion, NULL));
+            OK(esp_display_present_engine_drain(p, 1000));
+        }
+        free_model(p, &m);
+        assert(m.submissions == (stop ? 1u : 2u));
+    }
+}
 int main(void)
 {
     for (unsigned r = 1; r < 4; ++r) {
         bounded_canvas(r);
     }
+    region_enqueue_notifications();
     static_priority_selection();
     construction_does_not_pump(); source_ownership_and_seal(false); source_ownership_and_seal(true); copy_failure_is_not_hidden();
     puts("Dependency scheduling: disjoint overlap, bounded descriptors, retirement, static session priorities, cancellation and late completion passed");

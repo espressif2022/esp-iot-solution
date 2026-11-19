@@ -27,6 +27,12 @@
 GRAM NONE 与 TE 的边界保留。新增 TRANSFER_FAILED 不能继续按 TIMEOUT 处理，
 需要原始错误时使用 `esp_display_presenter_get_fault_error()`。
 
+Panel IO NONE 不再提供 `target.io_submit` 字段和 `esp_display_present_io_submit_t` 枚举。
+旧初始化项需删除；用 `target.drawbuf.buffers=1` 选择调用任务处理/提交，`=2` 选择单个 backend 任务。
+`=0` 按最终分配数量推导；自动两块降到一块时同步收回 worker 预算。
+因此旧的 D2 CALLER 和 D1 BACKGROUND 配置不再保留，应用须按实际缓冲数量重新验证阻塞位置与任务内存。
+TE、RGB/MIPI 的调度规则不受这项变更影响。
+
 本表说明不承诺 ABI 兼容；旧外部应用应重新编译并验证，不能仅替换组件二进制。
 
 ## LVGL 与 GSP

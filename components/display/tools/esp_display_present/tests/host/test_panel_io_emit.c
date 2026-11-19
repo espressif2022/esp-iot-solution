@@ -275,16 +275,20 @@ static void overwide_row(void)
     assert(esp_display_present_lcd_io_destroy(adapter) == ESP_OK && !live_allocations);
     free(source); pthread_mutex_destroy(&panel.lock); pthread_cond_destroy(&panel.changed);
 }
-/* Direct swap, actual PSRAM DMA length/address fallback, and lazy OOM retry. */
-static void routing_and_retry(void)
+/* Direct swap for arbitrary PSRAM lengths, address fallback, and lazy OOM retry. */
+static void routing_and_retry(unsigned direct_width)
 {
     for (unsigned path = 0; path < 7; ++path) {
         allocations = max_allocation = live_allocations = allocation_attempts = 0;
         internal_memory = path == 0 || path == 6;
-        bool direct = path == 0 || path == 1 || path == 6;
-        unsigned width = path == 2 ? 31 : 32;
-        _Alignas(64) uint8_t storage[128], saved[64], expected[64], seen[32] = {0};
-        uint8_t *source = storage + (path == 3 ? 2 : 0);
+        bool direct = path == 0 || path == 1 || path == 2 || path == 6;
+        unsigned width = path == 2 || internal_memory ? direct_width : 32;
+        _Alignas(64) uint8_t storage[1152], saved[1024], expected[1024], seen[512] = {0};
+        for (size_t i = 0; i < sizeof(storage); ++i) {
+            storage[i] = (uint8_t)(0xA5 ^ i);
+        }
+        uint8_t *source = storage + 64 + (path == 3 ? 2 : 0);
+        assert(width <= sizeof(seen));
         for (unsigned i = 0; i < width * 2; ++i) {
             source[i] = saved[i] = (uint8_t)i;
             expected[i] = (uint8_t)(i ^ 1);
@@ -316,12 +320,69 @@ static void routing_and_retry(void)
         assert(result.acceptance == ESP_DISPLAY_PRESENT_TX_ACCEPTED && result.result == ESP_OK);
         assert(panel.completions == 1 && panel.draws == 1);
         assert(!memcmp(source, direct ? expected : saved, width * 2));
+        /* Check both guards even when a rejected direct submit swaps twice. */
+        for (size_t i = 0; i < sizeof(storage); ++i) {
+            if (storage + i < source || storage + i >= source + width * 2) {
+                assert(storage[i] == (uint8_t)(0xA5 ^ i));
+            }
+        }
         assert(live_allocations == (direct ? 0u : 2u));
         assert(api.quiesce(api.context, 100) == ESP_OK);
         assert(esp_display_present_lcd_io_destroy(adapter) == ESP_OK && !live_allocations);
         pthread_mutex_destroy(&panel.lock); pthread_cond_destroy(&panel.changed);
     }
     internal_memory = false;
+}
+
+/* A 98-byte PSRAM request bypasses adapter staging, but remains borrowed
+ * until the real callback even after bounded close has timed out. */
+static void psram_unaligned_length_retirement(void)
+{
+    allocations = max_allocation = live_allocations = allocation_attempts = 0;
+    internal_memory = false;
+    _Alignas(64) uint8_t storage[256], expected[98], seen[49] = {0};
+    memset(storage, 0xDA, sizeof(storage));
+    uint8_t *source = storage + 64;
+    for (unsigned i = 0; i < sizeof(expected); ++i) {
+        source[i] = (uint8_t)i;
+        expected[i] = (uint8_t)(i ^ 1);
+    }
+    transform_t t = {.expected = expected, .seen = seen, .out_w = 7, .bpp = 2};
+    struct fake_lcd panel = {.lock = PTHREAD_MUTEX_INITIALIZER, .changed = PTHREAD_COND_INITIALIZER,
+               .transform = &t, .area = {0, 0, 7, 7}
+    };
+    esp_display_present_lcd_io_config_t cfg = {.panel = &panel, .io = &panel, .max_inflight = 1,
+                                               .region_mode = true, .psram_dma_direct = true,
+                                               .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565,
+                                               .byte_order = ESP_DISPLAY_PRESENT_ORDER_SWAPPED
+                                              };
+    esp_display_present_lcd_io_t *adapter;
+    assert(esp_display_present_lcd_io_create(&cfg, &adapter) == ESP_OK);
+    esp_display_present_panel_adapter_t api;
+    assert(esp_display_present_lcd_io_get_interface(adapter, &api) == ESP_OK);
+    assert(api.attach(api.context, completed, &panel) == ESP_OK);
+    esp_display_present_surface_t view = {source, sizeof(expected),
+        {7, 7, 14, cfg.format, ESP_DISPLAY_PRESENT_ORDER_NATIVE}
+    };
+    esp_display_present_tx_result_t result = api.emit(api.context, &view, &panel.area, 0, 91);
+    assert(result.acceptance == ESP_DISPLAY_PRESENT_TX_ACCEPTED && result.result == ESP_OK);
+    assert(panel.pending && panel.draws == 1 && !panel.completions && panel.pixels == source);
+    assert(!allocations && !allocation_attempts && !memcmp(source, expected, sizeof(expected)));
+    assert(api.quiesce(api.context, 0) == ESP_ERR_TIMEOUT);
+    assert(esp_display_present_lcd_io_destroy(adapter) == ESP_ERR_INVALID_STATE);
+    assert(api.emit(api.context, &view, &panel.area, 0, 92).acceptance == ESP_DISPLAY_PRESENT_TX_REJECTED);
+    assert(panel.draws == 1 && !panel.completions);
+    check_band(&panel); panel.pending = false;
+    (void)panel.callback(&panel, NULL, panel.user);
+    assert(panel.completions == 1 && panel.completion_result == ESP_OK);
+    assert(api.quiesce(api.context, 100) == ESP_OK);
+    assert(esp_display_present_lcd_io_destroy(adapter) == ESP_OK && !live_allocations);
+    for (size_t i = 0; i < sizeof(storage); ++i) {
+        if (i < 64 || i >= 64 + sizeof(expected)) {
+            assert(storage[i] == 0xDA);
+        }
+    }
+    pthread_mutex_destroy(&panel.lock); pthread_cond_destroy(&panel.changed);
 }
 
 /* One adapter may alternate direct and staged requests. A staged request
@@ -349,7 +410,8 @@ static void mixed_requests(void)
     assert(esp_display_present_lcd_io_get_interface(adapter, &api) == ESP_OK);
     assert(api.attach(api.context, completed, &panel) == ESP_OK);
     esp_display_present_surface_t direct = {first, 64, {32, 1, 64, cfg.format, ESP_DISPLAY_PRESENT_ORDER_NATIVE}};
-    esp_display_present_surface_t staged = {second, 62, {31, 1, 62, cfg.format, ESP_DISPLAY_PRESENT_ORDER_NATIVE}};
+    /* A padded source still needs staging, independently of its length. */
+    esp_display_present_surface_t staged = {second, 64, {31, 1, 64, cfg.format, ESP_DISPLAY_PRESENT_ORDER_NATIVE}};
     esp_display_present_rect_t small = {0, 0, 31, 1};
     assert(api.emit(api.context, &direct, &panel.area, 0, 91).acceptance == ESP_DISPLAY_PRESENT_TX_ACCEPTED);
     assert(!allocations && panel.pending && !memcmp(first, expected, 64));
@@ -567,7 +629,7 @@ static void worker_backpressure(void)
     area = (esp_display_present_engine_area_t) {
         0, 1, 30, 1
     };
-    assert(esp_display_present_engine_submit_buffer(engine, &second, &area, 62) == ESP_OK);
+    assert(esp_display_present_engine_submit_buffer(engine, &second, &area, 64) == ESP_OK);
     esp_display_present_engine_receipt_t receipt;
     assert(esp_display_present_engine_commit_with_receipt(engine, NULL, &receipt) == ESP_OK);
     assert(present_event_wait(busy_seen, 1000));
@@ -606,13 +668,28 @@ int main(void)
                         exercise(shapes[shape][0], shapes[shape][1], format == 2 ? 3 : 2, rot, format == 1, pad ? 4 : 0, early);
                         ++cases;
                     }
+    /* Exercise pair/tail boundaries and every source row alignment in the
+     * zero-degree fast path, including a full VoCat tile spanning three bands. */
+    const unsigned fast_shapes[][2] = {{7, 9}, {8, 9}, {9, 9}, {360, 50}, {361, 50}};
+    for (unsigned shape = 0; shape < 5; ++shape) for (unsigned padding = 0; padding < 4; ++padding)
+            for (unsigned format = 0; format < 3; ++format) for (unsigned early = 0; early < 2; ++early) {
+                    exercise(fast_shapes[shape][0], fast_shapes[shape][1], format == 2 ? 3 : 2,
+                             0, format == 1, padding, early);
+                    ++cases;
+                }
     for (unsigned first = 0; first < 2; ++first) {
         worker_staging_oom(first, 0);
         worker_staging_oom(first, 10);
     }
     worker_backpressure();
     overwide_row();
-    routing_and_retry();
+    /* Word pairs, 32-byte batches and tails; cache rejection must restore
+     * the original pixels before the same source is retried. */
+    const unsigned direct_widths[] = {1, 2, 3, 7, 8, 9, 15, 16, 17, 31, 32, 33, 255, 256, 257, 511};
+    for (size_t i = 0; i < sizeof(direct_widths) / sizeof(direct_widths[0]); ++i) {
+        routing_and_retry(direct_widths[i]);
+    }
+    psram_unaligned_length_retirement();
     mixed_requests();
     for (unsigned rotation = 0; rotation < 4; ++rotation) {
         worker_full_screen(rotation);
