@@ -52,6 +52,13 @@ struct present_te_composer {
     present_copy_handle_t repair;
 };
 
+void present_te_composer_set_priority(present_te_composer_t *composer, unsigned priority)
+{
+    if (composer) {
+        present_copy_queue_set_priority(composer->queue, priority);
+    }
+}
+
 static compose_job_t *find_job(present_te_composer_t *composer, present_te_frame_t f)
 {
     if (!composer || !f.value) {

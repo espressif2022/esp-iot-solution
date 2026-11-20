@@ -552,7 +552,7 @@ esp_err_t esp_display_present_engine_rebind_producer(esp_display_present_engine_
     /* Snapshot before taking the engine gate, avoiding its priority inheritance.
      * An explicit priority remains fixed across producer handoffs. */
     bool inherit = presenter->backend_worker.inherit_priority && presenter->backend_worker.handle;
-    unsigned priority = inherit ? present_task_priority() : 0;
+    unsigned priority = present_task_priority();
     if (!present_mutex_take(presenter->gate, timeout)) {
         return ESP_ERR_TIMEOUT;
     }
@@ -564,6 +564,9 @@ esp_err_t esp_display_present_engine_rebind_producer(esp_display_present_engine_
         }
         if (error == ESP_OK) {
             presenter->owner = present_current_task();
+            if (presenter->ops->set_copy_priority) {
+                presenter->ops->set_copy_priority(presenter->backend, priority);
+            }
         }
     }
     give_engine_gate(presenter);
@@ -681,9 +684,10 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
     presenter->panel = config->backend.panel;
     presenter->user_progress = config->backend.on_progress;
     presenter->progress_user = config->backend.progress_user;
+    unsigned producer_priority = present_task_priority();
     unsigned worker_priority = config->worker_priority;
     if (config->background_service && !worker_priority) {
-        worker_priority = present_task_priority();
+        worker_priority = producer_priority;
     }
     (void)present_mutex_take(presenter->gate, UINT32_MAX);
     if (config->background_service) {
@@ -719,6 +723,9 @@ esp_err_t esp_display_present_engine_create(const esp_display_present_engine_con
         }
         free_presenter(presenter);
         return ret;
+    }
+    if (presenter->ops->set_copy_priority) {
+        presenter->ops->set_copy_priority(presenter->backend, producer_priority);
     }
     (void)presenter->ops->get_caps(presenter->backend, &presenter->caps);
     give_engine_gate(presenter);
@@ -1432,7 +1439,7 @@ esp_err_t present_presenter_control_bind_producer(esp_display_present_engine_t *
     /* Snapshot before taking the engine gate, avoiding its priority inheritance.
      * An explicit priority remains fixed across producer handoffs. */
     bool inherit = presenter->backend_worker.inherit_priority && presenter->backend_worker.handle;
-    unsigned priority = inherit ? present_task_priority() : 0;
+    unsigned priority = present_task_priority();
     uint64_t start = present_now_ms();
     if (!present_mutex_take(presenter->gate, timeout)) {
         return ESP_ERR_TIMEOUT;
@@ -1448,6 +1455,9 @@ esp_err_t present_presenter_control_bind_producer(esp_display_present_engine_t *
             error = ESP_ERR_INVALID_STATE;
         } else {
             presenter->owner = present_current_task();
+            if (presenter->ops->set_copy_priority) {
+                presenter->ops->set_copy_priority(presenter->backend, priority);
+            }
         }
     }
     if (gate_held) {

@@ -10,20 +10,30 @@
 #error "Binding requires LVGL major version 9"
 #endif
 
+typedef enum {
+    BINDING_COPY,
+    BINDING_PARTIAL_LEASE,
+    BINDING_FULL_LEASE,
+    BINDING_DIRECT_LEASE,
+} binding_path_t;
+
 struct esp_lv_present_native {
     esp_display_present_engine_t *presenter;
     lv_display_t *display;
     lv_draw_buf_t *draw;
     struct {
         void *buffers[2];
-        size_t count;
-        bool preferred;
         lv_draw_buf_t peer;
     } direct;
     esp_display_present_backend_caps_t caps;
     size_t bpp;
+    binding_path_t path;
+    /* Successful creation strategy, retained while DIRECT temporarily copies
+     * through a rotated logical canvas. A copy fallback never promotes itself. */
+    binding_path_t initial_path;
+    /* Conservative local frame bookkeeping; cancel failure leaves it set. */
     bool refreshing;
-    bool borrowed_ready;
+    bool refresh_lease_ready;
     struct {
         lv_timer_t *retry;
         uint32_t started, timeout;
@@ -32,13 +42,44 @@ struct esp_lv_present_native {
     struct {
         bool in_refresh, closing;
     } lifecycle;
-    bool zero_copy;
-    bool pooled_partial;
     bool need_tile;
     lv_draw_buf_t borrowed;
     esp_display_present_lease_t lease;
     esp_err_t error;
 };
+
+static bool borrows_pixels(const esp_lv_present_native_t *binding)
+{
+    return binding->path != BINDING_COPY;
+}
+
+static bool surface_lease(const esp_lv_present_native_t *binding)
+{
+    return binding->path == BINDING_FULL_LEASE || binding->path == BINDING_DIRECT_LEASE;
+}
+
+static bool direct_lease(const esp_lv_present_native_t *binding)
+{
+    return binding->path == BINDING_DIRECT_LEASE;
+}
+
+static bool restores_direct_lease(const esp_lv_present_native_t *binding)
+{
+    return binding->initial_path == BINDING_DIRECT_LEASE;
+}
+
+static bool owns_draw_buffer(binding_path_t path)
+{
+    return path == BINDING_COPY || path == BINDING_PARTIAL_LEASE;
+}
+
+/* Also update the descriptor cached by LVGL's current layer. Switching only
+ * display->buf_act cannot redirect an already prepared PARTIAL band. */
+static void restore_partial_tile(esp_lv_present_native_t *binding)
+{
+    binding->borrowed.data = binding->draw->data;
+    binding->borrowed.unaligned_data = binding->draw->unaligned_data;
+}
 
 static esp_err_t copy_flush(esp_lv_present_native_t *binding, const lv_area_t *area, uint8_t *pixels)
 {
@@ -95,13 +136,13 @@ static esp_err_t copy_flush(esp_lv_present_native_t *binding, const lv_area_t *a
         }
         binding->refreshing = true;
     }
+    bool bounded_canvas = binding->caps.contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT &&
+                          !binding->caps.writes_active_scanout;
     for (uint32_t offset = 0; offset < height;) {
         esp_display_present_lease_t lease;
         esp_display_present_rect_t write_area = {
             (uint32_t)area->x1, (uint32_t)area->y1 + offset, (uint32_t)width, height - offset
         };
-        bool bounded_canvas = binding->caps.contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT &&
-                              !binding->caps.writes_active_scanout;
         esp_err_t ret = bounded_canvas ?
                         esp_display_present_engine_acquire_region(binding->presenter, &write_area, &lease) :
                         esp_display_present_engine_acquire_buffer(binding->presenter, &lease);
@@ -156,8 +197,9 @@ static esp_err_t copy_flush(esp_lv_present_native_t *binding, const lv_area_t *a
 
 static void detach(esp_lv_present_native_t *binding)
 {
-    binding->borrowed_ready = false;
+    binding->refresh_lease_ready = false;
     if (binding->draw) {
+        /* A failed rotation can retain the old owned descriptor while paused. */
         lv_display_set_draw_buffers(binding->display, binding->draw, NULL);
     } else {
         /* Keep descriptors/sync history, revoke every borrowed pixel address. */
@@ -178,7 +220,7 @@ static void fail_refresh(esp_lv_present_native_t *binding, esp_err_t error)
         lv_timer_pause(binding->admission.retry);
         binding->admission.pending = false;
     }
-    if (binding->zero_copy) {
+    if (borrows_pixels(binding)) {
         binding->need_tile = false;
         detach(binding);
     }
@@ -235,8 +277,7 @@ static void acquire_before_draw(lv_event_t *event)
     }
     esp_err_t ret = esp_display_present_engine_acquire_buffer(binding->presenter, &binding->lease);
     if (ret != ESP_OK) {
-        binding->borrowed.data = binding->draw->data;
-        binding->borrowed.unaligned_data = binding->draw->unaligned_data;
+        restore_partial_tile(binding);
         fail_refresh(binding, ret);
         return;
     }
@@ -250,7 +291,7 @@ static void acquire_before_draw(lv_event_t *event)
  * No owned pixel canvas is needed for FULL or physical two-buffer DIRECT. */
 static esp_err_t borrow_refresh(esp_lv_present_native_t *binding, bool poll)
 {
-    if (binding->refreshing && binding->borrowed_ready) {
+    if (binding->refreshing && binding->refresh_lease_ready) {
         return ESP_OK;
     }
     const esp_display_present_frame_request_t request = {
@@ -270,7 +311,7 @@ static esp_err_t borrow_refresh(esp_lv_present_native_t *binding, bool poll)
     if (error != ESP_OK) {
         return error;
     }
-    if (binding->direct.count == 2 && binding->lease.surface.pixels != binding->direct.buffers[0] &&
+    if (direct_lease(binding) && binding->lease.surface.pixels != binding->direct.buffers[0] &&
             binding->lease.surface.pixels != binding->direct.buffers[1]) {
         return ESP_ERR_INVALID_STATE;
     }
@@ -280,7 +321,7 @@ static esp_err_t borrow_refresh(esp_lv_present_native_t *binding, bool poll)
                              binding->lease.surface.capacity_bytes) != LV_RESULT_OK) {
         return ESP_ERR_INVALID_SIZE;
     }
-    if (binding->direct.count == 2) {
+    if (direct_lease(binding)) {
         void *peer = binding->lease.surface.pixels == binding->direct.buffers[0] ?
                      binding->direct.buffers[1] : binding->direct.buffers[0];
         if (lv_draw_buf_init(&binding->direct.peer, binding->caps.draw_layout.width, binding->caps.draw_layout.height,
@@ -289,10 +330,10 @@ static esp_err_t borrow_refresh(esp_lv_present_native_t *binding, bool poll)
             return ESP_ERR_INVALID_SIZE;
         }
     }
-    binding->borrowed_ready = true;
+    binding->refresh_lease_ready = true;
     if (binding->display) {
         lv_display_set_draw_buffers(binding->display, &binding->borrowed,
-                                    binding->direct.count == 2 ? &binding->direct.peer : NULL);
+                                    direct_lease(binding) ? &binding->direct.peer : NULL);
     }
     return ESP_OK;
 }
@@ -351,7 +392,7 @@ static void retry_admission(lv_timer_t *timer)
 {
     esp_lv_present_native_t *binding = lv_timer_get_user_data(timer);
     if (!binding->admission.pending || binding->lifecycle.closing || binding->error != ESP_OK ||
-            !binding->zero_copy || binding->direct.count != 2) {
+            !direct_lease(binding)) {
         lv_timer_pause(timer);
         return;
     }
@@ -371,7 +412,7 @@ static void refresh_event(lv_event_t *event)
     }
     if (code == LV_EVENT_REFR_READY) {
         binding->lifecycle.in_refresh = false;
-        if (!binding->zero_copy) {
+        if (!borrows_pixels(binding)) {
             return;
         }
         binding->need_tile = false;
@@ -386,7 +427,7 @@ static void refresh_event(lv_event_t *event)
         }
         return;
     }
-    if (code == LV_EVENT_RENDER_START && binding->pooled_partial && binding->error == ESP_OK) {
+    if (code == LV_EVENT_RENDER_START && (binding->path == BINDING_PARTIAL_LEASE) && binding->error == ESP_OK) {
         /* LVGL shapes the descriptor before FLUSH_WAIT_START acquires a lease.
          * Until then its storage must be the binding-owned tile. */
         (void)lv_draw_buf_init(&binding->borrowed, binding->caps.draw_layout.width, binding->draw->header.h,
@@ -415,19 +456,19 @@ static esp_lv_present_native_t *refresh_binding(lv_display_t *display)
 bool esp_lv_present_uses_refresh_lease(lv_display_t *display)
 {
     esp_lv_present_native_t *binding = refresh_binding(display);
-    return binding && binding->zero_copy && !binding->pooled_partial;
+    return binding && surface_lease(binding);
 }
 
 bool esp_lv_present_prepare_refresh(lv_display_t *display, bool dirty)
 {
     esp_lv_present_native_t *binding = refresh_binding(display);
-    if (!binding || !binding->zero_copy || binding->pooled_partial) {
+    if (!binding || !surface_lease(binding)) {
         return true;
     }
     if (!dirty || binding->lifecycle.closing || binding->error != ESP_OK) {
         return false;
     }
-    if (binding->direct.count == 2 && binding->admission.retry) {
+    if (direct_lease(binding) && binding->admission.retry) {
         admit_direct(binding, true);
     } else {
         esp_err_t error = borrow_refresh(binding, false);
@@ -435,12 +476,12 @@ bool esp_lv_present_prepare_refresh(lv_display_t *display, bool dirty)
             fail_refresh(binding, error);
         }
     }
-    return binding->error == ESP_OK && binding->borrowed_ready;
+    return binding->error == ESP_OK && binding->refresh_lease_ready;
 }
 
 static esp_err_t submit_borrowed(esp_lv_present_native_t *binding, const lv_area_t *area, uint8_t *pixels)
 {
-    if (binding->pooled_partial) {
+    if (binding->path == BINDING_PARTIAL_LEASE) {
         if (!binding->refreshing || !area || pixels != binding->lease.surface.pixels || !binding->borrowed.header.stride) {
             return ESP_ERR_INVALID_STATE;
         }
@@ -481,10 +522,7 @@ static void flush(lv_display_t *display, const lv_area_t *area, uint8_t *pixels)
 {
     esp_lv_present_native_t *binding = lv_display_get_user_data(display);
     if (binding->error == ESP_OK) {
-        esp_err_t ret = ESP_OK;
-        if (ret == ESP_OK) {
-            ret = binding->zero_copy ? submit_borrowed(binding, area, pixels) : copy_flush(binding, area, pixels);
-        }
+        esp_err_t ret = borrows_pixels(binding) ? submit_borrowed(binding, area, pixels) : copy_flush(binding, area, pixels);
         if (ret == ESP_OK && lv_display_flush_is_last(display)) {
             ret = esp_display_present_engine_commit_frame(binding->presenter, NULL);
             if (ret == ESP_OK) {
@@ -492,17 +530,15 @@ static void flush(lv_display_t *display, const lv_area_t *area, uint8_t *pixels)
                 (void)esp_display_present_engine_service(binding->presenter);
             }
         }
-        if (ret == ESP_OK && binding->pooled_partial && binding->refreshing) {
-            binding->borrowed.data = binding->draw->data;
-            binding->borrowed.unaligned_data = binding->draw->unaligned_data;
+        if (ret == ESP_OK && (binding->path == BINDING_PARTIAL_LEASE) && binding->refreshing) {
+            restore_partial_tile(binding);
             binding->need_tile = true;
         }
         if (ret != ESP_OK) {
             fail_refresh(binding, ret);
         }
     }
-    if (binding->zero_copy && binding->direct.count != 2 && (!binding->refreshing ||
-                                                             (!binding->pooled_partial && binding->caps.contract != ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT))) {
+    if (binding->path == BINDING_FULL_LEASE || (binding->path == BINDING_PARTIAL_LEASE && !binding->refreshing)) {
         detach(binding);
     }
     /* Pooled PARTIAL defers acquisition until FLUSH_WAIT_START just before
@@ -510,7 +546,8 @@ static void flush(lv_display_t *display, const lv_area_t *area, uint8_t *pixels)
     lv_display_flush_ready(display);
 }
 
-static esp_err_t create_binding(esp_display_present_engine_t *presenter, uint32_t rows, bool zero_copy, esp_lv_present_native_t **out)
+static esp_err_t create_binding(esp_display_present_engine_t *presenter, uint32_t rows, bool zero_copy,
+                                const esp_display_present_backend_caps_t *known_caps, esp_lv_present_native_t **out)
 {
     if (!out) {
         return ESP_ERR_INVALID_ARG;
@@ -529,9 +566,14 @@ static esp_err_t create_binding(esp_display_present_engine_t *presenter, uint32_
         return ESP_ERR_INVALID_STATE;
     }
     esp_display_present_backend_caps_t caps;
-    esp_err_t ret = esp_display_present_engine_get_caps(presenter, &caps);
-    if (ret != ESP_OK) {
-        return ret;
+    esp_err_t ret = ESP_OK;
+    if (known_caps) {
+        caps = *known_caps;
+    } else {
+        ret = esp_display_present_engine_get_caps(presenter, &caps);
+        if (ret != ESP_OK) {
+            return ret;
+        }
     }
     if (caps.contract > ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT || caps.draw_layout.byte_order != ESP_DISPLAY_PRESENT_ORDER_NATIVE ||
             (caps.draw_layout.format != ESP_DISPLAY_PRESENT_FORMAT_RGB565 && caps.draw_layout.format != ESP_DISPLAY_PRESENT_FORMAT_RGB888)) {
@@ -548,16 +590,16 @@ static esp_err_t create_binding(esp_display_present_engine_t *presenter, uint32_
     if (caps.contract != ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION) {
         rows = caps.draw_layout.height;
     }
-    if (rows > caps.draw_layout.height) {
-        rows = caps.draw_layout.height;
-    }
     size_t bpp = caps.draw_layout.format == ESP_DISPLAY_PRESENT_FORMAT_RGB565 ? 2 : 3;
     if (caps.draw_layout.width > INT_MAX || caps.draw_layout.height > INT_MAX ||
             caps.draw_layout.width > UINT32_MAX / bpp) {
         return ESP_ERR_INVALID_SIZE;
     }
-    lv_color_format_t cf = bpp == 2 ? LV_COLOR_FORMAT_RGB565 : LV_COLOR_FORMAT_RGB888;
-    uint32_t stride = lv_draw_buf_width_to_stride(caps.draw_layout.width, cf);
+    if (rows > caps.draw_layout.height) {
+        rows = caps.draw_layout.height;
+    }
+    lv_color_format_t format = bpp == 2 ? LV_COLOR_FORMAT_RGB565 : LV_COLOR_FORMAT_RGB888;
+    uint32_t stride = lv_draw_buf_width_to_stride(caps.draw_layout.width, format);
     if (zero_copy && (bpp != 2 || caps.draw_layout.stride_bytes != stride ||
                       (caps.contract != ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL && caps.contract != ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION &&
                        caps.contract != ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT) ||
@@ -588,21 +630,21 @@ static esp_err_t create_binding(esp_display_present_engine_t *presenter, uint32_
         return ESP_ERR_NO_MEM;
     }
     binding->presenter = presenter;
-    if (zero_copy && caps.contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT) {
-        binding->direct.count = pool_count;
-        binding->direct.preferred = true;
+    binding->path = !zero_copy ? BINDING_COPY :
+                    caps.contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION ? BINDING_PARTIAL_LEASE :
+                    caps.contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL ? BINDING_FULL_LEASE : BINDING_DIRECT_LEASE;
+    binding->initial_path = binding->path;
+    if (direct_lease(binding)) {
         for (size_t i = 0; i < pool_count; ++i) {
             binding->direct.buffers[i] = pool[i];
         }
     }
     binding->caps = caps;
     binding->bpp = bpp;
-    binding->zero_copy = zero_copy;
-    binding->pooled_partial = zero_copy && caps.contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION;
     /* Copy paths own their canvas. Pooled PARTIAL keeps a tile-sized error
      * sink because LVGL cannot abort a band after FLUSH_WAIT_START fails. */
-    if (!zero_copy || binding->pooled_partial) {
-        binding->draw = lv_draw_buf_create(caps.draw_layout.width, rows, cf, stride);
+    if (owns_draw_buffer(binding->path)) {
+        binding->draw = lv_draw_buf_create(caps.draw_layout.width, rows, format, stride);
         if (!binding->draw) {
             lv_free(binding);
             return ESP_ERR_NO_MEM;
@@ -626,7 +668,7 @@ static esp_err_t create_binding(esp_display_present_engine_t *presenter, uint32_
         lv_free(binding);
         return ESP_ERR_NO_MEM;
     }
-    if (binding->direct.preferred) {
+    if (restores_direct_lease(binding)) {
         ret = esp_display_present_engine_get_frame_timeout(presenter, &binding->admission.timeout);
         if (ret == ESP_OK) {
             binding->admission.retry = lv_timer_create(retry_admission, 1, binding);
@@ -642,10 +684,10 @@ static esp_err_t create_binding(esp_display_present_engine_t *presenter, uint32_
         }
         lv_timer_pause(binding->admission.retry);
     }
-    lv_display_set_color_format(binding->display, cf);
+    lv_display_set_color_format(binding->display, format);
     lv_display_set_user_data(binding->display, binding);
     lv_display_set_draw_buffers(binding->display, binding->draw ? binding->draw : &binding->borrowed,
-                                binding->direct.count == 2 ? &binding->direct.peer : NULL);
+                                direct_lease(binding) ? &binding->direct.peer : NULL);
     lv_display_render_mode_t mode = LV_DISPLAY_RENDER_MODE_PARTIAL;
     switch (caps.contract) {
     case ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL:
@@ -661,14 +703,14 @@ static esp_err_t create_binding(esp_display_present_engine_t *presenter, uint32_
     lv_display_set_flush_cb(binding->display, flush);
     lv_display_add_event_cb(binding->display, round_area, LV_EVENT_INVALIDATE_AREA, binding);
 #if LVGL_VERSION_MINOR >= 5
-    if (binding->pooled_partial) {
+    if (binding->path == BINDING_PARTIAL_LEASE) {
         lv_display_add_event_cb(binding->display, acquire_before_draw, LV_EVENT_FLUSH_WAIT_START, binding);
     }
 #endif
     /* All storage modes reject control transitions from refresh callbacks. */
     lv_display_add_event_cb(binding->display, refresh_event, LV_EVENT_REFR_START, binding);
     lv_display_add_event_cb(binding->display, refresh_event, LV_EVENT_REFR_READY, binding);
-    if (binding->pooled_partial) {
+    if (binding->path == BINDING_PARTIAL_LEASE) {
         lv_display_add_event_cb(binding->display, refresh_event, LV_EVENT_RENDER_START, binding);
     }
     /* TE has no baseline until actual full coverage has been composed. */
@@ -679,7 +721,7 @@ static esp_err_t create_binding(esp_display_present_engine_t *presenter, uint32_
 
 esp_err_t esp_lv_present_native_create(esp_display_present_engine_t *presenter, uint32_t rows, esp_lv_present_native_t **out)
 {
-    return create_binding(presenter, rows, false, out);
+    return create_binding(presenter, rows, false, NULL, out);
 }
 
 esp_err_t esp_lv_present_native_create_zero_copy(esp_display_present_engine_t *presenter, esp_lv_present_native_t **out)
@@ -696,7 +738,7 @@ esp_err_t esp_lv_present_native_create_zero_copy(esp_display_present_engine_t *p
     if (caps.contract != ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_FULL && caps.contract != ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_DIRECT) {
         return ESP_ERR_NOT_SUPPORTED;
     }
-    return create_binding(presenter, 1, true, out);
+    return create_binding(presenter, 1, true, &caps, out);
 }
 esp_err_t esp_lv_present_native_create_pooled(esp_display_present_engine_t *presenter, uint32_t rows, esp_lv_present_native_t **out)
 {
@@ -712,7 +754,7 @@ esp_err_t esp_lv_present_native_create_pooled(esp_display_present_engine_t *pres
     if (caps.contract != ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION) {
         return ESP_ERR_NOT_SUPPORTED;
     }
-    return create_binding(presenter, rows, true, out);
+    return create_binding(presenter, rows, true, &caps, out);
 }
 
 lv_display_t *esp_lv_present_native_get_display(esp_lv_present_native_t *binding)
@@ -805,10 +847,10 @@ esp_err_t esp_lv_present_native_rotate(esp_lv_present_native_t *binding, esp_dis
     }
     lv_color_format_t format = binding->bpp == 2 ? LV_COLOR_FORMAT_RGB565 : LV_COLOR_FORMAT_RGB888;
     uint32_t stride = lv_draw_buf_width_to_stride(width, format);
-    if (binding->zero_copy && stride != (size_t)width * binding->bpp) {
+    if (borrows_pixels(binding) && stride != (size_t)width * binding->bpp) {
         return ESP_ERR_NOT_SUPPORTED;
     }
-    if (binding->pooled_partial) {
+    if (binding->path == BINDING_PARTIAL_LEASE) {
         /* A quarter-turn changes the full-width tile stride; the backing pool
          * retains its original byte capacity. Reduce the rows before rebinding. */
         size_t available = binding->caps.drawbuf_capacity_bytes / stride;
@@ -819,10 +861,14 @@ esp_err_t esp_lv_present_native_rotate(esp_lv_present_native_t *binding, esp_dis
             rows = available;
         }
     }
-    bool owned = binding->pooled_partial || (!binding->zero_copy && !binding->direct.preferred) ||
-                 (binding->direct.preferred && rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0);
-    lv_draw_buf_t *draw = owned ? lv_draw_buf_create(width, rows, format, stride) : NULL;
-    if (owned && !draw) {
+    bool owned = restores_direct_lease(binding) ? rotation != ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 :
+                 owns_draw_buffer(binding->path);
+    /* Allocate only when the owned tile/canvas layout actually changes. The
+     * current descriptor stays attached until the new layout is ready. */
+    bool replace = owned && (!binding->draw || binding->draw->header.w != width ||
+                             binding->draw->header.h != rows || binding->draw->header.stride != stride);
+    lv_draw_buf_t *draw = replace ? lv_draw_buf_create(width, rows, format, stride) : NULL;
+    if (replace && !draw) {
         return ESP_ERR_NO_MEM;
     }
     if (binding->admission.retry) {
@@ -832,25 +878,18 @@ esp_err_t esp_lv_present_native_rotate(esp_lv_present_native_t *binding, esp_dis
         detach(binding);
         error = esp_display_present_engine_cancel_frame(binding->presenter);
         if (error != ESP_OK) {
-            if (draw) {
-                lv_draw_buf_destroy(draw);
-            }
             if (binding->admission.pending) {
                 lv_timer_resume(binding->admission.retry);
             }
-            return error;
+            goto discard;
         }
         binding->refreshing = false;
     }
     error = rotate(context, rotation, timeout);
     if (error != ESP_OK) {
-        if (draw) {
-            lv_draw_buf_destroy(draw);
-        }
         esp_display_present_engine_rotation_t actual;
         if (esp_display_present_engine_get_rotation(binding->presenter, &actual) != ESP_OK || actual != old_rotation) {
-            fail_refresh(binding, error);
-            return error;
+            goto fault;
         }
         if (binding->admission.pending) {
             lv_timer_resume(binding->admission.retry);
@@ -858,56 +897,52 @@ esp_err_t esp_lv_present_native_rotate(esp_lv_present_native_t *binding, esp_dis
         lv_obj_invalidate(lv_display_get_screen_active(binding->display));
         /* A full invalidation may already be recorded: LVGL then emits no
          * REFR_REQUEST. Restore admission explicitly after revoking a lease. */
-        if (binding->zero_copy && binding->direct.count == 2 && !binding->borrowed_ready && binding->error == ESP_OK) {
+        if (direct_lease(binding) && !binding->refresh_lease_ready && binding->error == ESP_OK) {
             admit_direct(binding, false);
         }
-        return error;
+        goto discard;
     }
     binding->admission.pending = false;
     error = esp_display_present_engine_get_caps(binding->presenter, &binding->caps);
     if (error != ESP_OK) {
-        if (draw) {
-            lv_draw_buf_destroy(draw);
-        }
-        fail_refresh(binding, error);
-        return error;
+        goto fault;
     }
-    if (binding->direct.preferred) {
+    if (restores_direct_lease(binding)) {
         void *pool[16] = {0};
         size_t count = 0, bytes = 0;
         error = esp_display_present_engine_get_draw_buffers(binding->presenter, pool, 16, &count, &bytes);
         if (error != ESP_OK) {
-            if (draw) {
-                lv_draw_buf_destroy(draw);
-            }
-            fail_refresh(binding, error);
-            return error;
+            goto fault;
         }
-        binding->zero_copy = count == 2 && !binding->caps.writes_active_scanout;
-        binding->direct.count = binding->zero_copy ? count : 0;
-        for (size_t i = 0; i < binding->direct.count; ++i) {
-            binding->direct.buffers[i] = pool[i];
+        binding->path = count == 2 && !binding->caps.writes_active_scanout ? BINDING_DIRECT_LEASE : BINDING_COPY;
+        if (direct_lease(binding)) {
+            memcpy(binding->direct.buffers, pool, sizeof(binding->direct.buffers));
         }
     }
-    lv_draw_buf_t *old = binding->draw;
-    binding->draw = draw;
-    if (draw) {
-        lv_display_set_draw_buffers(binding->display, draw, NULL);
+    if (owned) {
+        lv_display_set_draw_buffers(binding->display, draw ? draw : binding->draw, NULL);
     } else {
         error = borrow_refresh(binding, false);
         if (error != ESP_OK) {
-            /* LVGL may still reference the old owned descriptor. Keep it alive
-             * while faulted/paused; destroy releases it after display teardown.
-             * The engine already rotated, so this is not a successful rollback. */
-            binding->draw = old;
-            fail_refresh(binding, error);
-            return error;
+            goto fault;
         }
     }
+    lv_draw_buf_t *old = binding->draw;
+    binding->draw = owned ? (draw ? draw : old) : NULL;
     lv_display_set_resolution(binding->display, width, height);
-    if (old) {
+    if (old && old != binding->draw) {
         lv_draw_buf_destroy(old);
     }
     lv_obj_invalidate(lv_display_get_screen_active(binding->display));
     return ESP_OK;
+
+fault:
+    /* The engine may already have rotated. Keep the old descriptor alive for
+     * LVGL until display teardown, and stop refresh instead of claiming rollback. */
+    fail_refresh(binding, error);
+discard:
+    if (draw) {
+        lv_draw_buf_destroy(draw);
+    }
+    return error;
 }

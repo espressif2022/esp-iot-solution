@@ -20,6 +20,7 @@ typedef struct {
     esp_err_t (*create)(const esp_display_present_backend_config_t *config, present_backend_t **out_backend); /**< Create backend with default wake policy. */
     esp_err_t (*create_scheduled)(const esp_display_present_backend_config_t *config, present_backend_t **out_backend, bool autonomous); /**< Create backend with explicit engine background-service policy. */
     esp_err_t (*service)(present_backend_t *backend); /**< Task-context progress pump under the engine gate. */
+    void (*set_copy_priority)(present_backend_t *backend, unsigned priority); /**< Publish producer-session priority; no task calls or wake under gate. */
     bool (*copy_work)(present_backend_t *backend); /**< Optional blocking copy step run on backend worker outside gate. */
     bool (*can_defer_service)(present_backend_t *backend); /**< Optional concurrent snapshot: construction-only work, no ready scanout/retirement/fault. */
     esp_err_t (*get_caps)(present_backend_t *backend, esp_display_present_backend_caps_t *caps); /**< Query backend capabilities. */

@@ -24,8 +24,8 @@
 
 static const char *TAG = "lv_present_test";
 
-#define TEST_LCD_H_RES              100
-#define TEST_LCD_V_RES              100
+#define TEST_LCD_H_RES              120
+#define TEST_LCD_V_RES              80
 #define TEST_MEMORY_LEAK_THRESHOLD  (2000)
 #define TEST_QUIESCE_TIMEOUT_MS     (2000)
 
@@ -42,6 +42,7 @@ typedef struct {
 
 static dummy_io_t s_dummy_io;
 static dummy_panel_t s_dummy_panel;
+static uint16_t s_panel_pixels[TEST_LCD_H_RES * TEST_LCD_V_RES];
 
 static void IRAM_ATTR dummy_color_done_timer(void *arg)
 {
@@ -66,11 +67,17 @@ static esp_err_t dummy_draw_bitmap(esp_lcd_panel_t *panel, int x_start, int y_st
                                    int x_end, int y_end, const void *color_data)
 {
     (void)panel;
-    (void)x_start;
-    (void)y_start;
-    (void)x_end;
-    (void)y_end;
-    (void)color_data;
+    if (color_data != NULL && x_start >= 0 && y_start >= 0 &&
+            x_end <= TEST_LCD_H_RES && y_end <= TEST_LCD_V_RES &&
+            x_start < x_end && y_start < y_end) {
+        const uint16_t *src = (const uint16_t *)color_data;
+        const int width = x_end - x_start;
+        for (int y = y_start; y < y_end; ++y) {
+            memcpy(&s_panel_pixels[y * TEST_LCD_H_RES + x_start],
+                   &src[(y - y_start) * width],
+                   (size_t)width * sizeof(uint16_t));
+        }
+    }
     (void)esp_timer_stop(s_dummy_io.done_timer);
     (void)esp_timer_start_once(s_dummy_io.done_timer, 0);
     return ESP_OK;
@@ -80,6 +87,7 @@ static void dummy_panel_init(void)
 {
     memset(&s_dummy_io, 0, sizeof(s_dummy_io));
     memset(&s_dummy_panel, 0, sizeof(s_dummy_panel));
+    memset(s_panel_pixels, 0, sizeof(s_panel_pixels));
     s_dummy_io.base.register_event_callbacks = dummy_io_register_event_callbacks;
     s_dummy_panel.base.draw_bitmap = dummy_draw_bitmap;
 
@@ -189,6 +197,84 @@ TEST_CASE("lv present flushes through presenter", "[lv_present][basic]")
 
     TEST_ASSERT_TRUE(esp_lv_present_get_frame_count() > 0);
     ESP_LOGI(TAG, "committed %" PRIu32 " frame(s)", esp_lv_present_get_frame_count());
+
+    TEST_ESP_OK(esp_display_presenter_quiesce(presenter, TEST_QUIESCE_TIMEOUT_MS));
+    TEST_ESP_OK(esp_lv_present_stop());
+    test_presenter_delete(presenter);
+}
+
+TEST_CASE("lv present runtime set_rotation", "[lv_present][rotation]")
+{
+    static const esp_display_present_rotation_t angles[] = {
+        ESP_DISPLAY_PRESENT_ROTATE_0,
+        ESP_DISPLAY_PRESENT_ROTATE_90,
+        ESP_DISPLAY_PRESENT_ROTATE_180,
+        ESP_DISPLAY_PRESENT_ROTATE_270,
+        ESP_DISPLAY_PRESENT_ROTATE_0,
+    };
+    esp_display_presenter_t *presenter = NULL;
+    lv_display_t *disp = NULL;
+
+    TEST_ESP_ERR(ESP_ERR_INVALID_STATE,
+                 esp_lv_present_set_rotation(ESP_DISPLAY_PRESENT_ROTATE_90, TEST_QUIESCE_TIMEOUT_MS));
+
+    test_presenter_create(&presenter);
+    TEST_ESP_OK(esp_lv_present_start(presenter, &disp));
+    TEST_ASSERT_NOT_NULL(disp);
+
+    TEST_ESP_ERR(ESP_ERR_INVALID_ARG,
+                 esp_lv_present_set_rotation((esp_display_present_rotation_t)45, TEST_QUIESCE_TIMEOUT_MS));
+
+    lv_obj_t *scr = lv_display_get_screen_active(disp);
+    lv_obj_set_style_bg_color(scr, lv_color_hex(0x0000FF), 0);
+    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
+
+    lv_obj_t *marker = lv_obj_create(scr);
+    lv_obj_remove_style_all(marker);
+    lv_obj_set_size(marker, 16, 8);
+    lv_obj_set_pos(marker, 0, 0);
+    lv_obj_set_style_bg_color(marker, lv_color_hex(0xFF0000), 0);
+    lv_obj_set_style_bg_opa(marker, LV_OPA_COVER, 0);
+
+    for (size_t i = 0; i < sizeof(angles) / sizeof(angles[0]); ++i) {
+        const esp_display_present_rotation_t rot = angles[i];
+        const int32_t expected_w = (rot == ESP_DISPLAY_PRESENT_ROTATE_90 ||
+                                    rot == ESP_DISPLAY_PRESENT_ROTATE_270)
+                                   ? TEST_LCD_V_RES : TEST_LCD_H_RES;
+        const int32_t expected_h = (rot == ESP_DISPLAY_PRESENT_ROTATE_90 ||
+                                    rot == ESP_DISPLAY_PRESENT_ROTATE_270)
+                                   ? TEST_LCD_H_RES : TEST_LCD_V_RES;
+        uint32_t before_frames = esp_lv_present_get_frame_count();
+
+        TEST_ESP_OK(esp_lv_present_set_rotation(rot, TEST_QUIESCE_TIMEOUT_MS));
+        TEST_ASSERT_EQUAL_INT32(expected_w, lv_display_get_horizontal_resolution(disp));
+        TEST_ASSERT_EQUAL_INT32(expected_h, lv_display_get_vertical_resolution(disp));
+
+        esp_display_presenter_caps_t caps = {0};
+        TEST_ESP_OK(esp_display_presenter_get_caps(presenter, &caps));
+        TEST_ASSERT_EQUAL_INT32(expected_w, caps.width);
+        TEST_ASSERT_EQUAL_INT32(expected_h, caps.height);
+
+        memset(s_panel_pixels, 0, sizeof(s_panel_pixels));
+        lv_obj_invalidate(scr);
+        lv_refr_now(disp);
+        TEST_ESP_OK(esp_display_presenter_quiesce(presenter, TEST_QUIESCE_TIMEOUT_MS));
+        TEST_ASSERT_TRUE(esp_lv_present_get_frame_count() > before_frames);
+
+        int32_t px = (rot == ESP_DISPLAY_PRESENT_ROTATE_90 || rot == ESP_DISPLAY_PRESENT_ROTATE_180)
+                     ? (TEST_LCD_H_RES - 2) : 2;
+        int32_t py = (rot == ESP_DISPLAY_PRESENT_ROTATE_180 || rot == ESP_DISPLAY_PRESENT_ROTATE_270)
+                     ? (TEST_LCD_V_RES - 2) : 2;
+        int32_t opp_x = TEST_LCD_H_RES - 1 - px;
+        int32_t opp_y = TEST_LCD_V_RES - 1 - py;
+        uint16_t marker_px = s_panel_pixels[py * TEST_LCD_H_RES + px];
+        uint16_t bg_px = s_panel_pixels[opp_y * TEST_LCD_H_RES + opp_x];
+        TEST_ASSERT_NOT_EQUAL_UINT16(0, marker_px);
+        TEST_ASSERT_NOT_EQUAL_UINT16(marker_px, bg_px);
+
+        ESP_LOGI(TAG, "rotation=%u logical=%" PRId32 "x%" PRId32 " frames=%" PRIu32 " marker=0x%04x bg=0x%04x",
+                 (unsigned)rot, expected_w, expected_h, esp_lv_present_get_frame_count(), marker_px, bg_px);
+    }
 
     TEST_ESP_OK(esp_display_presenter_quiesce(presenter, TEST_QUIESCE_TIMEOUT_MS));
     TEST_ESP_OK(esp_lv_present_stop());

@@ -482,6 +482,11 @@ static void copy_work_ready(void *context)
 
 /* Engine joins the consumer before composer stop/destroy. Rotation only
  * reorients this stable composer; it does not replace its pixel engine. */
+static void te_set_copy_priority(present_backend_t *backend, unsigned priority)
+{
+    present_te_composer_set_priority(backend->composer, priority);
+}
+
 static bool te_copy_work(present_backend_t *backend)
 {
     present_lock_enter(&backend->lock, false);
@@ -1088,6 +1093,7 @@ const present_backend_ops_t present_te_backend = {
     .service = present_te_service,
     .create = te_create,
     .create_scheduled = te_create_common,
+    .set_copy_priority = te_set_copy_priority,
     .copy_work = te_copy_work,
     .get_caps = te_get_caps,
     .begin = te_begin,

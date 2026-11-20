@@ -116,6 +116,8 @@ struct present_backend {
     present_lock_t lock;
     esp_display_present_backend_config_t config;
     present_copy_queue_t *copy_queue;
+    unsigned copy_priority;
+    bool copy_priority_set;
     fb_slot_t slots[FB_LIMIT];
     present_frame_core_t core;
     size_t active;
@@ -770,6 +772,13 @@ static bool fb_can_defer_service(present_backend_t *backend)
     return defer;
 }
 
+static void fb_set_copy_priority(present_backend_t *backend, unsigned priority)
+{
+    backend->copy_priority = priority;
+    backend->copy_priority_set = true;
+    present_copy_queue_set_priority(backend->copy_queue, priority);
+}
+
 static esp_err_t create_copy_queue(present_backend_t *backend)
 {
     const esp_display_present_backend_config_t *config = &backend->config;
@@ -786,6 +795,9 @@ static esp_err_t create_copy_queue(present_backend_t *backend)
     present_copy_queue_t *queue = NULL;
     esp_err_t result = present_copy_queue_create(&qc, &queue);
     if (result == ESP_OK) {
+        if (backend->copy_priority_set) {
+            present_copy_queue_set_priority(queue, backend->copy_priority);
+        }
         /* Runtime rotation can create the first copy queue while the shared
          * worker is awake. Publish once; stop joins it before pointer cleanup. */
         present_lock_enter(&backend->lock, false);
@@ -1693,6 +1705,7 @@ static esp_err_t fb_set_rotation(present_backend_t *backend, esp_display_present
 const present_backend_ops_t present_fb_backend = {
     .name = "fb",
     .service = present_fb_service,
+    .set_copy_priority = fb_set_copy_priority,
     .copy_work = fb_copy_work,
     .can_defer_service = fb_can_defer_service,
     .create = fb_create,

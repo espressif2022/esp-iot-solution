@@ -217,6 +217,20 @@ esp_err_t present_copy_queue_create(const present_copy_queue_config_t *config, p
     return ESP_OK;
 }
 
+void present_copy_queue_set_priority(present_copy_queue_t *queue, unsigned priority)
+{
+    if (!queue || queue->external) {
+        return;
+    }
+    present_lock_enter(&queue->lock, false);
+    if (!queue->closing && (!queue->priority.initialized || queue->priority.value != priority)) {
+        queue->priority.value = priority;
+        queue->priority.initialized = true;
+        queue->priority.applied = false;
+    }
+    present_lock_exit(&queue->lock, false);
+}
+
 esp_err_t present_copy_queue_submit(present_copy_queue_t *queue, const esp_display_present_copy_request_t *request,
                                     present_copy_handle_t *out_handle)
 {
