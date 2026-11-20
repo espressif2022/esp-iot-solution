@@ -361,7 +361,7 @@ static void retry_admission(lv_timer_t *timer)
 static void refresh_event(lv_event_t *event)
 {
     esp_lv_present_native_t *binding = lv_event_get_user_data(event);
-    if (!binding->zero_copy || binding->lifecycle.closing) {
+    if (binding->lifecycle.closing) {
         return;
     }
     lv_event_code_t code = lv_event_get_code(event);
@@ -371,6 +371,9 @@ static void refresh_event(lv_event_t *event)
     }
     if (code == LV_EVENT_REFR_READY) {
         binding->lifecycle.in_refresh = false;
+        if (!binding->zero_copy) {
+            return;
+        }
         binding->need_tile = false;
         detach(binding);
         if (binding->refreshing) {
@@ -662,13 +665,11 @@ static esp_err_t create_binding(esp_display_present_engine_t *presenter, uint32_
         lv_display_add_event_cb(binding->display, acquire_before_draw, LV_EVENT_FLUSH_WAIT_START, binding);
     }
 #endif
-    if (zero_copy) {
-        if (!binding->pooled_partial) {
-            lv_display_add_event_cb(binding->display, refresh_event, LV_EVENT_REFR_START, binding);
-        } else {
-            lv_display_add_event_cb(binding->display, refresh_event, LV_EVENT_RENDER_START, binding);
-        }
-        lv_display_add_event_cb(binding->display, refresh_event, LV_EVENT_REFR_READY, binding);
+    /* All storage modes reject control transitions from refresh callbacks. */
+    lv_display_add_event_cb(binding->display, refresh_event, LV_EVENT_REFR_START, binding);
+    lv_display_add_event_cb(binding->display, refresh_event, LV_EVENT_REFR_READY, binding);
+    if (binding->pooled_partial) {
+        lv_display_add_event_cb(binding->display, refresh_event, LV_EVENT_RENDER_START, binding);
     }
     /* TE has no baseline until actual full coverage has been composed. */
     lv_obj_invalidate(lv_display_get_screen_active(binding->display));
@@ -767,9 +768,20 @@ esp_err_t esp_lv_present_native_destroy(esp_lv_present_native_t *binding)
     return ESP_OK;
 }
 
+static esp_err_t rotate_engine(void *context, esp_display_present_engine_rotation_t rotation, uint32_t timeout)
+{
+    return esp_display_present_engine_set_rotation(context, rotation, timeout);
+}
+
 esp_err_t esp_lv_present_native_set_rotation(esp_lv_present_native_t *binding, esp_display_present_engine_rotation_t rotation, uint32_t timeout)
 {
-    if (!binding || rotation < ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || rotation > ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270) {
+    return esp_lv_present_native_rotate(binding, rotation, timeout, rotate_engine, binding ? binding->presenter : NULL);
+}
+
+esp_err_t esp_lv_present_native_rotate(esp_lv_present_native_t *binding, esp_display_present_engine_rotation_t rotation,
+                                       uint32_t timeout, esp_lv_present_rotate_fn rotate, void *context)
+{
+    if (!binding || !rotate || rotation < ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || rotation > ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270) {
         return ESP_ERR_INVALID_ARG;
     }
     if (binding->lifecycle.in_refresh || binding->lifecycle.closing || binding->error != ESP_OK ||
@@ -830,10 +842,15 @@ esp_err_t esp_lv_present_native_set_rotation(esp_lv_present_native_t *binding, e
         }
         binding->refreshing = false;
     }
-    error = esp_display_present_engine_set_rotation(binding->presenter, rotation, timeout);
+    error = rotate(context, rotation, timeout);
     if (error != ESP_OK) {
         if (draw) {
             lv_draw_buf_destroy(draw);
+        }
+        esp_display_present_engine_rotation_t actual;
+        if (esp_display_present_engine_get_rotation(binding->presenter, &actual) != ESP_OK || actual != old_rotation) {
+            fail_refresh(binding, error);
+            return error;
         }
         if (binding->admission.pending) {
             lv_timer_resume(binding->admission.retry);

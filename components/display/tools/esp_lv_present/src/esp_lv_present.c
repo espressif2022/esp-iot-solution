@@ -79,6 +79,18 @@ esp_err_t esp_lv_present_stop(void)
     owner = NULL;
     return ESP_OK;
 }
+esp_err_t esp_lv_present_set_rotation(esp_display_present_rotation_t rotation, uint32_t timeout_ms)
+{
+    if (rotation != 0 && rotation != 90 && rotation != 180 && rotation != 270) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (!binding) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    return esp_lv_present_native_rotate(binding, (esp_display_present_engine_rotation_t)(rotation / 90),
+                                        timeout_ms, present_session_set_rotation, owner);
+}
+
 uint32_t esp_lv_present_get_frame_count(void)
 {
     if (!binding) {

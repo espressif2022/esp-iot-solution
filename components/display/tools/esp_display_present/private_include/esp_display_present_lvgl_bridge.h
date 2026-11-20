@@ -20,6 +20,9 @@ struct esp_display_presenter;
 esp_err_t present_session_bind(struct esp_display_presenter *presenter, esp_display_present_engine_t **out_engine);
 /** @brief Unbind the active renderer session and restore default presenter ownership. */
 void present_session_unbind(struct esp_display_presenter *presenter);
+/** @brief Rotate a bound session and synchronize facade geometry, even on a late error.
+ * Called by the binding after revoking its lease, before updating LVGL resolution. */
+esp_err_t present_session_set_rotation(void *presenter, esp_display_present_engine_rotation_t rotation, uint32_t timeout_ms);
 /** @brief Return the committed frame counter observed across the session. */
 uint64_t present_session_committed(struct esp_display_presenter *presenter);
 

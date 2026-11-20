@@ -13,6 +13,7 @@ examples:
   - path: ../../../../examples/display/gui/lvgl_present_benchmark
 files:
   exclude:
+    - "**/build*/**/*"
     - "dist/**/*"
     - "dev/**/*"
     - "tests/**/*"

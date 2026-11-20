@@ -17,6 +17,11 @@ dependencies:
     public: true
 examples:
   - path: ../../../../examples/display/gui/lvgl_present_benchmark
+files:
+  exclude:
+    - "**/build*/**/*"
+    - "dist/**/*"
+    - "test_apps/**/*"
 sbom:
   supplier: 'Organization: Espressif Systems (Shanghai) CO LTD'
   originator: 'Organization: Espressif Systems (Shanghai) CO LTD'

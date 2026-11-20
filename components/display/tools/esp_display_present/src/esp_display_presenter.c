@@ -1122,6 +1122,47 @@ esp_err_t present_session_bind(esp_display_presenter_t *presenter, esp_display_p
     present_mutex_give(presenter->gate);
     return error;
 }
+esp_err_t present_session_set_rotation(void *context, esp_display_present_engine_rotation_t rotation, uint32_t timeout)
+{
+    esp_display_presenter_t *presenter = context;
+    if (!presenter || rotation < ESP_DISPLAY_PRESENT_ENGINE_ROTATE_0 || rotation > ESP_DISPLAY_PRESENT_ENGINE_ROTATE_270) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    uint64_t start = present_now_ms();
+    if (!present_mutex_take(presenter->gate, timeout)) {
+        return ESP_ERR_TIMEOUT;
+    }
+    esp_err_t error = ESP_ERR_INVALID_STATE;
+    if (presenter->producer.lvgl_bound && present_same_task(presenter->producer.task, present_current_task()) &&
+            presenter->state == ESP_DISPLAY_PRESENTER_STATE_OPEN && !presenter->producer.active &&
+            !presenter->producer.cancel_pending) {
+        error = poll(presenter);
+        if (error == ESP_OK && (presenter->observer.public_id || presenter->observer.receipt.value ||
+                                presenter->observer.timeline.generation == UINT32_MAX)) {
+            error = ESP_ERR_INVALID_STATE;
+        }
+        if (error == ESP_OK) {
+            error = present_resources_set_rotation(presenter->resources, rotation, present_remaining_ms(start, timeout));
+            /* A backend transition may succeed before a later caps query fails.
+             * Publish the actual orientation; never pretend that it rolled back. */
+            esp_display_present_engine_rotation_t actual;
+            esp_err_t observed = esp_display_present_engine_get_rotation(core(presenter), &actual);
+            if (observed == ESP_OK && presenter->geometry.rotation != (esp_display_present_rotation_t)(actual * 90)) {
+                presenter->geometry.rotation = (esp_display_present_rotation_t)(actual * 90);
+                ++presenter->observer.timeline.generation;
+                presenter->producer.full_next = true;
+                (void)present_resources_select_executor(presenter->resources, actual);
+                observed = refresh_caps(presenter);
+            }
+            if (error == ESP_OK) {
+                error = observed;
+            }
+        }
+    }
+    present_mutex_give(presenter->gate);
+    return error;
+}
+
 void present_session_unbind(esp_display_presenter_t *presenter)
 {
     (void)present_mutex_take(presenter->gate, UINT32_MAX);

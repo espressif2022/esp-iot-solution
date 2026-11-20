@@ -59,6 +59,25 @@ esp_err_t esp_lv_present_start(esp_display_presenter_t *presenter,
 esp_err_t esp_lv_present_stop(void);
 
 /**
+ * @brief Rotate the active display without recreating its LVGL objects.
+ *
+ * Call on the task that started the binding, serialized with LVGL, outside
+ * LVGL callbacks. Drains pending output and updates logical resolution,
+ * Presenter point mapping and generation; forces a full redraw. Does not
+ * change panel MADCTL or reset application input devices. Reset/wait-release
+ * touch input after this call before accepting new coordinates.
+ *
+ * Allocation failure or a drain timeout before rotation preserves the old
+ * orientation. A failure after the engine changes orientation pauses rendering;
+ * Presenter queries report the actual orientation. Stop/recreate the binding
+ * before resuming in that case; do not overwrite LVGL draw buffers manually.
+ *
+ * @return ESP_OK, ESP_ERR_INVALID_ARG for invalid angles, ESP_ERR_INVALID_STATE
+ * for no binding/wrong task/refresh in progress, or allocation/backend error.
+ */
+esp_err_t esp_lv_present_set_rotation(esp_display_present_rotation_t rotation, uint32_t timeout_ms);
+
+/**
  * @brief Return frames committed to the presenter since the last start.
  *
  * @return Committed frame count, or 0 when the binding is not started.

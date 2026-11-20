@@ -82,6 +82,11 @@ esp_err_t esp_lv_present_native_destroy(esp_lv_present_native_t *binding);
  * LVGL display and object tree, changes logical resolution, invalidates all.
  * No panel MADCTL change and no recovery from an existing sticky fault. */
 esp_err_t esp_lv_present_native_set_rotation(esp_lv_present_native_t *, esp_display_present_engine_rotation_t, uint32_t timeout_ms);
+/* Private facade hook: runs after lease revocation, before LVGL resolution events.
+ * The callback must publish the actual facade geometry even on a late error. */
+typedef esp_err_t (*esp_lv_present_rotate_fn)(void *, esp_display_present_engine_rotation_t, uint32_t);
+esp_err_t esp_lv_present_native_rotate(esp_lv_present_native_t *, esp_display_present_engine_rotation_t,
+                                       uint32_t timeout_ms, esp_lv_present_rotate_fn, void *context);
 
 #ifdef __cplusplus
 }
