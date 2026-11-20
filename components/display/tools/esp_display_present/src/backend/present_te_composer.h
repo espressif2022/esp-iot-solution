@@ -29,6 +29,9 @@ typedef struct {
     esp_display_present_pixel_config_t pixel;          /**< Copy queue/worker configuration (max_jobs=0 selects sync). */
 } present_te_composer_config_t;
 
+/** @brief Publish the producer-session priority to the dedicated copy worker. */
+void present_te_composer_set_priority(present_te_composer_t *, unsigned);
+
 /** @brief Execute at most one queued request in external_worker mode (join worker before stop/destroy). */
 bool present_te_composer_run_one(present_te_composer_t *);
 

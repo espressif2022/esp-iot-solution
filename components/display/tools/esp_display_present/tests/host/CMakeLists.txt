@@ -57,6 +57,16 @@ target_compile_definitions(header_smoke PRIVATE PRESENT_HOST=1)
 target_compile_options(header_smoke PRIVATE -Wall -Wextra -Werror)
 add_test(NAME headers_cpp COMMAND header_smoke)
 
+add_executable(test_session_priority test_session_priority.c)
+target_link_libraries(test_session_priority PRIVATE present_engine)
+target_compile_definitions(test_session_priority PRIVATE PRESENT_HOST=1)
+target_compile_options(test_session_priority PRIVATE -Wall -Wextra -Werror -UNDEBUG)
+target_link_options(test_session_priority PRIVATE
+    -Wl,--wrap=present_task_priority -Wl,--wrap=present_task_set_priority
+    -Wl,--wrap=present_worker_create -Wl,--wrap=present_worker_set_priority)
+add_test(NAME session_priority COMMAND test_session_priority)
+set_tests_properties(session_priority PROPERTIES TIMEOUT 20)
+
 set(PRESENT_LVGL_DIR "" CACHE PATH "Optional existing LVGL 9 source directory")
 if(PRESENT_LVGL_DIR)
     set(LV_BUILD_CONF_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lv_conf.h" CACHE PATH "" FORCE)

@@ -55,6 +55,11 @@ typedef struct {
  */
 esp_err_t present_copy_queue_create(const present_copy_queue_config_t *config, present_copy_queue_t **out);
 
+/** @brief Publish a producer-session priority, applied before the next dedicated-worker job.
+ * Serialized with submit/stop by the owner; external workers keep their own priority.
+ * Does not wake a worker or change buffer ownership. */
+void present_copy_queue_set_priority(present_copy_queue_t *queue, unsigned priority);
+
 /**
  * @brief Validate and enqueue a copy request.
  *

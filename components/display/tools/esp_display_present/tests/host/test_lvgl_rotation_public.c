@@ -10,7 +10,7 @@ static bool io_mode, hold_io, fail_draw, fail_borrow;
 static uint16_t pixels[32];
 static atomic_bool scanning;
 static esp_display_presenter_t *presenter;
-static unsigned events;
+static unsigned events, held_completions;
 lv_draw_buf_t *__real_lv_draw_buf_create(uint32_t, uint32_t, lv_color_format_t, uint32_t);
 lv_draw_buf_t *__wrap_lv_draw_buf_create(uint32_t w, uint32_t h, lv_color_format_t f, uint32_t s)
 {
@@ -37,7 +37,13 @@ esp_err_t esp_lcd_panel_draw_bitmap(esp_lcd_panel_handle_t p, int x, int y, int 
     for (int row = y; row < ey; ++row) {
         memcpy(pixels + row * p->physical_width + x, (const uint16_t *)src + (row - y) * (ex - x), (ex - x) * 2);
     }
-    if (!hold_io && p->io) {
+    pthread_mutex_lock(&p->lock);
+    bool complete = !hold_io;
+    if (!complete) {
+        ++held_completions;
+    }
+    pthread_mutex_unlock(&p->lock);
+    if (complete && p->io) {
         p->io(p, NULL, p->user);
     }
     return ESP_OK;
@@ -142,10 +148,22 @@ static void exercise(esp_display_present_mode_t mode, unsigned width)
             }
     }
     if (io_mode) {
-        hold_io = true; lv_obj_set_style_bg_color(box, lv_color_hex(0x0000ff), 0); lv_refr_now(d);
+        pthread_mutex_lock(&p.lock);
+        hold_io = true;
+        pthread_mutex_unlock(&p.lock);
+        lv_obj_set_style_bg_color(box, lv_color_hex(0x0000ff), 0); lv_refr_now(d);
         assert(esp_lv_present_set_rotation(ESP_DISPLAY_PRESENT_ROTATE_90, 0) == ESP_ERR_TIMEOUT);
         OK(esp_display_presenter_get_frame_status(presenter, &after)); assert(after.generation == before.generation + 8);
-        hold_io = false; p.io(&p, NULL, p.user);
+        /* Deliver each accepted transfer exactly once. Both input tiles may
+         * already be queued when the zero-deadline rotation attempt returns. */
+        pthread_mutex_lock(&p.lock);
+        hold_io = false;
+        unsigned completions = held_completions;
+        held_completions = 0;
+        pthread_mutex_unlock(&p.lock);
+        while (completions--) {
+            p.io(&p, NULL, p.user);
+        }
         OK(esp_lv_present_set_rotation(ESP_DISPLAY_PRESENT_ROTATE_90, 1000));
         lv_refr_now(d); OK(esp_display_presenter_quiesce(presenter, 1000));
     }

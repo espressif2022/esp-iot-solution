@@ -246,12 +246,23 @@ static esp_err_t checked_direct_copy(void *user, const esp_display_present_copy_
 {
     (void)user;
     uint8_t saved[W * H * 2];
-    assert(request->src.capacity_bytes <= sizeof(saved));
-    memcpy(saved, request->src.pixels, request->src.capacity_bytes);
+    size_t row_bytes = request->src_area.width * 2;
+    assert(request->src_area.height * row_bytes <= sizeof(saved));
+    const uint8_t *source = (const uint8_t *)request->src.pixels +
+                            request->src_area.y * request->src.layout.stride_bytes + request->src_area.x * 2;
+    /* Only the requested rectangle is borrowed. Other canvas rectangles may be
+     * drawn concurrently; reading them here would itself introduce a test race. */
+    for (uint32_t y = 0; y < request->src_area.height; ++y) {
+        memcpy(saved + y * row_bytes, source + y * request->src.layout.stride_bytes, row_bytes);
+    }
     pause_copy(); /* Keep conversion alive while a following LVGL area is ready. */
-    assert(!memcmp(saved, request->src.pixels, request->src.capacity_bytes));
+    for (uint32_t y = 0; y < request->src_area.height; ++y) {
+        assert(!memcmp(saved + y * row_bytes, source + y * request->src.layout.stride_bytes, row_bytes));
+    }
     esp_err_t result = esp_display_present_pixel_execute_cpu(request);
-    assert(!memcmp(saved, request->src.pixels, request->src.capacity_bytes));
+    for (uint32_t y = 0; y < request->src_area.height; ++y) {
+        assert(!memcmp(saved + y * row_bytes, source + y * request->src.layout.stride_bytes, row_bytes));
+    }
     return result;
 }
 static void exercise_direct(unsigned rotation, bool async, bool swap)
