@@ -2,6 +2,11 @@
 
 ## 2.0.0 — Unreleased
 
+- Restore ESP-IDF 6.0 MIPI-DSI DPI scanout support via `on_refresh_done` when
+  `on_frame_buf_complete` / `on_vsync` are unavailable, adding an extra refresh
+  boundary on `CONFIG_ESP_REV_MIN_FULL >= 300` multi-FB switches so Bridge VSYNC
+  never retires an old framebuffer before DW-GDMA switches descriptors.
+
 - Track missing regions per physical image instead of retaining eight frame
   damage generations. FULL and single-image TE allocate no cross-frame history;
   preserve exact current writes, seeded pixels, cancellation invalidation and

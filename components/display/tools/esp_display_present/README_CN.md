@@ -82,7 +82,7 @@ D 数量与 C／F 数量独立。例如 `2 D + 3 F` 表示两块绘制缓冲配�
 
 - ESP-IDF 6.0 及以上，像素格式与已初始化的面板匹配。
 - 当前 Panel IO 发送适配器支持 SPI／QSPI 的完成回调协议，其他接口需单独适配。
-- RGB／MIPI 至少需要两张驱动帧缓冲。ESP32-S3 RGB 需要启用驱动 bounce buffer；DSI 需要 DPI 帧完成和 VSYNC 回调，ESP-IDF 6.0 尚不提供这些回调。
+- RGB／MIPI 至少需要两张驱动帧缓冲。ESP32-S3 RGB 需要启用驱动 bounce buffer；ESP-IDF 6.0 下 MIPI-DSI 仅提供 `on_refresh_done` 时，`CONFIG_ESP_REV_MIN_FULL >= 300` 的多缓冲切换会多等一个刷新周期以保证 DMA 安全退休，ESP-IDF 6.1+ 直接使用 `on_frame_buf_complete`。
 
 这份源码使用本地组件接入，在应用的 `main/idf_component.yml` 中指定路径：
 

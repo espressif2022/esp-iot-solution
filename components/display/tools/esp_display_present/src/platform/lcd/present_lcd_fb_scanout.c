@@ -9,10 +9,27 @@
 #include <limits.h>
 #ifdef PRESENT_HOST
 #define PRESENT_DSI_SUPPORTED 1
+#ifdef PRESENT_HOST_DSI_LEGACY_REFRESH_ONLY
+#define PRESENT_DSI_MODERN_CALLBACKS 0
+#define PRESENT_DSI_LEGACY_CALLBACKS 1
+#define PRESENT_DSI_LEGACY_VSYNC_RETIRE (PRESENT_HOST_P4_REV_MIN_FULL >= 300)
+#else
+#define PRESENT_DSI_MODERN_CALLBACKS 1
+#define PRESENT_DSI_LEGACY_CALLBACKS 0
+#define PRESENT_DSI_LEGACY_VSYNC_RETIRE 0
+#endif
 #define PRESENT_RGB_SUPPORTED 1
 #else
 #include "soc/soc_caps.h"
-#define PRESENT_DSI_SUPPORTED (SOC_MIPI_DSI_SUPPORTED && PRESENT_IDF_DSI_SCANOUT_API)
+#include "sdkconfig.h"
+#define PRESENT_DSI_MODERN_CALLBACKS (PRESENT_IDF_DSI_FRAME_COMPLETE_API && PRESENT_IDF_DSI_VSYNC_API)
+#define PRESENT_DSI_LEGACY_CALLBACKS (!PRESENT_DSI_MODERN_CALLBACKS && PRESENT_IDF_DSI_REFRESH_DONE_API)
+#if PRESENT_DSI_LEGACY_CALLBACKS && (!CONFIG_IDF_TARGET_ESP32P4 || (defined(CONFIG_ESP_REV_MIN_FULL) && CONFIG_ESP_REV_MIN_FULL >= 300))
+#define PRESENT_DSI_LEGACY_VSYNC_RETIRE 1
+#else
+#define PRESENT_DSI_LEGACY_VSYNC_RETIRE 0
+#endif
+#define PRESENT_DSI_SUPPORTED (SOC_MIPI_DSI_SUPPORTED && (PRESENT_DSI_MODERN_CALLBACKS || PRESENT_DSI_LEGACY_CALLBACKS))
 #define PRESENT_RGB_SUPPORTED SOC_LCD_RGB_SUPPORTED
 #endif
 #if PRESENT_DSI_SUPPORTED
@@ -127,6 +144,7 @@ static bool PRESENT_ISR_ATTR vsync(esp_display_present_lcd_fb_scanout_t *scanout
 }
 #endif
 #if PRESENT_DSI_SUPPORTED
+#if PRESENT_DSI_MODERN_CALLBACKS
 static bool PRESENT_ISR_ATTR dsi_vsync(esp_lcd_panel_handle_t panel, esp_lcd_dpi_panel_event_data_t *data, void *user)
 {
     (void)panel;
@@ -139,6 +157,20 @@ static bool PRESENT_ISR_ATTR dsi_done(esp_lcd_panel_handle_t panel, esp_lcd_dpi_
     (void)data;
     return frame_boundary(user, true);
 }
+#else
+/* ESP-IDF 6.0 DPI exposes on_refresh_done only: once per frame in
+ * mipi_dsi_dma_trans_done_cb (rev < 3.0) or mipi_dsi_bridge_isr_handler VSYNC
+ * (rev >= 3.0). Forward raw VSYNC edges before counting retirement boundaries. */
+static bool PRESENT_ISR_ATTR dsi_refresh_done(esp_lcd_panel_handle_t panel, esp_lcd_dpi_panel_event_data_t *data, void *user)
+{
+    (void)panel;
+    (void)data;
+    esp_display_present_lcd_fb_scanout_t *scanout = user;
+    bool yield = vsync(scanout);
+    yield |= frame_boundary(scanout, true);
+    return yield;
+}
+#endif
 #endif
 #if PRESENT_RGB_SUPPORTED
 static bool PRESENT_ISR_ATTR rgb_vsync(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_event_data_t *data, void *user)
@@ -176,8 +208,12 @@ static esp_err_t scanout_attach(void *context, esp_display_present_panel_event_f
 #if PRESENT_DSI_SUPPORTED
     if (scanout->config.kind == ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_DSI) {
         esp_lcd_dpi_panel_event_callbacks_t callbacks = {
+#if PRESENT_DSI_MODERN_CALLBACKS
             .on_frame_buf_complete = dsi_done,
             .on_vsync = scanout->config.on_vsync ? dsi_vsync : NULL,
+#else
+            .on_refresh_done = dsi_refresh_done,
+#endif
         };
         error = esp_lcd_dpi_panel_register_event_callbacks(scanout->config.panel, &callbacks, scanout);
     }
@@ -292,9 +328,19 @@ static esp_display_present_tx_result_t scanout_submit(void *context, const esp_d
     if (error == ESP_OK) {
         joined = present_isr_barrier(1000);
     }
+    /* On ESP-IDF 6.0 with P4 min rev >= 3.0, on_refresh_done fires on DSI
+     * bridge VSYNC after mipi_dsi_dma_trans_done_cb reloads cur_fb_index.
+     * If draw_bitmap ran between DMA EOF and bridge VSYNC, the first VSYNC
+     * precedes any DMA link switch; one additional active-frame period
+     * guarantees mipi_dsi_dma_trans_done_cb has switched off the old FB. */
     present_lock_enter(&scanout->lock, false);
     scanout->pending.boundaries = 0;
     scanout->pending.required_boundaries = (joined == ESP_OK || scanout->config.single_retire) ? 1u : 2u;
+#if PRESENT_DSI_LEGACY_VSYNC_RETIRE
+    if (scanout->config.kind == ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_DSI && scanout->config.buffer_count > 1) {
+        ++scanout->pending.required_boundaries;
+    }
+#endif
     scanout->pending.armed = error == ESP_OK;
     if (error != ESP_OK) {
         scanout->closing = true;

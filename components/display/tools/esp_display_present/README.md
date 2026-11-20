@@ -96,7 +96,7 @@ and PSRAM staging do not add a pixel task.
 
 - ESP-IDF 6.0 or later, with pixel format matching the initialized panel.
 - The current Panel IO adapter supports the SPI/QSPI completion callback protocol; other interfaces require separate adaptation.
-- RGB/MIPI require at least two driver framebuffers. ESP32-S3 RGB requires driver bounce buffers. DSI requires DPI frame-done and VSYNC callbacks, which ESP-IDF 6.0 does not provide.
+- RGB/MIPI require at least two driver framebuffers. ESP32-S3 RGB requires driver bounce buffers. On ESP-IDF 6.0 MIPI-DSI (`on_refresh_done` only), `CONFIG_ESP_REV_MIN_FULL >= 300` waits one extra refresh period per multi-buffer switch to guarantee DMA retirement; ESP-IDF 6.1+ uses `on_frame_buf_complete` directly.
 
 Use this source version as a local component in the application's `main/idf_component.yml`:
 

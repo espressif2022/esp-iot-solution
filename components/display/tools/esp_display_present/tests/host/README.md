@@ -49,8 +49,9 @@ python3 tests/run.py idf-build --target esp32p4
 
 This application verifies target API and link integration using a loopback
 fixture. It is not a panel benchmark and does not access a real display.
-DSI scanout requires SDK callbacks newer than those available in ESP-IDF 6.0;
-a successful P4 smoke build does not establish DSI runtime support.
+Host scanout tests additionally exercise both modern DPI callbacks and ESP-IDF 6.0
+`on_refresh_done` retirement semantics (`rev < 3.0` DMA-EOF and `rev >= 3.0`
+Bridge-VSYNC).
 
 ## Dependency scheduling regression
 

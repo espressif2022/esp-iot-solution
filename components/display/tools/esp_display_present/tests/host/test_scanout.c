@@ -115,6 +115,12 @@ static void boundary(struct fake_lcd *p)
     }
 }
 
+#if defined(PRESENT_HOST_DSI_LEGACY_REFRESH_ONLY) && PRESENT_HOST_P4_REV_MIN_FULL >= 300
+#define TEST_DSI_LEGACY_VSYNC_RETIRE 1
+#else
+#define TEST_DSI_LEGACY_VSYNC_RETIRE 0
+#endif
+
 esp_err_t esp_lcd_dpi_panel_register_event_callbacks(esp_lcd_panel_handle_t p, const esp_lcd_dpi_panel_event_callbacks_t *cb, void *user)
 {
     if (!user && p->detach_fail) {
@@ -126,8 +132,13 @@ esp_err_t esp_lcd_dpi_panel_register_event_callbacks(esp_lcd_panel_handle_t p, c
             (void)p->dsi_vsync(p, NULL, NULL);
         }
     }
+#ifdef PRESENT_HOST_DSI_LEGACY_REFRESH_ONLY
+    p->dsi = cb->on_refresh_done;
+    p->dsi_vsync = NULL;
+#else
     p->dsi = cb->on_frame_buf_complete;
     p->dsi_vsync = cb->on_vsync;
+#endif
     p->user = user;
     assert(!cb->on_color_trans_done);
     return ESP_OK;
@@ -262,6 +273,13 @@ static void exercise(esp_display_present_lcd_fb_scanout_kind_t kind, bool fail, 
         esp_display_present_frame_t blocked;
         assert(ops->begin(b, &req, &blocked) == ESP_ERR_NO_MEM);
     }
+    if (TEST_DSI_LEGACY_VSYNC_RETIRE && kind == ESP_DISPLAY_PRESENT_LCD_FB_SCANOUT_DSI && buffer_count > 1) {
+        /* Bridge VSYNC can fire after an earlier DMA EOF reloaded the old FB;
+         * the first refresh_done boundary must never retire the old buffer. */
+        boundary(&panel);
+        OK(ops->query(b, receipt, &status));
+        assert(!status.terminal);
+    }
     boundary(&panel);
     OK(ops->query(b, receipt, &status));
     assert(status.terminal == (!fail && join_result == ESP_OK));
@@ -350,6 +368,10 @@ static void test_callback_drain_retry(void)
     esp_display_present_rect_t area = {0, 0, 3, 2};
     esp_display_present_tx_result_t tx = interface.submit(interface.context, &surface, &area, 42);
     assert(tx.acceptance == ESP_DISPLAY_PRESENT_TX_ACCEPTED && tx.result == ESP_OK);
+    if (TEST_DSI_LEGACY_VSYNC_RETIRE) {
+        boundary(&panel);
+        assert(!gate.entered);
+    }
     pthread_t th;
     assert(pthread_create(&th, NULL, boundary_thread, &panel) == 0);
     pthread_mutex_lock(&gate.lock);
@@ -408,15 +430,25 @@ static void test_retained_scanout(void)
         if (rgb) {
             (void)panel.rgb_vsync(&panel, NULL, panel.user);
         } else {
+#ifdef PRESENT_HOST_DSI_LEGACY_REFRESH_ONLY
+            assert(!panel.dsi_vsync);
+            boundary(&panel);
+#else
             (void)panel.dsi_vsync(&panel, NULL, panel.user);
+#endif
         }
-        assert(vsyncs == 1 && !gate.entered); /* Raw VSYNC is never a retire fence. */
+        assert(vsyncs == 1 && !gate.entered); /* Raw VSYNC / idle refresh_done is never a retire fence. */
         esp_display_present_surface_t surface = {panel.buffers[1], 64, {3, 2, 6, ESP_DISPLAY_PRESENT_FORMAT_RGB565, ESP_DISPLAY_PRESENT_ORDER_NATIVE}};
         esp_display_present_rect_t area = {0, 0, 3, 2};
         assert(interface.submit(interface.context, &surface, &area, 42).acceptance == ESP_DISPLAY_PRESENT_TX_ACCEPTED);
         assert(interface.quiesce(interface.context, 0) == ESP_ERR_TIMEOUT);
         assert(esp_display_present_lcd_fb_scanout_destroy(adapter) == ESP_ERR_INVALID_STATE);
+        if (!rgb && TEST_DSI_LEGACY_VSYNC_RETIRE) {
+            boundary(&panel);
+            assert(vsyncs == 1 && !gate.entered); /* Closing suppresses raw VSYNC while awaiting 2nd retire boundary. */
+        }
         boundary(&panel);
+        assert(vsyncs == 1);
         /* Completion still drains while retained adapter closes. */
         assert(gate.entered);
         panel.detach_fail = true;
