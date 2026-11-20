@@ -51,7 +51,14 @@
   Kconfig, with shared factory/plan rounding rules and explicit tile-row overrides.
 
 - Declare the public geometry/scanout compatibility break explicitly; see
-  `COMPATIBILITY.md` before upgrading from 1.x.
+  `COMPATIBILITY.md` before upgrading from 1.x. In particular, note three
+  same-name API behavioral changes from 1.2.2: `create()`/`open()` now bind
+  the creator task immediately (requiring explicit `rebind_producer()` or
+  `release_producer()` when rendering on another worker task), `commit_frame()`
+  is asynchronous and no longer waits for GRAM/Panel-IO transfers to go idle
+  (call `quiesce()` where idle completion is required), and post-`begin`
+  `acquire_buffer()`/`submit_buffer()`/`commit_frame()` failures keep the
+  active frame open until `cancel_frame()` is called.
 - Detect optional SDK acceleration/DPI callback APIs during configuration;
   unavailable executors use the existing CPU fallback, while unavailable DSI
   scanout returns `ESP_ERR_NOT_SUPPORTED` rather than reinterpreting refresh events.

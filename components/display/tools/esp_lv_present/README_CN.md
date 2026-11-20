@@ -1,8 +1,8 @@
 # ESP LV Present
 
-[English](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_lv_present/README.md)
+[English](README.md) | 中文
 
-`esp_lv_present` 将 **LVGL 9** 接入已有的 [esp_display_present](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/README_CN.md) Presenter，负责创建 LVGL display、flush、缓冲租约及帧提交。应用负责初始化面板、创建 Presenter，并运行 UI 任务。
+`esp_lv_present` 将 **LVGL 9** 接入已有的 [esp_display_present](../esp_display_present/README_CN.md) Presenter，负责创建 LVGL display、flush、缓冲租约及帧提交。应用负责初始化面板、创建 Presenter，并运行 UI 任务。
 
 ## 接入要求与依赖
 
@@ -31,7 +31,7 @@ LVGL 9.0–9.4 的复制路径不需要此生成步骤。
 
 ## 启动 UI
 
-先为初始化好的面板 [创建 Presenter](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/README_CN.md#创建-presenter)，再在 UI 任务运行：
+先为初始化好的面板 [创建 Presenter](../esp_display_present/README_CN.md#创建-presenter)，再在 UI 任务运行：
 
 ```c
 #include "esp_lv_present.h"
@@ -86,13 +86,13 @@ esp_err_t err = esp_lv_present_set_rotation(ESP_DISPLAY_PRESENT_ROTATE_90, 1000)
 
 逐项检查返回值。无法完成时保留句柄，从当前阶段重试；取消或超时不代表硬件已释放像素。quiesce 返回 `ESP_ERR_INVALID_STATE` 时，用 `esp_display_presenter_get_state()` 检查状态；FAULTED 实例须安全删除并重建，不能无限重试复用。`stop()` 不删除 Presenter，成功后原 `lv_display_t *` 及其 UI 已失效。
 
-交给不能自行重绑的 adapter 时，在排空后、启动对方前释放生产者所有权；参考 [交接示例](https://github.com/espressif/esp-iot-solution/tree/master/examples/display/gui/gsp_lvgl_present_handoff)。
+交给不能自行重绑的 adapter 时，在排空后、启动对方前释放生产者所有权；参考 [交接示例](../../../../examples/display/gui/gsp_lvgl_present_handoff/README.md)。
 
-`esp_lv_present_get_frame_count()` 统计提交的帧数，不是物理屏幕刷新次数。旋转与模式由 Presenter 管理，见 [模式、缓冲与任务组合](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/README_CN.md#选择模式与流水线组合)。
+`esp_lv_present_get_frame_count()` 统计提交的帧数，不是物理屏幕刷新次数。旋转与模式由 Presenter 管理，见 [怎么选择模式](../esp_display_present/README_CN.md#怎么选择模式)。
 
 ## 参考
 
-- [绑定公开 API](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_lv_present/include/esp_lv_present.h)。
-- [LVGL benchmark 示例](https://github.com/espressif/esp-iot-solution/tree/master/examples/display/gui/lvgl_present_benchmark)。
-- [兼容与迁移](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/COMPATIBILITY.md)。
-- [联合 Host 回归](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/tests/host/README.md) 与 [目标端 Unity 测试](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_lv_present/test_apps/README.md)。
+- [绑定公开 API](include/esp_lv_present.h)。
+- [LVGL benchmark 示例](../../../../examples/display/gui/lvgl_present_benchmark/README.md)。
+- [兼容与迁移](../esp_display_present/COMPATIBILITY.md)。
+- [联合 Host 回归](../esp_display_present/tests/host/README.md) 与 [目标端 Unity 测试](test_apps/README.md)。

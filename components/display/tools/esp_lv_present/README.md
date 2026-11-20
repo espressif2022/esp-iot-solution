@@ -1,9 +1,9 @@
 # ESP LV Present
 
-[中文](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_lv_present/README_CN.md)
+English | [中文](README_CN.md)
 
 `esp_lv_present` connects **LVGL 9** to an existing
-[esp_display_present](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/README.md) presenter. It creates the
+[esp_display_present](../esp_display_present/README.md) presenter. It creates the
 LVGL display and handles flush, buffer leases and frame submission. Your
 application initializes the panel, creates the presenter and runs the UI task.
 
@@ -45,7 +45,7 @@ the integration. LVGL 9.0–9.4 copy paths do not require this generation step.
 
 ## Start the UI
 
-First [create a presenter](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/README.md#create-a-presenter)
+First [create a presenter](../esp_display_present/README.md#create-a-presenter)
 for the initialized panel, then run the following on the UI task:
 
 ```c
@@ -121,15 +121,15 @@ presenter; after it succeeds, the old `lv_display_t *` and its UI are invalid.
 
 To hand off to an adapter that does not rebind itself, release producer ownership
 after quiesce and before starting it. Follow the
-[handoff example](https://github.com/espressif/esp-iot-solution/tree/master/examples/display/gui/gsp_lvgl_present_handoff).
+[handoff example](../../../../examples/display/gui/gsp_lvgl_present_handoff/README.md).
 
 `esp_lv_present_get_frame_count()` counts committed frames, not physical panel
-refreshes. Rotation and mode selection belong to the presenter; see the
-[Present mode, buffer and task combinations](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/README.md#choose-a-mode-and-pipeline-combination).
+refreshes. Rotation and mode selection belong to the presenter; see
+[Choose a mode](../esp_display_present/README.md#choose-a-mode).
 
 ## Reference
 
-- [Public binding API](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_lv_present/include/esp_lv_present.h).
-- [LVGL benchmark example](https://github.com/espressif/esp-iot-solution/tree/master/examples/display/gui/lvgl_present_benchmark).
-- [Compatibility and migration](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/COMPATIBILITY.md).
-- [Joint Host regressions](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/tests/host/README.md) and [target Unity tests](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_lv_present/test_apps/README.md).
+- [Public binding API](include/esp_lv_present.h).
+- [LVGL benchmark example](../../../../examples/display/gui/lvgl_present_benchmark/README.md).
+- [Compatibility and migration](../esp_display_present/COMPATIBILITY.md).
+- [Joint Host regressions](../esp_display_present/tests/host/README.md) and [target Unity tests](test_apps/README.md).

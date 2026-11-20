@@ -57,8 +57,11 @@ Panel IO NONE 根据最终分配的输入缓冲数量决定提交上下文：一
 - **依赖组合**：Present 2.0 配套官方 `esp_lv_present` 0.2.0；更新 manifest 后重新生成
   锁文件。旧的固定 1.x / `^1.x` 项目不会因发布 2.0 自动升级。移除联调 override，
   在干净环境验证实际发布包；Vibe 等子模块项目先提交子模块再更新父仓库 gitlink。
-- **生产者任务**：创建时认领调用任务；另一绘制任务接管时显式 `rebind_producer()`，
-  或由当前所有者在帧间 `release_producer()` 后交接。无需把每帧重绑作为通用要求。
+- **生产者任务（1.2.2 首次帧认领 → 2.0 创建即绑定）**：1.2.2 允许创建后由首个调用 `begin_next_frame()` 的任务自动认领 producer；2.0 在 `create()` / `open()` 时即把**调用任务绑定为 producer**。若应用在主任务创建 presenter、在独立渲染 worker 线程提交帧，必须在确认原任务停止提交后由新任务在帧间显式调用 `esp_display_presenter_rebind_producer()`（或由原任务先调用 `esp_display_presenter_release_producer()`），不能再直接沿用 1.2.2 的首次帧自动认领假设。
+- **`commit_frame()` 完成语义（1.2.2 GRAM 等空闲 → 2.0 封帧即异步提交）**：1.2.2 的 GRAM 路径在 `commit_frame()` 内等待传输空闲才返回；2.0 的 `commit_frame()` 返回 `ESP_OK` 仅代表当前帧已封帧并交由 backend 调度，最后的 Panel IO / scanout 传输允许继续异步在途。不能再把 `commit_frame()` 成功当作物理传输或屏幕显示结束：需要明确完成保证的位置（如截图、完成统计、切换或销毁前）须显式调用 `esp_display_presenter_quiesce()`；正常连续渲染循环则建议依靠下一帧 `acquire_buffer()` 的自然背压来保留异步流水线重叠收益，避免无条件在每帧末尾 `quiesce()`。
+- **失败事务恢复（1.2.2 自动 cancel/reset → 2.0 保留活动帧现场）**：1.2.2 在 `submit_buffer()` 或 `commit_frame()` 失败时会自动取消并重置当前活动帧；2.0 在 `begin_next_frame()` 成功之后，若 `acquire_buffer()`、`submit_buffer()` 或 `commit_frame()` 返回失败，**活动帧（及尚未消费的 lease）仍保持开启**，不会自动清理。下游必须区分两类错误恢复：
+  - `begin_next_frame()` 成功且 `commit_frame()` 尚未成功（`acquire` / `submit` / `commit` 失败）：由当前 producer 任务显式调用 `esp_display_presenter_cancel_frame()` 清理活动帧后，再开始下一帧；
+  - `commit_frame()` 已返回成功、后续 `quiesce()` 等等待超时或失败：帧已封帧提交，`cancel_frame()` 不会撤销已进入硬件的传输，也不构成释放缓冲区的依据；应保留仍在使用的资源，按 `STATE_MACHINE.md` 重试 `quiesce()`，或按 fault 状态安全 `stop()` / `delete()`。
 - **区域类型**：旧 `esp_display_presenter_region_t` 可迁为应用自己的 surface + origin
   描述；缓冲写入仍使用 acquire/resolve_rows/submit/commit，不包含组件内部头文件。
 - **官方 LVGL 运行时旋转**：使用 `esp_lv_present_set_rotation(angle, timeout_ms)`，
