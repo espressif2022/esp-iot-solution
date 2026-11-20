@@ -72,6 +72,9 @@ esp_err_t esp_lv_present_stop(void);
  * Presenter queries report the actual orientation. Stop/recreate the binding
  * before resuming in that case; do not overwrite LVGL draw buffers manually.
  *
+ * @param[in]  rotation   Target logical-to-physical rotation angle.
+ * @param[in]  timeout_ms Maximum time in milliseconds to drain pending output before rotating.
+ *
  * @return ESP_OK, ESP_ERR_INVALID_ARG for invalid angles, ESP_ERR_INVALID_STATE
  * for no binding/wrong task/refresh in progress, or allocation/backend error.
  */

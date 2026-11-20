@@ -46,6 +46,9 @@ extern "C" {
  * Presenter creation still validates the actual handles and buffer storage.
  * @p out_count is set to 0 on error when non-NULL.
  *
+ * @param[in]  config    Target configuration specifying panel type, mode, rotation, and TE policy.
+ * @param[out] out_count Minimum required driver framebuffer count (0 on error when non-NULL).
+ *
  * @return ESP_OK on success, ESP_ERR_INVALID_ARG for invalid arguments,
  *         ESP_ERR_NOT_SUPPORTED for an unresolved panel type or unsupported
  *         mode, rotation or TE combination.
@@ -129,7 +132,8 @@ typedef struct {
     esp_display_present_mode_t requested_mode; /**< Mode requested at creation. */
     esp_display_present_mode_t effective_mode; /**< Mode actually resolved and active. */
     esp_display_present_rotation_t rotation;   /**< Active logical-to-physical rotation. */
-    uint16_t width, height;                    /**< Logical dimensions. */
+    uint16_t width;                            /**< Logical display width in pixels. */
+    uint16_t height;                           /**< Logical display height in pixels. */
     size_t draw_stride_bytes;                  /**< Full-width producer stride; a tile lease can be narrower. */
     size_t output_stride_bytes;                /**< Packed full-width physical row, before panel transport. */
     uint8_t draw_buffer_count;                 /**< Writable pool size, including full-frame leases. */
@@ -188,6 +192,12 @@ typedef enum {
  * framebuffer pool or TE config. The presenter borrows the panel and IO until
  * deletion, adopts the calling task as producer, and prepares the first scanout
  * or TE window on first frame admission. @p out_presenter is set to NULL on error.
+ *
+ * @param[in]  panel         Initialized panel binding and physical dimensions.
+ * @param[in]  mode          Requested present mode or AUTO.
+ * @param[out] out_presenter Created presenter handle (NULL on error).
+ *
+ * @return ESP_OK on success, or an ESP-IDF error code on invalid configuration or allocation failure.
  */
 esp_err_t esp_display_presenter_open(
     const esp_display_presenter_panel_config_t *panel,
@@ -199,6 +209,13 @@ esp_err_t esp_display_presenter_open(
  *
  * A NULL policy uses the defaults of esp_display_presenter_open().
  * See esp_display_presenter_create() for timeout and damage overrides.
+ *
+ * @param[in]  panel         Initialized panel binding and physical dimensions.
+ * @param[in]  mode          Requested present mode or AUTO.
+ * @param[in]  drawbuf       Optional draw-buffer and TE compose policy (NULL uses defaults).
+ * @param[out] out_presenter Created presenter handle (NULL on error).
+ *
+ * @return ESP_OK on success, or an ESP-IDF error code on invalid configuration or allocation failure.
  */
 esp_err_t esp_display_presenter_open_ex(
     const esp_display_presenter_panel_config_t *panel,
@@ -213,6 +230,11 @@ esp_err_t esp_display_presenter_open_ex(
  * A control task may request stop, but delete has one exclusive owner and
  * must not race another API call. Hardware callbacks run in ISR context;
  * the component keeps their state alive until stop has drained them.
+ *
+ * @param[in]  config        Full presenter configuration including target hardware and timeouts.
+ * @param[out] out_presenter Created presenter handle (NULL on error).
+ *
+ * @return ESP_OK on success, or an ESP-IDF error code on invalid configuration or allocation failure.
  */
 esp_err_t esp_display_presenter_create(
     const esp_display_presenter_config_t *config,
@@ -225,6 +247,10 @@ esp_err_t esp_display_presenter_create(
  * cancelled by its renderer. Retry ESP_ERR_INVALID_STATE while renderer calls
  * or hardware work are in flight. After a terminal fault, resume rendering
  * only after safe stop, deletion and recreation.
+ *
+ * @param[in] presenter Presenter handle.
+ *
+ * @return ESP_OK when stopped, ESP_ERR_INVALID_ARG if NULL, or ESP_ERR_INVALID_STATE while work remains active.
  */
 esp_err_t esp_display_presenter_stop(
     esp_display_presenter_t *presenter);
@@ -234,6 +260,10 @@ esp_err_t esp_display_presenter_stop(
  *
  * On ESP_ERR_INVALID_STATE the object remains owned by the caller and must be
  * retained for a later retry. Do not call delete concurrently from two tasks.
+ *
+ * @param[in] presenter Presenter handle.
+ *
+ * @return ESP_OK when deleted, ESP_ERR_INVALID_ARG if NULL, or ESP_ERR_INVALID_STATE if still busy.
  */
 esp_err_t esp_display_presenter_delete(
     esp_display_presenter_t *presenter);
@@ -244,12 +274,24 @@ esp_err_t esp_display_presenter_delete(
  * The producer must first stop submitting and quiesce the presenter. Crossing
  * between 0/180 and 90/270 swaps the logical width and height; query get_caps()
  * again before rendering. On failure, the previous configuration remains valid.
+ *
+ * @param[in] presenter Presenter handle.
+ * @param[in] rotation  Target logical-to-physical rotation angle.
+ *
+ * @return ESP_OK on success, or an ESP-IDF error code if invalid, busy, or allocation fails.
  */
 esp_err_t esp_display_presenter_set_rotation(
     esp_display_presenter_t *presenter,
     esp_display_present_rotation_t rotation);
 
-/** @brief Query renderer-visible presenter capabilities. */
+/**
+ * @brief Query renderer-visible presenter capabilities.
+ *
+ * @param[in]  presenter Presenter handle.
+ * @param[out] out_caps  Capabilities snapshot populated on success.
+ *
+ * @return ESP_OK on success, or ESP_ERR_INVALID_ARG on NULL arguments.
+ */
 esp_err_t esp_display_presenter_get_caps(
     const esp_display_presenter_t *presenter,
     esp_display_presenter_caps_t *out_caps);
@@ -260,6 +302,11 @@ esp_err_t esp_display_presenter_get_caps(
  * Describes the current layout, including after a successful rotation. Pool
  * counts describe allocated slots, not currently available slots. Allocates
  * no storage and starts no transfers.
+ *
+ * @param[in]  presenter  Presenter handle.
+ * @param[out] out_config Effective configuration snapshot populated on success.
+ *
+ * @return ESP_OK on success, or ESP_ERR_INVALID_ARG on NULL arguments.
  */
 esp_err_t esp_display_presenter_get_effective_config(
     const esp_display_presenter_t *presenter,
@@ -270,6 +317,10 @@ esp_err_t esp_display_presenter_get_effective_config(
  *
  * The first call allocates sampler storage. Call between producer runs with
  * no pending commits.
+ *
+ * @param[in] presenter Presenter handle.
+ *
+ * @return ESP_OK on success, or ESP_ERR_INVALID_ARG / ESP_ERR_NO_MEM on failure.
  */
 esp_err_t esp_display_presenter_reset_metrics(esp_display_presenter_t *presenter);
 
@@ -278,6 +329,11 @@ esp_err_t esp_display_presenter_reset_metrics(esp_display_presenter_t *presenter
  *
  * Returns ESP_ERR_INVALID_STATE if sampling has never been enabled. Serialize
  * both metrics APIs with deletion.
+ *
+ * @param[in]  presenter Presenter handle.
+ * @param[out] out       Metrics snapshot populated on success.
+ *
+ * @return ESP_OK on success, ESP_ERR_INVALID_ARG on NULL arguments, or ESP_ERR_INVALID_STATE if metrics are disabled.
  */
 esp_err_t esp_display_presenter_get_metrics(const esp_display_presenter_t *presenter,
                                             esp_display_presenter_metrics_t *out);
@@ -296,7 +352,14 @@ typedef struct {
     size_t bytes; /**< Capacity of each draw buffer in bytes. */
 } esp_display_presenter_drawbuf_t;
 
-/** @brief Inspect the presenter draw-buffer pool in PARTITION modes. */
+/**
+ * @brief Inspect the presenter draw-buffer pool in PARTITION modes.
+ *
+ * @param[in]  presenter   Presenter handle.
+ * @param[out] out_drawbuf Draw-buffer pool descriptor populated on success.
+ *
+ * @return ESP_OK on success, ESP_ERR_INVALID_ARG on NULL arguments, or ESP_ERR_NOT_SUPPORTED for non-PARTITION modes.
+ */
 esp_err_t esp_display_presenter_get_drawbuf(
     const esp_display_presenter_t *presenter,
     esp_display_presenter_drawbuf_t *out_drawbuf);
@@ -305,6 +368,11 @@ esp_err_t esp_display_presenter_get_drawbuf(
  * @brief Read the minimum power-of-two base-address alignment (bytes) of all leasable buffers.
  *
  * Query again after changing rotation, which rebuilds renderer storage.
+ *
+ * @param[in]  presenter     Presenter handle.
+ * @param[out] out_alignment Minimum base-address alignment in bytes.
+ *
+ * @return ESP_OK on success, or ESP_ERR_INVALID_ARG on NULL arguments.
  */
 esp_err_t esp_display_presenter_get_buffer_alignment(
     const esp_display_presenter_t *presenter, size_t *out_alignment);
@@ -313,6 +381,10 @@ esp_err_t esp_display_presenter_get_buffer_alignment(
  * @brief Rebind the serial render-task owner after a platform session handoff.
  *
  * Valid only between frames; retains pending hardware completion fences.
+ *
+ * @param[in] presenter Presenter handle.
+ *
+ * @return ESP_OK on success, ESP_ERR_INVALID_ARG if NULL, or ESP_ERR_INVALID_STATE if active/closed.
  */
 esp_err_t esp_display_presenter_rebind_producer(
     esp_display_presenter_t *presenter);
@@ -322,17 +394,33 @@ esp_err_t esp_display_presenter_rebind_producer(
  *
  * Use when the next renderer starts on a task that cannot call rebind_producer
  * itself; its first admitted begin_next_frame claims ownership.
+ *
+ * @param[in] presenter Presenter handle.
+ *
+ * @return ESP_OK on success, ESP_ERR_INVALID_ARG if NULL, or ESP_ERR_INVALID_STATE if called from wrong task/mid-frame.
  */
 esp_err_t esp_display_presenter_release_producer(
     esp_display_presenter_t *presenter);
 
-/** @brief Read the monotonic lifecycle state; FAULTED never reopens in place. */
+/**
+ * @brief Read the monotonic lifecycle state; FAULTED never reopens in place.
+ *
+ * @param[in]  presenter Presenter handle.
+ * @param[out] out_state Lifecycle state populated on success.
+ *
+ * @return ESP_OK on success, or ESP_ERR_INVALID_ARG on NULL arguments.
+ */
 esp_err_t esp_display_presenter_get_state(
     const esp_display_presenter_t *presenter,
     esp_display_presenter_state_t *out_state);
 
 /**
  * @brief Read why the presenter faulted (ESP_DISPLAY_PRESENT_FAULT_NONE if none).
+ *
+ * @param[in]  presenter  Presenter handle.
+ * @param[out] out_reason Fault reason populated on success.
+ *
+ * @return ESP_OK on success, or ESP_ERR_INVALID_ARG on NULL arguments.
  */
 esp_err_t esp_display_presenter_get_fault_reason(
     const esp_display_presenter_t *presenter,
@@ -340,12 +428,25 @@ esp_err_t esp_display_presenter_get_fault_reason(
 
 /**
  * @brief Read the original error behind the latched fault (ESP_OK if none).
+ *
+ * @param[in]  presenter Presenter handle.
+ * @param[out] out_error Latched error code populated on success.
+ *
+ * @return ESP_OK on success, or ESP_ERR_INVALID_ARG on NULL arguments.
  */
 esp_err_t esp_display_presenter_get_fault_error(
     const esp_display_presenter_t *presenter,
     esp_err_t *out_error);
 
-/** @brief Map physical input coordinates into the logical render orientation. */
+/**
+ * @brief Map physical input coordinates into the logical render orientation.
+ *
+ * @param[in]     presenter Presenter handle.
+ * @param[in,out] x         Physical X coordinate in; logical X coordinate out.
+ * @param[in,out] y         Physical Y coordinate in; logical Y coordinate out.
+ *
+ * @return ESP_OK on success, or ESP_ERR_INVALID_ARG on NULL arguments or out-of-bounds coordinates.
+ */
 esp_err_t esp_display_presenter_map_point(
     const esp_display_presenter_t *presenter,
     int32_t *x,
@@ -353,6 +454,15 @@ esp_err_t esp_display_presenter_map_point(
 
 /**
  * @brief Begin a frame on the presenter timeline and return logical areas needing rasterization.
+ *
+ * @param[in]  presenter              Presenter handle.
+ * @param[in]  request                Dirty-surface request from the producer.
+ * @param[out] out_render_areas       Output array of logical areas needing rasterization.
+ * @param[in]  render_area_capacity   Capacity of @p out_render_areas in entries.
+ * @param[out] out_render_area_count  Number of areas written to @p out_render_areas.
+ * @param[out] out_full_coverage      Set true when full-screen rasterization is required.
+ *
+ * @return ESP_OK on success, or an ESP-IDF error code on invalid state, wrong task, or backend fault.
  */
 esp_err_t esp_display_presenter_begin_next_frame(
     esp_display_presenter_t *presenter,
@@ -362,7 +472,14 @@ esp_err_t esp_display_presenter_begin_next_frame(
     size_t *out_render_area_count,
     bool *out_full_coverage);
 
-/** @brief Lease producer storage without choosing a logical damage area. */
+/**
+ * @brief Lease producer storage without choosing a logical damage area.
+ *
+ * @param[in]  presenter  Presenter handle.
+ * @param[out] out_buffer Leased buffer descriptor populated on success.
+ *
+ * @return ESP_OK on success, or an ESP-IDF error code on invalid state, timeout, or backend fault.
+ */
 esp_err_t esp_display_presenter_acquire_buffer(
     esp_display_presenter_t *presenter,
     esp_display_presenter_buffer_t *out_buffer);
@@ -372,6 +489,13 @@ esp_err_t esp_display_presenter_acquire_buffer(
  *
  * Pixels start at buffer.surface.pixels and use @p stride_bytes. The inclusive
  * logical @p area supplies the destination position and rendered dimensions.
+ *
+ * @param[in] presenter    Presenter handle.
+ * @param[in] buffer       Buffer lease previously obtained from esp_display_presenter_acquire_buffer().
+ * @param[in] area         Inclusive logical destination area rendered into @p buffer.
+ * @param[in] stride_bytes Source row stride in bytes.
+ *
+ * @return ESP_OK on success, or an ESP-IDF error code on invalid geometry, state, or backend failure.
  */
 esp_err_t esp_display_presenter_submit_buffer(
     esp_display_presenter_t *presenter,
@@ -379,7 +503,14 @@ esp_err_t esp_display_presenter_submit_buffer(
     const esp_display_present_area_t *area,
     size_t stride_bytes);
 
-/** @brief Commit the active frame with explicit logical coverage. */
+/**
+ * @brief Commit the active frame with explicit logical coverage.
+ *
+ * @param[in] presenter Presenter handle.
+ * @param[in] submit    Coverage descriptor for the active frame.
+ *
+ * @return ESP_OK on success, or an ESP-IDF error code on invalid state, coverage, or backend failure.
+ */
 esp_err_t esp_display_presenter_commit_frame(
     esp_display_presenter_t *presenter,
     const esp_display_presenter_submit_t *submit);
@@ -389,6 +520,13 @@ esp_err_t esp_display_presenter_commit_frame(
  *
  * When @p track_display is true, hardware VSYNC is required and later frames
  * wait for the switch fence plus two VSYNCs or cancel_frame_tracking().
+ *
+ * @param[in]  presenter     Presenter handle.
+ * @param[in]  submit        Coverage descriptor for the active frame.
+ * @param[in]  track_display Enable VSYNC confirmation tracking for the returned receipt.
+ * @param[out] out_receipt   Completion receipt populated on success (cleared on error).
+ *
+ * @return ESP_OK on success, or an ESP-IDF error code on invalid state, unsupported tracking, or backend failure.
  */
 esp_err_t esp_display_presenter_commit_frame_with_receipt(
     esp_display_presenter_t *presenter,
@@ -398,6 +536,11 @@ esp_err_t esp_display_presenter_commit_frame_with_receipt(
 
 /**
  * @brief Read a coherent completion snapshot from task context without waiting.
+ *
+ * @param[in]  presenter  Presenter handle.
+ * @param[out] out_status Frame completion status snapshot populated on success.
+ *
+ * @return ESP_OK on success, or ESP_ERR_INVALID_ARG on NULL arguments.
  */
 esp_err_t esp_display_presenter_get_frame_status(
     esp_display_presenter_t *presenter,
@@ -408,11 +551,21 @@ esp_err_t esp_display_presenter_get_frame_status(
  *
  * Returns ESP_ERR_NOT_FOUND if no matching wait remains. Does not confirm the
  * frame or release hardware-owned buffers.
+ *
+ * @param[in] presenter  Presenter handle.
+ * @param[in] frame_id   Frame identifier from esp_display_presenter_commit_frame_with_receipt().
+ * @param[in] generation Generation counter from the corresponding receipt.
+ *
+ * @return ESP_OK if cancelled, ESP_ERR_INVALID_ARG if NULL, or ESP_ERR_NOT_FOUND if no wait matches.
  */
 esp_err_t esp_display_presenter_cancel_frame_tracking(
     esp_display_presenter_t *presenter, uint64_t frame_id, uint32_t generation);
 
-/** @brief Cancel the active pre-commit frame and any held region from its bound producer task. */
+/**
+ * @brief Cancel the active pre-commit frame and any held region from its bound producer task.
+ *
+ * @param[in] presenter Presenter handle.
+ */
 void esp_display_presenter_cancel_frame(
     esp_display_presenter_t *presenter);
 
@@ -422,6 +575,11 @@ void esp_display_presenter_cancel_frame(
  * REGION and TE wait for source reads to finish; FB waits for scanout switch
  * confirmation (plus confirmation VSYNCs for tracked receipts). Returns
  * ESP_ERR_TIMEOUT on expiry or ESP_ERR_INVALID_STATE if faulted.
+ *
+ * @param[in] presenter  Presenter handle.
+ * @param[in] timeout_ms Maximum time in milliseconds to wait for pending work to drain.
+ *
+ * @return ESP_OK when drained, ESP_ERR_TIMEOUT on expiry, or ESP_ERR_INVALID_ARG / ESP_ERR_INVALID_STATE on error.
  */
 esp_err_t esp_display_presenter_quiesce(
     esp_display_presenter_t *presenter,
