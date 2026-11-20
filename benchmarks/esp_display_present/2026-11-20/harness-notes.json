@@ -1,0 +1,19 @@
+{
+  "runtime_sources_changed_after_freeze": false,
+  "usb_report_pacing": {
+    "scope": "SCENE_UNIFIED printing, after close and outside measured interval",
+    "delay_ms_per_scene": 10,
+    "reason": "USB Serial/JTAG lost end-of-case burst in VoCat first 0-degree capture; incomplete row will be rerun"
+  },
+  "reset": {
+    "s31-qspi": "official esptool watchdog-reset; hard reset stayed in download mode",
+    "p4-dsi": "official esptool watchdog-reset for subsequent captures; initial USB reset boot faults before app_main preserved and retried"
+  },
+  "metadata_correction": "Grouped controller selected PARTIAL case by name/angle only. Export and completion supervisor verify tile count from each image manifest and on-board buffer audit.",
+  "p4_completion_retries": {
+    "policy": "First complete valid result is retained; successful cases in supplemental Cartesian images are ignored, never selected by score. No SDK / XIP / clock changes.",
+    "memory": "Startup faults before app_main were recovered using an independent subset image with the same runtime and comparable SDK configuration; all 254 memory samples validated.",
+    "failure_interpretation": "A pre-app Store access fault is not evidence of a Presenter runtime fault. A post-RUN stall is recorded separately."
+  },
+  "archive_naming": "Completion archives include implementation, mode, angle, tile count and retry index, preventing same-angle FULL/PARTIAL case names from colliding. The scheduler was paused between child processes to fix naming; no firmware flash was interrupted."
+}

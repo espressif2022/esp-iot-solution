@@ -1,0 +1,114 @@
+{
+  "manifest": {
+    "esp_lcd_touch": {
+      "cache_package": "espressif__esp_lcd_touch_1.2.1_3f85a7d9",
+      "source_sha256": "c3e34cc316b7b69a80c1141672b92de8ad1b1317f4e829503126e08ba26bc782"
+    },
+    "esp_lcd_ili9341": {
+      "cache_package": "espressif__esp_lcd_ili9341_2.1.0_840387ee",
+      "source_sha256": "0155a9421945bb68ad66308e7d060cfeb15f569eacb1d2bb6b0d6d5196970382"
+    },
+    "esp_lcd_co5300": {
+      "cache_package": "espressif__esp_lcd_co5300_2.2.0_1a5cbaa0",
+      "source_sha256": "db5c9331ca11428c896ea247a78acc1495486f842fc9644e059fcf62762f1893"
+    },
+    "esp_lcd_gc9503": {
+      "cache_package": "espressif__esp_lcd_gc9503_3.0.1_6940bf99",
+      "source_sha256": "e0670ad8a0962659112273f8595c5315044b29aad6541be994e39dd81b17ea93"
+    },
+    "esp_lcd_panel_io_additions": {
+      "cache_package": "espressif__esp_lcd_panel_io_additions_1.0.1~1_1856c8b2",
+      "source_sha256": "b19823115d8a337cb9c45b512e86c035ba4ac99f273714286d87b3462ca62092"
+    },
+    "esp_io_expander": {
+      "cache_package": "espressif__esp_io_expander_1.2.1_7b7f9127",
+      "source_sha256": "f02ce47e55fae9ab0848c3aa1baa583595e45dbcdecf1bcf361db16caa301eb7"
+    },
+    "esp_io_expander_tca9554": {
+      "cache_package": "espressif__esp_io_expander_tca9554_2.0.3_ee94a439",
+      "source_sha256": "592c3bf39711aed483c922154c04e634170caee1405444a8c3c3a1d686b7f6e2"
+    },
+    "esp_lcd_ek79007": {
+      "cache_package": "espressif__esp_lcd_ek79007_2.0.2_7a0896e1",
+      "source_sha256": "0bd6882cbf9fc1a7dc932b288e99784519816d9d9989f15578abbfa094c76c1b"
+    }
+  },
+  "files": {
+    "esp_io_expander/CMakeLists.txt": "e52b56096e21637f5ebc54bd2a80e83d3c0e40a04fae9f11fd642feb5c20eac8",
+    "esp_io_expander/esp_io_expander.c": "f02ce47e55fae9ab0848c3aa1baa583595e45dbcdecf1bcf361db16caa301eb7",
+    "esp_io_expander/esp_io_expander_gpio_wrapper.c": "7438947a92b74c185bac1105ef3bf4012195d6e54d246edf87f73cf093d419b7",
+    "esp_io_expander/esp_io_expander_gpio_wrapper_weak.c": "e90b8c3bf5816c06782227b26373053a26b98d9abac33c2751efd3a06029269f",
+    "esp_io_expander/include/esp_io_expander.h": "8cdeb71aafe73fe00c6bcd847aa268c1c3b42343d626a0ee9bf85511343e2d8d",
+    "esp_io_expander/include/esp_io_expander_gpio_wrapper.h": "acc7b808701abb05e2afd922463fe2981837cf9e62ca03a33c8cb7a16089ea54",
+    "esp_io_expander/license.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "esp_io_expander/priv_include/esp_io_expander_gpio_wrapper_priv.h": "7fc2fcc9e4e2cf92dc08dd281a4b51059061e8b5fbdfdceb99b2714b7f3d9f93",
+    "esp_io_expander_tca9554/CMakeLists.txt": "da5ad276f6809ac1bb5ab8aed3be881276bd545c2cca7a6292214f19b699f2d6",
+    "esp_io_expander_tca9554/esp_io_expander_tca9554.c": "592c3bf39711aed483c922154c04e634170caee1405444a8c3c3a1d686b7f6e2",
+    "esp_io_expander_tca9554/examples/gpio/CMakeLists.txt": "e37b06e06f6b95e290d790b784a31b85272e5c8b8bba45673991ac3315c92017",
+    "esp_io_expander_tca9554/examples/gpio/main/CMakeLists.txt": "a7061854bd5767202fafaab8290cd769e0a28e8f9b6b68d52199ae30f9d9af96",
+    "esp_io_expander_tca9554/examples/gpio/main/gpio_example_main.c": "3d4691dea4afefac8931d6edf28699388c579a36595b517259f40d3bf5f78dfe",
+    "esp_io_expander_tca9554/include/esp_io_expander_tca9554.h": "d4428a47b36f743b237ee515bbd83fa542bdcfda290111e4b2ab112d89faca6f",
+    "esp_io_expander_tca9554/license.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "esp_io_expander_tca9554/test_apps/CMakeLists.txt": "7bec141915f7f08bb3aa198c395df5f59e4a8af94f93527d420f122b532c0e33",
+    "esp_io_expander_tca9554/test_apps/main/CMakeLists.txt": "9e6568462be45021953b9430c615ee6def74541021571d59af9c375799a9fa68",
+    "esp_io_expander_tca9554/test_apps/main/test_app_tca9554.c": "3b82f9a68f6529fa4a70d1d788969b845fe59ef8bd704a3111416ebbb868fff2",
+    "esp_lcd_co5300/CMakeLists.txt": "cf14d3e107f03bde7c61f75a6bff127a9120a67ddc7f59dfe1cf7b8b920ee363",
+    "esp_lcd_co5300/esp_lcd_co5300.c": "db5c9331ca11428c896ea247a78acc1495486f842fc9644e059fcf62762f1893",
+    "esp_lcd_co5300/esp_lcd_co5300_mipi.c": "cd4e6edd89883ab39899b888fc6b90a5380cdd7b3d13eda40edea0de2f1f90ac",
+    "esp_lcd_co5300/esp_lcd_co5300_spi.c": "823bda75000ebe4236ef06911cf26fc873e6507c8cc5de17a5104d89d19a9c34",
+    "esp_lcd_co5300/include/esp_lcd_co5300.h": "2566021c1d1b327f9b53667d64c596a97049150c78ff6aec84f6e6cf0b31ce1a",
+    "esp_lcd_co5300/license.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "esp_lcd_co5300/priv_include/esp_lcd_co5300_interface.h": "e341959b5e50bdc1bdf468274c4bd6689ec3f06c38756cab4ae12a76125c993d",
+    "esp_lcd_co5300/test_apps/CMakeLists.txt": "56f3a0f9d9013295ea5c643a5d85a6de02e9c28f738ef9a924818619abba15d6",
+    "esp_lcd_co5300/test_apps/main/CMakeLists.txt": "ef8db1c6618f6af135742f9dfe28bc3391b0f3ae280714c8110c0235f9091b20",
+    "esp_lcd_co5300/test_apps/main/test_app_main.c": "66cd21b348e8093dbe7b480bcf9ba1518190d820ba1620c2c464c50cecef70f7",
+    "esp_lcd_co5300/test_apps/main/test_esp_lcd_co5300_mipi.c": "5f5f54120c0945468d40362ff40c2134330ae6d4bdfcda3636bf15a695a6e5cd",
+    "esp_lcd_co5300/test_apps/main/test_esp_lcd_co5300_spi.c": "098a8c0834de3fea92c43a8a2833d71b91eea995eb4313b6ed938a0e646bb593",
+    "esp_lcd_ek79007/CMakeLists.txt": "8dc54910605c9a40b28543c883c5a8c87afa28b639fc9984aa3617d454bb9957",
+    "esp_lcd_ek79007/esp_lcd_ek79007.c": "0bd6882cbf9fc1a7dc932b288e99784519816d9d9989f15578abbfa094c76c1b",
+    "esp_lcd_ek79007/include/esp_lcd_ek79007.h": "d015530ae1ab69b1b9d11ce27a5570840a59bb203a424ab49da6788f25bba371",
+    "esp_lcd_ek79007/license.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "esp_lcd_ek79007/test_apps/CMakeLists.txt": "e56877379728a334f788c98593f68657a2eb010a2459cbcf957acc886ec81923",
+    "esp_lcd_ek79007/test_apps/main/CMakeLists.txt": "2855a38701db0c90350e0cc9cb6e2db4366f6de1e382252135fc2215ae83c4fb",
+    "esp_lcd_ek79007/test_apps/main/test_esp_lcd_ek79007.c": "513dc3ce18c482fb40d8ce99ef4ea739a1792283839926addc1ea72c3c523d34",
+    "esp_lcd_gc9503/CMakeLists.txt": "7d9083565511d4f61760736355b860d33958cf1fba7f714405dacbc25b83f9d0",
+    "esp_lcd_gc9503/esp_lcd_gc9503.c": "e0670ad8a0962659112273f8595c5315044b29aad6541be994e39dd81b17ea93",
+    "esp_lcd_gc9503/include/esp_lcd_gc9503.h": "687038e45537b0b32c48ba2ab8c2a72b09efd737748e0435d91adc46de1205ab",
+    "esp_lcd_gc9503/license.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "esp_lcd_gc9503/test_apps/CMakeLists.txt": "9a08eaeda54d8c35bb111ffd2293bf0bd80345e9a0a8d49da8a923af7a5ddd2d",
+    "esp_lcd_gc9503/test_apps/main/CMakeLists.txt": "f98b0d70a2a0015b4edbb0a972f5e8b5e590a8c11081eb3ba266b6d53ca83e06",
+    "esp_lcd_gc9503/test_apps/main/test_esp_lcd_gc9503.c": "45c6cb5adb7c721084a71a66a20d761b07bf42a7df2d6f78367055e90f1d2e7c",
+    "esp_lcd_ili9341/CMakeLists.txt": "9e2360856f9c09ed61b405b529deef4e2a5653807a994919ee4d24be83b3ac4f",
+    "esp_lcd_ili9341/esp_lcd_ili9341.c": "0155a9421945bb68ad66308e7d060cfeb15f569eacb1d2bb6b0d6d5196970382",
+    "esp_lcd_ili9341/include/esp_lcd_ili9341.h": "ebb60162c4708cfbd675b6c09a0e09e251f555156b90822fd764eff01cdd6c92",
+    "esp_lcd_ili9341/include/esp_lcd_ili9341_init_cmds_1.h": "8908e0e53fa202185e33293dab16b08e22d620c0e001d6207c8d76cc3361b2cd",
+    "esp_lcd_ili9341/include/esp_lcd_ili9341_init_cmds_2.h": "11f5ed0f55388721ec0a57c599ae05029bc873806fb6a52714203398e5177145",
+    "esp_lcd_ili9341/license.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "esp_lcd_ili9341/test_apps/CMakeLists.txt": "6743e0bf5a0e9c1fbffa4c8809aea123ad73e873071b44356c668be7ecfa7225",
+    "esp_lcd_ili9341/test_apps/main/CMakeLists.txt": "9f8755b8936e38cf4b65a60babaf784c732e38bfad0f8415d887bd6a3e19181d",
+    "esp_lcd_ili9341/test_apps/main/test_esp_lcd_ili9341.c": "0c4f8336571b0607059a7b21a0b725f7768a128987f59edeb9fc0507c1a18e7c",
+    "esp_lcd_panel_io_additions/CMakeLists.txt": "320a7470286a5fb46abfbfb656879cbaad16c77d95dc27935c9c20c93a3a0f46",
+    "esp_lcd_panel_io_additions/esp_lcd_panel_io_3wire_spi.c": "b19823115d8a337cb9c45b512e86c035ba4ac99f273714286d87b3462ca62092",
+    "esp_lcd_panel_io_additions/include/esp_lcd_panel_io_additions.h": "a3a676a725f7ffc7b7fdf5d652c28861900c85fa2ee9b68e1d24eed66918db55",
+    "esp_lcd_panel_io_additions/license.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "esp_lcd_panel_io_additions/test_apps/CMakeLists.txt": "5dcc2e4addad34135e2b6ed66f4a7a44da6b4c7ff5ce5188293e38d7d7c68d50",
+    "esp_lcd_panel_io_additions/test_apps/main/CMakeLists.txt": "f45243490b43afdcffd0bea9de189987227d95a9112ccb1bdf49714de3a34ef6",
+    "esp_lcd_panel_io_additions/test_apps/main/test_esp_lcd_panel_io_additions.c": "533fc397596f9f74ffc01c8dde2eb50d32fbc511179154e060f159186f82311b",
+    "esp_lcd_st77916/CMakeLists.txt": "cb2de7daf4712cada03c673584069e1955caecf39a42d0e9d057ab416f74ac9d",
+    "esp_lcd_st77916/esp_lcd_st77916.c": "c028dddc8857b7326133eb9d445c7f3835ef38027bec337d2cab873139533921",
+    "esp_lcd_st77916/esp_lcd_st77916_mipi.c": "b4304ec554e2370e100ac5f897a140bb249d1de0695c0b7fd67f50338b83c709",
+    "esp_lcd_st77916/esp_lcd_st77916_spi.c": "a464c88fcfd485bd418e42cfdd099cede661936ffe81ddcb0f46b3d466cc7f67",
+    "esp_lcd_st77916/include/esp_lcd_st77916.h": "4fb9d26532b574a14465dfe3853ea2a1bcab0fac6e28b42ed7f2e5ddd8ef2f87",
+    "esp_lcd_st77916/license.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "esp_lcd_st77916/priv_include/esp_lcd_st77916_interface.h": "f00d59d717ad79bf78575b4685e9f426321c3a0ab9700e2ef23577e808b39251",
+    "esp_lcd_st77916/test_apps/CMakeLists.txt": "964560e9e95e960d7a12c0eebb43b78d997f294fa17aa85d24a0a53dc604ed6e",
+    "esp_lcd_st77916/test_apps/main/CMakeLists.txt": "ef8db1c6618f6af135742f9dfe28bc3391b0f3ae280714c8110c0235f9091b20",
+    "esp_lcd_st77916/test_apps/main/test_app_main.c": "29cfa83157f9e48dcf84def2e1835b35fc5dd9b47d59bc95b1ff39f5eede7a2d",
+    "esp_lcd_st77916/test_apps/main/test_esp_lcd_st77916_mipi.c": "708551cd0d8a7d9f5137c30f07908a1b743787923b958fd0f570b8dd9a2444bc",
+    "esp_lcd_st77916/test_apps/main/test_esp_lcd_st77916_spi.c": "9b3b7f597daf342fd8b574d5d85582d48e276c190d32a759291ce9ce4e83f588",
+    "esp_lcd_touch/CMakeLists.txt": "3a39d1a42b35d0c68c12693dba1e84c0ecab03353a1643adf6545c3ee319f4e9",
+    "esp_lcd_touch/esp_lcd_touch.c": "c3e34cc316b7b69a80c1141672b92de8ad1b1317f4e829503126e08ba26bc782",
+    "esp_lcd_touch/include/esp_lcd_touch.h": "4633fa0a66560356f23b7decc3fa392ebc40e07d59eafbbe0d87d0a8bc14193d",
+    "esp_lcd_touch/license.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  }
+}

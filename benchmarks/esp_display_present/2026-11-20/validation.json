@@ -1,0 +1,58 @@
+{
+  "checked_configurations": 253,
+  "expected_configurations": 254,
+  "complete": false,
+  "all_configurations_attempted": true,
+  "campaign_finished": true,
+  "aligned_memory_samples": 254,
+  "missing": [
+    {
+      "board": "p4-dsi",
+      "missing": [
+        [
+          "present",
+          "DOUBLE_PARTIAL",
+          0,
+          2
+        ]
+      ]
+    }
+  ],
+  "host": {
+    "frozen-host-recheck": "61/61",
+    "frozen-perf": "61/61",
+    "frozen-sanitize-recheck": "61/61",
+    "frozen-tsan-recheck": "61/61",
+    "frozen_extra_lvgl92": "60/61; fixture hold flag was unsynchronized and only one held completion was delivered; fixed separately on publication branch"
+  },
+  "publication_host": {
+    "publish-host-final": "63/63",
+    "publish-sanitize-final": "63/63",
+    "publish-tsan-final": "63/63",
+    "publish-lvgl92-final": "63/63",
+    "lvgl92_public_rotation_repeat": "30/30",
+    "idf62_scanout_objects": "S3 / S31 / P4 identical to frozen benchmark build"
+  },
+  "same_frozen_present_and_bridge_runtime": true,
+  "all_test_buffers_match_audited_capacity": true,
+  "config_hashes": {
+    "s3-rgb": [
+      "206329fe274a06bb2946038eddd6aafb6591fac6d345072d880b481b3e21fa43"
+    ],
+    "s31-rgb": [
+      "9bab6045ddcad1e9ae1e2336883b45afa09164b8bb9df083cdcb640b7f3963ba"
+    ],
+    "p4-dsi": [
+      "f1994809999db99ead737f4c4564870d71afe6f4e94e7d5132fb07a522623acf"
+    ],
+    "box3-spi": [
+      "c2f5ba17a3b7cf771bb13d1e6dceac791ecbe27be1c0635fe40585b59cc7e1cf"
+    ],
+    "s31-qspi": [
+      "f5c443bcc696ac430ab0142a660897774ad051f9fe954c7204d68aabe2ed684a"
+    ],
+    "s3-qspi": [
+      "c2f5ba17a3b7cf771bb13d1e6dceac791ecbe27be1c0635fe40585b59cc7e1cf"
+    ]
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "generated": "2026-11-20 21:07:43",
+  "attempts_finished": true,
+  "passed": 253,
+  "planned": 254,
+  "scenes": 4048,
+  "aligned_memory": 254,
+  "aligned_memory_matched": 253,
+  "memory_missing": [],
+  "boards": {
+    "s3-rgb": {
+      "label": "S3 RGB",
+      "hardware_note": "480 × 480 · GC9503 · 10-line bounce · fixed 3 driver FB · XIP On",
+      "planned": 48,
+      "memory_phase": "complete",
+      "memory_passed": 48,
+      "update_note": "11-20 全新矩阵；不混用历史成绩",
+      "passed": 48,
+      "phase": "complete"
+    },
+    "s31-rgb": {
+      "label": "S31 Korvo RGB",
+      "hardware_note": "800 × 480 · RGB 18 MHz · no bounce · fixed 3 driver FB · XIP On",
+      "planned": 48,
+      "memory_phase": "complete",
+      "memory_passed": 48,
+      "update_note": "11-20 全新矩阵；不混用历史成绩",
+      "passed": 48,
+      "phase": "complete"
+    },
+    "p4-dsi": {
+      "label": "P4 MIPI DSI",
+      "hardware_note": "1024 × 600 · EK79007 · fixed 3 driver FB · XIP On",
+      "planned": 48,
+      "memory_phase": "complete",
+      "memory_passed": 48,
+      "update_note": "11-20 全新矩阵；不混用历史成绩",
+      "passed": 47,
+      "phase": "complete"
+    },
+    "box3-spi": {
+      "label": "BOX-3 SPI",
+      "hardware_note": "320 × 240 · ILI9341 · 40 MHz · max transfer 153600 B · queue 1 · PSRAM DMA Off",
+      "planned": 20,
+      "memory_phase": "complete",
+      "memory_passed": 20,
+      "update_note": "11-20 全新矩阵；不混用历史成绩",
+      "passed": 20,
+      "phase": "complete"
+    },
+    "s31-qspi": {
+      "label": "mosaico QSPI TE",
+      "hardware_note": "480 × 480 · CO5300 · 40 MHz · max transfer 460800 B · queue 10 · PSRAM DMA On · TE43",
+      "planned": 45,
+      "memory_phase": "complete",
+      "memory_passed": 45,
+      "update_note": "11-20 全新矩阵；不混用历史成绩",
+      "passed": 45,
+      "phase": "complete"
+    },
+    "s3-qspi": {
+      "label": "VoCat QSPI TE",
+      "hardware_note": "360 × 360 · ST77916 · 80 MHz · max transfer Default · queue 10 · PSRAM DMA Off · TE8",
+      "planned": 45,
+      "memory_phase": "complete",
+      "memory_passed": 45,
+      "update_note": "11-20 全新矩阵；不混用历史成绩",
+      "passed": 45,
+      "phase": "complete"
+    }
+  }
+}

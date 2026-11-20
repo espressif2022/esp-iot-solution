@@ -1,0 +1,159 @@
+{
+  "s3-rgb": {
+    "passed": 48,
+    "planned": 48,
+    "matched_native_cases": 20,
+    "raw_delta_pct_wins_ties_losses": [
+      14,
+      4,
+      2
+    ],
+    "nonempty_delta_pct_wins_ties_losses": [
+      15,
+      0,
+      5
+    ],
+    "unresolved_attempts": [],
+    "memory_samples": 48
+  },
+  "s31-rgb": {
+    "passed": 48,
+    "planned": 48,
+    "matched_native_cases": 20,
+    "raw_delta_pct_wins_ties_losses": [
+      15,
+      5,
+      0
+    ],
+    "nonempty_delta_pct_wins_ties_losses": [
+      20,
+      0,
+      0
+    ],
+    "unresolved_attempts": [],
+    "memory_samples": 48
+  },
+  "p4-dsi": {
+    "passed": 47,
+    "planned": 48,
+    "matched_native_cases": 20,
+    "raw_delta_pct_wins_ties_losses": [
+      8,
+      8,
+      4
+    ],
+    "nonempty_delta_pct_wins_ties_losses": [
+      10,
+      0,
+      10
+    ],
+    "unresolved_attempts": [
+      {
+        "implementation": "present",
+        "angle": 0,
+        "tiles": 2,
+        "mode": "DOUBLE_PARTIAL",
+        "reason": "Store access fault before app_main",
+        "archive": "/tmp/present-complete-20261120/captures/p4-dsi/present-0-d2-try0",
+        "failure_kind": "pre_app_startup_fault",
+        "detail": "进入 app_main 前发生 Store access fault，原因未定；SDK 和 XIP 配置保持不变。"
+      },
+      {
+        "implementation": "present",
+        "angle": 0,
+        "tiles": 2,
+        "mode": "DOUBLE_PARTIAL",
+        "reason": "Store access fault before app_main",
+        "archive": "/tmp/present-complete-20261120/captures/p4-dsi/present-0-d2-completion0",
+        "final_attempt": true,
+        "failure_kind": "pre_app_startup_fault",
+        "detail": "进入 app_main 前发生 Store access fault，原因未定；SDK 和 XIP 配置保持不变。"
+      },
+      {
+        "implementation": "present",
+        "angle": 0,
+        "tiles": 2,
+        "mode": "DOUBLE_PARTIAL",
+        "reason": "Store access fault before app_main",
+        "archive": "/tmp/present-complete-20261120/captures/p4-dsi/present-0-d2-completion1",
+        "final_attempt": true,
+        "failure_kind": "pre_app_startup_fault",
+        "detail": "进入 app_main 前发生 Store access fault，原因未定；SDK 和 XIP 配置保持不变。"
+      },
+      {
+        "implementation": "present",
+        "angle": 0,
+        "tiles": 2,
+        "mode": "DOUBLE_PARTIAL",
+        "reason": "Store access fault before app_main",
+        "archive": "/tmp/present-complete-20261120/captures/p4-dsi/present-DOUBLE_PARTIAL-0-d2-completion2",
+        "final_attempt": true,
+        "failure_kind": "pre_app_startup_fault",
+        "detail": "进入 app_main 前发生 Store access fault，原因未定；SDK 和 XIP 配置保持不变。"
+      },
+      {
+        "implementation": "present",
+        "mode": "DOUBLE_PARTIAL",
+        "angle": 0,
+        "tiles": 2,
+        "reason": "Store access fault before app_main",
+        "archive": "/tmp/present-complete-20261120/captures/p4-dsi/present-DOUBLE_PARTIAL-0-d2-final-control90",
+        "final_attempt": true,
+        "failure_kind": "pre_app_startup_fault",
+        "detail": "进入 app_main 前发生 Store access fault，原因未定；SDK 和 XIP 配置保持不变。"
+      }
+    ],
+    "memory_samples": 48
+  },
+  "box3-spi": {
+    "passed": 20,
+    "planned": 20,
+    "matched_native_cases": 4,
+    "raw_delta_pct_wins_ties_losses": [
+      2,
+      1,
+      1
+    ],
+    "nonempty_delta_pct_wins_ties_losses": [
+      2,
+      0,
+      2
+    ],
+    "unresolved_attempts": [],
+    "memory_samples": 20
+  },
+  "s31-qspi": {
+    "passed": 45,
+    "planned": 45,
+    "matched_native_cases": 4,
+    "raw_delta_pct_wins_ties_losses": [
+      1,
+      0,
+      3
+    ],
+    "nonempty_delta_pct_wins_ties_losses": [
+      1,
+      0,
+      3
+    ],
+    "unresolved_attempts": [],
+    "memory_samples": 45
+  },
+  "s3-qspi": {
+    "passed": 45,
+    "planned": 45,
+    "matched_native_cases": 4,
+    "raw_delta_pct_wins_ties_losses": [
+      1,
+      2,
+      1
+    ],
+    "nonempty_delta_pct_wins_ties_losses": [
+      3,
+      0,
+      1
+    ],
+    "unresolved_attempts": [],
+    "memory_samples": 45
+  }
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "viewport": "desktop",
+    "boards": [
+      "s3-rgb",
+      "s31-rgb",
+      "p4-dsi",
+      "box3-spi",
+      "s31-qspi",
+      "s3-qspi"
+    ],
+    "selections": 188,
+    "cells": 326,
+    "failures": [],
+    "noOverflow": true
+  },
+  {
+    "viewport": "mobile",
+    "boards": [
+      "s3-rgb",
+      "s31-rgb",
+      "p4-dsi",
+      "box3-spi",
+      "s31-qspi",
+      "s3-qspi"
+    ],
+    "selections": 188,
+    "cells": 326,
+    "failures": [],
+    "noOverflow": true
+  }
+]

@@ -1,0 +1,36 @@
+{
+  "branch": "codex/present-matrix-idf60-20261120",
+  "repository": "https://github.com/espressif2022/esp-iot-solution",
+  "priority_fix_commit": "22de9797764ddb77bce92b820bee2eb2af08ffaf",
+  "idf60_compatibility_commit": "645df9b9bb038fcb1c7462f0164de4444b15bbbf",
+  "hardware_scope": "ESP-IDF 6.2 frozen runtime with priority fix; IDF 6.0 fallback added after hardware freeze",
+  "publication_validation": {
+    "host": "63/63",
+    "asan_ubsan": "63/63",
+    "tsan": "63/63",
+    "lvgl92": "63/63",
+    "lvgl92_rotation_repeat": "30/30"
+  },
+  "idf60_hardware_matrix_rerun": false,
+  "modern_scanout_object_equivalence": [
+    {
+      "board": "s3-rgb",
+      "identical_object": true,
+      "frozen_sha256": "8a2958c2488aca4023c8bf207cf3ecdd6fb5199884218758722f9f508cde4cd1",
+      "publication_sha256": "8a2958c2488aca4023c8bf207cf3ecdd6fb5199884218758722f9f508cde4cd1"
+    },
+    {
+      "board": "s31-rgb",
+      "identical_object": true,
+      "frozen_sha256": "686d796a8688448931d8da9af9f63213d4f53ba2ad4ac53a8478b1ec715a5056",
+      "publication_sha256": "686d796a8688448931d8da9af9f63213d4f53ba2ad4ac53a8478b1ec715a5056"
+    },
+    {
+      "board": "p4-dsi",
+      "identical_object": true,
+      "frozen_sha256": "d341373e70b29370ed890a56e452cd0757c54dffc945688cf744589a91d17fa0",
+      "publication_sha256": "d341373e70b29370ed890a56e452cd0757c54dffc945688cf744589a91d17fa0"
+    }
+  ],
+  "code_precommit": "21 changed files passed"
+}
