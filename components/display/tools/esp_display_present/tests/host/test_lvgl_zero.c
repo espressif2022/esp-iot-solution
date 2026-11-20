@@ -24,11 +24,13 @@ lv_draw_buf_t *__wrap_lv_draw_buf_create(uint32_t width, uint32_t height, lv_col
     return __real_lv_draw_buf_create(width, height, format, stride);
 }
 static bool fail_acquire;
+static unsigned blocking_acquires;
 static lv_draw_buf_t *watched_draw;
 static unsigned watched_destroyed;
 esp_err_t __real_esp_display_present_engine_acquire_buffer(esp_display_present_engine_t *, esp_display_present_lease_t *);
 esp_err_t __wrap_esp_display_present_engine_acquire_buffer(esp_display_present_engine_t *engine, esp_display_present_lease_t *lease)
 {
+    ++blocking_acquires;
     if (fail_acquire) {
         fail_acquire = false;
         return ESP_ERR_NO_MEM;
@@ -71,6 +73,16 @@ esp_err_t __wrap_esp_display_present_engine_try_acquire_buffer(esp_display_prese
 }
 #define W 8
 #define H 6
+static void count_refresh(lv_event_t *event)
+{
+    unsigned *counts = lv_event_get_user_data(event);
+    if (lv_event_get_code(event) == LV_EVENT_REFR_READY) {
+        ++counts[0];
+    }
+    if (lv_event_get_code(event) == LV_EVENT_RENDER_READY) {
+        ++counts[1];
+    }
+}
 static void exercise(bool timeout, esp_display_present_present_mode_t mode)
 {
     scan_panel_t panel = {0};
@@ -93,6 +105,8 @@ static void exercise(bool timeout, esp_display_present_present_mode_t mode)
     assert(canvas_allocations == before); /* Borrowed FULL needs no pixel allocation. */
 #endif
     lv_display_t *d = esp_lv_present_native_get_display(b);
+    unsigned counts[2] = {0};
+    lv_display_add_event_cb(d, count_refresh, LV_EVENT_ALL, counts);
     lv_obj_t *s = lv_display_get_screen_active(d);
     lv_obj_remove_style_all(s);
     lv_obj_set_style_bg_color(s, lv_color_hex(0xff0000), 0);
@@ -136,12 +150,26 @@ static void exercise(bool timeout, esp_display_present_present_mode_t mode)
     } else {
         scan_confirm(&panel);
         OK(esp_display_present_engine_drain(p, 0));
-        lv_refr_now(d); /* No invalidations must return the unused lease. */
+        unsigned acquires = blocking_acquires, refreshes = counts[0], renders = counts[1];
+        for (unsigned i = 0; i < 3; ++i) {
+            lv_refr_now(d);
+        }
+        assert(counts[0] == refreshes + 3 && counts[1] == renders);
+        assert(blocking_acquires == acquires);
+#if LVGL_VERSION_MINOR >= 5
+        assert(!lv_display_get_buf_active(d)->data);
+#endif
         esp_display_present_engine_status_t status;
         OK(esp_display_present_engine_get_status(p, &status));
         assert(!status.frame_active);
+        forbid_wait = true;
         lv_obj_set_style_bg_color(s, lv_color_hex(0x00ff00), 0);
+        forbid_wait = false;
+        assert(blocking_acquires == acquires);
         lv_refr_now(d);
+#if LVGL_VERSION_MINOR >= 5
+        assert(blocking_acquires == acquires + (mode == ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_FULL));
+#endif
         OK(esp_lv_present_native_get_error(b));
         OK(esp_display_present_engine_service(p));
         assert(!memcmp(saved, panel.current.pixels, sizeof(saved)));
@@ -469,11 +497,15 @@ static void deferred_direct(unsigned action)
     forbid_wait = true;
     lv_obj_set_style_bg_color(boxes[1], lv_color_hex(0x0000ff), 0);
     forbid_wait = false;
+    assert(admission_polls == polls && lv_timer_get_paused(retry));
+    forbid_wait = true;
+    lv_refr_now(d);
+    forbid_wait = false;
     assert(admission_polls > polls && !lv_timer_get_paused(retry));
     assert(lv_timer_get_paused(lv_display_get_refr_timer(d)));
     assert(!lv_display_get_buf_active(d)->data && d->inv_p);
     unsigned damage = d->inv_p;
-    lv_refr_now(d); /* Manual refresh bypasses timer pause, but not the null address guard. */
+    lv_refr_now(d); /* Manual refresh must retain damage while admission is pending. */
     assert(d->inv_p == damage && !lv_display_get_buf_active(d)->data);
     unsigned pulses = 0;
     lv_timer_t *animation = lv_timer_create(pulse, 1, &pulses);
@@ -552,9 +584,9 @@ static void deferred_direct(unsigned action)
     OK(esp_display_present_engine_destroy(p));
 }
 
-/* Rollback also works when an unrendered full invalidation already holds a
- * lease. LVGL coalesces the repeated invalidation without emitting a request. */
-static void leased_rotation_timeout(void)
+/* Rollback preserves an unrendered full invalidation. LVGL coalesces the
+ * repeated invalidation without emitting a request. */
+static void pending_rotation_timeout(void)
 {
     scan_panel_t panel = {0};
     esp_display_present_engine_config_t cfg = {
@@ -572,7 +604,7 @@ static void leased_rotation_timeout(void)
     lv_refr_now(d);
     assert(panel.cookie);
     lv_obj_set_style_bg_color(lv_display_get_screen_active(d), lv_color_hex(0x0000ff), 0);
-    assert(lv_display_get_buf_active(d)->data && d->inv_p);
+    assert(!lv_display_get_buf_active(d)->data && d->inv_p);
     assert(esp_lv_present_native_set_rotation(b, ESP_DISPLAY_PRESENT_ENGINE_ROTATE_90, 0) == ESP_ERR_TIMEOUT);
     assert(lv_display_get_buf_active(d)->data || !lv_timer_get_paused(admission_timer(b)));
     scan_confirm(&panel);
@@ -639,6 +671,8 @@ static void deferred_acquire(esp_err_t injected)
     OK(esp_display_present_engine_drain(p, 0));
     acquire_poll_result = injected;
     lv_obj_set_style_bg_color(lv_display_get_screen_active(d), lv_color_hex(0x0000ff), 0);
+    assert(acquire_poll_result == injected);
+    lv_refr_now(d);
     assert(!acquire_poll_result);
     if (injected == ESP_ERR_NOT_FINISHED) {
         assert(!lv_timer_get_paused(admission_timer(b)));
@@ -663,7 +697,7 @@ int main(void)
     for (unsigned action = 0; action < 5; ++action) {
         deferred_direct(action);
     }
-    leased_rotation_timeout();
+    pending_rotation_timeout();
     deferred_transfer_fault();
     deferred_acquire(ESP_ERR_NOT_FINISHED);
     deferred_acquire(ESP_ERR_NO_MEM);
@@ -682,6 +716,10 @@ int main(void)
         exercise_direct(r, true, true);
     }
 #endif
+    lv_deinit();
+    /* Reinitialization must not leave a stale custom event or binding lookup. */
+    lv_init();
+    exercise(false, ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_FULL);
     lv_deinit();
     puts("LVGL zero-copy: lease pixels, detach, backpressure and destroy lifetime passed");
 }

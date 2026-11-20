@@ -20,3 +20,6 @@ endif()
 
 idf_component_get_property(_present_dir esp_display_present COMPONENT_DIR)
 target_include_directories(${COMPONENT_LIB} PRIVATE "${_present_dir}/private_include")
+
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/refresh.cmake")
+esp_lv_present_refresh_hook(${lvgl_lib} "${lvgl_dir}")

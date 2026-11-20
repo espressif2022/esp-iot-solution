@@ -34,6 +34,15 @@ conditional, not a universal zero-copy guarantee. FULL/DIRECT on the copy path
 need a full logical frame from the LVGL allocator. When reusing a presenter,
 finish or cancel the previous frame and quiesce it before starting a new binding.
 
+For LVGL 9.5+, the build generates a copy of the `lv_refr.c` refresh entry,
+leaving dependency sources unchanged. Borrowed paths acquire storage after
+layout has established damage, before DIRECT synchronization and drawing.
+An empty refresh emits `LV_EVENT_REFR_READY`, with no acquisition, render-ready
+event, or commit. Deferred DIRECT admission retains damage for the retry timer;
+invalidation itself does not wait for storage. The generator checks the refresh
+entry structure and fails configuration if an LVGL update requires review of
+the integration. LVGL 9.0–9.4 copy paths do not require this generation step.
+
 ## Start the UI
 
 First [create a presenter](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/README.md#create-a-presenter)

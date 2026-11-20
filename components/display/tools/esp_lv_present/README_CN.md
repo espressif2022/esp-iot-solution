@@ -22,6 +22,13 @@ dependencies:
 
 LVGL 是绑定的公开依赖。LVGL 9.0–9.4 使用独立绘制缓冲并在 flush 时复制；LVGL 9.5+ 在 RGB565 布局兼容时可借用 Presenter 存储，其余布局走复制路径。借用有准入条件，不承诺所有模式均为零拷贝。FULL／DIRECT 的复制路径还需要 LVGL 分配器提供一整张逻辑帧的内存。复用 Presenter 时，先完成或取消上一帧并排空，再启动新绑定。
 
+LVGL 9.5+ 的构建会生成 `lv_refr.c` 的刷新入口副本，依赖源码保持原样。
+借用路径在布局更新、确认脏区后获取缓冲，然后才执行 DIRECT 同步和绘制。
+无脏区的刷新发送 `LV_EVENT_REFR_READY`，不获取缓冲、不发送 `LV_EVENT_RENDER_READY`、不提交帧；
+DIRECT 准入延迟则保留脏区并通过重试定时器继续。失效通知本身不等待缓冲。
+生成器检查刷新入口结构；不兼容的 LVGL 更新会在配置时明确报错，需先复核集成点。
+LVGL 9.0–9.4 的复制路径不需要此生成步骤。
+
 ## 启动 UI
 
 先为初始化好的面板 [创建 Presenter](https://github.com/espressif/esp-iot-solution/blob/master/components/display/tools/esp_display_present/README_CN.md#创建-presenter)，再在 UI 任务运行：

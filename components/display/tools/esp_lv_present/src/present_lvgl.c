@@ -247,7 +247,7 @@ static void acquire_before_draw(lv_event_t *event)
 
 #endif
 
-/* Borrow before LVGL's entry buffer check, not only before RENDER_START.
+/* Borrow after layout has established damage, before DIRECT synchronization.
  * No owned pixel canvas is needed for FULL or physical two-buffer DIRECT. */
 static esp_err_t borrow_refresh(esp_lv_present_native_t *binding, bool poll)
 {
@@ -356,16 +356,6 @@ static void refresh_event(lv_event_t *event)
     lv_event_code_t code = lv_event_get_code(event);
     if (code == LV_EVENT_REFR_REQUEST) {
         binding->direct.requested = true;
-        if (!binding->pooled_partial && !binding->lifecycle.in_refresh && binding->error == ESP_OK) {
-            if (binding->direct.count == 2 && binding->admission.retry) {
-                admit_direct(binding);
-            } else {
-                esp_err_t error = borrow_refresh(binding, false);
-                if (error != ESP_OK) {
-                    fail_refresh(binding, error);
-                }
-            }
-        }
         return;
     }
     if (code == LV_EVENT_REFR_START) {
@@ -396,6 +386,37 @@ static void refresh_event(lv_event_t *event)
         lv_display_set_draw_buffers(binding->display, &binding->borrowed, NULL);
         binding->need_tile = true;
     }
+}
+
+/* Private bridge from the generated LVGL refresh entry. Locate our binding
+ * through its registered callback, without claiming application user_data or
+ * allocating a custom event ID that could outlive lv_deinit(). */
+bool esp_lv_present_prepare_refresh(lv_display_t *display, bool dirty)
+{
+    uint32_t count = lv_display_get_event_count(display);
+    for (uint32_t i = 0; i < count; ++i) {
+        lv_event_dsc_t *descriptor = lv_display_get_event_dsc(display, i);
+        if (lv_event_dsc_get_cb(descriptor) != refresh_event) {
+            continue;
+        }
+        esp_lv_present_native_t *binding = lv_event_dsc_get_user_data(descriptor);
+        if (!binding->zero_copy || binding->pooled_partial) {
+            return true;
+        }
+        if (!dirty || binding->lifecycle.closing || binding->error != ESP_OK) {
+            return false;
+        }
+        if (binding->direct.count == 2 && binding->admission.retry) {
+            admit_direct(binding);
+        } else {
+            esp_err_t error = borrow_refresh(binding, false);
+            if (error != ESP_OK) {
+                fail_refresh(binding, error);
+            }
+        }
+        return binding->error == ESP_OK && binding->borrowed_ready;
+    }
+    return true;
 }
 
 static esp_err_t submit_borrowed(esp_lv_present_native_t *binding, const lv_area_t *area, uint8_t *pixels)
