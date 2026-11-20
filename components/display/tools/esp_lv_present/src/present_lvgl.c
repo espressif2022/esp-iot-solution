@@ -841,11 +841,20 @@ esp_err_t esp_lv_present_native_rotate(esp_lv_present_native_t *binding, esp_dis
     bool axes = ((unsigned)old_rotation ^ (unsigned)rotation) & 1;
     uint32_t width = axes ? binding->caps.draw_layout.height : binding->caps.draw_layout.width;
     uint32_t height = axes ? binding->caps.draw_layout.width : binding->caps.draw_layout.height;
-    uint32_t rows = binding->caps.contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION ? binding->draw->header.h : height;
-    if (rows > height) {
-        rows = height;
-    }
     lv_color_format_t format = binding->bpp == 2 ? LV_COLOR_FORMAT_RGB565 : LV_COLOR_FORMAT_RGB888;
+    uint32_t rows = height;
+    if (binding->caps.contract == ESP_DISPLAY_PRESENT_ENGINE_CONTRACT_PARTITION) {
+        /* LVGL reshapes the descriptor to each dirty band. Recover the allocated
+         * full-width tile height from capacity, never from that mutable header. */
+        uint32_t current_stride = lv_draw_buf_width_to_stride(binding->caps.draw_layout.width, format);
+        if (!current_stride) {
+            return ESP_ERR_INVALID_SIZE;
+        }
+        rows = binding->draw->data_size / current_stride;
+        if (rows > height) {
+            rows = height;
+        }
+    }
     uint32_t stride = lv_draw_buf_width_to_stride(width, format);
     if (borrows_pixels(binding) && stride != (size_t)width * binding->bpp) {
         return ESP_ERR_NOT_SUPPORTED;
@@ -865,8 +874,9 @@ esp_err_t esp_lv_present_native_rotate(esp_lv_present_native_t *binding, esp_dis
                  owns_draw_buffer(binding->path);
     /* Allocate only when the owned tile/canvas layout actually changes. The
      * current descriptor stays attached until the new layout is ready. */
-    bool replace = owned && (!binding->draw || binding->draw->header.w != width ||
-                             binding->draw->header.h != rows || binding->draw->header.stride != stride);
+    bool replace = owned && (!binding->draw || binding->caps.draw_layout.width != width ||
+                             binding->caps.draw_layout.height != height ||
+                             (uint64_t)stride * rows > binding->draw->data_size);
     lv_draw_buf_t *draw = replace ? lv_draw_buf_create(width, rows, format, stride) : NULL;
     if (replace && !draw) {
         return ESP_ERR_NO_MEM;
@@ -920,7 +930,12 @@ esp_err_t esp_lv_present_native_rotate(esp_lv_present_native_t *binding, esp_dis
         }
     }
     if (owned) {
-        lv_display_set_draw_buffers(binding->display, draw ? draw : binding->draw, NULL);
+        lv_draw_buf_t *target = draw ? draw : binding->draw;
+        if (!lv_draw_buf_reshape(target, format, width, rows, stride)) {
+            error = ESP_ERR_INVALID_SIZE;
+            goto fault;
+        }
+        lv_display_set_draw_buffers(binding->display, target, NULL);
     } else {
         error = borrow_refresh(binding, false);
         if (error != ESP_OK) {

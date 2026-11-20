@@ -4,6 +4,7 @@
 #include "support/legacy_panel.h"
 #undef esp_lcd_panel_draw_bitmap
 #include "esp_lv_present.h"
+#include "present_lvgl.h"
 #if LVGL_VERSION_MINOR >= 5
 #include "lvgl_private.h"
 #elif LVGL_VERSION_MINOR == 0
@@ -207,6 +208,61 @@ static void exercise(esp_display_present_mode_t mode, unsigned width)
     OK(esp_display_presenter_delete(presenter));
     free_panel(&p); lv_deinit();
 }
+/* Exercise COPY explicitly even on LVGL versions that normally borrow tiles. */
+static void copy_partial_reuse(void)
+{
+    lv_init();
+    struct fake_lcd p;
+    init_panel(&p);
+    p.physical_width = 8; p.physical_height = 4;
+    io_mode = true;
+    esp_display_presenter_config_t cfg = config(&p, false);
+    cfg.target.hw.io = &p;
+    cfg.target.hw.panel_type = ESP_DISPLAY_PRESENT_PANEL_IO;
+    cfg.target.fb.mode = ESP_DISPLAY_PRESENT_MODE_NONE;
+    cfg.target.drawbuf.lines = 2;
+    cfg.target.drawbuf.buffers = 2;
+    OK(esp_display_presenter_create(&cfg, &presenter));
+    esp_display_present_engine_t *core;
+    OK(present_session_bind(presenter, &core));
+    esp_lv_present_native_t *copy;
+    OK(esp_lv_present_native_create(core, 2, &copy));
+    lv_display_t *display = esp_lv_present_native_get_display(copy);
+    lv_obj_t *screen = lv_display_get_screen_active(display);
+    lv_obj_remove_style_all(screen);
+    lv_obj_set_style_bg_color(screen, lv_color_white(), 0);
+    lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, 0);
+    lv_obj_t *box = lv_obj_create(screen);
+    lv_obj_remove_style_all(box);
+    lv_obj_set_pos(box, 1, 1); lv_obj_set_size(box, 2, 1);
+    lv_obj_set_style_bg_color(box, lv_color_hex(0xff0000), 0);
+    lv_obj_set_style_bg_opa(box, LV_OPA_COVER, 0);
+    lv_refr_now(display); OK(esp_display_presenter_quiesce(presenter, 1000));
+    lv_draw_buf_t *tile = lv_display_get_buf_active(display);
+    uint32_t capacity = tile->data_size;
+    lv_obj_set_style_bg_color(box, lv_color_hex(0x0000ff), 0);
+    lv_refr_now(display); OK(esp_display_presenter_quiesce(presenter, 1000));
+    const lv_area_t dirty = {1, 1, 2, 1};
+    lv_obj_invalidate_area(screen, &dirty);
+    lv_refr_now(display); OK(esp_display_presenter_quiesce(presenter, 1000));
+    assert(tile->header.w < 8 && tile->data_size == capacity);
+    unsigned allocations = draw_allocations;
+    OK(esp_lv_present_native_rotate(copy, ESP_DISPLAY_PRESENT_ENGINE_ROTATE_180, 1000,
+                                    present_session_set_rotation, presenter));
+    assert(draw_allocations == allocations && lv_display_get_buf_active(display) == tile);
+    assert(tile->data_size == capacity && tile->header.w == 8 && tile->header.h == 2);
+    lv_refr_now(display); OK(esp_display_presenter_quiesce(presenter, 1000));
+    for (unsigned y = 0; y < 4; ++y) for (unsigned x = 0; x < 8; ++x) {
+            assert(pixels[y * 8 + x] == (y == 2 && (x == 5 || x == 6) ? 0x001f : 0xffff));
+        }
+    OK(esp_lv_present_native_destroy(copy));
+    present_session_unbind(presenter);
+    OK(esp_display_presenter_quiesce(presenter, 1000));
+    OK(esp_display_presenter_delete(presenter));
+    free_panel(&p);
+    lv_deinit();
+}
+
 #if LVGL_VERSION_MINOR >= 5
 /* Keep creation fallback distinct from a borrowed DIRECT temporarily rotated
  * through COPY. Returning to 0 degrees must preserve the original policy. */
@@ -243,6 +299,17 @@ static void direct_path_policy(bool start_rotated)
         assert((lv_display_get_buf_active(display)->data == NULL) ==
                (!start_rotated && angle == ESP_DISPLAY_PRESENT_ROTATE_0));
     }
+    if (!start_rotated) {
+        OK(esp_lv_present_set_rotation(ESP_DISPLAY_PRESENT_ROTATE_90, 1000));
+        lv_refr_now(display); OK(esp_display_presenter_quiesce(presenter, 1000));
+    }
+    lv_draw_buf_t *canvas = lv_display_get_buf_active(display);
+    unsigned allocations = draw_allocations;
+    OK(esp_lv_present_set_rotation(ESP_DISPLAY_PRESENT_ROTATE_270, 1000));
+    assert(draw_allocations == allocations && lv_display_get_buf_active(display) == canvas);
+    lv_refr_now(display); OK(esp_display_presenter_quiesce(presenter, 1000));
+    OK(esp_lv_present_set_rotation(ESP_DISPLAY_PRESENT_ROTATE_0, 1000));
+    assert(lv_display_is_double_buffered(display) == !start_rotated);
     OK(esp_lv_present_stop());
     OK(esp_display_presenter_quiesce(presenter, 1000));
     atomic_store(&scanning, false);
@@ -324,6 +391,7 @@ int main(void)
     direct_path_policy(true);
     direct_stride_rejection();
 #endif
+    copy_partial_reuse();
     assert(events);
     puts("public LVGL rotation: pixels, facade geometry, ownership, OOM, timeout, late failure passed");
 }
