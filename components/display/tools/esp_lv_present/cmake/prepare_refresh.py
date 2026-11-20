@@ -22,17 +22,24 @@ anchor = '    lv_refr_join_area();\n    refr_sync_areas();\n    refr_invalid_are
 for fragment in (check, entry, anchor):
     if source.count(fragment) != 1:
         sys.exit('Unsupported LVGL refresh source layout; review the integration for this LVGL version')
-source = source.replace(check, '', 1)
-source = source.replace(entry, """/* Optional binding hook; displays without a Present binding retain their path. */
+# Only lease-backed Present displays may enter layout without a pixel address.
+# Every other display keeps LVGL's original early return and event ordering.
+source = source.replace(check, """    bool present_lease = esp_lv_present_uses_refresh_lease &&
+                         esp_lv_present_prepare_refresh &&
+                         esp_lv_present_uses_refresh_lease(disp_refr);
+    if(!present_lease) {
+""" + ''.join('    ' + line if line.strip() else line for line in check.splitlines(keepends=True)) + '    }\n\n', 1)
+source = source.replace(entry, """/* Optional binding hooks; other displays retain the original refresh path. */
+extern bool esp_lv_present_uses_refresh_lease(lv_display_t *) __attribute__((weak));
 extern bool esp_lv_present_prepare_refresh(lv_display_t *, bool) __attribute__((weak));
 
 """ + entry, 1)
+late_check = check.replace('        LV_PROFILER_REFR_END;\n        return;', '        goto refr_finish;')
 source = source.replace(anchor, """    /* Layout may invalidate objects. Borrow only once damage is known, before
      * any DIRECT synchronization or drawing can touch a framebuffer. */
-    if(esp_lv_present_prepare_refresh &&
-       !esp_lv_present_prepare_refresh(disp_refr, disp_refr->inv_p != 0)) goto refr_finish;
-
-""" + check.replace('        LV_PROFILER_REFR_END;\n        return;', '        goto refr_finish;') + anchor, 1)
+    if(present_lease) {
+        if(!esp_lv_present_prepare_refresh(disp_refr, disp_refr->inv_p != 0)) goto refr_finish;
+""" + ''.join('    ' + line if line.strip() else line for line in late_check.splitlines(keepends=True)) + '    }\n\n' + anchor, 1)
 output = pathlib.Path(sys.argv[2])
 if not output.exists() or output.read_text() != source:
     output.write_text(source)

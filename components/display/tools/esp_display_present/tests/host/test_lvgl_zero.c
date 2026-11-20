@@ -441,6 +441,81 @@ static lv_timer_t *admission_timer(esp_lv_present_native_t *binding)
     return NULL;
 }
 
+/* A display outside Present must keep LVGL's original no-buffer early exit. */
+static void unbound_refresh(void)
+{
+    lv_display_t *display = lv_display_create(W, H);
+    unsigned counts[2] = {0};
+    lv_display_add_event_cb(display, count_refresh, LV_EVENT_ALL, counts);
+    lv_refr_now(display);
+    assert(counts[0] == 0 && counts[1] == 0);
+    lv_display_delete(display);
+}
+
+/* Admission may succeed inside a refresh before the retry timer runs. This
+ * must not schedule another immediate round; manual refresh must also restore
+ * periodic perf sampling after the admission path paused the display timer. */
+static void deferred_refresh_schedule(bool manual)
+{
+    scan_panel_t panel = {.immediate = true};
+    esp_display_present_engine_config_t cfg = {
+        .backend = {
+            .width = W, .height = H, .buffer_count = 2, .max_frames = 4,
+            .format = ESP_DISPLAY_PRESENT_FORMAT_RGB565, .panel = scan_interface(&panel)
+        },
+        .backend_kind = ESP_DISPLAY_PRESENT_ENGINE_FB,
+        .mode = ESP_DISPLAY_PRESENT_ENGINE_MODE_DOUBLE_DIRECT, .timeout_ms = 1000
+    };
+    esp_display_present_engine_t *engine;
+    OK(esp_display_present_engine_create(&cfg, &engine));
+    esp_lv_present_native_t *binding;
+    OK(esp_lv_present_native_create_zero_copy(engine, &binding));
+    lv_display_t *display = esp_lv_present_native_get_display(binding);
+    lv_refr_now(display);
+    OK(esp_display_present_engine_drain(engine, 0));
+    unsigned counts[2] = {0};
+    lv_display_add_event_cb(display, count_refresh, LV_EVENT_ALL, counts);
+    lv_timer_t *refresh = lv_display_get_refr_timer(display);
+    lv_timer_set_period(refresh, 50);
+    acquire_poll_result = ESP_ERR_NOT_FINISHED;
+    lv_obj_invalidate(lv_display_get_screen_active(display));
+    lv_refr_now(display);
+    assert(!acquire_poll_result && counts[0] == 1 && counts[1] == 0);
+    assert(lv_timer_get_paused(refresh));
+    /* Control the ordering: the display refresh wins over the retry callback. */
+    lv_timer_pause(admission_timer(binding));
+    lv_timer_reset(refresh);
+    forbid_wait = true;
+    if (manual) {
+        lv_refr_now(display); /* A paused timer does not prevent manual refresh. */
+    } else {
+        lv_display_send_event(display, LV_EVENT_REFR_REQUEST, NULL);
+        lv_tick_inc(50);
+        (void)lv_timer_handler();
+    }
+    forbid_wait = false;
+    OK(esp_lv_present_native_get_error(binding));
+    OK(esp_display_present_engine_drain(engine, 0));
+    assert(counts[0] == 2 && counts[1] == 1);
+    assert(lv_timer_get_paused(admission_timer(binding)));
+    assert(lv_timer_get_paused(refresh) == !LV_USE_PERF_MONITOR);
+    size_t submitted = panel.submissions;
+    (void)lv_timer_handler();
+    timer_step(1);
+    assert(counts[0] == 2 && counts[1] == 1 && panel.submissions == submitted);
+    timer_step(49);
+    assert(counts[0] == 2 + !!LV_USE_PERF_MONITOR && counts[1] == 1);
+    assert(panel.submissions == submitted);
+    /* A later real invalidation still wakes and renders normally. */
+    lv_obj_invalidate(lv_display_get_screen_active(display));
+    lv_refr_now(display);
+    assert(counts[1] == 2 && panel.submissions == submitted + 1);
+    OK(esp_lv_present_native_destroy(binding));
+    OK(esp_display_present_engine_drain(engine, 0));
+    OK(esp_display_present_engine_stop(engine, 1000));
+    OK(esp_display_present_engine_destroy(engine));
+}
+
 static void *bind_other_owner(void *engine)
 {
     OK(esp_display_present_engine_rebind_producer(engine, 0));
@@ -693,6 +768,9 @@ int main(void)
 {
     lv_init();
 #if LVGL_VERSION_MINOR >= 5
+    deferred_refresh_schedule(false);
+    deferred_refresh_schedule(true);
+    unbound_refresh();
     rotation_borrow_failure();
     for (unsigned action = 0; action < 5; ++action) {
         deferred_direct(action);
