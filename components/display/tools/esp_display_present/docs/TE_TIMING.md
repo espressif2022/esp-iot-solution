@@ -29,28 +29,12 @@ Host 验证区分“尚未进入合法窗口”和“实测模型下不存在合
 可重试等待掩盖不可能条件。该拒绝不是硬件传输完成，也不自动改变 backend 的
 故障/回收生命周期。连续周期的模型测试不能证明真实面板脉冲与扫描相位一致。
 
-### TE worker allocation
+### TE 任务分配
 
-The factory uses one backend task for a single compose image (C1), including
-its asynchronous pixel queue. Pixel execution occurs outside the engine gate.
-Two compose images (C2) retain a dedicated pixel task so composition can overlap
-an in-flight transfer. Tile count T1/T2 does not change this choice.
-Both configurations retain the same admission, cancellation and completion
-contracts; task sharing is not synchronous execution in the owner task.
+单张合成帧（C1）使用 1 个 backend 任务，并在 engine gate 之外推进其异步像素队列；双张合成帧（C2）额外保留独立 pixel 任务，使下一帧合成可以与当前传输重叠。输入 tile 数量（T1／T2）不改变这一任务分配。两种配置遵循相同的准入、取消和完成合同；共用 backend 任务并不意味着在调用任务内同步执行。
 
-The default input-tile budget is configured by
-`CONFIG_ESP_DISPLAY_PRESENT_DEFAULT_TILE_BYTES` (32 KiB). Non-direct PSRAM TE
-uses two internal DMA stages, each bounded by
-`CONFIG_ESP_DISPLAY_PRESENT_IO_STAGING_SLOT_BYTES` (16 KiB by default), rounded
-to whole physical rows. Increasing stages may reduce inter-band overhead but
-consumes more internal memory; the complete measured transfer must still fit
-the TE timing model.
+默认输入 tile 字节预算由 `CONFIG_ESP_DISPLAY_PRESENT_DEFAULT_TILE_BYTES`（32 KiB）配置。非直传 PSRAM 的 TE 路径使用两块内部 DMA staging 缓冲，每块上限由 `CONFIG_ESP_DISPLAY_PRESENT_IO_STAGING_SLOT_BYTES`（默认 16 KiB）指定并按物理整行向下取整。增大 staging 上限可减少分片间开销，但会增加内部内存占用，且完整实测传输耗时仍须满足 TE 时序模型。
 
-### Startup polarity observation
+### 启动极性检测
 
-TE GPIO input is configured before polarity detection. Creation samples the
-dominant level over approximately 9 ms before registering the pin ISR. This
-avoids reversing blanking/scan when a single initial read lands in the short
-TE pulse. It assumes a short blanking pulse and a longer idle scan, as the
-existing automatic mode does. No task, heap pool or periodic sampling is added;
-measured edge timing and the admission model are unchanged.
+创建阶段先配置 TE GPIO 输入，并在注册引脚中断前对总线空闲电平采样约 9 ms，以主导电平判断空闲极性，避免单次读取恰好落在短消隐脉冲内而把消隐与扫描相位判反。该逻辑仍沿用自动模式下的短消隐脉冲、长空闲扫描假设，不新增后台任务、堆内存或周期采样，边沿测量和准入模型保持不变。

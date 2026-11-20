@@ -2,8 +2,8 @@
 
 This directory contains Host regressions of production code. The target smoke
 application lives in `../../test_apps/smoke`; `../run.py` is the shared entry.
-Benchmark datasets, lab device identities and board diagnostics are local-only
-under `../../dev` and are not required by formal tests or distributed packages.
+Benchmark datasets and board-specific diagnostics are external to the repository
+and are not required by formal tests or distributed packages.
 
 ## Host
 

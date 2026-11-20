@@ -94,7 +94,7 @@ static void async_fb_smoke(void)
     }
     ESP_ERROR_CHECK(ops->stop(backend, 1000));
     ESP_ERROR_CHECK(ops->destroy(backend));
-    puts("present_v2 async FB loopback passed (CPU worker, simulated scanout)");
+    puts("esp_display_present async FB loopback passed (CPU worker, simulated scanout)");
 }
 
 void app_main(void)
@@ -143,5 +143,5 @@ void app_main(void)
     ESP_ERROR_CHECK(ops->stop(backend, 0));
     ESP_ERROR_CHECK(ops->destroy(backend));
     async_fb_smoke();
-    puts("present_v2 smoke passed (CPU conversion and loopback GRAM; no real LCD)");
+    puts("esp_display_present smoke passed (CPU conversion and loopback GRAM; no real LCD)");
 }

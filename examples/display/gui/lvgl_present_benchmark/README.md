@@ -33,9 +33,13 @@ the worker stops after one complete matrix. Enable
 The panel is selected by the `Hardware Configuration` Kconfig choice, same as
 other GUI examples. LCD bring-up reuses `examples/display/gui/common/hw_init`.
 Target-specific PSRAM/XIP/cache live in `sdkconfig.defaults.esp32s31` /
-`sdkconfig.defaults.esp32p4`. Requires ESP-IDF >= 6.0.
+`sdkconfig.defaults.esp32p4`. For ESP32-S3-LCD-EV-Board R16 (GC9503 480x480 RGB),
+append `sdkconfig.defaults.s3ev` via `SDKCONFIG_DEFAULTS`. Requires ESP-IDF >= 6.0.
 
 ```sh
+# ESP32-S3-LCD-EV-Board R16 (GC9503 480x480 RGB)
+idf.py -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.defaults.esp32s3;sdkconfig.defaults.s3ev" set-target esp32s3 build flash monitor
+
 # ESP32-S31 (RGB, 250M PSRAM + XIP)
 idf.py set-target esp32s31 build flash monitor
 

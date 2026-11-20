@@ -77,6 +77,26 @@ It does **not** create a task to call `lv_timer_handler()`. Start, UI updates,
 timer handling and stop must be serialized on the same UI task. Do not submit
 frames through the Presenter API concurrently with this binding.
 
+## Runtime rotation with UI preservation
+
+Call on the task that started the binding, serialized with `lv_timer_handler()`
+and outside LVGL callbacks:
+
+```c
+esp_err_t err = esp_lv_present_set_rotation(ESP_DISPLAY_PRESENT_ROTATE_90, 1000);
+```
+
+The display and object tree survive. Logical resolution, Presenter caps, angle,
+generation and `map_point()` are updated before LVGL resolution events, followed
+by a full redraw. Do not replace LVGL draw buffers manually. The application must
+reset/wait-release touch input and adapt its layout to the new dimensions.
+The binding does not change panel MADCTL.
+
+Allocation failure or a drain timeout before rotation preserves the old angle.
+A failure after rotation pauses rendering and Presenter queries report the actual
+angle; stop/recreate the binding before resuming. Failure does not always mean
+rollback. Direct Presenter rotation remains rejected while this binding is active.
+
 ## Stop or hand off
 
 On the UI task, stop calling LVGL, then call `esp_lv_present_stop()` to cancel
@@ -85,8 +105,8 @@ succeeds, choose the next operation:
 
 - **Close:** call `esp_display_presenter_delete(presenter)`; release the
   application-owned panel/IO only after deletion succeeds.
-- **Reuse or rotate:** call `esp_display_presenter_quiesce(presenter, timeout_ms)`
-  before reconfiguring. Restart the binding and recreate the UI after rotation.
+- **Reuse with another renderer:** call `esp_display_presenter_quiesce(presenter, timeout_ms)`
+  before reconfiguring. Starting a new binding requires recreating its UI.
 
 Do not require quiesce to succeed before stopping the binding: a pending LVGL
 refresh may already hold an unfinished frame. Presenter rotation is rejected

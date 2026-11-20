@@ -52,7 +52,7 @@ Pair with the presenter
 .. code:: yaml
 
     dependencies:
-      espressif/esp_lv_present: "^0.1.0"
+      espressif/esp_lv_present: "^0.2.0"
 
 .. code:: c
 

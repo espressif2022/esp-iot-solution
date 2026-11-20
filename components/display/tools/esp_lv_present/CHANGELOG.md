@@ -2,6 +2,10 @@
 
 ## 0.2.0 — Unreleased
 
+- Add `esp_lv_present_set_rotation()` to preserve UI objects while coordinating
+  buffer leases, logical resolution and Presenter geometry/generation. Keep the
+  old orientation on pre-transition failure and pause on late rebind failure.
+
 - Bind to esp_display_present 2.x and the single presentation engine.
 - Preserve the binding entry points while requiring the present 2.x ownership
   and scanout policies. Do not resolve this release against present 1.x.

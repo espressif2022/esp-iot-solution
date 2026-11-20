@@ -58,12 +58,29 @@ void ui_task(void *arg)
 
 `start()` 会按需初始化 LVGL，并用 `esp_timer` 设置 tick 回调；每次 start 都会替换 LVGL tick 回调，不要另加 tick 来源。它**不创建**调用 `lv_timer_handler()` 的任务。start、UI 更新、timer handler 和 stop 应在同一 UI 任务串行执行。绑定运行期间，不要再并发调用 Presenter API 提交帧。
 
+## 保留 UI 的运行时旋转
+
+在启动绑定的 UI 任务中，与 `lv_timer_handler()` 串行、在 LVGL 回调之外调用：
+
+```c
+esp_err_t err = esp_lv_present_set_rotation(ESP_DISPLAY_PRESENT_ROTATE_90, 1000);
+```
+
+入口保留 display 和对象树，更新逻辑尺寸、Presenter 的 caps、角度、generation
+和 `map_point()` 映射，并请求全屏重绘。不要再手动调用 `lv_display_set_buffers()`。
+应用负责重置触摸状态（`lv_indev_reset()` / `lv_indev_wait_release()`）以及按新尺寸调整布局；
+组件不修改面板 MADCTL。分辨率变化事件中的 Presenter 查询已反映新方向。
+
+旋转前分配失败或排空超时保留旧方向，可以重试。旋转已发生、后续重绑失败时，
+刷新暂停，Presenter 查询反映实际方向；应用应停止并重建绑定后恢复，不能假定失败等于回滚。
+旧的公开 Presenter 旋转接口仍拒绝在官方绑定存活时直接调用。
+
 ## 停止与交接
 
 在 UI 任务停止调用 LVGL，再调用 `esp_lv_present_stop()` 取消未完成帧、销毁 display 并解除绑定。成功后选择后续操作：
 
 - **关闭：**调用 `esp_display_presenter_delete(presenter)`，删除成功后再释放应用持有的 panel／IO。
-- **复用或旋转：**调用 `esp_display_presenter_quiesce(presenter, timeout_ms)` 排空再配置，旋转后重新启动绑定并重建 UI。
+- **交给其他渲染器：**调用 `esp_display_presenter_quiesce(presenter, timeout_ms)` 排空再配置；再次启动绑定时需要重建 UI。
 
 不要把 quiesce 成功作为停止绑定的前提：待刷新的 LVGL 可能已持有未完成帧。绑定存活期间也不允许修改 Presenter 旋转。
 

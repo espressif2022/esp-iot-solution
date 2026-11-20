@@ -11,7 +11,7 @@
 
 当前行为以 [模式与缓冲合同](docs/MODE_ARCHITECTURE.md)、
 [TE 时序](docs/TE_TIMING.md) 和 [生命周期规则](STATE_MACHINE.md) 为准。
-构建/测试入口见 [开发说明](tests/host/README.md)。板测数据和实际 SDK 配置随 MR 验证附件维护。
+构建与测试入口见 [Host 回归说明](tests/host/README.md)。
 
 源码迁移不代表 Registry 发布或全部外部应用兼容性已经验收。
 
@@ -27,11 +27,16 @@
 GRAM NONE 与 TE 的边界保留。新增 TRANSFER_FAILED 不能继续按 TIMEOUT 处理，
 需要原始错误时使用 `esp_display_presenter_get_fault_error()`。
 
-Panel IO NONE 不再提供 `target.io_submit` 字段和 `esp_display_present_io_submit_t` 枚举。
-旧初始化项需删除；用 `target.drawbuf.buffers=1` 选择调用任务处理/提交，`=2` 选择单个 backend 任务。
-`=0` 按最终分配数量推导；自动两块降到一块时同步收回 worker 预算。
-因此旧的 D2 CALLER 和 D1 BACKGROUND 配置不再保留，应用须按实际缓冲数量重新验证阻塞位置与任务内存。
-TE、RGB/MIPI 的调度规则不受这项变更影响。
+Panel IO NONE 根据最终分配的输入缓冲数量决定提交上下文：一块由调用任务处理，
+两块由单个 backend 任务处理；自动两块降为一块时同步收回 worker 预算。
+下游应验证缓冲等待、任务交接和实际传输耗时，不能仅凭接口同名认定调度等价。
+
+### 仅针对 2.0 开发中间版本
+
+中间版本曾提供 `target.io_submit` 和 `esp_display_present_io_submit_t`，最终版本已删除；
+使用该中间版本的初始化项需要移除 `.io_submit`，并按上述缓冲数量规则配置。
+正式 1.2.2 没有这个字段，因此这不是 1.2.2 用户的必做迁移步骤。
+旧中间版 D2 CALLER / D1 BACKGROUND 的独立组合不再保留。
 
 本表说明不承诺 ABI 兼容；旧外部应用应重新编译并验证，不能仅替换组件二进制。
 
@@ -47,41 +52,49 @@ TE、RGB/MIPI 的调度规则不受这项变更影响。
 `esp_lv_present_start()` 接手；LVGL quiesce 并 stop 后再释放所有权，
 随后使用同一个 pause token 恢复 GSP，成功后丢弃 token。
 
-## SDK capability and optional acceleration
+## 正式 1.2.2 到 2.0 的下游迁移清单
 
-The minimum supported SDK remains ESP-IDF 6.0. CMake detects the available
-DMA2D APIs independently of the SoC capabilities; a missing private alignment
-helper no longer disables both accelerators. No SDK patch is installed.
+- **依赖组合**：Present 2.0 配套官方 `esp_lv_present` 0.2.0；更新 manifest 后重新生成
+  锁文件。旧的固定 1.x / `^1.x` 项目不会因发布 2.0 自动升级。移除联调 override，
+  在干净环境验证实际发布包；Vibe 等子模块项目先提交子模块再更新父仓库 gitlink。
+- **生产者任务**：创建时认领调用任务；另一绘制任务接管时显式 `rebind_producer()`，
+  或由当前所有者在帧间 `release_producer()` 后交接。无需把每帧重绑作为通用要求。
+- **区域类型**：旧 `esp_display_presenter_region_t` 可迁为应用自己的 surface + origin
+  描述；缓冲写入仍使用 acquire/resolve_rows/submit/commit，不包含组件内部头文件。
+- **官方 LVGL 运行时旋转**：使用 `esp_lv_present_set_rotation(angle, timeout_ms)`，
+  保留 UI 并同步 Presenter 查询。原先旋转后手动获取池地址、重绑 LVGL 缓冲的流程不再适用。
+  触摸复位由应用负责，晚期失败按实际方向处理。Claw 自带 `esp_lvgl_present` 是另一套绑定，
+  不应直接套用官方绑定迁移方式。
+- **硬件与故障**：复核至少两张 scanout FB、DSI 回调能力、SPI PSRAM DMA 配置与 BSP
+  一致性，以及 TRANSFER_FAILED、超时、迟到完成和停止时的资源保留。
 
-| Available SDK capability | Present executor path |
+### GSP 与下游发布的遗留验收
+
+这些事项独立于公共旋转入口，不能以 Host 通过代替产品发布验收：
+
+- GSP 旧 archive 使用的公开配置 ABI 与 2.0 不同；须取得匹配产品接口的源码、重新编译
+  并发布匹配包。仅重编应用或放宽版本约束无效。
+- Claw 还需重新审查输入/背景图产品补丁和 archive 装配检查；Vibe 的旧 GSP 模板单独迁移。
+  源码 GSP 测试不证明 Registry 旧预编译包兼容。
+- GSP 旧 geometry/rotate/PPA 微基准需要迁移或明确退役；跳过它们不等于完成验证。
+- `--wrap=esp_display_presenter_submit_buffer` 看不到官方 LVGL 的内部 Engine 提交。
+  截图/镜像须按 GSP、LVGL、自绘及切换分别验证，不能据此认定所有现有镜像都失效。
+- Webcam 使用官方旋转入口可移除应用额外整帧桥接；绑定仍有自身存储，内存峰值、
+  吞吐、TE 时序和动态旋转须在最终产品固件上验证。
+
+## SDK 能力检测与可选硬件加速
+
+最低支持的 SDK 仍为 ESP-IDF 6.0。CMake 会独立于芯片能力检测可用的 DMA2D 接口；缺少私有对齐查询辅助函数时，不再同时禁用两个硬件加速器。组件不依赖任何 SDK 补丁。
+
+| 可用的 SDK 能力 | Present 执行路径 |
 |---|---|
-| DMA2D SoC and `esp_async_color_convert.h` | Public asynchronous color-convert API, with equal source/destination formats for 2D copies |
-| DMA2D SoC and legacy `esp_private/async_memcpy_dma2d.h` only | Legacy asynchronous 2D memcpy API |
-| PPA SoC and the PPA driver | PPA SRM for copy, rotation and supported byte-order conversion |
-| Missing accelerator/API, or a request rejected by its probe | CPU fallback before hardware execution |
+| DMA2D SoC 且存在 `esp_async_color_convert.h` | 公开异步颜色转换接口，源与目标格式相同时用于 2D 拷贝 |
+| DMA2D SoC 且仅存在旧版 `esp_private/async_memcpy_dma2d.h` | 旧版异步 2D memcpy 接口 |
+| PPA SoC 与 PPA 驱动 | 使用 PPA SRM 完成拷贝、旋转及支持的字节序转换 |
+| 缺少加速器／接口，或请求被能力检查拒绝 | 执行前退回 CPU 实现 |
 
-When available, `dma2d_get_buffer_alignment_constraint()` supplies the memory
-constraints. Without it, the executor admits ordinary internal RAM and
-unencrypted, non-ECC PSRAM; unsupported external-memory constraints are rejected
-before submission. Cache-line, stride, capacity and transform checks still apply.
-The public DMA2D driver synchronizes the declared destination picture, so its
-picture window is restricted to the affected rows where alignment permits it.
-Entering hardware execution never authorizes CPU fallback on an error or a
-missing callback: its buffers must remain borrowed until completion is proven.
+存在 `dma2d_get_buffer_alignment_constraint()` 时由其提供内存对齐与域约束；缺少该函数时，执行器允许普通内部 RAM 及未开启加密和 ECC 的 PSRAM，不支持的外部内存约束会在提交前被拒绝，同时仍执行 cache line、stride、容量和变换检查。公开 DMA2D 驱动会同步声明的目标图像区域，因此在对齐允许时将图像窗口限制在受影响行范围内。一旦进入硬件执行，错误或缺失回调时不会退回 CPU，相关缓冲必须保持借用直到确认硬件完成。
 
-The facade creates accelerator clients only when its mode/rotation needs pixel
-copies, with one pending hardware transaction per client. Eligible FB paths
-reuse the existing backend worker for asynchronous copies outside the engine
-gate, avoiding an additional pixel-worker stack. Advanced configurations retain
-the dedicated pixel worker. Neither choice changes the pixel-buffer count or
-the requirement to retain in-flight storage on a stop timeout. Hardware evidence
-must identify the SDK revision and effective configuration; successful compilation
-alone is not evidence that an accelerator ran.
+门面层仅在当前模式／旋转确实需要像素拷贝时创建加速器客户端，每个客户端同时只允许一个在途硬件事务。符合条件的 FB 路径复用现有 backend 工作线程在 engine gate 之外执行异步拷贝，避免额外分配 pixel 工作栈；高级配置仍保留独立的 pixel 工作线程。两种方式都不会改变像素缓冲数量，也不会免除停止超时时保留在途存储的要求。硬件能力验收应记录实际使用的 SDK 版本与有效配置，编译通过本身不代表加速器在运行时已启用。
 
-DSI scanout additionally requires DPI `on_frame_buf_complete` and `on_vsync`
-callbacks. IDF 6.0 does not provide them: DSI scanout creation returns
-`ESP_ERR_NOT_SUPPORTED`. Its old `on_refresh_done` is not substituted for buffer
-retirement. Thus a successful 6.0 P4 compile validates core/CPU integration, not
-DSI scanout availability. The P4 DSI measurements use the newer SDK recorded with
-their evidence. RGB and IO support remain subject to their documented driver
-capabilities, independently of this DPI requirement.
+DSI 扫描输出额外依赖 DPI 的 `on_frame_buf_complete` 与 `on_vsync` 回调。ESP-IDF 6.0 不提供这两个回调，因此在该版本上创建 DSI scanout 会返回 `ESP_ERR_NOT_SUPPORTED`；组件不会用旧的 `on_refresh_done` 替代缓冲退休语义。基于 IDF 6.0 的 P4 编译通过仅验证核心层与 CPU 路径集成，不代表 DSI 扫描输出可用；P4 DSI 实测需配合提供上述 DPI 回调的较新 SDK。RGB 与 Panel IO 的支持范围仍各自取决于对应驱动能力，不受此 DPI 限制影响。

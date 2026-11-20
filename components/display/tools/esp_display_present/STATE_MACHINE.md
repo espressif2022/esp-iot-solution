@@ -172,14 +172,11 @@ it does depends on each backend's `service` implementation.
 
 Further extraction from here would need an added indirection layer,
 and there is currently no benefit that justifies one. Keeping these
-thin wrappers and the ops boundary is a deliberate design, not
-unfinished deduplication. This closes the backend-shell work: do not
-reopen it for line count alone. If a future change does extract an op,
-acceptance requires host tests that actually cover error codes,
-service-call ordering, early completions and receipt release across
-the affected backends, with the full host suite passing in the
-configuration under test (baseline recorded 2026-11-12: 44/44 in the
-default non-LVGL configuration). A passing total by itself does not
+thin wrappers and the ops boundary is a deliberate design. If a future
+change does extract an op, acceptance requires host tests that cover
+error codes, service-call ordering, early completions and receipt
+release across the affected backends, with the full host suite passing
+in the configuration under test; a passing total by itself does not
 substitute for those behavior checks.
 
 ## LCD IO completion ordering (SPI/QSPI)
@@ -192,14 +189,7 @@ IO handle, serialized submit calls, and a panel driver whose successful
 establish ordering across IO handles, nor support a panel that emits one
 color transfer per row without aggregating completion itself.
 
-Source audit (2026-11-12):
-
-| ESP-IDF revision | Basis | Audited implementation |
-| --- | --- | --- |
-| `7b9cc1ac79f865983f59bb8ff3ff43eb74ff1dbe` | Audited SDK revision | LCD SPI IO and SPI master queue/ISR |
-| `80c8922480b5aad5038a61d38f6b3d0de5727602` | Local `esp-idf-gitlab` HEAD; the two audited files have no working-tree edits | Same completion-ordering mechanism |
-
-In both revisions, `components/esp_lcd/spi/esp_lcd_panel_io_spi.c`:
+Implementation findings in ESP-IDF 6.x (`components/esp_lcd/spi/esp_lcd_panel_io_spi.c`):
 
 - `panel_io_spi_tx_color` acquires the SPI device's bus, splits large color
   payloads into queued transactions, clears each descriptor before reuse,
@@ -215,8 +205,9 @@ In `components/esp_driver_spi/src/gpspi/spi_master.c`,
 finishes the current transaction and runs `spi_post_trans`/`post_cb` before
 starting the next. This establishes FIFO completion for this device;
 arbitration with other devices can delay it, but does not reorder its queue.
-These are implementation findings for the listed revisions, not a blanket
-promise for other transports or future/custom drivers.
+These are implementation findings for the audited ESP-IDF 6.x SPI/QSPI driver
+implementation, not a blanket promise for other transports or future/custom
+drivers.
 
 There are two distinct levels of splitting:
 

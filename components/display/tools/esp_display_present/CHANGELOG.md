@@ -22,7 +22,8 @@
   CPU-only. Keep repair asynchronous and preserve queued hardware/custom
   executors, multi-tile overlap and scanout retirement.
 
-- Remove the public `target.io_submit` field and `esp_display_present_io_submit_t`.
+- Remove the development-only `target.io_submit` field and `esp_display_present_io_submit_t`
+  (neither was part of released 1.2.2).
   Panel-IO NONE now derives submission context from the final input count: one
   buffer uses the caller, two use one backend worker. Automatic 2->1 allocation
   fallback also recomputes the worker and stack budget. Existing initializers
