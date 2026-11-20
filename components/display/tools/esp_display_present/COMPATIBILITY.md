@@ -100,4 +100,4 @@ Panel IO NONE 根据最终分配的输入缓冲数量决定提交上下文：一
 
 门面层仅在当前模式／旋转确实需要像素拷贝时创建加速器客户端，每个客户端同时只允许一个在途硬件事务。符合条件的 FB 路径复用现有 backend 工作线程在 engine gate 之外执行异步拷贝，避免额外分配 pixel 工作栈；高级配置仍保留独立的 pixel 工作线程。两种方式都不会改变像素缓冲数量，也不会免除停止超时时保留在途存储的要求。硬件能力验收应记录实际使用的 SDK 版本与有效配置，编译通过本身不代表加速器在运行时已启用。
 
-DSI 扫描输出额外依赖 DPI 的 `on_frame_buf_complete` 与 `on_vsync` 回调。ESP-IDF 6.0 不提供这两个回调，因此在该版本上创建 DSI scanout 会返回 `ESP_ERR_NOT_SUPPORTED`；组件不会用旧的 `on_refresh_done` 替代缓冲退休语义。基于 IDF 6.0 的 P4 编译通过仅验证核心层与 CPU 路径集成，不代表 DSI 扫描输出可用；P4 DSI 实测需配合提供上述 DPI 回调的较新 SDK。RGB 与 Panel IO 的支持范围仍各自取决于对应驱动能力，不受此 DPI 限制影响。
+DSI 扫描输出优先使用 ESP-IDF 6.1+ 提供的 DPI `on_frame_buf_complete` 与 `on_vsync` 回调。在仅提供 `on_refresh_done` 的 ESP-IDF 6.0 上，适配器按芯片最小版本配置区分事件语义：`CONFIG_ESP_REV_MIN_FULL < 300` 时 `on_refresh_done` 在 DW-GDMA 切换链表后立即触发，采用单边界退休；`CONFIG_ESP_REV_MIN_FULL >= 300` 时 `on_refresh_done` 在 DSI Bridge VSYNC 触发（晚于 DW-GDMA 链表重载中断），多缓冲切换会额外等待一个刷新周期以确保旧帧缓冲真正退出 DMA 读取，单缓冲曝光确认不变。（注意：在精确的 ESP-IDF `v6.0.0` 标签上，移交 `esp_display_present` 管理的 DPI 面板请勿额外调用 `esp_lcd_dpi_panel_enable_dma2d()`，否则驱动旧分支顺序会拦截零拷贝切帧；`v6.0.1+` 已修复。）

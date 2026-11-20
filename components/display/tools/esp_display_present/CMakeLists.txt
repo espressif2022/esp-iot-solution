@@ -46,19 +46,31 @@ target_compile_definitions(${COMPONENT_LIB} PRIVATE
     PRESENT_IDF_COLOR_CONVERT_DMA2D_API=${_present_color_api}
     PRESENT_IDF_EFUSE_ENCRYPTION_API=${_present_efuse_api})
 
-# Older DPI drivers expose refresh_done only. It is not a retirement event;
-# do not substitute it for frame_buf_complete and silently weaken ownership.
+# Modern DPI drivers (ESP-IDF 6.1+) expose dedicated frame_buf_complete and
+# vsync callbacks. ESP-IDF 6.0 exposes on_refresh_done only: on P4 rev < 3.0 it
+# fires in mipi_dsi_dma_trans_done_cb right after DW-GDMA reloads cur_fb_index,
+# while on P4 rev >= 3.0 it fires on DSI bridge VSYNC after the DMA switch ISR
+# (requiring an extra refresh boundary before retiring a multi-FB allocation).
 set(_present_dsi_header "${IDF_PATH}/components/esp_lcd/dsi/include/esp_lcd_mipi_dsi.h")
-set(_present_dsi_scanout_api 0)
+set(_present_dsi_frame_complete_api 0)
+set(_present_dsi_vsync_api 0)
+set(_present_dsi_refresh_done_api 0)
 if(EXISTS "${_present_dsi_header}")
     file(READ "${_present_dsi_header}" _present_dsi_declarations)
-    if(_present_dsi_declarations MATCHES "on_frame_buf_complete" AND
-       _present_dsi_declarations MATCHES "on_vsync")
-        set(_present_dsi_scanout_api 1)
+    if(_present_dsi_declarations MATCHES "on_frame_buf_complete")
+        set(_present_dsi_frame_complete_api 1)
+    endif()
+    if(_present_dsi_declarations MATCHES "on_vsync")
+        set(_present_dsi_vsync_api 1)
+    endif()
+    if(_present_dsi_declarations MATCHES "on_refresh_done")
+        set(_present_dsi_refresh_done_api 1)
     endif()
 endif()
 target_compile_definitions(${COMPONENT_LIB} PRIVATE
-    PRESENT_IDF_DSI_SCANOUT_API=${_present_dsi_scanout_api})
+    PRESENT_IDF_DSI_FRAME_COMPLETE_API=${_present_dsi_frame_complete_api}
+    PRESENT_IDF_DSI_VSYNC_API=${_present_dsi_vsync_api}
+    PRESENT_IDF_DSI_REFRESH_DONE_API=${_present_dsi_refresh_done_api})
 
 # Re-evaluate capabilities when SDK private/public declarations change in place.
 foreach(_present_sdk_header IN ITEMS "${_present_dma_header}" "${_present_async_header}" "${_present_color_header}" "${_present_efuse_header}" "${_present_dsi_header}")
